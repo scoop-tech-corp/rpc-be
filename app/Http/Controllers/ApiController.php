@@ -11,6 +11,48 @@ use Illuminate\Support\Facades\Validator;
 
 class ApiController extends Controller
 {
+    /**
+     * @OA\Post(
+     * path="/api/register",
+     * operationId="Register",
+     * tags={"Register"},
+     * summary="User Register",
+     * description="User Register here",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"username","fullname","email", "password", "password_confirmation","role"},
+     *               @OA\Property(property="username", type="text"),
+     *               @OA\Property(property="fullname", type="text"),
+     *               @OA\Property(property="email", type="text"),
+     *               @OA\Property(property="password", type="password"),
+     *               @OA\Property(property="password_confirmation", type="password"),
+     *               @OA\Property(property="role", type="text")
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     * )
+     */
     public function register(Request $request)
     {
     	//Validate data
