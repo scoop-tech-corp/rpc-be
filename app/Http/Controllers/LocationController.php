@@ -304,243 +304,266 @@ class LocationController extends Controller
     public function index()
     {
 
-        //08/25/2022
-        //$object = new stdClass();
-        //$data2 =new stdClass();
-        $data2=[];
-        $location = DB::table('location')
+        $branch = DB::table('location')
+            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
+            ->select('location.codeLocation as codeLocation',
+                'location.locationName as locationName',
+                'location.isBranch as isBranch',
+                'location.status as status',
+                'location.introduction as introduction',
+                'location_alamat_detail.alamatJalan as alamatJalan', )
             ->get();
 
-        $decoded = json_decode($location, true);
+        return response()->json($branch, 200);
 
-        foreach ($decoded as $val) {
+    }
 
-            $param_location = DB::table('location')
-                ->select('location.codeLocation as codeLocation',
-                    'location.locationName as locationName',
-                    'location.isBranch as isBranch',
-                    'location.status as status',
-                    'location.introduction as introduction',
-                    'location.description as description',
-                    'location.image as image',
-                    'location.imageTitle as imageTitle',
+    public function getlocationorderbyid(Request $request)
+    {
 
-                )
-                ->where('location.codeLocation', '=', $val['codeLocation'])
-                ->first();
+        $order = $request->input('order');
 
-            $alamat_location = DB::table('location_alamat_detail')
-                ->select('location_alamat_detail.alamatJalan as alamatJalan',
-                    'location_alamat_detail.infoTambahan as infoTambahan',
-                    'location_alamat_detail.kotaID as kotaID',
-                    'location_alamat_detail.provinsiID as provinsiID',
-                    'location_alamat_detail.kodePos as kodePos',
-                    'location_alamat_detail.negara as negara',
+        $branch = DB::table('location')
+            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
+            ->select('location.codeLocation as codeLocation',
+                'location.locationName as locationName',
+                'location.isBranch as isBranch',
+                'location.status as status',
+                'location.introduction as introduction',
+                'location_alamat_detail.alamatJalan as alamatJalan', )
+            ->orderBy('location.codeLocation', $order)
+            ->get();
 
-                )
-                ->where('location_alamat_detail.codeLocation', '=', $val['codeLocation'])
-                ->get();
+        return response()->json($branch, 200);
 
-            $param_location->alamat_location = $alamat_location;
+    }
+
+    public function getlocationorderbyname(Request $request)
+    {
+        $order = $request->input('order');
+
+        $branch = DB::table('location')
+            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
+            ->select('location.codeLocation as codeLocation',
+                'location.locationName as locationName',
+                'location.isBranch as isBranch',
+                'location.status as status',
+                'location.introduction as introduction',
+                'location_alamat_detail.alamatJalan as alamatJalan', )
+            ->orderBy('location.locationName', $order)
+            ->get();
+
+        return response()->json($branch, 200);
+
+    }
+
+    public function getlocationorderbyalamatjalan(Request $request)
+    {
+        $order = $request->input('order');
+
+        $branch = DB::table('location')
+            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
+            ->select('location.codeLocation as codeLocation',
+                'location.locationName as locationName',
+                'location.isBranch as isBranch',
+                'location.status as status',
+                'location.introduction as introduction',
+                'location_alamat_detail.alamatJalan as alamatJalan', )
+            ->orderBy('location_alamat_detail.alamatJalan', $order)
+            ->get();
+
+        return response()->json($branch, 200);
+
+    }
 
 
-            $operational_location = DB::table('location_operational')
-                ->select('location_operational.days_name as days_name',
-                    'location_operational.from_time as from_time',
-                    'location_operational.to_time as to_time',
-                    'location_operational.all_day as all_day',
-                )
-                ->where('location_operational.codeLocation', '=', $val['codeLocation'])
-                ->get();
+    public function getlocationdetailbyid(Request $request)
+    {
 
-            $param_location->operational_location = $operational_location;
+        $codeLocation = $request->input('codeLocation');
 
-            // $operation_location = DB::table('location_operational')
-            //     ->select('location_operational.days_name as days_name',
-            //         'location_operational.from_time as to_time',
-            //     )
-            //     ->where('location_operational.codeLocation', '=', $val['codeLocation'])
-            //     ->get();
+        $param_location = DB::table('location')
+            ->select('location.codeLocation as codeLocation',
+                'location.locationName as locationName',
+                'location.isBranch as isBranch',
+                'location.status as status',
+                'location.introduction as introduction',
+                'location.description as description',
+                'location.image as image',
+                'location.imageTitle as imageTitle',
 
-            // $param_location->operation = $operation_location;
-            // $data2 = $param_location;
-            // $data2 = $data2->push((object)[$param_location]);
-            // $data2 += $param_location;
-            //array_push($data2, $param_location);
-           // return response()->json($param_location, 200);
-           //$data2 = json($param_location, 200);
+            )
+            ->where('location.codeLocation', '=', $codeLocation)
+            ->first();
 
-          // $data2 = array_merge(array($data2), array($param_location));
+        $alamat_location = DB::table('location_alamat_detail')
+            ->select('location_alamat_detail.alamatJalan as alamatJalan',
+                'location_alamat_detail.infoTambahan as infoTambahan',
+                'location_alamat_detail.kotaID as kotaID',
+                'location_alamat_detail.provinsiID as provinsiID',
+                'location_alamat_detail.kodePos as kodePos',
+                'location_alamat_detail.negara as negara',
 
+            )
+            ->where('location_alamat_detail.codeLocation', '=', $codeLocation)
+            ->get();
 
-          //json_encode(array_merge(json_decode($data2, true),json_decode($param_location, true)));
+        $param_location->alamat_location = $alamat_location;
 
-        //    json_encode(
-        //     array_merge(
-        //         json_decode($data2, true),
-        //         json_decode($param_location, true)
-        //     )
-        //     );
-          // $data2 = json_decode(json_encode($param_location), true);
+        $operational_location = DB::table('location_operational')
+            ->select('location_operational.days_name as days_name',
+                'location_operational.from_time as from_time',
+                'location_operational.to_time as to_time',
+                'location_operational.all_day as all_day',
+            )
+            ->where('location_operational.codeLocation', '=', $codeLocation)
+            ->get();
 
-          array_push($data2, $param_location);
+        $param_location->operational_location = $operational_location;
+
+        $email_location = DB::table('location_email')
+            ->select('location_email.pemakaian as pemakaian',
+                'location_email.namaPengguna as namaPengguna',
+                'location_email.tipe as tipe',
+            )
+            ->where('location_email.codeLocation', '=', $codeLocation)
+            ->get();
+
+        $param_location->email_location = $email_location;
+
+        $messenger_location = DB::table('location_messenger')
+            ->select('location_messenger.pemakaian as pemakaian',
+                'location_messenger.namaMessenger as namaMessenger',
+                'location_messenger.tipe as tipe', )
+            ->where('location_messenger.codeLocation', '=', $codeLocation)
+            ->get();
+
+        $param_location->messenger_location = $messenger_location;
+
+        $telepon_location = DB::table('location_telepon')
+            ->select('location_telepon.pemakaian as pemakaian',
+                'location_telepon.nomorTelepon as nomorTelepon',
+                'location_telepon.tipe as tipe',
+            )
+            ->where('location_telepon.codeLocation', '=', $codeLocation)
+            ->get();
+
+        $param_location->telepon_location = $telepon_location;
+
+        $data_static_pemakaian = DB::table('data_static')
+            ->select('data_static.value as value',
+                'data_static.name as name',
+            )
+            ->where('data_static.value', '=', 'pemakaian')
+            ->get();
+        $param_location->data_static_pemakaian = $data_static_pemakaian;
+
+        $data_static_telepon = DB::table('data_static')
+            ->select('data_static.value as value',
+                'data_static.name as name',
+            )
+            ->where('data_static.value', '=', 'telepon')
+            ->get();
+        $param_location->data_static_telepon = $data_static_telepon;
+
+        $data_static_messenger = DB::table('data_static')
+            ->select('data_static.value as value',
+                'data_static.name as name',
+            )
+            ->where('data_static.value', '=', 'messenger')
+            ->get();
+        $param_location->data_static_messenger = $data_static_messenger;
+
+        return response()->json($param_location, 200);
+    }
+
+    public function insertdatastatictelepon(Request $request)
+    {
+        DB::beginTransaction();
+
+        try
+        {
+            $request->validate([
+                'name' => 'required|max:2555',
+            ]);
+
+            DB::table('data_static')->insert([
+                'value' => 'Telepon',
+                'name' => $request->input('name'),
+                'isDeleted' => 0,
+            ]);
+
+            DB::commit();
+
+            return ('SUCCESS');
+
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return ('FAILED');
+
         }
 
-        return response()->json($data2, 200);
-        //08/25/2022
+    }
 
-        //08/25/2022
-        // $location = DB::table('location')
-        //     ->select('location.codeLocation as codeLocation'
-        //     )
-        //     ->first();
+    public function insertdatastaticpemakaian(Request $request)
+    {
+        DB::beginTransaction();
 
-        // $alamat_location = DB::table('location_alamat_detail')
-        //     ->select(
-        //         'location_alamat_detail.alamatJalan as alamatJalan')
-        //     ->where('location_alamat_detail.codeLocation', '=', 'ad7e99ea')
-        //     ->get();
+        try
+        {
+            $request->validate([
+                'name' => 'required|max:2555',
+            ]);
 
-        // $location->alamat_location = $alamat_location;
-        //08/25/2022
+            DB::table('data_static')->insert([
+                'value' => 'Pemakaian',
+                'name' => $request->input('name'),
+                'isDeleted' => 0,
+            ]);
 
-        //   foreach ($decoded as $d) {
+            DB::commit();
 
-        //         foreach($d as $k=>$v)
-        //         {
+            return ('SUCCESS');
 
-        //            // echo "$k - $v\n";
-        //         }
+        } catch (Exception $e) {
 
-        //    }
+            DB::rollback();
 
-        //      foreach ($location as $val) {
-        //         //echo response()->json($val, 200);
-        //         // $j_string_decoded = json_decode($val, true);
+            return ('FAILED');
 
-        //      //  echo j_string_decoded['id'];
+        }
 
-        //    }
+    }
 
-        // foreach ($request as $val) {
-        //     DB::table('location_operational_hours_details')
-        //         ->where('codeLocation', '=', $request->input('codeLocation'))
-        //         ->update([
-        //             'days_name' => $val['days_name'],
-        //             'from_time' => $val['from_time'],
-        //             'to_time' => $val['to_time'],
-        //             'all_day' => $val['all_day'],
+    public function insertdatastaticmessenger(Request $request)
+    {
+        DB::beginTransaction();
 
-        //         ]);
-        // }
+        try
+        {
+            $request->validate([
+                'name' => 'required|max:2555',
+            ]);
 
-        //08/25/2022
-        // $location = DB::table('location')
-        //     ->select('location.codeLocation as codeLocation'
-        //     )
-        //     ->first();
+            DB::table('data_static')->insert([
+                'value' => 'Messenger',
+                'name' => $request->input('name'),
+                'isDeleted' => 0,
+            ]);
 
-        // $alamat_location = DB::table('location_alamat_detail')
-        //     ->select(
-        //         'location_alamat_detail.alamatJalan as alamatJalan')
-        //     ->where('location_alamat_detail.codeLocation', '=', 'ad7e99ea')
-        //     ->get();
+            DB::commit();
 
-        // $location->alamat_location = $alamat_location;
+            return ('SUCCESS');
 
-        // return response()->json($location, 200);
-        //08/25/2022
+        } catch (Exception $e) {
 
-        // $branch = DB::table('location')
-        //         ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-        //         ->select('location.codeLocation as codeLocation',
-        //                 'location.isBranch as isBranch',
-        //                 'location.status as status',
-        //                 'location.introduction as introduction',
-        //                 'location.image as image',
-        //                 'location.imageTitle as imageTitle',
-        //         //DB::raw('CONCAT( ''['',(GROUP_CONCAT(JSON_OBJECT(location_operational_hours_details.days_name , location_operational_hours_details.from_time ,location_operational_hours_details.to_time,location_operational_hours_details.all_day )),'']'') as OperationalTime')
-        //             DB:raw(" CONCAT(''['', GROUP_CONCAT(JSON_OBJECT(location_alamat_detail.alamatJalan)),'']'') as list "),
+            DB::rollback();
 
-        //                // 'JSON_ARRAYAGG(JSON_OBJECT(location_alamat_detail.alamatJalan , location_alamat_detail.infoTambahan ,location_alamat_detail.kotaID )) as asd',
-        //              )
-        //                 ->groupBy('location.codeLocation')
+            return ('FAILED');
 
-        //     ->leftjoin('locations_alamats_details', 'locations_alamats_details.codeLocation', '=', 'locations.id')
-        //     ->leftjoin('location_operational_hours_details', 'location_operational_hours_details.codeLocation', '=', 'locations.id')
-        //     ->select('locations.locationName as LocationName',
-        //         'locations.introduction as introduction',
-        //         'locations.description as description',
-        //         'locations.image as image',
-        //         'locations.imageTitle as imageTitle',
-        //         'locations.id as CodeLocation',
-        //         DB::raw('count(location_operational_hours_details.codeLocation) as OperationalDays'),
-        //         DB::raw(' GROUP_CONCAT(JSON_OBJECT(location_operational_hours_details.days_name , location_operational_hours_details.from_time ,location_operational_hours_details.to_time,location_operational_hours_details.all_day )) as OperationalTime'),
-        //         DB::raw('count(locations_alamats_details.codeLocation) as Operational_Alamat'))
-        // //  ->select('locations.locationName as CodeLocation','locations.locationName as locationName','locations.isBranch as isBranch','locations.status as status',DB::raw('count(location_operational_hours_details.codeLocation) as jumlahAlamat'))
-        //     ->groupBy(
-        //         'locations.locationName',
-        //         'locations.introduction',
-        //         'locations.description',
-        //         'locations.image',
-        //         'locations.imageTitle',
-        //         'locations.id',
-        //         'location_operational_hours_details.codeLocation',
-        //         'locations_alamats_details.codeLocation', )
-        // ->get();
-
-        // ->select('branches.id', 'branch_code', 'branch_name',
-        //     'users.fullname as created_by',
-        //     DB::raw("DATE_FORMAT(branches.created_at, '%d %b %Y') as created_at"), 'branches.address')
-        // ->where('branches.isDeleted', '=', 0);
-
-        // $branch = $branch->orderBy('id', 'desc');
-
-        //return response()->json($branch, 200);
-
-        // return 'yolo';
-        // $branch = DB::table('branches')
-        // ->join('users', 'branches.user_id', '=', 'users.id')
-        // ->select('branches.id', 'branch_code', 'branch_name',
-        //     'users.fullname as created_by',
-        //     DB::raw("DATE_FORMAT(branches.created_at, '%d %b %Y') as created_at"), 'branches.address')
-        // ->where('branches.isDeleted', '=', 0);
-
-        // $posts = Post::latest()->paginate(100);
-        // return new PostResource(true, 'List Data Locations', $posts);
-
-        // return response()->json($branch, 200);
-
-        // if ($request->user()->role == 'dokter' || $request->user()->role == 'resepsionis') {
-        //     return response()->json([
-        //         'message' => 'The user role was invalid.',
-        //         'errors' => ['Akses User tidak diizinkan!'],
-        //     ], 403);
-        // }
-
-        // $branch = DB::table('branches')
-        //     ->join('users', 'branches.user_id', '=', 'users.id')
-        //     ->select('branches.id', 'branch_code', 'branch_name', 'users.fullname as created_by',
-        //         DB::raw("DATE_FORMAT(branches.created_at, '%d %b %Y') as created_at"), 'branches.address')
-        //     ->where('branches.isDeleted', '=', 0);
-
-        // if ($request->keyword) {
-        //     $branch = $branch->where('branch_code', 'like', '%' . $request->keyword . '%')
-        //         ->orwhere('branches.branch_name', 'like', '%' . $request->keyword . '%')
-        //         ->orwhere('branches.address', 'like', '%' . $request->keyword . '%')
-        //         ->orwhere('users.fullname', 'like', '%' . $request->keyword . '%');
-        // }
-
-        // if ($request->orderby) {
-
-        //     $branch = $branch->orderBy($request->column, $request->orderby);
-        // }
-
-        // $branch = $branch->orderBy('id', 'desc');
-
-        // $branch = $branch->get();
-
-        // return response()->json($branch, 200);
+        }
 
     }
 

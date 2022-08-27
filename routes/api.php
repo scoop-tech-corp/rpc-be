@@ -20,7 +20,13 @@ Route::post("deleteemail", [LocationController::class, "deleteemail"]);
 Route::post("deletemessenger", [LocationController::class, "deletemessenger"]);
 Route::post('uploadexceltest', [LocationController::class, 'uploadexceltest']);
 Route::get('getlocation', [LocationController::class, 'index']);
-Route::get('insertdatastatic', [LocationController::class, 'insertdatastatic']);
+Route::get('getlocationorderbyid', [LocationController::class, 'getlocationorderbyid']);
+Route::get('getlocationorderbyname', [LocationController::class, 'getlocationorderbyname']);
+Route::get('getlocationdetailbyid', [LocationController::class, 'getlocationdetailbyid']);
+Route::get('getlocationorderbyalamatjalan', [LocationController::class, 'getlocationorderbyalamatjalan']);
+Route::post('insertdatastatictelepon', [LocationController::class, 'insertdatastatictelepon']);
+Route::post('insertdatastaticpemakaian', [LocationController::class, 'insertdatastaticpemakaian']);
+Route::post('insertdatastaticmessenger', [LocationController::class, 'insertdatastaticmessenger']);
 
 Route::get('getindexdatastatic', [DataStaticController::class, 'getindexdatastatic']);
 Route::get('getindexdatastaticsortid', [DataStaticController::class, 'getindexdatastaticsortid']);
