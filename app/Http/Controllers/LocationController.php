@@ -10,6 +10,45 @@ use Maatwebsite\Excel\Facades\Excel;
 class LocationController extends Controller
 {
 
+ /**
+     * @OA\GET(
+     * path="/api/location",
+     * operationId="location",
+     * tags={"Location"},
+     * summary="Get Location",
+     * description="Get Location List Branch",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               @OA\Property(property="orderby", type="text"),
+     *               @OA\Property(property="column", type="text"),
+     *               @OA\Property(property="keyword", type="text"),
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="get data Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     * )
+     */
+
     public function deletetelepon(Request $request)
     {
 
