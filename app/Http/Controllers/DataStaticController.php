@@ -17,35 +17,12 @@ class DataStaticController extends Controller
 
             foreach ($request->deleted as $val) {
 
-                // DB::table('location_telepon')
-                // ->where('codeLocation', '=', $request->input('codeLocation'),
-                //     'pemakaian', '=', $request->input('pemakaian'),
-                //     'nomorTelepon', '=', $request->input('nomorTelepon'),
-                //     'tipe', '=', $request->input('tipe'),
-                // )
-                // ->update([
-                //     'isDeleted' => 1,
-                // ]);
-
-                // foreach ($request->operational_days as $val) {
-                //     DB::table('location_operational_hours_details')
-                //         ->where('codeLocation', '=', $request->input('codeLocation'))
-                //         ->update([
-                //             'days_name' => $val['days_name'],
-                //             'from_time' => $val['from_time'],
-                //             'to_time' => $val['to_time'],
-                //             'all_day' => $val['all_day'],
-
-                //         ]);
-                // }
-
                 DB::table('data_static')
-                    ->where('value', '=', $val['value'],
-                        'name', '=', $val['name'],
-                    )
+                    ->where('id', '=', $val['id'],)
                     ->update([
-                        'isDeleted' => 0,
+                        'isDeleted' => 1,
                     ]);
+
             }
 
             DB::commit();
@@ -61,21 +38,14 @@ class DataStaticController extends Controller
             //return back()->with('ERROR', 'Your error message');
         }
 
-        // $data = DB::table('data_static')
-        //     ->select('data_static.value',
-        //              'data_static.name',)
-        //       ->orderBy('id', 'asc')
-        //       ->get();
-
-        // return response()->json($data, 200);
-
     }
 
     public function getindexdatastatic()
     {
 
         $data = DB::table('data_static')
-            ->select('data_static.value',
+            ->select('data_static.id',
+                'data_static.value',
                 'data_static.name', )
             ->orderBy('id', 'asc')
             ->get();
@@ -84,39 +54,46 @@ class DataStaticController extends Controller
 
     }
 
-    public function getindexdatastaticsortid()
+    public function getindexdatastaticsortid(Request $request)
     {
 
+        $order = $request->input('order');
+
         $data = DB::table('data_static')
-            ->select('data_static.value',
+            ->select('data_static.id',
+                'data_static.value',
                 'data_static.name', )
-            ->orderBy('id', 'desc')
+            ->orderBy('id', $order)
             ->get();
 
         return response()->json($data, 200);
 
     }
 
-    public function getindexdatastaticsortvalue()
+    public function getindexdatastaticsortvalue(Request $request)
     {
 
+        $order = $request->input('order');
+
         $data = DB::table('data_static')
-            ->select('data_static.value',
+            ->select('data_static.id',
+                'data_static.value',
                 'data_static.name', )
-            ->orderBy('value', 'asc')
+            ->orderBy('value', $order)
             ->get();
 
         return response()->json($data, 200);
 
     }
 
-    public function getindexdatastaticsortname()
+    public function getindexdatastaticsortname(Request $request)
     {
-
+        $order = $request->input('order');
         $data = DB::table('data_static')
-            ->select('data_static.value',
+            ->select('data_static.id',
+                'data_static.value',
                 'data_static.name', )
-            ->orderBy('name', 'asc')
+            ->orderBy('name', $order)
             ->get();
 
         return response()->json($data, 200);
