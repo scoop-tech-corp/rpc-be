@@ -10,123 +10,33 @@ use Maatwebsite\Excel\Facades\Excel;
 class LocationController extends Controller
 {
 
- /**
-     * @OA\GET(
-     * path="/api/location",
-     * operationId="location",
-     * tags={"Location"},
-     * summary="Get Location",
-     * description="Get Location List Branch",
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               @OA\Property(property="orderby", type="text"),
-     *               @OA\Property(property="column", type="text"),
-     *               @OA\Property(property="keyword", type="text"),
-     *            ),
-     *        ),
-     *    ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="get data Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Register Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     * )
-     */
-
-    public function deletetelepon(Request $request)
+    public function deletecontactlocation(Request $request)
     {
+
+        $request->validate([
+            'keyword' => 'required|max:10000',
+        ]);
 
         DB::beginTransaction();
         try
         {
 
-            DB::table('location_telepon')
-                ->where('codeLocation', '=', $request->input('codeLocation'),
-                    'pemakaian', '=', $request->input('pemakaian'),
-                    'nomorTelepon', '=', $request->input('nomorTelepon'),
-                    'tipe', '=', $request->input('tipe'),
-                )
-                ->update([
-                    'isDeleted' => 1,
-                ]);
+            if ($request->input('keyword') == "email") {
 
-            DB::commit();
+                $table_name = 'location_email';
 
-            return ('SUCCESS');
-            //return back()->with('SUCCESS', 'Data has been successfully inserted');
+            } elseif ($request->input('keyword') == "messenger") {
 
-        } catch (Exception $e) {
+                $table_name = 'location_messenger';
 
-            DB::rollback();
+            } elseif ($request->input('keyword') == "telepon") {
 
-            return ('FAILED');
-            //return back()->with('ERROR', 'Your error message');
-        }
+                $table_name = 'location_telepon';
+            }
 
-    }
-
-    public function deleteemail(Request $request)
-    {
-
-        DB::beginTransaction();
-        try
-        {
-
-            DB::table('location_email')
-                ->where('codeLocation', '=', $request->input('codeLocation'),
-                    'pemakaian', '=', $request->input('pemakaian'),
-                    'namaPengguna', '=', $request->input('namaPengguna'),
-                    'tipe', '=', $request->input('tipe'),
-                )
-                ->update([
-                    'isDeleted' => 1,
-                ]);
-
-            DB::commit();
-
-            return ('SUCCESS');
-            //return back()->with('SUCCESS', 'Data has been successfully inserted');
-
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
-            //return back()->with('ERROR', 'Your error message');
-        }
-
-    }
-
-    public function deletemessenger(Request $request)
-    {
-
-        DB::beginTransaction();
-        try
-        {
-
-            DB::table('location_messenger')
-                ->where('codeLocation', '=', $request->input('codeLocation'),
-                    'pemakaian', '=', $request->input('pemakaian'),
-                    'namaMessenger', '=', $request->input('namaMessenger'),
-                    'tipe', '=', $request->input('tipe'),
-                )
-                ->update([
+             DB::table($table_name)
+                 ->where('id', '=', $request->input('id'),)
+                 ->update([
                     'isDeleted' => 1,
                 ]);
 
@@ -340,83 +250,91 @@ class LocationController extends Controller
 
     }
 
-    public function index()
+    /**
+     * @OA\Get(
+     * path="/api/location",
+     * operationId="location",
+     * tags={"Get Location"},
+     * summary="Get Location",
+     * description="get Location",
+     *       @OA\Parameter(
+     *         name="id",
+     *         in="query",
+     *         description="Get Data Static",
+     *         required=true,
+     *      ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Get Data Static Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Get Data Static Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+    public function location(Request $request)
     {
 
-        $branch = DB::table('location')
+        $items_per_page = 1;
+
+        $data = DB::table('location')
             ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
             ->select('location.codeLocation as codeLocation',
                 'location.locationName as locationName',
                 'location.isBranch as isBranch',
                 'location.status as status',
                 'location.introduction as introduction',
-                'location_alamat_detail.alamatJalan as alamatJalan', )
-            ->get();
+                'location_alamat_detail.alamatJalan as alamatJalan', );
 
-        return response()->json($branch, 200);
+        if ($request->keyword) {
 
-    }
+            $data = $data->where('location.codeLocation', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location.locationName', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location.introduction', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location_alamat_detail.alamatJalan', 'like', '%' . $request->keyword . '%');
+        }
 
-    public function getlocationorderbyid(Request $request)
-    {
+        if ($request->column) {
+            $data = $data->orderBy($request->column, $request->orderby);
+        }
 
-        $order = $request->input('order');
+        if ($request->total_per_page > 0) {
 
-        $branch = DB::table('location')
-            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-            ->select('location.codeLocation as codeLocation',
-                'location.locationName as locationName',
-                'location.isBranch as isBranch',
-                'location.status as status',
-                'location.introduction as introduction',
-                'location_alamat_detail.alamatJalan as alamatJalan', )
-            ->orderBy('location.codeLocation', $order)
-            ->get();
+            $items_per_page = $request->total_per_page;
+        }
 
-        return response()->json($branch, 200);
+        $page = $request->page;
 
-    }
+        $offset = ($page - 1) * $items_per_page;
 
-    public function getlocationorderbyname(Request $request)
-    {
-        $order = $request->input('order');
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
 
-        $branch = DB::table('location')
-            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-            ->select('location.codeLocation as codeLocation',
-                'location.locationName as locationName',
-                'location.isBranch as isBranch',
-                'location.status as status',
-                'location.introduction as introduction',
-                'location_alamat_detail.alamatJalan as alamatJalan', )
-            ->orderBy('location.locationName', $order)
-            ->get();
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($items_per_page)->get();
+        } else {
+            $data = $data->offset($offset)->limit($items_per_page)->get();
+        }
 
-        return response()->json($branch, 200);
+        $total_paging = $count_data / $items_per_page;
+
+        return response()->json(['total_paging' => ceil($total_paging),
+            'data' => $data], 200);
 
     }
 
-    public function getlocationorderbyalamatjalan(Request $request)
-    {
-        $order = $request->input('order');
-
-        $branch = DB::table('location')
-            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-            ->select('location.codeLocation as codeLocation',
-                'location.locationName as locationName',
-                'location.isBranch as isBranch',
-                'location.status as status',
-                'location.introduction as introduction',
-                'location_alamat_detail.alamatJalan as alamatJalan', )
-            ->orderBy('location_alamat_detail.alamatJalan', $order)
-            ->get();
-
-        return response()->json($branch, 200);
-
-    }
-
-
-    public function getlocationdetailbyid(Request $request)
+    public function locationdetail(Request $request)
     {
 
         $codeLocation = $request->input('codeLocation');
@@ -516,78 +434,20 @@ class LocationController extends Controller
         return response()->json($param_location, 200);
     }
 
-    public function insertdatastatictelepon(Request $request)
+    public function insertdatastatic(Request $request)
     {
+
+        $request->validate([
+            'keyword' => 'required|max:2555',
+        ]);
+
         DB::beginTransaction();
 
         try
         {
-            $request->validate([
-                'name' => 'required|max:2555',
-            ]);
 
             DB::table('data_static')->insert([
-                'value' => 'Telepon',
-                'name' => $request->input('name'),
-                'isDeleted' => 0,
-            ]);
-
-            DB::commit();
-
-            return ('SUCCESS');
-
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
-
-        }
-
-    }
-
-    public function insertdatastaticpemakaian(Request $request)
-    {
-        DB::beginTransaction();
-
-        try
-        {
-            $request->validate([
-                'name' => 'required|max:2555',
-            ]);
-
-            DB::table('data_static')->insert([
-                'value' => 'Pemakaian',
-                'name' => $request->input('name'),
-                'isDeleted' => 0,
-            ]);
-
-            DB::commit();
-
-            return ('SUCCESS');
-
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
-
-        }
-
-    }
-
-    public function insertdatastaticmessenger(Request $request)
-    {
-        DB::beginTransaction();
-
-        try
-        {
-            $request->validate([
-                'name' => 'required|max:2555',
-            ]);
-
-            DB::table('data_static')->insert([
-                'value' => 'Messenger',
+                'value' => $request->input('keyword'),
                 'name' => $request->input('name'),
                 'isDeleted' => 0,
             ]);

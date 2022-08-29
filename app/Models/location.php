@@ -15,7 +15,7 @@ class Location extends Model
 
     protected $fillable = ['codeLocation','locationName', 'isBranch', 'status'];
 
-
+    
     // public function location_operation_hours_detail()
     // {
     //     return $this->hasMany('Location_Operational_Hours_Detail');
