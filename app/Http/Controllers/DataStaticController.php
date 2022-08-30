@@ -80,7 +80,7 @@ class DataStaticController extends Controller
         }
 
     }
-
+/*
      /**
      * @OA\Get(
      * path="/api/datastatic",
