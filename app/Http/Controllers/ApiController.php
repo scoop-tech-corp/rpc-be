@@ -24,13 +24,10 @@ class ApiController extends Controller
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
      *               type="object",
-     *               required={"username","fullname","email", "password", "password_confirmation","role"},
-     *               @OA\Property(property="username", type="text"),
-     *               @OA\Property(property="fullname", type="text"),
+     *               required={"name","email","password"},
+     *               @OA\Property(property="name", type="text"),
      *               @OA\Property(property="email", type="text"),
      *               @OA\Property(property="password", type="password"),
-     *               @OA\Property(property="password_confirmation", type="password"),
-     *               @OA\Property(property="role", type="text")
      *            ),
      *        ),
      *    ),
@@ -90,8 +87,8 @@ class ApiController extends Controller
  /**
      * @OA\Post(
      * path="/api/login",
-     * operationId="LOGIN",
-     * tags={"LOGIN"},
+     * operationId="Login Username",
+     * tags={"Login Username"},
      * summary="Login",
      * description="Login RPC here",
      *     @OA\RequestBody(

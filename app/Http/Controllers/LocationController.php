@@ -10,6 +10,50 @@ use Maatwebsite\Excel\Facades\Excel;
 class LocationController extends Controller
 {
 
+    /**
+     * @OA\Delete(
+     * path="/api/deletecontactlocation",
+     * operationId="deletecontactlocation",
+     * tags={"Delete Contact Location"},
+     * summary="Delete Contact Location",
+     * description="Delete Contact Location , ex: email, messenger, operational(each represent column table, ex: email->location_email)",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Delete Contact Location",
+     *        example = "Delete Contact Location",
+    *        value = {
+    *           "keyword":"telepon",
+    *           "id":1,
+    *         },)),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               @OA\Property(property="keyword", type="text"),
+     *               @OA\Property(property="id", type="integer"),
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Delete branch Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Delete branch Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function deletecontactlocation(Request $request)
     {
 
@@ -55,6 +99,49 @@ class LocationController extends Controller
 
     }
 
+
+ /**
+     * @OA\Delete(
+     * path="/api/deletelocation",
+     * operationId="deletelocation",
+     * tags={"Delete Location"},
+     * summary="Delete Location",
+     * description="Delete Location , by delete location will update status isDeleted into 1)",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Delete Location",
+     *        example = "Delete Location",
+    *        value = {
+    *           "id":1,
+    *         },)),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               @OA\Property(property="id", type="integer"),
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Delete location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Delete location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function delete(Request $request)
     {
 
@@ -63,15 +150,12 @@ class LocationController extends Controller
         {
 
             DB::table('location')
-                ->where('codeLocation', '=', $request->input('codeLocation'))
+                ->where('id', '=', $request->input('id'))
                 ->update([
                     'isDeleted' => 1,
                 ]);
 
-            deletemessenger($request);
-            deleteemail($request);
-            deletetelepon($request);
-
+  
             DB::commit();
 
             return ('SUCCESS');
@@ -100,6 +184,140 @@ class LocationController extends Controller
         return 'true';
     }
 
+
+
+ /**
+     * @OA\Put(
+     * path="/api/updatelocation",
+     * operationId="Update Location",
+     * tags={"Update Location"},
+     * summary="Update Location",
+     * description="Update Location",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="update Location",
+     *        example = "update Location",
+    * value = {
+    *  "id":"1",
+    *  "locationName": "RPC Permata Hijau Jakarta",
+    *  "isBranch": "1",
+    *  "status": "0",
+    *  "introduction":"RPC Permata Hijau Jakarta, your satisfation is out top priority",
+    *  "description":"Dibangun di tahun 2022, RPC Permata Hijau Jakarta sudah melayani berbagai lebih dari 100 ribu client diberbagai wilayah dijakarta, fasilitas yang lengkap dan terjamin security",
+    *  "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijauJakarta.jpg",
+    *  "imageTitle":"ImageRPCPermataHijauJakarta.jpg",
+    *  "alamat_location":{
+    *      { 
+    *            "codeLocation":"366f70e7",
+    *            "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+    *            "infoTambahan": "Patokan Jalan : terminal busway jakarta selatan itc permata hijau",
+    *            "kotaID": "Jakarta Selatan",
+    *            "provinsiID": "Kebayoran Lama",
+    *            "kodePos": 12210,
+    *            "negara": "Indonesia",
+    *            "parkir": "Yes",
+    *            "pemakaian": "Apartement"
+    *         }
+    *    },
+    *  "operational_days": 
+    *    {
+    *        {
+    *
+    *		"days_name": "Monday",
+    *		"from_time": "10:00PM",
+    *		"to_time": "10:00PM",
+    *		"all_day": 1
+    *      },
+    *       {
+    *		"days_name": "Monday",
+    *		"from_time": "10:00PM",
+    *		"to_time": "10:00PM",
+    *		"all_day": 1
+    *      },
+    *	   {
+    *		"days_name": "Tuesday",
+    *		"from_time": "12:00PM",
+    *		"to_time": "13:00PM",
+    *		"all_day": 1
+    *      },
+    *	   {
+    *		"days_name": "Wednesday",
+    *		"from_time": "10:00PM",
+    *		"to_time": "10:00PM",
+    *		"all_day": 1
+    *      }
+    *    },
+    *    "messenger":
+    *    {
+    *        {
+    *           "pemakaian":"Utama",
+    *           "namaPengguna":"(021) 3851185",
+    *           "tipe":"Fax"
+    *        },
+    *        {
+    *           "pemakaian":"Utama",
+    *           "namaPengguna":"(021) 012345678",
+    *           "tipe":"Office"
+    *        }
+    *    },
+    *    "email":{
+    *
+    *         {
+    *           "pemakaian":"Utama",
+    *           "namaPengguna":"wahyudidanny23@gmail.com",
+    *           "tipe":"Personal"
+    *        }, 
+    *        {
+    *           "pemakaian":"Secondary",
+    *           "namaPengguna":"wahyudidanny25@gmail.com",
+    *           "tipe":"Personal"
+    *        }
+    *   },
+    *    "Telepon":{
+    *         {
+    *           "pemakaian":"Utama",
+    *           "namaPengguna":"087888821648",
+    *           "tipe":"Telepon Selular"
+    *        }, 
+    *        {
+    *           "pemakaian":"Secondary",
+    *           "namaPengguna":"085265779499",
+    *           "tipe":"Whatshapp"
+    *        }
+    *   }
+    *
+    *},
+     *          )),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"locationName","isBranch","password"},
+     *               @OA\Property(property="name", type="text"),
+
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function update(Request $request)
     {
 
@@ -108,7 +326,7 @@ class LocationController extends Controller
         {
 
             DB::table('location')
-                ->where('codeLocation', '=', $request->input('codeLocation'))
+                ->where('id', '=', $request->input('id'))
                 ->update([
                     'locationName' => $request->input('locationName'),
                     'isBranch' => $request->input('isBranch'),
@@ -122,7 +340,7 @@ class LocationController extends Controller
 
             foreach ($request->operational_days as $val) {
                 DB::table('location_operational_hours_details')
-                    ->where('codeLocation', '=', $request->input('codeLocation'))
+                    ->where('id', '=', $request->input('id'))
                     ->update([
                         'days_name' => $val['days_name'],
                         'from_time' => $val['from_time'],
@@ -132,7 +350,7 @@ class LocationController extends Controller
                     ]);
             }
 
-            //return 'success';
+    
 
         } catch (Exception $e) {
 
@@ -143,6 +361,136 @@ class LocationController extends Controller
 
     }
 
+
+    /**
+     * @OA\Post(
+     * path="/api/insertlocation",
+     * operationId="Insert Location",
+     * tags={"Insert Location"},
+     * summary="Insert Location",
+     * description="Insert Location",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Insert Location",
+     *        example = "Insert Location",
+    *value = {
+    *    "locationName": "RPC Permata Hijau Pekanbaru",
+    *    "isBranch": "0",
+    *    "status": "1",
+    *    "introduction":"RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
+    *    "description":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+    *    "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
+    *    "imageTitle":"ImageRPCPermataHijau.jpg",
+    *    "alamat_location":{
+    *        {
+    *                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+    *                "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+    *                "kotaID": "Jakarta Barat",
+    *                "provinsiID": "Kemanggisan",
+    *                "kodePos": "11480",
+    *                "negara": "Indonesia",
+    *                "parkir": "Yes",
+    *                "pemakaian": "Indekos"
+    *            }
+    *        },
+    *    "operational_days": 
+    *        {
+    *            {
+    *
+    *            "days_name": "Monday",
+    *            "from_time": "10:00PM",
+    *            "to_time": "10:00PM",
+    *            "all_day": 1
+    *        },
+    *        {
+    *            "days_name": "Monday",
+    *            "from_time": "10:00PM",
+    *            "to_time": "10:00PM",
+    *            "all_day": 1
+    *        },
+    *        {
+    *            "days_name": "Tuesday",
+    *            "from_time": "12:00PM",
+    *            "to_time": "13:00PM",
+    *            "all_day": 1
+    *        },
+    *        {
+    *            "days_name": "Wednesday",
+    *            "from_time": "10:00PM",
+    *            "to_time": "10:00PM",
+    *            "all_day": 1
+    *        }
+    *        },
+    *        "messenger":
+    *        {
+    *            {
+    *            "pemakaian":"Utama",
+    *            "namaMessenger":"(021) 3851185",
+    *            "tipe":"Fax"
+    *            },
+    *            {
+    *            "pemakaian":"Utama",
+    *            "namaMessenger":"(021) 012345678",
+    *            "tipe":"Office"
+    *            }
+    *        },
+    *        "email":{
+    *
+    *            {
+    *            "pemakaian":"Utama",
+    *            "namaPengguna":"wahyudidanny23@gmail.com",
+    *            "tipe":"Personal"
+    *            }, 
+    *            {
+    *            "pemakaian":"Secondary",
+    *            "namaPengguna":"wahyudidanny25@gmail.com",
+    *            "tipe":"Personal"
+    *            }
+    *    },
+    *        "telepon":{
+    *            {
+    *            "pemakaian":"Utama",
+    *            "nomorTelepon":"087888821648",
+    *            "tipe":"Telepon Selular"
+    *            }, 
+    *            {
+    *            "pemakaian":"Secondary",
+    *            "nomorTelepon":"085265779499",
+    *            "tipe":"Whatshapp"
+    *            }
+    *    }
+    * },
+     *          )),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"locationName","isBranch","password"},
+     *               @OA\Property(property="name", type="text"),
+
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function create(Request $request)
     {
         DB::beginTransaction();
@@ -150,7 +498,7 @@ class LocationController extends Controller
         try
         {
 
-            $getvaluesp = strval(collect(DB::select('call procedure_name'))[0]->randomString);
+            $getvaluesp = strval(collect(DB::select('call generate_codeLocation'))[0]->randomString);
 
             $request->validate([
                 'locationName' => 'required|max:255',
@@ -183,6 +531,7 @@ class LocationController extends Controller
                 'negara' => $request->input('alamat_location')[0]['negara'],
                 'parkir' => $request->input('alamat_location')[0]['parkir'],
                 'pemakaian' => $request->input('alamat_location')[0]['pemakaian'],
+                'isDeleted' => 0,
             ]);
 
             foreach ($request->operational_days as $val) {
@@ -257,20 +606,59 @@ class LocationController extends Controller
      * tags={"Get Location"},
      * summary="Get Location",
      * description="get Location",
-     *       @OA\Parameter(
-     *         name="id",
-     *         in="query",
-     *         description="Get Data Static",
-     *         required=true,
-     *      ),
-     *      @OA\Response(
+     *  @OA\Parameter(
+     *      name="orderby",
+     *      description="Query Order By",
+     *      example="ASC",
+     *      in="path",
+     *      @OA\Schema(
+     *          type="string"
+     *      )
+     *  ),
+     *  @OA\Parameter(
+     *      name="column",
+     *      description="Column table Location",
+     *      example="codeLocation, locationName, isBranch, status, introduction",
+     *      in="path",
+     *           @OA\Schema(
+     *          type="string"
+     *      )
+     *  ),
+     *  @OA\Parameter(
+     *      name="keyword",
+     *      description="keyword for value Location",
+     *      example="Jakarta",
+     *      in="path",
+     *           @OA\Schema(
+     *          type="string"
+     *      )
+     *  ),
+     *  @OA\Parameter(
+     *      name="page",
+     *      description="Go to Page...",
+     *      example="1",
+     *      in="path",
+     *           @OA\Schema(
+     *          type="integer"
+     *      )
+     *  ),
+     *  @OA\Parameter(
+     *      name="total_per_page",
+     *      description="total page in location",
+     *      example="5",
+     *      in="path",
+     *           @OA\Schema(
+     *          type="integer"
+     *      )
+     *  ),
+     *   @OA\Response(
      *          response=201,
-     *          description="Get Data Static Successfully",
+     *          description="Get Data Location Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Get Data Static Successfully",
+     *          description="Get Data Location Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(

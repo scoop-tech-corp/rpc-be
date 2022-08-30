@@ -56,11 +56,12 @@ class DataStaticController extends Controller
     public function datastaticlocation(Request $Request)
     {
 
+     
         DB::beginTransaction();
         try
         {
 
-            info($Request['id']);
+            
             DB::table('data_static')
                 ->where('id', '=', $Request['id'], )
                 ->update(['isDeleted' => 1,]);
@@ -80,63 +81,61 @@ class DataStaticController extends Controller
 
     }
 
-  /**
-     * @OA\Get(
-     * path="/api/datastatic",
-     * operationId="datastatic",
-     * tags={"Get Data Static"},
-     * summary="Get Data Static",
-     * description="get menu data static",
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(* @OA\Examples(
-     *        summary="Delete Branch",
-     *        example = "Delete Branch",
-     *       value = {
-     *           "id":1,
-     *         },)),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               required={"id"},
-     *               @OA\Property(property="id", type="integer")
-     *            ),
-     *        ),
-     *    ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="Delete branch Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Delete branch Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
-
      /**
      * @OA\Get(
      * path="/api/datastatic",
      * operationId="datastatic",
      * tags={"Get Data Static"},
      * summary="Get Data Static",
-     * description="get menu data static",
-     *       @OA\Parameter(
-     *         name="id",
-     *         in="query",
-     *         description="Get Data Static",
-     *         required=true,
-     *      ),
+     * description="Get Data Static",
+     * 
+     * 
+     * 
+     *  @OA\Parameter(
+     *      name="orderby",
+     *      description="Query Order By",
+     *      example="ASC",
+     *      in="path",
+     *      @OA\Schema(
+     *          type="string"
+     *      )
+     *  ),
+     *  @OA\Parameter(
+     *      name="column",
+     *      description="Column table data static",
+     *      example="value, name",
+     *      in="path",
+     *           @OA\Schema(
+     *          type="string"
+     *      )
+     *  ),
+     *  @OA\Parameter(
+     *      name="keyword",
+     *      description="keyword for value data static",
+     *      example="Messenger",
+     *      in="path",
+     *           @OA\Schema(
+     *          type="string"
+     *      )
+     *  ),
+     *  @OA\Parameter(
+     *      name="page",
+     *      description="Go to Page...",
+     *      example="1",
+     *      in="path",
+     *           @OA\Schema(
+     *          type="integer"
+     *      )
+     *  ),
+     *  @OA\Parameter(
+     *      name="total_per_page",
+     *      description="total page in data static",
+     *      example="5",
+     *      in="path",
+     *           @OA\Schema(
+     *          type="integer"
+     *      )
+     *  ),
      *      @OA\Response(
      *          response=201,
      *          description="Get Data Static Successfully",

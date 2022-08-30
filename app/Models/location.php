@@ -13,12 +13,7 @@ class Location extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['codeLocation','locationName', 'isBranch', 'status'];
+    protected $fillable = ['locationName', 'isBranch', 'status'];
 
-    
-    // public function location_operation_hours_detail()
-    // {
-    //     return $this->hasMany('Location_Operational_Hours_Detail');
-    // }
 
 }
