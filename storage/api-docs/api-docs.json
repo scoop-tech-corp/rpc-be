@@ -37,7 +37,17 @@
                             }
                         },
                         "application/json": {
-                            "schema": {}
+                            "schema": {},
+                            "examples": {
+                                "User Register": {
+                                    "summary": "User Register",
+                                    "value": {
+                                        "name": "DW",
+                                        "email": "testingvalue@gmail.com",
+                                        "password": "111111"
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -103,7 +113,16 @@
                             }
                         },
                         "application/json": {
-                            "schema": {}
+                            "schema": {},
+                            "examples": {
+                                "Login User": {
+                                    "summary": "Login User",
+                                    "value": {
+                                        "email": "yolo@gmail.com",
+                                        "password": "111111"
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -167,8 +186,8 @@
                         "application/json": {
                             "schema": {},
                             "examples": {
-                                "Delete Branch": {
-                                    "summary": "Delete Branch",
+                                "delete id 1": {
+                                    "summary": "Delete data static",
                                     "value": {
                                         "id": 1
                                     }
@@ -179,7 +198,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Delete branch Successfully",
+                        "description": "Delete data static Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -187,7 +206,7 @@
                         }
                     },
                     "200": {
-                        "description": "Delete branch Successfully",
+                        "description": "Delete data static Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -226,49 +245,38 @@
                 "operationId": "datastatic",
                 "parameters": [
                     {
-                        "name": "orderby",
+                        "name": "body",
                         "in": "path",
-                        "description": "Query Order By",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "ASC"
-                    },
-                    {
-                        "name": "column",
-                        "in": "path",
-                        "description": "Column table data static",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "value, name"
-                    },
-                    {
-                        "name": "keyword",
-                        "in": "path",
-                        "description": "keyword for value data static",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "Messenger"
-                    },
-                    {
-                        "name": "page",
-                        "in": "path",
-                        "description": "Go to Page...",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": "1"
-                    },
-                    {
-                        "name": "total_per_page",
-                        "in": "path",
-                        "description": "total page in data static",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": "5"
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "orderby": {
+                                            "type": "text",
+                                            "example": "asc"
+                                        },
+                                        "column": {
+                                            "type": "text",
+                                            "example": "value"
+                                        },
+                                        "keyword": {
+                                            "type": "text",
+                                            "example": "Messenger"
+                                        },
+                                        "page": {
+                                            "type": "number",
+                                            "example": "1"
+                                        },
+                                        "total_per_page": {
+                                            "type": "number",
+                                            "example": "14"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 ],
                 "responses": {
@@ -539,12 +547,12 @@
                                         "messenger": [
                                             {
                                                 "pemakaian": "Utama",
-                                                "namaPengguna": "(021) 3851185",
+                                                "namaMessenger": "(021) 3851185",
                                                 "tipe": "Fax"
                                             },
                                             {
                                                 "pemakaian": "Utama",
-                                                "namaPengguna": "(021) 012345678",
+                                                "namaMessenger": "(021) 012345678",
                                                 "tipe": "Office"
                                             }
                                         ],
@@ -560,15 +568,15 @@
                                                 "tipe": "Personal"
                                             }
                                         ],
-                                        "Telepon": [
+                                        "telepon": [
                                             {
                                                 "pemakaian": "Utama",
-                                                "namaPengguna": "087888821648",
+                                                "nomorTelepon": "087888821648",
                                                 "tipe": "Telepon Selular"
                                             },
                                             {
                                                 "pemakaian": "Secondary",
-                                                "namaPengguna": "085265779499",
+                                                "nomorTelepon": "085265779499",
                                                 "tipe": "Whatshapp"
                                             }
                                         ]
@@ -580,7 +588,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Register Successfully",
+                        "description": "Update Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -588,7 +596,7 @@
                         }
                     },
                     "200": {
-                        "description": "Register Successfully",
+                        "description": "Update Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -784,49 +792,38 @@
                 "operationId": "location",
                 "parameters": [
                     {
-                        "name": "orderby",
+                        "name": "body",
                         "in": "path",
-                        "description": "Query Order By",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "ASC"
-                    },
-                    {
-                        "name": "column",
-                        "in": "path",
-                        "description": "Column table Location",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "codeLocation, locationName, isBranch, status, introduction"
-                    },
-                    {
-                        "name": "keyword",
-                        "in": "path",
-                        "description": "keyword for value Location",
-                        "schema": {
-                            "type": "string"
-                        },
-                        "example": "Jakarta"
-                    },
-                    {
-                        "name": "page",
-                        "in": "path",
-                        "description": "Go to Page...",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": "1"
-                    },
-                    {
-                        "name": "total_per_page",
-                        "in": "path",
-                        "description": "total page in location",
-                        "schema": {
-                            "type": "integer"
-                        },
-                        "example": "5"
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "orderby": {
+                                            "type": "text",
+                                            "example": "asc"
+                                        },
+                                        "column": {
+                                            "type": "text",
+                                            "example": "codeLocation, locationName, isBranch, status, introduction"
+                                        },
+                                        "keyword": {
+                                            "type": "text",
+                                            "example": "Jakarta"
+                                        },
+                                        "page": {
+                                            "type": "number",
+                                            "example": "1"
+                                        },
+                                        "total_per_page": {
+                                            "type": "number",
+                                            "example": "5"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 ],
                 "responses": {
@@ -840,6 +837,73 @@
                     },
                     "200": {
                         "description": "Get Data Location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/locationdetail": {
+            "get": {
+                "tags": [
+                    "Get Location detail"
+                ],
+                "summary": "Get Location detail",
+                "description": "get Location detail",
+                "operationId": "locationdetail",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "text",
+                                            "example": "1"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data Location Detail Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Location Detail Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}

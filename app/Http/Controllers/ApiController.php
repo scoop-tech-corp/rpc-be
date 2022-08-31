@@ -19,7 +19,14 @@ class ApiController extends Controller
      * summary="User Register",
      * description="User Register here",
      *     @OA\RequestBody(
-     *         @OA\JsonContent(),
+    *         @OA\JsonContent(* @OA\Examples(
+     *        summary="User Register",
+     *        example = "User Register",
+     *       value = {
+     *           "name":"DW",
+     *           "email":"testingvalue@gmail.com",
+     *           "password":"111111"
+     *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
@@ -92,7 +99,13 @@ class ApiController extends Controller
      * summary="Login",
      * description="Login RPC here",
      *     @OA\RequestBody(
-     *         @OA\JsonContent(),
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Login User",
+     *        example = "Login User",
+     *       value = {
+     *           "email":"yolo@gmail.com",
+     *           "password":"111111"
+     *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(

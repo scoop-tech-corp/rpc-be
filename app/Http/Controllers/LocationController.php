@@ -21,10 +21,10 @@ class LocationController extends Controller
      *         @OA\JsonContent(* @OA\Examples(
      *        summary="Delete Contact Location",
      *        example = "Delete Contact Location",
-    *        value = {
-    *           "keyword":"telepon",
-    *           "id":1,
-    *         },)),
+     *        value = {
+     *           "keyword":"telepon",
+     *           "id":1,
+     *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
@@ -78,9 +78,9 @@ class LocationController extends Controller
                 $table_name = 'location_telepon';
             }
 
-             DB::table($table_name)
-                 ->where('id', '=', $request->input('id'),)
-                 ->update([
+            DB::table($table_name)
+                ->where('id', '=', $request->input('id'), )
+                ->update([
                     'isDeleted' => 1,
                 ]);
 
@@ -99,8 +99,7 @@ class LocationController extends Controller
 
     }
 
-
- /**
+    /**
      * @OA\Delete(
      * path="/api/deletelocation",
      * operationId="deletelocation",
@@ -111,9 +110,9 @@ class LocationController extends Controller
      *         @OA\JsonContent(* @OA\Examples(
      *        summary="Delete Location",
      *        example = "Delete Location",
-    *        value = {
-    *           "id":1,
-    *         },)),
+     *        value = {
+     *           "id":1,
+     *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
@@ -149,13 +148,41 @@ class LocationController extends Controller
         try
         {
 
-            DB::table('location')
+            $data = DB::table('location')
+                ->select('codeLocation')
                 ->where('id', '=', $request->input('id'))
+                ->first()->codeLocation;
+
+            DB::table('location')
+                ->where('codeLocation', '=', $data)
                 ->update([
                     'isDeleted' => 1,
                 ]);
 
-  
+            DB::table('location_alamat_detail')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'isDeleted' => 1,
+                ]);
+
+            DB::table('location_email')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'isDeleted' => 1,
+                ]);
+
+            DB::table('location_messenger')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'isDeleted' => 1,
+                ]);
+
+            DB::table('location_telepon')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'isDeleted' => 1,
+                ]);
+
             DB::commit();
 
             return ('SUCCESS');
@@ -184,9 +211,7 @@ class LocationController extends Controller
         return 'true';
     }
 
-
-
- /**
+    /**
      * @OA\Put(
      * path="/api/updatelocation",
      * operationId="Update Location",
@@ -197,96 +222,96 @@ class LocationController extends Controller
      *         @OA\JsonContent(* @OA\Examples(
      *        summary="update Location",
      *        example = "update Location",
-    * value = {
-    *  "id":"1",
-    *  "locationName": "RPC Permata Hijau Jakarta",
-    *  "isBranch": "1",
-    *  "status": "0",
-    *  "introduction":"RPC Permata Hijau Jakarta, your satisfation is out top priority",
-    *  "description":"Dibangun di tahun 2022, RPC Permata Hijau Jakarta sudah melayani berbagai lebih dari 100 ribu client diberbagai wilayah dijakarta, fasilitas yang lengkap dan terjamin security",
-    *  "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijauJakarta.jpg",
-    *  "imageTitle":"ImageRPCPermataHijauJakarta.jpg",
-    *  "alamat_location":{
-    *      { 
-    *            "codeLocation":"366f70e7",
-    *            "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-    *            "infoTambahan": "Patokan Jalan : terminal busway jakarta selatan itc permata hijau",
-    *            "kotaID": "Jakarta Selatan",
-    *            "provinsiID": "Kebayoran Lama",
-    *            "kodePos": 12210,
-    *            "negara": "Indonesia",
-    *            "parkir": "Yes",
-    *            "pemakaian": "Apartement"
-    *         }
-    *    },
-    *  "operational_days": 
-    *    {
-    *        {
-    *
-    *		"days_name": "Monday",
-    *		"from_time": "10:00PM",
-    *		"to_time": "10:00PM",
-    *		"all_day": 1
-    *      },
-    *       {
-    *		"days_name": "Monday",
-    *		"from_time": "10:00PM",
-    *		"to_time": "10:00PM",
-    *		"all_day": 1
-    *      },
-    *	   {
-    *		"days_name": "Tuesday",
-    *		"from_time": "12:00PM",
-    *		"to_time": "13:00PM",
-    *		"all_day": 1
-    *      },
-    *	   {
-    *		"days_name": "Wednesday",
-    *		"from_time": "10:00PM",
-    *		"to_time": "10:00PM",
-    *		"all_day": 1
-    *      }
-    *    },
-    *    "messenger":
-    *    {
-    *        {
-    *           "pemakaian":"Utama",
-    *           "namaPengguna":"(021) 3851185",
-    *           "tipe":"Fax"
-    *        },
-    *        {
-    *           "pemakaian":"Utama",
-    *           "namaPengguna":"(021) 012345678",
-    *           "tipe":"Office"
-    *        }
-    *    },
-    *    "email":{
-    *
-    *         {
-    *           "pemakaian":"Utama",
-    *           "namaPengguna":"wahyudidanny23@gmail.com",
-    *           "tipe":"Personal"
-    *        }, 
-    *        {
-    *           "pemakaian":"Secondary",
-    *           "namaPengguna":"wahyudidanny25@gmail.com",
-    *           "tipe":"Personal"
-    *        }
-    *   },
-    *    "Telepon":{
-    *         {
-    *           "pemakaian":"Utama",
-    *           "namaPengguna":"087888821648",
-    *           "tipe":"Telepon Selular"
-    *        }, 
-    *        {
-    *           "pemakaian":"Secondary",
-    *           "namaPengguna":"085265779499",
-    *           "tipe":"Whatshapp"
-    *        }
-    *   }
-    *
-    *},
+     * value = {
+     *  "id":"1",
+     *  "locationName": "RPC Permata Hijau Jakarta",
+     *  "isBranch": "1",
+     *  "status": "0",
+     *  "introduction":"RPC Permata Hijau Jakarta, your satisfation is out top priority",
+     *  "description":"Dibangun di tahun 2022, RPC Permata Hijau Jakarta sudah melayani berbagai lebih dari 100 ribu client diberbagai wilayah dijakarta, fasilitas yang lengkap dan terjamin security",
+     *  "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijauJakarta.jpg",
+     *  "imageTitle":"ImageRPCPermataHijauJakarta.jpg",
+     *  "alamat_location":{
+     *      {
+     *            "codeLocation":"366f70e7",
+     *            "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+     *            "infoTambahan": "Patokan Jalan : terminal busway jakarta selatan itc permata hijau",
+     *            "kotaID": "Jakarta Selatan",
+     *            "provinsiID": "Kebayoran Lama",
+     *            "kodePos": 12210,
+     *            "negara": "Indonesia",
+     *            "parkir": "Yes",
+     *            "pemakaian": "Apartement"
+     *         }
+     *    },
+     *  "operational_days":
+     *    {
+     *        {
+     *
+     *        "days_name": "Monday",
+     *        "from_time": "10:00PM",
+     *        "to_time": "10:00PM",
+     *        "all_day": 1
+     *      },
+     *       {
+     *        "days_name": "Monday",
+     *        "from_time": "10:00PM",
+     *        "to_time": "10:00PM",
+     *        "all_day": 1
+     *      },
+     *       {
+     *        "days_name": "Tuesday",
+     *        "from_time": "12:00PM",
+     *        "to_time": "13:00PM",
+     *        "all_day": 1
+     *      },
+     *       {
+     *        "days_name": "Wednesday",
+     *        "from_time": "10:00PM",
+     *        "to_time": "10:00PM",
+     *        "all_day": 1
+     *      }
+     *    },
+     *    "messenger":
+     *    {
+     *        {
+     *           "pemakaian":"Utama",
+     *           "namaMessenger":"(021) 3851185",
+     *           "tipe":"Fax"
+     *        },
+     *        {
+     *           "pemakaian":"Utama",
+     *           "namaMessenger":"(021) 012345678",
+     *           "tipe":"Office"
+     *        }
+     *    },
+     *    "email":{
+     *
+     *         {
+     *           "pemakaian":"Utama",
+     *           "namaPengguna":"wahyudidanny23@gmail.com",
+     *           "tipe":"Personal"
+     *        },
+     *        {
+     *           "pemakaian":"Secondary",
+     *           "namaPengguna":"wahyudidanny25@gmail.com",
+     *           "tipe":"Personal"
+     *        }
+     *   },
+     *    "telepon":{
+     *         {
+     *           "pemakaian":"Utama",
+     *           "nomorTelepon":"087888821648",
+     *           "tipe":"Telepon Selular"
+     *        },
+     *        {
+     *           "pemakaian":"Secondary",
+     *           "nomorTelepon":"085265779499",
+     *           "tipe":"Whatshapp"
+     *        }
+     *   }
+     *
+     *},
      *          )),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
@@ -300,12 +325,12 @@ class LocationController extends Controller
      *    ),
      *      @OA\Response(
      *          response=201,
-     *          description="Register Successfully",
+     *          description="Update Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Register Successfully",
+     *          description="Update Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
@@ -325,6 +350,11 @@ class LocationController extends Controller
         try
         {
 
+            $data = DB::table('location')
+                ->select('codeLocation')
+                ->where('id', '=', $request->input('id'))
+                ->first()->codeLocation;
+
             DB::table('location')
                 ->where('id', '=', $request->input('id'))
                 ->update([
@@ -337,10 +367,25 @@ class LocationController extends Controller
                     'imageTitle' => $request->input('imageTitle'),
 
                 ]);
+            
+                DB::table('location_alamat_detail')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'alamatJalan' => $request->input('alamat_location')[0]['alamatJalan'],
+                    'infoTambahan' => $request->input('alamat_location')[0]['infoTambahan'],
+                    'kotaID' => $request->input('alamat_location')[0]['kotaID'],
+                    'provinsiID' => $request->input('alamat_location')[0]['provinsiID'],
+                    'kodePos' => $request->input('alamat_location')[0]['kodePos'],
+                    'negara' => $request->input('alamat_location')[0]['negara'],
+                    'parkir' => $request->input('alamat_location')[0]['parkir'],
+                    'pemakaian' => $request->input('alamat_location')[0]['pemakaian'],
+                ]);
+
+
 
             foreach ($request->operational_days as $val) {
-                DB::table('location_operational_hours_details')
-                    ->where('id', '=', $request->input('id'))
+                DB::table('location_operational')
+                    ->where('codeLocation', '=', $data)
                     ->update([
                         'days_name' => $val['days_name'],
                         'from_time' => $val['from_time'],
@@ -350,17 +395,51 @@ class LocationController extends Controller
                     ]);
             }
 
-    
+
+
+            foreach ($request->messenger as $val) {
+                DB::table('location_messenger')
+                    ->where('codeLocation', '=', $data)
+                    ->update([
+                        'pemakaian' => $val['pemakaian'],
+                        'namaMessenger' => $val['namaMessenger'],
+                        'tipe' => $val['tipe'],
+                    ]);
+            }
+
+
+            foreach ($request->email as $val) {
+                DB::table('location_email')
+                    ->where('codeLocation', '=', $data)
+                    ->update([
+                        'pemakaian' => $val['pemakaian'],
+                        'namaPengguna' => $val['namaPengguna'],
+                        'tipe' => $val['tipe'],
+                    ]);
+            }
+
+
+            foreach ($request->telepon as $val) {
+                DB::table('location_telepon')
+                    ->where('codeLocation', '=', $data)
+                    ->update([
+                        'pemakaian' => $val['pemakaian'],
+                        'nomorTelepon' => $val['nomorTelepon'],
+                        'tipe' => $val['tipe'],
+                    ]);
+            }
+
+
+            return 'SUCCESS';
 
         } catch (Exception $e) {
 
             DB::rollback();
-
-            return back()->with('ERROR', 'Your error message');
+            return 'FAILED';
+            //return back()->with('ERROR', 'Your error message');
         }
 
     }
-
 
     /**
      * @OA\Post(
@@ -373,93 +452,93 @@ class LocationController extends Controller
      *         @OA\JsonContent(* @OA\Examples(
      *        summary="Insert Location",
      *        example = "Insert Location",
-    *value = {
-    *    "locationName": "RPC Permata Hijau Pekanbaru",
-    *    "isBranch": "0",
-    *    "status": "1",
-    *    "introduction":"RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
-    *    "description":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
-    *    "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
-    *    "imageTitle":"ImageRPCPermataHijau.jpg",
-    *    "alamat_location":{
-    *        {
-    *                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-    *                "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-    *                "kotaID": "Jakarta Barat",
-    *                "provinsiID": "Kemanggisan",
-    *                "kodePos": "11480",
-    *                "negara": "Indonesia",
-    *                "parkir": "Yes",
-    *                "pemakaian": "Indekos"
-    *            }
-    *        },
-    *    "operational_days": 
-    *        {
-    *            {
-    *
-    *            "days_name": "Monday",
-    *            "from_time": "10:00PM",
-    *            "to_time": "10:00PM",
-    *            "all_day": 1
-    *        },
-    *        {
-    *            "days_name": "Monday",
-    *            "from_time": "10:00PM",
-    *            "to_time": "10:00PM",
-    *            "all_day": 1
-    *        },
-    *        {
-    *            "days_name": "Tuesday",
-    *            "from_time": "12:00PM",
-    *            "to_time": "13:00PM",
-    *            "all_day": 1
-    *        },
-    *        {
-    *            "days_name": "Wednesday",
-    *            "from_time": "10:00PM",
-    *            "to_time": "10:00PM",
-    *            "all_day": 1
-    *        }
-    *        },
-    *        "messenger":
-    *        {
-    *            {
-    *            "pemakaian":"Utama",
-    *            "namaMessenger":"(021) 3851185",
-    *            "tipe":"Fax"
-    *            },
-    *            {
-    *            "pemakaian":"Utama",
-    *            "namaMessenger":"(021) 012345678",
-    *            "tipe":"Office"
-    *            }
-    *        },
-    *        "email":{
-    *
-    *            {
-    *            "pemakaian":"Utama",
-    *            "namaPengguna":"wahyudidanny23@gmail.com",
-    *            "tipe":"Personal"
-    *            }, 
-    *            {
-    *            "pemakaian":"Secondary",
-    *            "namaPengguna":"wahyudidanny25@gmail.com",
-    *            "tipe":"Personal"
-    *            }
-    *    },
-    *        "telepon":{
-    *            {
-    *            "pemakaian":"Utama",
-    *            "nomorTelepon":"087888821648",
-    *            "tipe":"Telepon Selular"
-    *            }, 
-    *            {
-    *            "pemakaian":"Secondary",
-    *            "nomorTelepon":"085265779499",
-    *            "tipe":"Whatshapp"
-    *            }
-    *    }
-    * },
+     *value = {
+     *    "locationName": "RPC Permata Hijau Pekanbaru",
+     *    "isBranch": "0",
+     *    "status": "1",
+     *    "introduction":"RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
+     *    "description":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+     *    "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
+     *    "imageTitle":"ImageRPCPermataHijau.jpg",
+     *    "alamat_location":{
+     *        {
+     *                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+     *                "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+     *                "kotaID": "Jakarta Barat",
+     *                "provinsiID": "Kemanggisan",
+     *                "kodePos": "11480",
+     *                "negara": "Indonesia",
+     *                "parkir": "Yes",
+     *                "pemakaian": "Indekos"
+     *            }
+     *        },
+     *    "operational_days":
+     *        {
+     *            {
+     *
+     *            "days_name": "Monday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Monday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Tuesday",
+     *            "from_time": "12:00PM",
+     *            "to_time": "13:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Wednesday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        }
+     *        },
+     *        "messenger":
+     *        {
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaMessenger":"(021) 3851185",
+     *            "tipe":"Fax"
+     *            },
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaMessenger":"(021) 012345678",
+     *            "tipe":"Office"
+     *            }
+     *        },
+     *        "email":{
+     *
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaPengguna":"wahyudidanny23@gmail.com",
+     *            "tipe":"Personal"
+     *            },
+     *            {
+     *            "pemakaian":"Secondary",
+     *            "namaPengguna":"wahyudidanny25@gmail.com",
+     *            "tipe":"Personal"
+     *            }
+     *    },
+     *        "telepon":{
+     *            {
+     *            "pemakaian":"Utama",
+     *            "nomorTelepon":"087888821648",
+     *            "tipe":"Telepon Selular"
+     *            },
+     *            {
+     *            "pemakaian":"Secondary",
+     *            "nomorTelepon":"085265779499",
+     *            "tipe":"Whatshapp"
+     *            }
+     *    }
+     * },
      *          )),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
@@ -607,50 +686,18 @@ class LocationController extends Controller
      * summary="Get Location",
      * description="get Location",
      *  @OA\Parameter(
-     *      name="orderby",
-     *      description="Query Order By",
-     *      example="ASC",
-     *      in="path",
-     *      @OA\Schema(
-     *          type="string"
-     *      )
-     *  ),
-     *  @OA\Parameter(
-     *      name="column",
-     *      description="Column table Location",
-     *      example="codeLocation, locationName, isBranch, status, introduction",
-     *      in="path",
-     *           @OA\Schema(
-     *          type="string"
-     *      )
-     *  ),
-     *  @OA\Parameter(
-     *      name="keyword",
-     *      description="keyword for value Location",
-     *      example="Jakarta",
-     *      in="path",
-     *           @OA\Schema(
-     *          type="string"
-     *      )
-     *  ),
-     *  @OA\Parameter(
-     *      name="page",
-     *      description="Go to Page...",
-     *      example="1",
-     *      in="path",
-     *           @OA\Schema(
-     *          type="integer"
-     *      )
-     *  ),
-     *  @OA\Parameter(
-     *      name="total_per_page",
-     *      description="total page in location",
-     *      example="5",
-     *      in="path",
-     *           @OA\Schema(
-     *          type="integer"
-     *      )
-     *  ),
+     *     name="body",
+     *     in="path",
+     *     required=true,
+     *     @OA\JsonContent(
+     *        type="object",
+     *        @OA\Property(property="orderby", type="text",example="asc"),
+     *        @OA\Property(property="column", type="text",example="codeLocation, locationName, isBranch, status, introduction"),
+     *        @OA\Property(property="keyword", type="text",example="Jakarta"),
+     *        @OA\Property(property="page", type="number",example="1"),
+     *        @OA\Property(property="total_per_page", type="number",example="5"),
+     *     ),
+     * ),
      *   @OA\Response(
      *          response=201,
      *          description="Get Data Location Successfully",
@@ -674,11 +721,12 @@ class LocationController extends Controller
     public function location(Request $request)
     {
 
-        $items_per_page = 1;
+        $items_per_page = 5;
 
         $data = DB::table('location')
             ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-            ->select('location.codeLocation as codeLocation',
+            ->select('location.id as id',
+                'location.codeLocation as codeLocation',
                 'location.locationName as locationName',
                 'location.isBranch as isBranch',
                 'location.status as status',
@@ -722,13 +770,50 @@ class LocationController extends Controller
 
     }
 
+    /**
+     * @OA\Get(
+     * path="/api/locationdetail",
+     * operationId="locationdetail",
+     * tags={"Get Location detail"},
+     * summary="Get Location detail",
+     * description="get Location detail",
+     *  @OA\Parameter(
+     *     name="body",
+     *     in="path",
+     *     required=true,
+     *     @OA\JsonContent(
+     *        type="object",
+     *        @OA\Property(property="id", type="text",example="1"),
+     *     ),
+     * ),
+     *   @OA\Response(
+     *          response=201,
+     *          description="Get Data Location Detail Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Get Data Location Detail Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function locationdetail(Request $request)
     {
 
-        $codeLocation = $request->input('codeLocation');
+        $id = $request->input('id');
 
         $param_location = DB::table('location')
-            ->select('location.codeLocation as codeLocation',
+            ->select('location.id as id',
+                'location.codeLocation as codeLocation',
                 'location.locationName as locationName',
                 'location.isBranch as isBranch',
                 'location.status as status',
@@ -736,9 +821,8 @@ class LocationController extends Controller
                 'location.description as description',
                 'location.image as image',
                 'location.imageTitle as imageTitle',
-
             )
-            ->where('location.codeLocation', '=', $codeLocation)
+            ->where('location.id', '=', $id)
             ->first();
 
         $alamat_location = DB::table('location_alamat_detail')
@@ -748,9 +832,8 @@ class LocationController extends Controller
                 'location_alamat_detail.provinsiID as provinsiID',
                 'location_alamat_detail.kodePos as kodePos',
                 'location_alamat_detail.negara as negara',
-
             )
-            ->where('location_alamat_detail.codeLocation', '=', $codeLocation)
+            ->where('location_alamat_detail.id', '=', $id)
             ->get();
 
         $param_location->alamat_location = $alamat_location;
@@ -761,7 +844,7 @@ class LocationController extends Controller
                 'location_operational.to_time as to_time',
                 'location_operational.all_day as all_day',
             )
-            ->where('location_operational.codeLocation', '=', $codeLocation)
+            ->where('location_operational.id', '=', $id)
             ->get();
 
         $param_location->operational_location = $operational_location;
@@ -771,7 +854,7 @@ class LocationController extends Controller
                 'location_email.namaPengguna as namaPengguna',
                 'location_email.tipe as tipe',
             )
-            ->where('location_email.codeLocation', '=', $codeLocation)
+            ->where('location_email.id', '=', $id)
             ->get();
 
         $param_location->email_location = $email_location;
@@ -780,7 +863,7 @@ class LocationController extends Controller
             ->select('location_messenger.pemakaian as pemakaian',
                 'location_messenger.namaMessenger as namaMessenger',
                 'location_messenger.tipe as tipe', )
-            ->where('location_messenger.codeLocation', '=', $codeLocation)
+            ->where('location_messenger.id', '=', $id)
             ->get();
 
         $param_location->messenger_location = $messenger_location;
@@ -790,7 +873,7 @@ class LocationController extends Controller
                 'location_telepon.nomorTelepon as nomorTelepon',
                 'location_telepon.tipe as tipe',
             )
-            ->where('location_telepon.codeLocation', '=', $codeLocation)
+            ->where('location_telepon.id', '=', $id)
             ->get();
 
         $param_location->telepon_location = $telepon_location;

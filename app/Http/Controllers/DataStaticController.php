@@ -18,11 +18,11 @@ class DataStaticController extends Controller
      * description="Delete data static here , need id data static",
      *     @OA\RequestBody(
      *         @OA\JsonContent(* @OA\Examples(
-     *        summary="Delete Branch",
-     *        example = "Delete Branch",
-     *       value = {
-     *           "id":1,
-     *         },)),
+     *        summary="Delete data static",
+     *        example = "delete id 1",
+    *       value = {
+    *           "id":1,
+    *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
@@ -34,12 +34,12 @@ class DataStaticController extends Controller
      *    ),
      *      @OA\Response(
      *          response=201,
-     *          description="Delete branch Successfully",
+     *          description="Delete data static Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Delete branch Successfully",
+     *          description="Delete data static Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
@@ -52,16 +52,13 @@ class DataStaticController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-
     public function datastaticlocation(Request $Request)
     {
 
-     
         DB::beginTransaction();
         try
         {
 
-            
             DB::table('data_static')
                 ->where('id', '=', $Request['id'], )
                 ->update(['isDeleted' => 1,]);
@@ -80,62 +77,28 @@ class DataStaticController extends Controller
         }
 
     }
-/*
-     /**
+
+
+/**
      * @OA\Get(
      * path="/api/datastatic",
      * operationId="datastatic",
      * tags={"Get Data Static"},
      * summary="Get Data Static",
      * description="Get Data Static",
-     * 
-     * 
-     * 
-     *  @OA\Parameter(
-     *      name="orderby",
-     *      description="Query Order By",
-     *      example="ASC",
-     *      in="path",
-     *      @OA\Schema(
-     *          type="string"
-     *      )
-     *  ),
-     *  @OA\Parameter(
-     *      name="column",
-     *      description="Column table data static",
-     *      example="value, name",
-     *      in="path",
-     *           @OA\Schema(
-     *          type="string"
-     *      )
-     *  ),
-     *  @OA\Parameter(
-     *      name="keyword",
-     *      description="keyword for value data static",
-     *      example="Messenger",
-     *      in="path",
-     *           @OA\Schema(
-     *          type="string"
-     *      )
-     *  ),
-     *  @OA\Parameter(
-     *      name="page",
-     *      description="Go to Page...",
-     *      example="1",
-     *      in="path",
-     *           @OA\Schema(
-     *          type="integer"
-     *      )
-     *  ),
-     *  @OA\Parameter(
-     *      name="total_per_page",
-     *      description="total page in data static",
-     *      example="5",
-     *      in="path",
-     *           @OA\Schema(
-     *          type="integer"
-     *      )
-     *  ),
+    *  @OA\Parameter(
+    *     name="body",
+    *     in="path",
+    *     required=true,
+    *     @OA\JsonContent(
+    *        type="object",
+    *        @OA\Property(property="orderby", type="text",example="asc"),
+    *        @OA\Property(property="column", type="text",example="value"),
+    *        @OA\Property(property="keyword", type="text",example="Messenger"),
+    *        @OA\Property(property="page", type="number",example="1"),
+    *        @OA\Property(property="total_per_page", type="number",example="14"),
+    *     ),
+    * ),
      *      @OA\Response(
      *          response=201,
      *          description="Get Data Static Successfully",

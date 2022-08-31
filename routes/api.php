@@ -15,7 +15,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('locationdetail', [LocationController::class, 'locationdetail']);
     Route::get('datastatic', [DataStaticController::class, 'datastatic']);
     Route::post('insertlocation', [LocationController::class, 'create']);
-
     Route::post('insertdatastatic', [LocationController::class, 'insertdatastatic']);
     Route::post('uploadexceltest', [LocationController::class, 'uploadexceltest']);
     Route::put('updatelocation', [LocationController::class, 'update']);
