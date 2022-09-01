@@ -10,33 +10,38 @@ use Maatwebsite\Excel\Facades\Excel;
 class LocationController extends Controller
 {
 
- /**
-     * @OA\GET(
-     * path="/api/location",
-     * operationId="location",
-     * tags={"Location"},
-     * summary="Get Location",
-     * description="Get Location List Branch",
+    /**
+     * @OA\Delete(
+     * path="/api/deletecontactlocation",
+     * operationId="deletecontactlocation",
+     * tags={"Delete Contact Location"},
+     * summary="Delete Contact Location",
+     * description="Delete Contact Location , ex: email, messenger, operational(each represent column table, ex: email->location_email)",
      *     @OA\RequestBody(
-     *         @OA\JsonContent(),
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Delete Contact Location",
+     *        example = "Delete Contact Location",
+     *        value = {
+     *           "keyword":"telepon",
+     *           "id":1,
+     *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
      *               type="object",
-     *               @OA\Property(property="orderby", type="text"),
-     *               @OA\Property(property="column", type="text"),
      *               @OA\Property(property="keyword", type="text"),
+     *               @OA\Property(property="id", type="integer"),
      *            ),
      *        ),
      *    ),
      *      @OA\Response(
      *          response=201,
-     *          description="get data Successfully",
+     *          description="Delete branch Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Register Successfully",
+     *          description="Delete branch Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
@@ -46,22 +51,35 @@ class LocationController extends Controller
      *       ),
      *      @OA\Response(response=400, description="Bad request"),
      *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
      * )
      */
-
-    public function deletetelepon(Request $request)
+    public function deletecontactlocation(Request $request)
     {
+
+        $request->validate([
+            'keyword' => 'required|max:10000',
+        ]);
 
         DB::beginTransaction();
         try
         {
 
-            DB::table('location_telepon')
-                ->where('codeLocation', '=', $request->input('codeLocation'),
-                    'pemakaian', '=', $request->input('pemakaian'),
-                    'nomorTelepon', '=', $request->input('nomorTelepon'),
-                    'tipe', '=', $request->input('tipe'),
-                )
+            if ($request->input('keyword') == "email") {
+
+                $table_name = 'location_email';
+
+            } elseif ($request->input('keyword') == "messenger") {
+
+                $table_name = 'location_messenger';
+
+            } elseif ($request->input('keyword') == "telepon") {
+
+                $table_name = 'location_telepon';
+            }
+
+            DB::table($table_name)
+                ->where('id', '=', $request->input('id'), )
                 ->update([
                     'isDeleted' => 1,
                 ]);
@@ -81,70 +99,48 @@ class LocationController extends Controller
 
     }
 
-    public function deleteemail(Request $request)
-    {
-
-        DB::beginTransaction();
-        try
-        {
-
-            DB::table('location_email')
-                ->where('codeLocation', '=', $request->input('codeLocation'),
-                    'pemakaian', '=', $request->input('pemakaian'),
-                    'namaPengguna', '=', $request->input('namaPengguna'),
-                    'tipe', '=', $request->input('tipe'),
-                )
-                ->update([
-                    'isDeleted' => 1,
-                ]);
-
-            DB::commit();
-
-            return ('SUCCESS');
-            //return back()->with('SUCCESS', 'Data has been successfully inserted');
-
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
-            //return back()->with('ERROR', 'Your error message');
-        }
-
-    }
-
-    public function deletemessenger(Request $request)
-    {
-
-        DB::beginTransaction();
-        try
-        {
-
-            DB::table('location_messenger')
-                ->where('codeLocation', '=', $request->input('codeLocation'),
-                    'pemakaian', '=', $request->input('pemakaian'),
-                    'namaMessenger', '=', $request->input('namaMessenger'),
-                    'tipe', '=', $request->input('tipe'),
-                )
-                ->update([
-                    'isDeleted' => 1,
-                ]);
-
-            DB::commit();
-
-            return ('SUCCESS');
-            //return back()->with('SUCCESS', 'Data has been successfully inserted');
-
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
-            //return back()->with('ERROR', 'Your error message');
-        }
-
-    }
-
+    /**
+     * @OA\Delete(
+     * path="/api/deletelocation",
+     * operationId="deletelocation",
+     * tags={"Delete Location"},
+     * summary="Delete Location",
+     * description="Delete Location , by delete location will update status isDeleted into 1)",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Delete Location",
+     *        example = "Delete Location",
+     *        value = {
+     *           "id":1,
+     *         },)),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               @OA\Property(property="id", type="integer"),
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Delete location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Delete location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function delete(Request $request)
     {
 
@@ -152,15 +148,40 @@ class LocationController extends Controller
         try
         {
 
+            $data = DB::table('location')
+                ->select('codeLocation')
+                ->where('id', '=', $request->input('id'))
+                ->first()->codeLocation;
+
             DB::table('location')
-                ->where('codeLocation', '=', $request->input('codeLocation'))
+                ->where('codeLocation', '=', $data)
                 ->update([
                     'isDeleted' => 1,
                 ]);
 
-            deletemessenger($request);
-            deleteemail($request);
-            deletetelepon($request);
+            DB::table('location_alamat_detail')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'isDeleted' => 1,
+                ]);
+
+            DB::table('location_email')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'isDeleted' => 1,
+                ]);
+
+            DB::table('location_messenger')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'isDeleted' => 1,
+                ]);
+
+            DB::table('location_telepon')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'isDeleted' => 1,
+                ]);
 
             DB::commit();
 
@@ -190,6 +211,138 @@ class LocationController extends Controller
         return 'true';
     }
 
+    /**
+     * @OA\Put(
+     * path="/api/updatelocation",
+     * operationId="Update Location",
+     * tags={"Update Location"},
+     * summary="Update Location",
+     * description="Update Location",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="update Location",
+     *        example = "update Location",
+     * value = {
+     *  "id":"1",
+     *  "locationName": "RPC Permata Hijau Jakarta",
+     *  "isBranch": "1",
+     *  "status": "0",
+     *  "introduction":"RPC Permata Hijau Jakarta, your satisfation is out top priority",
+     *  "description":"Dibangun di tahun 2022, RPC Permata Hijau Jakarta sudah melayani berbagai lebih dari 100 ribu client diberbagai wilayah dijakarta, fasilitas yang lengkap dan terjamin security",
+     *  "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijauJakarta.jpg",
+     *  "imageTitle":"ImageRPCPermataHijauJakarta.jpg",
+     *  "alamat_location":{
+     *      {
+     *            "codeLocation":"366f70e7",
+     *            "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+     *            "infoTambahan": "Patokan Jalan : terminal busway jakarta selatan itc permata hijau",
+     *            "kotaID": "Jakarta Selatan",
+     *            "provinsiID": "Kebayoran Lama",
+     *            "kodePos": 12210,
+     *            "negara": "Indonesia",
+     *            "parkir": "Yes",
+     *            "pemakaian": "Apartement"
+     *         }
+     *    },
+     *  "operational_days":
+     *    {
+     *        {
+     *
+     *        "days_name": "Monday",
+     *        "from_time": "10:00PM",
+     *        "to_time": "10:00PM",
+     *        "all_day": 1
+     *      },
+     *       {
+     *        "days_name": "Monday",
+     *        "from_time": "10:00PM",
+     *        "to_time": "10:00PM",
+     *        "all_day": 1
+     *      },
+     *       {
+     *        "days_name": "Tuesday",
+     *        "from_time": "12:00PM",
+     *        "to_time": "13:00PM",
+     *        "all_day": 1
+     *      },
+     *       {
+     *        "days_name": "Wednesday",
+     *        "from_time": "10:00PM",
+     *        "to_time": "10:00PM",
+     *        "all_day": 1
+     *      }
+     *    },
+     *    "messenger":
+     *    {
+     *        {
+     *           "pemakaian":"Utama",
+     *           "namaMessenger":"(021) 3851185",
+     *           "tipe":"Fax"
+     *        },
+     *        {
+     *           "pemakaian":"Utama",
+     *           "namaMessenger":"(021) 012345678",
+     *           "tipe":"Office"
+     *        }
+     *    },
+     *    "email":{
+     *
+     *         {
+     *           "pemakaian":"Utama",
+     *           "namaPengguna":"wahyudidanny23@gmail.com",
+     *           "tipe":"Personal"
+     *        },
+     *        {
+     *           "pemakaian":"Secondary",
+     *           "namaPengguna":"wahyudidanny25@gmail.com",
+     *           "tipe":"Personal"
+     *        }
+     *   },
+     *    "telepon":{
+     *         {
+     *           "pemakaian":"Utama",
+     *           "nomorTelepon":"087888821648",
+     *           "tipe":"Telepon Selular"
+     *        },
+     *        {
+     *           "pemakaian":"Secondary",
+     *           "nomorTelepon":"085265779499",
+     *           "tipe":"Whatshapp"
+     *        }
+     *   }
+     *
+     *},
+     *          )),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"locationName","isBranch","password"},
+     *               @OA\Property(property="name", type="text"),
+
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Update Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Update Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function update(Request $request)
     {
 
@@ -197,8 +350,13 @@ class LocationController extends Controller
         try
         {
 
+            $data = DB::table('location')
+                ->select('codeLocation')
+                ->where('id', '=', $request->input('id'))
+                ->first()->codeLocation;
+
             DB::table('location')
-                ->where('codeLocation', '=', $request->input('codeLocation'))
+                ->where('id', '=', $request->input('id'))
                 ->update([
                     'locationName' => $request->input('locationName'),
                     'isBranch' => $request->input('isBranch'),
@@ -209,10 +367,25 @@ class LocationController extends Controller
                     'imageTitle' => $request->input('imageTitle'),
 
                 ]);
+            
+                DB::table('location_alamat_detail')
+                ->where('codeLocation', '=', $data)
+                ->update([
+                    'alamatJalan' => $request->input('alamat_location')[0]['alamatJalan'],
+                    'infoTambahan' => $request->input('alamat_location')[0]['infoTambahan'],
+                    'kotaID' => $request->input('alamat_location')[0]['kotaID'],
+                    'provinsiID' => $request->input('alamat_location')[0]['provinsiID'],
+                    'kodePos' => $request->input('alamat_location')[0]['kodePos'],
+                    'negara' => $request->input('alamat_location')[0]['negara'],
+                    'parkir' => $request->input('alamat_location')[0]['parkir'],
+                    'pemakaian' => $request->input('alamat_location')[0]['pemakaian'],
+                ]);
+
+
 
             foreach ($request->operational_days as $val) {
-                DB::table('location_operational_hours_details')
-                    ->where('codeLocation', '=', $request->input('codeLocation'))
+                DB::table('location_operational')
+                    ->where('codeLocation', '=', $data)
                     ->update([
                         'days_name' => $val['days_name'],
                         'from_time' => $val['from_time'],
@@ -222,17 +395,181 @@ class LocationController extends Controller
                     ]);
             }
 
-            //return 'success';
+
+
+            foreach ($request->messenger as $val) {
+                DB::table('location_messenger')
+                    ->where('codeLocation', '=', $data)
+                    ->update([
+                        'pemakaian' => $val['pemakaian'],
+                        'namaMessenger' => $val['namaMessenger'],
+                        'tipe' => $val['tipe'],
+                    ]);
+            }
+
+
+            foreach ($request->email as $val) {
+                DB::table('location_email')
+                    ->where('codeLocation', '=', $data)
+                    ->update([
+                        'pemakaian' => $val['pemakaian'],
+                        'namaPengguna' => $val['namaPengguna'],
+                        'tipe' => $val['tipe'],
+                    ]);
+            }
+
+
+            foreach ($request->telepon as $val) {
+                DB::table('location_telepon')
+                    ->where('codeLocation', '=', $data)
+                    ->update([
+                        'pemakaian' => $val['pemakaian'],
+                        'nomorTelepon' => $val['nomorTelepon'],
+                        'tipe' => $val['tipe'],
+                    ]);
+            }
+
+
+            return 'SUCCESS';
 
         } catch (Exception $e) {
 
             DB::rollback();
-
-            return back()->with('ERROR', 'Your error message');
+            return 'FAILED';
+            //return back()->with('ERROR', 'Your error message');
         }
 
     }
 
+    /**
+     * @OA\Post(
+     * path="/api/insertlocation",
+     * operationId="Insert Location",
+     * tags={"Insert Location"},
+     * summary="Insert Location",
+     * description="Insert Location",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Insert Location",
+     *        example = "Insert Location",
+     *value = {
+     *    "locationName": "RPC Permata Hijau Pekanbaru",
+     *    "isBranch": "0",
+     *    "status": "1",
+     *    "introduction":"RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
+     *    "description":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+     *    "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
+     *    "imageTitle":"ImageRPCPermataHijau.jpg",
+     *    "alamat_location":{
+     *        {
+     *                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+     *                "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+     *                "kotaID": "Jakarta Barat",
+     *                "provinsiID": "Kemanggisan",
+     *                "kodePos": "11480",
+     *                "negara": "Indonesia",
+     *                "parkir": "Yes",
+     *                "pemakaian": "Indekos"
+     *            }
+     *        },
+     *    "operational_days":
+     *        {
+     *            {
+     *
+     *            "days_name": "Monday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Monday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Tuesday",
+     *            "from_time": "12:00PM",
+     *            "to_time": "13:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Wednesday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        }
+     *        },
+     *        "messenger":
+     *        {
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaMessenger":"(021) 3851185",
+     *            "tipe":"Fax"
+     *            },
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaMessenger":"(021) 012345678",
+     *            "tipe":"Office"
+     *            }
+     *        },
+     *        "email":{
+     *
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaPengguna":"wahyudidanny23@gmail.com",
+     *            "tipe":"Personal"
+     *            },
+     *            {
+     *            "pemakaian":"Secondary",
+     *            "namaPengguna":"wahyudidanny25@gmail.com",
+     *            "tipe":"Personal"
+     *            }
+     *    },
+     *        "telepon":{
+     *            {
+     *            "pemakaian":"Utama",
+     *            "nomorTelepon":"087888821648",
+     *            "tipe":"Telepon Selular"
+     *            },
+     *            {
+     *            "pemakaian":"Secondary",
+     *            "nomorTelepon":"085265779499",
+     *            "tipe":"Whatshapp"
+     *            }
+     *    }
+     * },
+     *          )),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"locationName","isBranch","password"},
+     *               @OA\Property(property="name", type="text"),
+
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function create(Request $request)
     {
         DB::beginTransaction();
@@ -240,7 +577,7 @@ class LocationController extends Controller
         try
         {
 
-            $getvaluesp = strval(collect(DB::select('call procedure_name'))[0]->randomString);
+            $getvaluesp = strval(collect(DB::select('call generate_codeLocation'))[0]->randomString);
 
             $request->validate([
                 'locationName' => 'required|max:255',
@@ -273,6 +610,7 @@ class LocationController extends Controller
                 'negara' => $request->input('alamat_location')[0]['negara'],
                 'parkir' => $request->input('alamat_location')[0]['parkir'],
                 'pemakaian' => $request->input('alamat_location')[0]['pemakaian'],
+                'isDeleted' => 0,
             ]);
 
             foreach ($request->operational_days as $val) {
@@ -340,89 +678,142 @@ class LocationController extends Controller
 
     }
 
-    public function index()
+    /**
+     * @OA\Get(
+     * path="/api/location",
+     * operationId="location",
+     * tags={"Get Location"},
+     * summary="Get Location",
+     * description="get Location",
+     *  @OA\Parameter(
+     *     name="body",
+     *     in="path",
+     *     required=true,
+     *     @OA\JsonContent(
+     *        type="object",
+     *        @OA\Property(property="orderby", type="text",example="asc"),
+     *        @OA\Property(property="column", type="text",example="codeLocation, locationName, isBranch, status, introduction"),
+     *        @OA\Property(property="keyword", type="text",example="Jakarta"),
+     *        @OA\Property(property="page", type="number",example="1"),
+     *        @OA\Property(property="total_per_page", type="number",example="5"),
+     *     ),
+     * ),
+     *   @OA\Response(
+     *          response=201,
+     *          description="Get Data Location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Get Data Location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+    public function location(Request $request)
     {
 
-        $branch = DB::table('location')
+        $items_per_page = 5;
+
+        $data = DB::table('location')
             ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-            ->select('location.codeLocation as codeLocation',
+            ->select('location.id as id',
+                'location.codeLocation as codeLocation',
                 'location.locationName as locationName',
                 'location.isBranch as isBranch',
                 'location.status as status',
                 'location.introduction as introduction',
-                'location_alamat_detail.alamatJalan as alamatJalan', )
-            ->get();
+                'location_alamat_detail.alamatJalan as alamatJalan', );
 
-        return response()->json($branch, 200);
+        if ($request->keyword) {
 
-    }
+            $data = $data->where('location.codeLocation', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location.locationName', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location.introduction', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location_alamat_detail.alamatJalan', 'like', '%' . $request->keyword . '%');
+        }
 
-    public function getlocationorderbyid(Request $request)
-    {
+        if ($request->column) {
+            $data = $data->orderBy($request->column, $request->orderby);
+        }
 
-        $order = $request->input('order');
+        if ($request->total_per_page > 0) {
 
-        $branch = DB::table('location')
-            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-            ->select('location.codeLocation as codeLocation',
-                'location.locationName as locationName',
-                'location.isBranch as isBranch',
-                'location.status as status',
-                'location.introduction as introduction',
-                'location_alamat_detail.alamatJalan as alamatJalan', )
-            ->orderBy('location.codeLocation', $order)
-            ->get();
+            $items_per_page = $request->total_per_page;
+        }
 
-        return response()->json($branch, 200);
+        $page = $request->page;
 
-    }
+        $offset = ($page - 1) * $items_per_page;
 
-    public function getlocationorderbyname(Request $request)
-    {
-        $order = $request->input('order');
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
 
-        $branch = DB::table('location')
-            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-            ->select('location.codeLocation as codeLocation',
-                'location.locationName as locationName',
-                'location.isBranch as isBranch',
-                'location.status as status',
-                'location.introduction as introduction',
-                'location_alamat_detail.alamatJalan as alamatJalan', )
-            ->orderBy('location.locationName', $order)
-            ->get();
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($items_per_page)->get();
+        } else {
+            $data = $data->offset($offset)->limit($items_per_page)->get();
+        }
 
-        return response()->json($branch, 200);
+        $total_paging = $count_data / $items_per_page;
+
+        return response()->json(['total_paging' => ceil($total_paging),
+            'data' => $data], 200);
 
     }
 
-    public function getlocationorderbyalamatjalan(Request $request)
+    /**
+     * @OA\Get(
+     * path="/api/locationdetail",
+     * operationId="locationdetail",
+     * tags={"Get Location detail"},
+     * summary="Get Location detail",
+     * description="get Location detail",
+     *  @OA\Parameter(
+     *     name="body",
+     *     in="path",
+     *     required=true,
+     *     @OA\JsonContent(
+     *        type="object",
+     *        @OA\Property(property="id", type="text",example="1"),
+     *     ),
+     * ),
+     *   @OA\Response(
+     *          response=201,
+     *          description="Get Data Location Detail Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Get Data Location Detail Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+    public function locationdetail(Request $request)
     {
-        $order = $request->input('order');
 
-        $branch = DB::table('location')
-            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-            ->select('location.codeLocation as codeLocation',
-                'location.locationName as locationName',
-                'location.isBranch as isBranch',
-                'location.status as status',
-                'location.introduction as introduction',
-                'location_alamat_detail.alamatJalan as alamatJalan', )
-            ->orderBy('location_alamat_detail.alamatJalan', $order)
-            ->get();
-
-        return response()->json($branch, 200);
-
-    }
-
-
-    public function getlocationdetailbyid(Request $request)
-    {
-
-        $codeLocation = $request->input('codeLocation');
+        $id = $request->input('id');
 
         $param_location = DB::table('location')
-            ->select('location.codeLocation as codeLocation',
+            ->select('location.id as id',
+                'location.codeLocation as codeLocation',
                 'location.locationName as locationName',
                 'location.isBranch as isBranch',
                 'location.status as status',
@@ -430,9 +821,8 @@ class LocationController extends Controller
                 'location.description as description',
                 'location.image as image',
                 'location.imageTitle as imageTitle',
-
             )
-            ->where('location.codeLocation', '=', $codeLocation)
+            ->where('location.id', '=', $id)
             ->first();
 
         $alamat_location = DB::table('location_alamat_detail')
@@ -442,9 +832,8 @@ class LocationController extends Controller
                 'location_alamat_detail.provinsiID as provinsiID',
                 'location_alamat_detail.kodePos as kodePos',
                 'location_alamat_detail.negara as negara',
-
             )
-            ->where('location_alamat_detail.codeLocation', '=', $codeLocation)
+            ->where('location_alamat_detail.id', '=', $id)
             ->get();
 
         $param_location->alamat_location = $alamat_location;
@@ -455,7 +844,7 @@ class LocationController extends Controller
                 'location_operational.to_time as to_time',
                 'location_operational.all_day as all_day',
             )
-            ->where('location_operational.codeLocation', '=', $codeLocation)
+            ->where('location_operational.id', '=', $id)
             ->get();
 
         $param_location->operational_location = $operational_location;
@@ -465,7 +854,7 @@ class LocationController extends Controller
                 'location_email.namaPengguna as namaPengguna',
                 'location_email.tipe as tipe',
             )
-            ->where('location_email.codeLocation', '=', $codeLocation)
+            ->where('location_email.id', '=', $id)
             ->get();
 
         $param_location->email_location = $email_location;
@@ -474,7 +863,7 @@ class LocationController extends Controller
             ->select('location_messenger.pemakaian as pemakaian',
                 'location_messenger.namaMessenger as namaMessenger',
                 'location_messenger.tipe as tipe', )
-            ->where('location_messenger.codeLocation', '=', $codeLocation)
+            ->where('location_messenger.id', '=', $id)
             ->get();
 
         $param_location->messenger_location = $messenger_location;
@@ -484,7 +873,7 @@ class LocationController extends Controller
                 'location_telepon.nomorTelepon as nomorTelepon',
                 'location_telepon.tipe as tipe',
             )
-            ->where('location_telepon.codeLocation', '=', $codeLocation)
+            ->where('location_telepon.id', '=', $id)
             ->get();
 
         $param_location->telepon_location = $telepon_location;
@@ -516,78 +905,20 @@ class LocationController extends Controller
         return response()->json($param_location, 200);
     }
 
-    public function insertdatastatictelepon(Request $request)
+    public function insertdatastatic(Request $request)
     {
+
+        $request->validate([
+            'keyword' => 'required|max:2555',
+        ]);
+
         DB::beginTransaction();
 
         try
         {
-            $request->validate([
-                'name' => 'required|max:2555',
-            ]);
 
             DB::table('data_static')->insert([
-                'value' => 'Telepon',
-                'name' => $request->input('name'),
-                'isDeleted' => 0,
-            ]);
-
-            DB::commit();
-
-            return ('SUCCESS');
-
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
-
-        }
-
-    }
-
-    public function insertdatastaticpemakaian(Request $request)
-    {
-        DB::beginTransaction();
-
-        try
-        {
-            $request->validate([
-                'name' => 'required|max:2555',
-            ]);
-
-            DB::table('data_static')->insert([
-                'value' => 'Pemakaian',
-                'name' => $request->input('name'),
-                'isDeleted' => 0,
-            ]);
-
-            DB::commit();
-
-            return ('SUCCESS');
-
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
-
-        }
-
-    }
-
-    public function insertdatastaticmessenger(Request $request)
-    {
-        DB::beginTransaction();
-
-        try
-        {
-            $request->validate([
-                'name' => 'required|max:2555',
-            ]);
-
-            DB::table('data_static')->insert([
-                'value' => 'Messenger',
+                'value' => $request->input('keyword'),
                 'name' => $request->input('name'),
                 'isDeleted' => 0,
             ]);

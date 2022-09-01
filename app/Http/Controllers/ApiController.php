@@ -19,18 +19,22 @@ class ApiController extends Controller
      * summary="User Register",
      * description="User Register here",
      *     @OA\RequestBody(
-     *         @OA\JsonContent(),
+    *         @OA\JsonContent(* @OA\Examples(
+     *        summary="User Register",
+     *        example = "User Register",
+     *       value = {
+     *           "name":"DW",
+     *           "email":"testingvalue@gmail.com",
+     *           "password":"111111"
+     *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
      *               type="object",
-     *               required={"username","fullname","email", "password", "password_confirmation","role"},
-     *               @OA\Property(property="username", type="text"),
-     *               @OA\Property(property="fullname", type="text"),
+     *               required={"name","email","password"},
+     *               @OA\Property(property="name", type="text"),
      *               @OA\Property(property="email", type="text"),
      *               @OA\Property(property="password", type="password"),
-     *               @OA\Property(property="password_confirmation", type="password"),
-     *               @OA\Property(property="role", type="text")
      *            ),
      *        ),
      *    ),
@@ -90,12 +94,18 @@ class ApiController extends Controller
  /**
      * @OA\Post(
      * path="/api/login",
-     * operationId="LOGIN",
-     * tags={"LOGIN"},
+     * operationId="Login Username",
+     * tags={"Login Username"},
      * summary="Login",
      * description="Login RPC here",
      *     @OA\RequestBody(
-     *         @OA\JsonContent(),
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Login User",
+     *        example = "Login User",
+     *       value = {
+     *           "email":"yolo@gmail.com",
+     *           "password":"111111"
+     *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(

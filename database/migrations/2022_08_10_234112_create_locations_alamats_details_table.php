@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('kodePos');
             $table->string('negara');
             $table->string('parkir');
+            $table->string('isDeleted');
             $table->string('pemakaian');
             $table->timestamps();
         });

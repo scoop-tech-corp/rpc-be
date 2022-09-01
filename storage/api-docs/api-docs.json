@@ -18,18 +18,12 @@
                         "multipart/form-data": {
                             "schema": {
                                 "required": [
-                                    "username",
-                                    "fullname",
+                                    "name",
                                     "email",
-                                    "password",
-                                    "password_confirmation",
-                                    "role"
+                                    "password"
                                 ],
                                 "properties": {
-                                    "username": {
-                                        "type": "text"
-                                    },
-                                    "fullname": {
+                                    "name": {
                                         "type": "text"
                                     },
                                     "email": {
@@ -37,19 +31,23 @@
                                     },
                                     "password": {
                                         "type": "password"
-                                    },
-                                    "password_confirmation": {
-                                        "type": "password"
-                                    },
-                                    "role": {
-                                        "type": "text"
                                     }
                                 },
                                 "type": "object"
                             }
                         },
                         "application/json": {
-                            "schema": {}
+                            "schema": {},
+                            "examples": {
+                                "User Register": {
+                                    "summary": "User Register",
+                                    "value": {
+                                        "name": "DW",
+                                        "email": "testingvalue@gmail.com",
+                                        "password": "111111"
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -90,11 +88,11 @@
         "/api/login": {
             "post": {
                 "tags": [
-                    "LOGIN"
+                    "Login Username"
                 ],
                 "summary": "Login",
                 "description": "Login RPC here",
-                "operationId": "LOGIN",
+                "operationId": "Login Username",
                 "requestBody": {
                     "content": {
                         "multipart/form-data": {
@@ -115,7 +113,16 @@
                             }
                         },
                         "application/json": {
-                            "schema": {}
+                            "schema": {},
+                            "examples": {
+                                "Login User": {
+                                    "summary": "Login User",
+                                    "value": {
+                                        "email": "yolo@gmail.com",
+                                        "password": "111111"
+                                    }
+                                }
+                            }
                         }
                     }
                 },
@@ -153,26 +160,331 @@
                 }
             }
         },
-        "/api/location": {
+        "/api/datastaticlocation": {
+            "delete": {
+                "tags": [
+                    "Delete Data Static Location"
+                ],
+                "summary": "Delete Data Static Location",
+                "description": "Delete data static here , need id data static",
+                "operationId": "datastaticlocation",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "id"
+                                ],
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "delete id 1": {
+                                    "summary": "Delete data static",
+                                    "value": {
+                                        "id": 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Delete data static Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Delete data static Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/datastatic": {
             "get": {
                 "tags": [
-                    "Location"
+                    "Get Data Static"
                 ],
-                "summary": "Get Location",
-                "description": "Get Location List Branch",
-                "operationId": "location",
+                "summary": "Get Data Static",
+                "description": "Get Data Static",
+                "operationId": "datastatic",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "orderby": {
+                                            "type": "text",
+                                            "example": "asc"
+                                        },
+                                        "column": {
+                                            "type": "text",
+                                            "example": "value"
+                                        },
+                                        "keyword": {
+                                            "type": "text",
+                                            "example": "Messenger"
+                                        },
+                                        "page": {
+                                            "type": "number",
+                                            "example": "1"
+                                        },
+                                        "total_per_page": {
+                                            "type": "number",
+                                            "example": "14"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data Static Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Static Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/deletecontactlocation": {
+            "delete": {
+                "tags": [
+                    "Delete Contact Location"
+                ],
+                "summary": "Delete Contact Location",
+                "description": "Delete Contact Location , ex: email, messenger, operational(each represent column table, ex: email->location_email)",
+                "operationId": "deletecontactlocation",
                 "requestBody": {
                     "content": {
                         "multipart/form-data": {
                             "schema": {
                                 "properties": {
-                                    "orderby": {
-                                        "type": "text"
-                                    },
-                                    "column": {
-                                        "type": "text"
-                                    },
                                     "keyword": {
+                                        "type": "text"
+                                    },
+                                    "id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Delete Contact Location": {
+                                    "summary": "Delete Contact Location",
+                                    "value": {
+                                        "keyword": "telepon",
+                                        "id": 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Delete branch Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Delete branch Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/deletelocation": {
+            "delete": {
+                "tags": [
+                    "Delete Location"
+                ],
+                "summary": "Delete Location",
+                "description": "Delete Location , by delete location will update status isDeleted into 1)",
+                "operationId": "deletelocation",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Delete Location": {
+                                    "summary": "Delete Location",
+                                    "value": {
+                                        "id": 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Delete location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Delete location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/updatelocation": {
+            "put": {
+                "tags": [
+                    "Update Location"
+                ],
+                "summary": "Update Location",
+                "description": "Update Location",
+                "operationId": "Update Location",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "locationName",
+                                    "isBranch",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
                                         "type": "text"
                                     }
                                 },
@@ -180,13 +492,260 @@
                             }
                         },
                         "application/json": {
-                            "schema": {}
+                            "schema": {},
+                            "examples": {
+                                "update Location": {
+                                    "summary": "update Location",
+                                    "value": {
+                                        "id": "1",
+                                        "locationName": "RPC Permata Hijau Jakarta",
+                                        "isBranch": "1",
+                                        "status": "0",
+                                        "introduction": "RPC Permata Hijau Jakarta, your satisfation is out top priority",
+                                        "description": "Dibangun di tahun 2022, RPC Permata Hijau Jakarta sudah melayani berbagai lebih dari 100 ribu client diberbagai wilayah dijakarta, fasilitas yang lengkap dan terjamin security",
+                                        "image": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijauJakarta.jpg",
+                                        "imageTitle": "ImageRPCPermataHijauJakarta.jpg",
+                                        "alamat_location": [
+                                            {
+                                                "codeLocation": "366f70e7",
+                                                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+                                                "infoTambahan": "Patokan Jalan : terminal busway jakarta selatan itc permata hijau",
+                                                "kotaID": "Jakarta Selatan",
+                                                "provinsiID": "Kebayoran Lama",
+                                                "kodePos": 12210,
+                                                "negara": "Indonesia",
+                                                "parkir": "Yes",
+                                                "pemakaian": "Apartement"
+                                            }
+                                        ],
+                                        "operational_days": [
+                                            {
+                                                "days_name": "Monday",
+                                                "from_time": "10:00PM",
+                                                "to_time": "10:00PM",
+                                                "all_day": 1
+                                            },
+                                            {
+                                                "days_name": "Monday",
+                                                "from_time": "10:00PM",
+                                                "to_time": "10:00PM",
+                                                "all_day": 1
+                                            },
+                                            {
+                                                "days_name": "Tuesday",
+                                                "from_time": "12:00PM",
+                                                "to_time": "13:00PM",
+                                                "all_day": 1
+                                            },
+                                            {
+                                                "days_name": "Wednesday",
+                                                "from_time": "10:00PM",
+                                                "to_time": "10:00PM",
+                                                "all_day": 1
+                                            }
+                                        ],
+                                        "messenger": [
+                                            {
+                                                "pemakaian": "Utama",
+                                                "namaMessenger": "(021) 3851185",
+                                                "tipe": "Fax"
+                                            },
+                                            {
+                                                "pemakaian": "Utama",
+                                                "namaMessenger": "(021) 012345678",
+                                                "tipe": "Office"
+                                            }
+                                        ],
+                                        "email": [
+                                            {
+                                                "pemakaian": "Utama",
+                                                "namaPengguna": "wahyudidanny23@gmail.com",
+                                                "tipe": "Personal"
+                                            },
+                                            {
+                                                "pemakaian": "Secondary",
+                                                "namaPengguna": "wahyudidanny25@gmail.com",
+                                                "tipe": "Personal"
+                                            }
+                                        ],
+                                        "telepon": [
+                                            {
+                                                "pemakaian": "Utama",
+                                                "nomorTelepon": "087888821648",
+                                                "tipe": "Telepon Selular"
+                                            },
+                                            {
+                                                "pemakaian": "Secondary",
+                                                "nomorTelepon": "085265779499",
+                                                "tipe": "Whatshapp"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "get data Successfully",
+                        "description": "Update Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Update Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/insertlocation": {
+            "post": {
+                "tags": [
+                    "Insert Location"
+                ],
+                "summary": "Insert Location",
+                "description": "Insert Location",
+                "operationId": "Insert Location",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "locationName",
+                                    "isBranch",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "text"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Insert Location": {
+                                    "summary": "Insert Location",
+                                    "value": {
+                                        "locationName": "RPC Permata Hijau Pekanbaru",
+                                        "isBranch": "0",
+                                        "status": "1",
+                                        "introduction": "RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
+                                        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+                                        "image": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijau.jpg",
+                                        "imageTitle": "ImageRPCPermataHijau.jpg",
+                                        "alamat_location": [
+                                            {
+                                                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+                                                "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+                                                "kotaID": "Jakarta Barat",
+                                                "provinsiID": "Kemanggisan",
+                                                "kodePos": "11480",
+                                                "negara": "Indonesia",
+                                                "parkir": "Yes",
+                                                "pemakaian": "Indekos"
+                                            }
+                                        ],
+                                        "operational_days": [
+                                            {
+                                                "days_name": "Monday",
+                                                "from_time": "10:00PM",
+                                                "to_time": "10:00PM",
+                                                "all_day": 1
+                                            },
+                                            {
+                                                "days_name": "Monday",
+                                                "from_time": "10:00PM",
+                                                "to_time": "10:00PM",
+                                                "all_day": 1
+                                            },
+                                            {
+                                                "days_name": "Tuesday",
+                                                "from_time": "12:00PM",
+                                                "to_time": "13:00PM",
+                                                "all_day": 1
+                                            },
+                                            {
+                                                "days_name": "Wednesday",
+                                                "from_time": "10:00PM",
+                                                "to_time": "10:00PM",
+                                                "all_day": 1
+                                            }
+                                        ],
+                                        "messenger": [
+                                            {
+                                                "pemakaian": "Utama",
+                                                "namaMessenger": "(021) 3851185",
+                                                "tipe": "Fax"
+                                            },
+                                            {
+                                                "pemakaian": "Utama",
+                                                "namaMessenger": "(021) 012345678",
+                                                "tipe": "Office"
+                                            }
+                                        ],
+                                        "email": [
+                                            {
+                                                "pemakaian": "Utama",
+                                                "namaPengguna": "wahyudidanny23@gmail.com",
+                                                "tipe": "Personal"
+                                            },
+                                            {
+                                                "pemakaian": "Secondary",
+                                                "namaPengguna": "wahyudidanny25@gmail.com",
+                                                "tipe": "Personal"
+                                            }
+                                        ],
+                                        "telepon": [
+                                            {
+                                                "pemakaian": "Utama",
+                                                "nomorTelepon": "087888821648",
+                                                "tipe": "Telepon Selular"
+                                            },
+                                            {
+                                                "pemakaian": "Secondary",
+                                                "nomorTelepon": "085265779499",
+                                                "tipe": "Whatshapp"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Register Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -215,7 +774,162 @@
                     "404": {
                         "description": "Resource Not Found"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/location": {
+            "get": {
+                "tags": [
+                    "Get Location"
+                ],
+                "summary": "Get Location",
+                "description": "get Location",
+                "operationId": "location",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "orderby": {
+                                            "type": "text",
+                                            "example": "asc"
+                                        },
+                                        "column": {
+                                            "type": "text",
+                                            "example": "codeLocation, locationName, isBranch, status, introduction"
+                                        },
+                                        "keyword": {
+                                            "type": "text",
+                                            "example": "Jakarta"
+                                        },
+                                        "page": {
+                                            "type": "number",
+                                            "example": "1"
+                                        },
+                                        "total_per_page": {
+                                            "type": "number",
+                                            "example": "5"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data Location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/locationdetail": {
+            "get": {
+                "tags": [
+                    "Get Location detail"
+                ],
+                "summary": "Get Location detail",
+                "description": "get Location detail",
+                "operationId": "locationdetail",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "text",
+                                            "example": "1"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data Location Detail Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Location Detail Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
             }
         }
     },

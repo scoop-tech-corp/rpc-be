@@ -42,15 +42,15 @@ return new class extends Migration
 
 
         $procedure = "
-        CREATE PROCEDURE `procedure_name`()
+        CREATE PROCEDURE `generate_codeLocation`()
         BEGIN
 
             SELECT SUBSTR(MD5(RAND()), 1, 8) AS randomString;
-       
+
         END
         ";
 
-    DB::unprepared("DROP procedure IF EXISTS procedure_name");
+    DB::unprepared("DROP procedure IF EXISTS generate_codeLocation");
     DB::unprepared($procedure);
 
     }
@@ -62,6 +62,6 @@ return new class extends Migration
      */
     public function down()
     {
-   //   Schema::dropIfExists('get_value_location');
+   //   Schema::dropIfExists('generate_codeLocation');
     }
 };
