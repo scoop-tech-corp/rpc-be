@@ -103,7 +103,7 @@ class LocationController extends Controller
      * @OA\Delete(
      * path="/api/deletelocation",
      * operationId="deletelocation",
-     * tags={"Delete Location"},
+     * tags={"Location"},
      * summary="Delete Location",
      * description="Delete Location , by delete location will update status isDeleted into 1)",
      *     @OA\RequestBody(
@@ -215,7 +215,7 @@ class LocationController extends Controller
      * @OA\Put(
      * path="/api/updatelocation",
      * operationId="Update Location",
-     * tags={"Update Location"},
+     * tags={"Location"},
      * summary="Update Location",
      * description="Update Location",
      *     @OA\RequestBody(
@@ -445,7 +445,7 @@ class LocationController extends Controller
      * @OA\Post(
      * path="/api/insertlocation",
      * operationId="Insert Location",
-     * tags={"Insert Location"},
+     * tags={"Location"},
      * summary="Insert Location",
      * description="Insert Location",
      *     @OA\RequestBody(
@@ -682,7 +682,7 @@ class LocationController extends Controller
      * @OA\Get(
      * path="/api/location",
      * operationId="location",
-     * tags={"Get Location"},
+     * tags={"Location"},
      * summary="Get Location",
      * description="get Location",
      *  @OA\Parameter(
@@ -774,7 +774,7 @@ class LocationController extends Controller
      * @OA\Get(
      * path="/api/locationdetail",
      * operationId="locationdetail",
-     * tags={"Get Location detail"},
+     * tags={"Location"},
      * summary="Get Location detail",
      * description="get Location detail",
      *  @OA\Parameter(
