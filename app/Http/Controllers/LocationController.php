@@ -12,9 +12,9 @@ class LocationController extends Controller
 
     /**
      * @OA\Delete(
-     * path="/api/deletecontactlocation",
-     * operationId="deletecontactlocation",
-     * tags={"Delete Contact Location"},
+     * path="/api/contactlocation",
+     * operationId="Delete Contact Location",
+     * tags={"Location"},
      * summary="Delete Contact Location",
      * description="Delete Contact Location , ex: email, messenger, operational(each represent column table, ex: email->location_email)",
      *     @OA\RequestBody(
@@ -101,8 +101,8 @@ class LocationController extends Controller
 
     /**
      * @OA\Delete(
-     * path="/api/deletelocation",
-     * operationId="deletelocation",
+     * path="/api/location",
+     * operationId="delete location",
      * tags={"Location"},
      * summary="Delete Location",
      * description="Delete Location , by delete location will update status isDeleted into 1)",
@@ -213,7 +213,7 @@ class LocationController extends Controller
 
     /**
      * @OA\Put(
-     * path="/api/updatelocation",
+     * path="/api/location",
      * operationId="Update Location",
      * tags={"Location"},
      * summary="Update Location",
@@ -443,7 +443,7 @@ class LocationController extends Controller
 
     /**
      * @OA\Post(
-     * path="/api/insertlocation",
+     * path="/api/location",
      * operationId="Insert Location",
      * tags={"Location"},
      * summary="Insert Location",
@@ -772,8 +772,8 @@ class LocationController extends Controller
 
     /**
      * @OA\Get(
-     * path="/api/locationdetail",
-     * operationId="locationdetail",
+     * path="/api/detaillocation",
+     * operationId="detaillocation",
      * tags={"Location"},
      * summary="Get Location detail",
      * description="get Location detail",
@@ -905,6 +905,52 @@ class LocationController extends Controller
         return response()->json($param_location, 200);
     }
 
+
+ /**
+     * @OA\Post(
+     * path="/api/datastatic",
+     * operationId="Insert Data Static",
+     * tags={"Location"},
+     * summary="Insert Data Static",
+     * description="Insert Data Static",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Insert Data static",
+     *        example = "Insert Data Static",
+     *      value = {
+     *          "keyword": "Pemakaian",
+     *           "name": "Sharing Account",
+     *          })),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"keyword","name"},
+     *               @OA\Property(property="keyword", type="text"),
+     *               @OA\Property(property="name", type="text"),
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Register Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
     public function insertdatastatic(Request $request)
     {
 

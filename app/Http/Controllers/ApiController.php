@@ -152,13 +152,15 @@ class ApiController extends Controller
         }
 
         //Request is validated
-        //Crean token
+        //Create token
         try {
             if (! $token = JWTAuth::attempt($credentials)) {
                 return response()->json([
                 	'success' => false,
                 	'message' => 'Login credentials are invalid.',
                 ], 400);
+
+
             }
         } catch (JWTException $e) {
     	return $credentials;
@@ -175,6 +177,8 @@ class ApiController extends Controller
         ]);
     }
  
+
+    
     public function logout(Request $request)
     {
         //valid credential

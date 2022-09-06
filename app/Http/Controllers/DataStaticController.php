@@ -13,7 +13,7 @@ class DataStaticController extends Controller
      * @OA\Delete(
      * path="/api/datastaticlocation",
      * operationId="datastaticlocation",
-     * tags={"Delete Data Static Location"},
+     * tags={"Data Static"},
      * summary="Delete Data Static Location",
      * description="Delete data static here , need id data static",
      *     @OA\RequestBody(
@@ -83,7 +83,7 @@ class DataStaticController extends Controller
      * @OA\Get(
      * path="/api/datastatic",
      * operationId="datastatic",
-     * tags={"Get Data Static"},
+     * tags={"Data Static"},
      * summary="Get Data Static",
      * description="Get Data Static",
     *  @OA\Parameter(
