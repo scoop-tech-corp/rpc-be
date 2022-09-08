@@ -211,6 +211,8 @@ class LocationController extends Controller
         return 'true';
     }
 
+    
+
     /**
      * @OA\Put(
      * path="/api/location",
@@ -902,8 +904,76 @@ class LocationController extends Controller
             ->get();
         $param_location->data_static_messenger = $data_static_messenger;
 
+        $data_region = DB::table('provinsi')
+        ->select('provinsi.namaProvinsi as namaProvinsi')
+        ->get();
+        $param_location->data_region = $data_region;
+       
         return response()->json($param_location, 200);
     }
+
+
+
+
+
+     /**
+     * @OA\Get(
+     * path="/api/region",
+     * operationId="region",
+     * tags={"Location"},
+     * summary="Get Region",
+     * description="Get Region",
+     *  @OA\Parameter(
+     *     name="body",
+     *     in="path",
+     *     required=true,
+     *     @OA\JsonContent(
+     *        type="object",
+     *        @OA\Property(property="provinsi", type="text",example="ACEH"),
+     *     ),
+     * ),
+     *   @OA\Response(
+     *          response=201,
+     *          description="Get Data Location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Get Data Location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+    public function region(Request $request)
+    {
+
+        $request->validate([
+            'provinsi' => 'required|max:10000',
+        ]);
+
+         $data_region = DB::table('provinsi')
+            ->leftjoin('kabupaten', 'kabupaten.kodeProvinsi', '=', 'provinsi.kodeProvinsi')
+            ->leftjoin('kecamatan', 'kecamatan.kodeKabupaten', '=', 'kabupaten.kodeKabupaten')
+            ->leftjoin('kelurahan', 'kelurahan.kodeKecamatan', '=', 'kecamatan.kodeKecamatan')
+            ->select('provinsi.namaProvinsi as namaProvinsi',
+                    'kabupaten.namaKabupaten as namaKabupaten',
+                    'kecamatan.namaKecamatan as namaKecamatan',
+                    'kelurahan.namaKelurahan as namaKelurahan',)
+            ->where('provinsi.namaProvinsi', '=', $request->input('provinsi'))     
+            ->get();
+ 
+        return response()->json($data_region, 200);
+
+    }
+
 
 
  /**

@@ -79,7 +79,11 @@ class FasilitasController extends Controller
             ]);
 
 
-            DB::table('fasilitas')->insert([
+
+            $getvaluesp = strval(collect(DB::select('call generate_codeFacility'))[0]->randomString);
+
+             DB::table('fasilitas')->insert([
+                        'codeFasilitas' => $getvaluesp,
                         'fasilitasName' => $request->input('fasilitasName'),
                         'locationName' => $request->input('locationName'),
                         'capacity' => $request->input('capacity'),
@@ -88,7 +92,27 @@ class FasilitasController extends Controller
                         'description' => $request->input('description'),               
                         'isDeleted' => 0,
                     ]);
+            
+                foreach ($request->unit as $val) {
+                    $unitname = strval(array_keys($val)[0]);
 
+                   foreach ($val as $key=>$asd) {
+
+
+                    foreach ($asd as $columnval) {
+                        DB::table('fasilitas_unit')->insert([
+                            'codeFasilitas' => $getvaluesp,
+                            'unitName' => $unitname ,
+                            'status' => $columnval['status'],
+                            'notes' => $columnval['notes'],
+                            'isDeleted' => 0,
+                        ]); 
+                    }
+                 
+                 
+                   }
+                }
+             
             DB::commit();
 
             return ('SUCCESS');
@@ -263,7 +287,7 @@ class FasilitasController extends Controller
             // } 
        
        // $param_fasilitas->map_location = $map_location;
-echo($result );
+//echo($result );
        // return response()->json($param_fasilitas, 200);
     }
 

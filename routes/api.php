@@ -5,6 +5,7 @@ use App\Http\Controllers\DataStaticController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\FasilitasController;
+use App\Http\Controllers\ImportRegionController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -12,6 +13,7 @@ Route::post('register', [ApiController::class, 'register']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
 
+    Route::post('logout', [ApiController::class, 'logout']);
     Route::get('location', [LocationController::class, 'location']);
     Route::post('location', [LocationController::class, 'create']);
     Route::put('location', [LocationController::class, 'update']);
@@ -24,6 +26,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::delete('datastatic', [DataStaticController::class, 'datastaticlocation']);
     Route::post('uploadexceltest', [LocationController::class, 'uploadexceltest']);
 
+    Route::get('region', [LocationController::class, 'region']);
+    Route::post('upload', [ImportRegionController::class, 'upload']);
     Route::post('fasilitas', [FasilitasController::class, 'create']);
     Route::get('fasilitas', [FasilitasController::class, 'getheader']);
     Route::get('detailfasilitas', [FasilitasController::class, 'getdetail']);

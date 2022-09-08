@@ -179,6 +179,51 @@ class ApiController extends Controller
  
 
     
+
+/**
+     * @OA\Post(
+     * path="/api/logout",
+     * operationId="Logout Username",
+     * tags={"Logout Username"},
+     * summary="Logout",
+     * description="Logout RPC",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Logout User",
+     *        example = "Logout User",
+     *       value = {
+     *           "token":"",
+     *         },)),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"token"},
+     *               @OA\Property(property="token", type="text"),
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Login Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Login Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+
     public function logout(Request $request)
     {
         //valid credential
@@ -194,7 +239,7 @@ class ApiController extends Controller
 		//Request is validated, do logout        
         try {
             JWTAuth::invalidate($request->token);
- 
+            
             return response()->json([
                 'success' => true,
                 'message' => 'User has been logged out'

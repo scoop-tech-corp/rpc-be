@@ -13,15 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('fasilitas', function (Blueprint $table) {
+        Schema::create('fasilitas_unit', function (Blueprint $table) {
             $table->id();
             $table->string('codeFasilitas');
-            $table->string('fasilitasName');
-            $table->string('locationName');
-            $table->integer('capacity');
+            $table->string('unitName');
             $table->boolean('status');
-            $table->string('introduction')->nullable()->default(NULL);;
-            $table->string('description')->nullable()->default(NULL);;
+            $table->string('notes')->nullable()->default(NULL);;
             $table->boolean('isDeleted');
             $table->timestamps();
         });
@@ -34,6 +31,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('fasilitas');
+        Schema::dropIfExists('fasilitas_unit');
     }
 };
