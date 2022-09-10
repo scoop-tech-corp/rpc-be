@@ -233,35 +233,35 @@ class testing extends Seeder
 
         $fasilitas_unit = [
             [
+                'codeFasilitas' => 'XYZ123',
                 'unitName' => 'Unit Testing 1',
-                "fasilitasName"=> "Kandang Maxi",
                 "status"=> 1,
                 "notes"=> "Unit Testing 1.1",
-                "isdDeleted"=> 0,
+                "isDeleted"=> 0,
                 "created_at" => '2022-09-13',
             ],
             [
+                'codeFasilitas' => 'XYZ123',
                 'unitName' => 'Unit Testing 2',
-                "fasilitasName"=> "Kandang Maxi",
                 "status"=> 1,
                 "notes"=> "Unit Testing 1.2",
-                "isdDeleted"=> 0,
+                "isDeleted"=> 0,
                 "created_at" => '2022-09-13',
             ],
             [
+                'codeFasilitas' => 'XYZ123',
                 'unitName' => 'Unit Testing 3',
-                "fasilitasName"=> "Kandang Maxi",
                 "status"=> 1,
                 "notes"=> "Unit Testing 3",
-                "isdDeleted"=> 0,
+                "isDeleted"=> 0,
                 "created_at" => '2022-09-13',
             ],
             [
+                'codeFasilitas' => 'XYZ123',
                 'unitName' => 'Unit Testing 4',
-                "fasilitasName"=> "Kandang Maxi",
                 "status"=> 1,
                 "notes"=> "Unit Testing 4",
-                "isdDeleted"=> 0,
+                "isDeleted"=> 0,
                 "created_at" => '2022-09-13',
             ],
 
@@ -271,3 +271,4 @@ class testing extends Seeder
 
     }
 }
+
