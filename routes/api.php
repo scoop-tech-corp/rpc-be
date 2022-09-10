@@ -30,7 +30,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('upload', [ImportRegionController::class, 'upload']);
     Route::post('fasilitas', [FasilitasController::class, 'create']);
     Route::get('fasilitas', [FasilitasController::class, 'getheader']);
-    Route::get('detailfasilitas', [FasilitasController::class, 'getdetail']);
+    Route::get('detailfasilitas', [FasilitasController::class, 'fasilitasdetail']);
     
 
 

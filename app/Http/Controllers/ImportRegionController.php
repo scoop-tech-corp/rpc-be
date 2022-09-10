@@ -13,7 +13,59 @@ use Maatwebsite\Excel\Facades\Excel;
 class ImportRegionController extends Controller
 {
   
-
+/**
+     * @OA\Post(
+     * path="/api/upload",
+     * operationId="Bulk Insert Region",
+     * tags={"Bulk Mapping Region"},
+     * summary="Notes: Upload mapping data only need to execute once",
+     * description="The data is way to huge to put in seeder, and data raw it self already represent as CSV<br>
+     *              so data already delimeted to column and save as .xlsx ( you can find the file in the folder<br>
+     *              Filemapping, except for kelurahan, the data is around 80.000 so it take lot of time to bulk<br>
+     *              already tried to partition but still didn't work) ",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Bulk Insert Mapping Region",
+     *        example = "Bulk Insert Mapping Region include : provinsi, kecamatan, kabupaten, kelurahan",
+     *          value = {
+     *          "provinsi": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Provinsi.xlsx",
+     *          "kecamatan": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Kecamatan.xlsx",
+     *          "kabupaten": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Kabupaten.xlsx",
+     *          "kelurahan": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Kelurahan.xlsx",
+     *           },
+     *          )),
+     *         @OA\MediaType(
+     *            mediaType="multipart/form-data",
+     *            @OA\Schema(
+     *               type="object",
+     *               required={"provinsi","kecamatan","kabupaten","kelurahan"},
+     *               @OA\Property(property="provinsi", type="text"),
+     *               @OA\Property(property="kecamatan", type="text"),
+     *               @OA\Property(property="kabupaten", type="integer"),
+     *               @OA\Property(property="kelurahan", type="integer"),
+     *            ),
+     *        ),
+     *    ),
+     *      @OA\Response(
+     *          response=201,
+     *          description="Register Fasilitas Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Register Fasilitas Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */ 
     public function upload(Request $request)
     {
 
@@ -25,6 +77,7 @@ class ImportRegionController extends Controller
             ]);
 
         try{
+             set_time_limit(500);
 
              if ($request->input('provinsi'))
                 Excel::import(new RegionImport, $request->input('provinsi'));

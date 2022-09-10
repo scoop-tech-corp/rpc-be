@@ -219,6 +219,55 @@ class testing extends Seeder
         ];
         DB::table('location_telepon')->insert($telepon); 
 
+        DB::table('fasilitas')->insert([
+            'codeFasilitas' => 'XYZ123',
+            "fasilitasName"=> "Kandang Maxi",
+            "locationName"=> "RPC Permata Hijau Pekanbaru",
+            "capacity"=> 1,
+            "status"=> 1,
+            "introduction"=> "Kandang maxi Extra bed for you love pet",
+            "description"=> "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
+            "isdDeleted"=> 0,
+            "created_at" => '2022-08-30',
+        ]);
+
+        $fasilitas_unit = [
+            [
+                'unitName' => 'Unit Testing 1',
+                "fasilitasName"=> "Kandang Maxi",
+                "status"=> 1,
+                "notes"=> "Unit Testing 1.1",
+                "isdDeleted"=> 0,
+                "created_at" => '2022-09-13',
+            ],
+            [
+                'unitName' => 'Unit Testing 2',
+                "fasilitasName"=> "Kandang Maxi",
+                "status"=> 1,
+                "notes"=> "Unit Testing 1.2",
+                "isdDeleted"=> 0,
+                "created_at" => '2022-09-13',
+            ],
+            [
+                'unitName' => 'Unit Testing 3',
+                "fasilitasName"=> "Kandang Maxi",
+                "status"=> 1,
+                "notes"=> "Unit Testing 3",
+                "isdDeleted"=> 0,
+                "created_at" => '2022-09-13',
+            ],
+            [
+                'unitName' => 'Unit Testing 4',
+                "fasilitasName"=> "Kandang Maxi",
+                "status"=> 1,
+                "notes"=> "Unit Testing 4",
+                "isdDeleted"=> 0,
+                "created_at" => '2022-09-13',
+            ],
+
+        ];
+        DB::table('fasilitas_unit')->insert($fasilitas_unit); 
+
 
     }
 }
