@@ -9,60 +9,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class FasilitasController extends Controller
 {
-  /**
-     * @OA\Post(
-     * path="/api/fasilitas",
-     * operationId="Insert Fasilitas",
-     * tags={"Fasilitas"},
-     * summary="Insert Fasilitas",
-     * description="Insert Fasilitas",
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(* @OA\Examples(
-     *        summary="Insert Fasilitas",
-     *        example = "Insert Fasilitas",
-     *          value = {
-     *          "fasilitasName": "Kandang Maxi",
-     *          "locationName": "RPC Permata Hijau Pekanbaru",
-     *          "capacity": 1,
-     *          "status": 1,
-     *          "introduction": "Kandang maxi Extra bed for you love pet",
-     *          "description" : "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever"
-     *           },
-     *          )),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               required={"fasilitasName","locationName","capacity","status","introduction","description"},
-     *               @OA\Property(property="fasilitasName", type="text"),
-     *               @OA\Property(property="locationName", type="text"),
-     *               @OA\Property(property="capacity", type="integer"),
-     *               @OA\Property(property="status", type="integer"),
-     *               @OA\Property(property="introduction", type="text"),
-     *               @OA\Property(property="description", type="text"),
-     *            ),
-     *        ),
-     *    ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="Register Fasilitas Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Register Fasilitas Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */ 
+  
     public function create(Request $request)
     {
         DB::beginTransaction();
@@ -176,6 +123,7 @@ class FasilitasController extends Controller
         
         $data = DB::table('fasilitas')
             ->select('fasilitas.id as id',
+                'fasilitas.codeFasilitas as codeFasilitas',
                 'fasilitas.fasilitasName as fasilitasName',
                 'fasilitas.locationName as locationName',
                 'fasilitas.capacity as capacity',
@@ -260,35 +208,42 @@ class FasilitasController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getdetail(Request $request)
+    public function fasilitasdetail(Request $request)
     {
+        $request->validate([
+             'codeFasilitas' => 'required|string|max:8',
+        ]);
 
-        $id = $request->input('id');
+        $codeFasilitas = $request->input('codeFasilitas');
 
         $param_fasilitas = DB::table('fasilitas')
             ->select('fasilitas.id as id',
+                'fasilitas.codeFasilitas as codeFasilitas',
                 'fasilitas.fasilitasName as fasilitasName',
                 'fasilitas.locationName as locationName',
                 'fasilitas.capacity as capacity',
                 'fasilitas.status as status',)
-            ->where('fasilitas.id', '=', $id)
+            ->where('fasilitas.codeFasilitas', '=', $codeFasilitas)
             ->first();
   
-        $map_location = DB::table('location')
-            ->select('location.locationName as locationName')
+        $fasilitas_unit = DB::table('fasilitas_unit')
+            ->select('fasilitas_unit.unitName as unitName',
+                     'fasilitas_unit.notes as notes',)
+            ->where('fasilitas_unit.codeFasilitas', '=', $codeFasilitas)
             ->get();
 
-            $result = json_decode($map_location, true);
-          
-          // echo($result('locationName')[0]);
-          // echo($result[0]('locationName'));
-          // foreach ($request->operational_days as $val) {
-                
-            // } 
-       
-       // $param_fasilitas->map_location = $map_location;
-//echo($result );
-       // return response()->json($param_fasilitas, 200);
+        if ($fasilitas_unit != null) {
+            $param_fasilitas->unit = $fasilitas_unit;
+        }
+
+        // $map_location = DB::table('location')
+        //     ->select('location.locationName as locationName')
+        //     ->get();
+
+        // $result = json_decode($map_location, true);
+     
+        return response()->json($param_fasilitas, 200);
+            
     }
 
 

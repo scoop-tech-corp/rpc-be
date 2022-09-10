@@ -552,104 +552,6 @@
                         "apiAuth": []
                     }
                 ]
-            },
-            "post": {
-                "tags": [
-                    "Fasilitas"
-                ],
-                "summary": "Insert Fasilitas",
-                "description": "Insert Fasilitas",
-                "operationId": "Insert Fasilitas",
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "required": [
-                                    "fasilitasName",
-                                    "locationName",
-                                    "capacity",
-                                    "status",
-                                    "introduction",
-                                    "description"
-                                ],
-                                "properties": {
-                                    "fasilitasName": {
-                                        "type": "text"
-                                    },
-                                    "locationName": {
-                                        "type": "text"
-                                    },
-                                    "capacity": {
-                                        "type": "integer"
-                                    },
-                                    "status": {
-                                        "type": "integer"
-                                    },
-                                    "introduction": {
-                                        "type": "text"
-                                    },
-                                    "description": {
-                                        "type": "text"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        },
-                        "application/json": {
-                            "schema": {},
-                            "examples": {
-                                "Insert Fasilitas": {
-                                    "summary": "Insert Fasilitas",
-                                    "value": {
-                                        "fasilitasName": "Kandang Maxi",
-                                        "locationName": "RPC Permata Hijau Pekanbaru",
-                                        "capacity": 1,
-                                        "status": 1,
-                                        "introduction": "Kandang maxi Extra bed for you love pet",
-                                        "description": "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Register Fasilitas Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "Register Fasilitas Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request"
-                    },
-                    "404": {
-                        "description": "Resource Not Found"
-                    }
-                },
-                "security": [
-                    {
-                        "apiAuth": []
-                    }
-                ]
             }
         },
         "/api/detailfasilitas": {
@@ -691,6 +593,96 @@
                     },
                     "200": {
                         "description": "Get Data Location Detail Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/upload": {
+            "post": {
+                "tags": [
+                    "Bulk Mapping Region"
+                ],
+                "summary": "Notes: Upload mapping data only need to execute once",
+                "description": "The data is way to huge to put in seeder, and data raw it self already represent as CSV<br>\n     *              so data already delimeted to column and save as .xlsx ( you can find the file in the folder<br>\n     *              Filemapping, except for kelurahan, the data is around 80.000 so it take lot of time to bulk<br>\n     *              already tried to partition but still didn't work) ",
+                "operationId": "Bulk Insert Region",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "provinsi",
+                                    "kecamatan",
+                                    "kabupaten",
+                                    "kelurahan"
+                                ],
+                                "properties": {
+                                    "provinsi": {
+                                        "type": "text"
+                                    },
+                                    "kecamatan": {
+                                        "type": "text"
+                                    },
+                                    "kabupaten": {
+                                        "type": "integer"
+                                    },
+                                    "kelurahan": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Bulk Insert Mapping Region include : provinsi, kecamatan, kabupaten, kelurahan": {
+                                    "summary": "Bulk Insert Mapping Region",
+                                    "value": {
+                                        "provinsi": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Provinsi.xlsx",
+                                        "kecamatan": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kecamatan.xlsx",
+                                        "kabupaten": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kabupaten.xlsx",
+                                        "kelurahan": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kelurahan.xlsx"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Register Fasilitas Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Register Fasilitas Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
