@@ -39,10 +39,10 @@ class ImportRegionController extends Controller
      *            @OA\Schema(
      *               type="object",
      *               required={"provinsi","kecamatan","kabupaten","kelurahan"},
-     *               @OA\Property(property="provinsi", type="text"),
-     *               @OA\Property(property="kecamatan", type="text"),
-     *               @OA\Property(property="kabupaten", type="integer"),
-     *               @OA\Property(property="kelurahan", type="integer"),
+     *               @OA\Property(property="provinsi", type="file"),
+     *               @OA\Property(property="kecamatan", type="file"),
+     *               @OA\Property(property="kabupaten", type="file"),
+     *               @OA\Property(property="kelurahan", type="file"),
      *            ),
      *        ),
      *    ),
@@ -69,29 +69,40 @@ class ImportRegionController extends Controller
     public function upload(Request $request)
     {
 
-            $request->validate([
-                'provinsi' => 'required|max:10000',
-                'kecamatan' => 'required|max:10000',
-                'kabupaten' => 'required|max:10000',
-                'kelurahan' => 'required|max:10000',
-            ]);
+            // $request->validate([
+            //     'provinsi' => 'required|max:10000',
+            //     'kecamatan' => 'required|max:10000',
+            //     'kabupaten' => 'required|max:10000',
+            //     'kelurahan' => 'required|max:10000',
+            // ]);
 
         try{
-             set_time_limit(500);
+            // set_time_limit(500);
 
-             if ($request->input('provinsi'))
-                Excel::import(new RegionImport, $request->input('provinsi'));
+            //  if('csv' == $request->input('extention')) {     
+            //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
+            //   } else if('xls' == $request->input('extention')) {     
+            //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xls();
+            //   } else     
+            //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
 
-            if ($request->input('kecamatan'))
-                Excel::import(new KecamatanImport, $request->input('kecamatan'));
+            //  if ($request->input('provinsi'))
+            //     Excel::import(new RegionImport, $request->input('provinsi'));
 
-             if ($request->input('kabupaten'))
-               Excel::import(new KabupatenImport, $request->input('kabupaten'));
+            // if ($request->input('kecamatan'))
+            //     Excel::import(new KecamatanImport, $request->input('kecamatan'));
 
-            if ($request->input('kelurahan'))
-               Excel::import(new KelurahanImport, $request->input('kelurahan'));
+            //  if ($request->input('kabupaten'))
+            //    Excel::import(new KabupatenImport, $request->input('kabupaten'));
 
-            
+            // if ($request->input('kelurahan'))
+            //    Excel::import(new KelurahanImport, $request->input('kelurahan'));
+
+            Excel::import(new RegionImport, $request->file('provinsi')->store('provinsi'));
+            Excel::import(new KecamatanImport, $request->file('kecamatan')->store('kecamatan'));
+            Excel::import(new KabupatenImport, $request->file('kabupaten')->store('kabupaten'));
+
+
               return 'SUCCESS';
 
 

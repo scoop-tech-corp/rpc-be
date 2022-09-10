@@ -641,16 +641,16 @@
                                 ],
                                 "properties": {
                                     "provinsi": {
-                                        "type": "text"
+                                        "type": "file"
                                     },
                                     "kecamatan": {
-                                        "type": "text"
+                                        "type": "file"
                                     },
                                     "kabupaten": {
-                                        "type": "integer"
+                                        "type": "file"
                                     },
                                     "kelurahan": {
-                                        "type": "integer"
+                                        "type": "file"
                                     }
                                 },
                                 "type": "object"
