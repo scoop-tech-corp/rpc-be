@@ -160,10 +160,85 @@
                 }
             }
         },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Logout Username"
+                ],
+                "summary": "Logout",
+                "description": "Logout RPC",
+                "operationId": "Logout Username",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "type": "text"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Logout User": {
+                                    "summary": "Logout User",
+                                    "value": {
+                                        "token": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Login Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Login Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
         "/api/datastaticlocation": {
             "delete": {
                 "tags": [
-                    "Delete Data Static Location"
+                    "Data Static"
                 ],
                 "summary": "Delete Data Static Location",
                 "description": "Delete data static here , need id data static",
@@ -238,7 +313,7 @@
         "/api/datastatic": {
             "get": {
                 "tags": [
-                    "Get Data Static"
+                    "Data Static"
                 ],
                 "summary": "Get Data Static",
                 "description": "Get Data Static",
@@ -316,16 +391,342 @@
                         "apiAuth": []
                     }
                 ]
+            },
+            "post": {
+                "tags": [
+                    "Location"
+                ],
+                "summary": "Insert Data Static",
+                "description": "Insert Data Static",
+                "operationId": "Insert Data Static",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "keyword",
+                                    "name"
+                                ],
+                                "properties": {
+                                    "keyword": {
+                                        "type": "text"
+                                    },
+                                    "name": {
+                                        "type": "text"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Insert Data Static": {
+                                    "summary": "Insert Data static",
+                                    "value": {
+                                        "keyword": "Pemakaian",
+                                        "name": "Sharing Account"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Register Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Register Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
             }
         },
-        "/api/deletecontactlocation": {
+        "/api/fasilitas": {
+            "get": {
+                "tags": [
+                    "Fasilitas"
+                ],
+                "summary": "Get Fasilitas",
+                "description": "get Fasilitas",
+                "operationId": "fasilitas",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "orderby": {
+                                            "type": "text",
+                                            "example": "asc"
+                                        },
+                                        "column": {
+                                            "type": "text",
+                                            "example": "fasilitasName"
+                                        },
+                                        "keyword": {
+                                            "type": "text",
+                                            "example": "RPC"
+                                        },
+                                        "page": {
+                                            "type": "number",
+                                            "example": "1"
+                                        },
+                                        "total_per_page": {
+                                            "type": "number",
+                                            "example": "5"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data Location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Fasilitas"
+                ],
+                "summary": "Insert Fasilitas",
+                "description": "Insert Fasilitas",
+                "operationId": "Insert Fasilitas",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "fasilitasName",
+                                    "locationName",
+                                    "capacity",
+                                    "status",
+                                    "introduction",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "fasilitasName": {
+                                        "type": "text"
+                                    },
+                                    "locationName": {
+                                        "type": "text"
+                                    },
+                                    "capacity": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "integer"
+                                    },
+                                    "introduction": {
+                                        "type": "text"
+                                    },
+                                    "description": {
+                                        "type": "text"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Insert Fasilitas": {
+                                    "summary": "Insert Fasilitas",
+                                    "value": {
+                                        "fasilitasName": "Kandang Maxi",
+                                        "locationName": "RPC Permata Hijau Pekanbaru",
+                                        "capacity": 1,
+                                        "status": 1,
+                                        "introduction": "Kandang maxi Extra bed for you love pet",
+                                        "description": "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Register Fasilitas Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Register Fasilitas Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/detailfasilitas": {
+            "get": {
+                "tags": [
+                    "Fasilitas"
+                ],
+                "summary": "Get Fasilitas Detail",
+                "description": "Get Fasilitas Detail",
+                "operationId": "detailfasilitas",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "text",
+                                            "example": "1"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data Location Detail Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Location Detail Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/contactlocation": {
             "delete": {
                 "tags": [
-                    "Delete Contact Location"
+                    "Location"
                 ],
                 "summary": "Delete Contact Location",
                 "description": "Delete Contact Location , ex: email, messenger, operational(each represent column table, ex: email->location_email)",
-                "operationId": "deletecontactlocation",
+                "operationId": "Delete Contact Location",
                 "requestBody": {
                     "content": {
                         "multipart/form-data": {
@@ -394,42 +795,53 @@
                 ]
             }
         },
-        "/api/deletelocation": {
-            "delete": {
+        "/api/location": {
+            "get": {
                 "tags": [
                     "Location"
                 ],
-                "summary": "Delete Location",
-                "description": "Delete Location , by delete location will update status isDeleted into 1)",
-                "operationId": "deletelocation",
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "properties": {
-                                    "id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        },
-                        "application/json": {
-                            "schema": {},
-                            "examples": {
-                                "Delete Location": {
-                                    "summary": "Delete Location",
-                                    "value": {
-                                        "id": 1
-                                    }
+                "summary": "Get Location",
+                "description": "get Location",
+                "operationId": "location",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "orderby": {
+                                            "type": "text",
+                                            "example": "asc"
+                                        },
+                                        "column": {
+                                            "type": "text",
+                                            "example": "codeLocation, locationName, isBranch, status, introduction"
+                                        },
+                                        "keyword": {
+                                            "type": "text",
+                                            "example": "Jakarta"
+                                        },
+                                        "page": {
+                                            "type": "number",
+                                            "example": "1"
+                                        },
+                                        "total_per_page": {
+                                            "type": "number",
+                                            "example": "5"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     }
-                },
+                ],
                 "responses": {
                     "201": {
-                        "description": "Delete location Successfully",
+                        "description": "Get Data Location Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -437,7 +849,7 @@
                         }
                     },
                     "200": {
-                        "description": "Delete location Successfully",
+                        "description": "Get Data Location Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -464,9 +876,7 @@
                         "apiAuth": []
                     }
                 ]
-            }
-        },
-        "/api/updatelocation": {
+            },
             "put": {
                 "tags": [
                     "Location"
@@ -623,9 +1033,7 @@
                         "apiAuth": []
                     }
                 ]
-            }
-        },
-        "/api/insertlocation": {
+            },
             "post": {
                 "tags": [
                     "Location"
@@ -780,55 +1188,42 @@
                         "apiAuth": []
                     }
                 ]
-            }
-        },
-        "/api/location": {
-            "get": {
+            },
+            "delete": {
                 "tags": [
                     "Location"
                 ],
-                "summary": "Get Location",
-                "description": "get Location",
-                "operationId": "location",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "path",
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "orderby": {
-                                            "type": "text",
-                                            "example": "asc"
-                                        },
-                                        "column": {
-                                            "type": "text",
-                                            "example": "codeLocation, locationName, isBranch, status, introduction"
-                                        },
-                                        "keyword": {
-                                            "type": "text",
-                                            "example": "Jakarta"
-                                        },
-                                        "page": {
-                                            "type": "number",
-                                            "example": "1"
-                                        },
-                                        "total_per_page": {
-                                            "type": "number",
-                                            "example": "5"
-                                        }
-                                    },
-                                    "type": "object"
+                "summary": "Delete Location",
+                "description": "Delete Location , by delete location will update status isDeleted into 1)",
+                "operationId": "delete location",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Delete Location": {
+                                    "summary": "Delete Location",
+                                    "value": {
+                                        "id": 1
+                                    }
                                 }
                             }
                         }
                     }
-                ],
+                },
                 "responses": {
                     "201": {
-                        "description": "Get Data Location Successfully",
+                        "description": "Delete location Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -836,7 +1231,7 @@
                         }
                     },
                     "200": {
-                        "description": "Get Data Location Successfully",
+                        "description": "Delete location Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -865,14 +1260,14 @@
                 ]
             }
         },
-        "/api/locationdetail": {
+        "/api/detaillocation": {
             "get": {
                 "tags": [
                     "Location"
                 ],
                 "summary": "Get Location detail",
                 "description": "get Location detail",
-                "operationId": "locationdetail",
+                "operationId": "detaillocation",
                 "parameters": [
                     {
                         "name": "body",
@@ -904,6 +1299,73 @@
                     },
                     "200": {
                         "description": "Get Data Location Detail Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/region": {
+            "get": {
+                "tags": [
+                    "Location"
+                ],
+                "summary": "Get Region",
+                "description": "Get Region",
+                "operationId": "region",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "provinsi": {
+                                            "type": "text",
+                                            "example": "ACEH"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data Location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Location Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
