@@ -227,7 +227,7 @@ class testing extends Seeder
             "status"=> 1,
             "introduction"=> "Kandang maxi Extra bed for you love pet",
             "description"=> "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
-            "isdDeleted"=> 0,
+            "isDeleted"=> 0,
             "created_at" => '2022-08-30',
         ]);
 
