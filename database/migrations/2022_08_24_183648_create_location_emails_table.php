@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('location_email', function (Blueprint $table) {
             $table->id();
-            $table->string('codeLocation');
+            $table->string('kodeLokasi');
             $table->string('pemakaian');
             $table->string('namaPengguna');
             $table->string('tipe');

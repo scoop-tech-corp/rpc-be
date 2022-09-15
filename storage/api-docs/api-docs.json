@@ -1056,49 +1056,79 @@
                                 "Insert Location": {
                                     "summary": "Insert Location",
                                     "value": {
-                                        "locationName": "RPC Permata Hijau Pekanbaru",
-                                        "isBranch": "0",
-                                        "status": "1",
-                                        "introduction": "RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
-                                        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
-                                        "image": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijau.jpg",
-                                        "imageTitle": "ImageRPCPermataHijau.jpg",
-                                        "alamat_location": [
+                                        "namaLokasi": "RPC Permata Hijau Pekanbaru",
+                                        "branch": 0,
+                                        "status": 1,
+                                        "introduksi": "RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
+                                        "deskripsi": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+                                        "gambar": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijau.jpg",
+                                        "judulGambar": "ImageRPCPermataHijau.jpg",
+                                        "alamatLokasi": [
                                             {
                                                 "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
                                                 "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-                                                "kotaID": "Jakarta Barat",
-                                                "provinsiID": "Kemanggisan",
+                                                "namaKota": "Jakarta Barat",
+                                                "namaProvinsi": "DKI Jakarta",
+                                                "namaKecamatan": "Palmerah",
                                                 "kodePos": "11480",
                                                 "negara": "Indonesia",
-                                                "parkir": "Yes",
+                                                "parkir": 1,
                                                 "pemakaian": "Indekos"
+                                            },
+                                            {
+                                                "alamatJalan": "Jalan Gang Keluarga no 12 c Palmerah Barat no 206 Jakarta Barat 11480",
+                                                "infoTambahan": "Didepan warteg kemuning",
+                                                "namaKota": "Jakarta Barat",
+                                                "namaProvinsi": "DKI Jakarta",
+                                                "namaKecamatan": "Palmerah",
+                                                "kodePos": "11480",
+                                                "negara": "Indonesia",
+                                                "parkir": 0,
+                                                "pemakaian": "Utama"
                                             }
                                         ],
-                                        "operational_days": [
+                                        "waktuOperational": [
                                             {
-                                                "days_name": "Monday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "hari": "Monday",
+                                                "dariJam": "",
+                                                "sampaiJam": "",
+                                                "tiapHari": 1
                                             },
                                             {
-                                                "days_name": "Monday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "hari": "Tuesday",
+                                                "dariJam": "",
+                                                "sampaiJam": "",
+                                                "tiapHari": 1
                                             },
                                             {
-                                                "days_name": "Tuesday",
-                                                "from_time": "12:00PM",
-                                                "to_time": "13:00PM",
-                                                "all_day": 1
+                                                "hari": "Wednesday",
+                                                "dariJam": "",
+                                                "sampaiJam": "",
+                                                "tiapHari": 1
                                             },
                                             {
-                                                "days_name": "Wednesday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "hari": "Thursday",
+                                                "dariJam": "",
+                                                "sampaiJam": "",
+                                                "tiapHari": 1
+                                            },
+                                            {
+                                                "hari": "Friday",
+                                                "dariJam": "",
+                                                "sampaiJam": "",
+                                                "tiapHari": 1
+                                            },
+                                            {
+                                                "hari": "Saturday",
+                                                "dariJam": "",
+                                                "sampaiJam": "",
+                                                "tiapHari": 1
+                                            },
+                                            {
+                                                "hari": "Sunday",
+                                                "dariJam": "",
+                                                "sampaiJam": "",
+                                                "tiapHari": 1
                                             }
                                         ],
                                         "messenger": [

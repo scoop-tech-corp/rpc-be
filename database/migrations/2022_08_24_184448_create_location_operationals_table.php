@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('location_operational', function (Blueprint $table) {
             $table->id();
-            $table->string('codeLocation');
-            $table->string('days_name');
-            $table->string('from_time');
-            $table->string('to_time');
-            $table->boolean('all_day');
+            $table->string('kodeLokasi');
+            $table->string('hari');
+            $table->string('dariJam')->nullable()->default(NULL);
+            $table->string('sampaiJam')->nullable()->default(NULL);
+            $table->boolean('tiapHari');
             $table->timestamps();
 
         });

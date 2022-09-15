@@ -14,8 +14,10 @@ Route::post('register', [ApiController::class, 'register']);
 Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::post('logout', [ApiController::class, 'logout']);
-    Route::get('location', [LocationController::class, 'location']);
     Route::post('location', [LocationController::class, 'create']);
+
+    Route::get('location', [LocationController::class, 'location']);
+    
     Route::put('location', [LocationController::class, 'update']);
     Route::get('detaillocation', [LocationController::class, 'locationdetail']);
     Route::delete("location", [LocationController::class, "deletecontactlocation"]);
