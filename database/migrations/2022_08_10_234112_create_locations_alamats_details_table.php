@@ -15,31 +15,17 @@ return new class extends Migration
     {
         Schema::create('location_alamat_detail', function (Blueprint $table) {
             $table->id();
-            $table->string('kodeLokasi');
+            $table->string('codeLocation');
             $table->string('alamatJalan');
             $table->string('infoTambahan');
-            $table->string('namaKota');
-            $table->string('namaProvinsi');
-            $table->string('namaKecamatan');
+            $table->string('kotaID');
+            $table->string('provinsiID');
             $table->string('kodePos');
             $table->string('negara');
             $table->string('parkir');
-            $table->boolean('isDeleted');
+            $table->string('isDeleted');
             $table->string('pemakaian');
             $table->timestamps();
-
-            // $table->id();
-            // $table->string('codeLocation');
-            // $table->string('alamatJalan');
-            // $table->string('infoTambahan');
-            // $table->string('kotaID');
-            // $table->string('provinsiID');
-            // $table->string('kodePos');
-            // $table->string('negara');
-            // $table->string('parkir');
-            // $table->string('isDeleted');
-            // $table->string('pemakaian');
-            // $table->timestamps();
         });
     }
 

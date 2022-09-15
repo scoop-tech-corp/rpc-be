@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('location_telepon', function (Blueprint $table) {
             $table->id();
-            $table->string('kodeLokasi');
+            $table->string('codeLocation');
             $table->string('pemakaian');
             $table->string('nomorTelepon');
             $table->string('tipe');

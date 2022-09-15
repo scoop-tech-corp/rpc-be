@@ -455,119 +455,91 @@ class LocationController extends Controller
      *        summary="Insert Location",
      *        example = "Insert Location",
      *value = {
-    *	"namaLokasi": "RPC Permata Hijau Pekanbaru",
-    *   "branch": 0,
-    *   "status": 1,
-    *   "introduksi":"RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
-    *   "deskripsi":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
-    *   "gambar":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
-    *   "judulGambar":"ImageRPCPermataHijau.jpg",
-    *   "alamatLokasi":{
-    *			{
-    *               "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-    *               "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-    *               "namaKota": "Jakarta Barat",
-    *               "namaProvinsi": "DKI Jakarta",
-    *               "namaKecamatan": "Palmerah",
-    *				"kodePos": "11480",
-    *               "negara": "Indonesia",
-    *               "parkir": 1,
-    *               "pemakaian": "Indekos"
-    *           }, 
-    *			{
-    *               "alamatJalan": "Jalan Gang Keluarga no 12 c Palmerah Barat no 206 Jakarta Barat 11480",
-    *               "infoTambahan": "Didepan warteg kemuning",
-    *               "namaKota": "Jakarta Barat",
-    *               "namaProvinsi": "DKI Jakarta",
-    *               "namaKecamatan": "Palmerah",
-    *				"kodePos": "11480",
-    *               "negara": "Indonesia",
-    *               "parkir": 0,
-    *               "pemakaian": "Utama"
-    *           }, 
-    *       },
-    *		
-    *	"waktuOperational": {
-    *							{
-    *								"hari": "Monday",
-    *								"dariJam": "",
-    *								"sampaiJam": "",
-    *								"tiapHari": 1
-    *							}, 
-    *							{
-    *								"hari": "Tuesday",
-    *								"dariJam": "",
-    *								"sampaiJam": "",
-    *								"tiapHari": 1
-    *							},
-    *							{
-    *								"hari": "Wednesday",
-    *								"dariJam": "",
-    *								"sampaiJam": "",
-    *								"tiapHari": 1
-    *							},
-    *							{
-    *								"hari": "Thursday",
-    *								"dariJam": "",
-    *								"sampaiJam": "",
-    *								"tiapHari": 1
-    *							},
-    *							{
-    *								"hari": "Friday",
-    *								"dariJam": "",
-    *								"sampaiJam": "",
-    *								"tiapHari": 1
-    *							},
-    *							{
-    *								"hari": "Saturday",
-    *								"dariJam": "",
-    *								"sampaiJam": "",
-    *								"tiapHari": 1
-    *							},
-    *							{
-    *								"hari": "Sunday",
-    *								"dariJam": "",
-    *								"sampaiJam": "",
-    *								"tiapHari": 1
-    *							},
-    *						
-    *						},
-    *	"messenger":{
-    *					{
-    *						"pemakaian":"Utama",
-    *						"namaMessenger":"(021) 3851185",
-    *						"tipe":"Fax"
-    *					},
-    *					{
-    *						"pemakaian":"Utama",
-    *						"namaMessenger":"(021) 012345678",
-    *						"tipe":"Office"
-    *					}
-    *				},
-    *   "email":{	
-    *				{
-    *					"pemakaian":"Utama",
-    *					"namaPengguna":"wahyudidanny23@gmail.com",
-    *					"tipe":"Personal"
-    *				}, 
-    *				{
-    *					"pemakaian":"Secondary",
-    *					"namaPengguna":"wahyudidanny25@gmail.com",
-    *					"tipe":"Personal"
-    *				}
-    *			},
-    *   "telepon":{
-    *				{
-    *					"pemakaian":"Utama",
-    *					"nomorTelepon":"087888821648",
-    *					"tipe":"Telepon Selular"
-    *				}, 
-    *				{
-    *					"pemakaian":"Secondary",
-    *					"nomorTelepon":"085265779499",
-    *					"tipe":"Whatshapp"
-    *				}
-    *			}
+     *    "locationName": "RPC Permata Hijau Pekanbaru",
+     *    "isBranch": "0",
+     *    "status": "1",
+     *    "introduction":"RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
+     *    "description":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+     *    "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
+     *    "imageTitle":"ImageRPCPermataHijau.jpg",
+     *    "alamat_location":{
+     *        {
+     *                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+     *                "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+     *                "kotaID": "Jakarta Barat",
+     *                "provinsiID": "Kemanggisan",
+     *                "kodePos": "11480",
+     *                "negara": "Indonesia",
+     *                "parkir": "Yes",
+     *                "pemakaian": "Indekos"
+     *            }
+     *        },
+     *    "operational_days":
+     *        {
+     *            {
+     *
+     *            "days_name": "Monday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Monday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Tuesday",
+     *            "from_time": "12:00PM",
+     *            "to_time": "13:00PM",
+     *            "all_day": 1
+     *        },
+     *        {
+     *            "days_name": "Wednesday",
+     *            "from_time": "10:00PM",
+     *            "to_time": "10:00PM",
+     *            "all_day": 1
+     *        }
+     *        },
+     *        "messenger":
+     *        {
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaMessenger":"(021) 3851185",
+     *            "tipe":"Fax"
+     *            },
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaMessenger":"(021) 012345678",
+     *            "tipe":"Office"
+     *            }
+     *        },
+     *        "email":{
+     *
+     *            {
+     *            "pemakaian":"Utama",
+     *            "namaPengguna":"wahyudidanny23@gmail.com",
+     *            "tipe":"Personal"
+     *            },
+     *            {
+     *            "pemakaian":"Secondary",
+     *            "namaPengguna":"wahyudidanny25@gmail.com",
+     *            "tipe":"Personal"
+     *            }
+     *    },
+     *        "telepon":{
+     *            {
+     *            "pemakaian":"Utama",
+     *            "nomorTelepon":"087888821648",
+     *            "tipe":"Telepon Selular"
+     *            },
+     *            {
+     *            "pemakaian":"Secondary",
+     *            "nomorTelepon":"085265779499",
+     *            "tipe":"Whatshapp"
+     *            }
+     *    }
      * },
      *          )),
      *         @OA\MediaType(
@@ -607,55 +579,50 @@ class LocationController extends Controller
         try
         {
 
-            info($request);
-
             $getvaluesp = strval(collect(DB::select('call generate_codeLocation'))[0]->randomString);
 
             $request->validate([
-                'namaLokasi' => 'required|max:255',
-                'branch' => 'required',
+                'locationName' => 'required|max:255',
+                'isBranch' => 'required',
                 'status' => 'required',
-                'introduksi' => 'required',
-                'deskripsi' => 'required',
-                'gambar' => 'required',
+                'introduction' => 'required',
+                'description' => 'required',
+                'image' => 'required',
             ]);
 
             DB::table('location')->insert([
-                'kodeLokasi' => $getvaluesp,
-                'namaLokasi' => $request->input('namaLokasi'),
-                'branch' => $request->input('branch'),
+                'codeLocation' => $getvaluesp,
+                'locationName' => $request->input('locationName'),
+                'isBranch' => $request->input('isBranch'),
                 'status' => $request->input('status'),
-                'introduksi' => $request->input('introduksi'),
-                'deskripsi' => $request->input('deskripsi'),
-                'gambar' => $request->input('gambar'),
-                'judulGambar' => $request->input('judulGambar'),
+                'introduction' => $request->input('introduction'),
+                'description' => $request->input('description'),
+                'image' => $request->input('image'),
+                'imageTitle' => $request->input('imageTitle'),
                 'isDeleted' => 0,
             ]);
 
-            foreach ($request->alamatLokasi as $val) {
-               DB::table('location_alamat_detail')->insert([
-                    'kodeLokasi' => $getvaluesp,
-                    'alamatJalan' => $val['alamatJalan'],
-                    'infoTambahan' => $val['infoTambahan'],
-                    'namaKota' => $val['namaKota'],
-                    'namaProvinsi' => $val['namaProvinsi'],
-                    'namaKecamatan' => $val['namaKecamatan'],
-                    'kodePos' => $val['kodePos'],
-                    'negara' => $val['negara'],
-                    'parkir' => $val['parkir'],
-                    'pemakaian' =>$val['pemakaian'],
-                    'isDeleted' => 0,
-                ]);
-            }
+            DB::table('location_alamat_detail')->insert([
+                'codeLocation' => $getvaluesp,
+                'alamatJalan' => $request->input('alamat_location')[0]['alamatJalan'],
+                'infoTambahan' => $request->input('alamat_location')[0]['infoTambahan'],
+                'kotaID' => $request->input('alamat_location')[0]['kotaID'],
+                'provinsiID' => $request->input('alamat_location')[0]['provinsiID'],
+                'kodePos' => $request->input('alamat_location')[0]['kodePos'],
+                'negara' => $request->input('alamat_location')[0]['negara'],
+                'parkir' => $request->input('alamat_location')[0]['parkir'],
+                'pemakaian' => $request->input('alamat_location')[0]['pemakaian'],
+                'isDeleted' => 0,
+            ]);
 
-            foreach ($request->waktuOperational as $val) {
+            foreach ($request->operational_days as $val) {
 
                 DB::table('location_operational')->insert([
-                    'kodeLokasi' => $getvaluesp,
-                    'hari' => $val['hari'],
-                    'dariJam' => $val['dariJam'],
-                    'sampaiJam' => $val['sampaiJam'],
-                    'tiapHari' => $val['tiapHari'],
+                    'codeLocation' => $getvaluesp,
+                    'days_name' => $val['days_name'],
+                    'from_time' => $val['from_time'],
+                    'to_time' => $val['to_time'],
+                    'all_day' => $val['all_day'],
                 ]);
 
             }
@@ -663,7 +630,7 @@ class LocationController extends Controller
             foreach ($request->messenger as $val) {
 
                 DB::table('location_messenger')->insert([
-                    'kodeLokasi' => $getvaluesp,
+                    'codeLocation' => $getvaluesp,
                     'pemakaian' => $val['pemakaian'],
                     'namaMessenger' => $val['namaMessenger'],
                     'tipe' => $val['tipe'],
@@ -675,7 +642,7 @@ class LocationController extends Controller
             foreach ($request->email as $val) {
 
                 DB::table('location_email')->insert([
-                    'kodeLokasi' => $getvaluesp,
+                    'codeLocation' => $getvaluesp,
                     'pemakaian' => $val['pemakaian'],
                     'namaPengguna' => $val['namaPengguna'],
                     'tipe' => $val['tipe'],
@@ -687,7 +654,7 @@ class LocationController extends Controller
             foreach ($request->telepon as $val) {
 
                 DB::table('location_telepon')->insert([
-                    'kodeLokasi' => $getvaluesp,
+                    'codeLocation' => $getvaluesp,
                     'pemakaian' => $val['pemakaian'],
                     'nomorTelepon' => $val['nomorTelepon'],
                     'tipe' => $val['tipe'],
@@ -756,81 +723,52 @@ class LocationController extends Controller
     public function location(Request $request)
     {
 
-       $items_per_page = 5;
-       info($request->all().Count);
-        if (is_null($request)){
-            echo('test');
-            $data = DB::table('location')
-            ->leftjoin('location_alamat_detail', 'location_alamat_detail.kodeLokasi', '=', 'location.kodeLokasi')
-            ->leftjoin('location_telepon', 'location_telepon.kodeLokasi', '=', 'location.kodeLokasi')
+        $items_per_page = 5;
+
+        $data = DB::table('location')
+            ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
             ->select('location.id as id',
-                'location.kodeLokasi as kodeLokasi',
-                'location.namaLokasi as namaLokasi',
-                'location.branch as branch',
-                'location_alamat_detail.alamatJalan as alamatJalan',
-                'location_alamat_detail.namaKota as namaKota',
-            DB::raw("CONCAT(location_telepon.nomorTelepon ,' ', location_telepon.pemakaian) as nomorTelepon"),
-                'location.status as status',)
-            ->where([
-                    ['location_alamat_detail.pemakaian', '=', 'utama'], 
-                    ['location_telepon.pemakaian', '=', 'utama']
-                    ])
-            ->get();
+                'location.codeLocation as codeLocation',
+                'location.locationName as locationName',
+                'location.isBranch as isBranch',
+                'location.status as status',
+                'location.introduction as introduction',
+                'location_alamat_detail.alamatJalan as alamatJalan', );
 
-            return response()->json($data, 200);
+        if ($request->keyword) {
 
-        }else{
-
-
-
-
-
+            $data = $data->where('location.codeLocation', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location.locationName', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location.introduction', 'like', '%' . $request->keyword . '%')
+                ->orwhere('location_alamat_detail.alamatJalan', 'like', '%' . $request->keyword . '%');
         }
-      
-        // $data = DB::table('location')
-        //     ->leftjoin('location_alamat_detail', 'location_alamat_detail.codeLocation', '=', 'location.codeLocation')
-        //     ->select('location.id as id',
-        //         'location.codeLocation as codeLocation',
-        //         'location.locationName as locationName',
-        //         'location.isBranch as isBranch',
-        //         'location.status as status',
-        //         'location.introduction as introduction',
-        //         'location_alamat_detail.alamatJalan as alamatJalan', );
 
-        // if ($request->keyword) {
+        if ($request->column) {
+            $data = $data->orderBy($request->column, $request->orderby);
+        }
 
-        //     $data = $data->where('location.codeLocation', 'like', '%' . $request->keyword . '%')
-        //         ->orwhere('location.locationName', 'like', '%' . $request->keyword . '%')
-        //         ->orwhere('location.introduction', 'like', '%' . $request->keyword . '%')
-        //         ->orwhere('location_alamat_detail.alamatJalan', 'like', '%' . $request->keyword . '%');
-        // }
+        if ($request->total_per_page > 0) {
 
-        // if ($request->column) {
-        //     $data = $data->orderBy($request->column, $request->orderby);
-        // }
+            $items_per_page = $request->total_per_page;
+        }
 
-        // if ($request->total_per_page > 0) {
+        $page = $request->page;
 
-        //     $items_per_page = $request->total_per_page;
-        // }
+        $offset = ($page - 1) * $items_per_page;
 
-        // $page = $request->page;
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
 
-        // $offset = ($page - 1) * $items_per_page;
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($items_per_page)->get();
+        } else {
+            $data = $data->offset($offset)->limit($items_per_page)->get();
+        }
 
-        // $count_data = $data->count();
-        // $count_result = $count_data - $offset;
+        $total_paging = $count_data / $items_per_page;
 
-        // if ($count_result < 0) {
-        //     $data = $data->offset(0)->limit($items_per_page)->get();
-        // } else {
-        //     $data = $data->offset($offset)->limit($items_per_page)->get();
-        // }
-
-        // $total_paging = $count_data / $items_per_page;
-
-        // return response()->json(['total_paging' => ceil($total_paging),
-        //     'data' => $data], 200);
+        return response()->json(['total_paging' => ceil($total_paging),
+            'data' => $data], 200);
 
     }
 
