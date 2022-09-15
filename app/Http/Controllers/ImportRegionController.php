@@ -69,15 +69,15 @@ class ImportRegionController extends Controller
     public function upload(Request $request)
     {
 
-            $request->validate([
-                'provinsi' => 'required|max:10000',
-                'kecamatan' => 'required|max:10000',
-                'kabupaten' => 'required|max:10000',
-                'kelurahan' => 'required|max:10000',
-            ]);
+            // $request->validate([
+            //     'provinsi' => 'required|max:10000',
+            //     'kecamatan' => 'required|max:10000',
+            //     'kabupaten' => 'required|max:10000',
+            //     'kelurahan' => 'required|max:10000',
+            // ]);
 
         try{
-                set_time_limit(500);
+            // set_time_limit(500);
 
             //  if('csv' == $request->input('extention')) {     
             //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
@@ -101,9 +101,9 @@ class ImportRegionController extends Controller
             Excel::import(new RegionImport, $request->file('provinsi')->store('provinsi'));
             Excel::import(new KecamatanImport, $request->file('kecamatan')->store('kecamatan'));
             Excel::import(new KabupatenImport, $request->file('kabupaten')->store('kabupaten'));
-            Excel::import(new KelurahanImport, $request->file('kelurahan')->store('kelurahan'));
 
-            return 'SUCCESS';
+
+              return 'SUCCESS';
 
 
         } catch (Exception $e) {
