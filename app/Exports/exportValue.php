@@ -24,11 +24,12 @@ class exportValue implements FromCollection, WithHeadings, WithTitle
         ->select('location.id as id',
             'location.codeLocation as codeLocation',
             'location.locationName as locationName',
-            'location.isBranch as isBranch',
+            DB::raw("CASE WHEN location.isBranch=1 then 'Aktif' else 'Non Aktif' end as isBranch" ),
             'location_detail_address.addressName as addressName', 
             'location_detail_address.cityName as cityName',    
             DB::raw("CONCAT(location_telephone.phoneNumber ,' ', location_telephone.usage) as phoneNumber"),
-            'location.status as status',)
+            DB::raw("CASE WHEN location.status=1 then 'Aktif' else 'Non Aktif' end as status" ),
+            )
          ->where([
                   ['location_detail_address.usage', '=', 'utama'], 
                  ['location_telephone.usage', '=', 'utama'],
@@ -44,14 +45,14 @@ class exportValue implements FromCollection, WithHeadings, WithTitle
     public function headings(): array
     {
        return [
-         'no',
-         'codeLocation',
-         'locationName',
-         'isBranch',
-         'addressName',
-         'cityName',
-         'phoneNumber',
-         'status'
+         'No',
+         'Kode Lokasi',
+         'Nama Lokasi',
+         'Status Cabang',
+         'Alamat',
+         'Kota',
+         'Nomor Telepon',
+         'Status'
        ];
     }
 
