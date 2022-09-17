@@ -16,9 +16,9 @@ return new class extends Migration
         Schema::create('location_email', function (Blueprint $table) {
             $table->id();
             $table->string('codeLocation');
-            $table->string('pemakaian');
-            $table->string('namaPengguna');
-            $table->string('tipe');
+            $table->string('username');
+            $table->string('type');
+            $table->string('usage');
             $table->boolean('isDeleted');
             $table->timestamps();
         });

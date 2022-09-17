@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use DB;
 use Illuminate\Http\Request;
 use App\Imports\UsersImport;
+use App\Exports\exportValue;
+use App\Exports\exportFacility;
 use Maatwebsite\Excel\Facades\Excel;
 
 class FasilitasController extends Controller
@@ -76,7 +78,7 @@ class FasilitasController extends Controller
 
 
 
-    /**
+     /**
      * @OA\Get(
      * path="/api/fasilitas",
      * operationId="fasilitas",
@@ -89,11 +91,23 @@ class FasilitasController extends Controller
      *     required=true,
      *     @OA\JsonContent(
      *        type="object",
-     *        @OA\Property(property="orderby", type="text",example="asc"),
-     *        @OA\Property(property="column", type="text",example="fasilitasName"),
-     *        @OA\Property(property="keyword", type="text",example="RPC"),
-     *        @OA\Property(property="page", type="number",example="1"),
-     *        @OA\Property(property="total_per_page", type="number",example="5"),
+     *        @OA\Property(property="rowPerPage", type="number",example="10"),
+     *        @OA\Property(property="goToPage", type="number",example="6"),
+     *        @OA\Property(property="orderColumn", type="array", collectionFormat="multi", 
+  *                @OA\Items(
+ *                      @OA\Property(
+ *                         property="value",
+ *                         type="string",
+ *                         example="asc"
+ *                      ),
+ *                      @OA\Property(
+ *                         property="fieldName",
+ *                         type="string",
+ *                         example="fasilitasName"
+ *                      ),
+ *                ),
+     *          ),
+     *        @OA\Property(property="search", type="text",example=""),
      *     ),
      * ),
      *   @OA\Response(
@@ -119,7 +133,7 @@ class FasilitasController extends Controller
     public function getheader(Request $request)
     {
 
-        $items_per_page = 5;
+        $rowPerPage = 5;
         
         $data = DB::table('fasilitas')
             ->select('fasilitas.id as id',
@@ -127,47 +141,89 @@ class FasilitasController extends Controller
                 'fasilitas.fasilitasName as fasilitasName',
                 'fasilitas.locationName as locationName',
                 'fasilitas.capacity as capacity',
-                'fasilitas.status as status', );
+                'fasilitas.status as status', )
+          ->where([
+                   ['fasilitas.isDeleted', '=', '0']
+           ]);
 
 
-                //info($request->keyword != "");
-
-        if ($request->keyword) {
-            info("keyword,");
-            $data = $data->where('fasilitas.fasilitasName', 'like', '%' . $request->keyword . '%')
-                ->orwhere('fasilitas.locationName', 'like', '%' . $request->keyword . '%')
-                ->orwhere('fasilitas.capacity', 'like', '%' . $request->keyword . '%')
-                ->orwhere('fasilitas.status', 'like', '%' . $request->keyword . '%');
+        if ($request->search) {
+           
+            $data = $data->where('fasilitas.fasilitasName', 'like', '%' . $request->search . '%')
+                            ->orwhere('fasilitas.locationName', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->column) {
-            info("column,");
-            $data = $data->orderBy($request->column, $request->orderby);
+        if ($request->orderColumn) {
+            $data = $data->orderBy($request->orderColumn['fieldName'], $request->orderColumn['value']);
         }
 
-        if ($request->total_per_page > 0) {
-            info("perpage,");
-            $items_per_page = $request->total_per_page;
+        if ($request->rowPerPage > 0) {
+            $rowPerPage = $request->rowPerPage;
         }
 
-        $page = $request->page;
+         $goToPage = $request->goToPage;
+       
+         $offset = ($goToPage - 1) * $rowPerPage;
 
-        $offset = ($page - 1) * $items_per_page;
-
-        $count_data = $data->count();
-        $count_result = $count_data - $offset;
+         $count_data = $data->count();
+         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($items_per_page)->get();
+            $data = $data->offset(0)->limit($rowPerPage)->get();
         } else {
-            $data = $data->offset($offset)->limit($items_per_page)->get();
+            $data = $data->offset($offset)->limit($rowPerPage)->get();
         }
 
-        $total_paging = $count_data / $items_per_page;
+        $total_paging = $count_data / $rowPerPage;
+        return response()->json(['totalData' => ceil($total_paging),'data' => $data], 200);
 
-        return response()->json(['total_paging' => ceil($total_paging),
-            'data' => $data], 200);
+    }
 
+
+     /**
+     * @OA\Get(
+     * path="/api/exportfasilitas",
+     * operationId="exportfasilitas",
+     * tags={"Fasilitas"},
+     * summary="export Location excel",
+     * description="export Location excel",
+     *   @OA\Response(
+     *          response=201,
+     *          description="Generate Excel Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Generate Excel Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+    public function export(Request $request){
+           
+        try
+        {
+            //danny
+            
+            return Excel::download(new exportFacility, 'Facility.xlsx');
+
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return ('FAILED');
+
+        }
+
+        
     }
 
 

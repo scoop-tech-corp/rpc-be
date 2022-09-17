@@ -13,18 +13,19 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('location_alamat_detail', function (Blueprint $table) {
+        Schema::create('location_detail_address', function (Blueprint $table) {
             $table->id();
             $table->string('codeLocation');
-            $table->string('alamatJalan');
-            $table->string('infoTambahan');
-            $table->string('kotaID');
-            $table->string('provinsiID');
-            $table->string('kodePos');
-            $table->string('negara');
-            $table->string('parkir');
-            $table->string('isDeleted');
-            $table->string('pemakaian');
+            $table->string('addressName');
+            $table->string('additionalInfo');
+            $table->string('cityName');
+            $table->string('provinceName');
+            $table->string('districtName');
+            $table->string('postalCode');
+            $table->string('country');
+            $table->boolean('parking');
+            $table->string('usage');    
+            $table->boolean('isDeleted');
             $table->timestamps();
         });
     }
@@ -36,6 +37,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('location_alamat_detail');
+        Schema::dropIfExists('location_detail_address');
     }
 };

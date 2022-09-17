@@ -13,12 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('location_telepon', function (Blueprint $table) {
+        Schema::create('location_telephone', function (Blueprint $table) {
             $table->id();
             $table->string('codeLocation');
-            $table->string('pemakaian');
-            $table->string('nomorTelepon');
-            $table->string('tipe');
+            $table->string('phoneNumber');
+            $table->string('type');
+            $table->string('usage');
             $table->boolean('isDeleted');
             $table->timestamps();
         });
