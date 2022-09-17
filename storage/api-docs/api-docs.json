@@ -692,8 +692,7 @@
                                 "required": [
                                     "provinsi",
                                     "kecamatan",
-                                    "kabupaten",
-                                    "kelurahan"
+                                    "kabupaten"
                                 ],
                                 "properties": {
                                     "provinsi": {
