@@ -34,7 +34,7 @@ class ImportRegionController extends Controller
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
      *               type="object",
-     *               required={"provinsi","kecamatan","kabupaten","kelurahan"},
+     *               required={"provinsi","kecamatan","kabupaten"},
      *               @OA\Property(property="provinsi", type="file"),
      *               @OA\Property(property="kecamatan", type="file"),
      *               @OA\Property(property="kabupaten", type="file"),
@@ -64,40 +64,14 @@ class ImportRegionController extends Controller
     public function upload(Request $request)
     {
 
-            $request->validate([
-                'provinsi' => 'required|max:10000',
-                'kecamatan' => 'required|max:10000',
-                'kabupaten' => 'required|max:10000',
-               // 'kelurahan' => 'required|max:10000',
-            ]);
-
         try{
-             set_time_limit(500);
 
-            //  if('csv' == $request->input('extention')) {     
-            //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Csv();
-            //   } else if('xls' == $request->input('extention')) {     
-            //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xls();
-            //   } else     
-            //     $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xlsx();
-
-            //  if ($request->input('provinsi'))
-            //     Excel::import(new RegionImport, $request->input('provinsi'));
-
-            // if ($request->input('kecamatan'))
-            //     Excel::import(new KecamatanImport, $request->input('kecamatan'));
-
-            //  if ($request->input('kabupaten'))
-            //    Excel::import(new KabupatenImport, $request->input('kabupaten'));
-
-            // if ($request->input('kelurahan'))
-            //    Excel::import(new KelurahanImport, $request->input('kelurahan'));
+            set_time_limit(500);
 
             Excel::import(new RegionImport, $request->file('provinsi')->store('provinsi'));
             Excel::import(new KecamatanImport, $request->file('kecamatan')->store('kecamatan'));
             Excel::import(new KabupatenImport, $request->file('kabupaten')->store('kabupaten'));
-           // Excel::import(new KelurahanImport, $request->file('kelurahan')->store('kelurahan'));
-            
+
               return 'SUCCESS';
 
 
