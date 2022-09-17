@@ -33,7 +33,7 @@ class exportFacility implements FromCollection, WithHeadings, WithTitle
     public function headings(): array
     {
        return [
-         '#',
+         'no',
          'codeFasilitas',
          'fasilitasName',
          'locationName',
