@@ -16,10 +16,10 @@ return new class extends Migration
         Schema::create('location_operational', function (Blueprint $table) {
             $table->id();
             $table->string('codeLocation');
-            $table->string('days_name');
-            $table->string('from_time');
-            $table->string('to_time');
-            $table->boolean('all_day');
+            $table->string('dayName');
+            $table->string('fromTime')->nullable()->default(NULL);
+            $table->string('toTime')->nullable()->default(NULL);
+            $table->boolean('allDay');
             $table->timestamps();
 
         });

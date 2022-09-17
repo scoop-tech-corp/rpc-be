@@ -17,34 +17,34 @@ class testing extends Seeder
 
         $data = [
             [
-                'value' => 'Pemakaian',
+                'value' => 'Usage',
                 'name' => 'Utama',
                 'isDeleted' => 0,
             ],
             [
-                'value' => 'Pemakaian',
+                'value' => 'Usage',
                 'name' => 'Secondary',
                 'isDeleted' => 0,
             ],
             [
-                'value' => 'Pemakaian',
+                'value' => 'Usage',
                 'name' => 'Whatsap',
                 'isDeleted' => 0,
             ],
             [
-                'value' => 'Telepon',
+                'value' => 'Telephone',
                 'name' => 'Rumah',
                 'isDeleted' => 0,
             ],
 
             [
-                'value' => 'Telepon',
+                'value' => 'Telephone',
                 'name' => 'Whatshap',
                 'isDeleted' => 0,
             ],
 
             [
-                'value' => 'Telepon',
+                'value' => 'Telephone',
                 'name' => 'Rumah',
                 'isDeleted' => 0,
             ],
@@ -97,42 +97,42 @@ class testing extends Seeder
         $operational_days = [
             [
                 "codeLocation" => "abc123",
-                "days_name"=> "Monday",
-                "from_time"=> "10:00PM",
-                "to_time"=> "10:00PM",
-                "all_day"=> 1,
+                "dayName"=> "Monday",
+                "fromTime"=> "10:00PM",
+                "toTime"=> "10:00PM",
+                "allDay"=> 1,
                 'created_at' =>'2022-08-30',
             ],
             [
                 "codeLocation" => "abc123",
-                "days_name"=> "Tuesday",
-                "from_time"=> "12:00PM",
-                "to_time"=> "13:00PM",
-                "all_day"=>1,
+                "dayName"=> "Tuesday",
+                "fromTime"=> "12:00PM",
+                "toTime"=> "13:00PM",
+                "allDay"=>1,
                 'created_at' =>'2022-08-30',
             ],
             [
                 "codeLocation" => "abc123",
-                "days_name"=> "Wednesday",
-                "from_time"=> "10:00PM",
-                "to_time"=> "10:00PM",
-                "all_day"=> 1,
+                "dayName"=> "Wednesday",
+                "fromTime"=> "10:00PM",
+                "toTime"=> "10:00PM",
+                "allDay"=> 1,
                 'created_at' =>'2022-08-30',
             ],
             [
                 "codeLocation" => "abc123",
-                "days_name"=> "Thursday",
-                "from_time"=> "10:00PM",
-                "to_time"=> "10:00PM",
-                "all_day"=> 1,
+                "dayName"=> "Thursday",
+                "fromTime"=> "10:00PM",
+                "toTime"=> "10:00PM",
+                "allDay"=> 1,
                 'created_at' =>'2022-08-30',
             ],
             [
                 "codeLocation" => "abc123",
-                "days_name"=> "Friday",
-                "from_time"=> "10:00PM",
-                "to_time"=> "10:00PM",
-                "all_day"=> 1,
+                "dayName"=> "Friday",
+                "fromTime"=> "10:00PM",
+                "toTime"=> "10:00PM",
+                "allDay"=> 1,
                 'created_at' =>'2022-08-30',
             ],
 
@@ -140,16 +140,17 @@ class testing extends Seeder
 
         DB::table('location_operational')->insert($operational_days); // Query Builder approach
 
-        DB::table('location_alamat_detail')->insert([
+        DB::table('location_detail_address')->insert([
             'codeLocation' => 'abc123',
-            "alamatJalan"=> "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-            "infoTambahan"=> "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-            "kotaID"=> "Jakarta Barat",
-            "provinsiID"=> "Kemanggisan",
-            "kodePos"=> "11480",
-            "negara"=> "Indonesia",
-            "parkir"=> "Yes",
-            "pemakaian"=> "Indekos",
+            "addressName"=> "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+            "additionalInfo"=> "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+            "cityName"=> "Jakarta Barat",
+            "provinceName"=> "Kemanggisan",
+            "districtName"=> "palmerah",
+            "postalCode"=> "11480",
+            "country"=> "Indonesia",
+            "parking"=> 1,
+            "usage"=> "utama",
             "isDeleted" => 0,
             'created_at' => '2022-08-30',
         ]);
@@ -157,17 +158,17 @@ class testing extends Seeder
         $messenger = [
             [
                 'codeLocation' => 'abc123',
-                "pemakaian" => "Utama",
-                "namaMessenger" => "(021) 3851185",
-                "tipe" => "Fax",
+                "messengerName" => "(021) 3851185",
+                "type" => "Fax",
+                "usage" => "Utama",
                 "isDeleted" => 0,
                 'created_at' => '2022-08-30',
             ],
             [
                 'codeLocation' => 'abc123',
-                "pemakaian" => "Utama",
                 "namaMessenger" => "(021) 012345678",
-                "tipe" => "Office",
+                "type" => "Office",
+                "usage" => "Utama",
                 "isDeleted" => 0,
                 'created_at' => '2022-08-30',
             ],
@@ -179,17 +180,17 @@ class testing extends Seeder
         $email = [
             [
                 'codeLocation' => 'abc123',
-                "pemakaian"=> "Utama",
-                "namaPengguna"=> "wahyudidanny23@gmail.com",
-                "tipe"=> "Personal",
+                "username"=> "wahyudidanny23@gmail.com",
+                "type"=> "Personal",
+                "usage"=> "Utama",
                 "isDeleted" => 0,
                 'created_at' => '2022-08-30',
             ],
             [
                 'codeLocation' => 'abc123',
-                "pemakaian"=> "Secondary",
-                "namaPengguna"=> "wahyudidanny25@gmail.com",
-                "tipe"=> "Personal",
+                "username"=> "wahyudidanny25@gmail.com",
+                "type"=> "Personal",
+                "usage"=> "Secondary",
                 "isDeleted" => 0,
                 'created_at' => '2022-08-30',
             ],
@@ -201,23 +202,23 @@ class testing extends Seeder
         $telepon = [
             [
                 'codeLocation' => 'abc123',
-                "pemakaian"=> "Utama",
-                "nomorTelepon"=> "087888821648",
-                "tipe"=> "Telepon Selular",
+                "phoneNumber"=> "087888821648",
+                "type"=> "Telepon Selular",
+                "usage"=> "Utama",
                 "isDeleted" => 0,
                 'created_at' => '2022-08-30',
             ],
             [
                 'codeLocation' => 'abc123',
-                "pemakaian"=> "Secondary",
-                "nomorTelepon"=> "085265779499",
-                "tipe"=> "Whatshapp",
+                "phoneNumber"=> "085265779499",
+                "type"=> "Whatshapp",
+                "usage"=> "Secondary",
                 "isDeleted" => 0,
                 'created_at' => '2022-08-30',
             ],
 
         ];
-        DB::table('location_telepon')->insert($telepon); 
+        DB::table('location_telephone')->insert($telepon); 
 
         DB::table('fasilitas')->insert([
             'codeFasilitas' => 'XYZ123',

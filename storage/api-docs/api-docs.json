@@ -488,25 +488,34 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "orderby": {
-                                            "type": "text",
-                                            "example": "asc"
-                                        },
-                                        "column": {
-                                            "type": "text",
-                                            "example": "fasilitasName"
-                                        },
-                                        "keyword": {
-                                            "type": "text",
-                                            "example": "RPC"
-                                        },
-                                        "page": {
+                                        "rowPerPage": {
                                             "type": "number",
-                                            "example": "1"
+                                            "example": "10"
                                         },
-                                        "total_per_page": {
+                                        "goToPage": {
                                             "type": "number",
-                                            "example": "5"
+                                            "example": "6"
+                                        },
+                                        "orderColumn": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string",
+                                                        "example": "asc"
+                                                    },
+                                                    "fieldName": {
+                                                        "type": "string",
+                                                        "example": "fasilitasName"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "collectionFormat": "multi"
+                                        },
+                                        "search": {
+                                            "type": "text",
+                                            "example": ""
                                         }
                                     },
                                     "type": "object"
@@ -526,6 +535,53 @@
                     },
                     "200": {
                         "description": "Get Data Location Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/exportfasilitas": {
+            "get": {
+                "tags": [
+                    "Fasilitas"
+                ],
+                "summary": "export Location excel",
+                "description": "export Location excel",
+                "operationId": "exportfasilitas",
+                "responses": {
+                    "201": {
+                        "description": "Generate Excel Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Generate Excel Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -627,7 +683,7 @@
                     "Bulk Mapping Region"
                 ],
                 "summary": "Notes: Upload mapping data only need to execute once",
-                "description": "The data is way to huge to put in seeder, and data raw it self already represent as CSV<br>\n     *              so data already delimeted to column and save as .xlsx ( you can find the file in the folder<br>\n     *              Filemapping, except for kelurahan, the data is around 80.000 so it take lot of time to bulk<br>\n     *              already tried to partition but still didn't work) ",
+                "description": " Upload only need execute once",
                 "operationId": "Bulk Insert Region",
                 "requestBody": {
                     "content": {
@@ -648,9 +704,6 @@
                                     },
                                     "kabupaten": {
                                         "type": "file"
-                                    },
-                                    "kelurahan": {
-                                        "type": "file"
                                     }
                                 },
                                 "type": "object"
@@ -664,8 +717,7 @@
                                     "value": {
                                         "provinsi": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Provinsi.xlsx",
                                         "kecamatan": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kecamatan.xlsx",
-                                        "kabupaten": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kabupaten.xlsx",
-                                        "kelurahan": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kelurahan.xlsx"
+                                        "kabupaten": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kabupaten.xlsx"
                                     }
                                 }
                             }
@@ -787,6 +839,53 @@
                 ]
             }
         },
+        "/api/export": {
+            "get": {
+                "tags": [
+                    "Location"
+                ],
+                "summary": "export Location excel",
+                "description": "export Location excel",
+                "operationId": "export",
+                "responses": {
+                    "201": {
+                        "description": "Generate Excel Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Generate Excel Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
         "/api/location": {
             "get": {
                 "tags": [
@@ -804,25 +903,34 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "orderby": {
-                                            "type": "text",
-                                            "example": "asc"
-                                        },
-                                        "column": {
-                                            "type": "text",
-                                            "example": "codeLocation, locationName, isBranch, status, introduction"
-                                        },
-                                        "keyword": {
-                                            "type": "text",
-                                            "example": "Jakarta"
-                                        },
-                                        "page": {
+                                        "rowPerPage": {
                                             "type": "number",
-                                            "example": "1"
+                                            "example": "10"
                                         },
-                                        "total_per_page": {
+                                        "goToPage": {
                                             "type": "number",
-                                            "example": "5"
+                                            "example": "6"
+                                        },
+                                        "orderColumn": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string",
+                                                        "example": "asc"
+                                                    },
+                                                    "fieldName": {
+                                                        "type": "string",
+                                                        "example": "locationName"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "collectionFormat": "multi"
+                                        },
+                                        "search": {
+                                            "type": "text",
+                                            "example": ""
                                         }
                                     },
                                     "type": "object"
@@ -899,7 +1007,7 @@
                                 "update Location": {
                                     "summary": "update Location",
                                     "value": {
-                                        "id": "1",
+                                        "codeLocation": "abc123",
                                         "locationName": "RPC Permata Hijau Jakarta",
                                         "isBranch": "1",
                                         "status": "0",
@@ -909,7 +1017,6 @@
                                         "imageTitle": "ImageRPCPermataHijauJakarta.jpg",
                                         "alamat_location": [
                                             {
-                                                "codeLocation": "366f70e7",
                                                 "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
                                                 "infoTambahan": "Patokan Jalan : terminal busway jakarta selatan itc permata hijau",
                                                 "kotaID": "Jakarta Selatan",
@@ -1057,84 +1164,114 @@
                                     "summary": "Insert Location",
                                     "value": {
                                         "locationName": "RPC Permata Hijau Pekanbaru",
-                                        "isBranch": "0",
-                                        "status": "1",
+                                        "isBranch": 0,
+                                        "status": 1,
                                         "introduction": "RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
-                                        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+                                        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem   tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
                                         "image": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijau.jpg",
                                         "imageTitle": "ImageRPCPermataHijau.jpg",
-                                        "alamat_location": [
+                                        "detailAddress": [
                                             {
-                                                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-                                                "infoTambahan": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-                                                "kotaID": "Jakarta Barat",
-                                                "provinsiID": "Kemanggisan",
-                                                "kodePos": "11480",
-                                                "negara": "Indonesia",
-                                                "parkir": "Yes",
-                                                "pemakaian": "Indekos"
+                                                "addressName": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+                                                "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+                                                "cityName": "Jakarta Barat",
+                                                "provinceName": "DKI Jakarta",
+                                                "districtName": "Palmerah",
+                                                "postalCode": "11480",
+                                                "country": "Indonesia",
+                                                "parking": 1,
+                                                "usage": "Indekos"
+                                            },
+                                            {
+                                                "addressName": "Jalan Keluarga sebelah binus syahdan",
+                                                "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+                                                "cityName": "Jakarta Barat",
+                                                "provinceName": "DKI Jakarta",
+                                                "districtName": "Palmerah",
+                                                "postalCode": "11480",
+                                                "country": "Indonesia",
+                                                "parking": 1,
+                                                "usage": "Utama"
                                             }
                                         ],
-                                        "operational_days": [
+                                        "operationalHour": [
                                             {
-                                                "days_name": "Monday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "dayName": "Monday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
                                             },
                                             {
-                                                "days_name": "Monday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "dayName": "Tuesday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
                                             },
                                             {
-                                                "days_name": "Tuesday",
-                                                "from_time": "12:00PM",
-                                                "to_time": "13:00PM",
-                                                "all_day": 1
+                                                "dayName": "Wednesday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
                                             },
                                             {
-                                                "days_name": "Wednesday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "dayName": "Thursday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
+                                            },
+                                            {
+                                                "dayName": "Friday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
+                                            },
+                                            {
+                                                "dayName": "Saturday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
+                                            },
+                                            {
+                                                "dayName": "Sunday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
                                             }
                                         ],
                                         "messenger": [
                                             {
-                                                "pemakaian": "Utama",
-                                                "namaMessenger": "(021) 3851185",
-                                                "tipe": "Fax"
+                                                "messengerName": "(021) 3851185",
+                                                "type": "Fax",
+                                                "usage": "Utama"
                                             },
                                             {
-                                                "pemakaian": "Utama",
-                                                "namaMessenger": "(021) 012345678",
-                                                "tipe": "Office"
+                                                "messengerName": "(021) 012345678",
+                                                "type": "Office",
+                                                "usage": "Personal"
                                             }
                                         ],
                                         "email": [
                                             {
-                                                "pemakaian": "Utama",
-                                                "namaPengguna": "wahyudidanny23@gmail.com",
-                                                "tipe": "Personal"
+                                                "username": "wahyudidanny23@gmail.com",
+                                                "type": "Personal",
+                                                "usage": "Utama"
                                             },
                                             {
-                                                "pemakaian": "Secondary",
-                                                "namaPengguna": "wahyudidanny25@gmail.com",
-                                                "tipe": "Personal"
+                                                "username": "wahyudidanny25@gmail.com",
+                                                "type": "Secondary",
+                                                "usage": "Personal"
                                             }
                                         ],
-                                        "telepon": [
+                                        "telephone": [
                                             {
-                                                "pemakaian": "Utama",
-                                                "nomorTelepon": "087888821648",
-                                                "tipe": "Telepon Selular"
+                                                "phoneNumber": "087888821648",
+                                                "type": "Telepon Selular",
+                                                "usage": "Utama"
                                             },
                                             {
-                                                "pemakaian": "Secondary",
-                                                "nomorTelepon": "085265779499",
-                                                "tipe": "Whatshapp"
+                                                "phoneNumber": "085265779499",
+                                                "type": "Whatshapp",
+                                                "usage": "Secondary"
                                             }
                                         ]
                                     }
