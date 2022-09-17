@@ -44,7 +44,7 @@ class exportValue implements FromCollection, WithHeadings, WithTitle
     public function headings(): array
     {
        return [
-         '#',
+         'no',
          'codeLocation',
          'locationName',
          'isBranch',
