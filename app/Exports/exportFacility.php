@@ -23,7 +23,7 @@ class exportFacility implements FromCollection, WithHeadings, WithTitle
                 'fasilitas.fasilitasName as fasilitasName',
                 'fasilitas.locationName as locationName',
                 'fasilitas.capacity as capacity',
-                'fasilitas.status as status', )
+           DB::raw("CASE WHEN fasilitas.status=1 then 'Aktif' else 'Non Aktif' end as status" ),)
         ->where('fasilitas.isDeleted', '=', '0')
         ->get();
         return collect($data);
@@ -33,12 +33,12 @@ class exportFacility implements FromCollection, WithHeadings, WithTitle
     public function headings(): array
     {
        return [
-         'no',
-         'codeFasilitas',
-         'fasilitasName',
-         'locationName',
-         'capacity',
-         'status'
+         'No',
+         'Kode Fasilitas',
+         'Nama Fasilitas',
+         'Nama Lokasi',
+         'Kapasitas',
+         'Status'
        ];
     }
 
