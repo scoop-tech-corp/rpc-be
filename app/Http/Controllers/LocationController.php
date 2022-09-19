@@ -821,7 +821,7 @@ class LocationController extends Controller
             ->select('location.id as id',
                 'location.codeLocation as codeLocation',
                 'location.locationName as locationName',
-                'location.isBranch as isBranch',
+                // 'location.isBranch as isBranch',
                 'location_detail_address.addressName as addressName', 
                 'location_detail_address.cityName as cityName',    
                 DB::raw("CONCAT(location_telephone.phoneNumber ,' ', location_telephone.usage) as phoneNumber"),
