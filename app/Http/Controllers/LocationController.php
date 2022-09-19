@@ -840,8 +840,14 @@ class LocationController extends Controller
                     ->orwhere('location_detail_address.cityName', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->orderColumn) {
-            $data = $data->orderBy($request->orderColumn['fieldName'], $request->orderColumn['value']);
+        // info($request->orderColumn( 'fieldName'))
+        // info($request->orderColumn->input('fieldName'));
+        // $request->input('fieldName');
+        //  $someArray = json_decode($$request->orderColumn, true);
+        //  echo($someArray["fieldName"]);
+
+        if ($request->orderColumn && $request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
       
         if ($request->rowPerPage > 0) {
