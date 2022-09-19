@@ -153,8 +153,12 @@ class FasilitasController extends Controller
                             ->orwhere('fasilitas.locationName', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->orderColumn) {
-            $data = $data->orderBy($request->orderColumn['fieldName'], $request->orderColumn['value']);
+        // if ($request->orderColumn) {
+        //     $data = $data->orderBy($request->orderColumn['fieldName'], $request->orderColumn['value']);
+        // }
+
+        if ($request->orderColumn && $request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
         if ($request->rowPerPage > 0) {
