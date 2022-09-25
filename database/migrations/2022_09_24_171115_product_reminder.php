@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('productReminder', function (Blueprint $table) {
+        Schema::create('product_reminder', function (Blueprint $table) {
             $table->id();
             $table->string('productCode');
             $table->integer('units');

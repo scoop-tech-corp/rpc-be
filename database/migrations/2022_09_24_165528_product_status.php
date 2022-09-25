@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('statusProduct', function (Blueprint $table) {
+        Schema::create('product_status', function (Blueprint $table) {
             $table->id();
             $table->string('statusName');
             $table->boolean('isActive');
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('statusProduct');
+        Schema::dropIfExists('product_status');
     }
 };
