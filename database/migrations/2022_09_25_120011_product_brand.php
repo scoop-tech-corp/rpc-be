@@ -13,7 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        //
+        Schema::create('product_brand', function (Blueprint $table) {
+            $table->id();
+            $table->string('brandName');
+            $table->boolean('isActive');
+            $table->boolean('isDeleted');
+            $table->timestamps();
+       });
     }
 
     /**
@@ -23,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        //
+        Schema::dropIfExists('product_brand');
     }
 };

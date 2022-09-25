@@ -691,14 +691,10 @@
                             "schema": {
                                 "required": [
                                     "provinsi",
-                                    "kecamatan",
                                     "kabupaten"
                                 ],
                                 "properties": {
                                     "provinsi": {
-                                        "type": "file"
-                                    },
-                                    "kecamatan": {
                                         "type": "file"
                                     },
                                     "kabupaten": {
@@ -715,7 +711,6 @@
                                     "summary": "Bulk Insert Mapping Region",
                                     "value": {
                                         "provinsi": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Provinsi.xlsx",
-                                        "kecamatan": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kecamatan.xlsx",
                                         "kabupaten": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kabupaten.xlsx"
                                     }
                                 }
@@ -1006,86 +1001,110 @@
                                 "update Location": {
                                     "summary": "update Location",
                                     "value": {
-                                        "codeLocation": "abc123",
                                         "locationName": "RPC Permata Hijau Jakarta",
-                                        "isBranch": "1",
-                                        "status": "0",
-                                        "introduction": "RPC Permata Hijau Jakarta, your satisfation is out top priority",
-                                        "description": "Dibangun di tahun 2022, RPC Permata Hijau Jakarta sudah melayani berbagai lebih dari 100 ribu client diberbagai wilayah dijakarta, fasilitas yang lengkap dan terjamin security",
-                                        "image": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijauJakarta.jpg",
-                                        "imageTitle": "ImageRPCPermataHijauJakarta.jpg",
-                                        "alamat_location": [
+                                        "isBranch": 0,
+                                        "status": 1,
+                                        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem   tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+                                        "image": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijau.jpg",
+                                        "imageTitle": "ImageRPCPermataHijau.jpg",
+                                        "detailAddress": [
                                             {
-                                                "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-                                                "infoTambahan": "Patokan Jalan : terminal busway jakarta selatan itc permata hijau",
-                                                "kotaID": "Jakarta Selatan",
-                                                "provinsiID": "Kebayoran Lama",
-                                                "kodePos": 12210,
-                                                "negara": "Indonesia",
-                                                "parkir": "Yes",
-                                                "pemakaian": "Apartement"
+                                                "addressName": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+                                                "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+                                                "cityName": "Jakarta Barat",
+                                                "provinceName": "DKI Jakarta",
+                                                "postalCode": "11480",
+                                                "country": "Indonesia",
+                                                "isPrimary": 1
+                                            },
+                                            {
+                                                "addressName": "Jalan Keluarga sebelah binus syahdan",
+                                                "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+                                                "cityName": "Jakarta Barat",
+                                                "provinceName": "DKI Jakarta",
+                                                "postalCode": "11480",
+                                                "country": "Indonesia",
+                                                "isPrimary": 0
                                             }
                                         ],
-                                        "operational_days": [
+                                        "operationalHour": [
                                             {
-                                                "days_name": "Monday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "dayName": "Monday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
                                             },
                                             {
-                                                "days_name": "Monday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "dayName": "Tuesday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
                                             },
                                             {
-                                                "days_name": "Tuesday",
-                                                "from_time": "12:00PM",
-                                                "to_time": "13:00PM",
-                                                "all_day": 1
+                                                "dayName": "Wednesday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
                                             },
                                             {
-                                                "days_name": "Wednesday",
-                                                "from_time": "10:00PM",
-                                                "to_time": "10:00PM",
-                                                "all_day": 1
+                                                "dayName": "Thursday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
+                                            },
+                                            {
+                                                "dayName": "Friday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
+                                            },
+                                            {
+                                                "dayName": "Saturday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
+                                            },
+                                            {
+                                                "dayName": "Sunday",
+                                                "fromTime": "",
+                                                "toTime": "",
+                                                "allDay": 1
                                             }
                                         ],
                                         "messenger": [
                                             {
-                                                "pemakaian": "Utama",
-                                                "namaMessenger": "(021) 3851185",
-                                                "tipe": "Fax"
+                                                "messengerName": "(021) 3851185",
+                                                "type": "Fax",
+                                                "usage": "Utama"
                                             },
                                             {
-                                                "pemakaian": "Utama",
-                                                "namaMessenger": "(021) 012345678",
-                                                "tipe": "Office"
+                                                "messengerName": "(021) 012345678",
+                                                "type": "Office",
+                                                "usage": "Personal"
                                             }
                                         ],
                                         "email": [
                                             {
-                                                "pemakaian": "Utama",
-                                                "namaPengguna": "wahyudidanny23@gmail.com",
-                                                "tipe": "Personal"
+                                                "username": "wahyudidanny23@gmail.com",
+                                                "type": "Personal",
+                                                "usage": "Utama"
                                             },
                                             {
-                                                "pemakaian": "Secondary",
-                                                "namaPengguna": "wahyudidanny25@gmail.com",
-                                                "tipe": "Personal"
+                                                "username": "wahyudidanny25@gmail.com",
+                                                "type": "Secondary",
+                                                "usage": "Personal"
                                             }
                                         ],
-                                        "telepon": [
+                                        "telephone": [
                                             {
-                                                "pemakaian": "Utama",
-                                                "nomorTelepon": "087888821648",
-                                                "tipe": "Telepon Selular"
+                                                "phoneNumber": "087888821648",
+                                                "type": "Telepon Selular",
+                                                "usage": "Utama"
                                             },
                                             {
-                                                "pemakaian": "Secondary",
-                                                "nomorTelepon": "085265779499",
-                                                "tipe": "Whatshapp"
+                                                "phoneNumber": "085265779499",
+                                                "type": "Whatshapp",
+                                                "usage": "Secondary"
                                             }
                                         ]
                                     }
@@ -1427,6 +1446,53 @@
                     },
                     "200": {
                         "description": "Get Data Location Detail Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/locationnew": {
+            "get": {
+                "tags": [
+                    "Location"
+                ],
+                "summary": "Get Data Static and Region",
+                "description": "Get Data Static and Region",
+                "operationId": "locationnew",
+                "responses": {
+                    "201": {
+                        "description": "Get Data Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}

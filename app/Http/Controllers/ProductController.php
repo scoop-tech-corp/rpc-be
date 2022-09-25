@@ -21,15 +21,15 @@ class ProductController extends Controller
                 'supplierName' => 'required',
             ]);
 
-            $checkIfValueExits = DB::table('productSupplier')
-                ->where('productSupplier.supplierName', '=', $request->input('supplierName'))
+            $checkIfValueExits = DB::table('product_supplier')
+                ->where('product_supplier.supplierName', '=', $request->input('supplierName'))
                 ->first();
 
             if ($checkIfValueExits === null) {
 
                 DB::beginTransaction();
 
-                DB::table('productSupplier')->insert([
+                DB::table('product_supplier')->insert([
                     'supplierName' => $request->input('supplierName'),
                     'isDeleted' => 0,
                 ]);
@@ -56,6 +56,58 @@ class ProductController extends Controller
         }
 
     }
+
+
+
+
+    public function addProductBrand(Request $request)
+    {
+        try
+        {
+            $returnString = "";
+            
+            $request->validate([
+                'brandName' => 'required',
+            ]);
+
+            $checkIfValueExits = DB::table('product_brand')
+                ->where('product_brand.brandName', '=', $request->input('brandName'))
+                ->first();
+
+            if ($checkIfValueExits === null) {
+
+                DB::beginTransaction();
+
+                DB::table('product_brand')->insert([
+                    'brandName' => $request->input('brandName'),
+                    'isDeleted' => 0,
+                ]);
+                
+                DB::commit();
+
+                $returnString = 'Success input brand';
+
+            }else{
+
+                $returnString ='Brand name already exists, please try different name.. ';
+
+            }
+
+            return ($returnString);
+
+
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return ('FAILED');
+
+        }
+
+    }
+
+
+
 
     public function createProduct(Request $request)
     {
