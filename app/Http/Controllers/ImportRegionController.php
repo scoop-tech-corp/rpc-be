@@ -26,7 +26,6 @@ class ImportRegionController extends Controller
      *        example = "Bulk Insert Mapping Region include : provinsi, kecamatan, kabupaten, kelurahan",
      *          value = {
      *          "provinsi": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Provinsi.xlsx",
-     *          "kecamatan": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Kecamatan.xlsx",
      *          "kabupaten": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Kabupaten.xlsx",
      *           },
      *          )),
@@ -34,9 +33,8 @@ class ImportRegionController extends Controller
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
      *               type="object",
-     *               required={"provinsi","kecamatan","kabupaten"},
+     *               required={"provinsi","kabupaten"},
      *               @OA\Property(property="provinsi", type="file"),
-     *               @OA\Property(property="kecamatan", type="file"),
      *               @OA\Property(property="kabupaten", type="file"),
      *            ),
      *        ),
@@ -69,10 +67,9 @@ class ImportRegionController extends Controller
             set_time_limit(500);
 
             Excel::import(new RegionImport, $request->file('provinsi')->store('provinsi'));
-            Excel::import(new KecamatanImport, $request->file('kecamatan')->store('kecamatan'));
             Excel::import(new KabupatenImport, $request->file('kabupaten')->store('kabupaten'));
 
-              return 'SUCCESS';
+           return 'SUCCESS';
 
 
         } catch (Exception $e) {

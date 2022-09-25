@@ -262,94 +262,121 @@ class LocationController extends Controller
      *        summary="update Location",
      *        example = "update Location",
      * value = 
-    *  {
-    *  "codeLocation": "abc123",
-    *  "locationName": "RPC Permata Hijau Jakarta",
-    *  "isBranch": "1",
-    *  "status": "0",
-    *  "introduction":"RPC Permata Hijau Jakarta, your satisfation is out top priority",
-    *  "description":"Dibangun di tahun 2022, RPC Permata Hijau Jakarta sudah melayani berbagai lebih dari 100 ribu client diberbagai wilayah dijakarta, fasilitas yang lengkap dan terjamin security",
-    *  "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijauJakarta.jpg",
-    *  "imageTitle":"ImageRPCPermataHijauJakarta.jpg",
-    *  "alamat_location":{
-    *      { 
-    *            "alamatJalan": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-    *            "infoTambahan": "Patokan Jalan : terminal busway jakarta selatan itc permata hijau",
-    *            "kotaID": "Jakarta Selatan",
-    *            "provinsiID": "Kebayoran Lama",
-    *            "kodePos": 12210,
-    *            "negara": "Indonesia",
-    *            "parkir": "Yes",
-    *            "pemakaian": "Apartement"
-    *         }
-    *    },
-    *  "operational_days": 
-    *    {
-    *        {
+    *{
+    *        "locationName": "RPC Permata Hijau Jakarta",
+    *        "isBranch": 0,
+    *        "status": 1,
+    *        "description":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem   tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+    *        "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
+    *        "imageTitle":"ImageRPCPermataHijau.jpg",
+    *        "detailAddress":{
+    *                {
+    *                    "addressName": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+    *                    "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+    *                    "cityName": "Jakarta Barat",
+    *                    "provinceName": "DKI Jakarta",
+    *                    "postalCode": "11480",
+    *                    "country": "Indonesia",
+    *                    "isPrimary" : 1
+    *                }, 
+    *                {
+    *                    "addressName": "Jalan Keluarga sebelah binus syahdan",
+    *                    "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+    *                    "cityName": "Jakarta Barat",
+    *                    "provinceName": "DKI Jakarta",
+    *                    "postalCode": "11480",
+    *                    "country": "Indonesia",
+    *                    "isPrimary" : 0
+    *                }
+    *            },
+    *            
+    *        "operationalHour": {
+    *                                {
+    *                                    "dayName": "Monday",
+    *                                    "fromTime": "",
+    *                                    "toTime": "",
+    *                                    "allDay": 1
+    *                                }, 
+    *                                {
+    *                                    "dayName": "Tuesday",
+    *                                    "fromTime": "",
+    *                                    "toTime": "",
+    *                                    "allDay": 1
+    *                                },
+    *                                {
+    *                                    "dayName": "Wednesday",
+    *                                    "fromTime": "",
+    *                                    "toTime": "",
+    *                                    "allDay": 1
+    *                                },
+    *                                {
+    *                                    "dayName": "Thursday",
+    *                                    "fromTime": "",
+    *                                    "toTime": "",
+    *                                    "allDay": 1
+    *                                },
+    *                                {
+    *                                    "dayName": "Friday",
+    *                                    "fromTime": "",
+    *                                    "toTime": "",
+    *                                    "allDay": 1
+    *                                },
+    *                                {
+    *                                     "dayName": "Saturday",
+    *                                    "fromTime": "",
+    *                                    "toTime": "",
+    *                                    "allDay": 1
+    *                                },
+    *                                {
+    *                                    "dayName": "Sunday",
+    *                                    "fromTime": "",
+    *                                    "toTime": "",
+    *                                    "allDay": 1
+    *                                }
+    *                            },
+    *        "messenger":{
+    *                        {
+    *                            
+    *                            "messengerName":"(021) 3851185",
+    *							"type":"Fax",
+    *							"usage":"Utama"
+    *                            
+    *                        },
+    *                        {
     *
-    *		"days_name": "Monday",
-    *		"from_time": "10:00PM",
-    *		"to_time": "10:00PM",
-    *		"all_day": 1
-    *      },
-    *       {
-    *		"days_name": "Monday",
-    *		"from_time": "10:00PM",
-    *		"to_time": "10:00PM",
-    *		"all_day": 1
-    *      },
-    *	   {
-    *		"days_name": "Tuesday",
-    *		"from_time": "12:00PM",
-    *		"to_time": "13:00PM",
-    *		"all_day": 1
-    *      },
-    *	   {
-    *		"days_name": "Wednesday",
-    *		"from_time": "10:00PM",
-    *		"to_time": "10:00PM",
-    *		"all_day": 1
-    *      }
-    *    },
-    *    "messenger":
-    *    {
-    *        {
-    *           "pemakaian":"Utama",
-    *           "namaMessenger":"(021) 3851185",
-    *           "tipe":"Fax"
-    *        },
-    *        {
-    *           "pemakaian":"Utama",
-    *           "namaMessenger":"(021) 012345678",
-    *           "tipe":"Office"
-    *        }
-    *    },
-    *    "email":{
-    *
-    *         {
-    *           "pemakaian":"Utama",
-    *           "namaPengguna":"wahyudidanny23@gmail.com",
-    *           "tipe":"Personal"
-    *        }, 
-    *        {
-    *           "pemakaian":"Secondary",
-    *           "namaPengguna":"wahyudidanny25@gmail.com",
-    *           "tipe":"Personal"
-    *        }
-    *   },
-    *    "telepon":{
-    *         {
-    *           "pemakaian":"Utama",
-    *           "nomorTelepon":"087888821648",
-    *           "tipe":"Telepon Selular"
-    *        }, 
-    *        {
-    *           "pemakaian":"Secondary",
-    *           "nomorTelepon":"085265779499",
-    *           "tipe":"Whatshapp"
-    *        }
-    *   }
-    *
+    *                            "messengerName":"(021) 012345678",
+    *                            "type":"Office",
+    *							"usage":"Personal"
+    *                        }
+    *                    },
+    *        "email":{	
+    *                    {
+    *                        
+    *                        "username":"wahyudidanny23@gmail.com",
+    *                        "type":"Personal",
+    *						"usage":"Utama"
+    *                    }, 
+    *                    {
+    *                       
+    *                        "username":"wahyudidanny25@gmail.com",
+    *						"type":"Secondary",
+    *                        "usage":"Personal"
+    *                    }
+    *                },
+    *        "telephone":{
+    *                    {
+    *                      
+    *                        "phoneNumber":"087888821648",
+    *                        "type":"Telepon Selular",
+    *						"usage":"Utama"
+    *                    }, 
+    *                    {
+    *                        
+    *                        "phoneNumber":"085265779499",
+    *                        "type":"Whatshapp",
+    *						"usage":"Secondary"
+    *                    }
+    *                }
      *},
      *          )),
      *         @OA\MediaType(
@@ -400,7 +427,6 @@ class LocationController extends Controller
                     'locationName' => $request->input('locationName'),
                     'isBranch' => $request->input('isBranch'),
                     'status' => $request->input('status'),
-                    'introduction' => $request->input('introduction'),
                     'description' => $request->input('description'),
                     'image' => $request->input('image'),
                     'imageTitle' => $request->input('imageTitle'),
@@ -414,11 +440,9 @@ class LocationController extends Controller
                         'additionalInfo' => $val['additionalInfo'],
                         'cityName' => $val['cityName'],
                         'provinceName' => $val['provinceName'],
-                        'districtName' => $val['districtName'],
                         'postalCode' => $val['postalCode'],
                         'country' => $val['country'],
-                        'parking' => $val['parking'],
-                        'usage' => $val['usage'],
+                        'isPrimary' => $val['isPrimary'],
                     ]);
             }
 
@@ -658,7 +682,6 @@ class LocationController extends Controller
                 'locationName' => 'required|max:255',
                 'isBranch' => 'required',
                 'status' => 'required',
-                'introduction' => 'required',
                 'description' => 'required',
                 'image' => 'required',
             ]);
@@ -668,7 +691,6 @@ class LocationController extends Controller
                 'locationName' => $request->input('locationName'),
                 'isBranch' => $request->input('isBranch'),
                 'status' => $request->input('status'),
-                'introduction' => $request->input('introduction'),
                 'description' => $request->input('description'),
                 'image' => $request->input('image'),
                 'imageTitle' => $request->input('imageTitle'),
@@ -682,11 +704,9 @@ class LocationController extends Controller
                      'additionalInfo' => $val['additionalInfo'],
                      'cityName' => $val['cityName'],
                      'provinceName' => $val['provinceName'],
-                     'districtName' => $val['districtName'],
                      'postalCode' => $val['postalCode'],
                      'country' => $val['country'],
-                     'parking' => $val['parking'],
-                     'usage' =>$val['usage'],
+                     'isPrimary' => $val['isPrimary'],
                      'isDeleted' => 0,
                  ]);
              }
@@ -976,7 +996,6 @@ class LocationController extends Controller
                 'location.locationName as locationName',
                 'location.isBranch as isBranch',
                 'location.status as status',
-                'location.introduction as introduction',
                 'location.description as description',  
                 'location.image as image',
                 'location.imageTitle as imageTitle',
@@ -989,11 +1008,9 @@ class LocationController extends Controller
                 'location_detail_address.additionalInfo as additionalInfo',
                 'location_detail_address.cityName as cityName',
                 'location_detail_address.provinceName as provinceName',
-                'location_detail_address.districtName as districtName',
                 'location_detail_address.postalCode as postalCode',
                 'location_detail_address.country as country',
-                'location_detail_address.parking as parking',
-                'location_detail_address.usage as usage',
+                'location_detail_address.isPrimary as isPrimary',
             )
             ->where('location_detail_address.codeLocation', '=', $codeLocation)
             ->get();
@@ -1064,16 +1081,61 @@ class LocationController extends Controller
 
         $data_region = DB::table('provinsi')
         ->leftjoin('kabupaten', 'kabupaten.kodeProvinsi', '=', 'provinsi.kodeProvinsi')
-        ->leftjoin('kecamatan', 'kecamatan.kodeKabupaten', '=', 'kabupaten.kodeKabupaten')
         ->select('provinsi.namaProvinsi as provinceName',
                 'kabupaten.namaKabupaten as cityName',
-                'kecamatan.namaKecamatan as districtName',)
+                )
         ->get();
         
         $param_location->dataRegion = $data_region;
 
         return response()->json($param_location, 200);
     }
+
+
+    //danny 
+
+    public function createNew(Request $request)
+    {
+
+        
+        $dataStaticUsage = DB::table('data_static')
+            ->select('data_static.value as value',
+                'data_static.name as name',
+            )
+            ->where('data_static.value', '=', 'Usage')
+            ->get();
+        $param_location->dataStaticUsage = $dataStaticUsage;
+
+        $data_static_telepon = DB::table('data_static')
+            ->select('data_static.value as value',
+                'data_static.name as name',
+            )
+            ->where('data_static.value', '=', 'Telephone')
+            ->get();
+        $param_location->dataStaticTelephone = $data_static_telepon;
+
+        $data_static_messenger = DB::table('data_static')
+            ->select('data_static.value as value',
+                'data_static.name as name',
+            )
+            ->where('data_static.value', '=', 'messenger')
+            ->get();
+        $param_location->dataStaticMessenger = $data_static_messenger;
+
+        $data_region = DB::table('provinsi')
+        ->leftjoin('kabupaten', 'kabupaten.kodeProvinsi', '=', 'provinsi.kodeProvinsi')
+        ->select('provinsi.namaProvinsi as provinceName',
+                'kabupaten.namaKabupaten as cityName',
+                )
+        ->get();
+        
+        $param_location->dataRegion = $data_region;
+
+        return response()->json($param_location, 200);
+
+    }
+
+    //end danny
 
 
      /**
