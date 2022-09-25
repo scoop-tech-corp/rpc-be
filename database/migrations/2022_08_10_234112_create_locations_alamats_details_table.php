@@ -20,11 +20,12 @@ return new class extends Migration
             $table->string('additionalInfo');
             $table->string('cityName');
             $table->string('provinceName');
-            $table->string('districtName');
+            // $table->string('districtName');
             $table->string('postalCode');
             $table->string('country');
-            $table->boolean('parking');
-            $table->string('usage');    
+            $table->boolean('isPrimary');
+            // $table->boolean('parking');
+            // $table->string('usage');    
             $table->boolean('isDeleted');
             $table->timestamps();
         });

@@ -14,6 +14,9 @@ Route::post('register', [ApiController::class, 'register']);
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [ApiController::class, 'logout']);
     Route::post('location', [LocationController::class, 'create']);
+
+    Route::post('location', [LocationController::class, 'createNew']);
+
     Route::get('location', [LocationController::class, 'location']);
     Route::delete('location', [LocationController::class, "delete"]);
     Route::delete("locationcontact", [LocationController::class, "deletecontactlocation"]);
@@ -32,10 +35,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('exportfasilitas', [FasilitasController::class, 'export']);
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
+
     Route::get('products', [ProductController::class, 'index']);
     Route::get('products/{id}', [ProductController::class, 'show']);
     Route::post('create', [ProductController::class, 'store']);
     Route::put('update/{product}', [ProductController::class, 'update']);
     Route::delete('delete/{product}', [ProductController::class, 'destroy']);
+
+    Route::post('productSupplier', [ProductController::class, 'addProductSupplier']);
 
 });
