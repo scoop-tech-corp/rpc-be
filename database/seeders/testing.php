@@ -81,6 +81,8 @@ class testing extends Seeder
             'updated_at' =>'2022-08-30',
         ]);
 
+
+        //location start
         DB::table('location')->insert([
             'codeLocation' => 'abc123',
             "locationName" => "RPC Permata Hijau Pekanbaru",
@@ -156,6 +158,8 @@ class testing extends Seeder
             'created_at' => '2022-08-30',
         ]);
 
+
+        
         $messenger = [
             [
                 'codeLocation' => 'abc123',
@@ -220,6 +224,10 @@ class testing extends Seeder
 
         ];
         DB::table('location_telephone')->insert($telepon); 
+        //location end
+
+        
+
 
         DB::table('fasilitas')->insert([
             'codeFasilitas' => 'XYZ123',

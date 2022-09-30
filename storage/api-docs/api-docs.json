@@ -1479,12 +1479,12 @@
                 "tags": [
                     "Location"
                 ],
-                "summary": "Get Data Static and Region",
-                "description": "Get Data Static and Region",
+                "summary": "Get Data Static",
+                "description": "Get Data Static",
                 "operationId": "locationnew",
                 "responses": {
                     "201": {
-                        "description": "Get Data Successfully",
+                        "description": "Get Data Static Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1492,7 +1492,7 @@
                         }
                     },
                     "200": {
-                        "description": "Get Data Successfully",
+                        "description": "Get Data Static Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1521,37 +1521,17 @@
                 ]
             }
         },
-        "/api/region": {
+        "/api/locationprovinsi": {
             "get": {
                 "tags": [
                     "Location"
                 ],
-                "summary": "Get Region",
-                "description": "Get Region",
-                "operationId": "region",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "path",
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "provinsi": {
-                                            "type": "text",
-                                            "example": "ACEH"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                ],
+                "summary": "Get Provinsi Location",
+                "description": "Get Provinsi Location",
+                "operationId": "locationprovinsi",
                 "responses": {
                     "201": {
-                        "description": "Get Data Location Successfully",
+                        "description": "Get Data Provinsi Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1559,7 +1539,54 @@
                         }
                     },
                     "200": {
-                        "description": "Get Data Location Successfully",
+                        "description": "Get  Data Provinsi Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/locationkabupatenkota": {
+            "get": {
+                "tags": [
+                    "Location"
+                ],
+                "summary": "Get Kabupaten Kota Location",
+                "description": "Get Kabupaten Kota Location",
+                "operationId": "locationkabupatenkota",
+                "responses": {
+                    "201": {
+                        "description": "Get Data Kabupaten Kota Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Kabupaten Kota Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}

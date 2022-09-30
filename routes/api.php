@@ -2,10 +2,10 @@
 
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\DataStaticController;
-use App\Http\Controllers\LocationController;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\FasilitasController;
 use App\Http\Controllers\ImportRegionController;
+use App\Http\Controllers\LocationController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -17,14 +17,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::get('locationnew', [LocationController::class, 'createNew']);
 
+    Route::get('locationprovinsi', [LocationController::class, 'locationProvinsi']);
+    Route::get('locationkabupatenkota', [LocationController::class, 'locationKabupaten']);
+
     Route::get('location', [LocationController::class, 'location']);
     Route::delete('location', [LocationController::class, "delete"]);
-    Route::delete("locationcontact", [LocationController::class, "deletecontactlocation"]);
     Route::put('location', [LocationController::class, 'update']);
-    Route::get('detaillocation', [LocationController::class, 'locationdetail']);
+    Route::get('detaillocation', [LocationController::class, 'locationDetail']);
     Route::post('upload', [ImportRegionController::class, 'upload']);
     Route::get('export', [LocationController::class, 'export']);
-    Route::get('region', [LocationController::class, 'region']);
+
+    Route::get('locationfasilitas', [FasilitasController::class, 'getLocationFasilitas']);
+
     Route::get('datastatic', [DataStaticController::class, 'datastatic']);
     Route::post('datastatic', [LocationController::class, 'insertdatastatic']);
     Route::delete('datastatic', [DataStaticController::class, 'datastaticlocation']);

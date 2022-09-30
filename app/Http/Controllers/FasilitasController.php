@@ -94,18 +94,18 @@ class FasilitasController extends Controller
      *        @OA\Property(property="rowPerPage", type="number",example="10"),
      *        @OA\Property(property="goToPage", type="number",example="6"),
      *        @OA\Property(property="orderColumn", type="array", collectionFormat="multi", 
-  *                @OA\Items(
- *                      @OA\Property(
- *                         property="value",
- *                         type="string",
- *                         example="asc"
- *                      ),
- *                      @OA\Property(
- *                         property="fieldName",
- *                         type="string",
- *                         example="fasilitasName"
- *                      ),
- *                ),
+    *                @OA\Items(
+    *                      @OA\Property(
+    *                         property="value",
+    *                         type="string",
+    *                         example="asc"
+    *                      ),
+    *                      @OA\Property(
+    *                         property="fieldName",
+    *                         type="string",
+    *                         example="fasilitasName"
+    *                      ),
+    *                ),
      *          ),
      *        @OA\Property(property="search", type="text",example=""),
      *     ),
@@ -136,15 +136,13 @@ class FasilitasController extends Controller
         $rowPerPage = 5;
         
         $data = DB::table('fasilitas')
-            ->select('fasilitas.id as id',
-                'fasilitas.codeFasilitas as codeFasilitas',
-                'fasilitas.fasilitasName as fasilitasName',
-                'fasilitas.locationName as locationName',
-                'fasilitas.capacity as capacity',
-                'fasilitas.status as status', )
-          ->where([
-                   ['fasilitas.isDeleted', '=', '0']
-           ]);
+                 ->select('fasilitas.id as id',
+                          'fasilitas.codeFasilitas as codeFasilitas',
+                          'fasilitas.fasilitasName as fasilitasName',
+                          'fasilitas.locationName as locationName',
+                          'fasilitas.capacity as capacity',
+                          'fasilitas.status as status', )
+                 ->where([['fasilitas.isDeleted', '=', '0']]);
 
 
         if ($request->search) {
@@ -225,6 +223,61 @@ class FasilitasController extends Controller
 
             return ('FAILED');
 
+        }
+
+        
+    }
+
+
+
+
+
+ /**
+     * @OA\Get(
+     * path="/api/locationfasilitas",
+     * operationId="locationfasilitas",
+     * tags={"Fasilitas"},
+     * summary="Get Location for dropdown in facility",
+     * description="Get Location for dropdown in facility",
+     *   @OA\Response(
+     *          response=201,
+     *          description="Generate Data Location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Generate Data Location Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+    public function getLocationFasilitas(Request $request){
+           
+        try
+        {
+  
+            $getLocationFasilitas = DB::table('location')
+                                    ->select('location.id as id',
+                                             'location.locationName as locationName', )
+                                    ->where('location.isDeleted', '=', '0')
+                                    ->get();
+    
+            return response()->json($getLocationFasilitas, 200);
+
+        } catch (Exception $e) {
+
+            return response()->json([
+                'success' => 'Failed',
+                'token' =>  $e,
+            ]);
         }
 
         
