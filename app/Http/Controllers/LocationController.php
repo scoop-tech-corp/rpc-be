@@ -12,95 +12,6 @@ class LocationController extends Controller
 {
 
     /**
-     * @OA\Delete(
-     * path="/api/contactlocation",
-     * operationId="Delete Contact Location",
-     * tags={"Location"},
-     * summary="Delete Contact Location",
-     * description="Delete Contact Location , ex: email, messenger, operational(each represent column table, ex: email->location_email)",
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(* @OA\Examples(
-     *        summary="Delete Contact Location",
-     *        example = "Delete Contact Location",
-     *        value = {
-     *           "keyword":"telepon",
-     *           "id":1,
-     *         },)),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               @OA\Property(property="keyword", type="text"),
-     *               @OA\Property(property="id", type="integer"),
-     *            ),
-     *        ),
-     *    ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="Delete branch Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Delete branch Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
-    public function deletecontactlocation(Request $request)
-    {
-
-        $request->validate([
-            'keyword' => 'required|max:10000',
-        ]);
-
-        DB::beginTransaction();
-        try
-        {
-
-            if ($request->input('keyword') == "email") {
-
-                $table_name = 'location_email';
-
-            } elseif ($request->input('keyword') == "messenger") {
-
-                $table_name = 'location_messenger';
-
-            } elseif ($request->input('keyword') == "telephone") {
-
-                $table_name = 'location_telephone';
-            }
-
-            DB::table($table_name)
-                ->where('id', '=', $request->input('id'), )
-                ->update([
-                    'isDeleted' => 1,
-                ]);
-
-            DB::commit();
-
-            return ('SUCCESS');
-            //return back()->with('SUCCESS', 'Data has been successfully inserted');
-
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
-            //return back()->with('ERROR', 'Your error message');
-        }
-
-    }
-
-    /**
      * @OA\Get(
      * path="/api/export",
      * operationId="export",
@@ -970,7 +881,7 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function locationdetail(Request $request)
+    public function locationDetail(Request $request)
     {
 
         $codeLocation = $request->input('codeLocation');
@@ -1076,22 +987,21 @@ class LocationController extends Controller
         return response()->json($param_location, 200);
     }
 
-
     /**
      * @OA\Get(
      * path="/api/locationnew",
      * operationId="locationnew",
      * tags={"Location"},
-     * summary="Get Data Static and Region",
-     * description="Get Data Static and Region",
+     * summary="Get Data Static",
+     * description="Get Data Static",
      *   @OA\Response(
      *          response=201,
-     *          description="Get Data Successfully",
+     *          description="Get Data Static Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Get Data Successfully",
+     *          description="Get Data Static Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
@@ -1107,69 +1017,61 @@ class LocationController extends Controller
     public function createNew(Request $request)
     {
 
-        $param_location = [];
+        try
+        {
+            
+            $param_location = [];
 
-        $data_static_telepon = DB::table('data_static')
-            ->select('data_static.value as value',
-                'data_static.name as name', )
-            ->where('data_static.value', '=', 'Telephone')
-            ->get();
+            $data_static_telepon = DB::table('data_static')
+                                    ->select('data_static.value as value',
+                                             'data_static.name as name', )
+                                    ->where('data_static.value', '=', 'Telephone')
+                                    ->get();
+    
+            $data_static_messenger = DB::table('data_static')
+                                      ->select('data_static.value as value',
+                                               'data_static.name as name',)
+                                      ->where('data_static.value', '=', 'messenger')
+                                      ->get();
+    
+            $dataStaticUsage = DB::table('data_static')
+                                ->select('data_static.value as value',
+                                         'data_static.name as name',)
+                                ->where('data_static.value', '=', 'Usage')
+                                ->get();
+            
+            $param_location = array('dataStaticTelephone' => $data_static_telepon);
+            $param_location['dataStaticMessenger'] = $data_static_messenger;
+            $param_location['dataStaticUsage'] = $dataStaticUsage;
+    
+            return response()->json($param_location, 200);
 
-         $param_location = array('name'=>$data_static_telepon);
-     
-        $data_static_messenger = DB::table('data_static')
-            ->select('data_static.value as value',
-                'data_static.name as name',
-            )
-            ->where('data_static.value', '=', 'messenger')
-            ->get();
+        } catch (Exception $e) {
 
-        $param_location['dataStaticMessenger'] = $data_static_messenger;
-
-        $dataStaticUsage = DB::table('data_static')
-            ->select('data_static.value as value',
-                'data_static.name as name',
-            )
-            ->where('data_static.value', '=', 'Usage')
-            ->get();
-        $param_location['dataStaticUsage'] = $dataStaticUsage;
-
-        $data_region = DB::table('provinsi')
-            ->leftjoin('kabupaten', 'kabupaten.kodeProvinsi', '=', 'provinsi.kodeProvinsi')
-            ->select('provinsi.namaProvinsi as provinceName',
-                'kabupaten.namaKabupaten as cityName')
-            ->get();
-
-        $param_location['dataRegion'] = $data_region;
-
-        return response()->json($param_location, 200);
+            return response()->json([
+                'success' => 'Failed',
+                'token' =>  $e,
+            ]);
+        }
 
     }
 
+
     /**
      * @OA\Get(
-     * path="/api/region",
-     * operationId="region",
+     * path="/api/locationprovinsi",
+     * operationId="locationprovinsi",
      * tags={"Location"},
-     * summary="Get Region",
-     * description="Get Region",
-     *  @OA\Parameter(
-     *     name="body",
-     *     in="path",
-     *     required=true,
-     *     @OA\JsonContent(
-     *        type="object",
-     *        @OA\Property(property="provinsi", type="text",example="ACEH"),
-     *     ),
-     * ),
+     * summary="Get Provinsi Location",
+     * description="Get Provinsi Location",
      *   @OA\Response(
      *          response=201,
-     *          description="Get Data Location Successfully",
+     *          description="Get Data Provinsi Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Get Data Location Successfully",
+     *          description="Get  Data Provinsi Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
@@ -1182,25 +1084,85 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function region(Request $request)
+    public function locationProvinsi(Request $request)
     {
 
-        $request->validate([
-            'provinsi' => 'required|max:10000',
-        ]);
+        try
+        {
 
-        $data_region = DB::table('provinsi')
-            ->leftjoin('kabupaten', 'kabupaten.kodeProvinsi', '=', 'provinsi.kodeProvinsi')
-            ->leftjoin('kecamatan', 'kecamatan.kodeKabupaten', '=', 'kabupaten.kodeKabupaten')
-            ->select('provinsi.namaProvinsi as namaProvinsi',
-                'kabupaten.namaKabupaten as namaKabupaten',
-                'kecamatan.namaKecamatan as namaKecamatan', )
-            ->where('provinsi.namaProvinsi', '=', $request->input('provinsi'))
-            ->get();
+            $getProvinsi = DB::table('provinsi')
+                            ->select('provinsi.kodeProvinsi as id',
+                                     'provinsi.namaProvinsi as provinceName', )
+                            ->get();
 
-        return response()->json($data_region, 200);
+            return response()->json($getProvinsi, 200);
+
+        } catch (Exception $e) {
+
+            return response()->json([
+                'success' => 'Failed',
+                'token' =>  $e,
+            ]);
+        }
 
     }
+
+
+
+  /**
+     * @OA\Get(
+     * path="/api/locationkabupatenkota",
+     * operationId="locationkabupatenkota",
+     * tags={"Location"},
+     * summary="Get Kabupaten Kota Location",
+     * description="Get Kabupaten Kota Location",
+     *   @OA\Response(
+     *          response=201,
+     *          description="Get Data Kabupaten Kota Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Get Data Kabupaten Kota Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+    public function locationKabupaten(Request $request)
+    {
+
+        try
+        {
+            
+            $request->validate(['provinceId' => 'required|max:10000']);
+
+            $data_kabupaten = DB::table('kabupaten')
+                                ->select('kabupaten.id as id',
+                                        'kabupaten.kodeKabupaten as cityCode',
+                                        'kabupaten.namaKabupaten as cityName')
+                                ->where('kabupaten.kodeProvinsi', '=', $request->provinceId)
+                                ->get();
+
+            return response()->json($data_kabupaten, 200);
+
+        } catch (Exception $e) {
+
+            return response()->json([
+                'success' => 'Failed',
+                'token' =>  $e,
+            ]);
+        
+        }
+    }
+
 
     /**
      * @OA\Post(

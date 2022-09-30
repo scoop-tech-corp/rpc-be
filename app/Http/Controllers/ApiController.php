@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use DB;
 use JWTAuth;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -91,7 +92,7 @@ class ApiController extends Controller
 
 
 
- /**
+    /**
      * @OA\Post(
      * path="/api/login",
      * operationId="Login Username",
@@ -171,10 +172,21 @@ class ApiController extends Controller
         }
  	
  		//Token created, return with success response and jwt token
+
+        $users = DB::SELECT('select id
+                                   ,name
+                                   ,email
+                                   ,email_verified_at
+                                   from users where email= ?',
+                                   [$request->input('email')]);
+                                  
         return response()->json([
-            'success' => true,
-            'token' => $token,
+             'success' => true,
+             'token' => $token,
+             'userInformation' => $users
         ]);
+
+
     }
  
 
