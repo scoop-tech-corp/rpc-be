@@ -27,16 +27,21 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('upload', [ImportRegionController::class, 'upload']);
     Route::get('export', [LocationController::class, 'export']);
 
-    Route::get('locationfasilitas', [FasilitasController::class, 'getLocationFasilitas']);
+   
 
     Route::get('datastatic', [DataStaticController::class, 'datastatic']);
     Route::post('datastatic', [LocationController::class, 'insertdatastatic']);
     Route::delete('datastatic', [DataStaticController::class, 'datastaticlocation']);
     Route::post('uploadexceltest', [LocationController::class, 'uploadexceltest']);
-    Route::post('fasilitas', [FasilitasController::class, 'create']);
-    Route::get('fasilitas', [FasilitasController::class, 'getheader']);
-    Route::get('detailfasilitas', [FasilitasController::class, 'fasilitasdetail']);
-    Route::get('exportfasilitas', [FasilitasController::class, 'export']);
+
+    Route::post('facility', [FasilitasController::class, 'createFacility']);
+    Route::put('facility', [FasilitasController::class, 'updateFacility']);
+    Route::delete('facility', [FasilitasController::class, 'deleteFacility']);
+    Route::get('facilitydetail', [FasilitasController::class, 'facilityDetail']);
+    Route::get('facilitylocation', [FasilitasController::class, 'facilityLocation']);
+    Route::get('facility', [FasilitasController::class, 'facilityMenuHeader']);
+    Route::get('facilityexport', [FasilitasController::class, 'facilityExport']);
+
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
 
