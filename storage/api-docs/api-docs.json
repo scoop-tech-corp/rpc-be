@@ -471,6 +471,318 @@
                 ]
             }
         },
+        "/api/facility": {
+            "put": {
+                "tags": [
+                    "Facility"
+                ],
+                "summary": "Update data facility",
+                "description": "Update data faciltiy",
+                "operationId": "update facility",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Update data facility": {
+                                    "summary": "Update data facility",
+                                    "value": {
+                                        "id": 1,
+                                        "facilityCode": "XYZ123",
+                                        "facilityName": "Kandang Maxi NEW",
+                                        "locationName": "RPC Permata Hijau Jakarta",
+                                        "capacity": 1,
+                                        "status": 1,
+                                        "introduction": "Kandang maxi Extra bed for you love pet",
+                                        "description": "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
+                                        "unit": [
+                                            {
+                                                "id": 1,
+                                                "facilityCode": "XYZ123",
+                                                "unitName": "Unit Testing 1",
+                                                "status": 1,
+                                                "notes": "Unit Testing 1.1",
+                                                "isDeleted": 1
+                                            },
+                                            {
+                                                "id": 2,
+                                                "facilityCode": "XYZ1232",
+                                                "unitName": "Unit Testing 1",
+                                                "status": 1,
+                                                "notes": "Unit Testing 1.2"
+                                            },
+                                            {
+                                                "id": 3,
+                                                "facilityCode": "XYZ123",
+                                                "unitName": "Unit Testing 2",
+                                                "status": 1,
+                                                "notes": "Unit Testing 2.1"
+                                            },
+                                            {
+                                                "unitName": "Unit Testing 4",
+                                                "status": 1,
+                                                "notes": "Unit Testing 4"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Register data facility successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Register data facilty Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Facility"
+                ],
+                "summary": "Insert data facility",
+                "description": "Insert data faciltiy",
+                "operationId": "facility",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Insert data facility": {
+                                    "summary": "Insert data facility",
+                                    "value": {
+                                        "facilityName": "Kandang Maxi",
+                                        "locationName": "RPC Permata Hijau Pekanbaru",
+                                        "capacity": 1,
+                                        "status": 1,
+                                        "introduction": "Kandang maxi Extra bed for you love pet",
+                                        "description": "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
+                                        "unit": [
+                                            {
+                                                "unitName": "Unit Testing 1",
+                                                "status": 1,
+                                                "notes": "Unit Testing 1.1"
+                                            },
+                                            {
+                                                "unitName": "Unit Testing 1",
+                                                "status": 1,
+                                                "notes": "Unit Testing 1.2"
+                                            },
+                                            {
+                                                "unitName": "Unit Testing 2",
+                                                "status": 1,
+                                                "notes": "Unit Testing 2.1"
+                                            },
+                                            {
+                                                "unitName": "Unit Testing 4",
+                                                "status": 1,
+                                                "notes": "Unit Testing 4"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Register data facility successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Register data facilty Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Facility"
+                ],
+                "summary": "delete facility and facility unit",
+                "description": "Delete facility will update status isDeleted into 1)",
+                "operationId": "delete facility and facility unit",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {},
+                            "examples": {
+                                "Delete facility": {
+                                    "summary": "Delete facility",
+                                    "value": {
+                                        "facilityCode": "XYZ123"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Delete facility Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Delete facility Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/facilitydetail": {
+            "get": {
+                "tags": [
+                    "Facility"
+                ],
+                "summary": "Get spesific data facility",
+                "description": "Get spesific fasilitas",
+                "operationId": "detail facility",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "facilityCode": {
+                                            "type": "text",
+                                            "example": "XYZ123"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "get facility Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "get facility Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
         "/api/fasilitas": {
             "get": {
                 "tags": [
@@ -610,37 +922,17 @@
                 ]
             }
         },
-        "/api/detailfasilitas": {
+        "/api/facilitylocation": {
             "get": {
                 "tags": [
-                    "Fasilitas"
+                    "Facility"
                 ],
-                "summary": "Get Fasilitas Detail",
-                "description": "Get Fasilitas Detail",
-                "operationId": "detailfasilitas",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "path",
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "id": {
-                                            "type": "text",
-                                            "example": "1"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                ],
+                "summary": "Get Location for dropdown in facility",
+                "description": "Get Location for dropdown in facility",
+                "operationId": "facilitylocation",
                 "responses": {
                     "201": {
-                        "description": "Get Data Location Detail Successfully",
+                        "description": "Generate Data Location Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -648,7 +940,7 @@
                         }
                     },
                     "200": {
-                        "description": "Get Data Location Detail Successfully",
+                        "description": "Generate Data Location Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -729,82 +1021,6 @@
                     },
                     "200": {
                         "description": "Register Fasilitas Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request"
-                    },
-                    "404": {
-                        "description": "Resource Not Found"
-                    }
-                },
-                "security": [
-                    {
-                        "apiAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/contactlocation": {
-            "delete": {
-                "tags": [
-                    "Location"
-                ],
-                "summary": "Delete Contact Location",
-                "description": "Delete Contact Location , ex: email, messenger, operational(each represent column table, ex: email->location_email)",
-                "operationId": "Delete Contact Location",
-                "requestBody": {
-                    "content": {
-                        "multipart/form-data": {
-                            "schema": {
-                                "properties": {
-                                    "keyword": {
-                                        "type": "text"
-                                    },
-                                    "id": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        },
-                        "application/json": {
-                            "schema": {},
-                            "examples": {
-                                "Delete Contact Location": {
-                                    "summary": "Delete Contact Location",
-                                    "value": {
-                                        "keyword": "telepon",
-                                        "id": 1
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Delete branch Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "Delete branch Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}

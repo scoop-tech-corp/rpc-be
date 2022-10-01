@@ -36,22 +36,21 @@ class LocationSeeder extends Seeder
 
           
             $locationDetailLoop = $faker->numberBetween($min = 1, $max = 3);
+           
 
-
-          // 11-94 provinsi
             for ($i = 1; $i <= $locationDetailLoop; $i++) {
                     
                 DB::table('location_detail_address')->insert([
-                    'codeLocation' => $codeLocation,
-                    "addressName"=> "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-                    "additionalInfo"=> "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-                    "provinceName"=> "Kemanggisan",
-                    "cityName"=> "Jakarta Barat",
-                    "postalCode"=> "11480",
-                    "country"=> "Indonesia",
-                    "isPrimary"=> 1,
-                    "isDeleted" => 0,
-                    'created_at' => now(),
+                         'codeLocation' => $codeLocation,
+                         "addressName"=> "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+                         "additionalInfo"=> "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+                         "provinceName"=> "Kemanggisan",
+                         "cityName"=> "Jakarta Barat",
+                         "postalCode"=> "11480",
+                         "country"=> "Indonesia",
+                        "isPrimary"=> 1,
+                        "isDeleted" => 0,
+                        'created_at' => now(),
                 ]);
 
             }

@@ -4,120 +4,159 @@ namespace App\Http\Controllers;
 
 use DB;
 use Illuminate\Http\Request;
-use App\Imports\UsersImport;
-use App\Exports\exportValue;
 use App\Exports\exportFacility;
 use Maatwebsite\Excel\Facades\Excel;
 
 class FasilitasController extends Controller
 {
-  
-    public function create(Request $request)
+   
+    /**
+     * @OA\Post(
+     * path="/api/facility",
+     * operationId="facility",
+     * tags={"Facility"},
+     * summary="Insert data facility",
+     * description="Insert data faciltiy",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Insert data facility",
+     *        example = "Insert data facility",
+     * value = {
+     *       "facilityName" : "Kandang Maxi",
+     *    "locationName" : "RPC Permata Hijau Pekanbaru",
+    *    "capacity" : 1,
+    *    "status" : 1,
+    *    "introduction" : "Kandang maxi Extra bed for you love pet",
+    *    "description" : "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
+    * "unit":  { 
+    *              {
+    *                  "unitName": "Unit Testing 1",
+    *                  "status": 1,
+    *                  "notes": "Unit Testing 1.1"
+    *              },
+    *              {
+    *                  "unitName": "Unit Testing 1",
+    *                  "status": 1,
+    *                  "notes": "Unit Testing 1.2"
+    *              },
+    *              {
+    *                  "unitName": "Unit Testing 2",
+    *                  "status": 1,
+    *                  "notes": "Unit Testing 2.1"
+    *              },
+    *              {
+    *                  "unitName": "Unit Testing 4",
+    *                  "status": 1,
+    *                  "notes": "Unit Testing 4"
+    *              }
+    *           }
+    *       }
+    *            ),
+    *        ),
+    *    ),
+    *      @OA\Response(
+    *          response=201,
+    *          description="Register data facility successfully",
+    *          @OA\JsonContent()
+    *       ),
+    *      @OA\Response(
+    *          response=200,
+    *          description="Register data facilty Successfully",
+    *          @OA\JsonContent()
+    *       ),
+    *      @OA\Response(
+    *          response=422,
+    *          description="Unprocessable Entity",
+    *          @OA\JsonContent()
+    *       ),
+    *      @OA\Response(response=400, description="Bad request"),
+    *      @OA\Response(response=404, description="Resource Not Found"),
+    *      security={{ "apiAuth": {} }}
+    * )
+    */
+    public function createFacility(Request $request)
     {
         DB::beginTransaction();
 
         try
         {
-            $request->validate([
-                'fasilitasName' => 'required',
-                'locationName' => 'required',
-                'capacity' => 'required',
-                'status' => 'required',
-                'introduction' => 'required',
-                'description' => 'required',
-            ]);
-
-
+           
+            $request->validate(['facilityName' => 'required',
+                                'locationName' => 'required',
+                                'capacity' => 'required',
+                                'status' => 'required',
+                                'introduction' => 'required',
+                                'description' => 'required',]);
 
             $getvaluesp = strval(collect(DB::select('call generate_codeFacility'))[0]->randomString);
 
-             DB::table('fasilitas')->insert([
-                        'codeFasilitas' => $getvaluesp,
-                        'fasilitasName' => $request->input('fasilitasName'),
-                        'locationName' => $request->input('locationName'),
-                        'capacity' => $request->input('capacity'),
-                        'status' => $request->input('status'),
-                        'introduction' => $request->input('introduction'),
-                        'description' => $request->input('description'),               
-                        'isDeleted' => 0,
-                    ]);
-            
-                foreach ($request->unit as $val) {
-                    $unitname = strval(array_keys($val)[0]);
-
-                   foreach ($val as $key=>$asd) {
+            DB::table('facility')->insert(['facilityCode' => $getvaluesp,
+                                            'facilityName' => $request->input('facilityName'),
+                                            'locationName' => $request->input('locationName'),
+                                            'capacity' => $request->input('capacity'),
+                                            'status' => $request->input('status'),
+                                            'introduction' => $request->input('introduction'),
+                                            'description' => $request->input('description'),
+                                            'isDeleted' => 0,
+                                            'created_at' => now(), ]);
 
 
-                    foreach ($asd as $columnval) {
-                        DB::table('fasilitas_unit')->insert([
-                            'codeFasilitas' => $getvaluesp,
-                            'unitName' => $unitname ,
-                            'status' => $columnval['status'],
-                            'notes' => $columnval['notes'],
-                            'isDeleted' => 0,
-                        ]); 
-                    }
-                 
-                 
-                   }
-                }
-             
+
+            foreach ($request->unit as $val) {
+
+                DB::table('facility_unit')->insert(['facilityCode' => $getvaluesp,
+                                                    'unitName' => $val['unitName'],
+                                                    'status' => $val['status'],
+                                                    'notes' => $val['notes'],
+                                                    'isDeleted' => 0,
+                                                    'created_at' => now(), 
+                                                  ]);
+
+            }
+
             DB::commit();
 
-            return ('SUCCESS');
+            return response()->json([
+                'result' => 'success',
+            ]);
 
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return ('FAILED');
+            return response()->json([
+                'result' => 'failed',
+                'token' =>  $e,
+            ]);
 
         }
 
     }
 
-
-
-     /**
-     * @OA\Get(
-     * path="/api/fasilitas",
-     * operationId="fasilitas",
-     * tags={"Fasilitas"},
-     * summary="Get Fasilitas",
-     * description="get Fasilitas",
-     *  @OA\Parameter(
-     *     name="body",
-     *     in="path",
-     *     required=true,
-     *     @OA\JsonContent(
-     *        type="object",
-     *        @OA\Property(property="rowPerPage", type="number",example="10"),
-     *        @OA\Property(property="goToPage", type="number",example="6"),
-     *        @OA\Property(property="orderColumn", type="array", collectionFormat="multi", 
-    *                @OA\Items(
-    *                      @OA\Property(
-    *                         property="value",
-    *                         type="string",
-    *                         example="asc"
-    *                      ),
-    *                      @OA\Property(
-    *                         property="fieldName",
-    *                         type="string",
-    *                         example="fasilitasName"
-    *                      ),
-    *                ),
-     *          ),
-     *        @OA\Property(property="search", type="text",example=""),
-     *     ),
-     * ),
-     *   @OA\Response(
+    
+    /**
+     * @OA\Delete(
+     * path="/api/facility",
+     * operationId="delete facility and facility unit",
+     * tags={"Facility"},
+     * summary="delete facility and facility unit",
+     * description="Delete facility will update status isDeleted into 1)",
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(* @OA\Examples(
+     *        summary="Delete facility",
+     *        example = "Delete facility",
+     *        value = {
+     *           "facilityCode":"XYZ123",
+     *         },))
+     *      ),
+     *      @OA\Response(
      *          response=201,
-     *          description="Get Data Location Successfully",
+     *          description="Delete facility Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Get Data Location Successfully",
+     *          description="Delete facility Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
@@ -130,30 +169,361 @@ class FasilitasController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getheader(Request $request)
+    public function deleteFacility(Request $request)
+    {
+        DB::beginTransaction();
+
+        $request->validate(['facilityCode' => 'required']);
+
+        try
+        {
+
+            DB::table('facility')
+              ->where('facilityCode', '=', $request->input('facilityCode'))
+              ->update(['isDeleted' => 1]);
+
+            DB::table('facility_Unit')
+              ->where('facilityCode', '=', $request->input('facilityCode'))
+              ->update(['isDeleted' => 1]);
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'success',
+            ]);
+
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'token' =>  $e,
+            ]);
+
+        }
+
+    }
+
+
+
+/**
+* @OA\Get(
+* path="/api/facilitydetail",
+* operationId="detail facility",
+* tags={"Facility"},
+* summary="Get spesific data facility",
+* description="Get spesific fasilitas",
+*  @OA\Parameter(
+*     name="body",
+*     in="path",
+*     required=true,
+*     @OA\JsonContent(
+*        type="object",
+*        @OA\Property(property="facilityCode", type="text",example="XYZ123"),
+*     ),
+* ),
+*      @OA\Response(
+*          response=201,
+*          description="get facility Successfully",
+*          @OA\JsonContent()
+*       ),
+*      @OA\Response(
+*          response=200,
+*          description="get facility Successfully",
+*          @OA\JsonContent()
+*       ),
+*      @OA\Response(
+*          response=422,
+*          description="Unprocessable Entity",
+*          @OA\JsonContent()
+*       ),
+*      @OA\Response(response=400, description="Bad request"),
+*      @OA\Response(response=404, description="Resource Not Found"),
+*      security={{ "apiAuth": {} }}
+* )
+*/
+public function facilityDetail(Request $request)
+{
+    $request->validate([
+        'facilityCode' => 'required|string|max:8',
+    ]);
+
+    $facilityCode = $request->input('facilityCode');
+
+    $facility = DB::table('facility')
+                        ->select('facility.id as id',
+                                 'facility.facilityCode as facilityCode',
+                                 'facility.facilityName as facilityName',
+                                 'facility.locationName as locationName',
+                                 'facility.introduction as introduction',
+                                 'facility.description as description',
+                                 'facility.capacity as capacity',
+                                 'facility.status as status', )
+                         ->where(['facility.facilityCode' => $facilityCode],
+                                 ['facility.isDeleted' => 0 ],)
+                         ->first();
+                         
+    $fasilitas_unit = DB::table('facility_unit')
+                       ->select('facility_unit.id as id',
+                                'facility_unit.facilityCode as facilityCode',
+                                'facility_unit.unitName as unitName',
+                                'facility_unit.status as status',
+                                'facility_unit.notes as notes', )
+                        ->where(['facility_unit.facilityCode' => $facilityCode],
+                                ['facility_unit.isDeleted' => 0 ],)
+                        ->get();
+
+    if ($fasilitas_unit != null) {
+        $facility->unit = $fasilitas_unit;
+    }
+
+    return response()->json($facility, 200);
+
+}
+
+
+
+/**
+ * @OA\put(
+ * path="/api/facility",
+ * operationId="update facility",
+ * tags={"Facility"},
+ * summary="Update data facility",
+ * description="Update data faciltiy",
+ *     @OA\RequestBody(
+ *         @OA\JsonContent(* @OA\Examples(
+ *        summary="Update data facility",
+ *        example = "Update data facility",
+ * value = {
+*    "id": 1,
+*    "facilityCode": "XYZ123",
+*    "facilityName": "Kandang Maxi NEW",
+*    "locationName": "RPC Permata Hijau Jakarta",
+*    "capacity": 1,
+*    "status": 1,
+*    "introduction" : "Kandang maxi Extra bed for you love pet",
+*    "description" : "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
+*    "unit": {
+*        {
+*            "id": 1,
+*            "facilityCode": "XYZ123",
+*            "unitName": "Unit Testing 1",
+*            "status": 1,
+*            "notes": "Unit Testing 1.1",
+*            "isDeleted" : 1
+*        },
+*        {
+*            "id": 2,
+*            "facilityCode": "XYZ1232",
+*            "unitName": "Unit Testing 1",
+*            "status": 1,
+*            "notes": "Unit Testing 1.2"
+*        },
+*        {
+*            "id": 3,
+*            "facilityCode": "XYZ123",
+*            "unitName": "Unit Testing 2",
+*            "status": 1,
+*            "notes": "Unit Testing 2.1"
+*        },
+*        {
+*            "unitName": "Unit Testing 4",
+*            "status": 1,
+*            "notes": "Unit Testing 4"
+*        }
+*        }
+*   },
+*            ),
+*        ),
+*    ),
+*      @OA\Response(
+*          response=201,
+*          description="Register data facility successfully",
+*          @OA\JsonContent()
+*       ),
+*      @OA\Response(
+*          response=200,
+*          description="Register data facilty Successfully",
+*          @OA\JsonContent()
+*       ),
+*      @OA\Response(
+*          response=422,
+*          description="Unprocessable Entity",
+*          @OA\JsonContent()
+*       ),
+*      @OA\Response(response=400, description="Bad request"),
+*      @OA\Response(response=404, description="Resource Not Found"),
+*      security={{ "apiAuth": {} }}
+* )
+*/
+public function updateFacility(Request $request)
+    {
+        DB::beginTransaction();
+
+        $request->validate(['facilityCode' => 'required' ,
+                            'facilityName' => 'required',
+                            'locationName' => 'required',
+                            'capacity' => 'required',
+                            'status' => 'required',
+                            'introduction' => 'required',
+                            'description' => 'required',
+                    ]);
+    
+        try
+        {
+
+            DB::table('facility')
+               ->where('facilityCode', '=', $request->input('facilityCode'))
+               ->update(['facilityName' => $request->input('facilityName'),
+                         'locationName' => $request->input('locationName'),
+                         'capacity' => $request->input('capacity'),
+                         'status' => $request->input('status'),
+                         'introduction' => $request->input('introduction'),
+                         'description' => $request->input('description'),
+                         'updated_at' => now(),
+                    ]);
+
+            
+            foreach ($request->unit as $val) {
+                
+               if(isset($val['facilityCode'])) 
+               {
+                      
+                    if(isset($val['isDeleted'])){
+
+                        DB::table('facility_unit')
+                        ->where([['facilityCode', '=', $val('facilityCode')],
+                                 ['id', '=', $val('id')]])
+                        ->update(['unitName' => $val('unitName'),
+                                  'status' => $val('status'),
+                                  'notes' => $val('notes'),
+                                  'isDeleted' => $val('isDeleted'),
+                                  'updated_at' => now(),
+                                 ]);
+
+                    }else{
+
+                        DB::table('facility_unit')
+                        ->where([['facilityCode', '=', $val('facilityCode')],
+                                 ['id', '=', $val('id')]])
+                        ->update(['unitName' => $val('unitName'),
+                                  'status' => $val('status'),
+                                  'notes' => $val('notes'),
+                                  'updated_at' => now(),
+                                 ]);
+                    }
+                   
+               }else{
+
+                    DB::table('facility_unit')->insert(['facilityCode' => $getvaluesp,
+                                                        'unitName' => $val['unitName'],
+                                                        'status' => $val['status'],
+                                                        'notes' => $val['notes'],
+                                                        'isDeleted' => 0,
+                                                        'created_at' => now(), 
+                    ]);
+
+               }
+
+            }
+        
+            DB::commit();
+
+            return 'success';
+            return response()->json([
+                'result' => 'success',
+            ]);
+
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'token' =>  $e,
+            ]);
+
+        }
+  
+
+    }
+
+    
+
+    /**
+     * @OA\Get(
+     * path="/api/facility",
+     * operationId="facility",
+     * tags={"facility"},
+     * summary="Get facility menu header",
+     * description="Get facility menu header",
+     *  @OA\Parameter(
+     *     name="body",
+     *     in="path",
+     *     required=true,
+     *     @OA\JsonContent(
+     *        type="object",
+     *        @OA\Property(property="rowPerPage", type="number",example="10"),
+     *        @OA\Property(property="goToPage", type="number",example="6"),
+     *        @OA\Property(property="orderColumn", type="array", collectionFormat="multi",
+     *                @OA\Items(
+     *                      @OA\Property(
+     *                         property="value",
+     *                         type="string",
+     *                         example="asc"
+     *                      ),
+     *                      @OA\Property(
+     *                         property="fieldName",
+     *                         type="string",
+     *                         example="facilityName"
+     *                      ),
+     *                ),
+     *          ),
+     *        @OA\Property(property="search", type="text",example=""),
+     *     ),
+     * ),
+     *   @OA\Response(
+     *          response=201,
+     *          description="Get Data facility Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Get Data facility Successfully",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Unprocessable Entity",
+     *          @OA\JsonContent()
+     *       ),
+     *      @OA\Response(response=400, description="Bad request"),
+     *      @OA\Response(response=404, description="Resource Not Found"),
+     *      security={{ "apiAuth": {} }}
+     * )
+     */
+    public function facilityMenuHeader(Request $request)
     {
 
         $rowPerPage = 5;
-        
-        $data = DB::table('fasilitas')
-                 ->select('fasilitas.id as id',
-                          'fasilitas.codeFasilitas as codeFasilitas',
-                          'fasilitas.fasilitasName as fasilitasName',
-                          'fasilitas.locationName as locationName',
-                          'fasilitas.capacity as capacity',
-                          'fasilitas.status as status', )
-                 ->where([['fasilitas.isDeleted', '=', '0']]);
+
+        $data = DB::table('facility')
+                 ->select('facility.id as id',
+                          'facility.facilityCode as facilityCode',
+                          'facility.facilityName as facilityName',
+                          'facility.locationName as locationName',
+                          'facility.capacity as capacity',
+                          'facility.status as status', )
+                ->where([['facility.isDeleted' ,"=", 0 ]]);
 
 
         if ($request->search) {
-           
-            $data = $data->where('fasilitas.fasilitasName', 'like', '%' . $request->search . '%')
-                            ->orwhere('fasilitas.locationName', 'like', '%' . $request->search . '%');
+
+            $data = $data->where('facility.facilityName', 'like', '%' . $request->search . '%')
+                       ->orwhere('facility.locationName', 'like', '%' . $request->search . '%');
         }
 
-        // if ($request->orderColumn) {
-        //     $data = $data->orderBy($request->orderColumn['fieldName'], $request->orderColumn['value']);
-        // }
 
         if ($request->orderColumn && $request->orderValue) {
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
@@ -163,12 +533,12 @@ class FasilitasController extends Controller
             $rowPerPage = $request->rowPerPage;
         }
 
-         $goToPage = $request->goToPage;
-       
-         $offset = ($goToPage - 1) * $rowPerPage;
+        $goToPage = $request->goToPage;
 
-         $count_data = $data->count();
-         $count_result = $count_data - $offset;
+        $offset = ($goToPage - 1) * $rowPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
             $data = $data->offset(0)->limit($rowPerPage)->get();
@@ -177,18 +547,18 @@ class FasilitasController extends Controller
         }
 
         $total_paging = $count_data / $rowPerPage;
-        return response()->json(['totalData' => ceil($total_paging),'data' => $data], 200);
+        return response()->json(['totalData' => ceil($total_paging), 'data' => $data], 200);
 
     }
 
 
-     /**
+    /**
      * @OA\Get(
-     * path="/api/exportfasilitas",
-     * operationId="exportfasilitas",
-     * tags={"Fasilitas"},
-     * summary="export Location excel",
-     * description="export Location excel",
+     * path="/api/facilityexport",
+     * operationId="facilityexport",
+     * tags={"Facility"},
+     * summary="export facility excel",
+     * description="export facility excel",
      *   @OA\Response(
      *          response=201,
      *          description="Generate Excel Successfully",
@@ -209,34 +579,32 @@ class FasilitasController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function export(Request $request){
-           
+    public function facilityExport(Request $request)
+    {
+
         try
         {
-            //danny
-            
             return Excel::download(new exportFacility, 'Facility.xlsx');
 
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return ('FAILED');
+            return response()->json([
+                'result' => 'Failed',
+                'token' => $e,
+            ]);
 
         }
 
-        
     }
 
 
-
-
-
- /**
+    /**
      * @OA\Get(
-     * path="/api/locationfasilitas",
-     * operationId="locationfasilitas",
-     * tags={"Fasilitas"},
+     * path="/api/facilitylocation",
+     * operationId="facilitylocation",
+     * tags={"Facility"},
      * summary="Get Location for dropdown in facility",
      * description="Get Location for dropdown in facility",
      *   @OA\Response(
@@ -259,107 +627,29 @@ class FasilitasController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getLocationFasilitas(Request $request){
-           
+    public function facilityLocation(Request $request)
+    {
+
         try
         {
-  
+
             $getLocationFasilitas = DB::table('location')
-                                    ->select('location.id as id',
-                                             'location.locationName as locationName', )
-                                    ->where('location.isDeleted', '=', '0')
-                                    ->get();
-    
+                                     ->select('location.id as id',
+                                              'location.locationName as locationName', )
+                                      ->where('location.isDeleted', '=', '0')
+                                      ->get();
+
             return response()->json($getLocationFasilitas, 200);
 
         } catch (Exception $e) {
 
             return response()->json([
-                'success' => 'Failed',
-                'token' =>  $e,
+                'result' => 'Failed',
+                'token' => $e,
             ]);
         }
 
-        
     }
-
-
-
-/**
-     * @OA\Get(
-     * path="/api/detailfasilitas",
-     * operationId="detailfasilitas",
-     * tags={"Fasilitas"},
-     * summary="Get Fasilitas Detail",
-     * description="Get Fasilitas Detail",
-     *  @OA\Parameter(
-     *     name="body",
-     *     in="path",
-     *     required=true,
-     *     @OA\JsonContent(
-     *        type="object",
-     *        @OA\Property(property="id", type="text",example="1"),
-     *     ),
-     * ),
-     *   @OA\Response(
-     *          response=201,
-     *          description="Get Data Location Detail Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Get Data Location Detail Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
-    public function fasilitasdetail(Request $request)
-    {
-        $request->validate([
-             'codeFasilitas' => 'required|string|max:8',
-        ]);
-
-        $codeFasilitas = $request->input('codeFasilitas');
-
-        $param_fasilitas = DB::table('fasilitas')
-            ->select('fasilitas.id as id',
-                'fasilitas.codeFasilitas as codeFasilitas',
-                'fasilitas.fasilitasName as fasilitasName',
-                'fasilitas.locationName as locationName',
-                'fasilitas.capacity as capacity',
-                'fasilitas.status as status',)
-            ->where('fasilitas.codeFasilitas', '=', $codeFasilitas)
-            ->first();
-  
-        $fasilitas_unit = DB::table('fasilitas_unit')
-            ->select('fasilitas_unit.unitName as unitName',
-                     'fasilitas_unit.notes as notes',)
-            ->where('fasilitas_unit.codeFasilitas', '=', $codeFasilitas)
-            ->get();
-
-        if ($fasilitas_unit != null) {
-            $param_fasilitas->unit = $fasilitas_unit;
-        }
-
-        // $map_location = DB::table('location')
-        //     ->select('location.locationName as locationName')
-        //     ->get();
-
-        // $result = json_decode($map_location, true);
-     
-        return response()->json($param_fasilitas, 200);
-            
-    }
-
-
 
 
 }
