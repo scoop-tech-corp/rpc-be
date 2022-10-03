@@ -454,8 +454,8 @@ public function updateFacility(Request $request)
     /**
      * @OA\Get(
      * path="/api/facility",
-     * operationId="facility",
-     * tags={"facility"},
+     * operationId="facilityMenuHeader",
+     * tags={"Facility"},
      * summary="Get facility menu header",
      * description="Get facility menu header",
      *  @OA\Parameter(

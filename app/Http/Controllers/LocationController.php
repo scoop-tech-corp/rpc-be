@@ -1112,10 +1112,19 @@ class LocationController extends Controller
   /**
      * @OA\Get(
      * path="/api/locationkabupatenkota",
-     * operationId="locationkabupatenkota",
+     * operationId="locationKabupaten",
      * tags={"Location"},
      * summary="Get Kabupaten Kota Location",
      * description="Get Kabupaten Kota Location",
+     *  @OA\Parameter(
+     *     name="body",
+     *     in="path",
+     *     required=true,
+     *     @OA\JsonContent(
+     *        type="object",
+     *        @OA\Property(property="provinceId", type="number",example=12),
+     *     ),
+     * ),
      *   @OA\Response(
      *          response=201,
      *          description="Get Data Kabupaten Kota Successfully",

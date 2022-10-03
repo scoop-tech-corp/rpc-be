@@ -472,6 +472,96 @@
             }
         },
         "/api/facility": {
+            "get": {
+                "tags": [
+                    "Facility"
+                ],
+                "summary": "Get facility menu header",
+                "description": "Get facility menu header",
+                "operationId": "facilityMenuHeader",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "rowPerPage": {
+                                            "type": "number",
+                                            "example": "10"
+                                        },
+                                        "goToPage": {
+                                            "type": "number",
+                                            "example": "6"
+                                        },
+                                        "orderColumn": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string",
+                                                        "example": "asc"
+                                                    },
+                                                    "fieldName": {
+                                                        "type": "string",
+                                                        "example": "facilityName"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "collectionFormat": "multi"
+                                        },
+                                        "search": {
+                                            "type": "text",
+                                            "example": ""
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data facility Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data facility Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            },
             "put": {
                 "tags": [
                     "Facility"
@@ -783,106 +873,14 @@
                 ]
             }
         },
-        "/api/fasilitas": {
+        "/api/facilityexport": {
             "get": {
                 "tags": [
-                    "Fasilitas"
+                    "Facility"
                 ],
-                "summary": "Get Fasilitas",
-                "description": "get Fasilitas",
-                "operationId": "fasilitas",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "path",
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "rowPerPage": {
-                                            "type": "number",
-                                            "example": "10"
-                                        },
-                                        "goToPage": {
-                                            "type": "number",
-                                            "example": "6"
-                                        },
-                                        "orderColumn": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "value": {
-                                                        "type": "string",
-                                                        "example": "asc"
-                                                    },
-                                                    "fieldName": {
-                                                        "type": "string",
-                                                        "example": "fasilitasName"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            },
-                                            "collectionFormat": "multi"
-                                        },
-                                        "search": {
-                                            "type": "text",
-                                            "example": ""
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Get Data Location Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "Get Data Location Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request"
-                    },
-                    "404": {
-                        "description": "Resource Not Found"
-                    }
-                },
-                "security": [
-                    {
-                        "apiAuth": []
-                    }
-                ]
-            }
-        },
-        "/api/exportfasilitas": {
-            "get": {
-                "tags": [
-                    "Fasilitas"
-                ],
-                "summary": "export Location excel",
-                "description": "export Location excel",
-                "operationId": "exportfasilitas",
+                "summary": "export facility excel",
+                "description": "export facility excel",
+                "operationId": "facilityexport",
                 "responses": {
                     "201": {
                         "description": "Generate Excel Successfully",
@@ -1791,7 +1789,27 @@
                 ],
                 "summary": "Get Kabupaten Kota Location",
                 "description": "Get Kabupaten Kota Location",
-                "operationId": "locationkabupatenkota",
+                "operationId": "locationKabupaten",
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "path",
+                        "required": true,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "provinceId": {
+                                            "type": "number",
+                                            "example": 12
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
                         "description": "Get Data Kabupaten Kota Successfully",
