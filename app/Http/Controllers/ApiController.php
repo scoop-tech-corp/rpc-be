@@ -179,11 +179,15 @@ class ApiController extends Controller
                                    ,email_verified_at
                                    from users where email= ?',
                                    [$request->input('email')]);
-                                  
+          echo($users[0]->id);
+          
         return response()->json([
              'success' => true,
              'token' => $token,
-             'userInformation' => $users
+             'userId' =>$users[0]->id,
+             'userName' => $users[0]->name,
+             'userEmail' => $users[0]->email,
+             'userVerifiedAt' => $users[0]->email_verified_at
         ]);
 
 

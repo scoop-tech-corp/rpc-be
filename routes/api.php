@@ -13,13 +13,12 @@ Route::post('register', [ApiController::class, 'register']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [ApiController::class, 'logout']);
-    Route::post('location', [LocationController::class, 'create']);
+
+    Route::post('location', [LocationController::class, 'insertLocation']);
 
     Route::get('locationnew', [LocationController::class, 'createNew']);
-
     Route::get('locationprovinsi', [LocationController::class, 'locationProvinsi']);
     Route::get('locationkabupatenkota', [LocationController::class, 'locationKabupaten']);
-
     Route::get('location', [LocationController::class, 'location']);
     Route::delete('location', [LocationController::class, "delete"]);
     Route::put('location', [LocationController::class, 'update']);

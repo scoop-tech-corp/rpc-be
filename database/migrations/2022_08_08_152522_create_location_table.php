@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('locationName');
             $table->boolean('isBranch');
             $table->boolean('status');
-            // $table->string('introduction')->nullable()->default(NULL);
             $table->string('description')->nullable()->default(NULL);
             $table->string('image')->nullable()->default(NULL);
             $table->string('imageTitle')->nullable()->default(NULL);

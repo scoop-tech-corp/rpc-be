@@ -568,7 +568,7 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function create(Request $request)
+    public function insertLocation(Request $request)
     {
         DB::beginTransaction();
 
@@ -577,100 +577,104 @@ class LocationController extends Controller
 
             $getvaluesp = strval(collect(DB::select('call generate_codeLocation'))[0]->randomString);
 
-            $request->validate([
-                'locationName' => 'required|max:255',
-                'isBranch' => 'required',
-                'status' => 'required',
-                'description' => 'required',
-                'image' => 'required',
-            ]);
+            $request->validate(['locationName' => 'required|max:255',
+                                'isBranch' => 'required',
+                                'status' => 'required',
+                                'description' => 'required',
+                                'image' => 'required',
+                                 ]);
 
-            DB::table('location')->insert([
-                'codeLocation' => $getvaluesp,
-                'locationName' => $request->input('locationName'),
-                'isBranch' => $request->input('isBranch'),
-                'status' => $request->input('status'),
-                'description' => $request->input('description'),
-                'image' => $request->input('image'),
-                'imageTitle' => $request->input('imageTitle'),
-                'isDeleted' => 0,
-            ]);
+            DB::table('location')->insert(['codeLocation' => $getvaluesp,
+                                           'locationName' => $request->input('locationName'),
+                                           'isBranch' => $request->input('isBranch'),
+                                           'status' => $request->input('status'),
+                                           'description' => $request->input('description'),
+                                           'image' => $request->input('image'),
+                                           'imageTitle' => $request->input('imageTitle'),
+                                           'isDeleted' => 0,
+                                           'created_at' => now()
+                                          ]);
 
             foreach ($request->detailAddress as $val) {
-                DB::table('location_detail_address')->insert([
-                    'codeLocation' => $getvaluesp,
-                    'addressName' => $val['addressName'],
-                    'additionalInfo' => $val['additionalInfo'],
-                    'cityName' => $val['cityName'],
-                    'provinceName' => $val['provinceName'],
-                    'postalCode' => $val['postalCode'],
-                    'country' => $val['country'],
-                    'isPrimary' => $val['isPrimary'],
-                    'isDeleted' => 0,
-                ]);
+                DB::table('location_detail_address')
+                ->insert(['codeLocation' => $getvaluesp,
+                          'addressName' => $val['addressName'],
+                          'additionalInfo' => $val['additionalInfo'],
+                          'provinceCode' => $val['provinceCode'],
+                          'cityCode' => $val['cityCode'],
+                          'postalCode' => $val['postalCode'],
+                          'country' => $val['country'],
+                          'isPrimary' => $val['isPrimary'],
+                          'isDeleted' => 0,
+                          'created_at' => now()
+                        ]);
             }
 
             foreach ($request->operationalHour as $val) {
 
-                DB::table('location_operational')->insert([
-                    'codeLocation' => $getvaluesp,
-                    'dayName' => $val['dayName'],
-                    'fromTime' => $val['fromTime'],
-                    'toTime' => $val['toTime'],
-                    'allDay' => $val['allDay'],
-                ]);
-
+                DB::table('location_operational')
+                ->insert(['codeLocation' => $getvaluesp,
+                          'dayName' => $val['dayName'],
+                          'fromTime' => $val['fromTime'],
+                          'toTime' => $val['toTime'],
+                          'allDay' => $val['allDay'],
+                        ]);
             }
 
             foreach ($request->messenger as $val) {
 
-                DB::table('location_messenger')->insert([
-                    'codeLocation' => $getvaluesp,
-                    'messengerName' => $val['messengerName'],
-                    'type' => $val['type'],
-                    'usage' => $val['usage'],
-                    'isDeleted' => 0,
-                ]);
-
+                DB::table('location_messenger')
+                 ->insert(['codeLocation' => $getvaluesp,
+                            'messengerNumber' => $val['messengerNumber'],
+                            'type' => $val['type'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                         ]);
             }
+
 
             foreach ($request->email as $val) {
 
-                DB::table('location_email')->insert([
-                    'codeLocation' => $getvaluesp,
-                    'username' => $val['username'],
-                    'type' => $val['type'],
-                    'usage' => $val['usage'],
-                    'isDeleted' => 0,
-                ]);
+                DB::table('location_email')
+                 ->insert(['codeLocation' => $getvaluesp,
+                            'username' => $val['username'],
+                            'type' => $val['type'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                          ]);
 
             }
 
+
             foreach ($request->telephone as $val) {
 
-                DB::table('location_telephone')->insert([
-                    'codeLocation' => $getvaluesp,
-                    'phoneNumber' => $val['phoneNumber'],
-                    'type' => $val['type'],
-                    'usage' => $val['usage'],
-                    'isDeleted' => 0,
-                ]);
+                DB::table('location_telephone')
+                 ->insert([ 'codeLocation' => $getvaluesp,
+                            'phoneNumber' => $val['phoneNumber'],
+                            'type' => $val['type'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                         ]);
 
             }
 
             DB::commit();
 
-            return ('SUCCESS');
-
-            //return back()->with('SUCCESS', 'Data has been successfully inserted');
+            return response()->json([
+                'result' => 'success',
+            ]);
 
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return ('FAILED');
-
-            // return back()->with('ERROR', 'Your error message');
+            return response()->json([
+                'result' => 'failed',
+                'token' =>  $e,
+            ]);
         }
 
     }
