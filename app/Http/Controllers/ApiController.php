@@ -179,8 +179,7 @@ class ApiController extends Controller
                                    ,email_verified_at
                                    from users where email= ?',
                                    [$request->input('email')]);
-          echo($users[0]->id);
-          
+       
         return response()->json([
              'success' => true,
              'token' => $token,

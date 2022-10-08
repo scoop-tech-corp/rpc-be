@@ -160,7 +160,7 @@ class LocationSeeder extends Seeder
 
         $faker = Faker::create('en_US');
 
-        for ($i = 1; $i <= 1; $i++) {
+        for ($i = 1; $i <= 60; $i++) {
 
         $codeLocation = $faker->isbn10;
         $imageName = $faker->company.' '.".jpg";

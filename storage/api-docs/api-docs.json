@@ -1395,10 +1395,9 @@
                                 "Insert Location": {
                                     "summary": "Insert Location",
                                     "value": {
-                                        "locationName": "RPC Permata Hijau Pekanbaru",
+                                        "locationName": "RPC Permata Hijau Jakarta",
                                         "isBranch": 0,
                                         "status": 1,
-                                        "introduction": "RPC Permata Hijau Pekanbaru, the best pet shop in the pekanbaru",
                                         "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem   tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
                                         "image": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijau.jpg",
                                         "imageTitle": "ImageRPCPermataHijau.jpg",
@@ -1406,24 +1405,20 @@
                                             {
                                                 "addressName": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
                                                 "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-                                                "cityName": "Jakarta Barat",
-                                                "provinceName": "DKI Jakarta",
-                                                "districtName": "Palmerah",
-                                                "postalCode": "11480",
+                                                "provinceCode": 11,
+                                                "cityCode": 1101,
+                                                "postalCode": 9999,
                                                 "country": "Indonesia",
-                                                "parking": 1,
-                                                "usage": "Indekos"
+                                                "isPrimary": 1
                                             },
                                             {
                                                 "addressName": "Jalan Keluarga sebelah binus syahdan",
                                                 "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-                                                "cityName": "Jakarta Barat",
-                                                "provinceName": "DKI Jakarta",
-                                                "districtName": "Palmerah",
-                                                "postalCode": "11480",
+                                                "provinceCode": 12,
+                                                "cityCode": 1201,
+                                                "postalCode": 9999,
                                                 "country": "Indonesia",
-                                                "parking": 1,
-                                                "usage": "Utama"
+                                                "isPrimary": 0
                                             }
                                         ],
                                         "operationalHour": [
@@ -1472,14 +1467,14 @@
                                         ],
                                         "messenger": [
                                             {
-                                                "messengerName": "(021) 3851185",
+                                                "messengerNumber": "(021) 3851185",
                                                 "type": "Fax",
                                                 "usage": "Utama"
                                             },
                                             {
-                                                "messengerName": "(021) 012345678",
+                                                "messengerNumber": "(021) 012345678",
                                                 "type": "Office",
-                                                "usage": "Personal"
+                                                "usage": "Secondary"
                                             }
                                         ],
                                         "email": [

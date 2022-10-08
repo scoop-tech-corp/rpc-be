@@ -64,18 +64,28 @@ class ImportRegionController extends Controller
 
         try{
 
+            $request->validate([
+                'provinsi' => 'required|max:10000',
+                'kabupaten' => 'required|max:10000',
+            ]);
+
             set_time_limit(500);
 
             Excel::import(new RegionImport, $request->file('provinsi')->store('provinsi'));
             Excel::import(new KabupatenImport, $request->file('kabupaten')->store('kabupaten'));
 
-           return 'SUCCESS';
-
+           return response()->json([
+                'result' => 'success',
+            ]);
 
         } catch (Exception $e) {
 
             Excel::rollback();
-            return 'FAILED';
+           
+            return response()->json([
+                'result' => 'failed',
+                'token' =>  $e,
+            ]);
           
         }
 
