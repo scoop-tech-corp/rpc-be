@@ -18,14 +18,11 @@ return new class extends Migration
             $table->string('codeLocation');
             $table->string('addressName');
             $table->string('additionalInfo');
-            $table->string('cityName');
-            $table->string('provinceName');
-            // $table->string('districtName');
-            $table->string('postalCode');
+            $table->integer('provinceCode');
+            $table->integer('cityCode');
+            $table->integer('postalCode');
             $table->string('country');
-            $table->boolean('isPrimary');
-            // $table->boolean('parking');
-            // $table->string('usage');    
+            $table->boolean('isPrimary');  
             $table->boolean('isDeleted');
             $table->timestamps();
         });

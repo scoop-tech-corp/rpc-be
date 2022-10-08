@@ -13,21 +13,19 @@ Route::post('register', [ApiController::class, 'register']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [ApiController::class, 'logout']);
-    Route::post('location', [LocationController::class, 'create']);
 
-    Route::get('locationnew', [LocationController::class, 'createNew']);
+    Route::post('location', [LocationController::class, 'insertLocation']);
+    Route::get('location', [LocationController::class, 'getLocationHeader']);
 
-    Route::get('locationprovinsi', [LocationController::class, 'locationProvinsi']);
-    Route::get('locationkabupatenkota', [LocationController::class, 'locationKabupaten']);
-
-    Route::get('location', [LocationController::class, 'location']);
+    Route::get('detaillocation', [LocationController::class, 'getLocationDetail']);
+    Route::get('datastaticlocation', [LocationController::class, 'getDataStaticLocation']);
+    Route::get('provinsilocation', [LocationController::class, 'getProvinsiLocation']);
+    Route::get('kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
+    Route::get('exportlocation', [LocationController::class, 'exportLocation']);
+    
     Route::delete('location', [LocationController::class, "delete"]);
     Route::put('location', [LocationController::class, 'update']);
-    Route::get('detaillocation', [LocationController::class, 'locationDetail']);
     Route::post('upload', [ImportRegionController::class, 'upload']);
-    Route::get('export', [LocationController::class, 'export']);
-
-   
 
     Route::get('datastatic', [DataStaticController::class, 'datastatic']);
     Route::post('datastatic', [LocationController::class, 'insertdatastatic']);

@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('location_messenger', function (Blueprint $table) {
             $table->id();
             $table->string('codeLocation');
-            $table->string('messengerName');
+            $table->string('messengerNumber');
             $table->string('type');
             $table->string('usage');
             $table->boolean('isDeleted');
