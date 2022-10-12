@@ -21,14 +21,6 @@ class ImportRegionController extends Controller
      * summary="Notes: Upload mapping data only need to execute once",
      * description=" Upload only need execute once",
      *     @OA\RequestBody(
-     *         @OA\JsonContent(* @OA\Examples(
-     *        summary="Bulk Insert Mapping Region",
-     *        example = "Bulk Insert Mapping Region include : provinsi, kecamatan, kabupaten, kelurahan",
-     *          value = {
-     *          "provinsi": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Provinsi.xlsx",
-     *          "kabupaten": "D:\\PROJECT\\LARAVEL\\pos-rpc\\app\\Filemapping\\Kabupaten.xlsx",
-     *           },
-     *          )),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
@@ -41,12 +33,12 @@ class ImportRegionController extends Controller
      *    ),
      *      @OA\Response(
      *          response=201,
-     *          description="Register Fasilitas Successfully",
+     *          description="Import Provinsi and Kabupaten Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Register Fasilitas Successfully",
+     *          description="Import Provinsi and Kabupaten Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
@@ -59,7 +51,7 @@ class ImportRegionController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */ 
-    public function upload(Request $request)
+    public function uploadRegion(Request $request)
     {
 
         try{
