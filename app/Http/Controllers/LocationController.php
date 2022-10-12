@@ -892,10 +892,10 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getLocationHeader($request)
+    public function getLocationHeader(Request $request)
     {
 
-        $requestData = json_decode($request, true);
+        // $requestData = json_decode($request, true);
        
         $defaultRowPerPage = 5;
 
@@ -915,22 +915,26 @@ class LocationController extends Controller
                        ['location.isDeleted', '=', '0'],
                       ]);
 
-        if ($requestData['search']) {
-            $data = $data->where('location.codeLocation', 'like', '%' . $requestData['search'] . '%')
-                        ->orwhere('location.locationName', 'like', '%' . $requestData['search']. '%')
-                        ->orwhere('location_detail_address.addressName', 'like', '%' . $requestData['search'] . '%')
-                        ->orwhere('kabupaten.namaKabupaten', 'like', '%' . $requestData['search'] . '%');
+         if ($request->search) {
+
+            $data = $data->where('location.codeLocation', 'like', '%' . $request->search . '%')
+                        ->orwhere('location.locationName', 'like', '%' . $request->search . '%')
+                        ->orwhere('location_detail_address.addressName', 'like', '%' . $request->search . '%')
+                        ->orwhere('kabupaten.namaKabupaten', 'like', '%' . $request->search . '%');
+
         }
 
-        if ($requestData['orderColumn'] && $requestData['orderValue']) {
-            $data = $data->orderBy($requestData['orderColumn'] , $requestData['orderValue']);
-        }
-        
-        if ($requestData['rowPerPage'] > 0) {
-            $defaultRowPerPage = $requestData['rowPerPage'];
+        if ($request->orderColumn && $request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+      
         }
 
-        $goToPage =$requestData['goToPage'];
+        if ($request->rowPerPage > 0) {
+            $rowPerPage = $request->rowPerPage;
+    
+        }
+
+        $goToPage = $request->goToPage;
 
         $offset = ($goToPage - 1) * $defaultRowPerPage;
 
@@ -982,10 +986,10 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getLocationDetail($codeLocation)
+    public function getLocationDetail(Request $request)
     {
-        //$request->validate(['codeLocation' => 'required|max:10000']);
-        //$codeLocation = codeLocation;
+        $request->validate(['codeLocation' => 'required|max:10000']);
+        $codeLocation = $request->input('codeLocation');
 
         $param_location = DB::table('location')
                             ->select('location.id as id',
@@ -1184,7 +1188,7 @@ class LocationController extends Controller
 
   /**
      * @OA\Get(
-     * path="/api/kabupatenkotalocation/{provinceId}",
+     * path="/api/kabupatenkotalocation/",
      * operationId="get kabupaten kota location",
      * tags={"Location"},
      * summary="Get Kabupaten Kota Location",
@@ -1214,12 +1218,15 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getKabupatenLocation($provinceId)
+    public function getKabupatenLocation(Request $request)
     {
 
         try
         {
             
+            $request->validate(['provinceId' => 'required|max:10000']);
+            $provinceId = $request->input('provinceId');
+		
             $data_kabupaten = DB::table('kabupaten')
                                 ->select('kabupaten.id as id',
                                         'kabupaten.kodeKabupaten as cityCode',

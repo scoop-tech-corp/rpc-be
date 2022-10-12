@@ -15,37 +15,27 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [ApiController::class, 'logout']);
 
     Route::post('location', [LocationController::class, 'insertLocation']);
-    Route::get('location/{request}', [LocationController::class, 'getLocationHeader']);
-    Route::get('detaillocation/{codeLocation}', [LocationController::class, 'getLocationDetail']);
+    Route::get('location', [LocationController::class, 'getLocationHeader']);
+    Route::get('detaillocation', [LocationController::class, 'getLocationDetail']);
     Route::get('datastaticlocation', [LocationController::class, 'getDataStaticLocation']);
     Route::get('provinsilocation', [LocationController::class, 'getProvinsiLocation']);
-    Route::get('kabupatenkotalocation/{provinceId}', [LocationController::class, 'getKabupatenLocation']);
+    Route::get('kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
     Route::get('exportlocation', [LocationController::class, 'exportLocation']);
-    
     Route::delete('location', [LocationController::class, "deleteLocation"]);
     Route::put('location', [LocationController::class, 'updateLocation']);
     Route::post('upload', [ImportRegionController::class, 'uploadRegion']);
-
     Route::get('datastatic', [DataStaticController::class, 'datastatic']);
     Route::post('datastatic', [LocationController::class, 'insertdatastatic']);
     Route::delete('datastatic', [DataStaticController::class, 'datastaticlocation']);
     Route::post('uploadexceltest', [LocationController::class, 'uploadexceltest']);
-
-
-
-    Route::get('facility/{request}', [FasilitasController::class, 'facilityMenuHeader']);
+    Route::get('facility', [FasilitasController::class, 'facilityMenuHeader']);
     Route::get('facilityexport', [FasilitasController::class, 'facilityExport']);
     Route::get('facilitylocation', [FasilitasController::class, 'facilityLocation']);
-    Route::get('facilitydetail/{facilityCode}', [FasilitasController::class, 'facilityDetail']);
+    Route::get('facilitydetail', [FasilitasController::class, 'facilityDetail']);
     Route::post('facility', [FasilitasController::class, 'createFacility']);
-    
     Route::put('facility', [FasilitasController::class, 'updateFacility']);
     Route::delete('facility', [FasilitasController::class, 'deleteFacility']);
     
-    
-   
-    
-
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
     Route::get('products', [ProductController::class, 'index']);
