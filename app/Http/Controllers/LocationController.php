@@ -57,13 +57,13 @@ class LocationController extends Controller
      *        summary="Delete Location",
      *        example = "Delete Location",
      *        value = {
-     *           "id":1,
+     *           "codeLocation":"abc123",
      *         },)),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
      *            @OA\Schema(
      *               type="object",
-     *               @OA\Property(property="id", type="integer"),
+     *               @OA\Property(property="codeLocation", type="text"),
      *            ),
      *        ),
      *    ),
@@ -87,7 +87,7 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function delete(Request $request)
+    public function deleteLocation(Request $request)
     {
 
         $request->validate([
@@ -130,15 +130,19 @@ class LocationController extends Controller
 
             DB::commit();
 
-            return ('SUCCESS');
-            //return back()->with('SUCCESS', 'Data has been successfully inserted');
+            return response()->json([
+                'result' => 'success',
+            ]);
 
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return ('FAILED');
-            //return back()->with('ERROR', 'Your error message');
+            return response()->json([
+                'result' => 'failed',
+                'token' =>  $e,
+            ]);
+         
         }
 
     }
@@ -150,10 +154,11 @@ class LocationController extends Controller
             'file' => 'required|max:10000',
         ]);
 
-        // echo($request->file);
-
         Excel::import(new UsersImport, $request->file);
-        return 'true';
+
+        return response()->json([
+            'result' => 'success',
+        ]);
     }
 
     /**
@@ -167,123 +172,108 @@ class LocationController extends Controller
      *         @OA\JsonContent(* @OA\Examples(
      *        summary="update Location",
      *        example = "update Location",
-     * value =
-     *{
-     *        "locationName": "RPC Permata Hijau Jakarta",
-     *        "isBranch": 0,
-     *        "status": 1,
-     *        "description":"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem   tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
-     *        "image":"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
-     *        "imageTitle":"ImageRPCPermataHijau.jpg",
-     *        "detailAddress":{
-     *                {
-     *                    "addressName": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-     *                    "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-     *                    "cityName": "Jakarta Barat",
-     *                    "provinceName": "DKI Jakarta",
-     *                    "postalCode": "11480",
-     *                    "country": "Indonesia",
-     *                    "isPrimary" : 1
-     *                },
-     *                {
-     *                    "addressName": "Jalan Keluarga sebelah binus syahdan",
-     *                    "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-     *                    "cityName": "Jakarta Barat",
-     *                    "provinceName": "DKI Jakarta",
-     *                    "postalCode": "11480",
-     *                    "country": "Indonesia",
-     *                    "isPrimary" : 0
-     *                }
-     *            },
-     *
-     *        "operationalHour": {
-     *                                {
-     *                                    "dayName": "Monday",
-     *                                    "fromTime": "",
-     *                                    "toTime": "",
-     *                                    "allDay": 1
-     *                                },
-     *                                {
-     *                                    "dayName": "Tuesday",
-     *                                    "fromTime": "",
-     *                                    "toTime": "",
-     *                                    "allDay": 1
-     *                                },
-     *                                {
-     *                                    "dayName": "Wednesday",
-     *                                    "fromTime": "",
-     *                                    "toTime": "",
-     *                                    "allDay": 1
-     *                                },
-     *                                {
-     *                                    "dayName": "Thursday",
-     *                                    "fromTime": "",
-     *                                    "toTime": "",
-     *                                    "allDay": 1
-     *                                },
-     *                                {
-     *                                    "dayName": "Friday",
-     *                                    "fromTime": "",
-     *                                    "toTime": "",
-     *                                    "allDay": 1
-     *                                },
-     *                                {
-     *                                     "dayName": "Saturday",
-     *                                    "fromTime": "",
-     *                                    "toTime": "",
-     *                                    "allDay": 1
-     *                                },
-     *                                {
-     *                                    "dayName": "Sunday",
-     *                                    "fromTime": "",
-     *                                    "toTime": "",
-     *                                    "allDay": 1
-     *                                }
-     *                            },
-     *        "messenger":{
-     *                        {
-     *
-     *                            "messengerName":"(021) 3851185",
-     *                            "type":"Fax",
-     *                            "usage":"Utama"
-     *
-     *                        },
-     *                        {
-     *
-     *                            "messengerName":"(021) 012345678",
-     *                            "type":"Office",
-     *                            "usage":"Personal"
-     *                        }
-     *                    },
-     *        "email":{
-     *                    {
-     *
-     *                        "username":"wahyudidanny23@gmail.com",
-     *                        "type":"Personal",
-     *                        "usage":"Utama"
-     *                    },
-     *                    {
-     *
-     *                        "username":"wahyudidanny25@gmail.com",
-     *                        "type":"Secondary",
-     *                        "usage":"Personal"
-     *                    }
-     *                },
-     *        "telephone":{
-     *                    {
-     *
-     *                        "phoneNumber":"087888821648",
-     *                        "type":"Telepon Selular",
-     *                        "usage":"Utama"
-     *                    },
-     *                    {
-     *
-     *                        "phoneNumber":"085265779499",
-     *                        "type":"Whatshapp",
-     *                        "usage":"Secondary"
-     *                    }
-     *                }
-     *},
+    * value = 
+    *{
+    *  "id": 1,
+    *  "codeLocation": "abc123",
+    *  "locationName": "RPC Permata Hijau Pekanbaru",
+    *  "isBranch": 0,
+    *  "status": 1,
+    *  "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+    *  "image": "D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
+    *  "imageTitle": "ImageRPCPermataHijau.jpg",
+    *  "detailAddress": {
+    *    {
+    *      "id": 1,
+    *      "addressName": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
+    *      "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
+    *      "provinceCode": 12,
+    *      "cityCode": 1102,
+    *      "postalCode": 9999,
+    *      "country": "Indonesia",
+    *      "isPrimary": 1
+    *    }
+    *  },
+    *  "operationalHour": {
+    *    {
+    *      "id": 1,
+    *      "dayName": "Monday",
+    *      "fromTime": "10:00PM",
+    *      "toTime": "10:00PM",
+    *      "allDay": 1
+    *    },
+    *    {
+    *      "id": 2,
+    *      "dayName": "Tuesday",
+    *      "fromTime": "12:00PM",
+    *      "toTime": "13:00PM",
+    *      "allDay": 1
+    *    },
+    *    {
+    *      "id": 3,
+    *      "dayName": "Wednesday",
+    *      "fromTime": "10:00PM",
+    *      "toTime": "10:00PM",
+    *      "allDay": 1
+    *    },
+    *    {
+    *      "id": 4,
+    *      "dayName": "Thursday",
+    *      "fromTime": "10:00PM",
+    *      "toTime": "10:00PM",
+    *      "allDay": 1
+    *    },
+    *    {
+    *      "id": 5,
+    *      "dayName": "Friday",
+    *      "fromTime": "10:00PM",
+    *      "toTime": "10:00PM",
+    *      "allDay": 1
+    *    }
+    *  },
+    *  "messenger": {
+    *    {
+    *      "id": 1,
+    *      "messengerNumber": "(021) 3851185",
+    *      "type": "Fax",
+    *      "usage": "Utama"
+    *    },
+    *    {
+    *      "id": 2,
+    *      "messengerNumber": "(021) 012345678",
+    *      "type": "Office",
+    *      "usage": "Utama"
+    *    }
+    *  },
+    *  "email": {
+    *    {
+    *      "id": 1,
+    *      "username": "wahyudidanny23@gmail.com",
+    *      "type": "Personal",
+    *      "usage": "Utama"
+    *    },
+    *    {
+    *      "id": 2,
+    *      "username": "wahyudidanny25@gmail.com",
+    *      "type": "Personal",
+    *      "usage": "Secondary"
+    *    }
+    *  },
+    *  "telephone": {
+    *    {
+    *      "id": 1,
+    *      "phoneNumber": "087888821648",
+    *      "type": "Telepon Selular",
+    *      "usage": "Utama"
+    *    },
+    *    {
+    *      "id": 2,
+    *      "phoneNumber": "085265779499",
+    *      "type": "Whatshapp",
+    *      "usage": "Secondary"
+    *    }
+    *  }
+    *}  
      *          )),
      *         @OA\MediaType(
      *            mediaType="multipart/form-data",
@@ -315,91 +305,279 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function update(Request $request)
+    public function updateLocation(Request $request)
     {
 
         DB::beginTransaction();
         try
         {
 
-            // $data = DB::table('location')
-            //     ->select('codeLocation')
-            //     ->where('id', '=', $request->input('id'))
-            //     ->first()->codeLocation;
-
             DB::table('location')
                 ->where('codeLocation', '=', $request->input('codeLocation'))
-                ->update([
-                    'locationName' => $request->input('locationName'),
-                    'isBranch' => $request->input('isBranch'),
-                    'status' => $request->input('status'),
-                    'description' => $request->input('description'),
-                    'image' => $request->input('image'),
-                    'imageTitle' => $request->input('imageTitle'),
-                ]);
+                ->update(['locationName' => $request->input('locationName'),
+                            'isBranch' => $request->input('isBranch'),
+                            'status' => $request->input('status'),
+                            'description' => $request->input('description'),
+                            'image' => $request->input('image'),
+                            'imageTitle' => $request->input('imageTitle'),
+                            'updated_at' => now(),
+                        ]);
 
             foreach ($request->detailAddress as $val) {
-                DB::table('location_detail_address')
-                    ->where('codeLocation', '=', $request->input('codeLocation'))
-                    ->update([
-                        'addressName' => $val['addressName'],
-                        'additionalInfo' => $val['additionalInfo'],
-                        'cityName' => $val['cityName'],
-                        'provinceName' => $val['provinceName'],
-                        'postalCode' => $val['postalCode'],
-                        'country' => $val['country'],
-                        'isPrimary' => $val['isPrimary'],
-                    ]);
+                
+                if(isset($val['codeLocation'])) 
+                {
+                    if(isset($val['isDeleted'])){
+                    
+                        DB::table('location_detail_address')
+                        ->where('codeLocation', '=', $val['codeLocation'],
+                                 'id', '=', $val['id'],)
+                       ->update(['addressName' => $val['addressName'],
+                                'additionalInfo' => $val['additionalInfo'],
+                                'provinceCode' => $val['provinceCode'],
+                                'cityCode' => $val['cityCode'],
+                                'postalCode' => $val['postalCode'],
+                                'country' => $val['country'],
+                                'isPrimary' => $val['isPrimary'],
+                                'isDeleted' => $val('isDeleted'),
+                                'updated_at' => now(),
+                            ]);
+
+                    }else{
+
+                        DB::table('location_detail_address')
+                        ->where('codeLocation', '=', $val['codeLocation'],
+                                'id', '=', $val['id'],)
+                        ->update(['addressName' => $val['addressName'],
+                                'additionalInfo' => $val['additionalInfo'],
+                                'provinceCode' => $val['provinceCode'],
+                                'cityCode' => $val['cityCode'],
+                                'postalCode' => $val['postalCode'],
+                                'country' => $val['country'],
+                                'isPrimary' => $val['isPrimary'],
+                                'updated_at' => now(),
+                            ]);
+
+                    }
+
+                }else{
+
+                    DB::table('location_detail_address')
+                    ->insert(['codeLocation' => $request->input('codeLocation'),
+                              'addressName' => $val['addressName'],
+                              'additionalInfo' => $val['additionalInfo'],
+                              'provinceCode' => $val['provinceCode'],
+                              'cityCode' => $val['cityCode'],
+                              'postalCode' => $val['postalCode'],
+                              'country' => $val['country'],
+                              'isPrimary' => $val['isPrimary'],
+                              'isDeleted' => 0,
+                              'created_at' => now()
+                            ]);
+                }
+
+
+
             }
 
-            foreach ($request->operationalHour as $val) {
-                DB::table('location_operational')
-                    ->where('codeLocation', '=', $request->input('codeLocation'))
-                    ->update([
-                        'dayName' => $val['dayName'],
-                        'fromTime' => $val['fromTime'],
-                        'toTime' => $val['toTime'],
-                        'allDay' => $val['allDay'],
 
-                    ]);
+
+            foreach ($request->operationalHour as $val) {
+   
+                if(isset($val['codeLocation'])) 
+                {
+                    if(isset($val['isDeleted'])){
+                    
+                            DB::table('location_operational')
+                            ->where('codeLocation', '=', $val['codeLocation'],
+                                    'id', '=', $val['id'],)
+                            ->update([
+                                    'dayName' => $val['dayName'],
+                                    'fromTime' => $val['fromTime'],
+                                    'toTime' => $val['toTime'],
+                                    'allDay' => $val['allDay'],
+                                    'isDeleted' => $val('isDeleted'),
+                                    'updated_at' => now(),
+                            ]);
+
+
+                    }else{
+
+                        DB::table('location_operational')
+                        ->where('codeLocation', '=', $val['codeLocation'],
+                                'id', '=', $val['id'],)
+                        ->update([
+                            'dayName' => $val['dayName'],
+                            'fromTime' => $val['fromTime'],
+                            'toTime' => $val['toTime'],
+                            'allDay' => $val['allDay'],
+                            'updated_at' => now(),
+                        ]);
+
+                    }
+
+                }else{
+
+                    DB::table('location_operational')
+                    ->insert(['codeLocation' => $request->input('codeLocation'),
+                              'dayName' => $val['dayName'],
+                              'fromTime' => $val['fromTime'],
+                              'toTime' => $val['toTime'],
+                              'allDay' => $val['allDay'],
+                            ]);
+                  }           
             }
 
             foreach ($request->messenger as $val) {
-                DB::table('location_messenger')
-                    ->where('codeLocation', '=', $request->input('codeLocation'))
-                    ->update([
-                        'messengerName' => $val['messengerName'],
-                        'type' => $val['type'],
-                        'usage' => $val['usage'],
-                    ]);
+           
+
+                    if(isset($val['codeLocation'])) 
+                    {
+                        if(isset($val['isDeleted'])){
+                        
+                                DB::table('location_messenger')
+                                ->where('codeLocation', '=', $val['codeLocation'],
+                                        'id', '=', $val['id'],)
+                                ->update([
+                                            'messengerName' => $val['messengerName'],
+                                            'type' => $val['type'],
+                                            'usage' => $val['usage'],
+                                            'isDeleted' => $val('isDeleted'),
+                                            'updated_at' => now(),
+                                    ]);
+            
+                        }else{
+
+                            DB::table('location_messenger')
+                            ->where('codeLocation', '=', $val['codeLocation'],
+                                    'id', '=', $val['id'],)
+                            ->update([
+                                        'messengerName' => $val['messengerName'],
+                                        'type' => $val['type'],
+                                        'usage' => $val['usage'],
+                                        'updated_at' => now(),
+                                ]);
+
+                        }
+    
+                    }else{
+    
+                        DB::table('location_messenger')
+                        ->insert(['codeLocation' => $request->input('codeLocation'),
+                                   'messengerNumber' => $val['messengerNumber'],
+                                   'type' => $val['type'],
+                                   'usage' => $val['usage'],
+                                   'isDeleted' => 0,
+                                   'created_at' => now(),
+                                ]);
+                      }     
+
             }
 
             foreach ($request->email as $val) {
-                DB::table('location_email')
-                    ->where('codeLocation', '=', $request->input('codeLocation'))
-                    ->update([
-                        'username' => $val['username'],
-                        'usage' => $val['usage'],
-                        'type' => $val['type'],
-                    ]);
+
+                if(isset($val['codeLocation'])) 
+                {
+                    if(isset($val['isDeleted'])){
+                    
+                        DB::table('location_email')
+                            ->where('codeLocation', '=', $val['codeLocation'])
+                            ->update([
+                                    'username' => $val['username'],
+                                    'usage' => $val['usage'],
+                                    'type' => $val['type'],
+                                    'isDeleted' => $val('isDeleted'),
+                                    'updated_at' => now(),
+                                ]);
+
+        
+                    }else{
+
+                        DB::table('location_email')
+                        ->where('codeLocation', '=', $val['codeLocation'])
+                        ->update([
+                                'username' => $val['username'],
+                                'usage' => $val['usage'],
+                                'type' => $val['type'],
+                                'updated_at' => now(),
+                            ]);
+
+                    }
+
+                }else{
+
+                    DB::table('location_email')
+                    ->insert(['codeLocation' => $request->input('codeLocation'),
+                               'username' => $val['username'],
+                               'type' => $val['type'],
+                               'usage' => $val['usage'],
+                               'isDeleted' => 0,
+                               'created_at' => now(),
+                             ]);
+   
+                  }   
+
             }
 
             foreach ($request->telephone as $val) {
-                DB::table('location_telephone')
-                    ->where('codeLocation', '=', $request->input('codeLocation'))
-                    ->update([
-                        'usage' => $val['usage'],
-                        'phoneNumber' => $val['phoneNumber'],
-                        'type' => $val['type'],
-                    ]);
-            }
 
-            return 'SUCCESS';
+
+                if(isset($val['codeLocation'])) 
+                {
+                    if(isset($val['isDeleted'])){
+                  
+                        DB::table('location_telephone')
+                        ->where('codeLocation', '=', $val['codeLocation'],
+                                'id', '=', $val['id'])
+                        ->update(['usage' => $val['usage'],
+                                    'phoneNumber' => $val['phoneNumber'],
+                                    'type' => $val['type'],
+                                    'isDeleted' => $val('isDeleted'),
+                                    'updated_at' => now(),
+                            ]);          
+        
+                    }else{
+
+                        DB::table('location_telephone')
+                            ->where('codeLocation', '=', $val['codeLocation'],
+                                    'id', '=', $val['id'])
+                            ->update(['usage' => $val['usage'],
+                                     'phoneNumber' => $val['phoneNumber'],
+                                     'type' => $val['type'],
+                                     'updated_at' => now(),
+                                ]);
+
+                    }
+
+                }else{
+
+                    DB::table('location_telephone')
+                    ->insert([ 'codeLocation' =>  $request->input('codeLocation'),
+                               'phoneNumber' => $val['phoneNumber'],
+                               'type' => $val['type'],
+                               'usage' => $val['usage'],
+                               'isDeleted' => 0,
+                               'created_at' => now(),
+                            ]);
+   
+                  }   
+
+            }
+            
+            DB::commit();
+
+            return response()->json([
+                'result' => 'success',
+            ]);
 
         } catch (Exception $e) {
 
             DB::rollback();
-            return 'FAILED';
+
+            return response()->json([
+                'result' => 'failed',
+                'token' =>  $e,
+            ]);
 
         }
 
@@ -677,44 +855,31 @@ class LocationController extends Controller
 
     /**
      * @OA\Get(
-     * path="/api/location",
+     * path="/api/location/{request}",
      * operationId="Get Location Header",
      * tags={"Location"},
      * summary="Get Location Header Menu",
      * description="get Location Header Menu",
-     *  @OA\Parameter(
-     *     name="body",
-     *     in="path",
-     *     required=true,
-     *     @OA\JsonContent(
-     *        type="object",
-     *        @OA\Property(property="rowPerPage", type="number",example="10"),
-     *        @OA\Property(property="goToPage", type="number",example="6"),
-     *        @OA\Property(property="orderColumn", type="array", collectionFormat="multi",
-     *                @OA\Items(
-     *                      @OA\Property(
-     *                         property="value",
-     *                         type="string",
-     *                         example="asc"
-     *                      ),
-     *                      @OA\Property(
-     *                         property="fieldName",
-     *                         type="string",
-     *                         example="locationName"
-     *                      ),
-     *                ),
-     *          ),
-     *        @OA\Property(property="search", type="text",example=""),
-     *     ),
-     * ),
+    * @OA\Parameter(
+    *      in="path",
+    *      name="request",
+    *     @OA\JsonContent(
+    *        type="object",
+    *        @OA\Property(property="rowPerPage", type="number" , example="1"),
+    *        @OA\Property(property="goToPage", type="number", example="11"),
+    *        @OA\Property(property="orderValue", type="string" , example="asc"),
+    *        @OA\Property(property="orderColumn", type="string", example="locationName"),
+    *        @OA\Property(property="search", type="string" , example=""),
+    *     ),
+    * ),
      *   @OA\Response(
      *          response=201,
-     *          description="Get Data Location Successfully",
+     *          description="Get Data Location Header Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
      *          response=200,
-     *          description="Get Data Location Successfully",
+     *          description="Get Data Location Header Successfully",
      *          @OA\JsonContent()
      *       ),
      *      @OA\Response(
@@ -727,10 +892,12 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getLocationHeader(Request $request)
+    public function getLocationHeader($request)
     {
 
-        $rowPerPage = 5;
+        $requestData = json_decode($request, true);
+       
+        $defaultRowPerPage = 5;
 
         $data = DB::table('location')
                ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
@@ -748,57 +915,53 @@ class LocationController extends Controller
                        ['location.isDeleted', '=', '0'],
                       ]);
 
-        if ($request->search) {
-
-            $data = $data->where('location.codeLocation', 'like', '%' . $request->search . '%')
-                        ->orwhere('location.locationName', 'like', '%' . $request->search . '%')
-                        ->orwhere('location_detail_address.addressName', 'like', '%' . $request->search . '%')
-                        ->orwhere('kabupaten.namaKabupaten', 'like', '%' . $request->search . '%');
+        if ($requestData['search']) {
+            $data = $data->where('location.codeLocation', 'like', '%' . $requestData['search'] . '%')
+                        ->orwhere('location.locationName', 'like', '%' . $requestData['search']. '%')
+                        ->orwhere('location_detail_address.addressName', 'like', '%' . $requestData['search'] . '%')
+                        ->orwhere('kabupaten.namaKabupaten', 'like', '%' . $requestData['search'] . '%');
         }
 
-        if ($request->orderColumn && $request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        if ($requestData['orderColumn'] && $requestData['orderValue']) {
+            $data = $data->orderBy($requestData['orderColumn'] , $requestData['orderValue']);
+        }
+        
+        if ($requestData['rowPerPage'] > 0) {
+            $defaultRowPerPage = $requestData['rowPerPage'];
         }
 
-        if ($request->rowPerPage > 0) {
-            $rowPerPage = $request->rowPerPage;
-        }
+        $goToPage =$requestData['goToPage'];
 
-        $goToPage = $request->goToPage;
-
-        $offset = ($goToPage - 1) * $rowPerPage;
+        $offset = ($goToPage - 1) * $defaultRowPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($rowPerPage)->get();
+            $data = $data->offset(0)->limit($defaultRowPerPage)->get();
         } else {
-            $data = $data->offset($offset)->limit($rowPerPage)->get();
+            $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
         }
 
-        $total_paging = $count_data / $rowPerPage;
+        $total_paging = $count_data / $defaultRowPerPage;
         return response()->json(['totalData' => ceil($total_paging), 'data' => $data], 200);
 
     }
 
 
-    /**
-     * @OA\Get(
-     * path="/api/detaillocation",
-     * operationId="Get Detail Location",
+     
+	 /**
+     * @OA\Get (
+     * path="/api/detaillocation/{codeLocation}",
+     * operationId="Get Location Detail",
      * tags={"Location"},
-     * summary="Get Location detail",
-     * description="get Location detail",
-     *  @OA\Parameter(
-     *     name="body",
-     *     in="path",
-     *     required=true,
-     *     @OA\JsonContent(
-     *        type="object",
-     *        @OA\Property(property="id", type="text",example="1"),
+     * summary="Get Location Location Detail",
+     * description="get Location Location Detail",
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="codeLocation",
+     *         @OA\Schema(type="string",example="ABC123")
      *     ),
-     * ),
      *   @OA\Response(
      *          response=201,
      *          description="Get Data Location Detail Successfully",
@@ -819,10 +982,10 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getLocationDetail(Request $request)
+    public function getLocationDetail($codeLocation)
     {
-        $request->validate(['codeLocation' => 'required|max:10000']);
-        $codeLocation = $request->input('codeLocation');
+        //$request->validate(['codeLocation' => 'required|max:10000']);
+        //$codeLocation = codeLocation;
 
         $param_location = DB::table('location')
                             ->select('location.id as id',
@@ -835,9 +998,11 @@ class LocationController extends Controller
                                     'location.imageTitle as imageTitle',)
                             ->where('location.codeLocation', '=', $codeLocation)
                             ->first();
-
+        
+                          
         $location_detail_address = DB::table('location_detail_address')
-                                    ->select('location_detail_address.addressName as addressName',
+                                    ->select('location_detail_address.id as id',
+                                            'location_detail_address.addressName as addressName',
                                             'location_detail_address.additionalInfo as additionalInfo',
                                             'location_detail_address.provinceCode as provinceCode',
                                             'location_detail_address.cityCode as cityCode',
@@ -850,7 +1015,8 @@ class LocationController extends Controller
         $param_location->detailAddress = $location_detail_address;
 
         $operationalHour = DB::table('location_operational')
-            ->select('location_operational.dayName as dayName',
+            ->select('location_operational.id as id',
+                    'location_operational.dayName as dayName',
                     'location_operational.fromTime as fromTime',
                     'location_operational.toTime as toTime',
                     'location_operational.allDay as allDay',)
@@ -860,7 +1026,8 @@ class LocationController extends Controller
         $param_location->operationalHour = $operationalHour;
 
         $messenger_location = DB::table('location_messenger')
-            ->select('location_messenger.messengerNumber as messengerNumber',
+            ->select('location_messenger.id as id',
+                    'location_messenger.messengerNumber as messengerNumber',
                     'location_messenger.type as type',
                     'location_messenger.usage as usage', )
             ->where('location_messenger.codeLocation', '=', $codeLocation)
@@ -869,20 +1036,22 @@ class LocationController extends Controller
         $param_location->messenger = $messenger_location;
 
         $email_location = DB::table('location_email')
-            ->select('location_email.username as username',
-                    'location_email.type as type',
-                    'location_email.usage as usage', )
-            ->where('location_email.codeLocation', '=', $codeLocation)
-            ->get();
+            ->select('location_email.id as id',
+                     'location_email.username as username',
+                     'location_email.type as type',
+                     'location_email.usage as usage', )
+             ->where('location_email.codeLocation', '=', $codeLocation)
+             ->get();
 
          $param_location->email = $email_location;
 
         $telepon_location = DB::table('location_telephone')
-            ->select('location_telephone.phoneNumber as phoneNumber',
+            ->select('location_telephone.id as id',
+                     'location_telephone.phoneNumber as phoneNumber',
                      'location_telephone.type as type',
                      'location_telephone.usage as usage', )
-            ->where('location_telephone.codeLocation', '=', $codeLocation)
-            ->get();
+             ->where('location_telephone.codeLocation', '=', $codeLocation)
+             ->get();
 
         $param_location->telephone = $telepon_location;
 
@@ -1015,20 +1184,16 @@ class LocationController extends Controller
 
   /**
      * @OA\Get(
-     * path="/api/kabupatenkotalocation",
+     * path="/api/kabupatenkotalocation/{provinceId}",
      * operationId="get kabupaten kota location",
      * tags={"Location"},
      * summary="Get Kabupaten Kota Location",
      * description="Get Kabupaten Kota Location",
-     *  @OA\Parameter(
-     *     name="body",
-     *     in="path",
-     *     required=true,
-     *     @OA\JsonContent(
-     *        type="object",
-     *        @OA\Property(property="provinceId", type="number",example=12),
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="provinceId",
+     *         @OA\Schema(type="string")
      *     ),
-     * ),
      *   @OA\Response(
      *          response=201,
      *          description="Get Data Kabupaten Kota Successfully",
@@ -1049,19 +1214,17 @@ class LocationController extends Controller
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function getKabupatenLocation(Request $request)
+    public function getKabupatenLocation($provinceId)
     {
 
         try
         {
             
-            $request->validate(['provinceId' => 'required|max:10000']);
-
             $data_kabupaten = DB::table('kabupaten')
                                 ->select('kabupaten.id as id',
                                         'kabupaten.kodeKabupaten as cityCode',
                                         'kabupaten.namaKabupaten as cityName')
-                                ->where('kabupaten.kodeProvinsi', '=', $request->provinceId)
+                                ->where('kabupaten.kodeProvinsi', '=', $provinceId)
                                 ->get();
 
             return response()->json($data_kabupaten, 200);
@@ -1142,13 +1305,18 @@ class LocationController extends Controller
 
             DB::commit();
 
-            return ('SUCCESS');
+            return response()->json([
+                'result' => 'success',
+            ]);
 
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return ('FAILED');
+            return response()->json([
+                'result' => 'failed',
+                'token' =>  $e,
+            ]);
 
         }
 

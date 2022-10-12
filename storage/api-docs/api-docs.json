@@ -236,6 +236,51 @@
             }
         },
         "/api/datastaticlocation": {
+            "get": {
+                "tags": [
+                    "Location"
+                ],
+                "summary": "Get Data Static",
+                "description": "Get Data Static",
+                "operationId": "get data static Location",
+                "responses": {
+                    "201": {
+                        "description": "Get Data Static Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data Static Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            },
             "delete": {
                 "tags": [
                     "Data Static"
@@ -472,96 +517,6 @@
             }
         },
         "/api/facility": {
-            "get": {
-                "tags": [
-                    "Facility"
-                ],
-                "summary": "Get facility menu header",
-                "description": "Get facility menu header",
-                "operationId": "facilityMenuHeader",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "path",
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "rowPerPage": {
-                                            "type": "number",
-                                            "example": "10"
-                                        },
-                                        "goToPage": {
-                                            "type": "number",
-                                            "example": "6"
-                                        },
-                                        "orderColumn": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "value": {
-                                                        "type": "string",
-                                                        "example": "asc"
-                                                    },
-                                                    "fieldName": {
-                                                        "type": "string",
-                                                        "example": "facilityName"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            },
-                                            "collectionFormat": "multi"
-                                        },
-                                        "search": {
-                                            "type": "text",
-                                            "example": ""
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Get Data facility Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "Get Data facility Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request"
-                    },
-                    "404": {
-                        "description": "Resource Not Found"
-                    }
-                },
-                "security": [
-                    {
-                        "apiAuth": []
-                    }
-                ]
-            },
             "put": {
                 "tags": [
                     "Facility"
@@ -579,24 +534,23 @@
                                     "value": {
                                         "id": 1,
                                         "facilityCode": "XYZ123",
-                                        "facilityName": "Kandang Maxi NEW",
-                                        "locationName": "RPC Permata Hijau Jakarta",
-                                        "capacity": 1,
-                                        "status": 1,
+                                        "facilityName": "Kandang Maxi",
+                                        "locationName": "RPC Permata Hijau Pekanbaru",
                                         "introduction": "Kandang maxi Extra bed for you love pet",
                                         "description": "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
+                                        "capacity": 1,
+                                        "status": 1,
                                         "unit": [
                                             {
                                                 "id": 1,
                                                 "facilityCode": "XYZ123",
                                                 "unitName": "Unit Testing 1",
                                                 "status": 1,
-                                                "notes": "Unit Testing 1.1",
-                                                "isDeleted": 1
+                                                "notes": "Unit Testing 1.1"
                                             },
                                             {
                                                 "id": 2,
-                                                "facilityCode": "XYZ1232",
+                                                "facilityCode": "XYZ123",
                                                 "unitName": "Unit Testing 1",
                                                 "status": 1,
                                                 "notes": "Unit Testing 1.2"
@@ -609,6 +563,8 @@
                                                 "notes": "Unit Testing 2.1"
                                             },
                                             {
+                                                "id": 4,
+                                                "facilityCode": "XYZ123",
                                                 "unitName": "Unit Testing 4",
                                                 "status": 1,
                                                 "notes": "Unit Testing 4"
@@ -806,7 +762,7 @@
                 ]
             }
         },
-        "/api/facilitydetail": {
+        "/api/facilitydetail/{facilityCode}": {
             "get": {
                 "tags": [
                     "Facility"
@@ -816,21 +772,11 @@
                 "operationId": "detail facility",
                 "parameters": [
                     {
-                        "name": "body",
+                        "name": "facilityCode",
                         "in": "path",
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "facilityCode": {
-                                            "type": "text",
-                                            "example": "XYZ123"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
+                        "schema": {
+                            "type": "string",
+                            "example": "XYZ123"
                         }
                     }
                 ],
@@ -845,6 +791,88 @@
                     },
                     "200": {
                         "description": "get facility Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    },
+                    "404": {
+                        "description": "Resource Not Found"
+                    }
+                },
+                "security": [
+                    {
+                        "apiAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/facility/{request}": {
+            "get": {
+                "tags": [
+                    "Facility"
+                ],
+                "summary": "Get facility menu header",
+                "description": "Get facility menu header",
+                "operationId": "facilityMenuHeader",
+                "parameters": [
+                    {
+                        "name": "request",
+                        "in": "path",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "rowPerPage": {
+                                            "type": "number",
+                                            "example": "1"
+                                        },
+                                        "goToPage": {
+                                            "type": "number",
+                                            "example": "11"
+                                        },
+                                        "orderValue": {
+                                            "type": "string",
+                                            "example": "asc"
+                                        },
+                                        "orderColumn": {
+                                            "type": "string",
+                                            "example": "facilityName"
+                                        },
+                                        "search": {
+                                            "type": "string",
+                                            "example": ""
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Get Data facility Successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Get Data facility Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -993,24 +1021,12 @@
                                 },
                                 "type": "object"
                             }
-                        },
-                        "application/json": {
-                            "schema": {},
-                            "examples": {
-                                "Bulk Insert Mapping Region include : provinsi, kecamatan, kabupaten, kelurahan": {
-                                    "summary": "Bulk Insert Mapping Region",
-                                    "value": {
-                                        "provinsi": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Provinsi.xlsx",
-                                        "kabupaten": "D:\\\\PROJECT\\\\LARAVEL\\\\pos-rpc\\\\app\\\\Filemapping\\\\Kabupaten.xlsx"
-                                    }
-                                }
-                            }
                         }
                     }
                 },
                 "responses": {
                     "201": {
-                        "description": "Register Fasilitas Successfully",
+                        "description": "Import Provinsi and Kabupaten Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1018,7 +1034,7 @@
                         }
                     },
                     "200": {
-                        "description": "Register Fasilitas Successfully",
+                        "description": "Import Provinsi and Kabupaten Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1047,14 +1063,14 @@
                 ]
             }
         },
-        "/api/export": {
+        "/api/exportlocation": {
             "get": {
                 "tags": [
                     "Location"
                 ],
                 "summary": "export Location excel",
                 "description": "export Location excel",
-                "operationId": "export",
+                "operationId": "export Location",
                 "responses": {
                     "201": {
                         "description": "Generate Excel Successfully",
@@ -1095,96 +1111,6 @@
             }
         },
         "/api/location": {
-            "get": {
-                "tags": [
-                    "Location"
-                ],
-                "summary": "Get Location",
-                "description": "get Location",
-                "operationId": "location",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "path",
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "rowPerPage": {
-                                            "type": "number",
-                                            "example": "10"
-                                        },
-                                        "goToPage": {
-                                            "type": "number",
-                                            "example": "6"
-                                        },
-                                        "orderColumn": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "value": {
-                                                        "type": "string",
-                                                        "example": "asc"
-                                                    },
-                                                    "fieldName": {
-                                                        "type": "string",
-                                                        "example": "locationName"
-                                                    }
-                                                },
-                                                "type": "object"
-                                            },
-                                            "collectionFormat": "multi"
-                                        },
-                                        "search": {
-                                            "type": "text",
-                                            "example": ""
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Get Data Location Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "200": {
-                        "description": "Get Data Location Successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "content": {
-                            "application/json": {
-                                "schema": {}
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request"
-                    },
-                    "404": {
-                        "description": "Resource Not Found"
-                    }
-                },
-                "security": [
-                    {
-                        "apiAuth": []
-                    }
-                ]
-            },
             "put": {
                 "tags": [
                     "Location"
@@ -1215,107 +1141,100 @@
                                 "update Location": {
                                     "summary": "update Location",
                                     "value": {
-                                        "locationName": "RPC Permata Hijau Jakarta",
+                                        "id": 1,
+                                        "codeLocation": "abc123",
+                                        "locationName": "RPC Permata Hijau Pekanbaru",
                                         "isBranch": 0,
                                         "status": 1,
-                                        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem   tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
+                                        "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
                                         "image": "D:\\\\ImageFolder\\\\ExamplePath\\\\ImageRPCPermataHijau.jpg",
                                         "imageTitle": "ImageRPCPermataHijau.jpg",
                                         "detailAddress": [
                                             {
+                                                "id": 1,
                                                 "addressName": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
                                                 "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-                                                "cityName": "Jakarta Barat",
-                                                "provinceName": "DKI Jakarta",
-                                                "postalCode": "11480",
+                                                "provinceCode": 12,
+                                                "cityCode": 1102,
+                                                "postalCode": 9999,
                                                 "country": "Indonesia",
                                                 "isPrimary": 1
-                                            },
-                                            {
-                                                "addressName": "Jalan Keluarga sebelah binus syahdan",
-                                                "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-                                                "cityName": "Jakarta Barat",
-                                                "provinceName": "DKI Jakarta",
-                                                "postalCode": "11480",
-                                                "country": "Indonesia",
-                                                "isPrimary": 0
                                             }
                                         ],
                                         "operationalHour": [
                                             {
+                                                "id": 1,
                                                 "dayName": "Monday",
-                                                "fromTime": "",
-                                                "toTime": "",
+                                                "fromTime": "10:00PM",
+                                                "toTime": "10:00PM",
                                                 "allDay": 1
                                             },
                                             {
+                                                "id": 2,
                                                 "dayName": "Tuesday",
-                                                "fromTime": "",
-                                                "toTime": "",
+                                                "fromTime": "12:00PM",
+                                                "toTime": "13:00PM",
                                                 "allDay": 1
                                             },
                                             {
+                                                "id": 3,
                                                 "dayName": "Wednesday",
-                                                "fromTime": "",
-                                                "toTime": "",
+                                                "fromTime": "10:00PM",
+                                                "toTime": "10:00PM",
                                                 "allDay": 1
                                             },
                                             {
+                                                "id": 4,
                                                 "dayName": "Thursday",
-                                                "fromTime": "",
-                                                "toTime": "",
+                                                "fromTime": "10:00PM",
+                                                "toTime": "10:00PM",
                                                 "allDay": 1
                                             },
                                             {
+                                                "id": 5,
                                                 "dayName": "Friday",
-                                                "fromTime": "",
-                                                "toTime": "",
-                                                "allDay": 1
-                                            },
-                                            {
-                                                "dayName": "Saturday",
-                                                "fromTime": "",
-                                                "toTime": "",
-                                                "allDay": 1
-                                            },
-                                            {
-                                                "dayName": "Sunday",
-                                                "fromTime": "",
-                                                "toTime": "",
+                                                "fromTime": "10:00PM",
+                                                "toTime": "10:00PM",
                                                 "allDay": 1
                                             }
                                         ],
                                         "messenger": [
                                             {
-                                                "messengerName": "(021) 3851185",
+                                                "id": 1,
+                                                "messengerNumber": "(021) 3851185",
                                                 "type": "Fax",
                                                 "usage": "Utama"
                                             },
                                             {
-                                                "messengerName": "(021) 012345678",
+                                                "id": 2,
+                                                "messengerNumber": "(021) 012345678",
                                                 "type": "Office",
-                                                "usage": "Personal"
+                                                "usage": "Utama"
                                             }
                                         ],
                                         "email": [
                                             {
+                                                "id": 1,
                                                 "username": "wahyudidanny23@gmail.com",
                                                 "type": "Personal",
                                                 "usage": "Utama"
                                             },
                                             {
+                                                "id": 2,
                                                 "username": "wahyudidanny25@gmail.com",
-                                                "type": "Secondary",
-                                                "usage": "Personal"
+                                                "type": "Personal",
+                                                "usage": "Secondary"
                                             }
                                         ],
                                         "telephone": [
                                             {
+                                                "id": 1,
                                                 "phoneNumber": "087888821648",
                                                 "type": "Telepon Selular",
                                                 "usage": "Utama"
                                             },
                                             {
+                                                "id": 2,
                                                 "phoneNumber": "085265779499",
                                                 "type": "Whatshapp",
                                                 "usage": "Secondary"
@@ -1557,8 +1476,8 @@
                         "multipart/form-data": {
                             "schema": {
                                 "properties": {
-                                    "id": {
-                                        "type": "integer"
+                                    "codeLocation": {
+                                        "type": "text"
                                     }
                                 },
                                 "type": "object"
@@ -1570,7 +1489,7 @@
                                 "Delete Location": {
                                     "summary": "Delete Location",
                                     "value": {
-                                        "id": 1
+                                        "codeLocation": "abc123"
                                     }
                                 }
                             }
@@ -1616,26 +1535,41 @@
                 ]
             }
         },
-        "/api/detaillocation": {
+        "/api/location/{request}": {
             "get": {
                 "tags": [
                     "Location"
                 ],
-                "summary": "Get Location detail",
-                "description": "get Location detail",
-                "operationId": "detaillocation",
+                "summary": "Get Location Header Menu",
+                "description": "get Location Header Menu",
+                "operationId": "Get Location Header",
                 "parameters": [
                     {
-                        "name": "body",
+                        "name": "request",
                         "in": "path",
-                        "required": true,
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "id": {
-                                            "type": "text",
+                                        "rowPerPage": {
+                                            "type": "number",
                                             "example": "1"
+                                        },
+                                        "goToPage": {
+                                            "type": "number",
+                                            "example": "11"
+                                        },
+                                        "orderValue": {
+                                            "type": "string",
+                                            "example": "asc"
+                                        },
+                                        "orderColumn": {
+                                            "type": "string",
+                                            "example": "locationName"
+                                        },
+                                        "search": {
+                                            "type": "string",
+                                            "example": ""
                                         }
                                     },
                                     "type": "object"
@@ -1646,7 +1580,7 @@
                 ],
                 "responses": {
                     "201": {
-                        "description": "Get Data Location Detail Successfully",
+                        "description": "Get Data Location Header Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1654,7 +1588,7 @@
                         }
                     },
                     "200": {
-                        "description": "Get Data Location Detail Successfully",
+                        "description": "Get Data Location Header Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1683,17 +1617,27 @@
                 ]
             }
         },
-        "/api/locationnew": {
+        "/api/detaillocation/{codeLocation}": {
             "get": {
                 "tags": [
                     "Location"
                 ],
-                "summary": "Get Data Static",
-                "description": "Get Data Static",
-                "operationId": "locationnew",
+                "summary": "Get Location Location Detail",
+                "description": "get Location Location Detail",
+                "operationId": "Get Location Detail",
+                "parameters": [
+                    {
+                        "name": "codeLocation",
+                        "in": "path",
+                        "schema": {
+                            "type": "string",
+                            "example": "ABC123"
+                        }
+                    }
+                ],
                 "responses": {
                     "201": {
-                        "description": "Get Data Static Successfully",
+                        "description": "Get Data Location Detail Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1701,7 +1645,7 @@
                         }
                     },
                     "200": {
-                        "description": "Get Data Static Successfully",
+                        "description": "Get Data Location Detail Successfully",
                         "content": {
                             "application/json": {
                                 "schema": {}
@@ -1730,14 +1674,14 @@
                 ]
             }
         },
-        "/api/locationprovinsi": {
+        "/api/provinsilocation": {
             "get": {
                 "tags": [
                     "Location"
                 ],
                 "summary": "Get Provinsi Location",
                 "description": "Get Provinsi Location",
-                "operationId": "locationprovinsi",
+                "operationId": "Get Provinsi Location",
                 "responses": {
                     "201": {
                         "description": "Get Data Provinsi Successfully",
@@ -1777,31 +1721,20 @@
                 ]
             }
         },
-        "/api/locationkabupatenkota": {
+        "/api/kabupatenkotalocation/{provinceId}": {
             "get": {
                 "tags": [
                     "Location"
                 ],
                 "summary": "Get Kabupaten Kota Location",
                 "description": "Get Kabupaten Kota Location",
-                "operationId": "locationKabupaten",
+                "operationId": "get kabupaten kota location",
                 "parameters": [
                     {
-                        "name": "body",
+                        "name": "provinceId",
                         "in": "path",
-                        "required": true,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "provinceId": {
-                                            "type": "number",
-                                            "example": 12
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],

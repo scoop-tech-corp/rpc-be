@@ -209,20 +209,16 @@ class FasilitasController extends Controller
 
 /**
 * @OA\Get(
-* path="/api/facilitydetail",
+* path="/api/facilitydetail/{facilityCode}",
 * operationId="detail facility",
 * tags={"Facility"},
 * summary="Get spesific data facility",
 * description="Get spesific fasilitas",
-*  @OA\Parameter(
-*     name="body",
-*     in="path",
-*     required=true,
-*     @OA\JsonContent(
-*        type="object",
-*        @OA\Property(property="facilityCode", type="text",example="XYZ123"),
-*     ),
-* ),
+    *     @OA\Parameter(
+    *         in="path",
+    *         name="facilityCode",
+    *         @OA\Schema(type="string",example="XYZ123")
+    *     ),
 *      @OA\Response(
 *          response=201,
 *          description="get facility Successfully",
@@ -243,13 +239,8 @@ class FasilitasController extends Controller
 *      security={{ "apiAuth": {} }}
 * )
 */
-public function facilityDetail(Request $request)
+public function facilityDetail($facilityCode)
 {
-    $request->validate([
-        'facilityCode' => 'required|string|max:8',
-    ]);
-
-    $facilityCode = $request->input('facilityCode');
 
     $facility = DB::table('facility')
                         ->select('facility.id as id',
@@ -261,7 +252,7 @@ public function facilityDetail(Request $request)
                                  'facility.capacity as capacity',
                                  'facility.status as status', )
                          ->where(['facility.facilityCode' => $facilityCode],
-                                 ['facility.isDeleted' => 0 ],)
+                                 ['location.isDeleted', '=', '0'],)
                          ->first();
                          
     $fasilitas_unit = DB::table('facility_unit')
@@ -271,7 +262,7 @@ public function facilityDetail(Request $request)
                                 'facility_unit.status as status',
                                 'facility_unit.notes as notes', )
                         ->where(['facility_unit.facilityCode' => $facilityCode],
-                                ['facility_unit.isDeleted' => 0 ],)
+                                ['location.isDeleted', '=', '0'],)
                         ->get();
 
     if ($fasilitas_unit != null) {
@@ -295,45 +286,47 @@ public function facilityDetail(Request $request)
  *         @OA\JsonContent(* @OA\Examples(
  *        summary="Update data facility",
  *        example = "Update data facility",
- * value = {
-*    "id": 1,
-*    "facilityCode": "XYZ123",
-*    "facilityName": "Kandang Maxi NEW",
-*    "locationName": "RPC Permata Hijau Jakarta",
-*    "capacity": 1,
-*    "status": 1,
-*    "introduction" : "Kandang maxi Extra bed for you love pet",
-*    "description" : "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
-*    "unit": {
-*        {
-*            "id": 1,
-*            "facilityCode": "XYZ123",
-*            "unitName": "Unit Testing 1",
-*            "status": 1,
-*            "notes": "Unit Testing 1.1",
-*            "isDeleted" : 1
-*        },
-*        {
-*            "id": 2,
-*            "facilityCode": "XYZ1232",
-*            "unitName": "Unit Testing 1",
-*            "status": 1,
-*            "notes": "Unit Testing 1.2"
-*        },
-*        {
-*            "id": 3,
-*            "facilityCode": "XYZ123",
-*            "unitName": "Unit Testing 2",
-*            "status": 1,
-*            "notes": "Unit Testing 2.1"
-*        },
-*        {
-*            "unitName": "Unit Testing 4",
-*            "status": 1,
-*            "notes": "Unit Testing 4"
-*        }
-*        }
-*   },
+ * value = 
+*{
+*  "id": 1,
+*  "facilityCode": "XYZ123",
+*  "facilityName": "Kandang Maxi",
+*  "locationName": "RPC Permata Hijau Pekanbaru",
+*  "introduction": "Kandang maxi Extra bed for you love pet",
+*  "description": "Ukuran 8M Cocok untuk tipe anjing besar, seperti golden retriever",
+*  "capacity": 1,
+*  "status": 1,
+*  "unit": {
+*    {
+*      "id": 1,
+*      "facilityCode": "XYZ123",
+*      "unitName": "Unit Testing 1",
+*      "status": 1,
+*      "notes": "Unit Testing 1.1"
+*    },
+*    {
+*      "id": 2,
+*      "facilityCode": "XYZ123",
+*      "unitName": "Unit Testing 1",
+*      "status": 1,
+*      "notes": "Unit Testing 1.2"
+*    },
+*    {
+*      "id": 3,
+*      "facilityCode": "XYZ123",
+*      "unitName": "Unit Testing 2",
+*      "status": 1,
+*      "notes": "Unit Testing 2.1"
+*    },
+*    {
+*      "id": 4,
+*      "facilityCode": "XYZ123",
+*      "unitName": "Unit Testing 4",
+*      "status": 1,
+*      "notes": "Unit Testing 4"
+*    }
+*  }
+*},
 *            ),
 *        ),
 *    ),
@@ -416,7 +409,7 @@ public function updateFacility(Request $request)
                    
                }else{
 
-                    DB::table('facility_unit')->insert(['facilityCode' => $getvaluesp,
+                    DB::table('facility_unit')->insert(['facilityCode' => $request->input('facilityCode'),
                                                         'unitName' => $val['unitName'],
                                                         'status' => $val['status'],
                                                         'notes' => $val['notes'],
@@ -430,7 +423,6 @@ public function updateFacility(Request $request)
         
             DB::commit();
 
-            return 'success';
             return response()->json([
                 'result' => 'success',
             ]);
@@ -453,36 +445,23 @@ public function updateFacility(Request $request)
 
     /**
      * @OA\Get(
-     * path="/api/facility",
+     * path="/api/facility/{request}",
      * operationId="facilityMenuHeader",
      * tags={"Facility"},
      * summary="Get facility menu header",
      * description="Get facility menu header",
-     *  @OA\Parameter(
-     *     name="body",
-     *     in="path",
-     *     required=true,
-     *     @OA\JsonContent(
-     *        type="object",
-     *        @OA\Property(property="rowPerPage", type="number",example="10"),
-     *        @OA\Property(property="goToPage", type="number",example="6"),
-     *        @OA\Property(property="orderColumn", type="array", collectionFormat="multi",
-     *                @OA\Items(
-     *                      @OA\Property(
-     *                         property="value",
-     *                         type="string",
-     *                         example="asc"
-     *                      ),
-     *                      @OA\Property(
-     *                         property="fieldName",
-     *                         type="string",
-     *                         example="facilityName"
-     *                      ),
-     *                ),
-     *          ),
-     *        @OA\Property(property="search", type="text",example=""),
-     *     ),
-     * ),
+    * @OA\Parameter(
+    *      in="path",
+    *      name="request",
+    *     @OA\JsonContent(
+    *        type="object",
+    *        @OA\Property(property="rowPerPage", type="number" , example="1"),
+    *        @OA\Property(property="goToPage", type="number", example="11"),
+    *        @OA\Property(property="orderValue", type="string" , example="asc"),
+    *        @OA\Property(property="orderColumn", type="string", example="facilityName"),
+    *        @OA\Property(property="search", type="string" , example=""),
+    *     ),
+    * ),
      *   @OA\Response(
      *          response=201,
      *          description="Get Data facility Successfully",
@@ -503,10 +482,11 @@ public function updateFacility(Request $request)
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function facilityMenuHeader(Request $request)
+    public function facilityMenuHeader($request)
     {
 
-        $rowPerPage = 5;
+        $requestData = json_decode($request, true);
+        $defaultRowPerPage = 5;
 
         $data = DB::table('facility')
                  ->select('facility.id as id',
@@ -517,36 +497,34 @@ public function updateFacility(Request $request)
                           'facility.status as status', )
                 ->where([['facility.isDeleted' ,"=", 0 ]]);
 
+        if ($requestData['search']) {
 
-        if ($request->search) {
-
-            $data = $data->where('facility.facilityName', 'like', '%' . $request->search . '%')
-                       ->orwhere('facility.locationName', 'like', '%' . $request->search . '%');
+            $data = $data->where('facility.facilityName', 'like', '%' . $requestData['search'] . '%')
+                       ->orwhere('facility.locationName', 'like', '%' . $requestData['search'] . '%');
         }
 
-
-        if ($request->orderColumn && $request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        if ($requestData['orderColumn'] && $requestData['orderValue']) {
+            $data = $data->orderBy($requestData['orderColumn'] , $requestData['orderValue']);
         }
 
-        if ($request->rowPerPage > 0) {
-            $rowPerPage = $request->rowPerPage;
+        if ($requestData['rowPerPage'] > 0) {
+            $defaultRowPerPage = $requestData['rowPerPage'];
         }
 
-        $goToPage = $request->goToPage;
+        $goToPage = $requestData['goToPage'];
 
-        $offset = ($goToPage - 1) * $rowPerPage;
+        $offset = ($goToPage - 1) * $defaultRowPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($rowPerPage)->get();
+            $data = $data->offset(0)->limit($defaultRowPerPage)->get();
         } else {
-            $data = $data->offset($offset)->limit($rowPerPage)->get();
+            $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
         }
 
-        $total_paging = $count_data / $rowPerPage;
+        $total_paging = $count_data / $defaultRowPerPage;
         return response()->json(['totalData' => ceil($total_paging), 'data' => $data], 200);
 
     }
