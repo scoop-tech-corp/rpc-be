@@ -239,9 +239,12 @@ class FasilitasController extends Controller
 *      security={{ "apiAuth": {} }}
 * )
 */
-public function facilityDetail($facilityCode)
+public function facilityDetail(Request $request)
 {
 
+    $request->validate(['facilityCode' => 'required|max:10000']);
+    $facilityCode = $request->input('facilityCode');
+		
     $facility = DB::table('facility')
                         ->select('facility.id as id',
                                  'facility.facilityCode as facilityCode',
@@ -445,7 +448,7 @@ public function updateFacility(Request $request)
 
     /**
      * @OA\Get(
-     * path="/api/facility/{request}",
+     * path="/api/facility/",
      * operationId="facilityMenuHeader",
      * tags={"Facility"},
      * summary="Get facility menu header",
@@ -482,10 +485,10 @@ public function updateFacility(Request $request)
      *      security={{ "apiAuth": {} }}
      * )
      */
-    public function facilityMenuHeader($request)
+    public function facilityMenuHeader(Request $request)
     {
 
-        $requestData = json_decode($request, true);
+       
         $defaultRowPerPage = 5;
 
         $data = DB::table('facility')
@@ -497,21 +500,23 @@ public function updateFacility(Request $request)
                           'facility.status as status', )
                 ->where([['facility.isDeleted' ,"=", 0 ]]);
 
-        if ($requestData['search']) {
+        if ($request->search) {
 
-            $data = $data->where('facility.facilityName', 'like', '%' . $requestData['search'] . '%')
-                       ->orwhere('facility.locationName', 'like', '%' . $requestData['search'] . '%');
+            $data = $data->where('facility.facilityName', 'like', '%' . $request->search . '%')
+                        ->orwhere('facility.locationName', 'like', '%' . $request->search . '%');
         }
 
-        if ($requestData['orderColumn'] && $requestData['orderValue']) {
-            $data = $data->orderBy($requestData['orderColumn'] , $requestData['orderValue']);
+        if ($request->orderColumn && $request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+    
         }
 
-        if ($requestData['rowPerPage'] > 0) {
-            $defaultRowPerPage = $requestData['rowPerPage'];
+        if ($request->rowPerPage > 0) {
+            $rowPerPage = $request->rowPerPage;
+
         }
 
-        $goToPage = $requestData['goToPage'];
+        $goToPage = $request->goToPage;
 
         $offset = ($goToPage - 1) * $defaultRowPerPage;
 
