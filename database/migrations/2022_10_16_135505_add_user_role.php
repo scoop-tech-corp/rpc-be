@@ -28,8 +28,8 @@ return new class extends Migration
     public function down()
     {
 
-       Schema::table('users', function (Blueprint $table) {
-                $table->string('role')->after('password'); 
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('role');
         });
 
     }
