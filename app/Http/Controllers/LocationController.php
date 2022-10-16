@@ -1224,8 +1224,8 @@ class LocationController extends Controller
         try
         {
             
-            $request->validate(['provinceId' => 'required|max:10000']);
-            $provinceId = $request->input('provinceId');
+            $request->validate(['provinceCode' => 'required|max:10000']);
+            $provinceId = $request->input('provinceCode');
 		
             $data_kabupaten = DB::table('kabupaten')
                                 ->select('kabupaten.id as id',
