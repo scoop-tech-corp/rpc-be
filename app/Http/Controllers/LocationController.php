@@ -318,8 +318,6 @@ class LocationController extends Controller
                             'isBranch' => $request->input('isBranch'),
                             'status' => $request->input('status'),
                             'description' => $request->input('description'),
-                            'image' => $request->input('image'),
-                            'imageTitle' => $request->input('imageTitle'),
                             'updated_at' => now(),
                         ]);
 
@@ -755,7 +753,6 @@ class LocationController extends Controller
                                 'isBranch' => 'required',
                                 'status' => 'required',
                                 'description' => 'required',
-                                'image' => 'required',
                                  ]);
 
             DB::table('location')->insert(['codeLocation' => $getvaluesp,
