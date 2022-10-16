@@ -77,6 +77,7 @@ class testing extends Seeder
             'name' => 'DW',
             'email' => 'yolo@gmail.com',
             'password' => bcrypt("111111"),
+            'role' => 'admin',
             'created_at' =>'2022-08-30',
             'updated_at' =>'2022-08-30',
         ]);

@@ -62,11 +62,12 @@ class ApiController extends Controller
     public function register(Request $request)
     {
     	//Validate data
-        $data = $request->only('name', 'email', 'password');
+        $data = $request->only('name', 'email', 'password','role');
         $validator = Validator::make($data, [
             'name' => 'required|string',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:6|max:50'
+            'password' => 'required|string|min:6|max:50',
+            'role' => 'required|string',
         ]);
 
         //Send failed response if request is not valid
@@ -78,6 +79,7 @@ class ApiController extends Controller
         $user = User::create([
         	'name' => $request->name,
         	'email' => $request->email,
+            'role' => $request->role,
         	'password' => bcrypt($request->password)
         ]);
 
@@ -177,6 +179,7 @@ class ApiController extends Controller
                                    ,name
                                    ,email
                                    ,email_verified_at
+                                   ,role
                                    from users where email= ?',
                                    [$request->input('email')]);
        
@@ -186,7 +189,8 @@ class ApiController extends Controller
              'userId' =>$users[0]->id,
              'userName' => $users[0]->name,
              'userEmail' => $users[0]->email,
-             'userVerifiedAt' => $users[0]->email_verified_at
+             'userVerifiedAt' => $users[0]->email_verified_at,
+             'role' => $users[0]->role
         ]);
 
 
