@@ -512,8 +512,7 @@ public function updateFacility(Request $request)
         }
 
         if ($request->rowPerPage > 0) {
-            $rowPerPage = $request->rowPerPage;
-
+            $defaultRowPerPage = $request->rowPerPage;
         }
 
         $goToPage = $request->goToPage;

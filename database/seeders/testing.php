@@ -121,17 +121,17 @@ class testing extends Seeder
                 'created_at' => now()
             ],
             [
-                'value' => 'doctor',
+                'roleName' => 'doctor',
                 'isActive' =>1,
                 'created_at' => now()
             ],
             [
-                'value' => 'office',
+                'roleName' => 'office',
                 'isActive' =>1,
                 'created_at' => now()
             ],
             [
-                'value' => 'staff',
+                'roleName' => 'staff',
                 'isActive' =>1,
                 'created_at' => now()
             ],

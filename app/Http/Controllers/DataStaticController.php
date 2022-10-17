@@ -145,10 +145,10 @@ class DataStaticController extends Controller
         }
         
         if ($request->rowPerPage > 0) {
-            $rowPerPage = $request->rowPerPage;
-    
+            $defaultRowPerPage = $request->rowPerPage;
         }
            
+        
         $goToPage = $request->goToPage;
 
         $offset = ($goToPage - 1) * $defaultRowPerPage;
@@ -157,7 +157,7 @@ class DataStaticController extends Controller
          $count_result = $count_data - $offset;
 
          if ($count_result < 0) {
-         $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+             $data = $data->offset(0)->limit($defaultRowPerPage)->get();
          }else {
              $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
          }

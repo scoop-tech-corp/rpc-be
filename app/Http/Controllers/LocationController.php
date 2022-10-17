@@ -923,7 +923,7 @@ class LocationController extends Controller
         }
 
         if ($request->rowPerPage > 0) {
-            $rowPerPage = $request->rowPerPage;
+            $defaultRowPerPage = $request->rowPerPage;
     
         }
 
