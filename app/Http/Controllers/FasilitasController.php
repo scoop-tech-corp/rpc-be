@@ -126,7 +126,7 @@ class FasilitasController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
 
         }
@@ -198,7 +198,7 @@ class FasilitasController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
 
         }
@@ -436,7 +436,7 @@ public function updateFacility(Request $request)
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
 
         }
@@ -512,8 +512,7 @@ public function updateFacility(Request $request)
         }
 
         if ($request->rowPerPage > 0) {
-            $rowPerPage = $request->rowPerPage;
-
+            $defaultRowPerPage = $request->rowPerPage;
         }
 
         $goToPage = $request->goToPage;
@@ -575,7 +574,7 @@ public function updateFacility(Request $request)
 
             return response()->json([
                 'result' => 'Failed',
-                'token' => $e,
+                'message' => $e,
             ]);
 
         }
@@ -628,7 +627,7 @@ public function updateFacility(Request $request)
 
             return response()->json([
                 'result' => 'Failed',
-                'token' => $e,
+                'message' => $e,
             ]);
         }
 

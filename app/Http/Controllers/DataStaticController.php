@@ -65,15 +65,19 @@ class DataStaticController extends Controller
 
             DB::commit();
 
-            return ('SUCCESS');
-            //return back()->with('SUCCESS', 'Data has been successfully inserted');
+            return response()->json([
+                'result' => 'success',
+            ]);
 
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return ('FAILED');
-            //return back()->with('ERROR', 'Your error message');
+            return response()->json([
+                'result' => 'Failed',
+                'message' =>  $e,
+            ]);
+
         }
 
     }
@@ -123,45 +127,44 @@ class DataStaticController extends Controller
     public function datastatic(Request $request)
     {
         
-        $items_per_page = 5;
+        $defaultRowPerPage = 5;
 
         $data = DB::table('data_static')
-                ->select('id',
-                         'value',
-                         'name',);
+                 ->select('id',
+                          'value',
+                          'name',);
 
-        if ($request->keyword) {
+        if ($request->search) {
 
-            $data = $data->where('value', 'like', '%' . $request->keyword . '%')
-                         ->orwhere('name', 'like', '%' . $request->keyword . '%');
+            $data = $data->where('value', 'like', '%' . $request->search . '%')
+                         ->orwhere('name', 'like', '%' . $request->search . '%');
         }
         
-        if($request->column){
-            $data = $data->orderBy($request->column, $request->orderby);
+        if ($request->orderColumn && $request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
         
-       if($request->total_per_page > 0){
-       
-            $items_per_page = $request->total_per_page;
+        if ($request->rowPerPage > 0) {
+            $defaultRowPerPage = $request->rowPerPage;
         }
            
-        $page = $request->page;
+        
+        $goToPage = $request->goToPage;
 
-        $offset = ($page - 1) * $items_per_page;
+        $offset = ($goToPage - 1) * $defaultRowPerPage;
 
          $count_data = $data->count();
          $count_result = $count_data - $offset;
 
          if ($count_result < 0) {
-         $data = $data->offset(0)->limit($items_per_page)->get();
+             $data = $data->offset(0)->limit($defaultRowPerPage)->get();
          }else {
-             $data = $data->offset($offset)->limit($items_per_page)->get();
+             $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
          }
 
-         $total_paging = $count_data / $items_per_page;
+         $total_paging = $count_data / $defaultRowPerPage;
 
-         return response()->json(['total_paging' => ceil($total_paging),
-            'data' => $data], 200);
+         return response()->json(['total_paging' => ceil($total_paging),'data' => $data], 200);
 
     }
 
