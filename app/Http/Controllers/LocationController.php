@@ -140,7 +140,7 @@ class LocationController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
          
         }
@@ -483,7 +483,6 @@ class LocationController extends Controller
                             ->update([
                                     'username' => $val['username'],
                                     'usage' => $val['usage'],
-                                    'type' => $val['type'],
                                     'isDeleted' => $val('isDeleted'),
                                     'updated_at' => now(),
                                 ]);
@@ -496,7 +495,6 @@ class LocationController extends Controller
                         ->update([
                                 'username' => $val['username'],
                                 'usage' => $val['usage'],
-                                'type' => $val['type'],
                                 'updated_at' => now(),
                             ]);
 
@@ -507,7 +505,6 @@ class LocationController extends Controller
                     DB::table('location_email')
                     ->insert(['codeLocation' => $request->input('codeLocation'),
                                'username' => $val['username'],
-                               'type' => $val['type'],
                                'usage' => $val['usage'],
                                'isDeleted' => 0,
                                'created_at' => now(),
@@ -574,7 +571,7 @@ class LocationController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
 
         }
@@ -810,7 +807,6 @@ class LocationController extends Controller
                 DB::table('location_email')
                  ->insert(['codeLocation' => $getvaluesp,
                             'username' => $val['username'],
-                            'type' => $val['type'],
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
@@ -844,7 +840,7 @@ class LocationController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
         }
 
@@ -1039,7 +1035,6 @@ class LocationController extends Controller
         $email_location = DB::table('location_email')
             ->select('location_email.id as id',
                      'location_email.username as username',
-                     'location_email.type as type',
                      'location_email.usage as usage', )
              ->where('location_email.codeLocation', '=', $codeLocation)
              ->get();
@@ -1123,8 +1118,8 @@ class LocationController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'success' => 'Failed',
-                'token' =>  $e,
+                'result' => 'Failed',
+                'message' =>  $e,
             ]);
         }
 
@@ -1174,8 +1169,8 @@ class LocationController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'success' => 'Failed',
-                'token' =>  $e,
+                'result' => 'Failed',
+                'message' =>  $e,
             ]);
         }
 
@@ -1236,8 +1231,8 @@ class LocationController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'success' => 'Failed',
-                'token' =>  $e,
+                'result' => 'Failed',
+                'message' =>  $e,
             ]);
         
         }
@@ -1319,7 +1314,7 @@ class LocationController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
 
         }

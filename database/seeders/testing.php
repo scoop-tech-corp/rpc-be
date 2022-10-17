@@ -75,12 +75,68 @@ class testing extends Seeder
 
         DB::table('users')->insert([
             'name' => 'DW',
-            'email' => 'yolo@gmail.com',
-            'password' => bcrypt("111111"),
+            'email' => 'office@gmail.com',
+            'password' => bcrypt("123"),
+            'role' => 'office',
+            'created_at' =>'2022-08-30',
+            'updated_at' =>'2022-08-30',
+        ]);
+
+
+        DB::table('users')->insert([
+            'name' => 'DW',
+            'email' => 'admin@gmail.com',
+            'password' => bcrypt("123"),
             'role' => 'admin',
             'created_at' =>'2022-08-30',
             'updated_at' =>'2022-08-30',
         ]);
+
+
+        DB::table('users')->insert([
+            'name' => 'DW',
+            'email' => 'doctor@gmail.com',
+            'password' => bcrypt("123"),
+            'role' => 'doctor',
+            'created_at' =>'2022-08-30',
+            'updated_at' =>'2022-08-30',
+        ]);
+
+        DB::table('users')->insert([
+            'name' => 'DW',
+            'email' => 'staff@gmail.com',
+            'password' => bcrypt("123"),
+            'role' => 'staff',
+            'created_at' =>'2022-08-30',
+            'updated_at' =>'2022-08-30',
+        ]);
+
+
+
+
+        $userRole = [
+            [
+                'roleName' => 'admin',
+                'isActive' =>1,
+                'created_at' => now()
+            ],
+            [
+                'value' => 'doctor',
+                'isActive' =>1,
+                'created_at' => now()
+            ],
+            [
+                'value' => 'office',
+                'isActive' =>1,
+                'created_at' => now()
+            ],
+            [
+                'value' => 'staff',
+                'isActive' =>1,
+                'created_at' => now()
+            ],
+        ];
+        DB::table('users_role')->insert($userRole); 
 
     }
 }

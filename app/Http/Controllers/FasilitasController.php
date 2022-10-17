@@ -126,7 +126,7 @@ class FasilitasController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
 
         }
@@ -198,7 +198,7 @@ class FasilitasController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
 
         }
@@ -436,7 +436,7 @@ public function updateFacility(Request $request)
 
             return response()->json([
                 'result' => 'failed',
-                'token' =>  $e,
+                'message' =>  $e,
             ]);
 
         }
@@ -575,7 +575,7 @@ public function updateFacility(Request $request)
 
             return response()->json([
                 'result' => 'Failed',
-                'token' => $e,
+                'message' => $e,
             ]);
 
         }
@@ -628,7 +628,7 @@ public function updateFacility(Request $request)
 
             return response()->json([
                 'result' => 'Failed',
-                'token' => $e,
+                'message' => $e,
             ]);
         }
 
