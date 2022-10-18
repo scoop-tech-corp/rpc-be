@@ -164,7 +164,7 @@ class DataStaticController extends Controller
 
          $total_paging = $count_data / $defaultRowPerPage;
 
-         return response()->json(['total_paging' => ceil($total_paging),'data' => $data], 200);
+         return response()->json(['totalPagination' => ceil($total_paging),'data' => $data], 200);
 
     }
 

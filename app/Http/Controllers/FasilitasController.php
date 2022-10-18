@@ -529,7 +529,7 @@ public function updateFacility(Request $request)
         }
 
         $total_paging = $count_data / $defaultRowPerPage;
-        return response()->json(['totalData' => ceil($total_paging), 'data' => $data], 200);
+        return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
 
     }
 
