@@ -889,7 +889,7 @@ class LocationController extends Controller
     {
 
         $defaultRowPerPage = 5;
-
+ 
         $data = DB::table('location')
                ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
                ->leftjoin('location_telephone', 'location_telephone.codeLocation', '=', 'location.codeLocation')
