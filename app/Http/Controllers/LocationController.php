@@ -888,8 +888,6 @@ class LocationController extends Controller
     public function getLocationHeader(Request $request)
     {
 
-        // $requestData = json_decode($request, true);
-       
         $defaultRowPerPage = 5;
 
         $data = DB::table('location')
@@ -908,23 +906,24 @@ class LocationController extends Controller
                        ['location.isDeleted', '=', '0'],
                       ]);
 
-         if ($request->search) {
+        if ($request->search) {
+            $res = $this->Search($request);
 
-            $data = $data->where('location.codeLocation', 'like', '%' . $request->search . '%')
-                        ->orwhere('location.locationName', 'like', '%' . $request->search . '%')
-                        ->orwhere('location_detail_address.addressName', 'like', '%' . $request->search . '%')
-                        ->orwhere('kabupaten.namaKabupaten', 'like', '%' . $request->search . '%');
-
+            if ($res) {
+                $data = $data->where($res, 'like', '%' . $request->search . '%');
+            } else {
+                $data = [];
+                return response()->json(['totalPagination' => 0,
+                    'data' => $data], 200);
+            }
         }
 
         if ($request->orderColumn && $request->orderValue) {
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
-      
         }
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;
-    
         }
 
         $goToPage = $request->goToPage;
@@ -942,6 +941,158 @@ class LocationController extends Controller
 
         $total_paging = $count_data / $defaultRowPerPage;
         return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
+
+    }
+
+
+    private function Search($request)
+    {
+        $columntable = '';
+
+        $data = DB::table('location')
+               ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
+               ->leftjoin('location_telephone', 'location_telephone.codeLocation', '=', 'location.codeLocation')
+               ->leftjoin('kabupaten', 'kabupaten.kodeKabupaten', '=', 'location_detail_address.cityCode')
+               ->select('location.id as id',
+                        'location.codeLocation as codeLocation',
+                        'location.locationName as locationName',
+                        'location_detail_address.addressName as addressName',
+                        'kabupaten.namaKabupaten as cityName',
+                DB::raw("CONCAT(location_telephone.phoneNumber ,' ', location_telephone.usage) as phoneNumber"),
+                        'location.status as status', )
+              ->where([['location_detail_address.isPrimary', '=', '1'],
+                       ['location_telephone.usage', '=', 'utama'],
+                       ['location.isDeleted', '=', '0'],
+                      ]);
+                     
+        if ($request->search) {
+            $data = $data->where('location.locationName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+            
+        if (count($data)) {
+            $temp_column = 'location.locationName';
+            return $temp_column;
+        }      
+        
+
+        $data = DB::table('location')
+               ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
+               ->leftjoin('location_telephone', 'location_telephone.codeLocation', '=', 'location.codeLocation')
+               ->leftjoin('kabupaten', 'kabupaten.kodeKabupaten', '=', 'location_detail_address.cityCode')
+               ->select('location.id as id',
+                        'location.codeLocation as codeLocation',
+                        'location.locationName as locationName',
+                        'location_detail_address.addressName as addressName',
+                        'kabupaten.namaKabupaten as cityName',
+                DB::raw("CONCAT(location_telephone.phoneNumber ,' ', location_telephone.usage) as phoneNumber"),
+                        'location.status as status', )
+              ->where([['location_detail_address.isPrimary', '=', '1'],
+                       ['location_telephone.usage', '=', 'utama'],
+                       ['location.isDeleted', '=', '0'],
+                      ]);
+
+        if ($request->search) {
+
+            $data = $data->where('location_detail_address.addressName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'location_detail_address.addressName';
+            return $temp_column;
+        }     
+
+
+
+        
+        $data = DB::table('location')
+               ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
+               ->leftjoin('location_telephone', 'location_telephone.codeLocation', '=', 'location.codeLocation')
+               ->leftjoin('kabupaten', 'kabupaten.kodeKabupaten', '=', 'location_detail_address.cityCode')
+               ->select('location.id as id',
+                        'location.codeLocation as codeLocation',
+                        'location.locationName as locationName',
+                        'location_detail_address.addressName as addressName',
+                        'kabupaten.namaKabupaten as cityName',
+                DB::raw("CONCAT(location_telephone.phoneNumber ,' ', location_telephone.usage) as phoneNumber"),
+                        'location.status as status', )
+              ->where([['location_detail_address.isPrimary', '=', '1'],
+                       ['location_telephone.usage', '=', 'utama'],
+                       ['location.isDeleted', '=', '0'],
+                      ]);
+
+        if ($request->search) {
+            $data = $data->where('kabupaten.namaKabupaten', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'kabupaten.namaKabupaten';
+            return $temp_column;
+        }     
+
+        // ***************************************
+
+         $data = DB::table('location')
+               ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
+               ->leftjoin('location_telephone', 'location_telephone.codeLocation', '=', 'location.codeLocation')
+               ->leftjoin('kabupaten', 'kabupaten.kodeKabupaten', '=', 'location_detail_address.cityCode')
+               ->select('location.id as id',
+                        'location.codeLocation as codeLocation',
+                        'location.locationName as locationName',
+                        'location_detail_address.addressName as addressName',
+                        'kabupaten.namaKabupaten as cityName',
+                DB::raw("CONCAT(location_telephone.phoneNumber ,' ', location_telephone.usage) as phoneNumber"),
+                        'location.status as status', )
+              ->where([['location_detail_address.isPrimary', '=', '1'],
+                       ['location_telephone.usage', '=', 'utama'],
+                       ['location.isDeleted', '=', '0'],
+                      ]);
+
+        if ($request->search) {
+            $data = $data->where('kabupaten.namaKabupaten', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'kabupaten.namaKabupaten';
+            return $temp_column;
+        }     
+
+
+       // ----------------------------------
+     
+        $data = DB::table('location')
+        ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
+        ->leftjoin('location_telephone', 'location_telephone.codeLocation', '=', 'location.codeLocation')
+        ->leftjoin('kabupaten', 'kabupaten.kodeKabupaten', '=', 'location_detail_address.cityCode')
+        ->select('location.id as id',
+                'location.codeLocation as codeLocation',
+                'location.locationName as locationName',
+                'location_detail_address.addressName as addressName',
+                'kabupaten.namaKabupaten as cityName',
+        DB::raw("CONCAT(location_telephone.phoneNumber ,' ', location_telephone.usage) as phoneNumber"),
+                'location.status as status', )
+        ->where([['location_detail_address.isPrimary', '=', '1'],
+                ['location_telephone.usage', '=', 'utama'],
+                ['location.isDeleted', '=', '0'],
+                ]);
+
+        if ($request->search) {
+        $data = $data->where('location.status', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+        $temp_column = 'location.status as status';
+        return $temp_column;
+        }     
 
     }
 
