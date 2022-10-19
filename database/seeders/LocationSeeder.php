@@ -117,7 +117,6 @@ class LocationSeeder extends Seeder
             [
                 'codeLocation' => 'abc123',
                 "username"=> "wahyudidanny23@gmail.com",
-                "type"=> "Personal",
                 "usage"=> "Utama",
                 "isDeleted" => 0,
                 'created_at' => now(),
@@ -125,7 +124,6 @@ class LocationSeeder extends Seeder
             [
                 'codeLocation' => 'abc123',
                 "username"=> "wahyudidanny25@gmail.com",
-                "type"=> "Personal",
                 "usage"=> "Secondary",
                 "isDeleted" => 0,
                 'created_at' =>now(),
@@ -274,7 +272,6 @@ class LocationSeeder extends Seeder
             DB::table('location_email')
             ->insert(['codeLocation' => $codeLocation,
                         "username"=> $faker->email,
-                        "type"=> $faker->randomElement(['Personal', 'Office']),
                         "usage" =>  $isPrimaryEmail,
                         "isDeleted" => 0,
                         'created_at'=>now(),
