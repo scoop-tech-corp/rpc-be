@@ -313,8 +313,6 @@ class LocationController extends Controller
             DB::table('location')
                 ->where('codeLocation', '=', $request->input('codeLocation'))
                 ->update(['locationName' => $request->input('locationName'),
-                            'isBranch' => $request->input('isBranch'),
-                            'status' => $request->input('status'),
                             'description' => $request->input('description'),
                             'updated_at' => now(),
                         ]);
