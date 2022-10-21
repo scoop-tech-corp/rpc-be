@@ -866,8 +866,8 @@ class LocationController extends Controller
             $location_images = DB::table('location_images')
                             ->select('location_images.imageName as imageName',
                                      'location_images.imagePath as imagePath',)
-                            ->where(['location_images.codeLocation', '=', $codeLocation],
-                                    ['location_images.isDeleted', '=', '0'])
+                            ->where([['location_images.codeLocation', '=', $codeLocation],
+                                    ['location_images.isDeleted', '=', '0']])
                             ->get();
 
             $param_location->images = $location_images;
