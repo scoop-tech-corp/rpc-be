@@ -89,47 +89,6 @@ class DataStaticController extends Controller
     }
 
 
-/**
-     * @OA\Get(
-     * path="/api/datastatic",
-     * operationId="datastatic",
-     * tags={"Data Static"},
-     * summary="Get Data Static",
-     * description="Get Data Static",
-    *  @OA\Parameter(
-    *     name="body",
-    *     in="path",
-    *     required=true,
-    *     @OA\JsonContent(
-    *        type="object",
-    *        @OA\Property(property="orderby", type="text",example="asc"),
-    *        @OA\Property(property="column", type="text",example="value"),
-    *        @OA\Property(property="keyword", type="text",example="Messenger"),
-    *        @OA\Property(property="page", type="number",example="1"),
-    *        @OA\Property(property="total_per_page", type="number",example="14"),
-    *     ),
-    * ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="Get Data Static Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Get Data Static Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
-
     public function datastatic(Request $request)
     {
         
@@ -155,6 +114,8 @@ class DataStaticController extends Controller
         if ($request->orderColumn && $request->orderValue) {
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
+
+        $data = $data->orderBy('created_at', 'desc');
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;

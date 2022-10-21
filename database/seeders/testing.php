@@ -20,54 +20,64 @@ class testing extends Seeder
                 'value' => 'Usage',
                 'name' => 'Utama',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
             [
                 'value' => 'Usage',
                 'name' => 'Secondary',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
             [
                 'value' => 'Usage',
                 'name' => 'Whatsap',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
             [
                 'value' => 'Telephone',
                 'name' => 'Rumah',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
 
             [
                 'value' => 'Telephone',
                 'name' => 'Whatshap',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
 
             [
                 'value' => 'Telephone',
                 'name' => 'Rumah',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
 
             [
                 'value' => 'Messenger',
                 'name' => 'Gmail',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
             [
                 'value' => 'Messenger',
                 'name' => 'Yahoo',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
             [
                 'value' => 'Messenger',
                 'name' => 'GooglePlus',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
             [
                 'value' => 'Messenger',
                 'name' => 'Bing',
                 'isDeleted' => 0,
+                'created_at' => now()
             ],
         ];
 
