@@ -20,11 +20,8 @@ class LocationSeeder extends Seeder
         DB::table('location')
          ->insert([ 'codeLocation' => 'abc123',
                     "locationName" => "RPC Permata Hijau Pekanbaru",
-                    "isBranch"=> 0,
                     "status"=> 1,
                     "description"=>"Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
-                    "image"=>"D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
-                    "imageTitle"=>"ImageRPCPermataHijau.jpg",
                     "isDeleted"=>0,
                     'created_at' =>now(),
                 ]);
@@ -166,11 +163,8 @@ class LocationSeeder extends Seeder
         DB::table('location')
         ->insert([ 'codeLocation' => $codeLocation,
                     "locationName" =>  $faker->company,
-                    "isBranch"=> $faker->numberBetween($min = 0, $max = 1),
                     "status"=> $faker->numberBetween($min = 0, $max = 1),
                     "description"=> $faker->text,
-                    "image"=>"D:\\ImageFolder\\ExamplePath\\" .' '. $imageName,
-                    "imageTitle"=> $imageName,
                     "isDeleted"=>0,
                     'created_at'=>now(),
                 ]);

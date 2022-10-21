@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\DataStaticController;
-use App\Http\Controllers\FasilitasController;
+use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\ImportRegionController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\ProductController;
@@ -28,13 +28,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('datastatic', [LocationController::class, 'insertdatastatic']);
     Route::delete('datastatic', [DataStaticController::class, 'datastaticlocation']);
     Route::post('uploadexceltest', [LocationController::class, 'uploadexceltest']);
-    Route::get('facility', [FasilitasController::class, 'facilityMenuHeader']);
-    Route::get('facilityexport', [FasilitasController::class, 'facilityExport']);
-    Route::get('facilitylocation', [FasilitasController::class, 'facilityLocation']);
-    Route::get('facilitydetail', [FasilitasController::class, 'facilityDetail']);
-    Route::post('facility', [FasilitasController::class, 'createFacility']);
-    Route::put('facility', [FasilitasController::class, 'updateFacility']);
-    Route::delete('facility', [FasilitasController::class, 'deleteFacility']);
+    Route::get('facility', [FacilityController::class, 'facilityMenuHeader']);
+    Route::get('facilityexport', [FacilityController::class, 'facilityExport']);
+    Route::get('facilitylocation', [FacilityController::class, 'facilityLocation']);
+    Route::get('facilitydetail', [FacilityController::class, 'facilityDetail']);
+    Route::post('facility', [FacilityController::class, 'createFacility']);
+    Route::put('facility', [FacilityController::class, 'updateFacility']);
+    Route::delete('facility', [FacilityController::class, 'deleteFacility']);
     
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
@@ -44,6 +44,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::put('update/{product}', [ProductController::class, 'update']);
     Route::delete('delete/{product}', [ProductController::class, 'destroy']);
 
-    Route::post('productSupplier', [ProductController::class, 'addProductSupplier']);
-    Route::post('productBrand', [ProductController::class, 'addProductBrand']);
+    
+    Route::post('productsupplier', [ProductController::class, 'addProductSupplier']);
+    Route::post('productbrand', [ProductController::class, 'addProductBrand']);
+    Route::post('productstatus', [ProductController::class, 'addProductStatus']);
+    Route::post('product', [ProductController::class, 'createNewProduct']);
+    Route::delete('product', [ProductController::class, 'deleteProduct']);
+    Route::get('product', [ProductController::class, 'indexProduct']);
+    Route::get('productdetail', [ProductController::class, 'getProductDetail']);
 });
