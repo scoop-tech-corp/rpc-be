@@ -13,7 +13,7 @@ Route::post('register', [ApiController::class, 'register']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('logout', [ApiController::class, 'logout']);
-
+    Route::get('locationImages', [LocationController::class, 'searchImageLocation']);
     Route::post('location', [LocationController::class, 'insertLocation']);
     Route::get('location', [LocationController::class, 'getLocationHeader']);
     Route::get('detaillocation', [LocationController::class, 'getLocationDetail']);
@@ -35,7 +35,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('facility', [FacilityController::class, 'createFacility']);
     Route::put('facility', [FacilityController::class, 'updateFacility']);
     Route::delete('facility', [FacilityController::class, 'deleteFacility']);
-    
+    Route::get('facilityimages', [FacilityController::class, 'searchImageFacility']);
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
     Route::get('products', [ProductController::class, 'index']);

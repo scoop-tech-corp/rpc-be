@@ -54,29 +54,34 @@ class FacilityController extends Controller
 
         if ($request->hasfile('images')) {  
 
-                $files[] = $request->file('images');
-       
-                foreach ($files as $file) {
-                
-                    foreach ($file as $fil) {
-                       
-                        $name = $fil->hashName();
-                      
-                        $fil->move(public_path() . '/FacilityImages/', $name);
-                        
-                        $fileName = "/FacilityImages/" . $name;
-    
-                           DB::table('facility_images')
-                            ->insert(['facilityCode' =>$getvaluesp,
-                                    'imageName' => $name,
-                                    'imagePath' => $fileName,
-                                    'isDeleted' => 0,
-                                    'created_at' => now()
-                                    ]);
-                    }
+            $files[] = $request->file('images');
+            $json_array = json_decode($request->imagesName,true);
+            $int = 0 ;
+
+               foreach ($files as $file) {
+
+                  foreach ($file as $fil) {
                   
-                }
-            }
+                     $name = $fil->hashName();                 
+                     $fil->move(public_path() . '/FacilityImages/', $name);
+ 
+                     $fileName = "/FacilityImages/" . $name;
+ 
+                         DB::table('facility_images')
+                         ->insert(['facilityCode' => $getvaluesp,
+                                     'labelName' => $json_array[$int]['name'],
+                                     'realImageName' => $fil->getClientOriginalName(),
+                                     'imageName' => $name,
+                                     'imagePath' => $fileName,
+                                     'isDeleted' => 0,
+                                     'created_at' => now()
+                                 ]);
+                    $int = $int + 1;
+                 }
+             }
+         
+         }
+          
 
             DB::commit();
 
@@ -191,12 +196,14 @@ public function facilityDetail(Request $request)
     $facility->unit = $fasilitas_unit;
         
     $fasilitas_images = DB::table('facility_images')
-                       ->select('facility_images.imageName as imageName',
+                       ->select('facility_images.labelName as labelName',
+                                'facility_images.realImageName as realImageName',
+                                'facility_images.imageName as imageName',
                                 'facility_images.imagePath as imagePath', )
                         ->where(['facility_images.facilityCode' => $facilityCode],
                                 ['facility_images.isDeleted', '=', '0'],)
                         ->get();
-
+                        
     $facility->images = $fasilitas_images;
 
     return response()->json($facility, 200);
@@ -204,6 +211,102 @@ public function facilityDetail(Request $request)
  }
 
 }
+
+
+
+public function searchImageFacility(Request $request)
+{
+
+    $request->validate(['facilityCode' => 'required|max:10000']);
+
+    $checkIfValueExits = DB::table('facility_images')
+                        ->where([['facility_images.facilityCode', '=', $request->input('facilityCode')],
+                                ['facility_images.isDeleted', '=', '0']])
+                        ->first();
+
+    if ($checkIfValueExits === null) {
+
+            return response()->json([
+            'result' => 'Failed',
+            'message' =>  "Data not exists",
+            ]);
+
+    }else{
+
+        $images = DB::table('facility_images')
+                ->select('facility_images.labelName as labelName',
+                        'facility_images.realImageName as realImageName',
+                        'facility_images.imageName as imageName',
+                        'facility_images.imagePath as imagePath',)
+                ->where([['facility_images.facilityCode', '=', $request->input('facilityCode')],
+                        ['facility_images.isDeleted', '=', '0']]);
+              
+
+        if ($request->name) {
+            $res = $this->SearchImages($request);
+
+            if ($res) {
+                $images = $images->where($res, 'like', '%' . $request->name . '%');
+            } else {
+                $images = [];
+                return response()->json($images, 200);
+            }
+        }
+        $images = $images->orderBy('facility_images.created_at', 'desc');
+        $images = $images->get();
+        return response()->json(['images' => $images],200);
+
+
+    }
+
+}
+
+
+private function SearchImages($request)
+{
+
+   
+    $data = DB::table('facility_images')
+            ->select('facility_images.labelName as labelName',
+                     'facility_images.realImageName as realImageName',
+                     'facility_images.imageName as imageName',
+                     'facility_images.imagePath as imagePath',)
+            ->where([['facility_images.facilityCode', '=', $request->facilityCode],
+                    ['facility_images.isDeleted', '=', '0']]);
+
+    if ($request->name) {
+        $data = $data->where('facility_images.labelName', 'like', '%' . $request->name . '%');
+    }
+
+    $data = $data->get();
+        
+    if (count($data)) {
+        $temp_column = 'facility_images.labelName';
+        return $temp_column;
+    }    
+   
+    // $data = DB::table('facility_images')
+    //         ->select('facility_images.labelName as labelName',
+    //                 'facility_images.realImageName as realImageName',
+    //                 'facility_images.imageName as imageName',
+    //                 'facility_images.imagePath as imagePath',)
+    //         ->where([['facility_images.facilityCode', '=', $request->facilityCode],
+    //                 ['facility_images.isDeleted', '=', '0']]);
+
+    // if ($request->name) {
+    //     $data = $data->where('facility_images.realImageName', 'like', '%' . $request->name . '%');
+    // }
+
+    // $data = $data->get();
+        
+    // if (count($data)) {
+    //     $temp_column = 'facility_images.realImageName';
+    //     return $temp_column;
+    // } 
+
+}
+
+
 
 public function updateFacility(Request $request)
     {
@@ -254,35 +357,39 @@ public function updateFacility(Request $request)
               /**End Delete facility unit*/
 
             /**Delete facility images*/
-            
+
             if ($request->hasfile('images')) {  
 
                 DB::table('facility_images')->where('facilityCode', '=', $request->input('facilityCode'))->delete();
-            
+        
                 $files[] = $request->file('images');
-       
-                foreach ($files as $file) {
-                
-                    foreach ($file as $fil) {
-                       
-                        $name = $fil->hashName();
-                      
-                        $fil->move(public_path() . '/FacilityImages/', $name);
-                        
-                        $fileName = "/FacilityImages/" . $name;
+                $json_array = json_decode($request->imagesName,true);
+                $int = 0 ;
     
-                           DB::table('facility_images')
-                            ->insert(['facilityCode' =>$request->input('facilityCode'),
-                                    'imageName' => $name,
-                                    'imagePath' => $fileName,
-                                    'isDeleted' => 0,
-                                    'created_at' => now()
-                                    ]);
+                    foreach ($files as $file) {
+    
+                        foreach ($file as $fil) {
+                        
+                            $name = $fil->hashName();                 
+                            $fil->move(public_path() . '/FacilityImages/', $name);
+        
+                            $fileName = "/FacilityImages/" . $name;
+        
+                                DB::table('facility_images')
+                                ->insert(['facilityCode' => $getvaluesp,
+                                            'labelName' => $json_array[$int]['name'],
+                                            'realImageName' => $fil->getClientOriginalName(),
+                                            'imageName' => $name,
+                                            'imagePath' => $fileName,
+                                            'isDeleted' => 0,
+                                            'created_at' => now()
+                                        ]);
+                        $int = $int + 1;
+                        }
                     }
-                  
+                
                 }
-            }
-
+       
              /**End Delete facility images*/
            
             DB::commit();
@@ -408,8 +515,6 @@ public function updateFacility(Request $request)
             return $temp_column;
         }  
 
-
-
         $data = DB::table('facility')
                  ->select('facility.id as id',
                           'facility.facilityCode as facilityCode',
@@ -434,36 +539,6 @@ public function updateFacility(Request $request)
 
 
 
-
-
-
-    /**
-     * @OA\Get(
-     * path="/api/facilityexport",
-     * operationId="facilityexport",
-     * tags={"Facility"},
-     * summary="export facility excel",
-     * description="export facility excel",
-     *   @OA\Response(
-     *          response=201,
-     *          description="Generate Excel Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Generate Excel Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
     public function facilityExport(Request $request)
     {
 
@@ -485,33 +560,6 @@ public function updateFacility(Request $request)
     }
 
 
-    /**
-     * @OA\Get(
-     * path="/api/facilitylocation",
-     * operationId="facilitylocation",
-     * tags={"Facility"},
-     * summary="Get Location for dropdown in facility",
-     * description="Get Location for dropdown in facility",
-     *   @OA\Response(
-     *          response=201,
-     *          description="Generate Data Location Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Generate Data Location Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
     public function facilityLocation(Request $request)
     {
 
