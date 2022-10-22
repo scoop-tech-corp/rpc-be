@@ -12,33 +12,7 @@ use DB;
 class LocationController extends Controller
 {
 
-    /**
-     * @OA\Get(
-     * path="/api/exportlocation",
-     * operationId="export Location",
-     * tags={"Location"},
-     * summary="export Location excel",
-     * description="export Location excel",
-     *   @OA\Response(
-     *          response=201,
-     *          description="Generate Excel Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Generate Excel Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
+   
     public function exportLocation(Request $request)
     {
 
@@ -46,48 +20,6 @@ class LocationController extends Controller
 
     }
 
-    /**
-     * @OA\Delete(
-     * path="/api/location",
-     * operationId="delete location",
-     * tags={"Location"},
-     * summary="Delete Location",
-     * description="Delete Location , by delete location will update status isDeleted into 1)",
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(* @OA\Examples(
-     *        summary="Delete Location",
-     *        example = "Delete Location",
-     *        value = {
-     *           "codeLocation":"abc123",
-     *         },)),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               @OA\Property(property="codeLocation", type="text"),
-     *            ),
-     *        ),
-     *    ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="Delete location Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Delete location Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
     public function deleteLocation(Request $request)
     {
 
@@ -159,150 +91,7 @@ class LocationController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Put(
-     * path="/api/location",
-     * operationId="Update Location",
-     * tags={"Location"},
-     * summary="Update Location",
-     * description="Update Location",
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(* @OA\Examples(
-     *        summary="update Location",
-     *        example = "update Location",
-    * value = 
-    *{
-    *  "id": 1,
-    *  "codeLocation": "abc123",
-    *  "locationName": "RPC Permata Hijau Pekanbaru",
-    *  "isBranch": 0,
-    *  "status": 1,
-    *  "description": "Lorem ipsum dolor sit amet consectetur adipisicing elit. Harum fuga, alias placeat necessitatibus dolorem ea autem tempore omnis asperiores nostrum, excepturi a unde mollitia blanditiis iusto. Dolorum tempora enim atque.",
-    *  "image": "D:\\ImageFolder\\ExamplePath\\ImageRPCPermataHijau.jpg",
-    *  "imageTitle": "ImageRPCPermataHijau.jpg",
-    *  "detailAddress": {
-    *    {
-    *      "id": 1,
-    *      "addressName": "Jalan U 27 B Palmerah Barat no 206 Jakarta Barat 11480",
-    *      "additionalInfo": "Didepan nasi goreng kuning arema, disebelah bubur pasudan",
-    *      "provinceCode": 12,
-    *      "cityCode": 1102,
-    *      "postalCode": 9999,
-    *      "country": "Indonesia",
-    *      "isPrimary": 1
-    *    }
-    *  },
-    *  "operationalHour": {
-    *    {
-    *      "id": 1,
-    *      "dayName": "Monday",
-    *      "fromTime": "10:00PM",
-    *      "toTime": "10:00PM",
-    *      "allDay": 1
-    *    },
-    *    {
-    *      "id": 2,
-    *      "dayName": "Tuesday",
-    *      "fromTime": "12:00PM",
-    *      "toTime": "13:00PM",
-    *      "allDay": 1
-    *    },
-    *    {
-    *      "id": 3,
-    *      "dayName": "Wednesday",
-    *      "fromTime": "10:00PM",
-    *      "toTime": "10:00PM",
-    *      "allDay": 1
-    *    },
-    *    {
-    *      "id": 4,
-    *      "dayName": "Thursday",
-    *      "fromTime": "10:00PM",
-    *      "toTime": "10:00PM",
-    *      "allDay": 1
-    *    },
-    *    {
-    *      "id": 5,
-    *      "dayName": "Friday",
-    *      "fromTime": "10:00PM",
-    *      "toTime": "10:00PM",
-    *      "allDay": 1
-    *    }
-    *  },
-    *  "messenger": {
-    *    {
-    *      "id": 1,
-    *      "messengerNumber": "(021) 3851185",
-    *      "type": "Fax",
-    *      "usage": "Utama"
-    *    },
-    *    {
-    *      "id": 2,
-    *      "messengerNumber": "(021) 012345678",
-    *      "type": "Office",
-    *      "usage": "Utama"
-    *    }
-    *  },
-    *  "email": {
-    *    {
-    *      "id": 1,
-    *      "username": "wahyudidanny23@gmail.com",
-    *      "type": "Personal",
-    *      "usage": "Utama"
-    *    },
-    *    {
-    *      "id": 2,
-    *      "username": "wahyudidanny25@gmail.com",
-    *      "type": "Personal",
-    *      "usage": "Secondary"
-    *    }
-    *  },
-    *  "telephone": {
-    *    {
-    *      "id": 1,
-    *      "phoneNumber": "087888821648",
-    *      "type": "Telepon Selular",
-    *      "usage": "Utama"
-    *    },
-    *    {
-    *      "id": 2,
-    *      "phoneNumber": "085265779499",
-    *      "type": "Whatshapp",
-    *      "usage": "Secondary"
-    *    }
-    *  }
-    *}  
-     *          )),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               required={"locationName","isBranch","password"},
-     *               @OA\Property(property="name", type="text"),
 
-     *            ),
-     *        ),
-     *    ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="Update Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Update Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
     public function updateLocation(Request $request)
     {
 
@@ -345,34 +134,40 @@ class LocationController extends Controller
 
 
             /**Delete location images */
-
+            DB::table('location_images')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+                  
             if ($request->hasfile('images')) {  
 
                 DB::table('location_images')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-            
-                $files[] = $request->file('images');
-       
-                foreach ($files as $file) {
-                
-                    foreach ($file as $fil) {
-                       
-                        $name = $fil->hashName();
-                      
-                        $fil->move(public_path() . '/LocationImages/', $name);
-                        
-                        $fileName = "/LocationImages/" . $name;
-    
-                           DB::table('location_images')
-                            ->insert(['codeLocation' =>$request->input('codeLocation'),
-                                    'imageName' => $name,
-                                    'imagePath' => $fileName,
-                                    'isDeleted' => 0,
-                                    'created_at' => now()
-                                    ]);
-                    }
                   
-                }
-            }
+                 $files[] = $request->file('images');
+                 $json_array = json_decode($request->imagesName,true);
+                 $int = 0;
+      
+                  foreach ($files as $file) {
+      
+                       foreach ($file as $fil) {
+                         
+                           $name = $fil->hashName();                 
+                           $fil->move(public_path() . '/LocationImages/', $name);
+      
+                           $fileName = "/LocationImages/" . $name;
+      
+                              DB::table('location_images')
+                              ->insert(['codeLocation' => $request->input('codeLocation'),
+                                          'labelName' => $json_array[$int]['name'],
+                                          'realImageName' => $fil->getClientOriginalName(),
+                                          'imageName' => $name,
+                                          'imagePath' => $fileName,
+                                          'isDeleted' => 0,
+                                          'created_at' => now()
+                                      ]);
+      
+                           $int =  $int +1;
+                      }
+                 }
+                      
+              }
             /**End Delete location Images */
 
 
@@ -449,10 +244,11 @@ class LocationController extends Controller
              }        
              /**End Delete location email*/
 
-            DB::commit();
+             DB::commit();
 
             return response()->json([
                 'result' => 'success',
+                'message' =>  'successfuly update data'
             ]);
 
         } catch (Exception $e) {
@@ -474,7 +270,7 @@ class LocationController extends Controller
 
         try
         {
-
+           
             $getvaluesp = strval(collect(DB::select('call generate_codeLocation'))[0]->randomString);
 
             $request->validate(['locationName' => 'required|max:255',
@@ -511,31 +307,36 @@ class LocationController extends Controller
 
         }
 
-
+         
          if ($request->hasfile('images')) {  
 
-            $files[] = $request->file('images');
-   
-            foreach ($files as $file) {
-            
-                foreach ($file as $fil) {
-                   
-                    $name = $fil->hashName();
-                  
-                    $fil->move(public_path() . '/LocationImages/', $name);
-                    
-                    $fileName = "/LocationImages/" . $name;
+           $files[] = $request->file('images');
+           $json_array = json_decode($request->imagesName,true);
+           $int = 0;
 
-                       DB::table('location_images')
+            foreach ($files as $file) {
+
+                 foreach ($file as $fil) {
+                   
+                     $name = $fil->hashName();                 
+                     $fil->move(public_path() . '/LocationImages/', $name);
+
+                     $fileName = "/LocationImages/" . $name;
+
+                        DB::table('location_images')
                         ->insert(['codeLocation' => $getvaluesp,
-                                'imageName' => $name,
-                                'imagePath' => $fileName,
-                                'isDeleted' => 0,
-                                'created_at' => now()
+                                    'labelName' => $json_array[$int]['name'],
+                                    'realImageName' => $fil->getClientOriginalName(),
+                                    'imageName' => $name,
+                                    'imagePath' => $fileName,
+                                    'isDeleted' => 0,
+                                    'created_at' => now()
                                 ]);
+
+                     $int =  $int +1;
                 }
-              
-            }
+           }
+                
         }
          
 
@@ -835,6 +636,104 @@ class LocationController extends Controller
     }
 
 
+
+
+    public function searchImageLocation(Request $request)
+    {
+
+        $request->validate(['codeLocation' => 'required|max:10000']);
+  
+        $checkIfValueExits = DB::table('location_images')
+                            ->where([['location_images.codeLocation', '=', $request->input('codeLocation')],
+                                    ['location_images.isDeleted', '=', '0']])
+                            ->first();
+
+        if ($checkIfValueExits === null) {
+
+                return response()->json([
+                'result' => 'Failed',
+                'message' =>  "Data not exists",
+                ]);
+
+        }else{
+
+            $images = DB::table('location_images')
+                    ->select('location_images.labelName as labelName',
+                            'location_images.realImageName as realImageName',
+                            'location_images.imageName as imageName',
+                            'location_images.imagePath as imagePath',)
+                    ->where([['location_images.codeLocation', '=', $request->input('codeLocation')],
+                            ['location_images.isDeleted', '=', '0']]);
+                  
+
+            if ($request->name) {
+                $res = $this->SearchImages($request);
+    
+                if ($res) {
+                    $images = $images->where($res, 'like', '%' . $request->name . '%');
+                } else {
+                    $images = [];
+                    return response()->json($images, 200);
+                }
+            }
+            $images = $images->orderBy('location_images.created_at', 'desc');
+            $images = $images->get();
+            return response()->json(['images' => $images],200);
+
+
+        }
+
+
+    }
+
+
+    private function SearchImages($request)
+    {
+
+       
+        $data = DB::table('location_images')
+                ->select('location_images.labelName as labelName',
+                        'location_images.realImageName as realImageName',
+                        'location_images.imageName as imageName',
+                        'location_images.imagePath as imagePath',)
+                ->where([['location_images.codeLocation', '=', $request->codeLocation],
+                        ['location_images.isDeleted', '=', '0']]);
+  
+        if ($request->name) {
+            $data = $data->where('location_images.labelName', 'like', '%' . $request->name . '%');
+        }
+
+        $data = $data->get();
+            
+        // if (count($data)) {
+        //     $temp_column = 'location_images.labelName';
+        //     return $temp_column;
+        // }    
+       
+        // $data = DB::table('location_images')
+        //         ->select('location_images.labelName as labelName',
+        //                 'location_images.realImageName as realImageName',
+        //                 'location_images.imageName as imageName',
+        //                 'location_images.imagePath as imagePath',)
+        //         ->where([['location_images.codeLocation', '=', $request->codeLocation],
+        //                 ['location_images.isDeleted', '=', '0']]);
+   
+        // if ($request->name) {
+        //     $data = $data->where('location_images.realImageName', 'like', '%' . $request->name . '%');
+        // }
+        
+        // $data = $data->get();
+            
+        // if (count($data)) {
+        //     $temp_column = 'location_images.realImageName';
+        //     return $temp_column;
+        // } 
+ 
+    }
+
+
+
+
     public function getLocationDetail(Request $request)
     {
         $request->validate(['codeLocation' => 'required|max:10000']);
@@ -864,7 +763,9 @@ class LocationController extends Controller
             ->first();
 
             $location_images = DB::table('location_images')
-                            ->select('location_images.imageName as imageName',
+                            ->select('location_images.labelName as labelName',
+                                     'location_images.realImageName as realImageName',
+                                     'location_images.imageName as imageName',
                                      'location_images.imagePath as imagePath',)
                             ->where([['location_images.codeLocation', '=', $codeLocation],
                                     ['location_images.isDeleted', '=', '0']])
