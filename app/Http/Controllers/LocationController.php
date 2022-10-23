@@ -106,14 +106,14 @@ class LocationController extends Controller
                           'updated_at' => now(),
                         ]);
             
-
             /**Delete location detail address */
-
-            if ($request->detailAddress){
-
-                DB::table('location_detail_address')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+            DB::table('location_detail_address')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
             
-                foreach ($request->detailAddress as $val) {
+            if ($request->detailAddress){
+          
+                $arradetailAddress= json_decode($request->detailAddress,true);
+       
+                foreach ($arradetailAddress as $val) {
 
                     DB::table('location_detail_address')
                     ->insert(['codeLocation' => $request->input('codeLocation'),
@@ -130,23 +130,20 @@ class LocationController extends Controller
                 }
             }    
              /**End Delete location detail address */
-
-
-
+          
             /**Delete location images */
             DB::table('location_images')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-                  
+             
             if ($request->hasfile('images')) {  
 
-                DB::table('location_images')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-                  
+                
                  $files[] = $request->file('images');
                  $json_array = json_decode($request->imagesName,true);
                  $int = 0;
       
                   foreach ($files as $file) {
       
-                       foreach ($file as $fil) {
+                       foreach ($file as $fil)  {
                          
                            $name = $fil->hashName();                 
                            $fil->move(public_path() . '/LocationImages/', $name);
@@ -170,15 +167,15 @@ class LocationController extends Controller
               }
             /**End Delete location Images */
 
-
-
+        
           /**Delete location operational hours */ 
-             
-          if ($request->operationalHour){
-
-            DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+          DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
             
-            foreach ($request->operationalHour as $val) {
+          if ($request->operationalHour){
+          
+            $arraoperationalHour= json_decode($request->operationalHour,true);
+       
+            foreach ($arraoperationalHour as $val) {
                         DB::table('location_operational')
                         ->insert(['codeLocation' => $request->input('codeLocation'),
                                 'dayName' => $val['dayName'],
@@ -193,10 +190,13 @@ class LocationController extends Controller
 
 
             /**Delete location messenger */
-           DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+            DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
            
            if ($request->messenger){
-            foreach ($request->messenger as $val) {
+
+            $arramessenger= json_decode($request->messenger,true);
+       
+            foreach ($arramessenger as $val) {
                     DB::table('location_messenger')
                     ->insert(['codeLocation' => $request->input('codeLocation'),
                             'messengerNumber' => $val['messengerNumber'],
@@ -209,12 +209,15 @@ class LocationController extends Controller
           }       
             /**End Delete location messenger*/
 
-
+           
             /**Delete location email */
-            if ($request->email){
             DB::table('location_email')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
-                foreach ($request->email as $val) {
+            if ($request->email){
+            
+            $arraemail= json_decode($request->email,true);
+
+                foreach ($arraemail as $val) {
                     DB::table('location_email')
                     ->insert(['codeLocation' => $request->input('codeLocation'),
                             'username' => $val['username'],
@@ -226,12 +229,16 @@ class LocationController extends Controller
 
             }       
             /**End Delete location email*/
-
+          
+            
              /**Delete location telephone */
-             if ($request->telephone){
              DB::table('location_telephone')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
- 
-                foreach ($request->telephone as $val) {
+            
+             if ($request->telephone){
+             
+             $arrtelephone= json_decode($request->telephone,true);
+
+             foreach ($arrtelephone as $val) {
                     DB::table('location_telephone')
                     ->insert([ 'codeLocation' => $request->input('codeLocation'),
                             'phoneNumber' => $val['phoneNumber'],
@@ -285,12 +292,13 @@ class LocationController extends Controller
                                            'isDeleted' => 0,
                                            'created_at' => now()
                                           ]);
-                  
-
-            if ($request->detailAddress) {    
-
-            foreach ($request->detailAddress as $val) {
-
+        
+           if ($request->detailAddress) {   
+          
+            $arrayDetailAddress = json_decode($request->detailAddress,true);
+       
+            foreach ($arrayDetailAddress as $val) {
+                
                     DB::table('location_detail_address')
                         ->insert(['codeLocation' => $getvaluesp,
                             'addressName' => $val['addressName'],
@@ -309,7 +317,7 @@ class LocationController extends Controller
 
          
          if ($request->hasfile('images')) {  
-
+          
            $files[] = $request->file('images');
            $json_array = json_decode($request->imagesName,true);
            $int = 0;
@@ -339,11 +347,13 @@ class LocationController extends Controller
                 
         }
          
-
+      
         if ($request->operationalHour) { 
-
-            foreach ($request->operationalHour as $val) {
-
+        
+            $arrayoperationalHour = json_decode($request->operationalHour,true);
+               
+            foreach ($arrayoperationalHour as $val) {
+                       
                 DB::table('location_operational')
                 ->insert(['codeLocation' => $getvaluesp,
                             'dayName' => $val['dayName'],
@@ -357,8 +367,10 @@ class LocationController extends Controller
 
 
         if ($request->messenger) { 
-
-            foreach ($request->messenger as $val) {
+            
+            $arraymessenger= json_decode($request->messenger,true);
+       
+            foreach ($arraymessenger as $val) {
 
                 DB::table('location_messenger')
                  ->insert(['codeLocation' => $getvaluesp,
@@ -372,7 +384,10 @@ class LocationController extends Controller
         }
 
         if ($request->email) { 
-            foreach ($request->email as $val) {
+
+            $arrayemail= json_decode($request->email,true);
+       
+            foreach ($arrayemail as $val) {
 
                 DB::table('location_email')
                     ->insert(['codeLocation' => $getvaluesp,
@@ -387,7 +402,9 @@ class LocationController extends Controller
 
         if ($request->telephone) {
 
-            foreach ($request->telephone as $val) {
+             $arratelephone= json_decode($request->telephone,true);
+       
+            foreach ($arratelephone as $val) {
 
                 DB::table('location_telephone')
                  ->insert([ 'codeLocation' => $getvaluesp,

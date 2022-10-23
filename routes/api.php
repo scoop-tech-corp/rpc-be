@@ -22,7 +22,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
     Route::get('exportlocation', [LocationController::class, 'exportLocation']);
     Route::delete('location', [LocationController::class, "deleteLocation"]);
-    Route::put('location', [LocationController::class, 'updateLocation']);
+    Route::post('patchlocation', [LocationController::class, 'updateLocation']);
     Route::post('upload', [ImportRegionController::class, 'uploadRegion']);
     Route::get('datastatic', [DataStaticController::class, 'datastatic']);
     Route::post('datastatic', [LocationController::class, 'insertdatastatic']);
@@ -33,7 +33,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('facilitylocation', [FacilityController::class, 'facilityLocation']);
     Route::get('facilitydetail', [FacilityController::class, 'facilityDetail']);
     Route::post('facility', [FacilityController::class, 'createFacility']);
-    Route::put('facility', [FacilityController::class, 'updateFacility']);
+    Route::post('patchfacility', [FacilityController::class, 'updateFacility']);
     Route::delete('facility', [FacilityController::class, 'deleteFacility']);
     Route::get('facilityimages', [FacilityController::class, 'searchImageFacility']);
     Route::get('logout', [ApiController::class, 'logout']);
