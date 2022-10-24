@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use DB;
+use File;
 use Illuminate\Http\Request;
 use App\Exports\exportFacility;
 use Maatwebsite\Excel\Facades\Excel;
@@ -198,9 +199,8 @@ public function facilityDetail(Request $request)
     $facility->unit = $fasilitas_unit;
         
     $fasilitas_images = DB::table('facility_images')
-                       ->select('facility_images.labelName as labelName',
-                                'facility_images.realImageName as realImageName',
-                                'facility_images.imageName as imageName',
+                       ->select('facility_images.id as id',
+                                'facility_images.labelName as labelName',
                                 'facility_images.imagePath as imagePath', )
                         ->where(['facility_images.facilityCode' => $facilityCode],
                                 ['facility_images.isDeleted', '=', '0'],)
@@ -236,9 +236,8 @@ public function searchImageFacility(Request $request)
     }else{
 
         $images = DB::table('facility_images')
-                ->select('facility_images.labelName as labelName',
-                        'facility_images.realImageName as realImageName',
-                        'facility_images.imageName as imageName',
+                ->select('facility_images.id as id',
+                        'facility_images.labelName as labelName',
                         'facility_images.imagePath as imagePath',)
                 ->where([['facility_images.facilityCode', '=', $request->input('facilityCode')],
                         ['facility_images.isDeleted', '=', '0']]);
@@ -340,13 +339,11 @@ public function updateFacility(Request $request)
 
              /**Delete facility unit*/
             
-            DB::table('facility_unit')->where('facilityCode', '=', $request->input('facilityCode'))->delete();
-                
             if($request->unit){
 
-                $arraunit= json_decode($request->unit,true);
+                DB::table('facility_unit')->where('facilityCode', '=', $request->input('facilityCode'))->delete();
                 
-                foreach ($arraunit as $val) {
+                foreach ($request->unit as $val) {
 
                     DB::table('facility_unit')->insert(['facilityCode' => $request->input('facilityCode'),
                                                         'unitName' => $val['unitName'],
@@ -361,41 +358,6 @@ public function updateFacility(Request $request)
             }  
               /**End Delete facility unit*/
               
-            /**Delete facility images*/
-            DB::table('facility_images')->where('facilityCode', '=', $request->input('facilityCode'))->delete();
-        
-            if ($request->hasfile('images')) {  
-
-                $files[] = $request->file('images');
-                $json_array = json_decode($request->imagesName,true);
-                $int = 0 ;
-    
-                    foreach ($files as $file) {
-    
-                        foreach ($file as $fil) {
-                        
-                            $name = $fil->hashName();                 
-                            $fil->move(public_path() . '/FacilityImages/', $name);
-        
-                            $fileName = "/FacilityImages/" . $name;
-        
-                                DB::table('facility_images')
-                                ->insert(['facilityCode' => $request->input('facilityCode'),
-                                            'labelName' => $json_array[$int]['name'],
-                                            'realImageName' => $fil->getClientOriginalName(),
-                                            'imageName' => $name,
-                                            'imagePath' => $fileName,
-                                            'isDeleted' => 0,
-                                            'created_at' => now()
-                                        ]);
-                        $int = $int + 1;
-                        }
-                    }
-                
-                }
-       
-             /**End Delete facility images*/
-           
             DB::commit();
 
             return response()->json([
@@ -416,6 +378,93 @@ public function updateFacility(Request $request)
   
 
     }
+
+
+
+    public function uploadImageFacility(Request $request){
+
+        try{
+               
+            if ($request->hasfile('images')) {  
+            
+                $files[] = $request->file('images');
+                $json_array = json_decode($request->imagesName,true);
+                $int = 0;
+    
+                foreach ($files as $file) {
+                    
+                    foreach ($file as $fil)  {
+                        
+                        if($json_array[$int]['status'] == "del"){
+
+                            $find_image = DB::table('facility_images')
+                                            ->select('facility_images.imageName',
+                                                     'facility_images.imagePath')
+                                            ->where('id', '=', $json_array[$int]['id'])
+                                            ->where('facilityCode', '=', $request->input('facilityCode'))
+                                            ->first();  
+
+                            if ($find_image) {
+                               
+                              if (file_exists(public_path() . $find_image->imagePath)) {
+    
+                                 File::delete(public_path() . $find_image->imagePath);
+
+                                  DB::table('facility_images')->where([['facilityCode', '=', $request->input('facilityCode')],
+                                                                       ['id', '=', $json_array[$int]['id']]])->delete();
+
+                              }
+
+                            }
+            
+                        }else{
+                       
+                             $name = $fil->hashName();                 
+                            $fil->move(public_path() . '/FacilityImages/', $name);
+        
+                            $fileName = "/FacilityImages/" . $name;
+        
+                                DB::table('facility_images')
+                                ->insert(['facilityCode' => $request->input('facilityCode'),
+                                            'labelName' => $json_array[$int]['name'],
+                                            'realImageName' => $fil->getClientOriginalName(),
+                                            'imageName' => $name,
+                                            'imagePath' => $fileName,
+                                            'isDeleted' => 0,
+                                            'created_at' => now()
+                                        ]);
+
+                        }
+
+                        $int =  $int +1;
+                    }
+                }
+                    
+            }
+
+
+          DB::commit();
+
+          return response()->json([
+              'result' => 'success',
+              'message' =>  'successfuly update image facility'
+          ]);
+
+      } catch (Exception $e) {
+
+          DB::rollback();
+
+          return response()->json([
+              'result' => 'failed',
+              'message' =>  $e,
+          ]);
+
+      }
+
+    }
+
+
+
 
     public function facilityMenuHeader(Request $request)
     {
