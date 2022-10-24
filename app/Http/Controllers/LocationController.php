@@ -92,6 +92,89 @@ class LocationController extends Controller
     }
 
 
+    public function uploadImageLocation(Request $request){
+
+        try{
+               
+            if ($request->hasfile('images')) {  
+            
+                $files[] = $request->file('images');
+                $json_array = json_decode($request->imagesName,true);
+                $int = 0;
+    
+                foreach ($files as $file) {
+                    
+                    foreach ($file as $fil)  {
+                        
+                        if($json_array[$int]['status'] == "del"){
+
+                            $find_image = DB::table('location_images')
+                                            ->select('location_images.imageName',
+                                                     'location_images.imagePath')
+                                            ->where('id', '=', $json_array[$int]['id'])
+                                            ->where('codeLocation', '=', $request->input('codeLocation'))
+                                            ->first();  
+
+                            if ($find_image) {
+                               
+                              if (file_exists(public_path() . $find_image->imagePath)) {
+    
+                                 File::delete(public_path() . $find_image->imagePath);
+
+                                  DB::table('location_images')->where([['codeLocation', '=', $request->input('codeLocation')],
+                                                                       ['id', '=', $json_array[$int]['id']]])->delete();
+
+                              }
+
+                            }
+            
+
+                        }else{
+                       
+                            $name = $fil->hashName();                 
+                            $fil->move(public_path() . '/LocationImages/', $name);
+
+                            $fileName = "/LocationImages/" . $name;
+
+                            DB::table('location_images')
+                            ->insert(['codeLocation' => $request->input('codeLocation'),
+                                    'labelName' => $json_array[$int]['name'],
+                                    'realImageName' => $fil->getClientOriginalName(),
+                                    'imageName' => $name,
+                                    'imagePath' => $fileName,
+                                    'isDeleted' => 0,
+                                    'created_at' => now()
+                                ]);
+
+                        }
+
+                        $int =  $int +1;
+                    }
+                }
+                    
+            }
+
+
+          DB::commit();
+
+          return response()->json([
+              'result' => 'success',
+              'message' =>  'successfuly update image location'
+          ]);
+
+      } catch (Exception $e) {
+
+          DB::rollback();
+
+          return response()->json([
+              'result' => 'failed',
+              'message' =>  $e,
+          ]);
+
+      }
+
+    }
+
     public function updateLocation(Request $request)
     {
 
@@ -107,13 +190,12 @@ class LocationController extends Controller
                         ]);
             
             /**Delete location detail address */
-            DB::table('location_detail_address')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-            
+           
             if ($request->detailAddress){
-          
-                $arradetailAddress= json_decode($request->detailAddress,true);
-       
-                foreach ($arradetailAddress as $val) {
+
+                DB::table('location_detail_address')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+            
+                foreach ($request->detailAddress as $val) {
 
                     DB::table('location_detail_address')
                     ->insert(['codeLocation' => $request->input('codeLocation'),
@@ -131,51 +213,14 @@ class LocationController extends Controller
             }    
              /**End Delete location detail address */
           
-            /**Delete location images */
-            DB::table('location_images')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-             
-            if ($request->hasfile('images')) {  
-
-                
-                 $files[] = $request->file('images');
-                 $json_array = json_decode($request->imagesName,true);
-                 $int = 0;
-      
-                  foreach ($files as $file) {
-      
-                       foreach ($file as $fil)  {
-                         
-                           $name = $fil->hashName();                 
-                           $fil->move(public_path() . '/LocationImages/', $name);
-      
-                           $fileName = "/LocationImages/" . $name;
-      
-                              DB::table('location_images')
-                              ->insert(['codeLocation' => $request->input('codeLocation'),
-                                          'labelName' => $json_array[$int]['name'],
-                                          'realImageName' => $fil->getClientOriginalName(),
-                                          'imageName' => $name,
-                                          'imagePath' => $fileName,
-                                          'isDeleted' => 0,
-                                          'created_at' => now()
-                                      ]);
-      
-                           $int =  $int +1;
-                      }
-                 }
-                      
-              }
-            /**End Delete location Images */
-
         
           /**Delete location operational hours */ 
-          DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-            
+      
           if ($request->operationalHour){
-          
-            $arraoperationalHour= json_decode($request->operationalHour,true);
-       
-            foreach ($arraoperationalHour as $val) {
+
+            DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+            
+            foreach ($request->operationalHour as $val) {
                         DB::table('location_operational')
                         ->insert(['codeLocation' => $request->input('codeLocation'),
                                 'dayName' => $val['dayName'],
@@ -190,13 +235,12 @@ class LocationController extends Controller
 
 
             /**Delete location messenger */
-            DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-           
+         
            if ($request->messenger){
 
-            $arramessenger= json_decode($request->messenger,true);
-       
-            foreach ($arramessenger as $val) {
+            DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+           
+            foreach ($request->messenger as $val) {
                     DB::table('location_messenger')
                     ->insert(['codeLocation' => $request->input('codeLocation'),
                             'messengerNumber' => $val['messengerNumber'],
@@ -211,13 +255,12 @@ class LocationController extends Controller
 
            
             /**Delete location email */
+         
+            if ($request->email){
+
             DB::table('location_email')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
-            if ($request->email){
-            
-            $arraemail= json_decode($request->email,true);
-
-                foreach ($arraemail as $val) {
+                foreach ($request->email as $val) {
                     DB::table('location_email')
                     ->insert(['codeLocation' => $request->input('codeLocation'),
                             'username' => $val['username'],
@@ -232,13 +275,12 @@ class LocationController extends Controller
           
             
              /**Delete location telephone */
-             DB::table('location_telephone')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-            
+           
              if ($request->telephone){
              
-             $arrtelephone= json_decode($request->telephone,true);
-
-             foreach ($arrtelephone as $val) {
+             DB::table('location_telephone')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+            
+             foreach ($request->telephone as $val) {
                     DB::table('location_telephone')
                     ->insert([ 'codeLocation' => $request->input('codeLocation'),
                             'phoneNumber' => $val['phoneNumber'],
@@ -675,9 +717,8 @@ class LocationController extends Controller
         }else{
 
             $images = DB::table('location_images')
-                    ->select('location_images.labelName as labelName',
-                            'location_images.realImageName as realImageName',
-                            'location_images.imageName as imageName',
+                    ->select('location_images.id as id',
+                            'location_images.labelName as labelName',
                             'location_images.imagePath as imagePath',)
                     ->where([['location_images.codeLocation', '=', $request->input('codeLocation')],
                             ['location_images.isDeleted', '=', '0']]);
@@ -780,9 +821,8 @@ class LocationController extends Controller
             ->first();
 
             $location_images = DB::table('location_images')
-                            ->select('location_images.labelName as labelName',
-                                     'location_images.realImageName as realImageName',
-                                     'location_images.imageName as imageName',
+                            ->select( 'location_images.id as id',
+                                      'location_images.labelName as labelName',
                                      'location_images.imagePath as imagePath',)
                             ->where([['location_images.codeLocation', '=', $codeLocation],
                                     ['location_images.isDeleted', '=', '0']])

@@ -12,6 +12,7 @@ Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
+
     Route::post('logout', [ApiController::class, 'logout']);
     Route::get('locationImages', [LocationController::class, 'searchImageLocation']);
     Route::post('location', [LocationController::class, 'insertLocation']);
@@ -22,7 +23,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
     Route::get('exportlocation', [LocationController::class, 'exportLocation']);
     Route::delete('location', [LocationController::class, "deleteLocation"]);
-    Route::post('patchlocation', [LocationController::class, 'updateLocation']);
+
+    Route::put('location', [LocationController::class, 'updateLocation']);
+    Route::put('facility', [FacilityController::class, 'updateFacility']);
+
+    Route::post('imagelocation', [LocationController::class, 'uploadImageLocation']);
+    Route::post('imagefacility', [FacilityController::class, 'uploadImageFacility']);
+
     Route::post('upload', [ImportRegionController::class, 'uploadRegion']);
     Route::get('datastatic', [DataStaticController::class, 'datastatic']);
     Route::post('datastatic', [LocationController::class, 'insertdatastatic']);
@@ -33,7 +40,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('facilitylocation', [FacilityController::class, 'facilityLocation']);
     Route::get('facilitydetail', [FacilityController::class, 'facilityDetail']);
     Route::post('facility', [FacilityController::class, 'createFacility']);
-    Route::post('patchfacility', [FacilityController::class, 'updateFacility']);
     Route::delete('facility', [FacilityController::class, 'deleteFacility']);
     Route::get('facilityimages', [FacilityController::class, 'searchImageFacility']);
     Route::get('logout', [ApiController::class, 'logout']);
