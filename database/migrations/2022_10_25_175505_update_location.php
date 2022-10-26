@@ -13,20 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-            $procedure = "
-                        ALTER TABLE location
-                        MODIFY COLUMN locationName varchar(255),
-                        MODIFY COLUMN description longtext;
-
-                        
-                        ALTER TABLE location_detail_address
-                        MODIFY COLUMN addressName longtext,
+        DB::statement('ALTER TABLE location_detail_address MODIFY COLUMN addressName longtext,
                         MODIFY COLUMN additionalInfo longtext;
+                        ');
 
-
-            ";
-        DB::unprepared($procedure);
- 
+        DB::statement('ALTER TABLE location MODIFY COLUMN description longtext;
+        ');
     }
 
     /**
@@ -36,16 +28,13 @@ return new class extends Migration
      */
     public function down()
     {
-        $procedure = "
-                        ALTER TABLE location
-                        MODIFY COLUMN locationName varchar(255),
-                        MODIFY COLUMN description longtext;
+      
+        DB::statement('ALTER TABLE location_detail_address MODIFY COLUMN addressName longtext,
+                       MODIFY COLUMN additionalInfo longtext;
+                      ');
 
-                        
-                        ALTER TABLE location_detail_address
-                        MODIFY COLUMN addressName longtext,
-                        MODIFY COLUMN additionalInfo longtext;
-            ";
-            DB::unprepared($procedure);
+        DB::statement('ALTER TABLE location MODIFY COLUMN description longtext;
+        ');
+      
     }
 };
