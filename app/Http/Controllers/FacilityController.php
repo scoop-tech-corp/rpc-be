@@ -40,7 +40,9 @@ class FacilityController extends Controller
         if ($request->unit) {
 
             $arraunit= json_decode($request->unit,true);
-       
+            
+            if (count($arraunit) != 0){
+
             foreach ($arraunit as $val) {
 
                 DB::table('facility_unit')->insert(['facilityCode' => $getvaluesp,
@@ -52,6 +54,7 @@ class FacilityController extends Controller
                                                   ]);
 
             }
+          }
         }
 
 
@@ -60,6 +63,8 @@ class FacilityController extends Controller
             $files[] = $request->file('images');
             $json_array = json_decode($request->imagesName,true);
             $int = 0 ;
+
+            if (count($files) != 0){
 
                foreach ($files as $file) {
 
@@ -82,6 +87,7 @@ class FacilityController extends Controller
                     $int = $int + 1;
                  }
              }
+           }
          
          }
           
@@ -341,6 +347,8 @@ public function updateFacility(Request $request)
             
             if($request->unit){
 
+                if (count($request->unit) != 0){
+
                 DB::table('facility_unit')->where('facilityCode', '=', $request->input('facilityCode'))->delete();
                 
                 foreach ($request->unit as $val) {
@@ -354,7 +362,7 @@ public function updateFacility(Request $request)
                                                         ]);
 
                 }    
-
+              }
             }  
               /**End Delete facility unit*/
               
@@ -390,7 +398,9 @@ public function updateFacility(Request $request)
                 $files[] = $request->file('images');
                 $json_array = json_decode($request->imagesName,true);
                 $int = 0;
-    
+                
+                if (count($files) != 0){
+
                 foreach ($files as $file) {
                     
                     foreach ($file as $fil)  {
@@ -417,9 +427,19 @@ public function updateFacility(Request $request)
 
                             }
             
-                        }else{
-                       
-                             $name = $fil->hashName();                 
+                     }else{
+                            
+                            $find_image = DB::table('facility_images')
+                                        ->select('facility_images.imageName',
+                                                'facility_images.imagePath')
+                                        ->where('id', '=', $json_array[$int]['id'])
+                                        ->where('facilityCode', '=', $request->input('facilityCode'))
+                                        ->first();  
+
+
+                         if ($find_image == null) {
+
+                            $name = $fil->hashName();                 
                             $fil->move(public_path() . '/FacilityImages/', $name);
         
                             $fileName = "/FacilityImages/" . $name;
@@ -436,10 +456,11 @@ public function updateFacility(Request $request)
 
                         }
 
+                      }
                         $int =  $int +1;
                     }
                 }
-                    
+             }    
             }
 
 

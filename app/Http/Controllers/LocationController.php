@@ -101,7 +101,9 @@ class LocationController extends Controller
                 $files[] = $request->file('images');
                 $json_array = json_decode($request->imagesName,true);
                 $int = 0;
-    
+                
+                if (count($files) != 0){
+                
                 foreach ($files as $file) {
                     
                     foreach ($file as $fil)  {
@@ -130,28 +132,40 @@ class LocationController extends Controller
             
 
                         }else{
-                       
-                            $name = $fil->hashName();                 
-                            $fil->move(public_path() . '/LocationImages/', $name);
+                   
 
-                            $fileName = "/LocationImages/" . $name;
+                            $find_image = DB::table('location_images')
+                            ->select('location_images.imageName',
+                                     'location_images.imagePath')
+                            ->where('id', '=', $json_array[$int]['id'])
+                            ->where('codeLocation', '=', $request->input('codeLocation'))
+                            ->first();  
 
-                            DB::table('location_images')
-                            ->insert(['codeLocation' => $request->input('codeLocation'),
-                                    'labelName' => $json_array[$int]['name'],
-                                    'realImageName' => $fil->getClientOriginalName(),
-                                    'imageName' => $name,
-                                    'imagePath' => $fileName,
-                                    'isDeleted' => 0,
-                                    'created_at' => now()
-                                ]);
+                            if ($find_image == null) {
+
+                                $name = $fil->hashName();                 
+                                $fil->move(public_path() . '/LocationImages/', $name);
+    
+                                $fileName = "/LocationImages/" . $name;
+    
+                                DB::table('location_images')
+                                ->insert(['codeLocation' => $request->input('codeLocation'),
+                                        'labelName' => $json_array[$int]['name'],
+                                        'realImageName' => $fil->getClientOriginalName(),
+                                        'imageName' => $name,
+                                        'imagePath' => $fileName,
+                                        'isDeleted' => 0,
+                                        'created_at' => now()
+                                    ]);
+
+                            }
 
                         }
 
                         $int =  $int +1;
                     }
                 }
-                    
+              }   
             }
 
 
@@ -192,6 +206,8 @@ class LocationController extends Controller
             /**Delete location detail address */
            
             if ($request->detailAddress){
+                
+                if (count($request->detailAddress) != 0){
 
                 DB::table('location_detail_address')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
             
@@ -210,6 +226,8 @@ class LocationController extends Controller
                             'created_at' => now()
                             ]);   
                 }
+
+              }
             }    
              /**End Delete location detail address */
           
@@ -217,6 +235,8 @@ class LocationController extends Controller
           /**Delete location operational hours */ 
       
           if ($request->operationalHour){
+
+            if (count($request->operationalHour) != 0){
 
             DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
             
@@ -229,14 +249,16 @@ class LocationController extends Controller
                                 'allDay' => $val['allDay'],
                                 ]);
             }    
-           
-            }
+          }
+        }
             /**End Delete location messenger*/
 
 
             /**Delete location messenger */
          
            if ($request->messenger){
+
+            if (count($request->messenger) != 0){
 
             DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
            
@@ -250,6 +272,7 @@ class LocationController extends Controller
                             'created_at' => now(),
                             ]);
             } 
+           }
           }       
             /**End Delete location messenger*/
 
@@ -257,19 +280,21 @@ class LocationController extends Controller
             /**Delete location email */
          
             if ($request->email){
+            
+                if (count($request->email) != 0){
 
-            DB::table('location_email')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+                 DB::table('location_email')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
-                foreach ($request->email as $val) {
-                    DB::table('location_email')
-                    ->insert(['codeLocation' => $request->input('codeLocation'),
-                            'username' => $val['username'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            ]);
-                } 
-
+                    foreach ($request->email as $val) {
+                        DB::table('location_email')
+                        ->insert(['codeLocation' => $request->input('codeLocation'),
+                                'username' => $val['username'],
+                                'usage' => $val['usage'],
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                                ]);
+                    } 
+                }
             }       
             /**End Delete location email*/
           
@@ -277,7 +302,9 @@ class LocationController extends Controller
              /**Delete location telephone */
            
              if ($request->telephone){
-             
+
+             if (count($request->telephone) != 0){
+
              DB::table('location_telephone')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
             
              foreach ($request->telephone as $val) {
@@ -290,6 +317,7 @@ class LocationController extends Controller
                             'created_at' => now(),
                             ]);
                 }
+               }
              }        
              /**End Delete location email*/
 
@@ -338,7 +366,9 @@ class LocationController extends Controller
            if ($request->detailAddress) {   
           
             $arrayDetailAddress = json_decode($request->detailAddress,true);
-       
+            
+            if (count($arrayDetailAddress) != 0){
+               
             foreach ($arrayDetailAddress as $val) {
                 
                     DB::table('location_detail_address')
@@ -354,15 +384,17 @@ class LocationController extends Controller
                             'created_at' => now()
                             ]);
             }
-
+         }
         }
-
+        
          
          if ($request->hasfile('images')) {  
-          
+    
            $files[] = $request->file('images');
            $json_array = json_decode($request->imagesName,true);
            $int = 0;
+
+           if (count($files) != 0){
 
             foreach ($files as $file) {
 
@@ -386,6 +418,8 @@ class LocationController extends Controller
                      $int =  $int +1;
                 }
            }
+
+         }
                 
         }
          
@@ -393,7 +427,9 @@ class LocationController extends Controller
         if ($request->operationalHour) { 
         
             $arrayoperationalHour = json_decode($request->operationalHour,true);
-               
+            
+            if (count($arrayoperationalHour) != 0){
+
             foreach ($arrayoperationalHour as $val) {
                        
                 DB::table('location_operational')
@@ -405,13 +441,16 @@ class LocationController extends Controller
                         ]);
             }
 
+         }
+
         }
 
 
         if ($request->messenger) { 
             
             $arraymessenger= json_decode($request->messenger,true);
-       
+            
+            if (count($arraymessenger) != 0){
             foreach ($arraymessenger as $val) {
 
                 DB::table('location_messenger')
@@ -423,29 +462,37 @@ class LocationController extends Controller
                             'created_at' => now(),
                          ]);
             }
+          }
         }
 
         if ($request->email) { 
 
             $arrayemail= json_decode($request->email,true);
-       
-            foreach ($arrayemail as $val) {
+           
+            if (count($arrayemail) != 0){
 
-                DB::table('location_email')
-                    ->insert(['codeLocation' => $getvaluesp,
-                            'username' => $val['username'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            ]);
+                foreach ($arrayemail as $val) {
+
+                    DB::table('location_email')
+                        ->insert(['codeLocation' => $getvaluesp,
+                                'username' => $val['username'],
+                                'usage' => $val['usage'],
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                                ]);
+    
+                }
 
             }
+
         }
 
         if ($request->telephone) {
 
              $arratelephone= json_decode($request->telephone,true);
-       
+            
+            if (count($arratelephone) != 0){
+
             foreach ($arratelephone as $val) {
 
                 DB::table('location_telephone')
@@ -457,6 +504,7 @@ class LocationController extends Controller
                             'created_at' => now(),
                          ]);
 
+                }
             }
         }
 
