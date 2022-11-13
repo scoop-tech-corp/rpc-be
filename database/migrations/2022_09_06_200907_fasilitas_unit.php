@@ -15,9 +15,11 @@ return new class extends Migration
     {
         Schema::create('facility_unit', function (Blueprint $table) {
             $table->id();
-            $table->string('facilityCode');
+            $table->string('locationName');
             $table->string('unitName');
             $table->boolean('status');
+            $table->integer('capacity');
+            $table->integer('amount');
             $table->string('notes')->nullable()->default(NULL);;
             $table->boolean('isDeleted');
             $table->timestamps();

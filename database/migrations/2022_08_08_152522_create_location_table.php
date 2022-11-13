@@ -17,11 +17,8 @@ return new class extends Migration
             $table->id();
             $table->string('codeLocation');
             $table->string('locationName');
-            $table->boolean('isBranch');
             $table->boolean('status');
-            $table->string('description')->nullable()->default(NULL);
-            $table->string('image')->nullable()->default(NULL);
-            $table->string('imageTitle')->nullable()->default(NULL);
+            $table->longText('description')->nullable()->default(NULL);
             $table->boolean('isDeleted');
             $table->timestamps();
         });

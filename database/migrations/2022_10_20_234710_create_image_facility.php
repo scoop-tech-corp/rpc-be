@@ -15,7 +15,10 @@ return new class extends Migration
     {
         Schema::create('facility_images', function (Blueprint $table) {
             $table->id();
-            $table->string('facilityCode');
+            $table->string('locationName');
+            $table->string('unitName');
+            $table->string('labelName');
+            $table->string('realImageName');
             $table->string('imageName');
             $table->string('imagePath');
             $table->boolean('isDeleted');
