@@ -17,15 +17,24 @@ class exportFacility implements FromCollection, WithHeadings, WithTitle
     public function collection()
     {
       
-        $data = DB::table('facility')
-                 ->select('facility.id as id',
-                          'facility.facilityCode as facilityCode',
-                          'facility.facilityName as facilityName',
-                          'facility.locationName as locationName',
-                          'facility.capacity as capacity',
-                  DB::raw("CASE WHEN facility.status=1 then 'Active' else 'Non Active' end as status" ),)
-                  ->where('facility.isDeleted', '=', '0')
-                  ->get();
+        $data = DB::table('location')
+                ->leftjoin(DB::raw('(select * from facility where isDeleted=0) as facility'),
+                    function ($join) {
+                        $join->on('facility.locationName', '=', 'location.locationName');
+                    })
+                ->leftjoin(DB::raw('(select * from facility_unit where isDeleted=0) as facility_unit'),
+                    function ($join) {
+                        $join->on('facility_unit.locationName', '=', 'facility.locationName');
+                    })
+                ->select('location.id as id',
+                    'location.locationName as locationName',
+                    DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
+                    DB::raw("IFNULL (count(DISTINCT(facility.locationName)),0) as facilityVariation"),
+                    DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
+                ->where([['location.isDeleted', '=', '0']])
+                ->groupBy('location.locationName', 'location.codeLocation', 'location.id', 'location.created_at')
+                ->get();
+
         return collect($data);
     }
 
@@ -34,11 +43,10 @@ class exportFacility implements FromCollection, WithHeadings, WithTitle
     {
        return [
          'No',
-         'Facility Code',
-         'Facility Name',
          'Location Name',
-         'Capacity',
-         'Status'
+         'Capacity Usage',
+         'Facility Variation',
+         'Unit Total',
        ];
     }
 
