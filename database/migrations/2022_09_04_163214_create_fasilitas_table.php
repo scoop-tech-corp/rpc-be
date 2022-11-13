@@ -15,11 +15,7 @@ return new class extends Migration
     {
         Schema::create('facility', function (Blueprint $table) {
             $table->id();
-            $table->string('facilityCode');
-            $table->string('facilityName');
             $table->string('locationName');
-            $table->integer('capacity');
-            $table->boolean('status');
             $table->string('introduction')->nullable()->default(NULL);;
             $table->string('description')->nullable()->default(NULL);;
             $table->boolean('isDeleted');

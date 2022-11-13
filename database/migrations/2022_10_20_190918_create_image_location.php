@@ -16,6 +16,8 @@ return new class extends Migration
         Schema::create('location_images', function (Blueprint $table) {
             $table->id();
             $table->string('codeLocation');
+            $table->string('labelName');
+            $table->string('realImageName');
             $table->string('imageName');
             $table->string('imagePath');
             $table->boolean('isDeleted');

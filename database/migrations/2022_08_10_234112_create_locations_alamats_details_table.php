@@ -16,12 +16,12 @@ return new class extends Migration
         Schema::create('location_detail_address', function (Blueprint $table) {
             $table->id();
             $table->string('codeLocation');
-            $table->string('addressName');
-            $table->string('additionalInfo');
-            $table->integer('provinceCode');
-            $table->integer('cityCode');
-            $table->integer('postalCode');
-            $table->string('country');
+            $table->longText('addressName')->nullable();   
+            $table->longText('additionalInfo')->nullable();
+            $table->integer('provinceCode')->nullable();
+            $table->integer('cityCode')->nullable();
+            $table->integer('postalCode')->nullable();
+            $table->string('country')->nullable();
             $table->boolean('isPrimary');  
             $table->boolean('isDeleted');
             $table->timestamps();

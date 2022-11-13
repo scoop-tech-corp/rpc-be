@@ -17,7 +17,6 @@ return new class extends Migration
             $table->id();
             $table->string('codeLocation');
             $table->string('username');
-            $table->string('type');
             $table->string('usage');
             $table->boolean('isDeleted');
             $table->timestamps();
