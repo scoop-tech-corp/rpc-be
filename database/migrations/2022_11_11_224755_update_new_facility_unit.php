@@ -31,9 +31,9 @@ return new class extends Migration
     {
        
         Schema::table('facility_unit', function (Blueprint $table) {
-            $table->string('locationName'); 
-            $table->integer('capacity'); 
-            $table->integer('amount'); 
+            $table->dropColumn('locationName'); 
+            $table->dropColumn('capacity'); 
+            $table->dropColumn('amount'); 
             $table->dropColumn('facilityCode');
         });
     }

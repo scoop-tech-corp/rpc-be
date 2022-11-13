@@ -28,8 +28,8 @@ return new class extends Migration
     public function down()
     {
         Schema::table('facility_images', function (Blueprint $table) {
-            $table->string('locationName'); 
-            $table->string('unitName'); 
+            $table->dropColumn('locationName'); 
+            $table->dropColumn('unitName'); 
             $table->dropColumn('facilityCode');
         });
     }
