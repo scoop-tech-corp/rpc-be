@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::table('facility_images', function (Blueprint $table) {
             $table->string('locationName')->after('facilityCode'); 
             $table->string('unitName')->after('locationName'); 
-            $table->dropColumn('facilityCode');
         });
     }
 
@@ -30,7 +29,6 @@ return new class extends Migration
         Schema::table('facility_images', function (Blueprint $table) {
             $table->dropColumn('locationName'); 
             $table->dropColumn('unitName'); 
-            $table->dropColumn('facilityCode');
         });
     }
 };
