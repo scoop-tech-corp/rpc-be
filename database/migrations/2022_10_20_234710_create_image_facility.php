@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('facility_images', function (Blueprint $table) {
             $table->id();
+            $table->string('locationId');
             $table->string('locationName');
             $table->string('unitName');
             $table->string('labelName');
