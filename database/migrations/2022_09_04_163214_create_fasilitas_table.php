@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('facility', function (Blueprint $table) {
             $table->id();
+            $table->string('locationId');
             $table->string('locationName');
             $table->string('introduction')->nullable()->default(NULL);;
             $table->string('description')->nullable()->default(NULL);;
