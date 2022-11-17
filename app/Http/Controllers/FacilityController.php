@@ -43,49 +43,32 @@ class FacilityController extends Controller
             if ($request->unit) {
 
                 $arraunit = json_decode($request->unit, true);
-             
+                
+
                 if (count($arraunit) != 0) {
 
+                    $check = Validator::make($arraunit,[
+
+                        "*.unitName" => 'required|max:25',
+                        "*.notes" => 'required|max:300',
+                        "*.status" => 'required|integer',
+                        "*.capacity" => 'required|integer',
+                        "*.amount" => 'required|integer',
+                    ]);
+
+                    if ($check->fails()) {
+                        $errors = $check->errors()->all();
+        
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => $errors,
+                        ], 422);
+                    }
+                   
+
                     foreach ($arraunit as $val) {
-
-                     if ( strlen($val['unitName']) > 25){
-
-                            return response()->json([
-                                'result' => 'Error',
-                                'message' => 'Unit name max length 25 digit',
-                            ]);
-
-                     }else if (strlen($val['notes']) > 300){
-
-                        return response()->json([
-                            'result' => 'Error',
-                            'message' => 'notes max length 300 digit',
-                        ]);    
-
-                     }else if ($val['status'] == ""){
-
-                        return response()->json([
-                            'result' => 'Error',
-                            'message' => 'Status unit required, please input status',
-                        ]);    
-
-                     }else if ($val['capacity'] == ""){
-
-                        return response()->json([
-                            'result' => 'Error',
-                            'message' => 'Capacity unit required, please input capacity',
-                        ]);    
-
-                     }else if ($val['amount'] == ""){
-
-                        return response()->json([
-                            'result' => 'Error',
-                            'message' => 'Amount unit required, please input amount',
-                        ]);    
-
-                     }else{
-
-
+               
+        
                         $checkIfFacilityExits = DB::table('facility_unit')
                         ->where([['locationId', '=', $request->input('locationId')],
 								['locationName', '=', $request->input('locationName')],
@@ -118,9 +101,10 @@ class FacilityController extends Controller
 
                         }
 
-                    }
                 }
             }
+
+
             if ($request->hasfile('images')) {
              
                 $files[] = $request->file('images');
@@ -383,16 +367,36 @@ class FacilityController extends Controller
 
                 if (count($request->unit) != 0) {
 
-                    foreach ($request->unit as $val) {
 
-                        if (isset($val['command'])) {
+                    $check = Validator::make($request->unit,[
+
+                        "*.unitName" => 'required|max:25',
+                        "*.notes" => 'required|max:300',
+                        "*.status" => 'required|integer',
+                        "*.capacity" => 'required|integer',
+                        "*.amount" => 'required|integer',
+                    ]);
+
+                    if ($check->fails()) {
+                        $errors = $check->errors()->all();
+        
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => $errors,
+                        ], 422);
+                    }
+
+
+                     foreach ($request->unit as $val) {
+                            
+                        if (isset($val['id'])) {
                            
-                            if ($val['command'] == "del") {
+                            if (isset($val['command'])) {
 
-                                DB::table('facility_unit')
+                                    DB::table('facility_unit')
                                     ->where([['locationId', '=', $request->input('locationId')],
-											['unitName', '=', $val['unitName']],
-											['isDeleted', '=', '0']])
+                                            ['unitName', '=', $val['unitName']],
+                                            ['isDeleted', '=', '0']])
                                     ->update(['unitName' => $val['unitName'],
                                         'isDeleted' => 1,
                                         'updated_at' => now(),
@@ -400,17 +404,34 @@ class FacilityController extends Controller
 
                                 DB::table('facility_images')
                                     ->where([['locationId', '=', $request->input('locationId')],
-											['unitName', '=', $val['unitName']],
-											['isDeleted', '=', '0']])
+                                            ['unitName', '=', $val['unitName']],
+                                            ['isDeleted', '=', '0']])
                                     ->update(['isDeleted' => 1,
                                         'updated_at' => now()]);
 
-                            } else {
-                                    
-                                $checkIfDataExits = DB::table('facility_unit')
+
+                                }else{
+
+                                     DB::table('facility_unit')
+                                        ->where([['locationId', '=', $request->input('locationId')],
+                                                ['id', '=', $val['id']],
+                                                ])
+                                        ->update(['unitName' => $val['unitName'],
+                                            'capacity' => $val['capacity'],
+                                            'amount' => $val['amount'],
+                                            'status' => $val['status'],
+                                            'notes' => $val['notes'],
+                                            'updated_at' => now(),
+                                        ]);
+                            }
+                        
+
+                        }else{
+
+                                 $checkIfDataExits = DB::table('facility_unit')
                                     ->where([['locationId', '=', $request->input('locationId')],
-											['unitName', '=', $val['unitName']],
-											['isDeleted', '=', '0']])
+                                            ['unitName', '=', $val['unitName']],
+                                            ['isDeleted', '=', '0']])
                                     ->first();
 
                                 if ($checkIfDataExits != null) {
@@ -423,48 +444,10 @@ class FacilityController extends Controller
                                 } else {
 
 
-                                if ( strlen($val['unitName']) > 25){
-
-                                        return response()->json([
-                                            'result' => 'Error',
-                                            'message' => 'Unit name max length 25 digit',
-                                        ]);
-            
-                                 }else if (strlen($val['notes']) > 300){
-            
-                                    return response()->json([
-                                        'result' => 'Error',
-                                        'message' => 'notes max length 300 digit',
-                                    ]);    
-            
-                                 }else if ($val['status'] == ""){
-            
-                                    return response()->json([
-                                        'result' => 'Error',
-                                        'message' => 'Status unit required, please input status',
-                                    ]);    
-            
-                                 }else if ($val['capacity'] == ""){
-            
-                                    return response()->json([
-                                        'result' => 'Error',
-                                        'message' => 'Capacity unit required, please input capacity',
-                                    ]);    
-            
-                                 }else if ($val['amount'] == ""){
-            
-                                    return response()->json([
-                                        'result' => 'Error',
-                                        'message' => 'Amount unit required, please input amount',
-                                    ]);    
-            
-                                 }else{
-
-
                                     DB::table('facility_unit')
                                         ->insert([
-											'locationId' => $request->input('locationId'),
-											'locationName' => $request->input('locationName'),
+                                            'locationId' => $request->input('locationId'),
+                                            'locationName' => $request->input('locationName'),
                                             'unitName' => $val['unitName'],
                                             'status' => $val['status'],
                                             'capacity' => $val['capacity'],
@@ -473,66 +456,9 @@ class FacilityController extends Controller
                                             'isDeleted' => 0,
                                             'created_at' => now(),
                                         ]);
-
-                                    }
-
                                 }
 
-                            }
-
-                        } else {
-                            
-                            if ( strlen($val['unitName']) > 25){
-
-                                return response()->json([
-                                    'result' => 'Error',
-                                    'message' => 'Unit name max length 25 digit',
-                                ]);
-    
-                         }else if (strlen($val['notes']) > 300){
-    
-                            return response()->json([
-                                'result' => 'Error',
-                                'message' => 'notes max length 300 digit',
-                            ]);    
-    
-                         }else if ($val['status'] == ""){
-    
-                            return response()->json([
-                                'result' => 'Error',
-                                'message' => 'Status unit required, please input status',
-                            ]);    
-    
-                         }else if ($val['capacity'] == ""){
-    
-                            return response()->json([
-                                'result' => 'Error',
-                                'message' => 'Capacity unit required, please input capacity',
-                            ]);    
-    
-                         }else if ($val['amount'] == ""){
-    
-                            return response()->json([
-                                'result' => 'Error',
-                                'message' => 'Amount unit required, please input amount',
-                            ]);    
-    
-                         }else{
-
-                                    DB::table('facility_unit')
-                                        ->where([['locationId', '=', $request->input('locationId')],
-                                                 ['id', '=', $val['id']],
-												])
-                                        ->update(['unitName' => $val['unitName'],
-                                            'capacity' => $val['capacity'],
-                                            'amount' => $val['amount'],
-                                            'status' => $val['status'],
-                                            'notes' => $val['notes'],
-                                            'updated_at' => now(),
-                                        ]);
-
-                             }
-
+                           
                         }
 
                     }
