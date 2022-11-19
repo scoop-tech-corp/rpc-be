@@ -1,11 +1,15 @@
 <?php
 
 use App\Http\Controllers\ApiController;
+use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\DataStaticController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\ImportRegionController;
 use App\Http\Controllers\LocationController;
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\Product\ProductClinicController;
+use App\Http\Controllers\Product\ProductController;
+use App\Http\Controllers\Product\ProductInventoryController;
+use App\Http\Controllers\Product\ProductSellController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -50,12 +54,42 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::put('update/{product}', [ProductController::class, 'update']);
     Route::delete('delete/{product}', [ProductController::class, 'destroy']);
 
-    
-    Route::post('productsupplier', [ProductController::class, 'addProductSupplier']);
-    Route::post('productbrand', [ProductController::class, 'addProductBrand']);
+    Route::post('product/supplier', [ProductController::class, 'addProductSupplier']);
+    Route::get('product/supplier', [ProductController::class, 'IndexProductSupplier']);
+
+    Route::post('product/brand', [ProductController::class, 'addProductBrand']);
+    Route::get('product/brand', [ProductController::class, 'IndexProductBrand']);
+
     Route::post('productstatus', [ProductController::class, 'addProductStatus']);
     Route::post('product', [ProductController::class, 'createNewProduct']);
     Route::delete('product', [ProductController::class, 'deleteProduct']);
     Route::get('product', [ProductController::class, 'indexProduct']);
     Route::get('productdetail', [ProductController::class, 'getProductDetail']);
+
+    //MODULE PRODUCT
+    //list produk
+    Route::get('product/sell', [ProductSellController::class, 'Index']);
+    Route::get('product/sell/detail', [ProductSellController::class, 'Detail']);
+    Route::post('product/sell', [ProductSellController::class, 'Create']);
+    Route::put('product/sell', [ProductSellController::class, 'Update']);
+    Route::delete('product/sell', [ProductSellController::class, 'Delete']);
+
+    Route::get('product/clinic', [ProductClinicController::class, 'index']);
+    Route::post('product/clinic', [ProductClinicController::class, 'Create']);
+    Route::put('product/clinic', [ProductClinicController::class, 'Update']);
+    Route::delete('product/clinic', [ProductClinicController::class, 'Delete']);
+
+    Route::get('product/inventory', [ProductInventoryController::class, 'Index']);
+    Route::post('product/inventory', [ProductInventoryController::class, 'Create']);
+    Route::put('product/inventory', [ProductInventoryController::class, 'Update']);
+    Route::delete('product/inventory', [ProductInventoryController::class, 'Delete']);
+
+    //product category
+    Route::get('product/category', [ProductController::class, 'IndexProductCategory']);
+    Route::post('product/category', [ProductController::class, 'CreateProductCategory']);
+
+    //MODULE CUSTOMER
+    //customer group
+    Route::get('customer/group', [CustomerController::class, 'Index']);
+    Route::post('customer/group', [CustomerController::class, 'Create']);
 });
