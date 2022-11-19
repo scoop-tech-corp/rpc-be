@@ -13,7 +13,7 @@ class ProductController
 {
     public function IndexProductSupplier(Request $request)
     {
-        $Data = DB::table('ProductSuppliers')
+        $Data = DB::table('productSuppliers')
             ->select('id', 'supplierName')
             ->where('isDeleted', '=', 0)
             ->get();
@@ -23,7 +23,7 @@ class ProductController
 
     public function IndexProductBrand(Request $request)
     {
-        $Data = DB::table('ProductBrands')
+        $Data = DB::table('productBrands')
             ->select('id', 'brandName')
             ->where('isDeleted', '=', 0)
             ->get();
@@ -218,7 +218,7 @@ class ProductController
             ], 422);
         }
 
-        $checkIfValueExits = DB::table('ProductCategories')
+        $checkIfValueExits = DB::table('productCategories')
             ->where('CategoryName', '=', $request->categoryName)
             ->first();
 
