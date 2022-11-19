@@ -38,7 +38,8 @@ class ProductSellController
                 DB::raw("TRIM(ps.price)+0 as price"),
                 'ps.pricingStatus',
                 DB::raw("TRIM(psl.inStock)+0 as stock"),
-                DB::raw("CASE WHEN ps.status = 1 THEN 'Active' ELSE 'Non Active' END as status"),
+                'ps.status',
+                'ps.isShipped',
                 'u.name as createdBy',
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
@@ -210,6 +211,9 @@ class ProductSellController
         }
 
         $ResultCategories = null;
+        $ResultPriceLocations = null;
+        $ResultQuantities = null;
+        $ResultCustomerGroups = null;
 
         if ($request->categories) {
             $ResultCategories = json_decode($request->categories, true);
@@ -325,7 +329,9 @@ class ProductSellController
         } else if ($request->pricingStatus == "PriceLocations") {
 
             if ($request->priceLocations) {
+
                 $ResultPriceLocations = json_decode($request->priceLocations, true);
+
 
                 $validatePriceLocations = Validator::make(
                     $ResultPriceLocations,
@@ -392,6 +398,7 @@ class ProductSellController
 
         //INSERT DATA s
 
+
         $flag = false;
         $res_data = [];
 
@@ -446,9 +453,7 @@ class ProductSellController
             if ($flag == false) {
 
                 if ($request->hasfile('images')) {
-                    info('masuk awal');
                     foreach ($files as $file) {
-                        info('masuk');
 
                         foreach ($file as $fil) {
 
@@ -497,15 +502,13 @@ class ProductSellController
                         'userId' => $request->user()->id,
                     ]);
                 }
-            } else if ($request->PricingStatus == "PriceLocations") {
-
-                $ResultPriceLocations = json_decode($request->priceLocations, true);
+            } else if ($request->pricingStatus == "PriceLocations") {
 
                 foreach ($ResultPriceLocations as $PriceVal) {
                     ProductSellPriceLocation::create([
                         'productSellId' => $product->id,
                         'locationId' => $PriceVal['locationId'],
-                        'rice' => $PriceVal['price'],
+                        'price' => $PriceVal['price'],
                         'userId' => $request->user()->id,
                     ]);
                 }
