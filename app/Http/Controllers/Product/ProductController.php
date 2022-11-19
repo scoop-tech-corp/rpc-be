@@ -116,7 +116,7 @@ class ProductController
 
                 ProductBrand::create([
                     'brandName' => $request->brandName,
-                    'UserId' => $request->user()->id,
+                    'userId' => $request->user()->id,
                 ]);
 
                 return response()->json(
