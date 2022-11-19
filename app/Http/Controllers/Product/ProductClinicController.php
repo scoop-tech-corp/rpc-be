@@ -425,7 +425,111 @@ class ProductClinicController
     }
 
     public function detail(Request $request)
-    { }
+    { 
+        $ProdClinic = DB::table('productClinics as ps')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
+            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.Id')
+            ->select(
+                'ps.id',
+                'ps.fullName',
+                DB::raw("IFNULL(ps.simpleName,'') as simpleName"),
+                DB::raw("IFNULL(ps.sku,'') as sku"),
+                'ps.productBrandId',
+                'pb.brandName as brandName',
+                'ps.productSupplierId',
+                'psup.supplierName as supplierName',
+                'ps.status',
+                'ps.pricingStatus',
+                DB::raw("TRIM(ps.costPrice)+0 as costPrice"),
+                DB::raw("TRIM(ps.marketPrice)+0 as marketPrice"),
+                DB::raw("TRIM(ps.price)+0 as price"),
+                'ps.isShipped',
+                DB::raw("TRIM(ps.weight)+0 as weight"),
+                DB::raw("TRIM(ps.length)+0 as length"),
+                DB::raw("TRIM(ps.width)+0 as width"),
+                DB::raw("TRIM(ps.height)+0 as height"),
+                DB::raw("TRIM(ps.weight)+0 as weight"),
+                DB::raw("IFNULL(ps.introduction,'') as introduction"),
+                DB::raw("IFNULL(ps.description,'') as description"),
+            )
+            ->where('ps.id', '=', $request->id)
+            ->first();
+
+        $location =  DB::table('productClinicLocations as psl')
+            ->join('location as l', 'l.Id', 'psl.locationId')
+            ->select('psl.Id', 'l.locationName', 'psl.inStock', 'psl.lowStock')
+            ->where('psl.productClinicId', '=', $request->id)
+            ->first();
+
+        $ProdClinic->location = $location;
+
+        if ($ProdClinic->pricingStatus == "CustomerGroups") {
+
+            $CustomerGroups = DB::table('productClinicCustomerGroups as psc')
+                ->join('productClinics as ps', 'psc.productClinicId', 'ps.id')
+                ->join('customerGroups as cg', 'psc.customerGroupId', 'cg.id')
+                ->select(
+                    'psc.id as id',
+                    'cg.customerGroup',
+                    DB::raw("TRIM(psc.price)+0 as price")
+                )
+                ->where('psc.productClinicId', '=', $request->id)
+                ->get();
+
+            $ProdClinic->customerGroups = $CustomerGroups;
+        } elseif ($ProdClinic->pricingStatus == "PriceLocations") {
+            $PriceLocations = DB::table('productClinicPriceLocations as psp')
+                ->join('productClinics as ps', 'psp.productClinicId', 'ps.id')
+                ->join('location as l', 'psp.locationId', 'l.id')
+                ->select(
+                    'psp.id as id',
+                    'l.locationName',
+                    DB::raw("TRIM(psp.price)+0 as Price")
+                )
+                ->where('psp.productClinicId', '=', $request->id)
+                ->get();
+
+            $ProdClinic->priceLocations = $PriceLocations;
+        } else if ($ProdClinic->pricingStatus == "Quantities") {
+
+            $Quantities = DB::table('productClinicQuantities as psq')
+                ->join('productClinics as ps', 'psq.productClinicId', 'ps.id')
+                ->select(
+                    'psq.id as id',
+                    'psq.fromQty',
+                    'psq.toQty',
+                    DB::raw("TRIM(psq.Price)+0 as Price")
+                )
+                ->where('psq.ProductClinicId', '=', $request->id)
+                ->get();
+
+            $ProdClinic->quantities = $Quantities;
+        }
+
+        $ProdClinic->categories = DB::table('productClinicCategories as psc')
+            ->join('productClinics as ps', 'psc.productClinicId', 'ps.id')
+            ->join('productCategories as pc', 'psc.productCategoryId', 'pc.id')
+            ->select(
+                'psc.id as id',
+                'pc.categoryName'
+            )
+            ->where('psc.ProductClinicId', '=', $request->id)
+            ->get();
+
+        $ProdClinic->images = DB::table('productClinicImages as psi')
+            ->join('productClinics as ps', 'psi.productClinicId', 'ps.id')
+            ->select(
+                'psi.id as id',
+                'psi.labelName',
+                'psi.realImageName',
+                'psi.imagePath'
+            )
+            ->where('psi.productClinicId', '=', $request->id)
+            ->get();
+
+        return response()->json($ProdClinic, 200);
+
+    }
 
     public function update(Request $request)
     { }
