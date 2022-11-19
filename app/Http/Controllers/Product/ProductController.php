@@ -48,7 +48,7 @@ class ProductController
                 ], 422);
             }
 
-            $checkIfValueExits = DB::table('ProductSuppliers')
+            $checkIfValueExits = DB::table('productSuppliers')
                 ->where('supplierName', '=', $request->supplierName)
                 ->first();
 
