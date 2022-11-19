@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductSell extends Model
 {
-    protected $table = "ProductSells";
+    protected $table = "productSells";
 
     protected $dates = ['created_at', 'DeletedAt'];
 
