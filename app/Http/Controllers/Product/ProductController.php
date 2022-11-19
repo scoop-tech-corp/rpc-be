@@ -108,7 +108,7 @@ class ProductController
                 ], 422);
             }
 
-            $checkIfValueExits = DB::table('ProductBrands')
+            $checkIfValueExits = DB::table('productBrands')
                 ->where('brandName', '=', $request->brandName)
                 ->first();
 
@@ -142,63 +142,6 @@ class ProductController
                 ],
                 500
             );
-        }
-    }
-
-    public function createProduct(Request $request)
-    {
-        DB::beginTransaction();
-
-        try {
-
-            // $request->validate([
-            //     'fasilitasName' => 'required',
-            //     'locationName' => 'required',
-            //     'capacity' => 'required',
-            //     'status' => 'required',
-            //     'introduction' => 'required',
-            //     'description' => 'required',
-            // ]);
-
-            $getvaluesp = strval(collect(DB::select('call generate_productCode'))[0]->randomString);
-
-            //  DB::table('fasilitas')->insert([
-            //             'codeFasilitas' => $getvaluesp,
-            //             'fasilitasName' => $request->input('fasilitasName'),
-            //             'locationName' => $request->input('locationName'),
-            //             'capacity' => $request->input('capacity'),
-            //             'status' => $request->input('status'),
-            //             'introduction' => $request->input('introduction'),
-            //             'description' => $request->input('description'),
-            //             'isDeleted' => 0,
-            //         ]);
-
-            //     foreach ($request->unit as $val) {
-            //         $unitname = strval(array_keys($val)[0]);
-
-            //        foreach ($val as $key=>$asd) {
-
-            //         foreach ($asd as $columnval) {
-            //             DB::table('fasilitas_unit')->insert([
-            //                 'codeFasilitas' => $getvaluesp,
-            //                 'unitName' => $unitname ,
-            //                 'status' => $columnval['status'],
-            //                 'notes' => $columnval['notes'],
-            //                 'isDeleted' => 0,
-            //             ]);
-            //         }
-
-            //        }
-            //     }
-
-            DB::commit();
-
-            return ('SUCCESS');
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return ('FAILED');
         }
     }
 
