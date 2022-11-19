@@ -396,7 +396,7 @@ class ProductSellController
             }
         }
 
-        //INSERT DATA s
+        //INSERT DATA
 
 
         $flag = false;
