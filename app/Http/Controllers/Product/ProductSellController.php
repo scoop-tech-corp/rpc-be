@@ -26,8 +26,8 @@ class ProductSellController
         $data = DB::table('productSells as ps')
             ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
             ->join('location as loc', 'loc.Id', 'psl.locationId')
-            ->leftjoin('ProductSuppliers as psup', 'ps.productSupplierId', 'psup.id')
-            ->leftjoin('ProductBrands as pb', 'ps.ProductBrandId', 'pb.Id')
+            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
             ->join('users as u', 'ps.userId', 'u.id')
             ->select(
                 'ps.id as id',
@@ -72,14 +72,14 @@ class ProductSellController
 
     public function Detail(Request $request)
     {
-        $ProdSell = DB::table('ProductSells as ps')
-            ->leftjoin('ProductBrands as pb', 'ps.ProductBrandId', 'pb.Id')
-            ->leftjoin('ProductSuppliers as psup', 'ps.ProductSupplierId', 'psup.Id')
+        $ProdSell = DB::table('productSells as ps')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
+            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.Id')
             ->select(
-                'ps.Id as id',
+                'ps.id',
                 'ps.fullName',
-                DB::raw("IFNULL(ps.SimpleName,'') as simpleName"),
-                DB::raw("IFNULL(ps.SKU,'') as sku"),
+                DB::raw("IFNULL(ps.simpleName,'') as simpleName"),
+                DB::raw("IFNULL(ps.sku,'') as sku"),
                 'ps.productBrandId',
                 'pb.brandName as brandName',
                 'ps.productSupplierId',
@@ -101,8 +101,8 @@ class ProductSellController
             ->where('ps.id', '=', $request->id)
             ->first();
 
-        $location =  DB::table('ProductSellLocations as psl')
-            ->join('location as l', 'l.Id', 'psl.LocationId')
+        $location =  DB::table('productSellLocations as psl')
+            ->join('location as l', 'l.Id', 'psl.locationId')
             ->select('psl.Id', 'l.locationName', 'psl.inStock', 'psl.lowStock')
             ->where('psl.productSellId', '=', $request->id)
             ->first();
@@ -111,35 +111,35 @@ class ProductSellController
 
         if ($ProdSell->pricingStatus == "CustomerGroups") {
 
-            $CustomerGroups = DB::table('ProductSellCustomerGroups as psc')
-                ->join('ProductSells as ps', 'psc.ProductSellId', 'ps.Id')
-                ->join('CustomerGroups as cg', 'psc.CustomerGroupId', 'cg.Id')
+            $CustomerGroups = DB::table('productSellCustomerGroups as psc')
+                ->join('productSells as ps', 'psc.productSellId', 'ps.id')
+                ->join('customerGroups as cg', 'psc.customerGroupId', 'cg.id')
                 ->select(
-                    'psc.id as Id',
+                    'psc.id as id',
                     'cg.customerGroup',
-                    DB::raw("TRIM(psc.Price)+0 as price")
+                    DB::raw("TRIM(psc.price)+0 as price")
                 )
-                ->where('psc.ProductSellId', '=', $request->id)
+                ->where('psc.productSellId', '=', $request->id)
                 ->get();
 
             $ProdSell->customerGroups = $CustomerGroups;
         } elseif ($ProdSell->pricingStatus == "PriceLocations") {
-            $PriceLocations = DB::table('ProductSellPriceLocations as psp')
-                ->join('ProductSells as ps', 'psp.ProductSellId', 'ps.Id')
-                ->join('location as l', 'psp.LocationId', 'l.Id')
+            $PriceLocations = DB::table('productSellPriceLocations as psp')
+                ->join('productSells as ps', 'psp.productSellId', 'ps.id')
+                ->join('location as l', 'psp.locationId', 'l.id')
                 ->select(
                     'psp.id as id',
                     'l.locationName',
-                    DB::raw("TRIM(psp.Price)+0 as Price")
+                    DB::raw("TRIM(psp.price)+0 as Price")
                 )
-                ->where('psp.ProductSellId', '=', $request->id)
+                ->where('psp.productSellId', '=', $request->id)
                 ->get();
 
             $ProdSell->priceLocations = $PriceLocations;
         } else if ($ProdSell->pricingStatus == "Quantities") {
 
-            $Quantities = DB::table('ProductSellQuantities as psq')
-                ->join('ProductSells as ps', 'psq.ProductSellId', 'ps.Id')
+            $Quantities = DB::table('productSellQuantities as psq')
+                ->join('productSells as ps', 'psq.productSellId', 'ps.id')
                 ->select(
                     'psq.id as id',
                     'psq.fromQty',
@@ -173,7 +173,7 @@ class ProductSellController
             ->where('psi.productSellId', '=', $request->id)
             ->get();
 
-        return response()->json($ProdSell,200);
+        return response()->json($ProdSell, 200);
     }
 
     public function Create(Request $request)
@@ -446,7 +446,7 @@ class ProductSellController
             if ($flag == false) {
 
                 if ($request->hasfile('images')) {
-                        info('masuk awal');
+                    info('masuk awal');
                     foreach ($files as $file) {
                         info('masuk');
 
