@@ -390,7 +390,7 @@ class ProductSellController
             }
         }
 
-        //INSERT DATA
+        //INSERT DATA s
 
         $flag = false;
         $res_data = [];
