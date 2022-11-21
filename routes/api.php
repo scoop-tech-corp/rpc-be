@@ -28,6 +28,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('exportlocation', [LocationController::class, 'exportLocation']);
     Route::delete('location', [LocationController::class, "deleteLocation"]);
 
+    Route::get('location/list', [LocationController::class, 'locationList']);
+
     Route::put('location', [LocationController::class, 'updateLocation']);
     Route::put('facility', [FacilityController::class, 'updateFacility']);
 
