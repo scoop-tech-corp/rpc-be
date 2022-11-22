@@ -8,6 +8,7 @@ use DB;
 use File;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Validator;
 
 class LocationController extends Controller
 {
@@ -105,16 +106,16 @@ class LocationController extends Controller
                     if ($val['id'] != "") {
 
                         if ($val['status'] == "del") {
-                          
+
                             $find_image = DB::table('location_images')
                                 ->select('location_images.imageName',
-                                        'location_images.imagePath')
+                                    'location_images.imagePath')
                                 ->where('id', '=', $val['id'])
                                 ->where('codeLocation', '=', $request->input('codeLocation'))
                                 ->first();
 
                             if ($find_image) {
-                                  
+
                                 if (file_exists(public_path() . $find_image->imagePath)) {
 
                                     File::delete(public_path() . $find_image->imagePath);
@@ -126,50 +127,47 @@ class LocationController extends Controller
                             }
 
                         } else {
-                          
+
                             $find_image = DB::table('location_images')
-                            ->select('location_images.imageName',
-                                'location_images.imagePath')
-                            ->where('id', '=', $val['id'])
-                            ->where('codeLocation', '=', $request->input('codeLocation'))
-                            ->first();
+                                ->select('location_images.imageName',
+                                    'location_images.imagePath')
+                                ->where('id', '=', $val['id'])
+                                ->where('codeLocation', '=', $request->input('codeLocation'))
+                                ->first();
 
                             if ($find_image) {
 
+                                DB::table('location_images')
+                                    ->where([['codeLocation', '=', $request->input('codeLocation')],
+                                        ['id', '=', $val['id']]])
+                                    ->update(['labelName' => $val['name'],
+                                        'updated_at' => now(),
+                                    ]);
 
-                                    DB::table('location_images')
-                                        ->where([['codeLocation', '=', $request->input('codeLocation')],
-                                                 ['id', '=', $val['id']]])
-                                      ->update(['labelName' => $val['name'],
-                                                'updated_at' => now(),
-                                               ]);
-                
                             }
 
                         }
 
                     } else {
-                       
+
                         $files[] = $request->file('images');
 
-                        foreach ($files as $file)
-                        {
+                        foreach ($files as $file) {
 
-                            foreach ($file as $fil)
-                            {
+                            foreach ($file as $fil) {
                                 $name = $fil->hashName();
                                 $fil->move(public_path() . '/LocationImages/', $name);
 
                                 $fileName = "/LocationImages/" . $name;
 
                                 DB::table('location_images')
-                                ->insert(['codeLocation' => $request->input('codeLocation'),
-                                        'labelName' => $val['name'] ,
+                                    ->insert(['codeLocation' => $request->input('codeLocation'),
+                                        'labelName' => $val['name'],
                                         'realImageName' => $fil->getClientOriginalName(),
                                         'imageName' => $name,
                                         'imagePath' => $fileName,
                                         'isDeleted' => 0,
-                                        'created_at' => now()
+                                        'created_at' => now(),
                                     ]);
                             }
 
@@ -207,126 +205,208 @@ class LocationController extends Controller
         try
         {
 
-            DB::table('location')
-                ->where('codeLocation', '=', $request->input('codeLocation'))
-                ->update(['locationName' => $request->input('locationName'),
-                    'description' => $request->input('description'),
-                    'updated_at' => now(),
-                ]);
+            $messages = [
+                'locationName.required' => 'Please insert location name, location name is required',
+                'locationName.max' => 'Exceeded maximum character, max character for location name is 50',
+                'status.required' => 'Please insert status location, status location is required',
+                'description.required' => 'Please insert description location, description location is required',
+            ];
 
-            /**Delete location detail address */
+            $validate = Validator::make($request->all(),
+                ['locationName' => 'required|max:50',
+                    'status' => 'required',
+                    'description' => 'required',
+                ], $messages);
 
-            if ($request->detailAddress) {
-
-                if (count($request->detailAddress) != 0) {
-
-                    DB::table('location_detail_address')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-
-                    foreach ($request->detailAddress as $val) {
-
-                        DB::table('location_detail_address')
-                            ->insert(['codeLocation' => $request->input('codeLocation'),
-                                'addressName' => $val['addressName'],
-                                'additionalInfo' => $val['additionalInfo'],
-                                'provinceCode' => $val['provinceCode'],
-                                'cityCode' => $val['cityCode'],
-                                'postalCode' => $val['postalCode'],
-                                'country' => $val['country'],
-                                'isPrimary' => $val['isPrimary'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
-                    }
-
-                }
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
             }
-            /**End Delete location detail address */
 
-            /**Delete location operational hours */
+    
 
-            if ($request->operationalHour) {
-
-                if (count($request->operationalHour) != 0) {
-
-                    DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-
-                    foreach ($request->operationalHour as $val) {
-                        DB::table('location_operational')
-                            ->insert(['codeLocation' => $request->input('codeLocation'),
-                                'dayName' => $val['dayName'],
-                                'fromTime' => $val['fromTime'],
-                                'toTime' => $val['toTime'],
-                                'allDay' => $val['allDay'],
-                            ]);
-                    }
+            if ($request->telephone) {
+               
+                $telephoneDetail = Validator::make(
+                    $request->telephone,
+                    [
+                        '*.phoneNumber' => 'required',
+                        '*.type' => 'required',
+                        '*.usage' => 'required'
+                    ]
+                );   
+                
+                if ($telephoneDetail->fails()) {
+                    $errorsdetail = $telephoneDetail->errors()->all();
+    
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errorsdetail,
+                    ], 422);
                 }
+              
             }
-            /**End Delete location messenger*/
 
-            /**Delete location messenger */
+
+            
+            if ($request->email) {
+               
+                $emailDetail = Validator::make(
+                    $request->email,
+                    [
+                        '*.username' => 'required',
+                        '*.usage' => 'required'
+                    ]
+                );   
+                
+                if ($emailDetail->fails()) {
+                    $errorsdetailEmail = $emailDetail->errors()->all();
+    
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errorsdetailEmail,
+                    ], 422);
+                }
+              
+            }
+
 
             if ($request->messenger) {
 
-                if (count($request->messenger) != 0) {
+                $messengerDetail = Validator::make(
+                    $request->messenger,
+                    [
+                        '*.messengerNumber' => 'required',
+                        '*.type' => 'required',
+                        '*.usage' => 'required'
+                    ]
+                );   
+                
+                if ($messengerDetail->fails()) {
+                    $errorsdetailMessenger = $messengerDetail->errors()->all();
+    
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errorsdetailMessenger,
+                    ], 422);
+                }
+              
+            }
 
-                    DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
-                    foreach ($request->messenger as $val) {
-                        DB::table('location_messenger')
-                            ->insert(['codeLocation' => $request->input('codeLocation'),
-                                'messengerNumber' => $val['messengerNumber'],
-                                'type' => $val['type'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
+            DB::table('location')
+            ->where('codeLocation', '=', $request->input('codeLocation'))
+            ->update(['locationName' => $request->input('locationName'),
+                'description' => $request->input('description'),
+                'updated_at' => now(),
+            ]);
+
+                /**Delete location detail address */
+
+                if ($request->detailAddress) {
+
+                        DB::table('location_detail_address')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+
+                        foreach ($request->detailAddress as $val) {
+
+                            DB::table('location_detail_address')
+                                ->insert(['codeLocation' => $request->input('codeLocation'),
+                                    'addressName' => $val['addressName'],
+                                    'additionalInfo' => $val['additionalInfo'],
+                                    'provinceCode' => $val['provinceCode'],
+                                    'cityCode' => $val['cityCode'],
+                                    'postalCode' => $val['postalCode'],
+                                    'country' => $val['country'],
+                                    'isPrimary' => $val['isPrimary'],
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                ]);
+                        }
+
+                }
+                /**End Delete location detail address */
+
+                /**Delete location operational hours */
+
+                if ($request->operationalHour) {
+
+                    if (count($request->operationalHour) != 0) {
+
+                        DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+
+                        foreach ($request->operationalHour as $val) {
+                            DB::table('location_operational')
+                                ->insert(['codeLocation' => $request->input('codeLocation'),
+                                    'dayName' => $val['dayName'],
+                                    'fromTime' => $val['fromTime'],
+                                    'toTime' => $val['toTime'],
+                                    'allDay' => $val['allDay'],
+                                ]);
+                        }
                     }
                 }
-            }
-            /**End Delete location messenger*/
+                /**End Delete location hours*/
 
-            /**Delete location email */
+                /**Delete location messenger */
 
-            if ($request->email) {
+                if ($request->messenger) {
 
-                if (count($request->email) != 0) {
+                        DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
-                    DB::table('location_email')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-
-                    foreach ($request->email as $val) {
-                        DB::table('location_email')
-                            ->insert(['codeLocation' => $request->input('codeLocation'),
-                                'username' => $val['username'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
-                    }
+                        foreach ($request->messenger as $val) {
+                            DB::table('location_messenger')
+                                ->insert(['codeLocation' => $request->input('codeLocation'),
+                                    'messengerNumber' => $val['messengerNumber'],
+                                    'type' => $val['type'],
+                                    'usage' => $val['usage'],
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                ]);
+                        }
                 }
-            }
-            /**End Delete location email*/
+                /**End Delete location messenger*/
 
-            /**Delete location telephone */
+                /**Delete location email */
 
-            if ($request->telephone) {
+                if ($request->email) {
 
-                if (count($request->telephone) != 0) {
+                        DB::table('location_email')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
-                    DB::table('location_telephone')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-
-                    foreach ($request->telephone as $val) {
-                        DB::table('location_telephone')
-                            ->insert(['codeLocation' => $request->input('codeLocation'),
-                                'phoneNumber' => $val['phoneNumber'],
-                                'type' => $val['type'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
-                    }
+                        foreach ($request->email as $val) {
+                            DB::table('location_email')
+                                ->insert(['codeLocation' => $request->input('codeLocation'),
+                                    'username' => $val['username'],
+                                    'usage' => $val['usage'],
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                ]);
+                        }
                 }
-            }
-            /**End Delete location email*/
+                /**End Delete location email*/
+
+                /**Delete location telephone */
+
+                if ($request->telephone) {
+
+                        DB::table('location_telephone')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+
+                        foreach ($request->telephone as $val) {
+                            DB::table('location_telephone')
+                                ->insert(['codeLocation' => $request->input('codeLocation'),
+                                    'phoneNumber' => $val['phoneNumber'],
+                                    'type' => $val['type'],
+                                    'usage' => $val['usage'],
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                ]);
+                        }
+                }
+                /**End Delete location telephone*/
+
+        
 
             DB::commit();
 
@@ -357,10 +437,141 @@ class LocationController extends Controller
 
             $getvaluesp = strval(collect(DB::select('call generate_codeLocation'))[0]->randomString);
 
-            $request->validate(['locationName' => 'required|max:255',
-                'status' => 'required',
-                'description' => 'required',
-            ]);
+            $messages = [
+                'locationName.required' => 'Please insert location name, location name is required',
+                'locationName.max' => 'Exceeded maximum character, max character for location name is 50',
+                'status.required' => 'Please insert status location, status location is required',
+                'description.required' => 'Please insert description location, description location is required',
+            ];
+
+            $validate = Validator::make($request->all(),
+                ['locationName' => 'required|max:50',
+                    'status' => 'required',
+                    'description' => 'required',
+                ], $messages);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            $checkdataLocation = DB::table('location')
+                ->select('locationName')
+                ->where('locationName', '=', $request->locationName)
+                ->first();
+
+            if ($checkdataLocation) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Location ' . $checkdataLocation->locationName . ' Already Exist on Location, please try different name !'],
+                ], 422);
+            }
+
+            if ($request->detailAddress) {
+
+                $arrayDetailAddress = json_decode($request->detailAddress, true);
+
+                $validateDetail = Validator::make(
+                    $arrayDetailAddress,
+                    [
+                        '*.addressName' => 'required',
+                        '*.provinceCode' => 'required',
+                        '*.cityCode' => 'required',
+                        '*.country' => 'required',
+                    ]
+                );
+
+                if ($validateDetail->fails()) {
+                    $errorsdetail = $validateDetail->errors()->all();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errorsdetail,
+                    ], 422);
+                }
+
+            } else {
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
+                ], 422);
+
+            }
+
+            if ($request->telephone) {
+
+                $arraytelephone = json_decode($request->telephone, true);
+
+                $telephoneDetail = Validator::make(
+                    $arraytelephone,
+                    [
+                        '*.phoneNumber' => 'required',
+                        '*.type' => 'required',
+                        '*.usage' => 'required',
+                    ]
+                );
+
+                if ($telephoneDetail->fails()) {
+                    $errorsdetail = $telephoneDetail->errors()->all();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errorsdetail,
+                    ], 422);
+                }
+
+            }
+
+            if ($request->email) {
+
+                $arrayemail = json_decode($request->email, true);
+
+                $emailDetail = Validator::make(
+                    $arrayemail,
+                    [
+                        '*.username' => 'required',
+                        '*.usage' => 'required',
+                    ]
+                );
+
+                if ($emailDetail->fails()) {
+                    $errorsdetailEmail = $emailDetail->errors()->all();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errorsdetailEmail,
+                    ], 422);
+                }
+
+            }
+
+            if ($request->messenger) {
+
+                $arraymessenger = json_decode($request->messenger, true);
+
+                $messengerDetail = Validator::make(
+                    $arraymessenger,
+                    [
+                        '*.messengerNumber' => 'required',
+                        '*.type' => 'required',
+                        '*.usage' => 'required',
+                    ]
+                );
+
+                if ($messengerDetail->fails()) {
+                    $errorsdetailMessenger = $messengerDetail->errors()->all();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errorsdetailMessenger,
+                    ], 422);
+                }
+
+            }
 
             DB::table('location')->insert(['codeLocation' => $getvaluesp,
                 'locationName' => $request->input('locationName'),
@@ -372,25 +583,20 @@ class LocationController extends Controller
 
             if ($request->detailAddress) {
 
-                $arrayDetailAddress = json_decode($request->detailAddress, true);
+                foreach ($arrayDetailAddress as $val) {
 
-                if (count($arrayDetailAddress) != 0) {
-
-                    foreach ($arrayDetailAddress as $val) {
-
-                        DB::table('location_detail_address')
-                            ->insert(['codeLocation' => $getvaluesp,
-                                'addressName' => $val['addressName'],
-                                'additionalInfo' => $val['additionalInfo'],
-                                'provinceCode' => $val['provinceCode'],
-                                'cityCode' => $val['cityCode'],
-                                'postalCode' => $val['postalCode'],
-                                'country' => $val['country'],
-                                'isPrimary' => $val['isPrimary'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
-                    }
+                    DB::table('location_detail_address')
+                        ->insert(['codeLocation' => $getvaluesp,
+                            'addressName' => $val['addressName'],
+                            'additionalInfo' => $val['additionalInfo'],
+                            'provinceCode' => $val['provinceCode'],
+                            'cityCode' => $val['cityCode'],
+                            'postalCode' => $val['postalCode'],
+                            'country' => $val['country'],
+                            'isPrimary' => $val['isPrimary'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
                 }
             }
 
@@ -452,40 +658,30 @@ class LocationController extends Controller
 
             if ($request->messenger) {
 
-                $arraymessenger = json_decode($request->messenger, true);
+                foreach ($arraymessenger as $val) {
 
-                if (count($arraymessenger) != 0) {
-                    foreach ($arraymessenger as $val) {
-
-                        DB::table('location_messenger')
-                            ->insert(['codeLocation' => $getvaluesp,
-                                'messengerNumber' => $val['messengerNumber'],
-                                'type' => $val['type'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
-                    }
+                    DB::table('location_messenger')
+                        ->insert(['codeLocation' => $getvaluesp,
+                            'messengerNumber' => $val['messengerNumber'],
+                            'type' => $val['type'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
                 }
             }
 
             if ($request->email) {
 
-                $arrayemail = json_decode($request->email, true);
+                foreach ($arrayemail as $val) {
 
-                if (count($arrayemail) != 0) {
-
-                    foreach ($arrayemail as $val) {
-
-                        DB::table('location_email')
-                            ->insert(['codeLocation' => $getvaluesp,
-                                'username' => $val['username'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
-
-                    }
+                    DB::table('location_email')
+                        ->insert(['codeLocation' => $getvaluesp,
+                            'username' => $val['username'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
 
                 }
 
@@ -493,22 +689,17 @@ class LocationController extends Controller
 
             if ($request->telephone) {
 
-                $arratelephone = json_decode($request->telephone, true);
+                foreach ($arraytelephone as $val) {
 
-                if (count($arratelephone) != 0) {
+                    DB::table('location_telephone')
+                        ->insert(['codeLocation' => $getvaluesp,
+                            'phoneNumber' => $val['phoneNumber'],
+                            'type' => $val['type'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
 
-                    foreach ($arratelephone as $val) {
-
-                        DB::table('location_telephone')
-                            ->insert(['codeLocation' => $getvaluesp,
-                                'phoneNumber' => $val['phoneNumber'],
-                                'type' => $val['type'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
-
-                    }
                 }
             }
 
@@ -1070,13 +1261,4 @@ class LocationController extends Controller
 
     }
 
-    public function locationList(Request $request)
-    {
-        $Data = DB::table('location')
-            ->select('id', 'locationName')
-            ->where('isDeleted', '=', 0)
-            ->get();
-
-        return response()->json($Data, 200);
-    }
 }
