@@ -20,7 +20,7 @@ return new class extends Migration
             $table->longText('additionalInfo')->nullable();
             $table->integer('provinceCode')->nullable();
             $table->integer('cityCode')->nullable();
-            $table->integer('postalCode')->nullable();
+            $table->string('postalCode')->nullable();
             $table->string('country')->nullable();
             $table->boolean('isPrimary');  
             $table->boolean('isDeleted');
