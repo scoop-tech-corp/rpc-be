@@ -55,12 +55,7 @@ class ImportRegionController extends Controller
     {
 
         try{
-
-            $request->validate([
-                'provinsi' => 'required|max:10000',
-                'kabupaten' => 'required|max:10000',
-            ]);
-
+           
             set_time_limit(500);
 
             Excel::import(new RegionImport, $request->file('provinsi')->store('provinsi'));
@@ -68,6 +63,7 @@ class ImportRegionController extends Controller
 
            return response()->json([
                 'result' => 'success',
+                'message' => 'Success Reupload Region',
             ]);
 
         } catch (Exception $e) {
