@@ -1261,4 +1261,14 @@ class LocationController extends Controller
 
     }
 
+    public function locationList(Request $request)
+    {
+        $Data = DB::table('location')
+            ->select('id', 'locationName')
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        return response()->json($Data, 200);
+    }
+
 }
