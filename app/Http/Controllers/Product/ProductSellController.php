@@ -9,6 +9,7 @@ use App\Models\ProductSellImages;
 use App\Models\ProductSellLocation;
 use App\Models\ProductSellPriceLocation;
 use App\Models\ProductSellQuantity;
+use App\Models\ProductSellReminder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -214,6 +215,7 @@ class ProductSellController
         $ResultPriceLocations = null;
         $ResultQuantities = null;
         $ResultCustomerGroups = null;
+        $ResultReminders = null;
 
         if ($request->categories) {
             $ResultCategories = json_decode($request->categories, true);
@@ -258,6 +260,34 @@ class ProductSellController
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => ['Product ' . $CheckDataBranch->fullName . ' Already Exist on Location ' . $CheckDataBranch->locationName . '!'],
+                ], 422);
+            }
+        }
+
+        $ResultReminders = json_decode($request->reminders, true);
+
+        if ($ResultReminders) {
+
+            $validateReminders = Validator::make(
+                $ResultReminders,
+                [
+                    '*.unit' => 'required|integer',
+                    '*.timing' => 'required|string',
+                    '*.status' => 'required|string',
+                ],
+                [
+                    '*.unit.integer' => 'Unit Should be Integer!',
+                    '*.timing.string' => 'Timing Should be String',
+                    '*.status.string' => 'Status Should be String'
+                ]
+            );
+
+            if ($validateReminders->fails()) {
+                $errors = $validateReminders->errors()->all();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
                 ], 422);
             }
         }
@@ -490,6 +520,16 @@ class ProductSellController
                         'userId' => $request->user()->id,
                     ]);
                 }
+            }
+
+            foreach ($ResultReminders as $RemVal) {
+                ProductSellReminder::create([
+                    'productSellId' => $product->id,
+                    'unit' => $RemVal['unit'],
+                    'timing' => $RemVal['timing'],
+                    'status' => $RemVal['status'],
+                    'userId' => $request->user()->id,
+                ]);
             }
 
             if ($request->pricingStatus == "CustomerGroups") {
@@ -905,6 +945,19 @@ class ProductSellController
             if ($ProdSellQty) {
 
                 ProductSellQuantity::where('ProductSellId', '=', $ProdSell->id)
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            }
+
+            $ProdSellRem = ProductSellReminder::where('ProductSellId', '=', $ProdSell->id)->get();
+            if ($ProdSellRem) {
+
+                ProductSellReminder::where('ProductSellId', '=', $ProdSell->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,

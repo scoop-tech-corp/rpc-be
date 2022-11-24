@@ -9,6 +9,7 @@ use App\Models\ProductClinicImages;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductClinicPriceLocation;
 use App\Models\ProductClinicQuantity;
+use App\Models\ProductClinicReminder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -107,6 +108,7 @@ class ProductClinicController
         $ResultPriceLocations = null;
         $ResultQuantities = null;
         $ResultCustomerGroups = null;
+        $ResultReminders = null;
 
         if ($request->categories) {
             $ResultCategories = json_decode($request->categories, true);
@@ -151,6 +153,34 @@ class ProductClinicController
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => ['Product ' . $CheckDataBranch->fullName . ' Already Exist on Location ' . $CheckDataBranch->locationName . '!'],
+                ], 422);
+            }
+        }
+
+        $ResultReminders = json_decode($request->reminders, true);
+
+        if($ResultReminders){
+
+            $validateReminders = Validator::make(
+                $ResultReminders,
+                [
+                    '*.unit' => 'required|integer',
+                    '*.timing' => 'required|string',
+                    '*.status' => 'required|string',
+                ],
+                [
+                    '*.unit.integer' => 'Unit Should be Integer!',
+                    '*.timing.string' => 'Timing Should be String',
+                    '*.status.string' => 'Status Should be String'
+                ]
+            );
+
+            if ($validateReminders->fails()) {
+                $errors = $validateReminders->errors()->all();
+    
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
                 ], 422);
             }
         }
@@ -380,6 +410,16 @@ class ProductClinicController
                         'userId' => $request->user()->id,
                     ]);
                 }
+            }
+
+            foreach ($ResultReminders as $RemVal) {
+                ProductClinicReminder::create([
+                    'productClinicId' => $product->id,
+                    'unit' => $RemVal['unit'],
+                    'timing' => $RemVal['timing'],
+                    'status' => $RemVal['status'],
+                    'userId' => $request->user()->id,
+                ]);
             }
 
             if ($request->pricingStatus == "CustomerGroups") {
@@ -631,6 +671,19 @@ class ProductClinicController
             if ($ProdClinicQty) {
 
                 ProductClinicQuantity::where('ProductClinicId', '=', $ProdClinic->id)
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            }
+
+            $ProdClinicRem = ProductClinicReminder::where('ProductClinicId', '=', $ProdClinic->id)->get();
+            if ($ProdClinicRem) {
+
+                ProductClinicReminder::where('ProductClinicId', '=', $ProdClinic->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
