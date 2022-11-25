@@ -196,11 +196,13 @@ class ProductClinicController
                 '*.locationId' => 'required|integer',
                 '*.inStock' => 'required|integer',
                 '*.lowStock' => 'required|integer',
+                '*.reStockLimit' => 'required|integer',
             ],
             [
                 '*.locationId.integer' => 'Location Id Should be Integer!',
                 '*.inStock.integer' => 'In Stock Should be Integer',
-                '*.lowStock.integer' => 'Low Stock Should be Integer'
+                '*.lowStock.integer' => 'Low Stock Should be Integer',
+                '*.reStockLimit.integer' => 'Restock Limit Should be Integer'
             ]
         );
 
@@ -399,6 +401,7 @@ class ProductClinicController
                     'locationId' => $value['locationId'],
                     'inStock' => $value['inStock'],
                     'lowStock' => $value['lowStock'],
+                    'reStockLimit' => $value['reStockLimit'],
                     'userId' => $request->user()->id,
                 ]);
 

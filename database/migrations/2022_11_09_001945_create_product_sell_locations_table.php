@@ -20,6 +20,7 @@ return new class extends Migration
             $table->integer('locationId');
             $table->integer('inStock');
             $table->integer('lowStock');
+            $table->integer('reStockLimit');
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');
