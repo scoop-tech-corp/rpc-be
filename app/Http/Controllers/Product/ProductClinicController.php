@@ -10,6 +10,7 @@ use App\Models\ProductClinicLocation;
 use App\Models\ProductClinicPriceLocation;
 use App\Models\ProductClinicQuantity;
 use App\Models\ProductClinicReminder;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -18,39 +19,52 @@ use Validator;
 class ProductClinicController
 {
     public function index(Request $request)
-    { 
-        $itemPerPage = $request->itemPerPage;
+    {
+        $itemPerPage = $request->rowPerPage;
 
-        $page = $request->page;
+        $page = $request->goToPage;
 
-        $data = DB::table('productClinics as ps')
-            ->join('productClinicLocations as psl', 'psl.productClinicId', 'ps.id')
-            ->join('location as loc', 'loc.Id', 'psl.locationId')
-            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
-            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
-            ->join('users as u', 'ps.userId', 'u.id')
+        $data = DB::table('productClinics as pc')
+            ->join('productClinicLocations as pcl', 'pcl.productClinicId', 'pc.id')
+            ->join('location as loc', 'loc.Id', 'pcl.locationId')
+            ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
+            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
+            ->join('users as u', 'pc.userId', 'u.id')
             ->select(
-                'ps.id as id',
-                'ps.fullName as fullName',
+                'pc.id as id',
+                'pc.fullName as fullName',
                 'loc.locationName as locationName',
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName"),
                 DB::raw("IFNULL(pb.brandName,'') as brandName"),
-                DB::raw("TRIM(ps.price)+0 as price"),
-                'ps.pricingStatus',
-                DB::raw("TRIM(psl.inStock)+0 as stock"),
-                'ps.status',
-                'ps.isShipped',
+                DB::raw("TRIM(pc.price)+0 as price"),
+                'pc.pricingStatus',
+                DB::raw("TRIM(pcl.inStock)+0 as stock"),
+                'pc.status',
+                'pc.isShipped',
                 'u.name as createdBy',
-                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+                DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->where('ps.isDeleted', '=', 0);
+            ->where('pc.isDeleted', '=', 0);
 
-
-        if ($request->orderby) {
-            $data = $data->orderBy($request->column, $request->orderby);
+        if ($request->search) {
+            $res = $this->Search($request);
+            if ($res) {
+                $data = $data->where($res, 'like', '%' . $request->search . '%');
+            } else {
+                $data = [];
+                return response()->json([
+                    'totalPagination' => 0,
+                    'data' => $data
+                ], 200);
+            }
         }
 
-        $data = $data->orderBy('ps.id', 'desc');
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('pc.id', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -66,9 +80,69 @@ class ProductClinicController
         $totalPaging = $count_data / $itemPerPage;
 
         return response()->json([
-            'totalPaging' => ceil($totalPaging),
+            'totalPagination' => ceil($totalPaging),
             'data' => $data
         ], 200);
+    }
+
+    private function Search($request)
+    {
+        $temp_column = '';
+
+        $data = DB::table('productClinics as pc')
+            ->select(
+                'pc.fullName as fullName'
+            )
+            ->where('pc.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('pc.fullName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'pc.fullName';
+            return $temp_column;
+        }
+        //------------------------
+
+        $data = DB::table('productClinics as pc')
+            ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
+            ->select(
+                DB::raw("IFNULL(psup.supplierName,'') as supplierName")
+            )
+            ->where('pc.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('psup.supplierName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'psup.supplierName';
+            return $temp_column;
+        }
+        //------------------------
+
+        $data = DB::table('productClinics as pc')
+            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
+            ->select(
+                DB::raw("IFNULL(pb.brandName,'') as brandName")
+            )
+            ->where('pc.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('pb.brandName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'pb.brandName';
+            return $temp_column;
+        }
     }
 
     public function create(Request $request)
@@ -141,12 +215,12 @@ class ProductClinicController
 
         foreach ($ResultLocations as $Res) {
 
-            $CheckDataBranch = DB::table('productClinics as ps')
-                ->join('productClinicLocations as psl', 'psl.productClinicId', 'ps.id')
-                ->join('location as loc', 'psl.locationId', 'loc.id')
-                ->select('ps.fullName as fullName', 'loc.locationName')
-                ->where('ps.fullName', '=', $request->fullName)
-                ->where('psl.locationId', '=', $Res['locationId'])
+            $CheckDataBranch = DB::table('productClinics as pc')
+                ->join('productClinicLocations as pcl', 'pcl.productClinicId', 'pc.id')
+                ->join('location as loc', 'pcl.locationId', 'loc.id')
+                ->select('pc.fullName as fullName', 'loc.locationName')
+                ->where('pc.fullName', '=', $request->fullName)
+                ->where('pcl.locationId', '=', $Res['locationId'])
                 ->first();
 
             if ($CheckDataBranch) {
@@ -159,7 +233,7 @@ class ProductClinicController
 
         $ResultReminders = json_decode($request->reminders, true);
 
-        if($ResultReminders){
+        if ($ResultReminders) {
 
             $validateReminders = Validator::make(
                 $ResultReminders,
@@ -177,7 +251,7 @@ class ProductClinicController
 
             if ($validateReminders->fails()) {
                 $errors = $validateReminders->errors()->all();
-    
+
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => $errors,
@@ -185,37 +259,7 @@ class ProductClinicController
             }
         }
 
-        if ($request->hasfile('images')) {
-
-            $data_item = [];
-
-            $files[] = $request->file('images');
-
-            foreach ($files as $file) {
-
-                foreach ($file as $fil) {
-
-                    $file_size = $fil->getSize();
-
-                    $file_size = $file_size / 1024;
-
-                    $oldname = $fil->getClientOriginalName();
-
-                    if ($file_size >= 5000) {
-
-                        array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
-                    }
-                }
-            }
-
-            if ($data_item) {
-
-                return response()->json([
-                    'message' => 'Foto yang dimasukkan tidak valid!',
-                    'errors' => $data_item,
-                ], 422);
-            }
-        }
+        $this->ValidationImage($request);
 
         if ($request->pricingStatus == "CustomerGroups") {
 
@@ -321,254 +365,333 @@ class ProductClinicController
 
         $flag = false;
         $res_data = [];
+        $files[] = $request->file('images');
 
-        foreach ($ResultLocations as $value) {
+        DB::beginTransaction();
+        try {
+            foreach ($ResultLocations as $value) {
 
-            $product = ProductClinic::create([
-                'fullName' => $request->fullName,
-                'simpleName' => $request->simpleName,
-                'sku' => $request->sku,
-                'productBrandId' => $request->productBrandId,
-                'productSupplierId' => $request->productSupplierId,
-                'status' => $request->status,
-                'expiredDate' => $request->expiredDate,
-                'pricingStatus' => $request->pricingStatus,
-                'costPrice' => $request->costPrice,
-                'marketPrice' => $request->marketPrice,
-                'price' => $request->price,
-                'isShipped' => $request->isShipped,
-                'weight' => $request->weight,
-                'length' => $request->length,
-                'width' => $request->width,
-                'height' => $request->height,
-                'introduction' => $request->introduction,
-                'description' => $request->description,
-                'height' => $request->height,
-                'userId' => $request->user()->id,
-            ]);
-
-            ProductClinicLocation::create([
-                'productClinicId' => $product->id,
-                'locationId' => $value['locationId'],
-                'inStock' => $value['inStock'],
-                'lowStock' => $value['lowStock'],
-                'userId' => $request->user()->id,
-            ]);
-
-            if ($ResultCategories) {
-
-                foreach ($ResultCategories as $valCat) {
-                    ProductClinicCategory::create([
-                        'productClinicId' => $product->id,
-                        'productCategoryId' => $valCat,
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-            }
-
-            $count = 0;
-
-            $ResImageDatas = json_decode($request->imageDatas, true);
-
-            if ($flag == false) {
-
-                if ($request->hasfile('images')) {
-                    foreach ($files as $file) {
-
-                        foreach ($file as $fil) {
-
-                            $name = $fil->hashName();
-
-                            $fil->move(public_path() . '/ProductClinicImages/', $name);
-
-                            $fileName = "/ProductClinicImages/" . $name;
-
-                            $file = new ProductClinicImages();
-                            $file->productClinicId = $product->id;
-                            $file->labelName = $ResImageDatas[$count];
-                            $file->realImageName = $fil->getClientOriginalName();
-                            $file->imagePath = $fileName;
-                            $file->userId = $request->user()->id;
-                            $file->save();
-
-                            array_push($res_data, $file);
-
-                            $count += 1;
-                        }
-                    }
-
-                    $flag = true;
-                }
-            } else {
-
-                foreach ($res_data as $res) {
-                    ProductClinicImages::create([
-                        'productClinicId' => $product->id,
-                        'labelName' => $res['labelName'],
-                        'realImageName' => $res['realImageName'],
-                        'imagePath' => $res['imagePath'],
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-            }
-
-            foreach ($ResultReminders as $RemVal) {
-                ProductClinicReminder::create([
-                    'productClinicId' => $product->id,
-                    'unit' => $RemVal['unit'],
-                    'timing' => $RemVal['timing'],
-                    'status' => $RemVal['status'],
+                $product = ProductClinic::create([
+                    'fullName' => $request->fullName,
+                    'simpleName' => $request->simpleName,
+                    'sku' => $request->sku,
+                    'productBrandId' => $request->productBrandId,
+                    'productSupplierId' => $request->productSupplierId,
+                    'status' => $request->status,
+                    'expiredDate' => $request->expiredDate,
+                    'pricingStatus' => $request->pricingStatus,
+                    'costPrice' => $request->costPrice,
+                    'marketPrice' => $request->marketPrice,
+                    'price' => $request->price,
+                    'isShipped' => $request->isShipped,
+                    'weight' => $request->weight,
+                    'length' => $request->length,
+                    'width' => $request->width,
+                    'height' => $request->height,
+                    'introduction' => $request->introduction,
+                    'description' => $request->description,
+                    'height' => $request->height,
                     'userId' => $request->user()->id,
                 ]);
+
+                ProductClinicLocation::create([
+                    'productClinicId' => $product->id,
+                    'locationId' => $value['locationId'],
+                    'inStock' => $value['inStock'],
+                    'lowStock' => $value['lowStock'],
+                    'userId' => $request->user()->id,
+                ]);
+
+                if ($ResultCategories) {
+
+                    foreach ($ResultCategories as $valCat) {
+                        ProductClinicCategory::create([
+                            'productClinicId' => $product->id,
+                            'productCategoryId' => $valCat,
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+
+                $count = 0;
+
+                $ResImageDatas = json_decode($request->imageDatas, true);
+
+                if ($flag == false) {
+
+                    if ($request->hasfile('images')) {
+                        foreach ($files as $file) {
+
+                            foreach ($file as $fil) {
+
+                                $name = $fil->hashName();
+
+                                $fil->move(public_path() . '/ProductClinicImages/', $name);
+
+                                $fileName = "/ProductClinicImages/" . $name;
+
+                                $file = new ProductClinicImages();
+                                $file->productClinicId = $product->id;
+                                $file->labelName = $ResImageDatas[$count];
+                                $file->realImageName = $fil->getClientOriginalName();
+                                $file->imagePath = $fileName;
+                                $file->userId = $request->user()->id;
+                                $file->save();
+
+                                array_push($res_data, $file);
+
+                                $count += 1;
+                            }
+                        }
+
+                        $flag = true;
+                    }
+                } else {
+
+                    foreach ($res_data as $res) {
+                        ProductClinicImages::create([
+                            'productClinicId' => $product->id,
+                            'labelName' => $res['labelName'],
+                            'realImageName' => $res['realImageName'],
+                            'imagePath' => $res['imagePath'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+
+                foreach ($ResultReminders as $RemVal) {
+                    ProductClinicReminder::create([
+                        'productClinicId' => $product->id,
+                        'unit' => $RemVal['unit'],
+                        'timing' => $RemVal['timing'],
+                        'status' => $RemVal['status'],
+                        'userId' => $request->user()->id,
+                    ]);
+                }
+
+                if ($request->pricingStatus == "CustomerGroups") {
+
+                    foreach ($ResultCustomerGroups as $CustVal) {
+                        ProductClinicCustomerGroup::create([
+                            'productClinicId' => $product->id,
+                            'customerGroupId' => $CustVal['customerGroupId'],
+                            'price' => $CustVal['price'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                } else if ($request->pricingStatus == "PriceLocations") {
+
+                    foreach ($ResultPriceLocations as $PriceVal) {
+                        ProductClinicPriceLocation::create([
+                            'productClinicId' => $product->id,
+                            'locationId' => $PriceVal['locationId'],
+                            'price' => $PriceVal['price'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                } else if ($request->pricingStatus == "Quantities") {
+
+                    foreach ($ResultQuantities as $QtyVal) {
+                        ProductClinicQuantity::create([
+                            'productClinicId' => $product->id,
+                            'fromQty' => $QtyVal['fromQty'],
+                            'toQty' => $QtyVal['toQty'],
+                            'price' => $QtyVal['price'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
             }
 
-            if ($request->pricingStatus == "CustomerGroups") {
+            DB::commit();
 
-                foreach ($ResultCustomerGroups as $CustVal) {
-                    ProductClinicCustomerGroup::create([
-                        'productClinicId' => $product->id,
-                        'customerGroupId' => $CustVal['customerGroupId'],
-                        'price' => $CustVal['price'],
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-            } else if ($request->pricingStatus == "PriceLocations") {
+            return response()->json(
+                [
+                    'message' => 'Insert Data Successful!',
+                ],
+                200
+            );
+        } catch (Exception $th) {
+            DB::rollback();
 
-                foreach ($ResultPriceLocations as $PriceVal) {
-                    ProductClinicPriceLocation::create([
-                        'productClinicId' => $product->id,
-                        'locationId' => $PriceVal['locationId'],
-                        'price' => $PriceVal['price'],
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-            } else if ($request->pricingStatus == "Quantities") {
+            return response()->json([
+                'message' => 'Insert Failed',
+                'errors' => $th,
+            ]);
+        }
+    }
 
-                foreach ($ResultQuantities as $QtyVal) {
-                    ProductClinicQuantity::create([
-                        'productClinicId' => $product->id,
-                        'fromQty' => $QtyVal['fromQty'],
-                        'toQty' => $QtyVal['toQty'],
-                        'price' => $QtyVal['price'],
-                        'userId' => $request->user()->id,
-                    ]);
+    private function ValidationImage($request)
+    {
+        $flag = false;
+
+        if ($request->file('images')) {
+
+            $flag = true;
+
+            $data_item = [];
+
+            $files[] = $request->file('images');
+
+            foreach ($files as $file) {
+
+                foreach ($file as $fil) {
+
+                    $file_size = $fil->getSize();
+
+                    $file_size = $file_size / 1024;
+
+                    $oldname = $fil->getClientOriginalName();
+
+                    if ($file_size >= 5000) {
+
+                        array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
+                    }
                 }
+            }
+
+            if ($data_item) {
+
+                return response()->json([
+                    'message' => 'Foto yang dimasukkan tidak valid!',
+                    'errors' => $data_item,
+                ], 422);
             }
         }
 
-        return response()->json(
-            [
-                'message' => 'Insert Data Successful!',
-            ],
-            200
-        );
+        if ($flag == true) {
+            if ($request->imageDatas) {
+                $ResultImageDatas = json_decode($request->imageDatas, true);
+
+                if (count($ResultImageDatas) != count($request->file('images'))) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Label Image and total image should same!'],
+                    ], 422);
+                } else {
+                    foreach ($ResultImageDatas as $value) {
+                        if ($value == "") {
+
+                            return response()->json([
+                                'message' => 'The given data was invalid.',
+                                'errors' => ['Label Image can not be empty!'],
+                            ], 422);
+                        }
+                    }
+                }
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Image label cannot be empty!!'],
+                ], 422);
+            }
+        }
     }
 
     public function detail(Request $request)
-    { 
-        $ProdClinic = DB::table('productClinics as ps')
-            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
-            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.Id')
+    {
+        $ProdClinic = DB::table('productClinics as pc')
+            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
+            ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.Id')
             ->select(
-                'ps.id',
-                'ps.fullName',
-                DB::raw("IFNULL(ps.simpleName,'') as simpleName"),
-                DB::raw("IFNULL(ps.sku,'') as sku"),
-                'ps.productBrandId',
+                'pc.id',
+                'pc.fullName',
+                DB::raw("IFNULL(pc.simpleName,'') as simpleName"),
+                DB::raw("IFNULL(pc.sku,'') as sku"),
+                'pc.productBrandId',
                 'pb.brandName as brandName',
-                'ps.productSupplierId',
+                'pc.productSupplierId',
                 'psup.supplierName as supplierName',
-                'ps.status',
-                'ps.pricingStatus',
-                DB::raw("TRIM(ps.costPrice)+0 as costPrice"),
-                DB::raw("TRIM(ps.marketPrice)+0 as marketPrice"),
-                DB::raw("TRIM(ps.price)+0 as price"),
-                'ps.isShipped',
-                DB::raw("TRIM(ps.weight)+0 as weight"),
-                DB::raw("TRIM(ps.length)+0 as length"),
-                DB::raw("TRIM(ps.width)+0 as width"),
-                DB::raw("TRIM(ps.height)+0 as height"),
-                DB::raw("TRIM(ps.weight)+0 as weight"),
-                DB::raw("IFNULL(ps.introduction,'') as introduction"),
-                DB::raw("IFNULL(ps.description,'') as description"),
+                'pc.status',
+                'pc.pricingStatus',
+                DB::raw("TRIM(pc.costPrice)+0 as costPrice"),
+                DB::raw("TRIM(pc.marketPrice)+0 as marketPrice"),
+                DB::raw("TRIM(pc.price)+0 as price"),
+                'pc.isShipped',
+                DB::raw("TRIM(pc.weight)+0 as weight"),
+                DB::raw("TRIM(pc.length)+0 as length"),
+                DB::raw("TRIM(pc.width)+0 as width"),
+                DB::raw("TRIM(pc.height)+0 as height"),
+                DB::raw("TRIM(pc.weight)+0 as weight"),
+                DB::raw("IFNULL(pc.introduction,'') as introduction"),
+                DB::raw("IFNULL(pc.description,'') as description"),
             )
-            ->where('ps.id', '=', $request->id)
+            ->where('pc.id', '=', $request->id)
             ->first();
 
-        $location =  DB::table('productClinicLocations as psl')
-            ->join('location as l', 'l.Id', 'psl.locationId')
-            ->select('psl.Id', 'l.locationName', 'psl.inStock', 'psl.lowStock')
-            ->where('psl.productClinicId', '=', $request->id)
+        $location =  DB::table('productClinicLocations as pcl')
+            ->join('location as l', 'l.Id', 'pcl.locationId')
+            ->select('pcl.Id', 'l.locationName', 'pcl.inStock', 'pcl.lowStock')
+            ->where('pcl.productClinicId', '=', $request->id)
             ->first();
 
         $ProdClinic->location = $location;
 
         if ($ProdClinic->pricingStatus == "CustomerGroups") {
 
-            $CustomerGroups = DB::table('productClinicCustomerGroups as psc')
-                ->join('productClinics as ps', 'psc.productClinicId', 'ps.id')
-                ->join('customerGroups as cg', 'psc.customerGroupId', 'cg.id')
+            $CustomerGroups = DB::table('productClinicCustomerGroups as pcc')
+                ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
+                ->join('customerGroups as cg', 'pcc.customerGroupId', 'cg.id')
                 ->select(
-                    'psc.id as id',
+                    'pcc.id as id',
                     'cg.customerGroup',
-                    DB::raw("TRIM(psc.price)+0 as price")
+                    DB::raw("TRIM(pcc.price)+0 as price")
                 )
-                ->where('psc.productClinicId', '=', $request->id)
+                ->where('pcc.productClinicId', '=', $request->id)
                 ->get();
 
             $ProdClinic->customerGroups = $CustomerGroups;
         } elseif ($ProdClinic->pricingStatus == "PriceLocations") {
-            $PriceLocations = DB::table('productClinicPriceLocations as psp')
-                ->join('productClinics as ps', 'psp.productClinicId', 'ps.id')
-                ->join('location as l', 'psp.locationId', 'l.id')
+            $PriceLocations = DB::table('productClinicPriceLocations as pcp')
+                ->join('productClinics as pc', 'pcp.productClinicId', 'pc.id')
+                ->join('location as l', 'pcp.locationId', 'l.id')
                 ->select(
-                    'psp.id as id',
+                    'pcp.id as id',
                     'l.locationName',
-                    DB::raw("TRIM(psp.price)+0 as Price")
+                    DB::raw("TRIM(pcp.price)+0 as Price")
                 )
-                ->where('psp.productClinicId', '=', $request->id)
+                ->where('pcp.productClinicId', '=', $request->id)
                 ->get();
 
             $ProdClinic->priceLocations = $PriceLocations;
         } else if ($ProdClinic->pricingStatus == "Quantities") {
 
-            $Quantities = DB::table('productClinicQuantities as psq')
-                ->join('productClinics as ps', 'psq.productClinicId', 'ps.id')
+            $Quantities = DB::table('productClinicQuantities as pcq')
+                ->join('productClinics as pc', 'pcq.productClinicId', 'pc.id')
                 ->select(
-                    'psq.id as id',
-                    'psq.fromQty',
-                    'psq.toQty',
-                    DB::raw("TRIM(psq.Price)+0 as Price")
+                    'pcq.id as id',
+                    'pcq.fromQty',
+                    'pcq.toQty',
+                    DB::raw("TRIM(pcq.Price)+0 as Price")
                 )
-                ->where('psq.ProductClinicId', '=', $request->id)
+                ->where('pcq.ProductClinicId', '=', $request->id)
                 ->get();
 
             $ProdClinic->quantities = $Quantities;
         }
 
-        $ProdClinic->categories = DB::table('productClinicCategories as psc')
-            ->join('productClinics as ps', 'psc.productClinicId', 'ps.id')
-            ->join('productCategories as pc', 'psc.productCategoryId', 'pc.id')
+        $ProdClinic->categories = DB::table('productClinicCategories as pcc')
+            ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
+            ->join('productCategories as pc', 'pcc.productCategoryId', 'pc.id')
             ->select(
-                'psc.id as id',
+                'pcc.id as id',
                 'pc.categoryName'
             )
-            ->where('psc.ProductClinicId', '=', $request->id)
+            ->where('pcc.ProductClinicId', '=', $request->id)
             ->get();
 
-        $ProdClinic->images = DB::table('productClinicImages as psi')
-            ->join('productClinics as ps', 'psi.productClinicId', 'ps.id')
+        $ProdClinic->images = DB::table('productClinicImages as pci')
+            ->join('productClinics as pc', 'pci.productClinicId', 'pc.id')
             ->select(
-                'psi.id as id',
-                'psi.labelName',
-                'psi.realImageName',
-                'psi.imagePath'
+                'pci.id as id',
+                'pci.labelName',
+                'pci.realImageName',
+                'pci.imagePath'
             )
-            ->where('psi.productClinicId', '=', $request->id)
+            ->where('pci.productClinicId', '=', $request->id)
             ->get();
 
         return response()->json($ProdClinic, 200);
-
     }
 
     public function update(Request $request)

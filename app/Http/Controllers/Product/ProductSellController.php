@@ -10,6 +10,7 @@ use App\Models\ProductSellLocation;
 use App\Models\ProductSellPriceLocation;
 use App\Models\ProductSellQuantity;
 use App\Models\ProductSellReminder;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -20,9 +21,9 @@ class ProductSellController
     public function Index(Request $request)
     {
 
-        $itemPerPage = $request->itemPerPage;
+        $itemPerPage = $request->rowPerPage;
 
-        $page = $request->page;
+        $page = $request->goToPage;
 
         $data = DB::table('productSells as ps')
             ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
@@ -46,9 +47,21 @@ class ProductSellController
             )
             ->where('ps.isDeleted', '=', 0);
 
+        if ($request->search) {
+            $res = $this->Search($request);
+            if ($res) {
+                $data = $data->where($res, 'like', '%' . $request->search . '%');
+            } else {
+                $data = [];
+                return response()->json([
+                    'totalPagination' => 0,
+                    'data' => $data
+                ], 200);
+            }
+        }
 
-        if ($request->orderby) {
-            $data = $data->orderBy($request->column, $request->orderby);
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
         $data = $data->orderBy('ps.id', 'desc');
@@ -67,9 +80,69 @@ class ProductSellController
         $totalPaging = $count_data / $itemPerPage;
 
         return response()->json([
-            'totalPaging' => ceil($totalPaging),
+            'totalPagination' => ceil($totalPaging),
             'data' => $data
         ], 200);
+    }
+
+    private function Search($request)
+    {
+        $temp_column = '';
+
+        $data = DB::table('productSells as ps')
+            ->select(
+                'ps.fullName as fullName'
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('ps.fullName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'ps.fullName';
+            return $temp_column;
+        }
+        //------------------------
+
+        $data = DB::table('productSells as ps')
+            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
+            ->select(
+                DB::raw("IFNULL(psup.supplierName,'') as supplierName")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('psup.supplierName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'psup.supplierName';
+            return $temp_column;
+        }
+        //------------------------
+
+        $data = DB::table('productSells as ps')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
+            ->select(
+                DB::raw("IFNULL(pb.brandName,'') as brandName")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('pb.brandName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'pb.brandName';
+            return $temp_column;
+        }
     }
 
     public function Detail(Request $request)
@@ -292,37 +365,7 @@ class ProductSellController
             }
         }
 
-        if ($request->hasfile('images')) {
-
-            $data_item = [];
-
-            $files[] = $request->file('images');
-
-            foreach ($files as $file) {
-
-                foreach ($file as $fil) {
-
-                    $file_size = $fil->getSize();
-
-                    $file_size = $file_size / 1024;
-
-                    $oldname = $fil->getClientOriginalName();
-
-                    if ($file_size >= 5000) {
-
-                        array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
-                    }
-                }
-            }
-
-            if ($data_item) {
-
-                return response()->json([
-                    'message' => 'Foto yang dimasukkan tidak valid!',
-                    'errors' => $data_item,
-                ], 422);
-            }
-        }
+        $this->ValidationImage($request);
 
         if ($request->pricingStatus == "CustomerGroups") {
 
@@ -425,153 +468,235 @@ class ProductSellController
                 ], 422);
             }
         }
+        // info(count($request->file('images')));
+        // return count($ResultImageDatas);
+
+
 
         //INSERT DATA
-
-
         $flag = false;
         $res_data = [];
+        $files[] = $request->file('images');
 
-        foreach ($ResultLocations as $value) {
+        DB::beginTransaction();
+        try {
+            foreach ($ResultLocations as $value) {
 
-            $product = ProductSell::create([
-                'fullName' => $request->fullName,
-                'simpleName' => $request->simpleName,
-                'sku' => $request->sku,
-                'productBrandId' => $request->productBrandId,
-                'productSupplierId' => $request->productSupplierId,
-                'status' => $request->status,
-                'expiredDate' => $request->expiredDate,
-                'pricingStatus' => $request->pricingStatus,
-                'costPrice' => $request->costPrice,
-                'marketPrice' => $request->marketPrice,
-                'price' => $request->price,
-                'isShipped' => $request->isShipped,
-                'weight' => $request->weight,
-                'length' => $request->length,
-                'width' => $request->width,
-                'height' => $request->height,
-                'introduction' => $request->introduction,
-                'description' => $request->description,
-                'height' => $request->height,
-                'userId' => $request->user()->id,
-            ]);
-
-            ProductSellLocation::create([
-                'productSellId' => $product->id,
-                'locationId' => $value['locationId'],
-                'inStock' => $value['inStock'],
-                'lowStock' => $value['lowStock'],
-                'userId' => $request->user()->id,
-            ]);
-
-            if ($ResultCategories) {
-
-                foreach ($ResultCategories as $valCat) {
-                    ProductSellCategory::create([
-                        'productSellId' => $product->id,
-                        'productCategoryId' => $valCat,
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-            }
-
-            $count = 0;
-
-            $ResImageDatas = json_decode($request->imageDatas, true);
-
-            if ($flag == false) {
-
-                if ($request->hasfile('images')) {
-                    foreach ($files as $file) {
-
-                        foreach ($file as $fil) {
-
-                            $name = $fil->hashName();
-
-                            $fil->move(public_path() . '/ProductSellImages/', $name);
-
-                            $fileName = "/ProductSellImages/" . $name;
-
-                            $file = new ProductSellImages();
-                            $file->productSellId = $product->id;
-                            $file->labelName = $ResImageDatas[$count];
-                            $file->realImageName = $fil->getClientOriginalName();
-                            $file->imagePath = $fileName;
-                            $file->userId = $request->user()->id;
-                            $file->save();
-
-                            array_push($res_data, $file);
-
-                            $count += 1;
-                        }
-                    }
-
-                    $flag = true;
-                }
-            } else {
-
-                foreach ($res_data as $res) {
-                    ProductSellImages::create([
-                        'productSellId' => $product->id,
-                        'labelName' => $res['labelName'],
-                        'realImageName' => $res['realImageName'],
-                        'imagePath' => $res['imagePath'],
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-            }
-
-            foreach ($ResultReminders as $RemVal) {
-                ProductSellReminder::create([
-                    'productSellId' => $product->id,
-                    'unit' => $RemVal['unit'],
-                    'timing' => $RemVal['timing'],
-                    'status' => $RemVal['status'],
+                $product = ProductSell::create([
+                    'fullName' => $request->fullName,
+                    'simpleName' => $request->simpleName,
+                    'sku' => $request->sku,
+                    'productBrandId' => $request->productBrandId,
+                    'productSupplierId' => $request->productSupplierId,
+                    'status' => $request->status,
+                    'expiredDate' => $request->expiredDate,
+                    'pricingStatus' => $request->pricingStatus,
+                    'costPrice' => $request->costPrice,
+                    'marketPrice' => $request->marketPrice,
+                    'price' => $request->price,
+                    'isShipped' => $request->isShipped,
+                    'weight' => $request->weight,
+                    'length' => $request->length,
+                    'width' => $request->width,
+                    'height' => $request->height,
+                    'introduction' => $request->introduction,
+                    'description' => $request->description,
+                    'height' => $request->height,
                     'userId' => $request->user()->id,
                 ]);
+
+                ProductSellLocation::create([
+                    'productSellId' => $product->id,
+                    'locationId' => $value['locationId'],
+                    'inStock' => $value['inStock'],
+                    'lowStock' => $value['lowStock'],
+                    'userId' => $request->user()->id,
+                ]);
+
+                if ($ResultCategories) {
+
+                    foreach ($ResultCategories as $valCat) {
+                        ProductSellCategory::create([
+                            'productSellId' => $product->id,
+                            'productCategoryId' => $valCat,
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+
+                $count = 0;
+
+                $ResImageDatas = json_decode($request->imageDatas, true);
+
+                if ($flag == false) {
+
+                    if ($request->hasfile('images')) {
+
+                        foreach ($files as $file) {
+
+                            foreach ($file as $fil) {
+
+                                $name = $fil->hashName();
+
+                                $fil->move(public_path() . '/ProductSellImages/', $name);
+
+                                $fileName = "/ProductSellImages/" . $name;
+
+                                $file = new ProductSellImages();
+                                $file->productSellId = $product->id;
+                                $file->labelName = $ResImageDatas[$count];
+                                $file->realImageName = $fil->getClientOriginalName();
+                                $file->imagePath = $fileName;
+                                $file->userId = $request->user()->id;
+                                $file->save();
+
+                                array_push($res_data, $file);
+
+                                $count += 1;
+                            }
+                        }
+
+                        $flag = true;
+                    }
+                } else {
+
+                    foreach ($res_data as $res) {
+                        ProductSellImages::create([
+                            'productSellId' => $product->id,
+                            'labelName' => $res['labelName'],
+                            'realImageName' => $res['realImageName'],
+                            'imagePath' => $res['imagePath'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+
+                foreach ($ResultReminders as $RemVal) {
+                    ProductSellReminder::create([
+                        'productSellId' => $product->id,
+                        'unit' => $RemVal['unit'],
+                        'timing' => $RemVal['timing'],
+                        'status' => $RemVal['status'],
+                        'userId' => $request->user()->id,
+                    ]);
+                }
+
+                if ($request->pricingStatus == "CustomerGroups") {
+
+                    foreach ($ResultCustomerGroups as $CustVal) {
+                        ProductSellCustomerGroup::create([
+                            'productSellId' => $product->id,
+                            'customerGroupId' => $CustVal['customerGroupId'],
+                            'price' => $CustVal['price'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                } else if ($request->pricingStatus == "PriceLocations") {
+
+                    foreach ($ResultPriceLocations as $PriceVal) {
+                        ProductSellPriceLocation::create([
+                            'productSellId' => $product->id,
+                            'locationId' => $PriceVal['locationId'],
+                            'price' => $PriceVal['price'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                } else if ($request->pricingStatus == "Quantities") {
+
+                    foreach ($ResultQuantities as $QtyVal) {
+                        ProductSellQuantity::create([
+                            'productSellId' => $product->id,
+                            'fromQty' => $QtyVal['fromQty'],
+                            'toQty' => $QtyVal['toQty'],
+                            'price' => $QtyVal['price'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+            }
+            DB::commit();
+
+            return response()->json(
+                [
+                    'message' => 'Insert Data Successful!',
+                ],
+                200
+            );
+        } catch (Exception $th) {
+            DB::rollback();
+
+            return response()->json([
+                'message' => 'Insert Failed',
+                'errors' => $th,
+            ]);
+        }
+    }
+
+    private function ValidationImage($request)
+    {
+        $flag = false;
+
+        if ($request->file('images')) {
+
+            $flag = true;
+
+            $data_item = [];
+
+            $files[] = $request->file('images');
+
+            foreach ($files as $file) {
+
+                foreach ($file as $fil) {
+
+                    $file_size = $fil->getSize();
+
+                    $file_size = $file_size / 1024;
+
+                    $oldname = $fil->getClientOriginalName();
+
+                    if ($file_size >= 5000) {
+
+                        array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
+                    }
+                }
             }
 
-            if ($request->pricingStatus == "CustomerGroups") {
+            if ($data_item) {
 
-                foreach ($ResultCustomerGroups as $CustVal) {
-                    ProductSellCustomerGroup::create([
-                        'productSellId' => $product->id,
-                        'customerGroupId' => $CustVal['customerGroupId'],
-                        'price' => $CustVal['price'],
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-            } else if ($request->pricingStatus == "PriceLocations") {
-
-                foreach ($ResultPriceLocations as $PriceVal) {
-                    ProductSellPriceLocation::create([
-                        'productSellId' => $product->id,
-                        'locationId' => $PriceVal['locationId'],
-                        'price' => $PriceVal['price'],
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-            } else if ($request->pricingStatus == "Quantities") {
-
-                foreach ($ResultQuantities as $QtyVal) {
-                    ProductSellQuantity::create([
-                        'productSellId' => $product->id,
-                        'fromQty' => $QtyVal['fromQty'],
-                        'toQty' => $QtyVal['toQty'],
-                        'price' => $QtyVal['price'],
-                        'userId' => $request->user()->id,
-                    ]);
-                }
+                return response()->json([
+                    'message' => 'Foto yang dimasukkan tidak valid!',
+                    'errors' => $data_item,
+                ], 422);
             }
         }
 
-        return response()->json(
-            [
-                'message' => 'Insert Data Successful!',
-            ],
-            200
-        );
+        if ($flag == true) {
+            if ($request->imageDatas) {
+                $ResultImageDatas = json_decode($request->imageDatas, true);
+
+                if (count($ResultImageDatas) != count($request->file('images'))) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Label Image and total image should same!'],
+                    ], 422);
+                } else {
+                    foreach ($ResultImageDatas as $value) {
+                        if ($value == "") {
+
+                            return response()->json([
+                                'message' => 'The given data was invalid.',
+                                'errors' => ['Label Image can not be empty!'],
+                            ], 422);
+                        }
+                    }
+                }
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Image label cannot be empty!!'],
+                ], 422);
+            }
+        }
     }
 
     public function Update(Request $request)
