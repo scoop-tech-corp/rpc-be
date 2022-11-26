@@ -11,21 +11,19 @@ return new class extends Migration
      *
      * @return void
      */
-  
     public function up()
     {
         $procedure = "
-                    CREATE PROCEDURE `generate_productCode`()
-                    BEGIN
+        CREATE PROCEDURE `generate_codeLocation`()
+        BEGIN
 
-                        SELECT SUBSTR(MD5(RAND()), 1, 8) AS randomString;
+            SELECT SUBSTR(MD5(RAND()), 1, 8) AS randomString;
 
-                    END
-            ";
+        END
+        ";
 
-        DB::unprepared("DROP procedure IF EXISTS generate_productCode");
-        DB::unprepared($procedure);
-
+    DB::unprepared("DROP procedure IF EXISTS generate_codeLocation");
+    DB::unprepared($procedure);
     }
 
     /**
@@ -35,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('generate_productCode');
+        Schema::dropIfExists('generate_codeLocation');
     }
 };
