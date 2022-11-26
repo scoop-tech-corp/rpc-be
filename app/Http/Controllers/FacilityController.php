@@ -19,100 +19,115 @@ class FacilityController extends Controller
         try
         {
 
-           $request->validate([ 'locationId' => 'required',
-								'locationName' => 'required',]);
-           
-            
-            $checkIfDataExits = DB::table('facility')
-                ->where([['locationId', '=', $request->input('locationId')],
-						['locationName', '=', $request->input('locationName')],
-						['isDeleted', '=', '0']])
-                ->first();
+            $validate = Validator::make($request->all(), [
+                'locationId' => 'required|integer',
+                'locationName' => 'required|string|max:30',
+            ]);
 
-            if ($checkIfDataExits === null) {
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
 
-                DB::table('facility')->insert(['locationId' => $request->input('locationId'),
-												'locationName' => $request->input('locationName'),
-												'introduction' => $request->input('introduction'),
-												'description' => $request->input('description'),
-												'isDeleted' => 0,
-												'created_at' => now()]);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
             }
 
-            
+            $checkIfDataExits = DB::table('facility')
+                ->where([['locationId', '=', $request->input('locationId')],
+                    ['locationName', '=', $request->input('locationName')],
+                    ['isDeleted', '=', '0']])
+                ->first();
+
+            if ($checkIfDataExits) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Location name ' . $checkIfDataExits->locationName . ' Already Exist, please try different name !'],
+                ], 422);
+            }
+
             if ($request->unit) {
 
                 $arraunit = json_decode($request->unit, true);
-                
 
-                if (count($arraunit) != 0) {
+                $check = Validator::make($arraunit, [
+                    "*.unitName" => 'required|max:25',
+                    "*.notes" => 'required|max:300',
+                    "*.status" => 'required|integer',
+                    "*.capacity" => 'required|integer',
+                    "*.amount" => 'required|integer',
+                ]);
 
-                    $check = Validator::make($arraunit,[
+                if ($check->fails()) {
+                    $errors = $check->errors()->all();
 
-                        "*.unitName" => 'required|max:25',
-                        "*.notes" => 'required|max:300',
-                        "*.status" => 'required|integer',
-                        "*.capacity" => 'required|integer',
-                        "*.amount" => 'required|integer',
-                    ]);
-
-                    if ($check->fails()) {
-                        $errors = $check->errors()->all();
-        
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => $errors,
-                        ], 422);
-                    }
-                   
-
-                    foreach ($arraunit as $val) {
-               
-        
-                        $checkIfFacilityExits = DB::table('facility_unit')
-                        ->where([['locationId', '=', $request->input('locationId')],
-								['locationName', '=', $request->input('locationName')],
-								['unitName', '=', $val['unitName']],
-								['isDeleted', '=', '0']])
-                        ->first();
-
-                            if ($checkIfFacilityExits === null) {
-
-                                DB::table('facility_unit')->insert([
-									'locationId' => $request->input('locationId'),
-								    'locationName' => $request->input('locationName'),
-                                    'unitName' => $val['unitName'],
-                                    'status' => $val['status'],
-                                    'capacity' => $val['capacity'],
-                                    'amount' => $val['amount'],
-                                    'notes' => $val['notes'],
-                                    'isDeleted' => 0,
-                                    'created_at' => now(),
-                                ]);
-
-                            } else {
-
-                                return response()->json([
-                                    'result' => 'Failed',
-                                    'message' => "Unit name with spesific location already exists, please try different name",
-                                ]);
-
-                            }
-
-                        }
-
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errors,
+                    ], 422);
                 }
+
+            } else {
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Facility unit can not be empty!'],
+                ], 422);
+
             }
 
+            DB::table('facility')->insert(['locationId' => $request->input('locationId'),
+                'locationName' => $request->input('locationName'),
+                'introduction' => $request->input('introduction'),
+                'description' => $request->input('description'),
+                'isDeleted' => 0,
+                'created_at' => now()]);
+
+            if ($request->unit) {
+
+                foreach ($arraunit as $val) {
+
+                    $checkIfFacilityExits = DB::table('facility_unit')
+                        ->where([['locationId', '=', $request->input('locationId')],
+                            ['locationName', '=', $request->input('locationName')],
+                            ['unitName', '=', $val['unitName']],
+                            ['isDeleted', '=', '0']])
+                        ->first();
+
+                    if ($checkIfFacilityExits === null) {
+
+                        DB::table('facility_unit')->insert([
+                            'locationId' => $request->input('locationId'),
+                            'locationName' => $request->input('locationName'),
+                            'unitName' => $val['unitName'],
+                            'status' => $val['status'],
+                            'capacity' => $val['capacity'],
+                            'amount' => $val['amount'],
+                            'notes' => $val['notes'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
+
+                    } else {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => "Unit name with spesific location already exists, please try different name",
+                        ]);
+
+                    }
+                }
+
+            }
 
             if ($request->hasfile('images')) {
-             
+
                 $files[] = $request->file('images');
                 $json_array = json_decode($request->imagesName, true);
                 $int = 0;
-               
+
                 if (count($files) != 0) {
-                  
+
                     foreach ($files as $file) {
 
                         foreach ($file as $fil) {
@@ -124,8 +139,8 @@ class FacilityController extends Controller
 
                             DB::table('facility_images')
                                 ->insert([
-									'locationId' => $request->input('locationId'),
-									'locationName' => $request->input('locationName'),
+                                    'locationId' => $request->input('locationId'),
+                                    'locationName' => $request->input('locationName'),
                                     'unitName' => $json_array[$int]['unitName'],
                                     'labelName' => $json_array[$int]['name'],
                                     'realImageName' => $fil->getClientOriginalName(),
@@ -166,7 +181,19 @@ class FacilityController extends Controller
     {
         DB::beginTransaction();
 
-        $request->validate(['locationId' => 'required']);
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
 
         try
         {
@@ -213,12 +240,25 @@ class FacilityController extends Controller
     public function facilityDetail(Request $request)
     {
 
-        $request->validate(['locationId' => 'required|max:10000']);
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
         $locationId = $request->input('locationId');
 
         $checkIfValueExits = DB::table('facility')
             ->where([['facility.locationId', '=', $locationId],
-					 ['facility.isDeleted', '=', '0']])
+                ['facility.isDeleted', '=', '0']])
             ->first();
 
         if ($checkIfValueExits === null) {
@@ -232,36 +272,36 @@ class FacilityController extends Controller
 
             $facility = DB::table('facility')
                 ->select(
-					'facility.locationId as locationId',
-				    'facility.locationName as locationName',
+                    'facility.locationId as locationId',
+                    'facility.locationName as locationName',
                     'facility.introduction as introduction',
                     'facility.description as description', )
                 ->where([['facility.locationId', '=', $locationId],
-						 ['facility.isDeleted', '=', '0']])
+                    ['facility.isDeleted', '=', '0']])
                 ->first();
 
             $fasilitas_unit = DB::table('facility_unit')
                 ->select(
-					'facility_unit.id as id',
-					'facility_unit.locationId as locationId',
-					'facility_unit.unitName as unitName',
+                    'facility_unit.id as id',
+                    'facility_unit.locationId as locationId',
+                    'facility_unit.unitName as unitName',
                     'facility_unit.status as status',
                     'facility_unit.capacity as capacity',
                     'facility_unit.amount as amount',
                     'facility_unit.notes as notes', )
                 ->where([['facility_unit.locationId', '=', $locationId],
-						 ['facility_unit.isDeleted', '=', '0']])
+                    ['facility_unit.isDeleted', '=', '0']])
                 ->get();
 
             $facility->unit = $fasilitas_unit;
 
             $fasilitas_images = DB::table('facility_images')
                 ->select('facility_images.id as id',
-						 'facility_images.locationId as locationId',
-						 'facility_images.locationName as locationName',
-						'facility_images.unitName as unitName',
-						'facility_images.labelName as labelName',
-						'facility_images.imagePath as imagePath', )
+                    'facility_images.locationId as locationId',
+                    'facility_images.locationName as locationName',
+                    'facility_images.unitName as unitName',
+                    'facility_images.labelName as labelName',
+                    'facility_images.imagePath as imagePath', )
                 ->where([['facility_images.locationId', '=', $locationId],
                     ['facility_images.isDeleted', '=', '0']])
                 ->get();
@@ -276,7 +316,19 @@ class FacilityController extends Controller
     public function searchImageFacility(Request $request)
     {
 
-        $request->validate(['locationId' => 'required|max:10000']);
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
 
         $checkIfValueExits = DB::table('facility_images')
             ->where([['facility_images.locationId', '=', $request->input('locationId')],
@@ -294,7 +346,7 @@ class FacilityController extends Controller
 
             $images = DB::table('facility_images')
                 ->select('facility_images.id as id',
-					'facility_images.locationId as locationId',
+                    'facility_images.locationId as locationId',
                     'facility_images.locationName as locationName',
                     'facility_images.unitName as unitName',
                     'facility_images.labelName as labelName',
@@ -324,14 +376,14 @@ class FacilityController extends Controller
     {
 
         $data = DB::table('facility_images')
-             ->select('facility_images.id as id',
-					'facility_images.locationId as locationId',
-                    'facility_images.locationName as locationName',
-                    'facility_images.unitName as unitName',
-                    'facility_images.labelName as labelName',
-                    'facility_images.imagePath as imagePath', )
+            ->select('facility_images.id as id',
+                'facility_images.locationId as locationId',
+                'facility_images.locationName as locationName',
+                'facility_images.unitName as unitName',
+                'facility_images.labelName as labelName',
+                'facility_images.imagePath as imagePath', )
             ->where([['facility_images.locationId', '=', $request->locationId],
-					 ['facility_images.isDeleted', '=', '0']]);
+                ['facility_images.isDeleted', '=', '0']]);
 
         if ($request->name) {
             $data = $data->where('facility_images.labelName', 'like', '%' . $request->name . '%');
@@ -350,25 +402,41 @@ class FacilityController extends Controller
     {
         DB::beginTransaction();
 
-        $request->validate(['locationId' => 'required',
-							'locationName' => 'required',]);
 
         try
         {
 
+
+
+            $validate = Validator::make($request->all(), [
+                'locationId' => 'required|integer',
+                'locationName' => 'required|string|max:30',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+
+
             DB::table('facility')
                 ->where('locationId', '=', $request->input('locationId'))
                 ->update(['introduction' => $request->input('introduction'),
-                            'description' => $request->input('description'),
-                            'updated_at' => now(),
+                    'description' => $request->input('description'),
+                    'updated_at' => now(),
                 ]);
+                
 
             if ($request->unit) {
 
                 if (count($request->unit) != 0) {
 
-
-                    $check = Validator::make($request->unit,[
+                    $check = Validator::make($request->unit, [
 
                         "*.unitName" => 'required|max:25',
                         "*.notes" => 'required|max:300',
@@ -379,24 +447,23 @@ class FacilityController extends Controller
 
                     if ($check->fails()) {
                         $errors = $check->errors()->all();
-        
+
                         return response()->json([
                             'message' => 'The given data was invalid.',
                             'errors' => $errors,
                         ], 422);
                     }
 
+                    foreach ($request->unit as $val) {
 
-                     foreach ($request->unit as $val) {
-                            
                         if (isset($val['id'])) {
-                           
+
                             if (isset($val['command'])) {
 
-                                    DB::table('facility_unit')
+                                DB::table('facility_unit')
                                     ->where([['locationId', '=', $request->input('locationId')],
-                                            ['unitName', '=', $val['unitName']],
-                                            ['isDeleted', '=', '0']])
+                                        ['unitName', '=', $val['unitName']],
+                                        ['isDeleted', '=', '0']])
                                     ->update(['unitName' => $val['unitName'],
                                         'isDeleted' => 1,
                                         'updated_at' => now(),
@@ -404,61 +471,57 @@ class FacilityController extends Controller
 
                                 DB::table('facility_images')
                                     ->where([['locationId', '=', $request->input('locationId')],
-                                            ['unitName', '=', $val['unitName']],
-                                            ['isDeleted', '=', '0']])
+                                        ['unitName', '=', $val['unitName']],
+                                        ['isDeleted', '=', '0']])
                                     ->update(['isDeleted' => 1,
                                         'updated_at' => now()]);
 
+                            } else {
 
-                                }else{
-
-                                     DB::table('facility_unit')
-                                        ->where([['locationId', '=', $request->input('locationId')],
-                                                ['id', '=', $val['id']],
-                                                ])
-                                        ->update(['unitName' => $val['unitName'],
-                                            'capacity' => $val['capacity'],
-                                            'amount' => $val['amount'],
-                                            'status' => $val['status'],
-                                            'notes' => $val['notes'],
-                                            'updated_at' => now(),
-                                        ]);
-                            }
-                        
-
-                        }else{
-
-                                 $checkIfDataExits = DB::table('facility_unit')
+                                DB::table('facility_unit')
                                     ->where([['locationId', '=', $request->input('locationId')],
-                                            ['unitName', '=', $val['unitName']],
-                                            ['isDeleted', '=', '0']])
-                                    ->first();
-
-                                if ($checkIfDataExits != null) {
-
-                                    return response()->json([
-                                        'result' => 'Failed',
-                                        'message' => 'Unit name : ' . $val['unitName'] . ', for this location name : ' . $request->input('locationName') . ' already exists, please try different unit name',
+                                        ['id', '=', $val['id']],
+                                    ])
+                                    ->update(['unitName' => $val['unitName'],
+                                        'capacity' => $val['capacity'],
+                                        'amount' => $val['amount'],
+                                        'status' => $val['status'],
+                                        'notes' => $val['notes'],
+                                        'updated_at' => now(),
                                     ]);
+                            }
 
-                                } else {
+                        } else {
 
+                            $checkIfDataExits = DB::table('facility_unit')
+                                ->where([['locationId', '=', $request->input('locationId')],
+                                    ['unitName', '=', $val['unitName']],
+                                    ['isDeleted', '=', '0']])
+                                ->first();
 
-                                    DB::table('facility_unit')
-                                        ->insert([
-                                            'locationId' => $request->input('locationId'),
-                                            'locationName' => $request->input('locationName'),
-                                            'unitName' => $val['unitName'],
-                                            'status' => $val['status'],
-                                            'capacity' => $val['capacity'],
-                                            'amount' => $val['amount'],
-                                            'notes' => $val['notes'],
-                                            'isDeleted' => 0,
-                                            'created_at' => now(),
-                                        ]);
-                                }
+                            if ($checkIfDataExits != null) {
 
-                           
+                                return response()->json([
+                                    'result' => 'Failed',
+                                    'message' => 'Unit name : ' . $val['unitName'] . ', for this location name : ' . $request->input('locationName') . ' already exists, please try different unit name',
+                                ]);
+
+                            } else {
+
+                                DB::table('facility_unit')
+                                    ->insert([
+                                        'locationId' => $request->input('locationId'),
+                                        'locationName' => $request->input('locationName'),
+                                        'unitName' => $val['unitName'],
+                                        'status' => $val['status'],
+                                        'capacity' => $val['capacity'],
+                                        'amount' => $val['amount'],
+                                        'notes' => $val['notes'],
+                                        'isDeleted' => 0,
+                                        'created_at' => now(),
+                                    ]);
+                            }
+
                         }
 
                     }
@@ -504,18 +567,16 @@ class FacilityController extends Controller
 
                             if ($val['status'] == "del") {
 
-
                                 $find_image = DB::table('facility_images')
                                     ->select('facility_images.imageName',
-                                             'facility_images.imagePath')
+                                        'facility_images.imagePath')
                                     ->where('id', '=', $val['id'])
                                     ->first();
 
                                 if ($find_image) {
-                                    
-                              
+
                                     if (file_exists(public_path() . $find_image->imagePath)) {
-                                        
+
                                         File::delete(public_path() . $find_image->imagePath);
 
                                         DB::table('facility_images')->where([['id', '=', $val['id']]])->delete();
@@ -527,7 +588,7 @@ class FacilityController extends Controller
 
                                 $find_image = DB::table('facility_images')
                                     ->select('facility_images.imageName',
-                                             'facility_images.imagePath')
+                                        'facility_images.imagePath')
                                     ->where('id', '=', $val['id'])
                                     ->where('unitName', '=', $request->input('unitName'))
                                     ->first();
@@ -546,7 +607,7 @@ class FacilityController extends Controller
                             }
 
                         } else {
-                          
+
                             $files[] = $request->file('images');
 
                             foreach ($files as $file) {
@@ -560,8 +621,8 @@ class FacilityController extends Controller
 
                                     DB::table('facility_images')
                                         ->insert([
-											'locationId' => $request->input('locationId'),
-											'locationName' => $request->input('locationName'),
+                                            'locationId' => $request->input('locationId'),
+                                            'locationName' => $request->input('locationName'),
                                             'unitName' => $val['unitName'],
                                             'labelName' => $val['name'],
                                             'realImageName' => $fil->getClientOriginalName(),
@@ -638,12 +699,12 @@ class FacilityController extends Controller
                 DB::raw("IFNULL (count(DISTINCT(facility.locationName)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName',  'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'location.created_at');
 
         if ($request->search || $request->search == 0) {
-            
+
             $res = $this->Search($request);
-           
+
             if (str_contains($res, "location.locationName")) {
 
                 $data = $data->having($res, 'like', '%' . $request->search . '%');
