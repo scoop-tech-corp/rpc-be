@@ -33,6 +33,7 @@ class ProductClinicController
             ->select(
                 'pc.id as id',
                 'pc.fullName as fullName',
+                DB::raw("IFNULL(pc.sku,'') as sku"),
                 'loc.locationName as locationName',
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName"),
                 DB::raw("IFNULL(pb.brandName,'') as brandName"),

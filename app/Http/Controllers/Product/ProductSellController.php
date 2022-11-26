@@ -34,6 +34,7 @@ class ProductSellController
             ->select(
                 'ps.id as id',
                 'ps.fullName as fullName',
+                DB::raw("IFNULL(ps.sku,'') as sku"),
                 'loc.locationName as locationName',
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName"),
                 DB::raw("IFNULL(pb.brandName,'') as brandName"),
