@@ -8,50 +8,6 @@ use Illuminate\Http\Request;
 class DataStaticController extends Controller
 {
 
-
- /**
-     * @OA\Delete(
-     * path="/api/datastaticlocation",
-     * operationId="datastaticlocation",
-     * tags={"Data Static"},
-     * summary="Delete Data Static Location",
-     * description="Delete data static here , need id data static",
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(* @OA\Examples(
-     *        summary="Delete data static",
-     *        example = "delete id 1",
-    *       value = {
-    *           "id":1,
-    *         },)),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               required={"id"},
-     *               @OA\Property(property="id", type="integer")
-     *            ),
-     *        ),
-     *    ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="Delete data static Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Delete data static Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
     public function datastaticlocation(Request $Request)
     {
 

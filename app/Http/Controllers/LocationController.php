@@ -23,7 +23,19 @@ class LocationController extends Controller
     public function deleteLocation(Request $request)
     {
 
-        $request->validate(['codeLocation' => 'required']);
+        $validate = Validator::make($request->all(), [
+            'codeLocation' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
 
         DB::beginTransaction();
         try
