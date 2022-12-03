@@ -367,7 +367,7 @@ class ProductInventoryController
                         'pi.id',
                         'pi.productType',
                         'pi.productId',
-                        'p.fullName',
+                        'p.fullName as productName',
                         'pi.usage',
                         'pi.quantity'
                     )
@@ -383,7 +383,7 @@ class ProductInventoryController
                         'pi.id',
                         'pi.productType',
                         'pi.productId',
-                        'p.fullName',
+                        'p.fullName as productName',
                         'pi.usage',
                         'pi.quantity'
                     )
