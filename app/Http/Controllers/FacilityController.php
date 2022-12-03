@@ -704,8 +704,12 @@ class FacilityController extends Controller
         if ($request->search || $request->search == 0) {
 
             $res = $this->Search($request);
+            
+            if (str_contains($res, "location.id")) {
 
-            if (str_contains($res, "location.locationName")) {
+                $data = $data->where($res, '=', $request->search);
+
+            } else if (str_contains($res, "location.locationName")) {
 
                 $data = $data->having($res, 'like', '%' . $request->search . '%');
 
@@ -760,6 +764,38 @@ class FacilityController extends Controller
     private function Search($request)
     {
 
+        
+        $data = DB::table('location')
+            ->leftjoin(DB::raw('(select * from facility where isDeleted=0) as facility'),
+                function ($join) {
+                    $join->on('facility.locationName', '=', 'location.locationName');
+                })
+            ->leftjoin(DB::raw('(select * from facility_unit where isDeleted=0) as facility_unit'),
+                function ($join) {
+                    $join->on('facility_unit.locationName', '=', 'facility.locationName');
+                })
+            ->select('location.id as locationId',
+                'location.locationName as locationName',
+                'location.created_at as createdAt',
+                DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
+                DB::raw("IFNULL (count(DISTINCT(facility.locationName)),0) as facilityVariation"),
+                DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
+            ->where([['location.isDeleted', '=', '0']])
+            ->groupBy('location.locationName', 'location.codeLocation', 'location.id', 'location.created_at');
+
+        if ($request->search || $request->search == 0) {
+            $data = $data->where('location.id', '=', $request->search);
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'location.id';
+            return $temp_column;
+        }
+
+
+
         $data = DB::table('location')
             ->leftjoin(DB::raw('(select * from facility where isDeleted=0) as facility'),
                 function ($join) {
@@ -788,6 +824,9 @@ class FacilityController extends Controller
             $temp_column = 'location.locationName';
             return $temp_column;
         }
+
+
+
 
         $data = DB::table('location')
             ->leftjoin(DB::raw('(select * from facility where isDeleted=0) as facility'),
