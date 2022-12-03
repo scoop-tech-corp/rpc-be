@@ -196,4 +196,51 @@ class ProductController
 
         return response()->json($Data, 200);
     }
+
+    public function IndexProductSell(Request $request)
+    {
+        if ($request->id) {
+
+            $data = DB::table('productSells as ps')
+                ->join('productSellLocations as pl','ps.id','pl.productSellId')
+                ->select('ps.id', 'ps.fullName')
+                ->where('ps.isDeleted', '=', 0)
+                ->where('ps.status', '=', 1)
+                ->where('pl.locationId', '=', $request->id)
+                ->get();
+
+            return response()->json($data, 200);
+        }
+        else{
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Id is invalid!'],
+            ], 422);
+        }
+    }
+
+    public function IndexProductClinic(Request $request)
+    {
+        
+        if ($request->id) {
+
+            $data = DB::table('productClinics as p')
+                ->join('productClinicLocations as pl','p.id','pl.productClinicId')
+                ->select('p.id', 'p.fullName')
+                ->where('p.isDeleted', '=', 0)
+                ->where('p.status', '=', 1)
+                ->where('pl.locationId', '=', $request->id)
+                ->get();
+
+            return response()->json($data, 200);
+        }
+        else{
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Id is invalid!'],
+            ], 422);
+        }
+    }
 }

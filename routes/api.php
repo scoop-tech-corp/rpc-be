@@ -82,14 +82,28 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::put('product/clinic', [ProductClinicController::class, 'Update']);
     Route::delete('product/clinic', [ProductClinicController::class, 'Delete']);
 
-    Route::get('product/inventory', [ProductInventoryController::class, 'Index']);
-    Route::post('product/inventory', [ProductInventoryController::class, 'Create']);
-    Route::put('product/inventory', [ProductInventoryController::class, 'Update']);
-    Route::delete('product/inventory', [ProductInventoryController::class, 'Delete']);
+    Route::get('product/inventory', [ProductInventoryController::class, 'index']);
+    Route::get('product/inventory/history/office', [ProductInventoryController::class, 'indexHistoryOffice']);
+    Route::get('product/inventory/history/admin', [ProductInventoryController::class, 'indexHistoryAdmin']);
+    Route::get('product/inventory/admin', [ProductInventoryController::class, 'indexAdmin']);
+    Route::get('product/inventory/office', [ProductInventoryController::class, 'indexOffice']);
+    
+    Route::get('product/inventory/detail', [ProductInventoryController::class, 'detail']);
+
+    Route::post('product/inventory', [ProductInventoryController::class, 'create']);
+
+    Route::put('product/inventory', [ProductInventoryController::class, 'update']);
+    Route::put('product/inventory/office', [ProductInventoryController::class, 'updateOffice']);
+    Route::put('product/inventory/admin', [ProductInventoryController::class, 'updateAdmin']);
+    
+    Route::delete('product/inventory', [ProductInventoryController::class, 'delete']);
 
     //product category
     Route::get('product/category', [ProductController::class, 'IndexProductCategory']);
     Route::post('product/category', [ProductController::class, 'CreateProductCategory']);
+
+    Route::get('product/sell/dropdown', [ProductController::class, 'IndexProductSell']);
+    Route::get('product/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
 
     //MODULE CUSTOMER
     //customer group
