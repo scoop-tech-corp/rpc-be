@@ -13,14 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('facility_images', function (Blueprint $table) {
+        Schema::create('tableaccess', function (Blueprint $table) {
             $table->id();
-            $table->string('locationId');
-            $table->string('labelName');
-            $table->string('realImageName');
-            $table->string('imageName');
-            $table->string('imagePath');
-            $table->boolean('isDeleted');
+            $table->integer('menuListId');
+            $table->integer('roleId');
+            $table->integer('roleAccessId');
+            $table->integer('accessLimitId');
             $table->timestamps();
         });
     }
@@ -32,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('facility_images');
+        Schema::dropIfExists('tableaccess');
     }
 };

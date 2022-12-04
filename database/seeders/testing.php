@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+
 class testing extends Seeder
 {
     /**
@@ -87,9 +88,22 @@ class testing extends Seeder
             'name' => 'DW',
             'email' => 'office@gmail.com',
             'password' => bcrypt("123"),
-            'role' => 'office',
-            'created_at' =>'2022-08-30',
-            'updated_at' =>'2022-08-30',
+            'role' => '1',
+            'isDeleted' => '0',
+            'created_at' =>now(),
+            'updated_at' =>now(),
+        ]);
+
+
+        
+        DB::table('users')->insert([
+            'name' => 'DW',
+            'email' => 'wahyudidanny23@gmail.com',
+            'password' => bcrypt("123"),
+            'role' => '1',
+            'isDeleted' => '0',
+            'created_at' =>now(),
+            'updated_at' =>now(),
         ]);
 
 
@@ -97,9 +111,10 @@ class testing extends Seeder
             'name' => 'DW',
             'email' => 'admin@gmail.com',
             'password' => bcrypt("123"),
-            'role' => 'admin',
-            'created_at' =>'2022-08-30',
-            'updated_at' =>'2022-08-30',
+            'role' => '1',
+            'isDeleted' => '0',
+            'created_at' =>now(),
+            'updated_at' =>now(),
         ]);
 
 
@@ -107,46 +122,22 @@ class testing extends Seeder
             'name' => 'DW',
             'email' => 'doctor@gmail.com',
             'password' => bcrypt("123"),
-            'role' => 'doctor',
-            'created_at' =>'2022-08-30',
-            'updated_at' =>'2022-08-30',
+            'role' => '1',
+            'isDeleted' => '0',
+            'created_at' =>now(),
+            'updated_at' =>now(),
         ]);
 
         DB::table('users')->insert([
             'name' => 'DW',
             'email' => 'staff@gmail.com',
             'password' => bcrypt("123"),
-            'role' => 'staff',
-            'created_at' =>'2022-08-30',
-            'updated_at' =>'2022-08-30',
+            'role' => '1',
+            'isDeleted' => '0',
+            'created_at' =>now(),
+            'updated_at' =>now(),
         ]);
 
-
-
-
-        $userRole = [
-            [
-                'roleName' => 'admin',
-                'isActive' =>1,
-                'created_at' => now()
-            ],
-            [
-                'roleName' => 'doctor',
-                'isActive' =>1,
-                'created_at' => now()
-            ],
-            [
-                'roleName' => 'office',
-                'isActive' =>1,
-                'created_at' => now()
-            ],
-            [
-                'roleName' => 'staff',
-                'isActive' =>1,
-                'created_at' => now()
-            ],
-        ];
-        DB::table('users_role')->insert($userRole); 
 
     }
 }

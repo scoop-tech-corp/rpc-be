@@ -13,14 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('facility_images', function (Blueprint $table) {
+        Schema::create('accesslimit', function (Blueprint $table) {
             $table->id();
-            $table->string('locationId');
-            $table->string('labelName');
-            $table->string('realImageName');
-            $table->string('imageName');
-            $table->string('imagePath');
-            $table->boolean('isDeleted');
+            $table->string('timeLimit');    
             $table->timestamps();
         });
     }
@@ -32,6 +27,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('facility_images');
+        Schema::dropIfExists('accesslimit');
     }
 };
