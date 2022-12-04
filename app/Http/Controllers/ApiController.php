@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use DB;
-use JWTAuth;
 use App\Models\User;
+use DB;
 use Illuminate\Http\Request;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Validator;
+use JWTAuth;
+use Symfony\Component\HttpFoundation\Response;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class ApiController extends Controller
 {
@@ -20,7 +20,7 @@ class ApiController extends Controller
      * summary="User Register",
      * description="User Register here",
      *     @OA\RequestBody(
-    *         @OA\JsonContent(* @OA\Examples(
+     *         @OA\JsonContent(* @OA\Examples(
      *        summary="User Register",
      *        example = "User Register",
      *       value = {
@@ -61,8 +61,8 @@ class ApiController extends Controller
 
     public function register(Request $request)
     {
-    	//Validate data
-        $data = $request->only('name', 'email', 'password','role');
+        //Validate data
+        $data = $request->only('name', 'email', 'password', 'role');
         $validator = Validator::make($data, [
             'name' => 'required|string',
             'email' => 'required|email|unique:users',
@@ -77,22 +77,19 @@ class ApiController extends Controller
 
         //Request is valid, create new user
         $user = User::create([
-        	'name' => $request->name,
-        	'email' => $request->email, 
+            'name' => $request->name,
+            'email' => $request->email,
             'role' => $request->role,
-        	'password' => bcrypt($request->password)
+            'password' => bcrypt($request->password),
         ]);
 
         //User created, return success response
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
-            'data' => $user
+            'data' => $user,
         ], Response::HTTP_OK);
     }
- 
-
-
 
     /**
      * @OA\Post(
@@ -146,7 +143,7 @@ class ApiController extends Controller
         //valid credential
         $validator = Validator::make($credentials, [
             'email' => 'required|email',
-            'password' => 'required|string'
+            'password' => 'required|string',
         ]);
 
         //Send failed response if request is not valid
@@ -157,97 +154,145 @@ class ApiController extends Controller
         //Request is validated
         //Create token
         try {
-            if (! $token = JWTAuth::attempt($credentials)) {
+            if (!$token = JWTAuth::attempt($credentials)) {
                 return response()->json([
-                	'success' => false,
-                	'message' => 'Login credentials are invalid.',
+                    'success' => false,
+                    'message' => 'Login credentials are invalid.',
                 ], 400);
-
 
             }
         } catch (JWTException $e) {
-    	return $credentials;
+            return $credentials;
             return response()->json([
-                	'success' => false,
-                	'message' => 'Could not create token.',
-                ], 500);
+                'success' => false,
+                'message' => 'Could not create token.',
+            ], 500);
         }
- 	
- 		//Token created, return with success response and jwt token
+
+        //Token created, return with success response and jwt token
 
         $users = DB::SELECT('select id
-                                   ,name
-                                   ,email
-                                   ,email_verified_at
-                                   ,role
-                                   from users where email= ?',
-                                   [$request->input('email')]);
-       
-        return response()->json([
+                            ,name
+                            ,email
+                            ,email_verified_at
+                            ,role
+                            from users
+                            where email= ?',
+                            [$request->input('email')]);
+        
+    $data = DB::table('tableaccess')
+        ->join('menulist', 'menulist.id', '=', 'tableaccess.menulistId')
+        ->join('users_role', 'users_role.id', '=', 'tableaccess.roleId')
+        ->join('tableroleaccess', 'tableroleaccess.id', '=', 'tableaccess.roleAccessId')
+        ->join('accesslimit', 'accesslimit.id', '=', 'tableaccess.accessLimitId')
+        ->select('menulist.id',
+                 'menulist.menuName',
+                 'menulist.isActive',
+                 'users_role.roleName',
+                 'tableroleaccess.accessName',
+                 'accesslimit.timeLimit', )
+       ->where([['tableaccess.roleId', '=', $users[0]->role], ])
+       ->get();
+
+       return response()->json([
              'success' => true,
              'token' => $token,
              'userId' =>$users[0]->id,
              'userName' => $users[0]->name,
              'userEmail' => $users[0]->email,
              'userVerifiedAt' => $users[0]->email_verified_at,
-             'role' => $users[0]->role
+             'role' => $users[0]->role,
+             'menuLevel' => $data
         ]);
 
 
-    }
- 
+        // $users = DB::SELECT('select id
+        //                            ,name
+        //                            ,email
+        //                            ,email_verified_at
+        //                            ,role
+        //                            from users
+        //                            where email= ?',
+        //                            [$request->input('email')]);
 
-    
+        // $checkdataLocation = DB::table('location')
+        //                 ->select('locationName')
+        //                 ->where('locationName', '=', $request->locationName)
+        //                 ->first();
+
+        // return response()->json([
+        //      'success' => true,
+        //      'token' => $token,
+        //      'userId' =>$users[0]->id,
+        //      'userName' => $users[0]->name,
+        //      'userEmail' => $users[0]->email,
+        //      'userVerifiedAt' => $users[0]->email_verified_at,
+        //      'role' => $users[0]->role
+        // ]);
+
+        //     $Data = DB::table('users')
+        //     ->select('name', 'email')
+        //     ->where('email', '=',$request->input('email'))
+        //     ->get();
+
+        //    return response()->json([
+        //          'success' => true,
+        //          'token' => $token,
+        //          'userId' =>$users[0]->id,
+        //          'userName' => $users[0]->name,
+        //     ]);
+
+    }
 
 /**
-     * @OA\Post(
-     * path="/api/logout",
-     * operationId="Logout Username",
-     * tags={"Logout Username"},
-     * summary="Logout",
-     * description="Logout RPC",
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(* @OA\Examples(
-     *        summary="Logout User",
-     *        example = "Logout User",
-     *       value = {
-     *           "token":"",
-     *         },)),
-     *         @OA\MediaType(
-     *            mediaType="multipart/form-data",
-     *            @OA\Schema(
-     *               type="object",
-     *               required={"token"},
-     *               @OA\Property(property="token", type="text"),
-     *            ),
-     *        ),
-     *    ),
-     *      @OA\Response(
-     *          response=201,
-     *          description="Login Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=200,
-     *          description="Login Successfully",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(
-     *          response=422,
-     *          description="Unprocessable Entity",
-     *          @OA\JsonContent()
-     *       ),
-     *      @OA\Response(response=400, description="Bad request"),
-     *      @OA\Response(response=404, description="Resource Not Found"),
-     *      security={{ "apiAuth": {} }}
-     * )
-     */
+ * @OA\Post(
+ * path="/api/logout",
+ * operationId="Logout Username",
+ * tags={"Logout Username"},
+ * summary="Logout",
+ * description="Logout RPC",
+ *     @OA\RequestBody(
+ *         @OA\JsonContent(* @OA\Examples(
+ *        summary="Logout User",
+ *        example = "Logout User",
+ *       value = {
+ *           "token":"",
+ *         },)),
+ *         @OA\MediaType(
+ *            mediaType="multipart/form-data",
+ *            @OA\Schema(
+ *               type="object",
+ *               required={"token"},
+ *               @OA\Property(property="token", type="text"),
+ *            ),
+ *        ),
+ *    ),
+ *      @OA\Response(
+ *          response=201,
+ *          description="Login Successfully",
+ *          @OA\JsonContent()
+ *       ),
+ *      @OA\Response(
+ *          response=200,
+ *          description="Login Successfully",
+ *          @OA\JsonContent()
+ *       ),
+ *      @OA\Response(
+ *          response=422,
+ *          description="Unprocessable Entity",
+ *          @OA\JsonContent()
+ *       ),
+ *      @OA\Response(response=400, description="Bad request"),
+ *      @OA\Response(response=404, description="Resource Not Found"),
+ *      security={{ "apiAuth": {} }}
+ * )
+ */
 
     public function logout(Request $request)
     {
         //valid credential
         $validator = Validator::make($request->only('token'), [
-            'token' => 'required'
+            'token' => 'required',
         ]);
 
         //Send failed response if request is not valid
@@ -255,30 +300,30 @@ class ApiController extends Controller
             return response()->json(['error' => $validator->messages()], 200);
         }
 
-		//Request is validated, do logout        
+        //Request is validated, do logout
         try {
             JWTAuth::invalidate($request->token);
-            
+
             return response()->json([
                 'success' => true,
-                'message' => 'User has been logged out'
+                'message' => 'User has been logged out',
             ]);
         } catch (JWTException $exception) {
             return response()->json([
                 'success' => false,
-                'message' => 'Sorry, user cannot be logged out'
+                'message' => 'Sorry, user cannot be logged out',
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
- 
+
     public function get_user(Request $request)
     {
         $this->validate($request, [
-            'token' => 'required'
+            'token' => 'required',
         ]);
- 
+
         $user = JWTAuth::authenticate($request->token);
- 
+
         return response()->json(['user' => $user]);
     }
 }
