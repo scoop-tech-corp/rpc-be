@@ -139,6 +139,17 @@ class testing extends Seeder
         ]);
 
 
+        DB::table('users')->insert([
+            'name' => 'Adiyansyah Dwi Putra',
+            'email' => 'adiyansyahdwiputra@gmail.com',
+            'password' => bcrypt("160196"),
+            'role' => '1',
+            'isDeleted' => '0',
+            'created_at' =>now(),
+            'updated_at' =>now(),
+        ]);
+
+
     }
 }
 

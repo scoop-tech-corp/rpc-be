@@ -81,6 +81,7 @@ class ApiController extends Controller
             'email' => $request->email,
             'role' => $request->role,
             'password' => bcrypt($request->password),
+            'isDeleted' => 0,
         ]);
 
         //User created, return success response
