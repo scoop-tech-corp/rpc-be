@@ -172,12 +172,14 @@ class ApiController extends Controller
 
         //Token created, return with success response and jwt token
 
-        $users = DB::SELECT('select id
-                            ,name
-                            ,email
-                            ,email_verified_at
-                            ,role
-                            from users
+        $users = DB::SELECT('select a.id
+                            ,a.name
+                            ,a.email
+                            ,a.email_verified_at
+                            ,a.role as roleId
+                            ,b.roleName as role
+                            from users a 
+                            inner join users_role b on b.id=a.role
                             where email= ?',
                             [$request->input('email')]);
         
@@ -192,7 +194,7 @@ class ApiController extends Controller
                  'users_role.roleName',
                  'tableroleaccess.accessName',
                  'accesslimit.timeLimit', )
-       ->where([['tableaccess.roleId', '=', $users[0]->role], ])
+       ->where([['tableaccess.roleId', '=', $users[0]->roleId], ])
        ->get();
 
        return response()->json([

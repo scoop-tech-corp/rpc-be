@@ -202,18 +202,18 @@ class FacilityController extends Controller
 
                 $json_array = json_decode($request->imagesName, true);
                 $int = 0;
-
+                
                 if (count($files) != 0) {
-
+                   
                     foreach ($files as $file) {
-
+                      
                         foreach ($file as $fil) {
-
+                           
                             $name = $fil->hashName();
                             $fil->move(public_path() . '/FacilityImages/', $name);
 
                             $fileName = "/FacilityImages/" . $name;
-
+                          
                             DB::table('facility_images')
                                 ->insert([
                                     'locationId' => $request->input('locationId'),
@@ -224,7 +224,7 @@ class FacilityController extends Controller
                                     'isDeleted' => 0,
                                     'created_at' => now(),
                                 ]);
-
+                              
                             $int = $int + 1;
                         }
                     }
@@ -282,7 +282,7 @@ class FacilityController extends Controller
                         ['isDeleted', '=', '0']])
                     ->first();
 
-                  if (!$checkIfDataExits) {
+                if (!$checkIfDataExits) {
                     array_push($data_item, 'locationId : ' . $val . ' not found, please try different locationId');
                 }
 
@@ -368,8 +368,10 @@ class FacilityController extends Controller
         } else {
 
             $facility = DB::table('facility')
+                ->join('location', 'location.id', '=', 'facility.locationId')
                 ->select(
                     'facility.locationId as locationId',
+                    'location.locationName as locationName',
                     'facility.introduction as introduction',
                     'facility.description as description', )
                 ->where([['facility.locationId', '=', $locationId],
@@ -781,7 +783,7 @@ class FacilityController extends Controller
     {
 
         $defaultRowPerPage = 5;
-        $defaultOrderBy= "asc";
+        $defaultOrderBy = "asc";
 
         $data = DB::table('location')
             ->leftjoin(DB::raw('(select * from facility where isDeleted=0) as facility'),
@@ -798,21 +800,21 @@ class FacilityController extends Controller
                 DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
-            ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
-
+            ->groupBy('location.locationName', 'location.id', 'location.created_at')
+            ->havingRaw('unitTotal > ?', [0]);
+            
         if ($request->search || $request->search == 0) {
-
+            
             $res = $this->Search($request);
-
+            
             if (str_contains($res, "location.id")) {
 
                 $data = $data->where($res, '=', $request->search);
 
             } else if (str_contains($res, "location.locationName")) {
-              
+
                 $data = $data->having($res, 'like', '%' . $request->search . '%');
-              
+
             } else if (str_contains($res, "facility_unit.capacity")) {
 
                 $data = $data->having(DB::raw('IFNULL(SUM(facility_unit.capacity),0)'), '=', $request->search);
@@ -833,37 +835,34 @@ class FacilityController extends Controller
             }
         }
 
-        if ($request->orderValue){
+        if ($request->orderValue) {
 
             $defaultOrderBy = $request->orderValue;
         }
 
-
         if ($request->orderColumn && $defaultOrderBy) {
 
             $listOrder = array(
-                    'location.id',
-                    'location.locationName',
-                    'facility_unit.capacity',
-                    'facility.locationId',
-                    'facility_unit.unitName'
-                );   
-                
-            if(!in_array($request->orderColumn, $listOrder))
-            {
-                
+                'location.id',
+                'location.locationName',
+                'facility_unit.capacity',
+                'facility.locationId',
+                'facility_unit.unitName',
+            );
+
+            if (!in_array($request->orderColumn, $listOrder)) {
+
                 return response()->json([
                     'result' => 'failed',
                     'message' => 'Please try different Order Column',
-                    'orderColumn' => $listOrder
+                    'orderColumn' => $listOrder,
                 ]);
             }
-            
-            if(strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc" )
-            {
+
+            if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
                 return response()->json([
                     'result' => 'failed',
-                    'message' => 'order value must Ascending: ASC or Descending: DESC '
+                    'message' => 'order value must Ascending: ASC or Descending: DESC ',
                 ]);
             }
 
@@ -914,8 +913,9 @@ class FacilityController extends Controller
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
-
+            ->groupBy('location.locationName', 'location.id', 'location.created_at')
+            ->havingRaw('unitTotal > ?', [0]);
+ 
         if ($request->search || $request->search == 0) {
             $data = $data->where('location.id', '=', $request->search);
         }
@@ -923,10 +923,11 @@ class FacilityController extends Controller
         $data = $data->get();
 
         if (count($data)) {
+         
             $temp_column = 'location.id';
             return $temp_column;
         }
-
+    
         $data = DB::table('location')
             ->leftjoin(DB::raw('(select * from facility where isDeleted=0) as facility'),
                 function ($join) {
@@ -943,7 +944,8 @@ class FacilityController extends Controller
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'location.created_at')
+            ->havingRaw('unitTotal > ?', [0]);
 
         if ($request->search || $request->search == 0) {
             $data = $data->where('location.locationName', 'like', '%' . $request->search . '%');
@@ -955,7 +957,7 @@ class FacilityController extends Controller
             $temp_column = 'location.locationName';
             return $temp_column;
         }
-
+      
         $data = DB::table('location')
             ->leftjoin(DB::raw('(select * from facility where isDeleted=0) as facility'),
                 function ($join) {
@@ -972,12 +974,14 @@ class FacilityController extends Controller
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'location.created_at')
+            ->havingRaw('unitTotal > ?', [0]);
 
         if ($request->search || $request->search == 0) {
             $data = $data->having(DB::raw('IFNULL (SUM(facility_unit.capacity),0)'), '=', $request->search);
         }
 
+    
         $data = $data->get();
 
         if (count($data)) {
@@ -1001,7 +1005,8 @@ class FacilityController extends Controller
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'location.created_at')
+            ->havingRaw('unitTotal > ?', [0]);
 
         if ($request->search || $request->search == 0) {
             $data = $data->having(DB::raw('IFNULL(count(DISTINCT(facility.locationId)),0)'), '=', $request->search);
@@ -1030,7 +1035,8 @@ class FacilityController extends Controller
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal"))
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'location.created_at')
+            ->havingRaw('unitTotal > ?', [0]);
 
         if ($request->search || $request->search == 0) {
             $data = $data->having(DB::raw('IFNULL(count(facility_unit.unitName),0)'), '=', $request->search);
