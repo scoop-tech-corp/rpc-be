@@ -148,6 +148,13 @@ class ProductClinicController
 
     public function create(Request $request)
     {
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
         $validate = Validator::make($request->all(), [
             'fullName' => 'required|string|max:30',
             'simpleName' => 'nullable|string',
