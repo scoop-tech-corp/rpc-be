@@ -12,7 +12,7 @@ if (!function_exists('adminAccess')) {
             ->where('u.id', '=', $id)
             ->first();
 
-        if ($user != "admin") {
+        if ($user != "Administrator") {
             return false;
         } else {
             return true;
