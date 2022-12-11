@@ -9,10 +9,11 @@ if (!function_exists('adminAccess')) {
     {
         $user = DB::table('users as u')
             ->join('users_role as ur', 'ur.id', 'u.role')
+            ->select('u.id','ur.roleName')
             ->where('u.id', '=', $id)
             ->first();
 
-        if ($user != "Administrator") {
+        if ($user->roleName != "Administrator") {
             return false;
         } else {
             return true;
