@@ -27,6 +27,7 @@ class ProductInventoryController
                 'p.id',
                 'p.requirementName',
                 'p.locationId',
+                'p.totalItem',
                 'loc.locationName as locationName',
                 'p.isApprovedOffice',
                 DB::raw("IFNULL(uOff.name,'') as officeApprovedBy"),
@@ -449,6 +450,7 @@ class ProductInventoryController
 
             $prod =  ProductInventory::create([
                 'requirementName' => $request->requirementName,
+                'totalItem' => count($ResultProducts),
                 'locationId' => $request->locationId,
                 'userId' => $request->user()->id,
             ]);

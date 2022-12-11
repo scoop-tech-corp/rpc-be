@@ -18,6 +18,7 @@ return new class extends Migration
 
             $table->string('requirementName');
             $table->integer('locationId');
+            $table->integer('totalItem');
             $table->integer('isApprovedOffice')->default(0);
             $table->integer('isApprovedAdmin')->default(0);
 
