@@ -34,7 +34,7 @@ class ProductInventoryController
                 'p.isApprovedAdmin',
                 DB::raw("IFNULL(uAdm.name,'') as adminApprovedBy"),
                 'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y') as createdAt")
+                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             );
 
         if ($request->search) {
@@ -115,7 +115,7 @@ class ProductInventoryController
                 'p.isApprovedAdmin',
                 DB::raw("IFNULL(p.reasonOffice,'') as Reason"),
                 'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y') as createdAt")
+                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             )
             ->whereIn('p.isApprovedOffice', array(1, 2));
 
@@ -177,7 +177,7 @@ class ProductInventoryController
                 'p.isApprovedOffice',
                 'p.isApprovedAdmin',
                 'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y') as createdAt")
+                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             )
             ->where('p.isApprovedOffice', '=', 1)
             ->where('p.isApprovedAdmin', '=', 0);
@@ -237,7 +237,7 @@ class ProductInventoryController
                 'p.isApprovedOffice',
                 'p.isApprovedAdmin',
                 'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y') as createdAt")
+                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             )
             ->where('p.isApprovedOffice', '=', 0);
 
@@ -300,7 +300,7 @@ class ProductInventoryController
                 'p.isApprovedAdmin',
                 DB::raw("IFNULL(p.reasonAdmin,'') as Reason"),
                 'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y') as createdAt")
+                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             )
             ->where('p.isApprovedOffice', '=', 1)
             ->whereIn('p.isApprovedAdmin', array(1, 2));
@@ -364,15 +364,17 @@ class ProductInventoryController
 
                 $prodDetail = DB::table('productInventoryLists as pi')
                     ->join('productSells as p', 'p.id', 'pi.productId')
+                    ->join('usages as u', 'u.id', 'pi.usageId')
                     ->select(
                         'pi.id',
                         'pi.productType',
                         'pi.productId',
                         'p.fullName as productName',
-                        'pi.usage',
+                        'pi.usageId',
+                        'u.usage',
                         'pi.quantity'
                     )
-                    ->where('productInventoryId', '=', $request->id)
+                    ->where('pi.productInventoryId', '=', $request->id)
                     ->get();
 
                 $result = $prodDetail;
@@ -380,15 +382,17 @@ class ProductInventoryController
 
                 $prodDetail = DB::table('productInventoryLists as pi')
                     ->join('productClinics as p', 'p.id', 'pi.productId')
+                    ->join('usages as u', 'u.id', 'pi.usageId')
                     ->select(
                         'pi.id',
                         'pi.productType',
                         'pi.productId',
                         'p.fullName as productName',
-                        'pi.usage',
+                        'pi.usageId',
+                        'u.usage',
                         'pi.quantity'
                     )
-                    ->where('productInventoryId', '=', $request->id)
+                    ->where('pi.productInventoryId', '=', $request->id)
                     ->get();
 
                 $result = $prodDetail;
@@ -425,14 +429,14 @@ class ProductInventoryController
             [
                 '*.productType' => 'required|string',
                 '*.productId' => 'required|integer',
-                '*.usage' => 'required|string',
+                '*.usageId' => 'required|integer',
                 '*.quantity' => 'required|integer',
             ],
             [
-                '*.productType.string' => 'Location Id Should be Integer!',
-                '*.productId.integer' => 'In Stock Should be Integer',
-                '*.usage.string' => 'Low Stock Should be Integer',
-                '*.quantity.integer' => 'Restock Limit Should be Integer'
+                '*.productType.string' => 'Product Type Should be String!',
+                '*.productId.integer' => 'Product Id Should be Integer',
+                '*.usage.integer' => 'Usage Should be Integer',
+                '*.quantity.integer' => 'Quantity Should be Integer'
             ]
         );
 
@@ -461,7 +465,7 @@ class ProductInventoryController
                     'productInventoryId' => $prod->id,
                     'productType' => $value['productType'],
                     'productId' => $value['productId'],
-                    'usage' => $value['usage'],
+                    'usageId' => $value['usageId'],
                     'quantity' => $value['quantity'],
                     'userId' => $request->user()->id,
                 ]);

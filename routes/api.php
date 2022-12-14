@@ -105,6 +105,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('product/sell/dropdown', [ProductController::class, 'IndexProductSell']);
     Route::get('product/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
 
+    Route::post('product/usage', [ProductController::class, 'CreateUsage']);
+    Route::get('product/usage', [ProductController::class, 'IndexUsage']);
+
     //MODULE CUSTOMER
     //customer group
     Route::get('customer/group', [CustomerController::class, 'Index']);
