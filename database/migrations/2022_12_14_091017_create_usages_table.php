@@ -13,15 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('productInventoryLists', function (Blueprint $table) {
+        Schema::create('usages', function (Blueprint $table) {
             $table->id();
 
-            $table->integer('productInventoryId');
-
-            $table->string('productType');
-            $table->integer('productId');
-            $table->integer('usageId');
-            $table->integer('quantity');
+            $table->string('usage');
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');
@@ -39,6 +34,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('productInventoryLists');
+        Schema::dropIfExists('usages');
     }
 };

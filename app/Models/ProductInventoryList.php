@@ -15,6 +15,6 @@ class ProductInventoryList extends Model
 
     protected $fillable = [
         'productInventoryId', 'productType', 'productId',
-        'usage', 'quantity', 'userId', 'userUpdateId'
+        'usageId', 'quantity', 'userId', 'userUpdateId'
     ];
 }

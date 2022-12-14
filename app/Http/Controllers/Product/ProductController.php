@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Product;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
 use App\Models\ProductSupplier;
+use App\Models\usages;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Validator;
@@ -202,7 +203,7 @@ class ProductController
         if ($request->id) {
 
             $data = DB::table('productSells as ps')
-                ->join('productSellLocations as pl','ps.id','pl.productSellId')
+                ->join('productSellLocations as pl', 'ps.id', 'pl.productSellId')
                 ->select('ps.id', 'ps.fullName')
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.status', '=', 1)
@@ -210,8 +211,7 @@ class ProductController
                 ->get();
 
             return response()->json($data, 200);
-        }
-        else{
+        } else {
 
             return response()->json([
                 'message' => 'The given data was invalid.',
@@ -222,11 +222,11 @@ class ProductController
 
     public function IndexProductClinic(Request $request)
     {
-        
+
         if ($request->id) {
 
             $data = DB::table('productClinics as p')
-                ->join('productClinicLocations as pl','p.id','pl.productClinicId')
+                ->join('productClinicLocations as pl', 'p.id', 'pl.productClinicId')
                 ->select('p.id', 'p.fullName')
                 ->where('p.isDeleted', '=', 0)
                 ->where('p.status', '=', 1)
@@ -234,12 +234,63 @@ class ProductController
                 ->get();
 
             return response()->json($data, 200);
-        }
-        else{
+        } else {
 
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => ['Id is invalid!'],
+            ], 422);
+        }
+    }
+
+    public function IndexUsage(Request $request)
+    {
+
+        $data = DB::table('usages as u')
+            ->select('u.id', 'u.usage')
+            ->where('u.isDeleted', '=', 0)
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function CreateUsage(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'usage' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $checkIfValueExits = DB::table('usages')
+            ->where('usage', '=', $request->usage)
+            ->first();
+
+        if ($checkIfValueExits === null) {
+
+            usages::create([
+                'usage' => $request->usage,
+                'userId' => $request->user()->id,
+            ]);
+
+            return response()->json(
+                [
+                    'message' => 'Insert Data Successful!',
+                ],
+                200
+            );
+        } else {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Category Name already exists!'],
             ], 422);
         }
     }
