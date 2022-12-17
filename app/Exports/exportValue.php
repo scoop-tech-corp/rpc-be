@@ -2,53 +2,48 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\WithTitle;
-use App\Models\Location;
 use DB;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class exportValue implements FromCollection, WithHeadings, WithTitle
+class exportValue implements FromCollection, WithHeadings, WithTitle, ShouldAutoSize
 {
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return \Illuminate\Support\Collection
+     */
     public function collection()
     {
-     
 
-        $data = DB::table('location')
-        ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
-        ->leftjoin('location_telephone', 'location_telephone.codeLocation', '=', 'location.codeLocation')
-        ->leftjoin('kabupaten', 'kabupaten.kodeKabupaten', '=', 'location_detail_address.cityCode')
-        ->select('location.id as id',
-                 'location.codeLocation as codeLocation',
-                 'location.locationName as locationName',
-                 'location_detail_address.addressName as addressName',
-                 'kabupaten.namaKabupaten as cityName',
-         DB::raw("CONCAT(location_telephone.phoneNumber ,' ', location_telephone.usage) as phoneNumber"),
-         DB::raw("CASE WHEN location.status=1 then 'Active' else 'Non Active' end as status" ),)
-       ->where([['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'],
-                ['location.isDeleted', '=', '0'],
-               ])
-        ->get();
+        $data = DB::SELECT('select
+                            ROW_NUMBER() OVER(ORDER BY a.created_at DESC ) AS ID,
+                            a.locationName,
+                            b.addressName,
+                            d.namaKabupaten,
+                            CONCAT(c.phoneNumber ,\' \', c.usage) as phoneNumber,
+                            CASE WHEN a.status=1 then \'Active\' else \'Non Active\' end as status
+                            from location a
+                            left join location_detail_address b on b.codeLocation=a.codeLocation
+                            left join location_telephone c on c.codeLocation=a.codeLocation
+                            left join kabupaten d on d.kodeKabupaten=b.cityCode
+                            where b.isPrimary= ? and c.usage=? and a.isDeleted=?',
+                            [1, 'utama', 0],
+        );
+
         return collect($data);
     }
 
     public function headings(): array
     {
-       return [
-         'No',
-         'Location Code',
-         'Location Name',
-         'Address',
-         'CityName',
-         'Phone Number',
-         'Status'
-       ];
+        return [
+            'No',
+            'Location Name',
+            'Address',
+            'CityName',
+            'Phone Number',
+            'Status',
+        ];
     }
 
     public function title(): string
