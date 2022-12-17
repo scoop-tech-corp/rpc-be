@@ -23,6 +23,13 @@ class LocationController extends Controller
     public function deleteLocation(Request $request)
     {
 
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
         $validate = Validator::make($request->all(), [
             'codeLocation' => 'required',
         ]);
@@ -40,13 +47,13 @@ class LocationController extends Controller
 
         try
         {
-           
+
             $data_item = [];
             foreach ($request->codeLocation as $val) {
 
                 $checkIfDataExits = DB::table('location')
                     ->where([['codeLocation', '=', $val],
-                             ['isDeleted', '=', '0']])
+                        ['isDeleted', '=', '0']])
                     ->first();
 
                 if (!$checkIfDataExits) {
@@ -54,7 +61,6 @@ class LocationController extends Controller
                 }
 
             }
-
 
             if ($data_item) {
                 return response()->json([
@@ -239,11 +245,18 @@ class LocationController extends Controller
         try
         {
 
+            if (!adminAccess($request->user()->id)) {
+                return response()->json([
+                    'message' => 'The user role was invalid.',
+                    'errors' => ['User Access not Authorize!'],
+                ], 403);
+            }
+    
             $messages = [
                 'locationName.required' => 'Please insert location name, location name is required',
                 'locationName.max' => 'Exceeded maximum character, max character for location name is 50',
                 'status.required' => 'Please insert status location, status location is required',
-                'description.required' => 'Please insert description location, description location is required',
+                'description.required' => 'Overview on Tab Description is required!',
             ];
 
             $validate = Validator::make($request->all(),
@@ -260,7 +273,53 @@ class LocationController extends Controller
                 ], 422);
             }
 
+
+            if ($request->detailAddress) {
+
+                $messageAddress = [
+                    '*.addressName.required' => 'Address name on tab Address is required',
+                    '*.provinceCode.required' => 'Province code on tab Address is required',
+                    '*.cityCode.required' => 'City code on tab Address is required',
+                    '*.country.required' => 'Country on tab Address is required',
+                ];
+
+                $validateDetail = Validator::make(
+                    $request->detailAddress,
+                    [
+                        '*.addressName' => 'required',
+                        '*.provinceCode' => 'required',
+                        '*.cityCode' => 'required',
+                        '*.country' => 'required',
+                    ], $messageAddress
+                );
+
+                if ($validateDetail->fails()) {
+                    $errorsdetail = $validateDetail->errors()->all();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errorsdetail,
+                    ], 422);
+                }
+
+            } else {
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
+                ], 422);
+
+            }
+
+
+
             if ($request->telephone) {
+
+                $messagePhone = [
+                    '*.phoneNumber.required' => 'Phone Number on tab telephone is required',
+                    '*.type.required' => 'Type on tab telephone is required',
+                    '*.usage.required' => 'Usage on tab telephone is required',
+                ];
 
                 $telephoneDetail = Validator::make(
                     $request->telephone,
@@ -268,7 +327,7 @@ class LocationController extends Controller
                         '*.phoneNumber' => 'required',
                         '*.type' => 'required',
                         '*.usage' => 'required',
-                    ]
+                    ],$messagePhone
                 );
 
                 if ($telephoneDetail->fails()) {
@@ -284,12 +343,17 @@ class LocationController extends Controller
 
             if ($request->email) {
 
+                $messageEmail = [
+                    '*.username.required' => 'username on tab email is required',
+                    '*.usage.required' => 'Usage on tab email is required',
+                ];
+
                 $emailDetail = Validator::make(
                     $request->email,
                     [
                         '*.username' => 'required',
                         '*.usage' => 'required',
-                    ]
+                    ],$messageEmail
                 );
 
                 if ($emailDetail->fails()) {
@@ -305,13 +369,19 @@ class LocationController extends Controller
 
             if ($request->messenger) {
 
+                $messageMessenger = [
+                    '*.messengerNumber.required' => 'messenger number on tab messenger is required',
+                    '*.type.required' => 'Type on tab messenger is required',
+                    '*.usage.required' => 'Usage on tab messenger is required',
+                ];
+
                 $messengerDetail = Validator::make(
                     $request->messenger,
                     [
                         '*.messengerNumber' => 'required',
                         '*.type' => 'required',
                         '*.usage' => 'required',
-                    ]
+                    ], $messageMessenger
                 );
 
                 if ($messengerDetail->fails()) {
@@ -324,6 +394,8 @@ class LocationController extends Controller
                 }
 
             }
+
+
 
             DB::table('location')
                 ->where('codeLocation', '=', $request->input('codeLocation'))
@@ -461,13 +533,21 @@ class LocationController extends Controller
         try
         {
 
+            if (!adminAccess($request->user()->id)) {
+                return response()->json([
+                    'message' => 'The user role was invalid.',
+                    'errors' => ['User Access not Authorize!'],
+                ], 403);
+            }
+    
+
             $getvaluesp = strval(collect(DB::select('call generate_codeLocation'))[0]->randomString);
 
             $messages = [
                 'locationName.required' => 'Please insert location name, location name is required',
                 'locationName.max' => 'Exceeded maximum character, max character for location name is 50',
                 'status.required' => 'Please insert status location, status location is required',
-                'description.required' => 'Please insert description location, description location is required',
+                'description.required' => 'Overview on Tab Description is required!',
             ];
 
             $validate = Validator::make($request->all(),
@@ -500,6 +580,13 @@ class LocationController extends Controller
 
                 $arrayDetailAddress = json_decode($request->detailAddress, true);
 
+                $messageAddress = [
+                    '*.addressName.required' => 'Address name on tab Address is required',
+                    '*.provinceCode.required' => 'Province code on tab Address is required',
+                    '*.cityCode.required' => 'City code on tab Address is required',
+                    '*.country.required' => 'Country on tab Address is required',
+                ];
+
                 $validateDetail = Validator::make(
                     $arrayDetailAddress,
                     [
@@ -507,7 +594,7 @@ class LocationController extends Controller
                         '*.provinceCode' => 'required',
                         '*.cityCode' => 'required',
                         '*.country' => 'required',
-                    ]
+                    ], $messageAddress
                 );
 
                 if ($validateDetail->fails()) {
@@ -532,13 +619,19 @@ class LocationController extends Controller
 
                 $arraytelephone = json_decode($request->telephone, true);
 
+                $messagePhone = [
+                    '*.phoneNumber.required' => 'Phone Number on tab telephone is required',
+                    '*.type.required' => 'Type on tab telephone is required',
+                    '*.usage.required' => 'Usage on tab telephone is required',
+                ];
+
                 $telephoneDetail = Validator::make(
                     $arraytelephone,
                     [
                         '*.phoneNumber' => 'required',
                         '*.type' => 'required',
                         '*.usage' => 'required',
-                    ]
+                    ], $messagePhone
                 );
 
                 if ($telephoneDetail->fails()) {
@@ -556,12 +649,17 @@ class LocationController extends Controller
 
                 $arrayemail = json_decode($request->email, true);
 
+                $messageEmail = [
+                    '*.username.required' => 'username on tab email is required',
+                    '*.usage.required' => 'Usage on tab email is required',
+                ];
+
                 $emailDetail = Validator::make(
                     $arrayemail,
                     [
                         '*.username' => 'required',
                         '*.usage' => 'required',
-                    ]
+                    ], $messageEmail
                 );
 
                 if ($emailDetail->fails()) {
@@ -579,13 +677,19 @@ class LocationController extends Controller
 
                 $arraymessenger = json_decode($request->messenger, true);
 
+                $messageMessenger = [
+                    '*.messengerNumber.required' => 'messenger number on tab messenger is required',
+                    '*.type.required' => 'Type on tab messenger is required',
+                    '*.usage.required' => 'Usage on tab messenger is required',
+                ];
+
                 $messengerDetail = Validator::make(
                     $arraymessenger,
                     [
                         '*.messengerNumber' => 'required',
                         '*.type' => 'required',
                         '*.usage' => 'required',
-                    ]
+                    ], $messageMessenger
                 );
 
                 if ($messengerDetail->fails()) {
@@ -601,7 +705,7 @@ class LocationController extends Controller
 
             $flag = false;
 
-             if ($request->hasfile('images')) {
+            if ($request->hasfile('images')) {
 
                 $flag = true;
 
@@ -637,7 +741,6 @@ class LocationController extends Controller
 
             }
 
-
             if ($flag == true) {
                 if ($request->imagesName) {
                     $ResultImageDatas = json_decode($request->imagesName, true);
@@ -669,9 +772,6 @@ class LocationController extends Controller
                 }
             }
 
-
-
-
             //INSERT
             DB::table('location')->insert(['codeLocation' => $getvaluesp,
                 'locationName' => $request->input('locationName'),
@@ -699,9 +799,6 @@ class LocationController extends Controller
                         ]);
                 }
             }
-
-
-             
 
             if ($request->hasfile('images')) {
 
@@ -736,8 +833,6 @@ class LocationController extends Controller
                 }
 
             }
-
-
 
             if ($request->operationalHour) {
 
