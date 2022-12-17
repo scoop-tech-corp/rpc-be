@@ -112,19 +112,4 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //customer group
     Route::get('customer/group', [CustomerController::class, 'Index']);
     Route::post('customer/group', [CustomerController::class, 'Create']);
-
-
-    //staff
-    Route::post('staff', [StaffController::class, 'insertStaff']);
-    Route::delete('staff', [StaffController::class, 'deleteStaff']);
-    Route::post('send', [StaffController::class, 'sendEmail']);
-    Route::get('rolestaff', [StaffController::class, 'getRoleStaff']);
-    Route::get('locationstaff', [StaffController::class, 'getLocationStaff']);
-    Route::get('staffdetail', [StaffController::class, 'getDetailStaff']);
-    Route::put('staff', [StaffController::class, 'updateStaff']);
-    Route::get('staff', [StaffController::class, 'index']);
-    Route::get('staffimages', [StaffController::class, 'searchImageStaff']);
-    Route::get('exportstaff', [StaffController::class, 'exportStaff']);
-    Route::post('imageStaff', [StaffController::class, 'uploadImageStaff']);
-
 });
