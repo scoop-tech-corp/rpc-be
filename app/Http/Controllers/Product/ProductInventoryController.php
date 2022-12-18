@@ -97,7 +97,7 @@ class ProductInventoryController
         }
     }
 
-    public function indexHistoryOffice(Request $request)
+    public function indexHistory(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
 
@@ -116,8 +116,14 @@ class ProductInventoryController
                 DB::raw("IFNULL(p.reasonOffice,'') as Reason"),
                 'u.name as createdBy',
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
-            )
-            ->whereIn('p.isApprovedOffice', array(1, 2));
+            );
+
+        if ($request->user()->role == 'admin') {
+            $data = $data->where('p.isApprovedOffice', '=', 1)
+                ->whereIn('p.isApprovedAdmin', array(1, 2));
+        } elseif ($request->user()->role == 'office') {
+            $data = $data->whereIn('p.isApprovedOffice', array(1, 2));
+        }
 
         if ($request->search) {
             $res = $this->SearchOffice($request);
@@ -158,9 +164,10 @@ class ProductInventoryController
     }
 
     public function SearchOffice(Request $request)
-    { }
+    {
+    }
 
-    public function indexAdmin(Request $request)
+    public function indexApproval(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
 
@@ -178,9 +185,16 @@ class ProductInventoryController
                 'p.isApprovedAdmin',
                 'u.name as createdBy',
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
-            )
-            ->where('p.isApprovedOffice', '=', 1)
-            ->where('p.isApprovedAdmin', '=', 0);
+            );
+
+        if ($request->user()->role == 'admin') {
+            $data = $data->where('p.isApprovedOffice', '=', 1)
+                ->where('p.isApprovedAdmin', '=', 0);
+        } elseif ($request->user()->role == 'office') {
+            $data = $data->where('p.isApprovedOffice', '=', 0);
+        }
+
+
 
         if ($request->search) {
             $res = $this->SearchAdmin($request);
@@ -280,7 +294,8 @@ class ProductInventoryController
     }
 
     public function SearchAdmin(Request $request)
-    { }
+    {
+    }
 
     public function indexHistoryAdmin(Request $request)
     {
@@ -490,45 +505,10 @@ class ProductInventoryController
     }
 
     public function update(Request $request)
-    { }
-
-    public function updateOffice(Request $request)
     {
-        $prod = ProductInventory::find($request->id);
-
-        if (!$prod) {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Product Inventory Request not found!'],
-            ], 422);
-        }
-
-        if ($request->status == 2 && $request->reason == "") {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Reason should be filled when to set reject!'],
-            ], 422);
-        }
-
-        ProductInventory::where('id', '=', $request->id)
-            ->update(
-                [
-                    'userApproveOfficeId' => $request->user()->id,
-                    'isApprovedOffice' => $request->status,
-                    'reasonOffice' => $request->reason,
-                    'userApproveOfficeAt' => Carbon::now()
-                ]
-            );
-
-        return response()->json(
-            [
-                'message' => 'Update Status Successful!',
-            ],
-            200
-        );
     }
 
-    public function updateAdmin(Request $request)
+    public function updateApproval(Request $request)
     {
         $prod = ProductInventory::find($request->id);
 
@@ -546,15 +526,27 @@ class ProductInventoryController
             ], 422);
         }
 
-        ProductInventory::where('id', '=', $request->id)
-            ->update(
-                [
-                    'userApproveAdminId' => $request->user()->id,
-                    'isApprovedAdmin' => $request->status,
-                    'reasonAdmin' => $request->reason,
-                    'userApproveAdminAt' => Carbon::now()
-                ]
-            );
+        if ($request->user()->role == 'office') {
+            ProductInventory::where('id', '=', $request->id)
+                ->update(
+                    [
+                        'userApproveOfficeId' => $request->user()->id,
+                        'isApprovedOffice' => $request->status,
+                        'reasonOffice' => $request->reason,
+                        'userApproveOfficeAt' => Carbon::now()
+                    ]
+                );
+        } elseif ($request->user()->role == 'admin') {
+            ProductInventory::where('id', '=', $request->id)
+                ->update(
+                    [
+                        'userApproveAdminId' => $request->user()->id,
+                        'isApprovedAdmin' => $request->status,
+                        'reasonAdmin' => $request->reason,
+                        'userApproveAdminAt' => Carbon::now()
+                    ]
+                );
+        }
 
         return response()->json(
             [
@@ -565,5 +557,6 @@ class ProductInventoryController
     }
 
     public function delete(Request $request)
-    { }
+    {
+    }
 }
