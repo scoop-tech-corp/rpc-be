@@ -91,8 +91,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('product/inventory', [ProductInventoryController::class, 'create']);
 
     Route::put('product/inventory', [ProductInventoryController::class, 'update']);
-    Route::put('product/inventory/office', [ProductInventoryController::class, 'updateOffice']);
-    Route::put('product/inventory/admin', [ProductInventoryController::class, 'updateAdmin']);
+    Route::put('product/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
     
     Route::delete('product/inventory', [ProductInventoryController::class, 'delete']);
 

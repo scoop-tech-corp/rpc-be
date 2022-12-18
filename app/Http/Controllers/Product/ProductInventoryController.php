@@ -118,10 +118,10 @@ class ProductInventoryController
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             );
 
-        if ($request->user()->role == 'admin') {
+        if ($request->user()->role == 'Admin') {
             $data = $data->where('p.isApprovedOffice', '=', 1)
                 ->whereIn('p.isApprovedAdmin', array(1, 2));
-        } elseif ($request->user()->role == 'office') {
+        } elseif ($request->user()->role == 'Office') {
             $data = $data->whereIn('p.isApprovedOffice', array(1, 2));
         }
 
@@ -187,10 +187,10 @@ class ProductInventoryController
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             );
 
-        if ($request->user()->role == 'admin') {
+        if ($request->user()->role == 'Admin') {
             $data = $data->where('p.isApprovedOffice', '=', 1)
                 ->where('p.isApprovedAdmin', '=', 0);
-        } elseif ($request->user()->role == 'office') {
+        } elseif ($request->user()->role == 'Office') {
             $data = $data->where('p.isApprovedOffice', '=', 0);
         }
 
@@ -526,7 +526,7 @@ class ProductInventoryController
             ], 422);
         }
 
-        if ($request->user()->role == 'office') {
+        if ($request->user()->role == 'Office') {
             ProductInventory::where('id', '=', $request->id)
                 ->update(
                     [
@@ -536,7 +536,7 @@ class ProductInventoryController
                         'userApproveOfficeAt' => Carbon::now()
                     ]
                 );
-        } elseif ($request->user()->role == 'admin') {
+        } elseif ($request->user()->role == 'Admin') {
             ProductInventory::where('id', '=', $request->id)
                 ->update(
                     [
