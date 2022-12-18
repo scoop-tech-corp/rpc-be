@@ -83,10 +83,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::delete('product/clinic', [ProductClinicController::class, 'Delete']);
 
     Route::get('product/inventory', [ProductInventoryController::class, 'index']);
-    Route::get('product/inventory/history/office', [ProductInventoryController::class, 'indexHistoryOffice']);
-    Route::get('product/inventory/history/admin', [ProductInventoryController::class, 'indexHistoryAdmin']);
-    Route::get('product/inventory/admin', [ProductInventoryController::class, 'indexAdmin']);
-    Route::get('product/inventory/office', [ProductInventoryController::class, 'indexOffice']);
+    Route::get('product/inventory/history', [ProductInventoryController::class, 'indexHistory']);
+    Route::get('product/inventory/approval', [ProductInventoryController::class, 'indexApproval']);
     
     Route::get('product/inventory/detail', [ProductInventoryController::class, 'detail']);
 

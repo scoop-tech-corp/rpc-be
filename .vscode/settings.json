@@ -1,0 +1,4 @@
+{
+    "intelephense.diagnostics.typeErrors": false,
+    "intelephense.diagnostics.undefinedTypes": false
+}
