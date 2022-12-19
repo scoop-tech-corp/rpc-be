@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use Validator;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class ProductInventoryController
 {
     public function index(Request $request)
     {
+
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
@@ -75,7 +77,7 @@ class ProductInventoryController
         ], 200);
     }
 
-    public function Search(Request $request)
+    public function Search($request)
     {
         $temp_column = '';
 
@@ -118,15 +120,15 @@ class ProductInventoryController
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             );
 
-        if ($request->user()->role == 'Admin') {
+        if (role($request->user()->id) == 'Administrator') {
             $data = $data->where('p.isApprovedOffice', '=', 1)
                 ->whereIn('p.isApprovedAdmin', array(1, 2));
-        } elseif ($request->user()->role == 'Office') {
+        } elseif (role($request->user()->id) == 'Office') {
             $data = $data->whereIn('p.isApprovedOffice', array(1, 2));
         }
 
         if ($request->search) {
-            $res = $this->SearchOffice($request);
+            $res = $this->SearchHistory($request);
             if ($res) {
                 $data = $data->where($res, 'like', '%' . $request->search . '%');
             } else {
@@ -163,7 +165,7 @@ class ProductInventoryController
         ], 200);
     }
 
-    public function SearchOffice(Request $request)
+    public function SearchHistory($request)
     {
     }
 
@@ -187,17 +189,15 @@ class ProductInventoryController
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             );
 
-        if ($request->user()->role == 'Admin') {
+        if (role($request->user()->id) == 'Administrator') {
             $data = $data->where('p.isApprovedOffice', '=', 1)
                 ->where('p.isApprovedAdmin', '=', 0);
-        } elseif ($request->user()->role == 'Office') {
+        } elseif (role($request->user()->id) == 'Office') {
             $data = $data->where('p.isApprovedOffice', '=', 0);
         }
 
-
-
         if ($request->search) {
-            $res = $this->SearchAdmin($request);
+            $res = $this->SearchApproval($request);
             if ($res) {
                 $data = $data->where($res, 'like', '%' . $request->search . '%');
             } else {
@@ -234,128 +234,9 @@ class ProductInventoryController
         ], 200);
     }
 
-    public function indexOffice(Request $request)
+    public function SearchApproval($request)
     {
-        $itemPerPage = $request->rowPerPage;
-
-        $page = $request->goToPage;
-
-        $data = DB::table('productInventories as p')
-            ->join('users as u', 'p.userId', 'u.id')
-            ->join('location as loc', 'loc.Id', 'p.locationId')
-            ->select(
-                'p.id',
-                'p.requirementName',
-                'p.locationId',
-                'loc.locationName as locationName',
-                'p.isApprovedOffice',
-                'p.isApprovedAdmin',
-                'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
-            )
-            ->where('p.isApprovedOffice', '=', 0);
-
-        if ($request->search) {
-            $res = $this->searchOffice($request);
-            if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
-            } else {
-                $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
-            }
-        }
-
-        if ($request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
-        }
-
-        $data = $data->orderBy('p.id', 'desc');
-
-        $offset = ($page - 1) * $itemPerPage;
-
-        $count_data = $data->count();
-        $count_result = $count_data - $offset;
-
-        if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
-        } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
-        }
-
-        $totalPaging = $count_data / $itemPerPage;
-
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
-    }
-
-    public function SearchAdmin(Request $request)
-    {
-    }
-
-    public function indexHistoryAdmin(Request $request)
-    {
-        $itemPerPage = $request->rowPerPage;
-
-        $page = $request->goToPage;
-
-        $data = DB::table('productInventories as p')
-            ->join('users as u', 'p.userId', 'u.id')
-            ->join('location as loc', 'loc.Id', 'p.locationId')
-            ->select(
-                'p.id',
-                'p.requirementName',
-                'p.locationId',
-                'loc.locationName as locationName',
-                'p.isApprovedOffice',
-                'p.isApprovedAdmin',
-                DB::raw("IFNULL(p.reasonAdmin,'') as Reason"),
-                'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
-            )
-            ->where('p.isApprovedOffice', '=', 1)
-            ->whereIn('p.isApprovedAdmin', array(1, 2));
-
-        if ($request->search) {
-            $res = $this->SearchAdmin($request);
-            if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
-            } else {
-                $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
-            }
-        }
-
-        if ($request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
-        }
-
-        $data = $data->orderBy('p.id', 'desc');
-
-        $offset = ($page - 1) * $itemPerPage;
-
-        $count_data = $data->count();
-        $count_result = $count_data - $offset;
-
-        if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
-        } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
-        }
-
-        $totalPaging = $count_data / $itemPerPage;
-
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
+        # code...
     }
 
     public function detail(Request $request)
@@ -525,8 +406,14 @@ class ProductInventoryController
                 'errors' => ['Reason should be filled when to set reject!'],
             ], 422);
         }
+        elseif ($request->status == 1 && $request->reason != "") {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Reason should be empty when to set approve!'],
+            ], 422);
+        }
 
-        if ($request->user()->role == 'Office') {
+        if (role($request->user()->id) == 'Office') {
             ProductInventory::where('id', '=', $request->id)
                 ->update(
                     [
@@ -536,7 +423,7 @@ class ProductInventoryController
                         'userApproveOfficeAt' => Carbon::now()
                     ]
                 );
-        } elseif ($request->user()->role == 'Admin') {
+        } elseif (role($request->user()->id) == 'Administrator') {
             ProductInventory::where('id', '=', $request->id)
                 ->update(
                     [
@@ -546,6 +433,16 @@ class ProductInventoryController
                         'userApproveAdminAt' => Carbon::now()
                     ]
                 );
+        }
+
+        if ($prod->isApprovedAdmin == 1 && $prod->isApprovedOffice == 1) {
+            // update untuk mengurangi stok barang
+            $prodList = ProductInventoryList::where('ProductInventoryId', '=', $request->id)->get();
+
+            foreach ($prodList as $value) {
+
+                // return $value['productType'];
+            }
         }
 
         return response()->json(
@@ -558,5 +455,44 @@ class ProductInventoryController
 
     public function delete(Request $request)
     {
+
+        foreach ($request->id as $va) {
+
+            $prod = ProductInventory::find($va);
+
+            if (!$prod) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Product Inventory Request not found!'],
+                ], 422);
+            }
+        }
+
+        foreach ($request->id as $va) {
+
+            $prod = ProductInventory::find($va);
+
+            $prodList = ProductInventoryList::where('ProductInventoryId', '=', $prod->id)->get();
+
+            if ($prodList) {
+
+                ProductInventoryList::where('ProductSellId', '=', $prodList->id)
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            }
+
+            $prodList->DeletedBy = $request->user()->id;
+            $prodList->isDeleted = true;
+            $prodList->DeletedAt = Carbon::now();
+        }
+
+        return response()->json([
+            'message' => 'Delete Data Successful',
+        ], 200);
     }
 }

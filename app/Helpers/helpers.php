@@ -89,3 +89,16 @@ if (!function_exists('intershipAccess')) {
         }
     }
 }
+
+if (!function_exists('role')) {
+    function role($id)
+    {
+        $user = DB::table('users as u')
+            ->join('users_role as ur', 'ur.id', 'u.role')
+            ->select('u.id','ur.roleName')
+            ->where('u.id', '=', $id)
+            ->first();
+
+        return $user->roleName;
+    }
+}
