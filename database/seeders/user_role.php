@@ -21,6 +21,7 @@ class user_role extends Seeder
             [ 'roleName' => 'Staff','isActive' =>1,'created_at' => now()],
             [ 'roleName' => 'Customer','isActive' =>1,'created_at' => now()],
             [ 'roleName' => 'Intership','isActive' =>1,'created_at' => now()],
+            [ 'roleName' => 'Office','isActive' =>1,'created_at' => now()],
         ];
         DB::table('users_role')->insert($userRole); 
 
