@@ -31,10 +31,17 @@ class ProductInventoryController
                 'p.locationId',
                 'p.totalItem',
                 'loc.locationName as locationName',
+                
                 'p.isApprovedOffice',
                 DB::raw("IFNULL(uOff.name,'') as officeApprovedBy"),
+                DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:00'),'') as officeApprovedAt"),
+                DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
+
                 'p.isApprovedAdmin',
                 DB::raw("IFNULL(uAdm.name,'') as adminApprovedBy"),
+                DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:00'),'') as adminApprovedAt"),
+                DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
+
                 'u.name as createdBy',
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
             );
@@ -105,26 +112,56 @@ class ProductInventoryController
 
         $page = $request->goToPage;
 
-        $data = DB::table('productInventories as p')
-            ->join('users as u', 'p.userId', 'u.id')
-            ->join('location as loc', 'loc.Id', 'p.locationId')
-            ->select(
-                'p.id',
-                'p.requirementName',
-                'p.locationId',
-                'loc.locationName as locationName',
-                'p.isApprovedOffice',
-                'p.isApprovedAdmin',
-                DB::raw("IFNULL(p.reasonOffice,'') as Reason"),
-                'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
-            );
-
         if (role($request->user()->id) == 'Administrator') {
+
+            $data = DB::table('productInventories as p')
+                ->join('users as u', 'p.userId', 'u.id')
+                ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
+                ->leftJoin('users as uAdm', 'p.userApproveAdminId', 'uAdm.id')
+                ->join('location as loc', 'loc.Id', 'p.locationId')
+                ->select(
+                    'p.id',
+                    'p.requirementName',
+                    'p.locationId',
+                    'loc.locationName as locationName',
+                    'p.isApprovedOffice',
+                    'p.isApprovedAdmin',
+                    
+                    DB::raw("IFNULL(uOff.name,'') as officeApprovedBy"),
+                    DB::raw("IFNULL(uAdm.name,'') as adminApprovedBy"),
+                    
+                    DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:00'),'') as officeApprovedAt"),
+                    DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:00'),'') as adminApprovedAt"),
+
+                    DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
+                    DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
+
+                    'u.name as createdBy',
+                    DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
+                );
+
+
             $data = $data->where('p.isApprovedOffice', '=', 1)
                 ->whereIn('p.isApprovedAdmin', array(1, 2));
         } elseif (role($request->user()->id) == 'Office') {
-            $data = $data->whereIn('p.isApprovedOffice', array(1, 2));
+
+            $data = DB::table('productInventories as p')
+                ->join('users as u', 'p.userId', 'u.id')
+                ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
+                ->join('location as loc', 'loc.Id', 'p.locationId')
+                ->select(
+                    'p.id',
+                    'p.requirementName',
+                    'p.locationId',
+                    'loc.locationName as locationName',
+                    'p.isApprovedOffice',
+                    DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
+                    'uOff.name as officeApprovedBy',
+                    'u.name as createdBy',
+                    DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt"),
+                    DB::raw("DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:00') as userApprovedOfficeAt")
+                )
+                ->whereIn('p.isApprovedOffice', array(1, 2));
         }
 
         if ($request->search) {
@@ -175,25 +212,39 @@ class ProductInventoryController
 
         $page = $request->goToPage;
 
-        $data = DB::table('productInventories as p')
-            ->join('users as u', 'p.userId', 'u.id')
-            ->join('location as loc', 'loc.Id', 'p.locationId')
-            ->select(
-                'p.id',
-                'p.requirementName',
-                'p.locationId',
-                'loc.locationName as locationName',
-                'p.isApprovedOffice',
-                'p.isApprovedAdmin',
-                'u.name as createdBy',
-                DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
-            );
-
         if (role($request->user()->id) == 'Administrator') {
-            $data = $data->where('p.isApprovedOffice', '=', 1)
+
+            $data = DB::table('productInventories as p')
+                ->join('users as u', 'p.userId', 'u.id')
+                ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
+                ->join('location as loc', 'loc.Id', 'p.locationId')
+                ->select(
+                    'p.id',
+                    'p.requirementName',
+                    'p.locationId',
+                    'loc.locationName as locationName',
+                    'p.isApprovedOffice',
+                    'uOff.name as officeApprovedBy',
+                    'p.isApprovedAdmin',
+                    'u.name as createdBy',
+                    DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
+                )
+                ->where('p.isApprovedOffice', '=', 1)
                 ->where('p.isApprovedAdmin', '=', 0);
         } elseif (role($request->user()->id) == 'Office') {
-            $data = $data->where('p.isApprovedOffice', '=', 0);
+            $data = DB::table('productInventories as p')
+                ->join('users as u', 'p.userId', 'u.id')
+                ->join('location as loc', 'loc.Id', 'p.locationId')
+                ->select(
+                    'p.id',
+                    'p.requirementName',
+                    'p.locationId',
+                    'loc.locationName as locationName',
+                    'p.isApprovedOffice',
+                    'u.name as createdBy',
+                    DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:00') as createdAt")
+                )
+                ->where('p.isApprovedOffice', '=', 0);
         }
 
         if ($request->search) {
@@ -400,13 +451,26 @@ class ProductInventoryController
             ], 422);
         }
 
+        if(role($request->user()->id) == 'Office' && $prod->isApprovedOffice != 0){
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data has already signed by Office!'],
+            ], 422);
+        }
+
+        if(role($request->user()->id) == 'Administrator' && $prod->isApprovedAdmin != 0){
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data has already signed by Office!'],
+            ], 422);
+        }
+
         if ($request->status == 2 && $request->reason == "") {
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => ['Reason should be filled when to set reject!'],
             ], 422);
-        }
-        elseif ($request->status == 1 && $request->reason != "") {
+        } elseif ($request->status == 1 && $request->reason != "") {
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => ['Reason should be empty when to set approve!'],
