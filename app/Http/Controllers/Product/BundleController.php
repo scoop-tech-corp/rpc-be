@@ -245,7 +245,7 @@ class BundleController
                 DB::raw("DATE_FORMAT(pb.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pb.id', '=', $request->id)
-            ->get();
+            ->first();
 
         $prodDetail = DB::table('productBundleDetails as pbd')
             ->join('productClinics as pc', 'pc.id', 'pbd.productId')
