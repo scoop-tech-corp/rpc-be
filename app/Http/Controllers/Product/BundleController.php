@@ -37,7 +37,11 @@ class BundleController
         if ($request->search) {
             $res = $this->Search($request);
             if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->keyword . '%');
+                }
             } else {
                 $data = [];
                 return response()->json([
@@ -74,6 +78,63 @@ class BundleController
 
     private function Search($request)
     {
+        $data = DB::table('productBundles as pb')
+            ->select(
+                'pb.name',
+            )
+            ->where('pb.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('pb.name', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'pb.name';
+        }
+
+
+        $data = DB::table('productBundles as pb')
+            ->join('users as u', 'pb.userId', 'u.id')
+            ->join('location as loc', 'loc.Id', 'pb.locationId')
+            ->join('productCategories as pc', 'pc.Id', 'pb.categoryId')
+            ->select(
+                'pc.categoryName'
+            )
+            ->where('pb.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('pc.categoryName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'pc.categoryName';
+        }
+
+
+        $data = DB::table('productBundles as pb')
+            ->join('users as u', 'pb.userId', 'u.id')
+            ->join('location as loc', 'loc.Id', 'pb.locationId')
+            ->join('productCategories as pc', 'pc.Id', 'pb.categoryId')
+            ->select(
+                'loc.locationName'
+            )
+            ->where('pb.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('loc.locationName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'loc.locationName';
+        }
+
+        return $temp_column;
     }
 
     public function create(Request $request)
