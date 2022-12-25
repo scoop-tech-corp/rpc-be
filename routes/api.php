@@ -6,6 +6,7 @@ use App\Http\Controllers\DataStaticController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\ImportRegionController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\Product\BundleController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductInventoryController;
@@ -104,6 +105,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::post('product/usage', [ProductController::class, 'CreateUsage']);
     Route::get('product/usage', [ProductController::class, 'IndexUsage']);
+
+    //product bundle
+    Route::get('product/bundle', [BundleController::class, 'index']);
+    Route::get('product/bundle/detail', [BundleController::class, 'detail']);
+    Route::post('product/bundle', [BundleController::class, 'create']);
+    Route::put('product/bundle', [BundleController::class, 'update']);
+    Route::delete('product/bundle', [BundleController::class, 'delete']);
 
     //MODULE CUSTOMER
     //customer group

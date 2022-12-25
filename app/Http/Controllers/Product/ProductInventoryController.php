@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Models\ProductClinic;
+use App\Models\ProductClinicLocation;
 use App\Models\ProductInventory;
 use App\Models\ProductInventoryList;
+use App\Models\ProductSell;
+use App\Models\ProductSellLocation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -31,7 +35,7 @@ class ProductInventoryController
                 'p.locationId',
                 'p.totalItem',
                 'loc.locationName as locationName',
-                
+
                 'p.isApprovedOffice',
                 DB::raw("IFNULL(uOff.name,'') as officeApprovedBy"),
                 DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
@@ -126,10 +130,10 @@ class ProductInventoryController
                     'loc.locationName as locationName',
                     'p.isApprovedOffice',
                     'p.isApprovedAdmin',
-                    
+
                     DB::raw("IFNULL(uOff.name,'') as officeApprovedBy"),
                     DB::raw("IFNULL(uAdm.name,'') as adminApprovedBy"),
-                    
+
                     DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
                     DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
 
@@ -451,19 +455,19 @@ class ProductInventoryController
             ], 422);
         }
 
-        if(role($request->user()->id) == 'Office' && $prod->isApprovedOffice != 0){
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Data has already signed by Office!'],
-            ], 422);
-        }
+        // if (role($request->user()->id) == 'Office' && $prod->isApprovedOffice != 0) {
+        //     return response()->json([
+        //         'message' => 'The given data was invalid.',
+        //         'errors' => ['Data has already signed by Office!'],
+        //     ], 422);
+        // }
 
-        if(role($request->user()->id) == 'Administrator' && $prod->isApprovedAdmin != 0){
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Data has already signed by Office!'],
-            ], 422);
-        }
+        // if (role($request->user()->id) == 'Administrator' && $prod->isApprovedAdmin != 0) {
+        //     return response()->json([
+        //         'message' => 'The given data was invalid.',
+        //         'errors' => ['Data has already signed by Administrator!'],
+        //     ], 422);
+        // }
 
         if ($request->status == 2 && $request->reason == "") {
             return response()->json([
@@ -501,11 +505,47 @@ class ProductInventoryController
 
         if ($prod->isApprovedAdmin == 1 && $prod->isApprovedOffice == 1) {
             // update untuk mengurangi stok barang
+            $prodInventory = ProductInventory::find($request->id);
+
             $prodList = ProductInventoryList::where('ProductInventoryId', '=', $request->id)->get();
+
+            //check validation update
+            $msg = $this->ValidateUpdate($prodList, $prodInventory);
+            if ($msg != "") {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$msg],
+                ], 422);
+            }
 
             foreach ($prodList as $value) {
 
-                // return $value['productType'];
+                if ($value['productType'] == 'productSell') {
+
+                    $product = ProductSellLocation::where('productSellId', '=', $value['productId'])
+                        ->where('locationId', '=', $prodInventory->locationId)
+                        ->first();
+
+                    ProductSellLocation::where('productSellId', '=', $value['productId'])
+                        ->where('locationId', '=', $prodInventory->locationId)
+                        ->update([
+                            'inStock' => $product->inStock - $value['quantity'],
+                            'userUpdateId' => $request->user()->id,
+                            'updated_at' => Carbon::now()
+                        ]);
+                } elseif ($value['productType'] == 'productClinic') {
+                    $product = ProductClinicLocation::where('productClinicId', '=', $value['productId'])
+                        ->where('locationId', '=', $prodInventory->locationId)
+                        ->first();
+
+                    ProductClinicLocation::where('productClinicId', '=', $value['productId'])
+                        ->where('locationId', '=', $prodInventory->locationId)
+                        ->update([
+                            'inStock' => $product->inStock - $value['quantity'],
+                            'userUpdateId' => $request->user()->id,
+                            'updated_at' => Carbon::now()
+                        ]);
+                }
             }
         }
 
@@ -515,6 +555,42 @@ class ProductInventoryController
             ],
             200
         );
+    }
+
+    private function ValidateUpdate($prodList, $prodInventory)
+    {
+        $msg = '';
+        foreach ($prodList as $value) {
+
+            if ($value['productType'] == 'productSell') {
+
+                $product = ProductSellLocation::where('productSellId', '=', $value['productId'])
+                    ->where('locationId', '=', $prodInventory->locationId)
+                    ->first();
+
+                if (!$product) {
+                    $msg = 'Data not exist';
+                }
+            } elseif ($value['productType'] == 'productClinic') {
+                $product = ProductClinicLocation::where('productClinicId', '=', $value['productId'])
+                    ->where('locationId', '=', $prodInventory->locationId)
+                    ->first();
+
+                if (!$product) {
+                    $msg = 'Data not exist';
+                }
+            }
+        }
+
+        return $msg;
+    }
+
+    private function LogProductSell()
+    {
+    }
+
+    private function LogProductClinic()
+    {
     }
 
     public function delete(Request $request)

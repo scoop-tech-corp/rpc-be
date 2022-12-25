@@ -227,7 +227,7 @@ class ProductController
 
             $data = DB::table('productClinics as p')
                 ->join('productClinicLocations as pl', 'p.id', 'pl.productClinicId')
-                ->select('p.id', 'p.fullName')
+                ->select('p.id', 'p.fullName','p.price')
                 ->where('p.isDeleted', '=', 0)
                 ->where('p.status', '=', 1)
                 ->where('pl.locationId', '=', $request->locationId)
