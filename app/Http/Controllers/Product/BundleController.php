@@ -94,7 +94,7 @@ class BundleController
             ], 422);
         }
 
-        $errorDetail = $this->ValidateDetail($request);
+        $errorDetail = $this->ValidateDetail($request, 'create');
 
         if ($errorDetail != '') {
 
@@ -149,37 +149,72 @@ class BundleController
         }
     }
 
-    private function ValidateDetail($request)
+    private function ValidateDetail($request, $status)
     {
+
         $products = null;
 
-        if ($request->products) {
+        if ($status == 'create') {
 
-            $products = $request->products;
+            if ($request->products) {
+
+                $products = json_decode($request->products, true);
+            }
+
+            $validateDetail = Validator::make(
+                $products,
+                [
+                    '*.productId' => 'required|integer',
+                    '*.quantity' => 'required|integer',
+                    '*.total' => 'required|numeric',
+
+                ],
+                [
+                    '*.productId.integer' => 'Product Id Should be Integer',
+                    '*.quantity.integer' => 'Quantity Should be Integer',
+                    '*.total.numeric' => 'Total Should be Decimal',
+                ]
+            );
+
+            if ($validateDetail->fails()) {
+                $errors = $validateDetail->errors()->all();
+
+                return $errors;
+            }
+
+            return '';
+        } elseif ($status == 'update') {
+
+            if ($request->products) {
+
+                $products = $request->products;
+            }
+
+            $validateDetail = Validator::make(
+                $products,
+                [
+                    '*.id' => 'required|integer',
+                    '*.productId' => 'required|integer',
+                    '*.quantity' => 'required|integer',
+                    '*.total' => 'required|numeric',
+
+                ],
+                [
+                    '*.id.integer' => 'Id Should be Integer',
+                    '*.productId.integer' => 'Product Id Should be Integer',
+                    '*.quantity.integer' => 'Quantity Should be Integer',
+                    '*.total.numeric' => 'Total Should be Decimal',
+                ]
+            );
+
+            if ($validateDetail->fails()) {
+                $errors = $validateDetail->errors()->all();
+
+                return $errors;
+            }
+
+            return '';
         }
-
-        $validateDetail = Validator::make(
-            $products,
-            [
-                '*.productId' => 'required|integer',
-                '*.quantity' => 'required|integer',
-                '*.total' => 'required|numeric',
-
-            ],
-            [
-                '*.productId.integer' => 'Product Id Should be Integer',
-                '*.quantity.integer' => 'Quantity Should be Integer',
-                '*.total.numeric' => 'Total Should be Decimal',
-            ]
-        );
-
-        if ($validateDetail->fails()) {
-            $errors = $validateDetail->errors()->all();
-
-            return $errors;
-        }
-
-        return '';
     }
 
     public function detail(Request $request)
@@ -267,7 +302,7 @@ class BundleController
             ], 422);
         }
 
-        $errorDetail = $this->ValidateDetail($request);
+        $errorDetail = $this->ValidateDetail($request, 'update');
 
         if ($errorDetail != '') {
 
