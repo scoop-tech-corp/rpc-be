@@ -78,6 +78,8 @@ class BundleController
 
     private function Search($request)
     {
+        $temp_column[] = null;
+
         $data = DB::table('productBundles as pb')
             ->select(
                 'pb.name',
