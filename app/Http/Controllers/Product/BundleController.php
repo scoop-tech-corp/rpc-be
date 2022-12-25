@@ -193,14 +193,12 @@ class BundleController
             $validateDetail = Validator::make(
                 $products,
                 [
-                    '*.id' => 'required|integer',
                     '*.productId' => 'required|integer',
                     '*.quantity' => 'required|integer',
                     '*.total' => 'required|numeric',
 
                 ],
                 [
-                    '*.id.integer' => 'Id Should be Integer',
                     '*.productId.integer' => 'Product Id Should be Integer',
                     '*.quantity.integer' => 'Quantity Should be Integer',
                     '*.total.numeric' => 'Total Should be Decimal',
