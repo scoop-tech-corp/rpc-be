@@ -28,6 +28,7 @@ class BundleController
                 'loc.locationName',
                 'pb.categoryId',
                 'pc.categoryName',
+                'pb.status',
                 'u.name as createdBy',
                 DB::raw("DATE_FORMAT(pb.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
