@@ -830,6 +830,7 @@ class ProductClinicController
             $ProdClinic->DeletedBy = $request->user()->id;
             $ProdClinic->isDeleted = true;
             $ProdClinic->DeletedAt = Carbon::now();
+            $ProdClinic->save();
         }
 
         return response()->json([

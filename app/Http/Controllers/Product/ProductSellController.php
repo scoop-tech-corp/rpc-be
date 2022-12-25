@@ -1099,6 +1099,7 @@ class ProductSellController
             $ProdSell->DeletedBy = $request->user()->id;
             $ProdSell->isDeleted = true;
             $ProdSell->DeletedAt = Carbon::now();
+            $ProdSell->save();
         }
 
         return response()->json([
