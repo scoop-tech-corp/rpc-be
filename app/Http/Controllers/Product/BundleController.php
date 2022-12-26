@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Product;
 
 use App\Models\ProductBundle;
 use App\Models\ProductBundleDetail;
+use App\Models\ProductBundleLog;
+use App\Models\ProductClinic;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
@@ -197,6 +199,8 @@ class BundleController
 
             DB::commit();
 
+            $this->AddLog($request, $prod->id, 'Created', '', '');
+
             return response()->json(
                 [
                     'message' => 'Insert Data Successful!',
@@ -210,6 +214,69 @@ class BundleController
                 'message' => 'Insert Failed',
                 'errors' => $e,
             ]);
+        }
+    }
+
+    private function AddLog($request, $id, $event, $status, $productName)
+    {
+        if ($event == 'Created') {
+
+            ProductBundleLog::create(
+                [
+                    'productBundleId' => $id,
+                    'event' => $event,
+                    'details' => 'A draft Product Bundle has been created.',
+                    'userId' => $request->user()->id,
+                ]
+            );
+        } elseif ($event == 'Updated') {
+
+            if ($status == 'new') {
+
+                ProductBundleLog::create(
+                    [
+                        'productBundleId' => $id,
+                        'event' => $event,
+                        'details' => 'A Product ' . $productName .  ' has been added on bundle.',
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            } elseif ($status == 'update') {
+                ProductBundleLog::create(
+                    [
+                        'productBundleId' => $id,
+                        'event' => $event,
+                        'details' => 'A Product ' . $productName . ' has been updated on bundle.',
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            } elseif ($status == 'delete') {
+                ProductBundleLog::create(
+                    [
+                        'productBundleId' => $id,
+                        'event' => $event,
+                        'details' => 'A Product ' . $productName . ' has been deleted on bundle.',
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            } elseif ($status == 'status') {
+
+                $detail = '';
+                if ($request->status == 1) {
+                    $detail = 'A Product Bundle has been Activated.';
+                } else if ($request->status == 0) {
+                    $detail = 'A Product Bundle has been Disabled.';
+                }
+
+                ProductBundleLog::create(
+                    [
+                        'productBundleId' => $id,
+                        'event' => 'Updated',
+                        'details' => $detail,
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
         }
     }
 
@@ -327,10 +394,25 @@ class BundleController
             ->where('pbd.productBundleId', '=', $request->id)
             ->get();
 
+        $history = DB::table('productBundleLogs as pbl')
+            ->join('productBundles as pb', 'pbl.productBundleId', 'pb.id')
+            ->join('users as u', 'pbl.userId', 'u.id')
+            ->select(
+                'pbl.id',
+                'pbl.event',
+                'pbl.details',
+                'u.name as createdBy',
+                DB::raw("DATE_FORMAT(pbl.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('pbl.productBundleId', '=', $request->id)
+            ->orderBy('pbl.id', 'desc')
+            ->get();
+
 
         return response()->json([
             'productBundle' => $prod,
-            'detailBundle' => $prodDetail
+            'detailBundle' => $prodDetail,
+            'history' => $history
         ], 200);
     }
 
@@ -420,10 +502,37 @@ class BundleController
                 $p->updated_at = \Carbon\Carbon::now();
                 $p->save();
             }
+
+            $pClinic = ProductClinic::find($value['productId']);
+
+            $this->AddLog($request, $request->id, 'Updated', $value['status'], $pClinic->fullName);
         }
 
         return response()->json([
             'message' => 'Update data successfull',
+        ], 200);
+    }
+
+    public function changeStatus(Request $request)
+    {
+        $res = ProductBundle::find($request->id);
+
+        if (!$res) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['There is any Data not found!'],
+            ], 422);
+        }
+
+        $res->status = $request->status;
+        $res->userUpdateId = $request->user()->id;
+        $res->updated_at = Carbon::now();
+        $res->save();
+
+        $this->AddLog($request, $request->id, 'Updated', 'status', '');
+
+        return response()->json([
+            'message' => 'Update Status Successful',
         ], 200);
     }
 

@@ -111,6 +111,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('product/bundle/detail', [BundleController::class, 'detail']);
     Route::post('product/bundle', [BundleController::class, 'create']);
     Route::put('product/bundle', [BundleController::class, 'update']);
+    Route::put('product/bundle/status', [BundleController::class, 'changeStatus']);
     Route::delete('product/bundle', [BundleController::class, 'delete']);
 
     //MODULE CUSTOMER
