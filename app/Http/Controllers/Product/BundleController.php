@@ -38,7 +38,7 @@ class BundleController
 
         if ($request->search) {
             $res = $this->Search($request);
-            if ($res) {
+            if (!is_null($res[0])) {
                 $data = $data->where($res[0], 'like', '%' . $request->search . '%');
 
                 for ($i = 1; $i < count($res); $i++) {
