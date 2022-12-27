@@ -268,10 +268,6 @@ class ProductSellController
             'marketPrice' => 'required|numeric',
             'price' => 'required|numeric',
             'isShipped' => 'required|bool',
-            'weight' => 'nullable|numeric',
-            'length' => 'nullable|numeric',
-            'width' => 'nullable|numeric',
-            'height' => 'nullable|numeric',
             'introduction' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
