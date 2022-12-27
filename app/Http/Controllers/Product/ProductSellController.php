@@ -485,6 +485,26 @@ class ProductSellController
         try {
             foreach ($ResultLocations as $value) {
 
+                $weight = 0;
+                if(!is_null($request->weight)){
+                    $weight = $request->weight;
+                }
+
+                $length = 0;
+                if(!is_null($request->length)){
+                    $length = $request->length;
+                }
+
+                $width = 0;
+                if(!is_null($request->width)){
+                    $width = $request->width;
+                }
+
+                $height = 0;
+                if(!is_null($request->height)){
+                    $height = $request->height;
+                }
+
                 $product = ProductSell::create([
                     'fullName' => $request->fullName,
                     'simpleName' => $request->simpleName,
@@ -498,13 +518,12 @@ class ProductSellController
                     'marketPrice' => $request->marketPrice,
                     'price' => $request->price,
                     'isShipped' => $request->isShipped,
-                    'weight' => $request->weight,
-                    'length' => $request->length,
-                    'width' => $request->width,
-                    'height' => $request->height,
+                    'weight' => $weight,
+                    'length' => $length,
+                    'width' => $width,
+                    'height' => $height,
                     'introduction' => $request->introduction,
                     'description' => $request->description,
-                    'height' => $request->height,
                     'userId' => $request->user()->id,
                 ]);
 
