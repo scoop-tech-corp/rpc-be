@@ -37,6 +37,14 @@ return new class extends Migration
             $table->string('introduction');
             $table->string('description');
 
+            $table->boolean('isCustomerPurchase');
+            $table->boolean('isCustomerPurchaseOnline');
+            $table->boolean('isCustomerPurchaseOutStock');
+            $table->boolean('isStockLevelCheck');
+            $table->boolean('isNonChargeable');
+            $table->boolean('isOfficeApproval');
+            $table->boolean('isAdminApproval');
+
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');
             $table->integer('userUpdateId')->nullable();
