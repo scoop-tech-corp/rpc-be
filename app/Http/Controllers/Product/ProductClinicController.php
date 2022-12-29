@@ -171,6 +171,14 @@ class ProductClinicController
             'isShipped' => 'required|bool',
             'introduction' => 'nullable|string',
             'description' => 'nullable|string',
+
+            'isCustomerPurchase' => 'required|bool',
+            'isCustomerPurchaseOnline' => 'required|bool',
+            'isCustomerPurchaseOutStock' => 'required|bool',
+            'isStockLevelCheck' => 'required|bool',
+            'isNonChargeable' => 'required|bool',
+            'isOfficeApproval' => 'required|bool',
+            'isAdminApproval' => 'required|bool',
         ]);
 
         if ($validate->fails()) {
@@ -416,6 +424,15 @@ class ProductClinicController
                     'height' => $height,
                     'introduction' => $request->introduction,
                     'description' => $request->description,
+
+                    'isCustomerPurchase' => $request->isCustomerPurchase,
+                    'isCustomerPurchaseOnline' => $request->isCustomerPurchaseOnline,
+                    'isCustomerPurchaseOutStock' => $request->isCustomerPurchaseOutStock,
+                    'isStockLevelCheck' => $request->isStockLevelCheck,
+                    'isNonChargeable' => $request->isNonChargeable,
+                    'isOfficeApproval' => $request->isOfficeApproval,
+                    'isAdminApproval' => $request->isAdminApproval,
+
                     'userId' => $request->user()->id,
                 ]);
 
