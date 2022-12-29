@@ -196,7 +196,7 @@ class ApiController extends Controller
                     'users.roleId',
                     'usersRoles.roleName',
                     'jobTitle.jobName as jobName',
-                    DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.middleName,'') ,' ', IFNULL(users.lastName,'') ,'(', IFNULL(users.nickName,'') ,')'  ) as name"),
+                    DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.lastName,'')) as name"),
                 )
                 ->where([
                     ['users.id', '=', $userId],
