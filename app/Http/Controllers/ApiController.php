@@ -236,7 +236,7 @@ class ApiController extends Controller
                 'success' => true,
                 'token' => $token,
                 'usersId' => $userId,
-                "username" => $users->name,
+                "userName" => $users->name,
                 "emailAddress" => $emailaddress,
                 "jobName" => $users->jobName,
                 "role" => $users->roleName,
