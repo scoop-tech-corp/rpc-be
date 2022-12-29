@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('tableroleaccess', function (Blueprint $table) {
+        Schema::create('tableRoleAccess', function (Blueprint $table) {
             $table->id();
             $table->string('accessType');
             $table->timestamps();
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('tableroleaccess');
+        Schema::dropIfExists('tableRoleAccess');
     }
 };
