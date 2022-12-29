@@ -207,28 +207,28 @@ class ApiController extends Controller
 
 
 
-            $data = DB::table('tableaccess')
-                ->join('menulist', 'menulist.id', '=', 'tableaccess.menulistId')
-                ->join('tableroleaccess', 'tableroleaccess.id', '=', 'tableaccess.roleAccessId')
+            $data = DB::table('tableAccess as a')
+                ->join('menuList as b', 'b.id', '=', 'a.menuListId')
+                ->join('tableRoleAccess as c', 'c.id', '=', 'a.roleAccessId')
                 ->select(
-                    'menulist.menuName',
-                    'tableroleaccess.accessType',
+                    'b.menuName',
+                    'c.accessType',
                 )
-                ->where([['tableaccess.roleId', '=', $users->roleId],])
+                ->where([['a.roleId', '=', $users->roleId],])
                 ->get();
 
 
 
-            $accessLimit = DB::table('tableaccess')
-                ->join('menulist', 'menulist.id', '=', 'tableaccess.menulistId')
-                ->join('accesslimit', 'accesslimit.id', '=', 'tableaccess.accessLimitId')
-                ->join('tableroleaccess', 'tableroleaccess.id', '=', 'tableaccess.roleAccessId')
+            $accessLimit = DB::table('tableAccess as a')
+                ->join('menuList as b', 'b.id', '=', 'a.menulistId')
+                ->join('accessLimit as c', 'c.id', '=', 'a.accessLimitId')
+                ->join('tableRoleAccess as d', 'd.id', '=', 'a.roleAccessId')
                 ->select(
-                    'menulist.menuName',
-                    'tableroleaccess.accessType',
-                    'accesslimit.timeLimit',
+                    'b.menuName',
+                    'd.accessType',
+                    'c.timeLimit',
                 )
-                ->where([['tableaccess.roleId', '=', $users->roleId],])
+                ->where([['a.roleId', '=', $users->roleId],])
                 ->get();
 
 
@@ -242,7 +242,6 @@ class ApiController extends Controller
                 "role" => $users->roleName,
                 "menuLevel" => $data,
                 "accessLimit" => $accessLimit,
-                // "accessLimit" => "" Menuname timelimit
             ]);
         } else {
 
