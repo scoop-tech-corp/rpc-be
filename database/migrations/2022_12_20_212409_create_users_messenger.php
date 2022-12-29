@@ -13,10 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('accesslimit', function (Blueprint $table) {
+        Schema::create('usersMessengers', function (Blueprint $table) {
             $table->id();
-            $table->integer('timeLimit');
-            $table->datetime('startDuration');
+            $table->string('usersId');
+            $table->string('messengerNumber');
+            $table->string('type');
+            $table->string('usage');
+            $table->boolean('isDeleted');
             $table->timestamps();
         });
     }
@@ -28,6 +31,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('accesslimit');
+        Schema::dropIfExists('usersMessengers');
     }
 };

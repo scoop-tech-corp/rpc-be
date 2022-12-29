@@ -12,25 +12,22 @@ class DataStaticController extends Controller
     {
 
         DB::beginTransaction();
-        try
-        {
+        try {
 
 
-            foreach($Request->id as $val){
+            foreach ($Request->id as $val) {
 
                 DB::table('data_static')
-                    ->where('id', '=', $val, )
+                    ->where('id', '=', $val,)
                     ->update(['isDeleted' => 1,]);
 
                 DB::commit();
-                
-             }
+            }
 
             return response()->json([
                 'result' => 'success',
                 'message' => 'Successfully deleted data static'
             ]);
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -39,20 +36,18 @@ class DataStaticController extends Controller
                 'result' => 'Failed',
                 'message' =>  $e,
             ]);
-
         }
-
     }
 
 
     public function datastatic(Request $request)
     {
-        
+
         $defaultRowPerPage = 5;
 
         $data = DB::table('data_static')
-                 ->select('id','value','name',)
-                 ->where('isDeleted', '=', '0');
+            ->select('id', 'value', 'name',)
+            ->where('isDeleted', '=', '0');
 
         if ($request->search) {
 
@@ -62,11 +57,13 @@ class DataStaticController extends Controller
                 $data = $data->where($res, 'like', '%' . $request->search . '%');
             } else {
                 $data = [];
-                return response()->json(['totalPagination' => 0,
-                    'data' => $data], 200);
+                return response()->json([
+                    'totalPagination' => 0,
+                    'data' => $data
+                ], 200);
             }
         }
-        
+
         if ($request->orderColumn && $request->orderValue) {
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
@@ -92,7 +89,6 @@ class DataStaticController extends Controller
 
         $total_paging = $count_data / $defaultRowPerPage;
         return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
-
     }
 
 
@@ -103,35 +99,33 @@ class DataStaticController extends Controller
         $columntable = '';
 
         $data = DB::table('data_static')
-                 ->select('id','value','name',)
-                 ->where('isDeleted', '=', '0');
+            ->select('id', 'value', 'name',)
+            ->where('isDeleted', '=', '0');
 
         if ($request->search) {
             $data = $data->where('value', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
-            
+
         if (count($data)) {
             $temp_column = 'value';
             return $temp_column;
-        }  
+        }
 
         $data = DB::table('data_static')
-                 ->select('id','value','name',)
-                 ->where('isDeleted', '=', '0');
+            ->select('id', 'value', 'name',)
+            ->where('isDeleted', '=', '0');
 
         if ($request->search) {
             $data = $data->where('name', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
-            
+
         if (count($data)) {
             $temp_column = 'name';
             return $temp_column;
-        }  
-
+        }
     }
-
 }

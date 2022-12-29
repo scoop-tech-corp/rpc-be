@@ -13,10 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('accesslimit', function (Blueprint $table) {
+        Schema::create('payPeriod', function (Blueprint $table) {
             $table->id();
-            $table->integer('timeLimit');
-            $table->datetime('startDuration');
+            $table->string('periodName');
+            $table->boolean('isActive');  
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('accesslimit');
+        Schema::dropIfExists('payPeriod');
     }
 };

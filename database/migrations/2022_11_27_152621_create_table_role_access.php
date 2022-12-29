@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('tableroleaccess', function (Blueprint $table) {
             $table->id();
-            $table->string('accessName');
+            $table->string('accessType');
             $table->timestamps();
         });
     }

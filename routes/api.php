@@ -12,6 +12,10 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Product\ProductSellController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\GlobalVariableController;
+use App\Http\Controllers\VerifyUserandPasswordController;
+
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -118,4 +122,31 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //customer group
     Route::get('customer/group', [CustomerController::class, 'Index']);
     Route::post('customer/group', [CustomerController::class, 'Create']);
+
+    //STAFF
+    Route::post('staff', [StaffController::class, 'insertStaff']);
+    Route::delete('staff', [StaffController::class, 'deleteStaff']);
+    Route::get('rolestaff', [StaffController::class, 'getRoleStaff']);
+    Route::get('locationstaff', [StaffController::class, 'getLocationStaff']);
+    Route::get('typeid', [StaffController::class, 'getTypeId']);
+    Route::get('payperiod', [StaffController::class, 'getPayPeriod']);
+    Route::get('jobtitle', [StaffController::class, 'getJobTitle']);
+    Route::post('typeid', [StaffController::class, 'insertTypeId']);
+    Route::post('payperiod', [StaffController::class, 'insertPayPeriod']);
+    Route::post('jobtitle', [StaffController::class, 'insertJobTitle']);
+    Route::post('imageStaff', [StaffController::class, 'uploadImageStaff']);
+    Route::delete('imageStaff', [StaffController::class, 'deleteImageStaff']);
+    Route::get('staffdetail', [StaffController::class, 'getDetailStaff']);
+    Route::put('staff', [StaffController::class, 'updateStaff']);
+    Route::get('staff', [StaffController::class, 'index']);
+    Route::get('exportstaff', [StaffController::class, 'exportStaff']);
+    Route::post('sendEmail', [StaffController::class, 'sendEmailVerification']);
+    Route::put('statusStaff', [StaffController::class, 'updateStatusUsers']);
+
+    //GLOBAL VARIABLE
+    Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
+    Route::get('provinsi', [GlobalVariableController::class, 'getProvinsi']);
+    Route::get('datastatic', [GlobalVariableController::class, 'getDataStatic']);
+    Route::post('datastaticglobal', [GlobalVariableController::class, 'insertDataStatic']);
+    Route::post('uploadregion', [GlobalVariableController::class, 'uploadRegion']);
 });
