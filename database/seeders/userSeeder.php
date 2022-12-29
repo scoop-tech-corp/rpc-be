@@ -283,7 +283,7 @@ class userSeeder extends Seeder
                 ["usersId" => $j, "phoneNumber" => $faker->phoneNumber, "type" => $faker->randomElement(['Telepon Selular', 'Whatshapp']), "usage" =>  "Secondary", "isDeleted" => 0, 'created_at' => now(),]
             ];
 
-            DB::table('userstelephones')->insert($phone);
+            DB::table('usersTelephones')->insert($phone);
         }
 
 
@@ -294,7 +294,7 @@ class userSeeder extends Seeder
                 ["usersId" => $j, "messengerNumber" => $faker->phoneNumber, "type" => $faker->randomElement(['Office', 'Fax']), "usage" =>  'Secondary', "isDeleted" => 0, 'created_at' => now(),]
             ];
 
-            DB::table('usersmessengers')->insert($messenger);
+            DB::table('usersMessengers')->insert($messenger);
         }
 
 
@@ -309,10 +309,10 @@ class userSeeder extends Seeder
         }
 
         DB::table('users')->insert($users);
-        DB::table('userstelephones')->insert($userstelephone);
-        DB::table('usersmessengers')->insert($usersmessengers);
+        DB::table('usersTelephones')->insert($userstelephone);
+        DB::table('usersMessengers')->insert($usersmessengers);
         DB::table('usersEmails')->insert($usersEmails);
-        DB::table('usersdetailaddresses')->insert($detailaddress);
+        DB::table('usersDetailAddresses')->insert($detailaddress);
         DB::table('jobTitle')->insert($jobTitle);
         DB::table('payPeriod')->insert($payPeriod);
         DB::table('typeId')->insert($typeId);
