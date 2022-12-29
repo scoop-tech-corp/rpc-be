@@ -270,6 +270,14 @@ class ProductSellController
             'isShipped' => 'required|bool',
             'introduction' => 'nullable|string',
             'description' => 'nullable|string',
+
+            'isCustomerPurchase' => 'required|bool',
+            'isCustomerPurchaseOnline' => 'required|bool',
+            'isCustomerPurchaseOutStock' => 'required|bool',
+            'isStockLevelCheck' => 'required|bool',
+            'isNonChargeable' => 'required|bool',
+            'isOfficeApproval' => 'required|bool',
+            'isAdminApproval' => 'required|bool',
         ]);
 
         if ($validate->fails()) {
@@ -482,22 +490,22 @@ class ProductSellController
             foreach ($ResultLocations as $value) {
 
                 $weight = 0;
-                if(!is_null($request->weight)){
+                if (!is_null($request->weight)) {
                     $weight = $request->weight;
                 }
 
                 $length = 0;
-                if(!is_null($request->length)){
+                if (!is_null($request->length)) {
                     $length = $request->length;
                 }
 
                 $width = 0;
-                if(!is_null($request->width)){
+                if (!is_null($request->width)) {
                     $width = $request->width;
                 }
 
                 $height = 0;
-                if(!is_null($request->height)){
+                if (!is_null($request->height)) {
                     $height = $request->height;
                 }
 
@@ -520,6 +528,15 @@ class ProductSellController
                     'height' => $height,
                     'introduction' => $request->introduction,
                     'description' => $request->description,
+
+                    'isCustomerPurchase' => $request->isCustomerPurchase,
+                    'isCustomerPurchaseOnline' => $request->isCustomerPurchaseOnline,
+                    'isCustomerPurchaseOutStock' => $request->isCustomerPurchaseOutStock,
+                    'isStockLevelCheck' => $request->isStockLevelCheck,
+                    'isNonChargeable' => $request->isNonChargeable,
+                    'isOfficeApproval' => $request->isOfficeApproval,
+                    'isAdminApproval' => $request->isAdminApproval,
+                    
                     'userId' => $request->user()->id,
                 ]);
 
