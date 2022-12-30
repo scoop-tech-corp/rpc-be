@@ -14,23 +14,39 @@ class VerifyUserandPasswordController extends Controller
 
     try {
 
-      $checkIfValueExits = DB::table('usersEmails')
+
+
+      $checkIfUsersExists = DB::table('users')
         ->where([
-          ['usersEmails.usage', '=', 'Utama'],
-          ['usersEmails.email_verified_at', '=', null],
-          ['usersEmails.usersId', '=', $id]
+          ['isDeleted', '=', '0'],
+          ['id', '=', $id]
         ])
         ->first();
 
-      if ($checkIfValueExits != null) {
+      if ($checkIfUsersExists != null) { //users exists
 
-        return view('posts.setpassword', [
-          'id' => $id,
-        ]);
+        $checkIfValueExits = DB::table('usersEmails')
+          ->where([
+            ['usersEmails.usage', '=', 'Utama'],
+            ['usersEmails.email_verified_at', '=', null],
+            ['usersEmails.usersId', '=', $id]
+          ])
+          ->first();
+
+        if ($checkIfValueExits != null) {
+
+          return view('posts.setpassword', [
+            'id' => $id,
+          ]);
+        } else {
+
+          return view('posts.accountverified');
+        }
       } else {
 
-        return view('posts.accountverified');
+        return view('posts.accountnotexists');
       }
+      
     } catch (Exception $e) {
 
       DB::rollback();
