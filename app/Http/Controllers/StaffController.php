@@ -140,7 +140,7 @@ class StaffController extends Controller
 
                 foreach ($arraytelephone as $val) {
 
-                    $checkIfTelephoneAlreadyExists = DB::table('userstelephones')
+                    $checkIfTelephoneAlreadyExists = DB::table('usersTelephones')
                         ->where([
                             ['phoneNumber', '=', $val['phoneNumber'],],
                             ['isDeleted', '=', '0']
@@ -265,7 +265,7 @@ class StaffController extends Controller
                 $checkMessenger = [];
                 foreach ($arraymessenger as $val) {
 
-                    $checkifMessengerExists = DB::table('usersmessengers')
+                    $checkifMessengerExists = DB::table('usersMessengers')
                         ->where([
                             ['messengerNumber', '=', $val['messengerNumber'],],
                             ['isDeleted', '=', '0']
@@ -358,7 +358,7 @@ class StaffController extends Controller
 
                             $fileName = "/UsersImages/" . $name;
 
-                            DB::table('usersimages')
+                            DB::table('usersImages')
                                 ->insert([
                                     'usersId' => $lastInsertedID,
                                     'imagePath' => $fileName,
@@ -376,7 +376,7 @@ class StaffController extends Controller
 
                 foreach ($arraymessenger as $val) {
 
-                    DB::table('usersmessengers')
+                    DB::table('usersMessengers')
                         ->insert([
                             'usersId' => $lastInsertedID,
                             'messengerNumber' => $val['messengerNumber'],
@@ -407,7 +407,7 @@ class StaffController extends Controller
 
                 foreach ($arraytelephone as $val) {
 
-                    DB::table('userstelephones')
+                    DB::table('usersTelephones')
                         ->insert([
                             'usersId' => $lastInsertedID,
                             'phoneNumber' => $val['phoneNumber'],
@@ -719,30 +719,30 @@ class StaffController extends Controller
             $defaultOrderBy = "asc";
 
             //V1
-            $subquery = DB::table('users')
-                ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-                ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-                ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-                ->leftjoin('location', 'location.id', '=', 'users.locationId')
+            $subquery = DB::table('users as a')
+                ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+                ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+                ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+                ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
                 ->select(
-                    'users.id as id',
-                    DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                    'jobTitle.jobName as jobTitle',
-                    'usersEmails.email as emailAddress',
-                    DB::raw("CONCAT(userstelephones.phoneNumber) as phoneNumber"),
-                    DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                    DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                    'location.locationName as location',
-                    'users.createdBy as createdBy',
-                    DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                    'a.id as id',
+                    DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                    'b.jobName as jobTitle',
+                    'c.email as emailAddress',
+                    DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                    DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                    DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                    'e.locationName as location',
+                    'a.createdBy as createdBy',
+                    DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
                 )
                 ->where([
-                    ['users.isDeleted', '=', '0'],
-                    ['jobTitle.isActive', '=', '1'],
-                    ['usersEmails.usage', '=', 'Utama'],
-                    ['usersEmails.isDeleted', '=', '0'],
-                    ['userstelephones.usage', '=', 'Utama'],
-                    ['location.isDeleted', '=', '0'],
+                    ['a.isDeleted', '=', '0'],
+                    ['b.isActive', '=', '1'],
+                    ['c.usage', '=', 'Utama'],
+                    ['c.isDeleted', '=', '0'],
+                    ['d.usage', '=', 'Utama'],
+                    ['e.isDeleted', '=', '0'],
                 ]);
 
             //V2
@@ -912,30 +912,30 @@ class StaffController extends Controller
     private function Search($request)
     {
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
@@ -951,30 +951,30 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
 
@@ -991,30 +991,30 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
 
@@ -1031,30 +1031,30 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
@@ -1071,30 +1071,30 @@ class StaffController extends Controller
         }
 
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
@@ -1111,30 +1111,30 @@ class StaffController extends Controller
         }
 
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
@@ -1150,30 +1150,30 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
 
@@ -1191,30 +1191,30 @@ class StaffController extends Controller
         }
 
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
 
@@ -1231,30 +1231,30 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
@@ -1270,30 +1270,30 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users')
-            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-            ->leftjoin('usersEmails', 'usersEmails.usersId', '=', 'users.id')
-            ->leftjoin('userstelephones', 'userstelephones.usersId', '=', 'users.id')
-            ->leftjoin('location', 'location.id', '=', 'users.locationId')
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
-                'users.id as id',
-                DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-                'jobTitle.jobName as jobTitle',
-                'usersEmails.email as emailAddress',
-                DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-                DB::raw("CASE WHEN lower(userstelephones.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-                'location.locationName as location',
-                'users.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
+                'a.id as id',
+                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
             )
             ->where([
-                ['users.isDeleted', '=', '0'],
-                ['jobTitle.isActive', '=', '1'],
-                ['usersEmails.usage', '=', 'Utama'],
-                ['usersEmails.isDeleted', '=', '0'],
-                ['userstelephones.usage', '=', 'Utama'],
-                ['location.isDeleted', '=', '0'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isActive', '=', '1'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
@@ -1343,7 +1343,7 @@ class StaffController extends Controller
         } else {
 
 
-            $checkImages = DB::table('usersimages')
+            $checkImages = DB::table('usersImages')
                 ->where([
                     ['usersId', '=', $request->id]
                 ])
@@ -1374,7 +1374,7 @@ class StaffController extends Controller
 
                                 $fileName = "/UsersImages/" . $name;
 
-                                DB::table('usersimages')
+                                DB::table('usersImages')
                                     ->insert([
                                         'usersId' => $request->id,
                                         'imagePath' => $fileName,
@@ -1441,7 +1441,7 @@ class StaffController extends Controller
             ], 406);
         } else {
 
-            $checkImages = DB::table('usersimages')
+            $checkImages = DB::table('usersImages')
                 ->where([
                     ['usersId', '=', $request->id]
                 ])
@@ -1460,7 +1460,7 @@ class StaffController extends Controller
 
                     File::delete(public_path() . $checkImages->imagePath);
 
-                    DB::table('usersimages')->where([
+                    DB::table('usersImages')->where([
                         ['usersId', '=', $request->id]
                     ])->delete();
                 }
@@ -1511,126 +1511,126 @@ class StaffController extends Controller
                 ], 406);
             } else {
 
-                $users = DB::table('users')
-                    ->leftjoin('location', 'location.id', '=', 'users.id')
-                    ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-                    ->leftjoin('typeId', 'typeId.id', '=', 'users.typeId')
-                    ->leftjoin('payPeriod', 'payPeriod.id', '=', 'users.payPeriodId')
+                $users = DB::table('users as a')
+                    ->leftjoin('location as b', 'b.id', '=', 'a.id')
+                    ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
+                    ->leftjoin('typeId as d', 'd.id', '=', 'a.typeId')
+                    ->leftjoin('payPeriod as e', 'e.id', '=', 'a.payPeriodId')
                     ->select(
-                        'users.id',
-                        'users.firstName',
-                        'users.middleName',
-                        'users.lastName',
-                        'users.nickName',
-                        'users.gender',
-                        'users.status',
-                        'jobTitle.id as jobTitleId',
-                        'jobTitle.jobName as jobName',
-                        'users.startDate',
-                        'users.endDate',
-                        'users.registrationNo',
-                        'users.designation',
-                        'location.id as locationId',
-                        'location.locationname as locationName',
+                        'a.id',
+                        'a.firstName',
+                        'a.middleName',
+                        'a.lastName',
+                        'a.nickName',
+                        'a.gender',
+                        'a.status',
+                        'c.id as jobTitleId',
+                        'c.jobName as jobName',
+                        'a.startDate',
+                        'a.endDate',
+                        'a.registrationNo',
+                        'a.designation',
+                        'b.id as locationId',
+                        'b.locationname as locationName',
 
-                        'users.annualSickAllowance',
-                        'users.annualLeaveAllowance',
-                        'users.payPeriodId',
-                        'payPeriod.periodName',
-                        'users.payAmount',
+                        'a.annualSickAllowance',
+                        'a.annualLeaveAllowance',
+                        'a.payPeriodId',
+                        'e.periodName',
+                        'a.payAmount',
 
-                        'typeId.id as typeId',
-                        'typeId.typeName as typeName',
-                        'users.identificationNumber',
-                        'users.additionalInfo',
+                        'd.id as typeId',
+                        'd.typeName as typeName',
+                        'a.identificationNumber',
+                        'a.additionalInfo',
 
-                        'users.generalCustomerCanSchedule',
-                        'users.generalCustomerReceiveDailyEmail',
-                        'users.generalAllowMemberToLogUsingEmail',
-                        'users.reminderEmail',
-                        'users.reminderWhatsapp',
-                        'users.roleId',
+                        'a.generalCustomerCanSchedule',
+                        'a.generalCustomerReceiveDailyEmail',
+                        'a.generalAllowMemberToLogUsingEmail',
+                        'a.reminderEmail',
+                        'a.reminderWhatsapp',
+                        'a.roleId',
 
                     )
                     ->where([
-                        ['users.id', '=', $request->id],
-                        ['users.isDeleted', '=', '0'],
-                        ['jobTitle.isActive', '=', '1'],
-                        ['typeId.isActive', '=', '1'],
-                        ['payPeriod.isActive', '=', '1']
+                        ['a.id', '=', $request->id],
+                        ['a.isDeleted', '=', '0'],
+                        ['c.isActive', '=', '1'],
+                        ['d.isActive', '=', '1'],
+                        ['e.isActive', '=', '1']
                     ])
                     ->first();
 
 
-                $usersimages = DB::table('usersimages')
+                $usersimages = DB::table('usersImages as a')
                     ->select(
-                        'usersimages.id as id',
-                        'usersimages.usersId as usersId',
-                        'usersimages.imagePath as imagePath',
+                        'a.id as id',
+                        'a.usersId as usersId',
+                        'a.imagePath as imagePath',
                     )
                     ->where([
-                        ['usersimages.usersId', '=', $request->id],
-                        ['usersimages.isDeleted', '=', '0']
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', '0']
                     ])
                     ->get();
 
                 $users->images = $usersimages;
 
-                $users_detail_address = DB::table('usersdetailaddresses')
+                $users_detail_address = DB::table('usersDetailAddresses as a')
                     ->select(
-                        'usersdetailaddresses.addressName as addressName',
-                        'usersdetailaddresses.additionalInfo as additionalInfo',
-                        'usersdetailaddresses.provinceCode as provinceCode',
-                        'usersdetailaddresses.cityCode as cityCode',
-                        'usersdetailaddresses.postalCode as postalCode',
-                        'usersdetailaddresses.country as country',
-                        'usersdetailaddresses.isPrimary as isPrimary',
+                        'a.addressName as addressName',
+                        'a.additionalInfo as additionalInfo',
+                        'a.provinceCode as provinceCode',
+                        'a.cityCode as cityCode',
+                        'a.postalCode as postalCode',
+                        'a.country as country',
+                        'a.isPrimary as isPrimary',
                     )
                     ->where([
-                        ['usersdetailaddresses.usersId', '=', $request->id],
-                        ['usersdetailaddresses.isDeleted', '=', '0']
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', '0']
                     ])
                     ->get();
 
                 $users->detailAddress = $users_detail_address;
 
 
-                $usersmessengers = DB::table('usersmessengers')
+                $usersmessengers = DB::table('usersMessengers as a')
                     ->select(
-                        'usersmessengers.messengerNumber as messengerNumber',
-                        'usersmessengers.type as type',
-                        'usersmessengers.usage as usage',
+                        'a.messengerNumber as messengerNumber',
+                        'a.type as type',
+                        'a.usage as usage',
                     )
                     ->where([
-                        ['usersmessengers.usersId', '=', $request->id],
-                        ['usersmessengers.isDeleted', '=', '0']
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', '0']
                     ])
                     ->get();
 
                 $users->messenger = $usersmessengers;
 
-                $usersEmails = DB::table('usersEmails')
+                $usersEmails = DB::table('usersEmails as a')
                     ->select(
-                        'usersEmails.email as email',
-                        'usersEmails.usage as usage',
+                        'a.email as email',
+                        'a.usage as usage',
                     )
                     ->where([
-                        ['usersEmails.usersId', '=', $request->id],
-                        ['usersEmails.isDeleted', '=', '0']
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', '0']
                     ])
                     ->get();
 
                 $users->email = $usersEmails;
 
-                $userstelephone = DB::table('userstelephones')
+                $userstelephone = DB::table('usersTelephones as a')
                     ->select(
-                        'userstelephones.phoneNumber as phoneNumber',
-                        'userstelephones.type as type',
-                        'userstelephones.usage as usage',
+                        'a.phoneNumber as phoneNumber',
+                        'a.type as type',
+                        'a.usage as usage',
                     )
                     ->where([
-                        ['userstelephones.usersId', '=', $request->id],
-                        ['userstelephones.isDeleted', '=', '0']
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', '0']
                     ])
                     ->get();
 
@@ -1645,7 +1645,7 @@ class StaffController extends Controller
             return response()->json([
                 'result' => 'failed',
                 'message' => $e,
-            ],422);
+            ], 422);
         }
     }
 
@@ -1796,7 +1796,7 @@ class StaffController extends Controller
 
                 foreach ($request->telephone as $val) {
 
-                    $checkIfTelephoneAlreadyExists = DB::table('userstelephones')
+                    $checkIfTelephoneAlreadyExists = DB::table('usersTelephones')
                         ->where([
                             ['phoneNumber', '=', $val['phoneNumber'],],
                             ['isDeleted', '=', '0'],
@@ -1931,7 +1931,7 @@ class StaffController extends Controller
 
                 foreach ($request->messenger as $val) {
 
-                    $checkifMessengerExists = DB::table('usersmessengers')
+                    $checkifMessengerExists = DB::table('usersMessengers')
                         ->where([
                             ['messengerNumber', '=', $val['messengerNumber'],],
                             ['isDeleted', '=', '0'],
@@ -1993,11 +1993,11 @@ class StaffController extends Controller
 
                 if ($request->detailAddress) {
 
-                    DB::table('usersdetailaddresses')->where('usersId', '=', $request->id)->delete();
+                    DB::table('usersDetailAddresses')->where('usersId', '=', $request->id)->delete();
 
                     foreach ($request->detailAddress as $val) {
 
-                        DB::table('usersdetailaddresses')
+                        DB::table('usersDetailAddresses')
                             ->insert([
                                 'usersId' => $request->id,
                                 'addressName' => $val['addressName'],
@@ -2016,10 +2016,10 @@ class StaffController extends Controller
 
                 if ($request->messenger) {
 
-                    DB::table('usersmessengers')->where('usersId', '=', $request->id)->delete();
+                    DB::table('usersMessengers')->where('usersId', '=', $request->id)->delete();
 
                     foreach ($request->messenger as $val) {
-                        DB::table('usersmessengers')
+                        DB::table('usersMessengers')
                             ->insert([
                                 'usersId' => $request->id,
                                 'messengerNumber' => $val['messengerNumber'],
@@ -2053,10 +2053,10 @@ class StaffController extends Controller
 
                 if ($request->telephone) {
 
-                    DB::table('userstelephones')->where('usersId', '=', $request->id)->delete();
+                    DB::table('usersTelephones')->where('usersId', '=', $request->id)->delete();
 
                     foreach ($request->telephone as $val) {
-                        DB::table('userstelephones')
+                        DB::table('usersTelephones')
                             ->insert([
                                 'usersId' => $request->id,
                                 'phoneNumber' => $val['phoneNumber'],
@@ -2147,11 +2147,11 @@ class StaffController extends Controller
 
                 if ($request->detailAddress) {
 
-                    DB::table('usersdetailaddresses')->where('usersId', '=', $request->id)->delete();
+                    DB::table('usersDetailAddresses')->where('usersId', '=', $request->id)->delete();
 
                     foreach ($request->detailAddress as $val) {
 
-                        DB::table('usersdetailaddresses')
+                        DB::table('usersDetailAddresses')
                             ->insert([
                                 'usersId' => $request->id,
                                 'addressName' => $val['addressName'],
@@ -2171,10 +2171,10 @@ class StaffController extends Controller
 
                 if ($request->messenger) {
 
-                    DB::table('usersmessengers')->where('usersId', '=', $request->id)->delete();
+                    DB::table('usersMessengers')->where('usersId', '=', $request->id)->delete();
 
                     foreach ($request->messenger as $val) {
-                        DB::table('usersmessengers')
+                        DB::table('usersMessengers')
                             ->insert([
                                 'usersId' => $request->id,
                                 'messengerNumber' => $val['messengerNumber'],
@@ -2207,10 +2207,10 @@ class StaffController extends Controller
 
                 if ($request->telephone) {
 
-                    DB::table('userstelephones')->where('usersId', '=', $request->id)->delete();
+                    DB::table('usersTelephones')->where('usersId', '=', $request->id)->delete();
 
                     foreach ($request->telephone as $val) {
-                        DB::table('userstelephones')
+                        DB::table('usersTelephones')
                             ->insert([
                                 'usersId' => $request->id,
                                 'phoneNumber' => $val['phoneNumber'],
@@ -2249,19 +2249,18 @@ class StaffController extends Controller
 
         try {
 
-            $getLocationStaff = DB::table('location')
+            $getLocationStaff = DB::table('location as a')
                 ->select(
-                    'location.id as locationId',
-                    'location.locationName as locationName',
+                    'a.id as locationId',
+                    'a.locationName as locationName',
                 )
                 ->where([
                     ['isDeleted', '=', 0],
                 ])
-                ->orderBy('location.created_at', 'desc')
+                ->orderBy('a.created_at', 'desc')
                 ->get();
 
             return response()->json($getLocationStaff, 200);
-
         } catch (Exception $e) {
 
             return response()->json([
@@ -2278,15 +2277,15 @@ class StaffController extends Controller
 
         try {
 
-            $getTypeId = DB::table('typeId')
+            $getTypeId = DB::table('typeId as a')
                 ->select(
-                    'typeId.id as typeId',
-                    'typeId.typeName as typeName',
+                    'a.id as typeId',
+                    'a.typeName as typeName',
                 )
                 ->where([
                     ['isActive', '=', 1],
                 ])
-                ->orderBy('typeid.created_at', 'desc')
+                ->orderBy('a.created_at', 'desc')
                 ->get();
 
             return response()->json($getTypeId, 200);
@@ -2305,15 +2304,15 @@ class StaffController extends Controller
 
         try {
 
-            $getPayPeriod = DB::table('payPeriod')
+            $getPayPeriod = DB::table('payPeriod as a')
                 ->select(
-                    'payPeriod.id as payPeriodId',
-                    'payPeriod.periodName as periodName',
+                    'a.id as payPeriodId',
+                    'a.periodName as periodName',
                 )
                 ->where([
                     ['isActive', '=', 1],
                 ])
-                ->orderBy('payPeriod.created_at', 'desc')
+                ->orderBy('a.created_at', 'desc')
                 ->get();
 
             return response()->json($getPayPeriod, 200);
@@ -2331,15 +2330,15 @@ class StaffController extends Controller
 
         try {
 
-            $getjobTitle = DB::table('jobTitle')
+            $getjobTitle = DB::table('jobTitle as a')
                 ->select(
-                    'jobTitle.id as jobTitleid',
-                    'jobTitle.jobName as jobName',
+                    'a.id as jobTitleid',
+                    'a.jobName as jobName',
                 )
                 ->where([
                     ['isActive', '=', 1],
                 ])
-                ->orderBy('jobTitle.created_at', 'desc')
+                ->orderBy('a.created_at', 'desc')
                 ->get();
 
             return response()->json($getjobTitle, 200);
@@ -2364,10 +2363,10 @@ class StaffController extends Controller
 
         try {
 
-            $checkIfValueExits = DB::table('TypeId')
+            $checkIfValueExits = DB::table('typeId as a')
                 ->where([
-                    ['TypeId.typeName', '=', $request->typeName],
-                    ['TypeId.isActive', '=', 1]
+                    ['a.typeName', '=', $request->typeName],
+                    ['a.isActive', '=', 1]
                 ])
                 ->first();
 
@@ -2379,7 +2378,7 @@ class StaffController extends Controller
                 ]);
             } else {
 
-                DB::table('TypeId')->insert([
+                DB::table('typeId')->insert([
                     'typeName' => $request->typeName,
                     'created_at' => now(),
                     'isActive' => 1,
@@ -2416,10 +2415,10 @@ class StaffController extends Controller
 
         try {
 
-            $checkIfValueExits = DB::table('jobTitle')
+            $checkIfValueExits = DB::table('jobTitle as a')
                 ->where([
-                    ['jobTitle.jobName', '=', $request->jobName],
-                    ['jobTitle.isActive', '=', 1]
+                    ['a.jobName', '=', $request->jobName],
+                    ['a.isActive', '=', 1]
                 ])
                 ->first();
 
@@ -2468,10 +2467,10 @@ class StaffController extends Controller
 
         try {
 
-            $checkIfValueExits = DB::table('payPeriod')
+            $checkIfValueExits = DB::table('payPeriod as a')
                 ->where([
-                    ['payPeriod.periodName', '=', $request->periodName],
-                    ['payPeriod.isActive', '=', 1]
+                    ['a.periodName', '=', $request->periodName],
+                    ['a.isActive', '=', 1]
                 ])
                 ->first();
 
@@ -2562,7 +2561,7 @@ class StaffController extends Controller
                     ->where('id', '=', $val)
                     ->update(['isDeleted' => 1]);
 
-                DB::table('usersdetailaddresses')
+                DB::table('usersDetailAddresses')
                     ->where('usersId', '=', $val)
                     ->update(['isDeleted' => 1]);
 
@@ -2570,20 +2569,20 @@ class StaffController extends Controller
                     ->where('usersId', '=', $val)
                     ->update(['isDeleted' => 1]);
 
-                DB::table('usersmessengers')
+                DB::table('usersMessengers')
                     ->where('usersId', '=', $val)
                     ->update(['isDeleted' => 1]);
 
-                DB::table('usersimages')
+                DB::table('usersImages')
                     ->where('usersId', '=', $val)
                     ->update(['isDeleted' => 1]);
 
-                DB::table('userstelephones')
+                DB::table('usersTelephones')
                     ->where('usersId', '=', $val)
                     ->update(['isDeleted' => 1]);
 
 
-                $checkImages = DB::table('usersimages')
+                $checkImages = DB::table('usersImages')
                     ->where([
                         ['usersId', '=', $val]
                     ])
