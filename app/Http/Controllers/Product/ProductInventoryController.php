@@ -37,16 +37,16 @@ class ProductInventoryController
                 'loc.locationName as locationName',
 
                 'p.isApprovedOffice',
-                DB::raw("IFNULL(uOff.name,'') as officeApprovedBy"),
+                DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
                 DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
                 DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
 
                 'p.isApprovedAdmin',
-                DB::raw("IFNULL(uAdm.name,'') as adminApprovedBy"),
+                DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
                 DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
                 DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
 
-                'u.name as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             );
 
@@ -131,8 +131,8 @@ class ProductInventoryController
                     'p.isApprovedOffice',
                     'p.isApprovedAdmin',
 
-                    DB::raw("IFNULL(uOff.name,'') as officeApprovedBy"),
-                    DB::raw("IFNULL(uAdm.name,'') as adminApprovedBy"),
+                    DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
+                    DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
 
                     DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
                     DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
@@ -140,7 +140,7 @@ class ProductInventoryController
                     DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
                     DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
 
-                    'u.name as createdBy',
+                    'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                 );
 
@@ -160,8 +160,8 @@ class ProductInventoryController
                     'loc.locationName as locationName',
                     'p.isApprovedOffice',
                     DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
-                    'uOff.name as officeApprovedBy',
-                    'u.name as createdBy',
+                    'uOff.firstName as officeApprovedBy',
+                    'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
                     DB::raw("DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s') as userApprovedOfficeAt")
                 )
@@ -228,9 +228,9 @@ class ProductInventoryController
                     'p.locationId',
                     'loc.locationName as locationName',
                     'p.isApprovedOffice',
-                    'uOff.name as officeApprovedBy',
+                    'uOff.firstName as officeApprovedBy',
                     'p.isApprovedAdmin',
-                    'u.name as createdBy',
+                    'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                 )
                 ->where('p.isApprovedOffice', '=', 1)
@@ -245,7 +245,7 @@ class ProductInventoryController
                     'p.locationId',
                     'loc.locationName as locationName',
                     'p.isApprovedOffice',
-                    'u.name as createdBy',
+                    'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                 )
                 ->where('p.isApprovedOffice', '=', 0);

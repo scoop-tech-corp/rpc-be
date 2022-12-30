@@ -31,7 +31,7 @@ class BundleController
                 'pb.categoryId',
                 'pc.categoryName',
                 'pb.status',
-                'u.name as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pb.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pb.isDeleted', '=', 0);
@@ -371,7 +371,7 @@ class BundleController
                 'pc.categoryName',
                 'pb.remark',
                 'pb.status',
-                'u.name as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pb.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pb.id', '=', $request->id)
@@ -388,7 +388,7 @@ class BundleController
                 'pbd.quantity',
                 DB::raw("TRIM(pc.price)+0 as price"),
                 DB::raw("TRIM(pbd.total)+0 as total"),
-                'u.name as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pbd.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pbd.productBundleId', '=', $request->id)
@@ -401,7 +401,7 @@ class BundleController
                 'pbl.id',
                 'pbl.event',
                 'pbl.details',
-                'u.name as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pbl.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pbl.productBundleId', '=', $request->id)

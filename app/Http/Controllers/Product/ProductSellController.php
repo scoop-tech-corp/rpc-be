@@ -43,7 +43,7 @@ class ProductSellController
                 DB::raw("TRIM(psl.inStock)+0 as stock"),
                 'ps.status',
                 'ps.isShipped',
-                'u.name as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('ps.isDeleted', '=', 0);
