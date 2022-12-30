@@ -42,7 +42,7 @@ class ProductClinicController
                 DB::raw("TRIM(pcl.inStock)+0 as stock"),
                 'pc.status',
                 'pc.isShipped',
-                'u.name as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('pc.isDeleted', '=', 0);
