@@ -193,7 +193,7 @@ class ProductClinicController
         if ($request->isOfficeApproval == 'false' && $request->isAdminApproval == 'false') {
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['Office Approval and Admin Approval cannot false'],
+                'errors' => ['Office Approval or Admin Approval cannot false'],
             ], 422);
         }
 
