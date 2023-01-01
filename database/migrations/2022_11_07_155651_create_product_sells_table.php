@@ -34,8 +34,8 @@ return new class extends Migration
             $table->decimal('width', $precision = 18, $scale = 2);
             $table->decimal('height', $precision = 18, $scale = 2);
 
-            $table->string('introduction');
-            $table->string('description');
+            $table->string('introduction')->nullable();
+            $table->string('description')->nullable();
 
             $table->boolean('isCustomerPurchase');
             $table->boolean('isCustomerPurchaseOnline');
