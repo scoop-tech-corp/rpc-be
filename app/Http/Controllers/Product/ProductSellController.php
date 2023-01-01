@@ -289,6 +289,13 @@ class ProductSellController
             ], 422);
         }
 
+        if ($request->isOfficeApproval == 'false' && $request->isAdminApproval == 'false') {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Office Approval and Admin Approval cannot false'],
+            ], 422);
+        }
+
         $ResultCategories = null;
         $ResultPriceLocations = null;
         $ResultQuantities = null;
@@ -536,7 +543,7 @@ class ProductSellController
                     'isNonChargeable' => convertTrueFalse($request->isNonChargeable),
                     'isOfficeApproval' => convertTrueFalse($request->isOfficeApproval),
                     'isAdminApproval' => convertTrueFalse($request->isAdminApproval),
-                    
+
                     'userId' => $request->user()->id,
                 ]);
 
@@ -664,7 +671,7 @@ class ProductSellController
             return response()->json([
                 'message' => 'Insert Failed',
                 'errors' => $th,
-            ]);
+            ], 422);
         }
     }
 
