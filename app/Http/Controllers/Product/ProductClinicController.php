@@ -190,6 +190,13 @@ class ProductClinicController
             ], 422);
         }
 
+        if ($request->isOfficeApproval == 'false' && $request->isAdminApproval == 'false') {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Office Approval and Admin Approval cannot false'],
+            ], 422);
+        }
+
         $ResultCategories = null;
         $ResultPriceLocations = null;
         $ResultQuantities = null;
@@ -560,7 +567,7 @@ class ProductClinicController
             return response()->json([
                 'message' => 'Insert Failed',
                 'errors' => $th,
-            ]);
+            ], 422);
         }
     }
 
