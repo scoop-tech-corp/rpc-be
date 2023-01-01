@@ -105,6 +105,18 @@ if (!function_exists('role')) {
     }
 }
 
+if(!function_exists('convertTrueFalse')){
+    function convertTrueFalse($value)
+    {
+        if($value == 'true' || $value =='TRUE'){
+            return 1;
+        }
+        elseif ($value == 'false'|| $value == 'FALSE') {
+            return 0;
+        }
+    }
+}
+
 //add by danny wahyudi
 // if (!function_exists('securityGroupAdmin')) {
 //     function securityGroupAdmin($id)
