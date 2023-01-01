@@ -172,13 +172,13 @@ class ProductClinicController
             'introduction' => 'nullable|string',
             'description' => 'nullable|string',
 
-            'isCustomerPurchase' => 'required|bool',
-            'isCustomerPurchaseOnline' => 'required|bool',
-            'isCustomerPurchaseOutStock' => 'required|bool',
-            'isStockLevelCheck' => 'required|bool',
-            'isNonChargeable' => 'required|bool',
-            'isOfficeApproval' => 'required|bool',
-            'isAdminApproval' => 'required|bool',
+            'isCustomerPurchase' => 'required|in:true,false,TRUE,FALSE',
+            'isCustomerPurchaseOnline' => 'required|in:true,false,TRUE,FALSE',
+            'isCustomerPurchaseOutStock' => 'required|in:true,false,TRUE,FALSE',
+            'isStockLevelCheck' => 'required|in:true,false,TRUE,FALSE',
+            'isNonChargeable' => 'required|in:true,false,TRUE,FALSE',
+            'isOfficeApproval' => 'required|in:true,false,TRUE,FALSE',
+            'isAdminApproval' => 'required|in:true,false,TRUE,FALSE',
         ]);
 
         if ($validate->fails()) {
@@ -425,13 +425,13 @@ class ProductClinicController
                     'introduction' => $request->introduction,
                     'description' => $request->description,
 
-                    'isCustomerPurchase' => $request->isCustomerPurchase,
-                    'isCustomerPurchaseOnline' => $request->isCustomerPurchaseOnline,
-                    'isCustomerPurchaseOutStock' => $request->isCustomerPurchaseOutStock,
-                    'isStockLevelCheck' => $request->isStockLevelCheck,
-                    'isNonChargeable' => $request->isNonChargeable,
-                    'isOfficeApproval' => $request->isOfficeApproval,
-                    'isAdminApproval' => $request->isAdminApproval,
+                    'isCustomerPurchase' => convertTrueFalse($request->isCustomerPurchase),
+                    'isCustomerPurchaseOnline' => convertTrueFalse($request->isCustomerPurchaseOnline),
+                    'isCustomerPurchaseOutStock' => convertTrueFalse($request->isCustomerPurchaseOutStock),
+                    'isStockLevelCheck' => convertTrueFalse($request->isStockLevelCheck),
+                    'isNonChargeable' => convertTrueFalse($request->isNonChargeable),
+                    'isOfficeApproval' => convertTrueFalse($request->isOfficeApproval),
+                    'isAdminApproval' => convertTrueFalse($request->isAdminApproval),
 
                     'userId' => $request->user()->id,
                 ]);
