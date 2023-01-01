@@ -53,8 +53,6 @@ class User extends Authenticatable implements JWTSubject
             ->first();
 
         if ($users->password != null) {
-            info($users->password);
-
             return $this->getKey();
         }
     }

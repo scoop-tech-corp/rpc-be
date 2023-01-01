@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('fullName');
             $table->string('simpleName')->nullable();
             $table->string('sku')->nullable();
-            $table->integer('productBrandId');
-            $table->integer('productSupplierId');
+            $table->integer('productBrandId')->nullable();
+            $table->integer('productSupplierId')->nullable();
             $table->boolean('status');
             $table->date('expiredDate')->nullable();
 
