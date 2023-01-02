@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('tableaccess', function (Blueprint $table) {
+        Schema::create('tableAccess', function (Blueprint $table) {
             $table->id();
             $table->integer('menuListId');
             $table->integer('roleId');
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('tableaccess');
+        Schema::dropIfExists('tableAccess');
     }
 };

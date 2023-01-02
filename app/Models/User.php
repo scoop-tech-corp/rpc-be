@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -6,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use DB;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -17,7 +19,7 @@ class User extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password','role','isDeleted'
+        'name', 'password', 'isDeleted'
     ];
 
     /**
@@ -40,7 +42,19 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTIdentifier()
     {
-        return $this->getKey();
+
+
+        $users = DB::table('users')
+            ->select('users.password',)
+            ->where([
+                ['users.id', '=', $this->id],
+                ['users.isDeleted', '=', 0]
+            ])
+            ->first();
+
+        if ($users->password != null) {
+            return $this->getKey();
+        }
     }
     public function getJWTCustomClaims()
     {

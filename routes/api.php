@@ -6,11 +6,16 @@ use App\Http\Controllers\DataStaticController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\ImportRegionController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\Product\BundleController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Product\ProductSellController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\GlobalVariableController;
+use App\Http\Controllers\VerifyUserandPasswordController;
+
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -83,18 +88,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::delete('product/clinic', [ProductClinicController::class, 'Delete']);
 
     Route::get('product/inventory', [ProductInventoryController::class, 'index']);
-    Route::get('product/inventory/history/office', [ProductInventoryController::class, 'indexHistoryOffice']);
-    Route::get('product/inventory/history/admin', [ProductInventoryController::class, 'indexHistoryAdmin']);
-    Route::get('product/inventory/admin', [ProductInventoryController::class, 'indexAdmin']);
-    Route::get('product/inventory/office', [ProductInventoryController::class, 'indexOffice']);
+    Route::get('product/inventory/history', [ProductInventoryController::class, 'indexHistory']);
+    Route::get('product/inventory/approval', [ProductInventoryController::class, 'indexApproval']);
     
     Route::get('product/inventory/detail', [ProductInventoryController::class, 'detail']);
 
     Route::post('product/inventory', [ProductInventoryController::class, 'create']);
 
     Route::put('product/inventory', [ProductInventoryController::class, 'update']);
-    Route::put('product/inventory/office', [ProductInventoryController::class, 'updateOffice']);
-    Route::put('product/inventory/admin', [ProductInventoryController::class, 'updateAdmin']);
+    Route::put('product/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
     
     Route::delete('product/inventory', [ProductInventoryController::class, 'delete']);
 
@@ -105,8 +107,46 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('product/sell/dropdown', [ProductController::class, 'IndexProductSell']);
     Route::get('product/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
 
+    Route::post('product/usage', [ProductController::class, 'CreateUsage']);
+    Route::get('product/usage', [ProductController::class, 'IndexUsage']);
+
+    //product bundle
+    Route::get('product/bundle', [BundleController::class, 'index']);
+    Route::get('product/bundle/detail', [BundleController::class, 'detail']);
+    Route::post('product/bundle', [BundleController::class, 'create']);
+    Route::put('product/bundle', [BundleController::class, 'update']);
+    Route::put('product/bundle/status', [BundleController::class, 'changeStatus']);
+    Route::delete('product/bundle', [BundleController::class, 'delete']);
+
     //MODULE CUSTOMER
     //customer group
     Route::get('customer/group', [CustomerController::class, 'Index']);
     Route::post('customer/group', [CustomerController::class, 'Create']);
+
+    //STAFF
+    Route::post('staff', [StaffController::class, 'insertStaff']);
+    Route::delete('staff', [StaffController::class, 'deleteStaff']);
+    Route::get('rolestaff', [StaffController::class, 'getRoleStaff']);
+    Route::get('locationstaff', [StaffController::class, 'getLocationStaff']);
+    Route::get('typeid', [StaffController::class, 'getTypeId']);
+    Route::get('payperiod', [StaffController::class, 'getPayPeriod']);
+    Route::get('jobtitle', [StaffController::class, 'getJobTitle']);
+    Route::post('typeid', [StaffController::class, 'insertTypeId']);
+    Route::post('payperiod', [StaffController::class, 'insertPayPeriod']);
+    Route::post('jobtitle', [StaffController::class, 'insertJobTitle']);
+    Route::post('imageStaff', [StaffController::class, 'uploadImageStaff']);
+    Route::delete('imageStaff', [StaffController::class, 'deleteImageStaff']);
+    Route::get('staffdetail', [StaffController::class, 'getDetailStaff']);
+    Route::put('staff', [StaffController::class, 'updateStaff']);
+    Route::get('staff', [StaffController::class, 'index']);
+    Route::get('exportstaff', [StaffController::class, 'exportStaff']);
+    Route::post('sendEmail', [StaffController::class, 'sendEmailVerification']);
+    Route::put('statusStaff', [StaffController::class, 'updateStatusUsers']);
+
+    //GLOBAL VARIABLE
+    Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
+    Route::get('provinsi', [GlobalVariableController::class, 'getProvinsi']);
+    Route::get('datastatic', [GlobalVariableController::class, 'getDataStatic']);
+    Route::post('datastaticglobal', [GlobalVariableController::class, 'insertDataStatic']);
+    Route::post('uploadregion', [GlobalVariableController::class, 'uploadRegion']);
 });

@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('fullName');
             $table->string('simpleName')->nullable();
             $table->string('sku')->nullable();
-            $table->integer('productBrandId');
-            $table->integer('productSupplierId');
+            $table->integer('productBrandId')->nullable();
+            $table->integer('productSupplierId')->nullable();
             $table->boolean('status');
             $table->date('expiredDate')->nullable();
 
@@ -34,8 +34,16 @@ return new class extends Migration
             $table->decimal('width', $precision = 18, $scale = 2);
             $table->decimal('height', $precision = 18, $scale = 2);
 
-            $table->string('introduction');
-            $table->string('description');
+            $table->string('introduction')->nullable();
+            $table->string('description')->nullable();
+
+            $table->boolean('isCustomerPurchase');
+            $table->boolean('isCustomerPurchaseOnline');
+            $table->boolean('isCustomerPurchaseOutStock');
+            $table->boolean('isStockLevelCheck');
+            $table->boolean('isNonChargeable');
+            $table->boolean('isOfficeApproval');
+            $table->boolean('isAdminApproval');
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');

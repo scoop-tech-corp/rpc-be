@@ -43,7 +43,7 @@ class ProductSellController
                 DB::raw("TRIM(psl.inStock)+0 as stock"),
                 'ps.status',
                 'ps.isShipped',
-                'u.name as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('ps.isDeleted', '=', 0);
@@ -268,12 +268,16 @@ class ProductSellController
             'marketPrice' => 'required|numeric',
             'price' => 'required|numeric',
             'isShipped' => 'required|bool',
-            'weight' => 'nullable|numeric',
-            'length' => 'nullable|numeric',
-            'width' => 'nullable|numeric',
-            'height' => 'nullable|numeric',
             'introduction' => 'nullable|string',
             'description' => 'nullable|string',
+
+            'isCustomerPurchase' => 'required|in:true,false,TRUE,FALSE',
+            'isCustomerPurchaseOnline' => 'required|in:true,false,TRUE,FALSE',
+            'isCustomerPurchaseOutStock' => 'required|in:true,false,TRUE,FALSE',
+            'isStockLevelCheck' => 'required|in:true,false,TRUE,FALSE',
+            'isNonChargeable' => 'required|in:true,false,TRUE,FALSE',
+            'isOfficeApproval' => 'required|in:true,false,TRUE,FALSE',
+            'isAdminApproval' => 'required|in:true,false,TRUE,FALSE',
         ]);
 
         if ($validate->fails()) {
@@ -282,6 +286,13 @@ class ProductSellController
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => $errors,
+            ], 422);
+        }
+
+        if ($request->isOfficeApproval == 'false' && $request->isAdminApproval == 'false') {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Office Approval or Admin Approval cannot false'],
             ], 422);
         }
 
@@ -485,6 +496,26 @@ class ProductSellController
         try {
             foreach ($ResultLocations as $value) {
 
+                $weight = 0;
+                if (!is_null($request->weight)) {
+                    $weight = $request->weight;
+                }
+
+                $length = 0;
+                if (!is_null($request->length)) {
+                    $length = $request->length;
+                }
+
+                $width = 0;
+                if (!is_null($request->width)) {
+                    $width = $request->width;
+                }
+
+                $height = 0;
+                if (!is_null($request->height)) {
+                    $height = $request->height;
+                }
+
                 $product = ProductSell::create([
                     'fullName' => $request->fullName,
                     'simpleName' => $request->simpleName,
@@ -498,13 +529,21 @@ class ProductSellController
                     'marketPrice' => $request->marketPrice,
                     'price' => $request->price,
                     'isShipped' => $request->isShipped,
-                    'weight' => $request->weight,
-                    'length' => $request->length,
-                    'width' => $request->width,
-                    'height' => $request->height,
+                    'weight' => $weight,
+                    'length' => $length,
+                    'width' => $width,
+                    'height' => $height,
                     'introduction' => $request->introduction,
                     'description' => $request->description,
-                    'height' => $request->height,
+
+                    'isCustomerPurchase' => convertTrueFalse($request->isCustomerPurchase),
+                    'isCustomerPurchaseOnline' => convertTrueFalse($request->isCustomerPurchaseOnline),
+                    'isCustomerPurchaseOutStock' => convertTrueFalse($request->isCustomerPurchaseOutStock),
+                    'isStockLevelCheck' => convertTrueFalse($request->isStockLevelCheck),
+                    'isNonChargeable' => convertTrueFalse($request->isNonChargeable),
+                    'isOfficeApproval' => convertTrueFalse($request->isOfficeApproval),
+                    'isAdminApproval' => convertTrueFalse($request->isAdminApproval),
+
                     'userId' => $request->user()->id,
                 ]);
 
@@ -632,7 +671,7 @@ class ProductSellController
             return response()->json([
                 'message' => 'Insert Failed',
                 'errors' => $th,
-            ]);
+            ], 422);
         }
     }
 
@@ -1099,6 +1138,7 @@ class ProductSellController
             $ProdSell->DeletedBy = $request->user()->id;
             $ProdSell->isDeleted = true;
             $ProdSell->DeletedAt = Carbon::now();
+            $ProdSell->save();
         }
 
         return response()->json([

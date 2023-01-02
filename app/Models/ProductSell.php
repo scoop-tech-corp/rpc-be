@@ -12,9 +12,13 @@ class ProductSell extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['fullName', 'simpleName', 'sku',
-        'productBrandId', 'productSupplierId', 'status','expiredDate', 'pricingStatus',
+    protected $fillable = [
+        'fullName', 'simpleName', 'sku',
+        'productBrandId', 'productSupplierId', 'status', 'expiredDate', 'pricingStatus',
         'costPrice', 'marketPrice', 'price',
         'isShipped', 'weight', 'length', 'width',
-        'height', 'introduction', 'description', 'userId', 'userUpdateId'];
+        'height', 'introduction', 'description', 'isCustomerPurchase', 'isCustomerPurchaseOnline',
+        'isCustomerPurchaseOutStock', 'isStockLevelCheck', 'isNonChargeable',
+        'isOfficeApproval', 'isAdminApproval', 'userId', 'userUpdateId'
+    ];
 }

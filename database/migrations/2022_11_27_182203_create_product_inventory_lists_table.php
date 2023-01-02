@@ -20,7 +20,7 @@ return new class extends Migration
 
             $table->string('productType');
             $table->integer('productId');
-            $table->string('usage');
+            $table->integer('usageId');
             $table->integer('quantity');
 
             $table->boolean('isDeleted')->nullable()->default(false);

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\VerifyUserandPasswordController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -16,3 +16,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Auth::routes([
+// 'verify' => true
+
+// ]);
+
+Route::resource('/posts/{id}', \App\Http\Controllers\VerifyUserandPasswordController::class);
+Route::post('/posts','\App\Http\Controllers\VerifyUserandPasswordController@store')->name('reset.password.store');

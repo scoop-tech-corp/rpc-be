@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('menulist', function (Blueprint $table) {
+        Schema::create('menuList', function (Blueprint $table) {
             $table->id();
             $table->string('menuName');
             $table->integer('isActive');
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('menulist');
+        Schema::dropIfExists('menuList');
     }
 };
