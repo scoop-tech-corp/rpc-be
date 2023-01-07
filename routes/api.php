@@ -146,7 +146,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
     Route::get('provinsi', [GlobalVariableController::class, 'getProvinsi']);
-    Route::get('datastatic', [GlobalVariableController::class, 'getDataStatic']);
+    Route::get('datastaticglobal', [GlobalVariableController::class, 'getDataStatic']);
     Route::post('datastaticglobal', [GlobalVariableController::class, 'insertDataStatic']);
     Route::post('uploadregion', [GlobalVariableController::class, 'uploadRegion']);
 });
