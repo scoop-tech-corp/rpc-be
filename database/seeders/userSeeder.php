@@ -127,7 +127,7 @@ class userSeeder extends Seeder
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualLeaveAllowance' => 10, 'payPeriodId' => 3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 15013534555, 'additionalInfo' => 'Your additional information RPC petshop care',
-                'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 2,
+                'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 1,
                 'isDeleted' => 0,  'created_at' => now()->addDay(1),  'updated_at' => now(), 'password' => bcrypt("160196"),
                 'registrationNo' => '8782784881',  'designation' => '1219835124', 'createdBy' => 'danny', 'email' => 'adiyansyahdwiputra@gmail.com',
             ],

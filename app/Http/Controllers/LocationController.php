@@ -282,33 +282,48 @@ class LocationController extends Controller
                 ], 422);
             }
 
+            $data_error_address = [];
 
             if ($request->detailAddress) {
 
                 $messageAddress = [
-                    '*.addressName.required' => 'Address name on tab Address is required',
-                    '*.provinceCode.required' => 'Province code on tab Address is required',
-                    '*.cityCode.required' => 'City code on tab Address is required',
-                    '*.country.required' => 'Country on tab Address is required',
+                    'addressName.required' => 'Address name on tab Address is required',
+                    'provinceCode.required' => 'Province code on tab Address is required',
+                    'cityCode.required' => 'City code on tab Address is required',
+                    'country.required' => 'Country on tab Address is required',
                 ];
 
-                $validateDetail = Validator::make(
-                    $request->detailAddress,
-                    [
-                        '*.addressName' => 'required',
-                        '*.provinceCode' => 'required',
-                        '*.cityCode' => 'required',
-                        '*.country' => 'required',
-                    ],
-                    $messageAddress
-                );
+                foreach ($request->detailAddress as $key) {
 
-                if ($validateDetail->fails()) {
-                    $errorsdetail = $validateDetail->errors()->all();
+                    $validateDetail = Validator::make(
+                        $key,
+                        [
+                            'addressName' => 'required',
+                            'provinceCode' => 'required',
+                            'cityCode' => 'required',
+                            'country' => 'required',
+                        ],
+                        $messageAddress
+                    );
 
+
+                    if ($validateDetail->fails()) {
+
+                        $errors = $validateDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_address))) {
+                                array_push($data_error_address, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_error_address) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errorsdetail,
+                        'errors' => $data_error_address,
                     ], 422);
                 }
             } else {
@@ -320,91 +335,140 @@ class LocationController extends Controller
             }
 
 
+            $data_error_telephone = [];
 
             if ($request->telephone) {
 
                 $messagePhone = [
-                    '*.phoneNumber.required' => 'Phone Number on tab telephone is required',
-                    '*.type.required' => 'Type on tab telephone is required',
-                    '*.usage.required' => 'Usage on tab telephone is required',
+                    'phoneNumber.required' => 'Phone Number on tab telephone is required',
+                    'type.required' => 'Type on tab telephone is required',
+                    'usage.required' => 'Usage on tab telephone is required',
                 ];
 
-                $telephoneDetail = Validator::make(
-                    $request->telephone,
-                    [
-                        '*.phoneNumber' => 'required',
-                        '*.type' => 'required',
-                        '*.usage' => 'required',
-                    ],
-                    $messagePhone
-                );
+                foreach ($request->telephone as $key) {
 
-                if ($telephoneDetail->fails()) {
-                    $errorsdetail = $telephoneDetail->errors()->all();
+                    $telephoneDetail = Validator::make(
+                        $key,
+                        [
+                            'phoneNumber' => 'required',
+                            'type' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messagePhone
+                    );
 
+                    if ($telephoneDetail->fails()) {
+
+                        $errors = $telephoneDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_telephone))) {
+                                array_push($data_error_telephone, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_error_telephone) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errorsdetail,
+                        'errors' => $data_error_telephone,
                     ], 422);
                 }
             }
 
+
+            $data_error_email = [];
             if ($request->email) {
 
                 $messageEmail = [
-                    '*.username.required' => 'username on tab email is required',
-                    '*.usage.required' => 'Usage on tab email is required',
+                    'username.required' => 'username on tab email is required',
+                    'usage.required' => 'Usage on tab email is required',
                 ];
 
-                $emailDetail = Validator::make(
-                    $request->email,
-                    [
-                        '*.username' => 'required',
-                        '*.usage' => 'required',
-                    ],
-                    $messageEmail
-                );
 
-                if ($emailDetail->fails()) {
-                    $errorsdetailEmail = $emailDetail->errors()->all();
+                foreach ($request->email as $key) {
 
+                    $emailDetail = Validator::make(
+                        $key,
+                        [
+                            '*.username' => 'required',
+                            '*.usage' => 'required',
+                        ],
+                        $messageEmail
+                    );
+
+                    if ($emailDetail->fails()) {
+
+                        $errors = $emailDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_email))) {
+                                array_push($data_error_email, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+
+                if ($data_error_email) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errorsdetailEmail,
+                        'errors' => $data_error_email,
                     ], 422);
                 }
             }
 
+
+
+            $data_error_messenger = [];
             if ($request->messenger) {
 
                 $messageMessenger = [
-                    '*.messengerNumber.required' => 'messenger number on tab messenger is required',
-                    '*.type.required' => 'Type on tab messenger is required',
-                    '*.usage.required' => 'Usage on tab messenger is required',
+                    'messengerNumber.required' => 'messenger number on tab messenger is required',
+                    'type.required' => 'Type on tab messenger is required',
+                    'usage.required' => 'Usage on tab messenger is required',
                 ];
 
-                $messengerDetail = Validator::make(
-                    $request->messenger,
-                    [
-                        '*.messengerNumber' => 'required',
-                        '*.type' => 'required',
-                        '*.usage' => 'required',
-                    ],
-                    $messageMessenger
-                );
+                foreach ($request->messenger as $key) {
 
-                if ($messengerDetail->fails()) {
-                    $errorsdetailMessenger = $messengerDetail->errors()->all();
+                    $messengerDetail = Validator::make(
+                        $key,
+                        [
+                            'messengerNumber' => 'required',
+                            'type' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messageMessenger
+                    );
 
+
+                    if ($messengerDetail->fails()) {
+
+                        $errors = $messengerDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_messenger))) {
+                                array_push($data_error_messenger, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_error_messenger) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errorsdetailMessenger,
+                        'errors' => $data_error_messenger,
                     ], 422);
                 }
+
             }
 
 
-
+            //UPDATE 
             DB::table('location')
                 ->where('codeLocation', '=', $request->input('codeLocation'))
                 ->update([
@@ -589,34 +653,51 @@ class LocationController extends Controller
                 ], 422);
             }
 
+
+            $data_error_address = [];
             if ($request->detailAddress) {
 
                 $arrayDetailAddress = json_decode($request->detailAddress, true);
 
                 $messageAddress = [
-                    '*.addressName.required' => 'Address name on tab Address is required',
-                    '*.provinceCode.required' => 'Province code on tab Address is required',
-                    '*.cityCode.required' => 'City code on tab Address is required',
-                    '*.country.required' => 'Country on tab Address is required',
+                    'addressName.required' => 'Address name on tab Address is required',
+                    'provinceCode.required' => 'Province code on tab Address is required',
+                    'cityCode.required' => 'City code on tab Address is required',
+                    'country.required' => 'Country on tab Address is required',
                 ];
 
-                $validateDetail = Validator::make(
-                    $arrayDetailAddress,
-                    [
-                        '*.addressName' => 'required',
-                        '*.provinceCode' => 'required',
-                        '*.cityCode' => 'required',
-                        '*.country' => 'required',
-                    ],
-                    $messageAddress
-                );
+                foreach ($arrayDetailAddress as $key) {
 
-                if ($validateDetail->fails()) {
-                    $errorsdetail = $validateDetail->errors()->all();
+                    $validateDetail = Validator::make(
+                        $key,
+                        [
+                            'addressName' => 'required',
+                            'provinceCode' => 'required',
+                            'cityCode' => 'required',
+                            'country' => 'required',
+                        ],
+                        $messageAddress
+                    );
 
+
+                    if ($validateDetail->fails()) {
+
+                        $errors = $validateDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_address))) {
+                                array_push($data_error_address, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+
+                if ($data_error_address) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errorsdetail,
+                        'errors' => $data_error_address,
                     ], 422);
                 }
             } else {
@@ -627,90 +708,143 @@ class LocationController extends Controller
                 ], 422);
             }
 
+
+
+            $data_error_telephone = [];
+
             if ($request->telephone) {
 
                 $arraytelephone = json_decode($request->telephone, true);
 
                 $messagePhone = [
-                    '*.phoneNumber.required' => 'Phone Number on tab telephone is required',
-                    '*.type.required' => 'Type on tab telephone is required',
-                    '*.usage.required' => 'Usage on tab telephone is required',
+                    'phoneNumber.required' => 'Phone Number on tab telephone is required',
+                    'type.required' => 'Type on tab telephone is required',
+                    'usage.required' => 'Usage on tab telephone is required',
                 ];
 
-                $telephoneDetail = Validator::make(
-                    $arraytelephone,
-                    [
-                        '*.phoneNumber' => 'required',
-                        '*.type' => 'required',
-                        '*.usage' => 'required',
-                    ],
-                    $messagePhone
-                );
 
-                if ($telephoneDetail->fails()) {
-                    $errorsdetail = $telephoneDetail->errors()->all();
+                foreach ($arraytelephone as $key) {
 
+                    $telephoneDetail = Validator::make(
+                        $arraytelephone,
+                        [
+                            'phoneNumber' => 'required',
+                            'type' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messagePhone
+                    );
+
+                    if ($telephoneDetail->fails()) {
+
+                        $errors = $telephoneDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_telephone))) {
+                                array_push($data_error_telephone, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+
+                if ($data_error_telephone) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errorsdetail,
+                        'errors' => $data_error_telephone,
                     ], 422);
                 }
             }
+
+
+
+            $data_error_email = [];
 
             if ($request->email) {
 
                 $arrayemail = json_decode($request->email, true);
 
                 $messageEmail = [
-                    '*.username.required' => 'username on tab email is required',
-                    '*.usage.required' => 'Usage on tab email is required',
+                    'username.required' => 'username on tab email is required',
+                    'usage.required' => 'Usage on tab email is required',
                 ];
 
-                $emailDetail = Validator::make(
-                    $arrayemail,
-                    [
-                        '*.username' => 'required',
-                        '*.usage' => 'required',
-                    ],
-                    $messageEmail
-                );
+                foreach ($arrayemail as $key) {
 
-                if ($emailDetail->fails()) {
-                    $errorsdetailEmail = $emailDetail->errors()->all();
+                    $emailDetail = Validator::make(
+                        $key,
+                        [
+                            'username' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messageEmail
+                    );
 
+
+                    if ($emailDetail->fails()) {
+
+                        $errors = $emailDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_email))) {
+                                array_push($data_error_email, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_error_email) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errorsdetailEmail,
+                        'errors' => $data_error_email,
                     ], 422);
                 }
             }
 
+
+
+            $data_error_email = [];
             if ($request->messenger) {
 
                 $arraymessenger = json_decode($request->messenger, true);
 
                 $messageMessenger = [
-                    '*.messengerNumber.required' => 'messenger number on tab messenger is required',
-                    '*.type.required' => 'Type on tab messenger is required',
-                    '*.usage.required' => 'Usage on tab messenger is required',
+                    'messengerNumber.required' => 'messenger number on tab messenger is required',
+                    'type.required' => 'Type on tab messenger is required',
+                    'usage.required' => 'Usage on tab messenger is required',
                 ];
 
-                $messengerDetail = Validator::make(
-                    $arraymessenger,
-                    [
-                        '*.messengerNumber' => 'required',
-                        '*.type' => 'required',
-                        '*.usage' => 'required',
-                    ],
-                    $messageMessenger
-                );
+                foreach ($arraymessenger as $key) {
 
-                if ($messengerDetail->fails()) {
-                    $errorsdetailMessenger = $messengerDetail->errors()->all();
+                    $messengerDetail = Validator::make(
+                        $arraymessenger,
+                        [
+                            'messengerNumber' => 'required',
+                            'type' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messageMessenger
+                    );
 
+                    if ($messengerDetail->fails()) {
+
+                        $errors = $messengerDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_email))) {
+                                array_push($data_error_email, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_error_email) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errorsdetailMessenger,
+                        'errors' => $data_error_email,
                     ], 422);
                 }
             }

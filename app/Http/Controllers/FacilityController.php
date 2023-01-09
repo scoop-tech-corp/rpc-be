@@ -132,24 +132,60 @@ class FacilityController extends Controller
                 }
             }
 
+            $inputUnitReal = [];
+
             if ($request->unit) {
 
                 $arraunit = json_decode($request->unit, true);
 
-                $check = Validator::make($arraunit, [
-                    "*.unitName" => 'required|max:25',
-                    "*.notes" => 'required|max:300',
-                    "*.status" => 'required|integer',
-                    "*.capacity" => 'required|integer',
-                    "*.amount" => 'required|integer',
-                ]);
+                foreach ($arraunit as $val) {
 
-                if ($check->fails()) {
-                    $errors = $check->errors()->all();
+                    if (!isset($val['command'])) {
+                        array_push($inputUnitReal, $val);
+                    }
+                }
 
+                $messages = [
+                    'unitName.required' => 'Please input unit name, unit name is required',
+                    'unitName.max' => 'Exceeded maximum character, max character for unit name is 35',
+                    'notes.max' => 'Exceeded maximum character, max character for notes name is 300',
+                    'status.required' => 'Please input status, status is required',
+                    'status.integer' => 'Status must be integer',
+                    'capacity.required' => 'Please input capacity unit, capacity is required',
+                    'capacity.integer' => 'Capacity must be integer',
+                    'amount.required' => 'Please input amount unit, amount is required',
+                    'amount.integer' => 'Amount must be integer',
+                ];
+
+                $data_item = [];
+
+                foreach ($inputUnitReal as $key) {
+
+                    $check = Validator::make($key, [
+                        "unitName" => 'required|max:25',
+                        "notes" => 'max:300',
+                        "status" => 'required|integer',
+                        "capacity" => 'required|integer',
+                        "amount" => 'required|integer'
+                    ], $messages);
+
+                    if ($check->fails()) {
+
+                        $errors = $check->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_item))) {
+                                array_push($data_item, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_item) {
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_item,
                     ], 422);
                 }
             } else {
@@ -159,6 +195,8 @@ class FacilityController extends Controller
                     'errors' => ['Facility unit can not be empty!'],
                 ], 422);
             }
+
+
 
             //INSERT DATA
             DB::table('facility')->insert([
@@ -171,7 +209,7 @@ class FacilityController extends Controller
 
             if ($request->unit) {
 
-                foreach ($arraunit as $val) {
+                foreach ($inputUnitReal as $val) {
 
                     $checkIfFacilityExits = DB::table('facility_unit')
                         ->where([
@@ -560,112 +598,151 @@ class FacilityController extends Controller
                 ], 422);
             }
 
+
+            $data_item = [];
+
             if ($request->unit) {
 
                 if (count($request->unit) != 0) {
 
-                    $check = Validator::make($request->unit, [
+                    $messages = [
+                        'unitName.required' => 'Please input unit name, unit name is required',
+                        'unitName.max' => 'Exceeded maximum character, max character for unit name is 35',
+                        'notes.max' => 'Exceeded maximum character, max character for notes name is 300',
+                        'status.required' => 'Please input status, status is required',
+                        'status.integer' => 'Status must be integer',
+                        'capacity.required' => 'Please input capacity unit, capacity is required',
+                        'capacity.integer' => 'Capacity must be integer',
+                        'amount.required' => 'Please input amount unit, amount is required',
+                        'amount.integer' => 'Amount must be integer',
+                    ];
 
-                        "*.unitName" => 'required|max:25',
-                        "*.notes" => 'required|max:300',
-                        "*.status" => 'required|integer',
-                        "*.capacity" => 'required|integer',
-                        "*.amount" => 'required|integer',
-                    ]);
+                    foreach ($request->unit as $key) {
 
-                    if ($check->fails()) {
-                        $errors = $check->errors()->all();
-
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => $errors,
-                        ], 422);
-                    }
-
-                    //UPDATE
-                    DB::table('facility')
-                        ->where('locationId', '=', $request->locationId)
-                        ->update([
-                            'introduction' => $request->introduction,
-                            'description' => $request->description,
-                            'updated_at' => now(),
-                        ]);
-
-                    foreach ($request->unit as $val) {
-
-                        if (isset($val['id'])) {
-
-                            if (isset($val['command'])) {
-
-                                DB::table('facility_unit')
-                                    ->where([
-                                        ['locationId', '=', $request->input('locationId')],
-                                        ['id', '=', $val['id']],
-                                        ['isDeleted', '=', '0']
-                                    ])
-                                    ->update([
-                                        'unitName' => $val['unitName'],
-                                        'isDeleted' => 1,
-                                        'updated_at' => now(),
-                                    ]);
-
-                                DB::table('facility_images')
-                                    ->where([
-                                        ['locationId', '=', $request->input('locationId')],
-                                        ['id', '=', $val['id']],
-                                        ['isDeleted', '=', '0']
-                                    ])
-                                    ->update([
-                                        'isDeleted' => 1,
-                                        'updated_at' => now()
-                                    ]);
-                            } else {
-
-                                DB::table('facility_unit')
-                                    ->where([
-                                        ['locationId', '=', $request->input('locationId')],
-                                        ['id', '=', $val['id']],
-                                    ])
-                                    ->update([
-                                        'unitName' => $val['unitName'],
-                                        'capacity' => $val['capacity'],
-                                        'amount' => $val['amount'],
-                                        'status' => $val['status'],
-                                        'notes' => $val['notes'],
-                                        'updated_at' => now(),
-                                    ]);
-                            }
-                        } else {
-
-                            $checkIfDataExits = DB::table('facility_unit')
-                                ->where([
-                                    ['locationId', '=', $request->input('locationId')],
-                                    ['unitName', '=', $val['unitName']],
-                                    ['isDeleted', '=', '0']
-                                ])
-                                ->first();
-
-                            if ($checkIfDataExits != null) {
-
-                                return response()->json([
-                                    'result' => 'Failed',
-                                    'message' => 'Unit name : ' . $val['unitName'] . ', already exists, please try different unit name',
-                                ]);
-                            } else {
-
-                                DB::table('facility_unit')
-                                    ->insert([
-                                        'locationId' => $request->input('locationId'),
-                                        'unitName' => $val['unitName'],
-                                        'status' => $val['status'],
-                                        'capacity' => $val['capacity'],
-                                        'amount' => $val['amount'],
-                                        'notes' => $val['notes'],
-                                        'isDeleted' => 0,
-                                        'created_at' => now(),
-                                    ]);
+                        $check = Validator::make($key, [
+                            "unitName" => 'required|max:25',
+                            "notes" => 'max:300',
+                            "status" => 'required|integer',
+                            "capacity" => 'required|integer',
+                            "amount" => 'required|integer'
+                        ], $messages);
+    
+                        if ($check->fails()) {
+    
+                            $errors = $check->errors()->all();
+    
+                            foreach ($errors as $checkisu) {
+    
+                                if (!(in_array($checkisu, $data_item))) {
+                                    array_push($data_item, $checkisu);
+                                }
                             }
                         }
+                    }
+
+
+                    if ($data_item) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => $data_item,
+                        ], 422);
+                    }
+                    
+                }
+
+            }else {
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Facility unit can not be empty!'],
+                ], 422);
+            }
+
+
+
+            //UPDATE
+            DB::table('facility')
+                ->where('locationId', '=', $request->locationId)
+                ->update([
+                    'introduction' => $request->introduction,
+                    'description' => $request->description,
+                    'updated_at' => now(),
+                ]);
+
+
+            foreach ($request->unit as $val) {
+
+                if (isset($val['id'])) {
+
+                    if (isset($val['command'])) {
+
+                        DB::table('facility_unit')
+                            ->where([
+                                ['locationId', '=', $request->input('locationId')],
+                                ['id', '=', $val['id']],
+                                ['isDeleted', '=', '0']
+                            ])
+                            ->update([
+                                'unitName' => $val['unitName'],
+                                'isDeleted' => 1,
+                                'updated_at' => now(),
+                            ]);
+
+                        DB::table('facility_images')
+                            ->where([
+                                ['locationId', '=', $request->input('locationId')],
+                                ['id', '=', $val['id']],
+                                ['isDeleted', '=', '0']
+                            ])
+                            ->update([
+                                'isDeleted' => 1,
+                                'updated_at' => now()
+                            ]);
+                    } else {
+
+                        DB::table('facility_unit')
+                            ->where([
+                                ['locationId', '=', $request->input('locationId')],
+                                ['id', '=', $val['id']],
+                            ])
+                            ->update([
+                                'unitName' => $val['unitName'],
+                                'capacity' => $val['capacity'],
+                                'amount' => $val['amount'],
+                                'status' => $val['status'],
+                                'notes' => $val['notes'],
+                                'updated_at' => now(),
+                            ]);
+                    }
+                } else {
+
+                    $checkIfDataExits = DB::table('facility_unit')
+                        ->where([
+                            ['locationId', '=', $request->input('locationId')],
+                            ['unitName', '=', $val['unitName']],
+                            ['isDeleted', '=', '0']
+                        ])
+                        ->first();
+
+                    if ($checkIfDataExits != null) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'Unit name : ' . $val['unitName'] . ', already exists, please try different unit name',
+                        ]);
+                    } else {
+
+                        DB::table('facility_unit')
+                            ->insert([
+                                'locationId' => $request->input('locationId'),
+                                'unitName' => $val['unitName'],
+                                'status' => $val['status'],
+                                'capacity' => $val['capacity'],
+                                'amount' => $val['amount'],
+                                'notes' => $val['notes'],
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                            ]);
                     }
                 }
             }
