@@ -14,8 +14,6 @@ class ProductInventory extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'requirementName', 'locationId', 'totalItem', 'isApprovedOffice', 'userApproveOfficeId',
-        'userApproveAdminId', 'isApprovedAdmin', 'userApproveOfficeAt', 'userApproveAdminAt',
-        'reasonOffice', 'reasonAdmin', 'userId', 'userUpdateId'
+        'requirementName', 'locationId', 'totalItem', 'isApprovalAdmin', 'isApprovalOffice', 'userId', 'userUpdateId'
     ];
 }

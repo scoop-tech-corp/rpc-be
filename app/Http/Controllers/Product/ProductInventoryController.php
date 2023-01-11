@@ -6,6 +6,7 @@ use App\Models\ProductClinic;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductInventory;
 use App\Models\ProductInventoryList;
+use App\Models\ProductInventoryListImages;
 use App\Models\ProductSell;
 use App\Models\ProductSellLocation;
 use Illuminate\Http\Request;
@@ -27,24 +28,21 @@ class ProductInventoryController
         $data = DB::table('productInventories as p')
             ->join('users as u', 'p.userId', 'u.id')
             ->join('location as loc', 'loc.Id', 'p.locationId')
-            ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
-            ->leftJoin('users as uAdm', 'p.userApproveAdminId', 'uAdm.id')
             ->select(
                 'p.id',
                 'p.requirementName',
                 'p.locationId',
-                'p.totalItem',
                 'loc.locationName as locationName',
+                'p.totalItem',
+                // 'p.isApprovedOffice',
+                // DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
+                // DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
+                // DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
 
-                'p.isApprovedOffice',
-                DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
-                DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
-
-                'p.isApprovedAdmin',
-                DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
-                DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
-                DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
+                // 'p.isApprovedAdmin',
+                // DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
+                // DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
+                // DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
 
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
@@ -220,21 +218,22 @@ class ProductInventoryController
 
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
-                ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
+                // ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
                 ->join('location as loc', 'loc.Id', 'p.locationId')
                 ->select(
                     'p.id',
                     'p.requirementName',
                     'p.locationId',
                     'loc.locationName as locationName',
-                    'p.isApprovedOffice',
-                    'uOff.firstName as officeApprovedBy',
-                    'p.isApprovedAdmin',
+                    // 'p.isApprovedOffice',
+                    // 'uOff.firstName as officeApprovedBy',
+                    // 'p.isApprovedAdmin',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                 )
-                ->where('p.isApprovedOffice', '=', 1)
-                ->where('p.isApprovedAdmin', '=', 0);
+                // ->where('p.isApprovedOffice', '=', 0)
+                // ->where('p.isApprovedAdmin', '=', 0)
+                ->where('p.isApprovalAdmin', '=', 1);
         } elseif (role($request->user()->id) == 'Office') {
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
@@ -244,11 +243,12 @@ class ProductInventoryController
                     'p.requirementName',
                     'p.locationId',
                     'loc.locationName as locationName',
-                    'p.isApprovedOffice',
+                    // 'p.isApprovedOffice',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                 )
-                ->where('p.isApprovedOffice', '=', 0);
+                ->where('p.isApprovedOffice', '=', 0)
+                ->where('p.isApprovalOffice', '=', 1);
         }
 
         if ($request->search) {
@@ -316,6 +316,8 @@ class ProductInventoryController
                 $prodDetail = DB::table('productInventoryLists as pi')
                     ->join('productSells as p', 'p.id', 'pi.productId')
                     ->join('usages as u', 'u.id', 'pi.usageId')
+                    ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
+                    ->leftJoin('users as uAdm', 'pi.userApproveAdminId', 'uAdm.id')
                     ->select(
                         'pi.id',
                         'pi.productType',
@@ -323,7 +325,17 @@ class ProductInventoryController
                         'p.fullName as productName',
                         'pi.usageId',
                         'u.usage',
-                        'pi.quantity'
+                        'pi.quantity',
+
+                        'pi.isApprovedOffice',
+                        DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
+                        DB::raw("IFNULL(DATE_FORMAT(pi.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
+                        DB::raw("IFNULL(pi.reasonOffice,'') as reasonOffice"),
+
+                        'pi.isApprovedAdmin',
+                        DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
+                        DB::raw("IFNULL(DATE_FORMAT(pi.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
+                        DB::raw("IFNULL(pi.reasonAdmin,'') as reasonAdmin"),
                     )
                     ->where('pi.productInventoryId', '=', $request->id)
                     ->get();
@@ -341,7 +353,17 @@ class ProductInventoryController
                         'p.fullName as productName',
                         'pi.usageId',
                         'u.usage',
-                        'pi.quantity'
+                        'pi.quantity',
+
+                        'pi.isApprovedOffice',
+                        DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
+                        DB::raw("IFNULL(DATE_FORMAT(pi.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
+                        DB::raw("IFNULL(pi.reasonOffice,'') as reasonOffice"),
+
+                        'pi.isApprovedAdmin',
+                        DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
+                        DB::raw("IFNULL(DATE_FORMAT(pi.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
+                        DB::raw("IFNULL(pi.reasonAdmin,'') as reasonAdmin"),
                     )
                     ->where('pi.productInventoryId', '=', $request->id)
                     ->get();
@@ -382,12 +404,16 @@ class ProductInventoryController
                 '*.productId' => 'required|integer',
                 '*.usageId' => 'required|integer',
                 '*.quantity' => 'required|integer',
+                '*.dateCondition' => 'required|date',
+                '*.itemCondition' => 'required|string',
             ],
             [
                 '*.productType.string' => 'Product Type Should be String!',
                 '*.productId.integer' => 'Product Id Should be Integer',
                 '*.usage.integer' => 'Usage Should be Integer',
-                '*.quantity.integer' => 'Quantity Should be Integer'
+                '*.quantity.integer' => 'Quantity Should be Integer',
+                '*.dateCondition.date' => 'Quantity Should be Date',
+                '*.itemCondition.string' => 'Quantity Should be Integer'
             ]
         );
 
@@ -400,26 +426,100 @@ class ProductInventoryController
             ], 422);
         }
 
+        $approvalAdmin = 0;
+        $approvalOffice = 0;
+
+        foreach ($ResultProducts as $value) {
+
+            if ($value['productType'] == 'productSell') {
+
+                $findProduct = ProductSell::find($value['productId']);
+
+                if ($findProduct->isAdminApproval == 1) {
+                    $approvalAdmin = 1;
+                }
+
+                if ($findProduct->isOfficeApproval == 1) {
+                    $approvalOffice = 1;
+                }
+            } elseif ($value['productType'] == 'productClinic') {
+
+                $findProduct = ProductClinic::find($value['productId']);
+
+                if ($findProduct->isAdminApproval == 1) {
+                    $approvalAdmin = 1;
+                }
+
+                if ($findProduct->isOfficeApproval == 1) {
+                    $approvalOffice = 1;
+                }
+            }
+        }
+
         DB::beginTransaction();
         try {
 
             $prod =  ProductInventory::create([
                 'requirementName' => $request->requirementName,
-                'totalItem' => count($ResultProducts),
                 'locationId' => $request->locationId,
+                'totalItem' => count($ResultProducts),
+                'isApprovalAdmin' => $approvalAdmin,
+                'isApprovalOffice' => $approvalOffice,
                 'userId' => $request->user()->id,
             ]);
 
+            $count = 0;
+
+            $files[] = $request->file('images');
+            $tmpImages = [];
+
+            if ($request->hasfile('images')) {
+                foreach ($files as $file) {
+
+                    foreach ($file as $fil) {
+
+                        $name = $fil->hashName();
+
+                        $fil->move(public_path() . '/ProductClinicImages/', $name);
+
+                        $fileName = "/ProductInventoryImages/" . $name;
+
+                        $file = new ProductInventoryListImages();
+                        $file->productInventoryListId = 1;
+                        $file->realImageName = $fil->getClientOriginalName();
+                        $file->imagePath = $fileName;
+                        $file->userId = $request->user()->id;
+
+                        array_push($tmpImages, $file);
+                    }
+                }
+            }
+
             foreach ($ResultProducts as $value) {
 
-                ProductInventoryList::create([
+                $prod = ProductInventoryList::create([
                     'productInventoryId' => $prod->id,
                     'productType' => $value['productType'],
                     'productId' => $value['productId'],
                     'usageId' => $value['usageId'],
                     'quantity' => $value['quantity'],
+                    'dateCondition' => $value['dateCondition'],
+                    'itemCondition' => $value['itemCondition'],
+                    'isAnyImage' => $value['isAnyImage'],
                     'userId' => $request->user()->id,
                 ]);
+
+                if ($value['isAnyImage'] == 1) {
+
+                    ProductInventoryListImages::create([
+                        'productInventoryListId' => $prod->id,
+                        'realImageName' => $tmpImages[$count]['realImageName'],
+                        'imagePath' => $tmpImages[$count]['imagePath'],
+                        'userId' => $request->user()->id,
+                    ]);
+
+                    $count += 1;
+                }
             }
 
             DB::commit();
@@ -435,8 +535,8 @@ class ProductInventoryController
 
             return response()->json([
                 'message' => 'Insert Failed',
-                'errors' => $e,
-            ]);
+                'errors' => $e->getMessage(),
+            ], 422);
         }
     }
 
@@ -446,12 +546,12 @@ class ProductInventoryController
 
     public function updateApproval(Request $request)
     {
-        $prod = ProductInventory::find($request->id);
+        $prod = ProductInventoryList::find($request->id);
 
         if (!$prod) {
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['Product Inventory Request not found!'],
+                'errors' => ['The Product Request not found!'],
             ], 422);
         }
 
@@ -482,7 +582,7 @@ class ProductInventoryController
         }
 
         if (role($request->user()->id) == 'Office') {
-            ProductInventory::where('id', '=', $request->id)
+            ProductInventoryList::where('id', '=', $request->id)
                 ->update(
                     [
                         'userApproveOfficeId' => $request->user()->id,
@@ -492,7 +592,7 @@ class ProductInventoryController
                     ]
                 );
         } elseif (role($request->user()->id) == 'Administrator') {
-            ProductInventory::where('id', '=', $request->id)
+            ProductInventoryList::where('id', '=', $request->id)
                 ->update(
                     [
                         'userApproveAdminId' => $request->user()->id,
@@ -505,9 +605,9 @@ class ProductInventoryController
 
         if ($prod->isApprovedAdmin == 1 && $prod->isApprovedOffice == 1) {
             // update untuk mengurangi stok barang
-            $prodInventory = ProductInventory::find($request->id);
+            $prodInventory = ProductInventory::find($prod->productInventoryId);
 
-            $prodList = ProductInventoryList::where('ProductInventoryId', '=', $request->id)->get();
+            $prodList = ProductInventoryList::where('id', '=', $request->id)->get();
 
             //check validation update
             $msg = $this->ValidateUpdate($prodList, $prodInventory);

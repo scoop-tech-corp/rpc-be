@@ -13,21 +13,21 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('productInventories', function (Blueprint $table) {
+        Schema::create('productClinicDosages', function (Blueprint $table) {
             $table->id();
 
-            $table->string('requirementName');
-            $table->integer('locationId');
-            $table->integer('totalItem');
-            
-            $table->boolean('isApprovalAdmin');
-            $table->boolean('isApprovalOffice');
+            $table->integer('productClinicId');
 
+            $table->integer('from');
+            $table->integer('to');
+            $table->decimal('dosage', $precision = 18, $scale = 2);
+            $table->string('unit');
+            
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');
             $table->integer('userUpdateId')->nullable();
             $table->string('deletedBy')->nullable();
-            $table->timestamp('deletedAt', 0)->nullable();
+            $table->timestamp('deletedAt',0)->nullable();
             $table->timestamps();
         });
     }
@@ -39,6 +39,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('productInventories');
+        Schema::dropIfExists('productClinicDosages');
     }
 };

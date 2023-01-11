@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Product;
 use App\Models\ProductClinic;
 use App\Models\ProductClinicCategory;
 use App\Models\ProductClinicCustomerGroup;
+use App\Models\ProductClinicDosage;
 use App\Models\ProductClinicImages;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductClinicPriceLocation;
@@ -14,6 +15,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx\Rels;
 use Validator;
 
 class ProductClinicController
@@ -23,6 +25,8 @@ class ProductClinicController
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
+
+        $tmpRes = "";
 
         $data = DB::table('productClinics as pc')
             ->join('productClinicLocations as pcl', 'pcl.productClinicId', 'pc.id')
@@ -34,6 +38,7 @@ class ProductClinicController
                 'pc.id as id',
                 'pc.fullName as fullName',
                 DB::raw("IFNULL(pc.sku,'') as sku"),
+                'loc.id as locationId',
                 'loc.locationName as locationName',
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName"),
                 DB::raw("IFNULL(pb.brandName,'') as brandName"),
@@ -46,6 +51,11 @@ class ProductClinicController
                 DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('pc.isDeleted', '=', 0);
+
+        if ($request->locationId) {
+
+            $data = $data->whereIn('loc.id', $request->locationId);
+        }
 
         if ($request->search) {
             $res = $this->Search($request);
@@ -202,6 +212,7 @@ class ProductClinicController
         $ResultQuantities = null;
         $ResultCustomerGroups = null;
         $ResultReminders = null;
+        $ResultDosages = null;
 
         if ($request->categories) {
             $ResultCategories = json_decode($request->categories, true);
@@ -279,6 +290,37 @@ class ProductClinicController
                 ], 422);
             }
         }
+
+        $ResultDosages = json_decode($request->dosages, true);
+
+        if ($ResultDosages) {
+
+            $validateDosages = Validator::make(
+                $ResultDosages,
+                [
+                    '*.from' => 'required|integer',
+                    '*.to' => 'required|integer',
+                    '*.dosage' => 'required|numeric',
+                    '*.unit' => 'required|string',
+                ],
+                [
+                    '*.from.integer' => 'From Weight Should be Integer!',
+                    '*.to.integer' => 'To Weight Should be Integer!',
+                    '*.dosage.numeric' => 'Dosage Should be Numeric!',
+                    '*.unit.string' => 'Unit Should be String',
+                ]
+            );
+
+            if ($validateDosages->fails()) {
+                $errors = $validateDosages->errors()->all();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+        }
+        //validasi gambar
 
         $this->ValidationImage($request);
 
@@ -515,6 +557,17 @@ class ProductClinicController
                         'unit' => $RemVal['unit'],
                         'timing' => $RemVal['timing'],
                         'status' => $RemVal['status'],
+                        'userId' => $request->user()->id,
+                    ]);
+                }
+
+                foreach ($ResultDosages as $dos) {
+                    ProductClinicDosage::create([
+                        'productClinicId' => $product->id,
+                        'from' => $dos['from'],
+                        'to' => $dos['to'],
+                        'dosage' => $dos['dosage'],
+                        'unit' => $dos['unit'],
                         'userId' => $request->user()->id,
                     ]);
                 }
@@ -876,5 +929,45 @@ class ProductClinicController
         return response()->json([
             'message' => 'Delete Data Successful',
         ], 200);
+    }
+
+    public function export(Request $request)
+    {
+        $tmp = "";
+        $date = Carbon::now()->format('d-m-y');
+
+        if ($request->locationId) {
+            $location = DB::table('location')
+                ->select('locationName')
+                ->whereIn('id', $request->locationId)
+                ->get();
+
+            if ($location) {
+
+                foreach ($location as $key) {
+                    $tmp = $tmp . (string) $key->locationName . ",";
+                }
+            }
+            $tmp = rtrim($tmp, ", ");
+        }
+
+        if ($tmp == "") {
+            $fileName = 'Rekap Produk Klinik Lokasi ' . $tmp . ' ' . $date . '.xlsx';
+        } else {
+            $filename = 'Rekap Produk Klinik ' . $date . '.xlsx';
+        }
+
+        return (new ProductClinicReport(
+            $request->orderValue,
+            $request->orderColumn,
+            $request->search,
+            $request->goToPage,
+            $request->rowPerPage,
+            $request->locationId,
+            $request->isExportAll,
+            $request->isExportLimit,
+            $request->user()->role
+        ))
+            ->download($filename);
     }
 }
