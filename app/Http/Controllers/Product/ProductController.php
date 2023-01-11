@@ -200,7 +200,7 @@ class ProductController
 
     public function IndexProductSell(Request $request)
     {
-        if ($request->locationId) {
+        if ($request->locationId && $request->brandId) {
 
             $data = DB::table('productSells as ps')
                 ->join('productSellLocations as pl', 'ps.id', 'pl.productSellId')
@@ -208,6 +208,7 @@ class ProductController
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.status', '=', 1)
                 ->where('pl.locationId', '=', $request->locationId)
+                ->where('ps.productBrandId', '=', $request->brandId)
                 ->get();
 
             return response()->json($data, 200);
@@ -215,7 +216,7 @@ class ProductController
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['Id location is invalid!'],
+                'errors' => ['Id location or Id Brand is invalid!'],
             ], 422);
         }
     }
@@ -223,7 +224,7 @@ class ProductController
     public function IndexProductClinic(Request $request)
     {
 
-        if ($request->locationId) {
+        if ($request->locationId && $request->brandId) {
 
             $data = DB::table('productClinics as p')
                 ->join('productClinicLocations as pl', 'p.id', 'pl.productClinicId')
@@ -231,6 +232,7 @@ class ProductController
                 ->where('p.isDeleted', '=', 0)
                 ->where('p.status', '=', 1)
                 ->where('pl.locationId', '=', $request->locationId)
+                ->where('p.productBrandId', '=', $request->brandId)
                 ->get();
 
             return response()->json($data, 200);

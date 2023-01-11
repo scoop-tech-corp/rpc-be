@@ -80,12 +80,14 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('product/sell', [ProductSellController::class, 'Create']);
     Route::put('product/sell', [ProductSellController::class, 'Update']);
     Route::delete('product/sell', [ProductSellController::class, 'Delete']);
+    Route::get('product/sell/export', [ProductSellController::class, 'Export']);
 
     Route::get('product/clinic', [ProductClinicController::class, 'index']);
     Route::get('product/clinic/detail', [ProductClinicController::class, 'detail']);
     Route::post('product/clinic', [ProductClinicController::class, 'Create']);
     Route::put('product/clinic', [ProductClinicController::class, 'Update']);
     Route::delete('product/clinic', [ProductClinicController::class, 'Delete']);
+    Route::get('product/clinic/export', [ProductClinicController::class, 'Export']);
 
     Route::get('product/inventory', [ProductInventoryController::class, 'index']);
     Route::get('product/inventory/history', [ProductInventoryController::class, 'indexHistory']);

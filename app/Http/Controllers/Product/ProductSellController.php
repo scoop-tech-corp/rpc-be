@@ -35,6 +35,7 @@ class ProductSellController
                 'ps.id as id',
                 'ps.fullName as fullName',
                 DB::raw("IFNULL(ps.sku,'') as sku"),
+                'loc.id as locationId',
                 'loc.locationName as locationName',
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName"),
                 DB::raw("IFNULL(pb.brandName,'') as brandName"),
@@ -47,6 +48,11 @@ class ProductSellController
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('ps.isDeleted', '=', 0);
+
+        if ($request->locationId) {
+
+            $data = $data->whereIn('loc.id', $request->locationId);
+        }
 
         if ($request->search) {
             $res = $this->Search($request);
@@ -1144,5 +1150,10 @@ class ProductSellController
         return response()->json([
             'message' => 'Delete Data Successful',
         ], 200);
+    }
+
+    public function Export(Request $request)
+    {
+        # code...
     }
 }
