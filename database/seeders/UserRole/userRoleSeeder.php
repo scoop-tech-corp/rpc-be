@@ -1,12 +1,12 @@
 <?php
 
-namespace Database\Seeders;
+namespace Database\Seeders\UserRole;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class userRole extends Seeder
+class userRoleSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -15,8 +15,6 @@ class userRole extends Seeder
      */
     public function run()
     {
-
-
         $data = [
             [
                 'value' => 'Usage',
@@ -119,9 +117,9 @@ class userRole extends Seeder
 
 
         $accesslimit = [
-            ['timeLimit' => '60', 'created_at' => now()],
-            ['timeLimit' => '60', 'created_at' => now()],
-            ['timeLimit' => '60', 'created_at' => now()],
+            ['timeLimit' => '60','startDuration'=>now(), 'created_at' => now()],
+            ['timeLimit' => '60','startDuration'=>now(), 'created_at' => now()],
+            ['timeLimit' => '60','startDuration'=>now(), 'created_at' => now()],
         ];
         DB::table('accesslimit')->insert($accesslimit);
 
