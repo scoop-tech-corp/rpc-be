@@ -99,7 +99,7 @@ class userRoleSeeder extends Seeder
             ['accessType' => 'None', 'created_at' => now()],
             ['accessType' => 'Full', 'created_at' => now()],
         ];
-        DB::table('tableroleaccess')->insert($roleAccess);
+        DB::table('tableRoleAccess')->insert($roleAccess);
 
         $menulist = [
             ['menuName' => 'Location', 'isActive' => '1', 'created_at' => now()],
@@ -121,7 +121,7 @@ class userRoleSeeder extends Seeder
             ['timeLimit' => '60','startDuration'=>now(), 'created_at' => now()],
             ['timeLimit' => '60','startDuration'=>now(), 'created_at' => now()],
         ];
-        DB::table('accesslimit')->insert($accesslimit);
+        DB::table('accessLimit')->insert($accesslimit);
 
 
         $tableaccess = [
@@ -135,6 +135,6 @@ class userRoleSeeder extends Seeder
             ['menuListId' => '8', 'roleId' => '1', 'roleAccessId' => '4', 'accessLimitId' => '3',  'created_at' => now()],
             ['menuListId' => '9', 'roleId' => '1', 'roleAccessId' => '4', 'accessLimitId' => '3',  'created_at' => now()],
         ];
-        DB::table('tableaccess')->insert($tableaccess);
+        DB::table('tableAccess')->insert($tableaccess);
     }
 }
