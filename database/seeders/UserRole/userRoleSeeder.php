@@ -113,7 +113,7 @@ class userRoleSeeder extends Seeder
             ['menuName' => 'Messenger', 'isActive' => '1', 'created_at' => now()],
 
         ];
-        DB::table('menulist')->insert($menulist);
+        DB::table('menuList')->insert($menulist);
 
 
         $accesslimit = [
