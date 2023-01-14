@@ -19,7 +19,7 @@ class regionSeeder extends Seeder
      */
     public function run()
     {
-        $icons = database_path('seeders\FileMapping');
+        $icons = database_path('seeders/FileMapping');
         $files = File::allFiles($icons);
 
         foreach ($files as $file) {
