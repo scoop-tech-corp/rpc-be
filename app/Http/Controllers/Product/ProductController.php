@@ -200,16 +200,20 @@ class ProductController
 
     public function IndexProductSell(Request $request)
     {
-        if ($request->locationId && $request->brandId) {
+        if ($request->locationId) {
 
             $data = DB::table('productSells as ps')
                 ->join('productSellLocations as pl', 'ps.id', 'pl.productSellId')
                 ->select('ps.id', 'ps.fullName')
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.status', '=', 1)
-                ->where('pl.locationId', '=', $request->locationId)
-                ->where('ps.productBrandId', '=', $request->brandId)
-                ->get();
+                ->where('pl.locationId', '=', $request->locationId);
+
+            if ($request->brandId) {
+                $data = $data->where('ps.productBrandId', '=', $request->brandId);
+            }
+
+            $data = $data->get();
 
             return response()->json($data, 200);
         } else {
@@ -231,9 +235,13 @@ class ProductController
                 ->select('p.id', 'p.fullName', DB::raw("TRIM(p.price)+0 as price"))
                 ->where('p.isDeleted', '=', 0)
                 ->where('p.status', '=', 1)
-                ->where('pl.locationId', '=', $request->locationId)
-                ->where('p.productBrandId', '=', $request->brandId)
-                ->get();
+                ->where('pl.locationId', '=', $request->locationId);
+
+            if ($request->brandId) {
+                $data = $data->where('p.productBrandId', '=', $request->brandId);
+            }
+
+            $data = $data->get();
 
             return response()->json($data, 200);
         } else {
