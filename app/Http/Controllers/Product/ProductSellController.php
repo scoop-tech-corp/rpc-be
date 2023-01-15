@@ -1193,6 +1193,9 @@ class ProductSellController
             $request->isExportLimit,
             $request->user()->role
         ))
-            ->download($fileName);
+            ->download($fileName, \Maatwebsite\Excel\Excel::XLSX, [
+                'Content-Type' => 'application/json',
+                'Content-Disposition' => 'attachment; filename=' . $fileName . '',
+            ]);
     }
 }
