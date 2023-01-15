@@ -12,5 +12,5 @@ class ProductSellLocation extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['productSellId', 'locationId', 'inStock', 'lowStock','reStockLimit', 'userId', 'userUpdateId'];
+    protected $fillable = ['productSellId', 'locationId', 'inStock', 'lowStock','reStockLimit','diffStock', 'userId', 'userUpdateId'];
 }

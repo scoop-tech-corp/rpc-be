@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Exports\Product\ProductSellReport;
 use App\Models\ProductSell;
 use App\Models\ProductSellCategory;
 use App\Models\ProductSellCustomerGroup;
@@ -57,7 +58,12 @@ class ProductSellController
         if ($request->search) {
             $res = $this->Search($request);
             if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->keyword . '%');
+                }
             } else {
                 $data = [];
                 return response()->json([
@@ -94,7 +100,7 @@ class ProductSellController
 
     private function Search($request)
     {
-        $temp_column = '';
+        $temp_column = null;
 
         $data = DB::table('productSells as ps')
             ->select(
@@ -109,8 +115,7 @@ class ProductSellController
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'ps.fullName';
-            return $temp_column;
+            $temp_column[] = 'ps.fullName';
         }
         //------------------------
 
@@ -128,8 +133,7 @@ class ProductSellController
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'psup.supplierName';
-            return $temp_column;
+            $temp_column[] = 'psup.supplierName';
         }
         //------------------------
 
@@ -147,8 +151,7 @@ class ProductSellController
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'pb.brandName';
-            return $temp_column;
+            $temp_column[] = 'pb.brandName';
         }
     }
 
@@ -559,6 +562,7 @@ class ProductSellController
                     'inStock' => $value['inStock'],
                     'lowStock' => $value['lowStock'],
                     'reStockLimit' => $value['reStockLimit'],
+                    'diffStock' => $value['inStock'] - $value['lowStock'],
                     'userId' => $request->user()->id,
                 ]);
 
@@ -1154,6 +1158,41 @@ class ProductSellController
 
     public function Export(Request $request)
     {
-        # code...
+        $tmp = "";
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-y');
+
+        if ($request->locationId) {
+
+            $location = DB::table('location')
+                ->select('locationName')
+                ->whereIn('id', $request->locationId)
+                ->get();
+
+            if ($location) {
+
+                foreach ($location as $key) {
+                    $tmp = $tmp . (string) $key->locationName . ",";
+                }
+            }
+            $tmp = rtrim($tmp, ", ");
+        }
+
+        if ($tmp == "") {
+            $fileName = 'Rekap Produk Jual ' . $date . '.xlsx';
+        } else {
+            $fileName = 'Rekap Produk Jual Lokasi ' . $tmp . ' ' . $date . '.xlsx';
+        }
+
+        return (new ProductSellReport(
+            $request->orderValue,
+            $request->orderColumn,
+            $request->search,
+            $request->locationId,
+            $request->isExportAll,
+            $request->isExportLimit,
+            $request->user()->role
+        ))
+            ->download($fileName);
     }
 }

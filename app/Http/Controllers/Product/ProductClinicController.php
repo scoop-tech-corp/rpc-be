@@ -11,6 +11,7 @@ use App\Models\ProductClinicLocation;
 use App\Models\ProductClinicPriceLocation;
 use App\Models\ProductClinicQuantity;
 use App\Models\ProductClinicReminder;
+use App\Exports\Product\ProductClinicReport;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -60,7 +61,13 @@ class ProductClinicController
         if ($request->search) {
             $res = $this->Search($request);
             if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->keyword . '%');
+
+                }
             } else {
                 $data = [];
                 return response()->json([
@@ -98,7 +105,7 @@ class ProductClinicController
 
     private function Search($request)
     {
-        $temp_column = '';
+        $temp_column = null;
 
         $data = DB::table('productClinics as pc')
             ->select(
@@ -113,8 +120,7 @@ class ProductClinicController
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'pc.fullName';
-            return $temp_column;
+            $temp_column[] = 'pc.fullName';
         }
         //------------------------
 
@@ -132,8 +138,7 @@ class ProductClinicController
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'psup.supplierName';
-            return $temp_column;
+            $temp_column[] = 'psup.supplierName';
         }
         //------------------------
 
@@ -151,8 +156,7 @@ class ProductClinicController
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'pb.brandName';
-            return $temp_column;
+            $temp_column[] = 'pb.brandName';
         }
     }
 
@@ -491,6 +495,7 @@ class ProductClinicController
                     'inStock' => $value['inStock'],
                     'lowStock' => $value['lowStock'],
                     'reStockLimit' => $value['reStockLimit'],
+                    'diffStock' => $value['inStock'] - $value['lowStock'],
                     'userId' => $request->user()->id,
                 ]);
 
@@ -934,9 +939,11 @@ class ProductClinicController
     public function export(Request $request)
     {
         $tmp = "";
+        $fileName = "";
         $date = Carbon::now()->format('d-m-y');
 
         if ($request->locationId) {
+            
             $location = DB::table('location')
                 ->select('locationName')
                 ->whereIn('id', $request->locationId)
@@ -952,22 +959,20 @@ class ProductClinicController
         }
 
         if ($tmp == "") {
-            $fileName = 'Rekap Produk Klinik Lokasi ' . $tmp . ' ' . $date . '.xlsx';
+            $fileName = 'Rekap Produk Klinik ' . $date . '.xlsx';
         } else {
-            $filename = 'Rekap Produk Klinik ' . $date . '.xlsx';
+            $fileName = 'Rekap Produk Klinik Lokasi ' . $tmp . ' ' . $date . '.xlsx';
         }
 
         return (new ProductClinicReport(
             $request->orderValue,
             $request->orderColumn,
             $request->search,
-            $request->goToPage,
-            $request->rowPerPage,
             $request->locationId,
             $request->isExportAll,
             $request->isExportLimit,
             $request->user()->role
         ))
-            ->download($filename);
+            ->download($fileName);
     }
 }
