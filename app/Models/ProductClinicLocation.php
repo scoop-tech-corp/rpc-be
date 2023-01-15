@@ -13,5 +13,5 @@ class ProductClinicLocation extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['productClinicId', 'locationId', 'inStock', 'lowStock','reStockLimit', 'userId', 'userUpdateId'];
+    protected $fillable = ['productClinicId', 'locationId', 'inStock', 'lowStock','reStockLimit','diffStock', 'userId', 'userUpdateId'];
 }
