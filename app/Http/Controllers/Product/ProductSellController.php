@@ -1184,18 +1184,31 @@ class ProductSellController
             $fileName = 'Rekap Produk Jual Lokasi ' . $tmp . ' ' . $date . '.xlsx';
         }
 
-        return (new ProductSellReport(
-            $request->orderValue,
-            $request->orderColumn,
-            $request->search,
-            $request->locationId,
-            $request->isExportAll,
-            $request->isExportLimit,
-            $request->user()->role
-        ))
-            ->download($fileName, \Maatwebsite\Excel\Excel::XLSX, [
-                'Content-Type' => 'application/json',
-                'Content-Disposition' => 'attachment; filename=' . $fileName . '',
-            ]);
+        // return (new ProductSellReport(
+        //     $request->orderValue,
+        //     $request->orderColumn,
+        //     $request->search,
+        //     $request->locationId,
+        //     $request->isExportAll,
+        //     $request->isExportLimit,
+        //     $request->user()->role
+        // ))
+        //     ->download($fileName, \Maatwebsite\Excel\Excel::XLSX, [
+        //         'Content-Type' => 'application/json',
+        //         'Content-Disposition' => 'attachment; filename=' . $fileName . '',
+        //     ]);
+
+        return Excel::download(
+            new ProductSellReport(
+                $request->orderValue,
+                $request->orderColumn,
+                $request->search,
+                $request->locationId,
+                $request->isExportAll,
+                $request->isExportLimit,
+                $request->user()->role
+            ),
+            $fileName
+        );
     }
 }
