@@ -1209,7 +1209,10 @@ class ProductSellController
                 $request->isExportLimit,
                 $request->user()->role
             ),
-            $fileName
+            $fileName,
+            [
+                'Content-Disposition' => 'attachment; filename=' . $fileName . '',
+            ]
         );
     }
 }
