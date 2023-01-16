@@ -1180,9 +1180,9 @@ class ProductSellController
         }
 
         if ($tmp == "") {
-            $fileName = 'Rekap Produk Jual ' . $date . '.xlsx';
+            $fileName = "Rekap Produk Jual " . $date . ".xlsx";
         } else {
-            $fileName = 'Rekap Produk Jual Lokasi ' . $tmp . ' ' . $date . '.xlsx';
+            $fileName = "Rekap Produk Jual Lokasi " . $tmp . " " . $date . ".xlsx";
         }
 
         // return (new ProductSellReport(
