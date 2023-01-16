@@ -977,6 +977,8 @@ class ProductClinicController
         //         'Content-Disposition' => 'attachment; filename='. $fileName .'',
         //     ]);
 
+        // return Excel::download()
+
         return Excel::download(
             new ProductClinicReport(
                 $request->orderValue,
@@ -987,10 +989,7 @@ class ProductClinicController
                 $request->isExportLimit,
                 $request->user()->role
             ),
-            $fileName,
-            [
-                'Content-Disposition' => 'attachment; filename=' . $fileName . '',
-            ]
+            $fileName
         );
     }
 }
