@@ -164,7 +164,7 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
 
     public function title(): string
     {
-        return 'Produk Klinik';
+        return 'Produk Jual';
     }
 
     public function map($item): array

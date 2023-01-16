@@ -166,7 +166,7 @@ class DataRecapProductSellLimit implements FromCollection, ShouldAutoSize, WithH
 
     public function title(): string
     {
-        return 'Produk Klinik Limit';
+        return 'Produk Jual Limit';
     }
 
     public function map($item): array

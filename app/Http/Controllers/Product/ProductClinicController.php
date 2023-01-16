@@ -66,7 +66,6 @@ class ProductClinicController
                 for ($i = 1; $i < count($res); $i++) {
 
                     $data = $data->orWhere($res[$i], 'like', '%' . $request->keyword . '%');
-
                 }
             } else {
                 $data = [];
@@ -943,7 +942,7 @@ class ProductClinicController
         $date = Carbon::now()->format('d-m-y');
 
         if ($request->locationId) {
-            
+
             $location = DB::table('location')
                 ->select('locationName')
                 ->whereIn('id', $request->locationId)
@@ -988,7 +987,10 @@ class ProductClinicController
                 $request->isExportLimit,
                 $request->user()->role
             ),
-            $fileName
+            $fileName,
+            [
+                'Content-Disposition' => 'attachment; filename=' . $fileName . '',
+            ]
         );
     }
 }
