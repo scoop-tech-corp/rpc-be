@@ -16,7 +16,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx\Rels;
+use Excel;
 use Validator;
 
 class ProductClinicController
