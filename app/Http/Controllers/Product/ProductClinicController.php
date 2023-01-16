@@ -958,9 +958,9 @@ class ProductClinicController
         }
 
         if ($tmp == "") {
-            $fileName = 'Rekap Produk Klinik ' . $date . '.xlsx';
+            $fileName = "Rekap Produk Klinik " . $date . ".xlsx";
         } else {
-            $fileName = 'Rekap Produk Klinik Lokasi ' . $tmp . ' ' . $date . '.xlsx';
+            $fileName = "Rekap Produk Klinik Lokasi " . $tmp . " " . $date . ".xlsx";
         }
 
         // return (new ProductClinicReport(
