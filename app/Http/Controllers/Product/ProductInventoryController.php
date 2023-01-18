@@ -218,7 +218,7 @@ class ProductInventoryController
 
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
-                // ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
+                ->join('productInventoryLists as pl', 'p.id', 'pl.productInventoryId')
                 ->join('location as loc', 'loc.Id', 'p.locationId')
                 ->select(
                     'p.id',
@@ -230,14 +230,14 @@ class ProductInventoryController
                     // 'p.isApprovedAdmin',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
-                )
-                // ->where('p.isApprovedOffice', '=', 0)
-                // ->where('p.isApprovedAdmin', '=', 0)
-                ->where('p.isApprovalAdmin', '=', 1);
+                )->distinct()
+                ->where('p.isApprovalAdmin', '=', 1)
+                ->where('pl.isApprovedOffice', '=', 0);
         } elseif (role($request->user()->id) == 'Office') {
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
                 ->join('location as loc', 'loc.Id', 'p.locationId')
+                ->join('productInventoryLists as pl', 'p.id', 'pl.productInventoryId')
                 ->select(
                     'p.id',
                     'p.requirementName',
@@ -246,9 +246,9 @@ class ProductInventoryController
                     // 'p.isApprovedOffice',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
-                )
-                ->where('p.isApprovedOffice', '=', 0)
-                ->where('p.isApprovalOffice', '=', 1);
+                )->distinct()
+                ->where('p.isApprovalOffice', '=', 1)
+                ->where('pl.isApprovedOffice', '=', 0);
         }
 
         if ($request->search) {
@@ -318,6 +318,7 @@ class ProductInventoryController
                     ->join('usages as u', 'u.id', 'pi.usageId')
                     ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
                     ->leftJoin('users as uAdm', 'pi.userApproveAdminId', 'uAdm.id')
+                    ->leftJoin('productInventoryListImages as pimg', 'pi.id', 'pimg.productInventoryListId')
                     ->select(
                         'pi.id',
                         'pi.productType',
@@ -336,8 +337,15 @@ class ProductInventoryController
                         DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
                         DB::raw("IFNULL(DATE_FORMAT(pi.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
                         DB::raw("IFNULL(pi.reasonAdmin,'') as reasonAdmin"),
+
+                        DB::raw("IFNULL(DATE_FORMAT(pi.dateCondition, '%d/%m/%Y'),'') as dateCondition"),
+                        DB::raw("IFNULL(pi.itemCondition,'') as itemCondition"),
+
+                        DB::raw("IFNULL(pimg.imagePath,'') as imagePath"),
+                        DB::raw("IFNULL(pimg.realImageName,'') as realImageName"),
                     )
                     ->where('pi.productInventoryId', '=', $request->id)
+                    ->orderBy('pi.id', 'desc')
                     ->get();
 
                 $result = $prodDetail;
@@ -346,6 +354,9 @@ class ProductInventoryController
                 $prodDetail = DB::table('productInventoryLists as pi')
                     ->join('productClinics as p', 'p.id', 'pi.productId')
                     ->join('usages as u', 'u.id', 'pi.usageId')
+                    ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
+                    ->leftJoin('users as uAdm', 'pi.userApproveAdminId', 'uAdm.id')
+                    ->leftJoin('productInventoryListImages as pimg', 'pi.id', 'pimg.productInventoryListId')
                     ->select(
                         'pi.id',
                         'pi.productType',
@@ -364,8 +375,14 @@ class ProductInventoryController
                         DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
                         DB::raw("IFNULL(DATE_FORMAT(pi.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
                         DB::raw("IFNULL(pi.reasonAdmin,'') as reasonAdmin"),
+
+                        DB::raw("IFNULL(DATE_FORMAT(pi.dateCondition, '%d/%m/%Y'),'') as dateCondition"),
+                        DB::raw("IFNULL(pi.itemCondition,'') as itemCondition"),
+                        DB::raw("IFNULL(pimg.imagePath,'') as imagePath"),
+                        DB::raw("IFNULL(pimg.realImageName,'') as realImageName"),
                     )
                     ->where('pi.productInventoryId', '=', $request->id)
+                    ->orderBy('pi.id', 'desc')
                     ->get();
 
                 $result = $prodDetail;
@@ -497,7 +514,7 @@ class ProductInventoryController
 
             foreach ($ResultProducts as $value) {
 
-                $prod = ProductInventoryList::create([
+                $prodList = ProductInventoryList::create([
                     'productInventoryId' => $prod->id,
                     'productType' => $value['productType'],
                     'productId' => $value['productId'],
@@ -512,7 +529,7 @@ class ProductInventoryController
                 if ($value['isAnyImage'] == 1) {
 
                     ProductInventoryListImages::create([
-                        'productInventoryListId' => $prod->id,
+                        'productInventoryListId' => $prodList->id,
                         'realImageName' => $tmpImages[$count]['realImageName'],
                         'imagePath' => $tmpImages[$count]['imagePath'],
                         'userId' => $request->user()->id,
