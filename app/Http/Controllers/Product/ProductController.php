@@ -228,7 +228,7 @@ class ProductController
     public function IndexProductClinic(Request $request)
     {
 
-        if ($request->locationId && $request->brandId) {
+        if ($request->locationId) {
 
             $data = DB::table('productClinics as p')
                 ->join('productClinicLocations as pl', 'p.id', 'pl.productClinicId')
