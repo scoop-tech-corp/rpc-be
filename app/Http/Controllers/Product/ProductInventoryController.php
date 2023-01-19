@@ -118,52 +118,55 @@ class ProductInventoryController
 
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
-                ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
-                ->leftJoin('users as uAdm', 'p.userApproveAdminId', 'uAdm.id')
+                ->join('productInventoryLists as pil', 'pil.productInventoryId', 'p.id')
+                // ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
+                // ->leftJoin('users as uAdm', 'p.userApproveAdminId', 'uAdm.id')
                 ->join('location as loc', 'loc.Id', 'p.locationId')
                 ->select(
                     'p.id',
                     'p.requirementName',
                     'p.locationId',
                     'loc.locationName as locationName',
-                    'p.isApprovedOffice',
-                    'p.isApprovedAdmin',
+                    // 'p.isApprovedOffice',
+                    // 'p.isApprovedAdmin',
 
-                    DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
-                    DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
+                    // DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
+                    // DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
 
-                    DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                    DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
+                    // DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
+                    // DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
 
-                    DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
-                    DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
+                    // DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
+                    // DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
 
+                    // 'u.firstName as createdBy',
+                    // DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                     'u.firstName as createdBy',
-                    DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
-                );
+                    DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
+                )->distinct()
+                ->where('pil.isApprovedOffice', '=', 1)
+                ->whereIn('pil.isApprovedAdmin', array(1, 2));
 
-
-            $data = $data->where('p.isApprovedOffice', '=', 1)
-                ->whereIn('p.isApprovedAdmin', array(1, 2));
         } elseif (role($request->user()->id) == 'Office') {
 
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
-                ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
+                ->join('productInventoryLists as pil', 'pil.productInventoryId', 'p.id')
+                // ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
                 ->join('location as loc', 'loc.Id', 'p.locationId')
                 ->select(
                     'p.id',
                     'p.requirementName',
                     'p.locationId',
                     'loc.locationName as locationName',
-                    'p.isApprovedOffice',
-                    DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
-                    'uOff.firstName as officeApprovedBy',
+                    // 'p.isApprovedOffice',
+                    // DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
+                    // 'uOff.firstName as officeApprovedBy',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
-                    DB::raw("DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s') as userApprovedOfficeAt")
-                )
-                ->whereIn('p.isApprovedOffice', array(1, 2));
+                    // DB::raw("DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s') as userApprovedOfficeAt")
+                )->distinct()
+                ->whereIn('pil.isApprovedOffice', array(1, 2));
         }
 
         if ($request->search) {
