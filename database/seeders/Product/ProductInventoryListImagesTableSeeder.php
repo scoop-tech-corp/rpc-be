@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders\Product;
+namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
@@ -188,34 +188,6 @@ class ProductInventoryListImagesTableSeeder extends Seeder
                 'updated_at' => '2023-01-15 23:20:15',
             ),
             12 => 
-            array (
-                'id' => 13,
-                'productInventoryListId' => 7,
-                'realImageName' => 'blank-check-box.png',
-                'imagePath' => '/ProductInventoryImages/jlVGcdWfYQ5Vibc9g513Iw42XuOtq6qaR8Mxu4ak.png',
-                'isDeleted' => 0,
-                'userId' => 3,
-                'userUpdateId' => NULL,
-                'deletedBy' => NULL,
-                'deletedAt' => NULL,
-                'created_at' => '2023-01-16 01:52:00',
-                'updated_at' => '2023-01-16 01:52:00',
-            ),
-            13 => 
-            array (
-                'id' => 14,
-                'productInventoryListId' => 9,
-            'realImageName' => 'check (1).png',
-                'imagePath' => '/ProductInventoryImages/vimfy1E8LVK1Lo0PfWudcBNCbQRtkHKdyyyHIAB1.png',
-                'isDeleted' => 0,
-                'userId' => 3,
-                'userUpdateId' => NULL,
-                'deletedBy' => NULL,
-                'deletedAt' => NULL,
-                'created_at' => '2023-01-16 01:52:00',
-                'updated_at' => '2023-01-16 01:52:00',
-            ),
-            14 => 
             array (
                 'id' => 16,
                 'productInventoryListId' => 19,
