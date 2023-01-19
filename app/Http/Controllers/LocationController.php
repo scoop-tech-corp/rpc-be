@@ -257,13 +257,15 @@ class LocationController extends Controller
                 ], 403);
             }
 
+
+     
             $messages = [
                 'locationName.required' => 'Please insert location name, location name is required',
                 'locationName.max' => 'Exceeded maximum character, max character for location name is 50',
                 'status.required' => 'Please insert status location, status location is required',
                 'description.required' => 'Overview on Tab Description is required!',
             ];
-
+         
             $validate = Validator::make(
                 $request->all(),
                 [
@@ -393,8 +395,8 @@ class LocationController extends Controller
                     $emailDetail = Validator::make(
                         $key,
                         [
-                            '*.username' => 'required',
-                            '*.usage' => 'required',
+                            'username' => 'required',
+                            'usage' => 'required',
                         ],
                         $messageEmail
                     );
@@ -589,6 +591,7 @@ class LocationController extends Controller
                 'result' => 'success',
                 'message' => 'successfuly update data',
             ]);
+
         } catch (Exception $e) {
 
             DB::rollback();
