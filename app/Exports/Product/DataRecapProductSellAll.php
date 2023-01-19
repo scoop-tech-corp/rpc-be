@@ -31,27 +31,26 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
 
     public function collection()
     {
-        $data = DB::table('productSells as pc')
-            ->join('productSellLocations as pcl', 'pcl.productSellId', 'pc.id')
-            ->join('location as loc', 'loc.Id', 'pcl.locationId')
-            ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
-            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
-            ->join('users as u', 'pc.userId', 'u.id')
+        $data = DB::table('productSells as ps')
+            ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
+            ->join('location as loc', 'loc.Id', 'psl.locationId')
+            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
+            ->join('users as u', 'ps.userId', 'u.id')
             ->select(
-                'pc.fullName as fullName',
+                'ps.fullName as fullName',
                 DB::raw("IFNULL(pb.brandName,'') as brandName"),
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName"),
-                DB::raw("TRIM(pc.price)+0 as price"),
-                DB::raw("TRIM(pcl.inStock)+0 as inStock"),
-                DB::raw("TRIM(pcl.lowStock)+0 as lowStock"),
-                DB::raw("TRIM(pcl.reStockLimit)+0 as reStockLimit"),
-                DB::raw("TRIM(pc.expiredDate)+0 as expiredDate"),
-                DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt"),
+                DB::raw("TRIM(ps.price)+0 as price"),
+                DB::raw("TRIM(psl.inStock)+0 as inStock"),
+                DB::raw("TRIM(psl.lowStock)+0 as lowStock"),
+                DB::raw("TRIM(psl.reStockLimit)+0 as reStockLimit"),
+                DB::raw("DATE_FORMAT(ps.expiredDate, '%d/%m/%Y') as expiredDate"),
                 'loc.locationName as locationName',
                 'u.firstName as createdBy',
-                DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->where('pc.isDeleted', '=', 0);
+            ->where('ps.isDeleted', '=', 0);
 
         if ($this->locationId) {
 
@@ -81,7 +80,7 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
             $data = $data->orderBy($this->orderColumn, $this->orderValue);
         }
 
-        $data = $data->orderBy('pc.id', 'desc')->get();
+        $data = $data->orderBy('ps.id', 'desc')->get();
 
         $val = 1;
         foreach ($data as $key) {
@@ -96,29 +95,29 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
     {
         $temp_column = null;
 
-        $data = DB::table('productSells as pc')
+        $data = DB::table('productSells as ps')
             ->select(
-                'pc.fullName as fullName'
+                'ps.fullName as fullName'
             )
-            ->where('pc.isDeleted', '=', 0);
+            ->where('ps.isDeleted', '=', 0);
 
         if ($search) {
-            $data = $data->where('pc.fullName', 'like', '%' . $search . '%');
+            $data = $data->where('ps.fullName', 'like', '%' . $search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'pc.fullName';
+            $temp_column[] = 'ps.fullName';
         }
         //------------------------
 
-        $data = DB::table('productSells as pc')
-            ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
+        $data = DB::table('productSells as ps')
+            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
             ->select(
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName")
             )
-            ->where('pc.isDeleted', '=', 0);
+            ->where('ps.isDeleted', '=', 0);
 
         if ($search) {
             $data = $data->where('psup.supplierName', 'like', '%' . $search . '%');
@@ -131,12 +130,12 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
         }
         //------------------------
 
-        $data = DB::table('productSells as pc')
-            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
+        $data = DB::table('productSells as ps')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
             ->select(
                 DB::raw("IFNULL(pb.brandName,'') as brandName")
             )
-            ->where('pc.isDeleted', '=', 0);
+            ->where('ps.isDeleted', '=', 0);
 
         if ($search) {
             $data = $data->where('pb.brandName', 'like', '%' . $search . '%');

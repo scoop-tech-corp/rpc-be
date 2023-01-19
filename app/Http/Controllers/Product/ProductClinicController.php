@@ -960,24 +960,8 @@ class ProductClinicController
         if ($tmp == "") {
             $fileName = "Rekap Produk Klinik " . $date . ".xlsx";
         } else {
-            $fileName = "Rekap Produk Klinik Lokasi " . $tmp . " " . $date . ".xlsx";
+            $fileName = "Rekap Produk Klinik " . $tmp . " " . $date . ".xlsx";
         }
-
-        // return (new ProductClinicReport(
-        //     $request->orderValue,
-        //     $request->orderColumn,
-        //     $request->search,
-        //     $request->locationId,
-        //     $request->isExportAll,
-        //     $request->isExportLimit,
-        //     $request->user()->role
-        // ))
-        //     ->download($fileName,\Maatwebsite\Excel\Excel::XLSX,[
-        //         'Content-Type' => 'application/json',
-        //         'Content-Disposition' => 'attachment; filename='. $fileName .'',
-        //     ]);
-
-        // return Excel::download()
 
         return Excel::download(
             new ProductClinicReport(
