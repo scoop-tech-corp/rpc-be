@@ -29,6 +29,7 @@ use Database\Seeders\Product\ProductSellQuantitiesTableSeeder;
 use Database\Seeders\Product\ProductSellRemindersTableSeeder;
 use Database\Seeders\Product\ProductSuppliersTableSeeder;
 use Database\Seeders\Customer\CustomerGroupsTableSeeder;
+use Database\Seeders\Customer\UsagesTableSeeder;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -69,5 +70,6 @@ class ProductsMaster extends Seeder
         $this->call(ProductSellRemindersTableSeeder::class);
         $this->call(ProductSuppliersTableSeeder::class);
         $this->call(CustomerGroupsTableSeeder::class);
+        $this->call(UsagesTableSeeder::class);
     }
 }
