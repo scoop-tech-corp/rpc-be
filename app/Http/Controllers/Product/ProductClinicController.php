@@ -65,7 +65,7 @@ class ProductClinicController
 
                 for ($i = 1; $i < count($res); $i++) {
 
-                    $data = $data->orWhere($res[$i], 'like', '%' . $request->keyword . '%');
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
                 }
             } else {
                 $data = [];
