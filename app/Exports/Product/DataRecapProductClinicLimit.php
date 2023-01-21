@@ -45,8 +45,7 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
                 DB::raw("TRIM(pcl.inStock)+0 as inStock"),
                 DB::raw("TRIM(pcl.lowStock)+0 as lowStock"),
                 DB::raw("TRIM(pcl.reStockLimit)+0 as reStockLimit"),
-                DB::raw("TRIM(pc.expiredDate)+0 as expiredDate"),
-                DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt"),
+                DB::raw("DATE_FORMAT(pc.expiredDate, '%d/%m/%Y') as expiredDate"),
                 'loc.locationName as locationName',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")

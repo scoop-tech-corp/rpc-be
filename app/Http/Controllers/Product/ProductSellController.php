@@ -63,7 +63,7 @@ class ProductSellController
 
                 for ($i = 1; $i < count($res); $i++) {
 
-                    $data = $data->orWhere($res[$i], 'like', '%' . $request->keyword . '%');
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
                 }
             } else {
                 $data = [];
@@ -1182,22 +1182,8 @@ class ProductSellController
         if ($tmp == "") {
             $fileName = "Rekap Produk Jual " . $date . ".xlsx";
         } else {
-            $fileName = "Rekap Produk Jual Lokasi " . $tmp . " " . $date . ".xlsx";
+            $fileName = "Rekap Produk Jual " . $tmp . " " . $date . ".xlsx";
         }
-
-        // return (new ProductSellReport(
-        //     $request->orderValue,
-        //     $request->orderColumn,
-        //     $request->search,
-        //     $request->locationId,
-        //     $request->isExportAll,
-        //     $request->isExportLimit,
-        //     $request->user()->role
-        // ))
-        //     ->download($fileName, \Maatwebsite\Excel\Excel::XLSX, [
-        //         'Content-Type' => 'application/json',
-        //         'Content-Disposition' => 'attachment; filename=' . $fileName . '',
-        //     ]);
 
         return Excel::download(
             new ProductSellReport(
