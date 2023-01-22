@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Exports\Product\ProductInventoryApprovalReport;
+use App\Exports\Product\ProductInventoryHistoryReport;
 use App\Models\ProductClinic;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductInventory;
@@ -14,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 use Validator;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
+use Excel;
 
 class ProductInventoryController
 {
@@ -34,16 +36,6 @@ class ProductInventoryController
                 'p.locationId',
                 'loc.locationName as locationName',
                 'p.totalItem',
-                // 'p.isApprovedOffice',
-                // DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
-                // DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                // DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
-
-                // 'p.isApprovedAdmin',
-                // DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
-                // DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
-                // DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
-
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             );
@@ -189,6 +181,49 @@ class ProductInventoryController
         ], 200);
     }
 
+    public function exportHistory(Request $request)
+    {
+        $tmp = "";
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-y');
+        $role = role($request->user()->id);
+
+        if ($request->locationId) {
+
+            $location = DB::table('location')
+                ->select('locationName')
+                ->whereIn('id', $request->locationId)
+                ->get();
+
+            if ($location) {
+
+                foreach ($location as $key) {
+                    $tmp = $tmp . (string) $key->locationName . ",";
+                }
+            }
+            $tmp = rtrim($tmp, ", ");
+        }
+
+        if ($tmp == "") {
+            $fileName = "Rekap Riwayat Produk Inventori " . $date . ".xlsx";
+        } else {
+            $fileName = "Rekap Riwayat Produk Inventori " . $tmp . " " . $date . ".xlsx";
+        }
+
+        return Excel::download(
+            new ProductInventoryHistoryReport(
+                $request->orderValue,
+                $request->orderColumn,
+                $request->fromDate,
+                $request->toDate,
+                $request->search,
+                $request->locationId,
+                $role
+            ),
+            $fileName
+        );
+    }
+
     public function SearchHistory($request)
     {
         $temp_column = null;
@@ -240,14 +275,12 @@ class ProductInventoryController
                     'p.requirementName',
                     'p.locationId',
                     'loc.locationName as locationName',
-                    // 'p.isApprovedOffice',
-                    // 'uOff.firstName as officeApprovedBy',
-                    // 'p.isApprovedAdmin',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                 )->distinct()
                 ->where('p.isApprovalAdmin', '=', 1)
-                ->where('pl.isApprovedOffice', '=', 0);
+                ->where('pl.isApprovedAdmin', '=', 0)
+                ->where('p.isDeleted', '=', 0);
         } elseif (role($request->user()->id) == 'Office') {
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
@@ -258,18 +291,23 @@ class ProductInventoryController
                     'p.requirementName',
                     'p.locationId',
                     'loc.locationName as locationName',
-                    // 'p.isApprovedOffice',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                 )->distinct()
                 ->where('p.isApprovalOffice', '=', 1)
-                ->where('pl.isApprovedOffice', '=', 0);
+                ->where('pl.isApprovedOffice', '=', 0)
+                ->where('p.isDeleted', '=', 0);
         }
 
         if ($request->search) {
             $res = $this->SearchApproval($request);
             if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
             } else {
                 $data = [];
                 return response()->json([
@@ -304,9 +342,78 @@ class ProductInventoryController
         ], 200);
     }
 
+    public function exportApproval(Request $request)
+    {
+        $tmp = "";
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-y');
+
+        if ($request->locationId) {
+
+            $location = DB::table('location')
+                ->select('locationName')
+                ->whereIn('id', $request->locationId)
+                ->get();
+
+            if ($location) {
+
+                foreach ($location as $key) {
+                    $tmp = $tmp . (string) $key->locationName . ",";
+                }
+            }
+            $tmp = rtrim($tmp, ", ");
+        }
+
+        if ($tmp == "") {
+            $fileName = "Rekap List Approval Produk Inventori " . $date . ".xlsx";
+        } else {
+            $fileName = "Rekap List Approval Produk Inventori " . $tmp . " " . $date . ".xlsx";
+        }
+
+        return Excel::download(
+            new ProductInventoryApprovalReport(
+                $request->orderValue,
+                $request->orderColumn,
+                $request->search,
+                $request->locationId,
+                role($request->user()->id)
+            ),
+            $fileName
+        );
+    }
+
     public function SearchApproval($request)
     {
-        # code...
+        $temp_column = null;
+
+        $data = DB::table('productInventories as p')
+            ->select('p.requirementName')
+            ->where('p.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('p.requirementName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'p.requirementName';
+        }
+
+        $data = DB::table('productInventories as p')
+            ->join('users as u', 'p.userId', 'u.id')
+            ->select('u.firstName')
+            ->where('p.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'u.firstName';
+        }
     }
 
     public function detail(Request $request)
@@ -322,13 +429,11 @@ class ProductInventoryController
 
         $prodDetail = ProductInventoryList::where('productInventoryId', '=', $prod->id)->get();
 
-        $result[] = null;
-
         foreach ($prodDetail as $value) {
 
             if ($value['productType'] = 'productSell') {
 
-                $prodDetail = DB::table('productInventoryLists as pi')
+                $prodRes = DB::table('productInventoryLists as pi')
                     ->join('productSells as p', 'p.id', 'pi.productId')
                     ->join('usages as u', 'u.id', 'pi.usageId')
                     ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
@@ -359,14 +464,34 @@ class ProductInventoryController
                         DB::raw("IFNULL(pimg.imagePath,'') as imagePath"),
                         DB::raw("IFNULL(pimg.realImageName,'') as realImageName"),
                     )
-                    ->where('pi.productInventoryId', '=', $request->id)
+                    ->where('pi.id', '=', $value['id'])
                     ->orderBy('pi.id', 'desc')
-                    ->get();
+                    ->first();
 
-                $result = $prodDetail;
+                $result[] = array(
+                    'id' => $prodRes->id, 
+                    'productType' => $prodRes->productType, 
+                    'productId' => $prodRes->productId,
+                    'productName' => $prodRes->productName, 
+                    'usageId' => $prodRes->usageId, 
+                    'usage' => $prodRes->usage, 
+                    'quantity' => $prodRes->quantity, 
+                    'isApprovedOffice' => $prodRes->isApprovedOffice,
+                    'officeApprovedBy' => $prodRes->officeApprovedBy, 
+                    'officeApprovedAt' => $prodRes->officeApprovedAt, 
+                    'reasonOffice' => $prodRes->reasonOffice, 
+                    'isApprovedAdmin' => $prodRes->isApprovedAdmin,
+                    'adminApprovedBy' => $prodRes->adminApprovedBy, 
+                    'adminApprovedAt' => $prodRes->adminApprovedAt, 
+                    'reasonAdmin' => $prodRes->reasonAdmin, 
+                    'dateCondition' => $prodRes->dateCondition, 
+                    'itemCondition' => $prodRes->itemCondition,
+                    'imagePath' => $prodRes->imagePath, 
+                    'realImageName' => $prodRes->realImageName,
+                );
             } else {
 
-                $prodDetail = DB::table('productInventoryLists as pi')
+                $prodRes = DB::table('productInventoryLists as pi')
                     ->join('productClinics as p', 'p.id', 'pi.productId')
                     ->join('usages as u', 'u.id', 'pi.usageId')
                     ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
@@ -396,11 +521,31 @@ class ProductInventoryController
                         DB::raw("IFNULL(pimg.imagePath,'') as imagePath"),
                         DB::raw("IFNULL(pimg.realImageName,'') as realImageName"),
                     )
-                    ->where('pi.productInventoryId', '=', $request->id)
+                    ->where('pi.id', '=', $value['id'])
                     ->orderBy('pi.id', 'desc')
                     ->get();
 
-                $result = $prodDetail;
+                    $result[] = array(
+                        'id' => $prodRes->id, 
+                        'productType' => $prodRes->productType, 
+                        'productId' => $prodRes->productId,
+                        'productName' => $prodRes->productName, 
+                        'usageId' => $prodRes->usageId, 
+                        'usage' => $prodRes->usage, 
+                        'quantity' => $prodRes->quantity, 
+                        'isApprovedOffice' => $prodRes->isApprovedOffice,
+                        'officeApprovedBy' => $prodRes->officeApprovedBy, 
+                        'officeApprovedAt' => $prodRes->officeApprovedAt, 
+                        'reasonOffice' => $prodRes->reasonOffice, 
+                        'isApprovedAdmin' => $prodRes->isApprovedAdmin,
+                        'adminApprovedBy' => $prodRes->adminApprovedBy, 
+                        'adminApprovedAt' => $prodRes->adminApprovedAt, 
+                        'reasonAdmin' => $prodRes->reasonAdmin, 
+                        'dateCondition' => $prodRes->dateCondition, 
+                        'itemCondition' => $prodRes->itemCondition,
+                        'imagePath' => $prodRes->imagePath, 
+                        'realImageName' => $prodRes->realImageName,
+                    );
             }
         }
 
