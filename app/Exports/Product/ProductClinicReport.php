@@ -2,8 +2,6 @@
 
 namespace App\Exports\Product;
 
-use DB;
-use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use App\Exports\Product\DataRecapProductClinicLimit;

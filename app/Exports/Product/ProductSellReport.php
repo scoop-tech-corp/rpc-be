@@ -19,8 +19,9 @@ class ProductSellReport implements WithMultipleSheets
     protected $locationId;
     protected $isExportAll;
     protected $isExportLimit;
+    protected $role;
 
-    public function __construct($orderValue, $orderColumn, $search, $locationId, $isExportAll, $isExportLimit)
+    public function __construct($orderValue, $orderColumn, $search, $locationId, $isExportAll, $isExportLimit, $role)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
@@ -28,6 +29,7 @@ class ProductSellReport implements WithMultipleSheets
         $this->locationId = $locationId;
         $this->isExportAll = $isExportAll;
         $this->isExportLimit = $isExportLimit;
+        $this->role = $role;
     }
 
     function array(): array

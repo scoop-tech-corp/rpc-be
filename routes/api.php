@@ -91,7 +91,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::get('product/inventory', [ProductInventoryController::class, 'index']);
     Route::get('product/inventory/history', [ProductInventoryController::class, 'indexHistory']);
+    Route::get('product/inventory/history/export', [ProductInventoryController::class, 'exportHistory']);
     Route::get('product/inventory/approval', [ProductInventoryController::class, 'indexApproval']);
+    Route::get('product/inventory/approval/export', [ProductInventoryController::class, 'exportApproval']);
     
     Route::get('product/inventory/detail', [ProductInventoryController::class, 'detail']);
 
