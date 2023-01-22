@@ -119,52 +119,29 @@ class ProductInventoryController
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
                 ->join('productInventoryLists as pil', 'pil.productInventoryId', 'p.id')
-                // ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
-                // ->leftJoin('users as uAdm', 'p.userApproveAdminId', 'uAdm.id')
                 ->join('location as loc', 'loc.Id', 'p.locationId')
                 ->select(
                     'p.id',
                     'p.requirementName',
                     'p.locationId',
                     'loc.locationName as locationName',
-                    // 'p.isApprovedOffice',
-                    // 'p.isApprovedAdmin',
-
-                    // DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
-                    // DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
-
-                    // DB::raw("IFNULL(DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                    // DB::raw("IFNULL(DATE_FORMAT(p.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
-
-                    // DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
-                    // DB::raw("IFNULL(p.reasonAdmin,'') as reasonAdmin"),
-
-                    // 'u.firstName as createdBy',
-                    // DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
                 )->distinct()
-                ->where('pil.isApprovedOffice', '=', 1)
                 ->whereIn('pil.isApprovedAdmin', array(1, 2));
-
         } elseif (role($request->user()->id) == 'Office') {
 
             $data = DB::table('productInventories as p')
                 ->join('users as u', 'p.userId', 'u.id')
                 ->join('productInventoryLists as pil', 'pil.productInventoryId', 'p.id')
-                // ->leftJoin('users as uOff', 'p.userApproveOfficeId', 'uOff.id')
                 ->join('location as loc', 'loc.Id', 'p.locationId')
                 ->select(
                     'p.id',
                     'p.requirementName',
                     'p.locationId',
                     'loc.locationName as locationName',
-                    // 'p.isApprovedOffice',
-                    // DB::raw("IFNULL(p.reasonOffice,'') as reasonOffice"),
-                    // 'uOff.firstName as officeApprovedBy',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
-                    // DB::raw("DATE_FORMAT(p.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s') as userApprovedOfficeAt")
                 )->distinct()
                 ->whereIn('pil.isApprovedOffice', array(1, 2));
         }
@@ -172,7 +149,12 @@ class ProductInventoryController
         if ($request->search) {
             $res = $this->SearchHistory($request);
             if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
             } else {
                 $data = [];
                 return response()->json([
@@ -209,6 +191,36 @@ class ProductInventoryController
 
     public function SearchHistory($request)
     {
+        $temp_column = null;
+
+        $data = DB::table('productInventories as p')
+            ->select('p.requirementName')
+            ->where('p.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('p.requirementName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'p.requirementName';
+        }
+
+        $data = DB::table('productInventories as p')
+            ->join('users as u', 'p.userId', 'u.id')
+            ->select('u.firstName')
+            ->where('p.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'u.firstName';
+        }
     }
 
     public function indexApproval(Request $request)
