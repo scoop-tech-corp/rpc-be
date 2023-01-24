@@ -15,6 +15,28 @@ class DataStaticController extends Controller
         try {
 
 
+            $data_item = [];
+            foreach ($Request->id as $val) {
+
+                $checkIfDataExits = DB::table('data_static')
+                    ->where([
+                        ['id', '=', $val],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->first();
+
+                if (!$checkIfDataExits) {
+                    array_push($data_item, 'data static id: ' . $val . ' not found, please try different id');
+                }
+            }
+
+            if ($data_item) {
+                return response()->json([
+                    'message' => 'Inputed data is not valid',
+                    'errors' => $data_item,
+                ], 422);
+            }
+
             foreach ($Request->id as $val) {
 
                 DB::table('data_static')
