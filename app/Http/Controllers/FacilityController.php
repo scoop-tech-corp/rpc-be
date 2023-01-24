@@ -138,12 +138,12 @@ class FacilityController extends Controller
 
                 $arraunit = json_decode($request->unit, true);
 
-                foreach ($arraunit as $val) {
+                // foreach ($arraunit as $val) {
 
-                    if (!isset($val['command'])) {
-                        array_push($inputUnitReal, $val);
-                    }
-                }
+                //     if (!isset($val['command'])) {
+                //         array_push($inputUnitReal, $val);
+                //     }
+                // }
 
                 $messages = [
                     'unitName.required' => 'Please input unit name, unit name is required',
@@ -159,7 +159,7 @@ class FacilityController extends Controller
 
                 $data_item = [];
 
-                foreach ($inputUnitReal as $key) {
+                foreach ($arraunit as $key) {
 
                     $check = Validator::make($key, [
                         "unitName" => 'required|max:25',
@@ -723,6 +723,7 @@ class FacilityController extends Controller
                                 'updated_at' => now(),
                             ]);
                     }
+                    
                 } else {
 
                     $checkIfDataExits = DB::table('facility_unit')
