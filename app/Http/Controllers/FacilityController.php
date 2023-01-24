@@ -169,6 +169,15 @@ class FacilityController extends Controller
                         "amount" => 'required|integer'
                     ], $messages);
 
+                    if ($key['unitName'] == "") {
+
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Unit name can not be empty!'],
+                        ], 422);
+
+                    }
+
                     if ($check->fails()) {
 
                         $errors = $check->errors()->all();
