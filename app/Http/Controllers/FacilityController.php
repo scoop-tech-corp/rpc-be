@@ -169,15 +169,6 @@ class FacilityController extends Controller
                         "amount" => 'required|integer'
                     ], $messages);
 
-                    if ($key['unitName'] == "") {
-
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Unit name can not be empty!'],
-                        ], 422);
-
-                    }
-
                     if ($check->fails()) {
 
                         $errors = $check->errors()->all();
@@ -635,13 +626,13 @@ class FacilityController extends Controller
                             "capacity" => 'required|integer',
                             "amount" => 'required|integer'
                         ], $messages);
-
+    
                         if ($check->fails()) {
-
+    
                             $errors = $check->errors()->all();
-
+    
                             foreach ($errors as $checkisu) {
-
+    
                                 if (!(in_array($checkisu, $data_item))) {
                                     array_push($data_item, $checkisu);
                                 }
@@ -656,8 +647,10 @@ class FacilityController extends Controller
                             'errors' => $data_item,
                         ], 422);
                     }
+                    
                 }
-            } else {
+
+            }else {
 
                 return response()->json([
                     'message' => 'The given data was invalid.',
