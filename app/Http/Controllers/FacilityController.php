@@ -24,7 +24,6 @@ class FacilityController extends Controller
                 ], 403);
             }
 
-
             $validate = Validator::make($request->all(), [
                 'locationId' => 'required|integer',
             ]);
@@ -138,16 +137,17 @@ class FacilityController extends Controller
 
                 $arraunit = json_decode($request->unit, true);
 
-                // foreach ($arraunit as $val) {
+                foreach ($arraunit as $val) {
 
-                //     if (!isset($val['command'])) {
-                //         array_push($inputUnitReal, $val);
-                //     }
-                // }
+                    if ($val['command'] != "del") {
+                        array_push($inputUnitReal, $val);
+                    }
+                }
+
 
                 $messages = [
                     'unitName.required' => 'Please input unit name, unit name is required',
-                    'unitName.max' => 'Exceeded maximum character, max character for unit name is 35',
+                    'unitName.max' => 'Exceeded maximum character, max character for unit name is 25',
                     'notes.max' => 'Exceeded maximum character, max character for notes name is 300',
                     'status.required' => 'Please input status, status is required',
                     'status.integer' => 'Status must be integer',
@@ -158,8 +158,9 @@ class FacilityController extends Controller
                 ];
 
                 $data_item = [];
+                $filtered = [];
 
-                foreach ($arraunit as $key) {
+                foreach ($inputUnitReal as $key) {
 
                     $check = Validator::make($key, [
                         "unitName" => 'required|max:25',
@@ -170,12 +171,10 @@ class FacilityController extends Controller
                     ], $messages);
 
                     if ($key['unitName'] == "") {
-
                         return response()->json([
                             'message' => 'The given data was invalid.',
                             'errors' => ['Unit name can not be empty!'],
                         ], 422);
-
                     }
 
                     if ($check->fails()) {
@@ -189,12 +188,25 @@ class FacilityController extends Controller
                             }
                         }
                     }
+
+                    $filtered[$key['unitName']][] = $key;
                 }
 
                 if ($data_item) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
                         'errors' => $data_item,
+                    ], 422);
+                }
+
+                $filtered = array_filter($filtered, function ($v) {
+                    return count($v) > 1;
+                });
+
+                if ($filtered) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => ['Identical unit name , please check again'],
                     ], 422);
                 }
             } else {
@@ -204,6 +216,7 @@ class FacilityController extends Controller
                     'errors' => ['Facility unit can not be empty!'],
                 ], 422);
             }
+
 
 
 
@@ -609,14 +622,23 @@ class FacilityController extends Controller
 
 
             $data_item = [];
+            $inputUnitReal = [];
+            $filtered = [];
 
             if ($request->unit) {
 
                 if (count($request->unit) != 0) {
 
+                    foreach ($request->unit as $val) {
+
+                        if ($val['command'] != "del" || ($val['command'] == "del" && $val['id'] != "")) {
+                            array_push($inputUnitReal, $val);
+                        }
+                    }
+
                     $messages = [
                         'unitName.required' => 'Please input unit name, unit name is required',
-                        'unitName.max' => 'Exceeded maximum character, max character for unit name is 35',
+                        // 'unitName.max' => 'Exceeded maximum character, max character for unit name is 25',
                         'notes.max' => 'Exceeded maximum character, max character for notes name is 300',
                         'status.required' => 'Please input status, status is required',
                         'status.integer' => 'Status must be integer',
@@ -626,27 +648,41 @@ class FacilityController extends Controller
                         'amount.integer' => 'Amount must be integer',
                     ];
 
-                    foreach ($request->unit as $key) {
+                    foreach ($inputUnitReal as $key) {
 
                         $check = Validator::make($key, [
-                            "unitName" => 'required|max:25',
+                            //"unitName" => 'required|max:25',
                             "notes" => 'max:300',
                             "status" => 'required|integer',
                             "capacity" => 'required|integer',
                             "amount" => 'required|integer'
+
                         ], $messages);
-    
+
+
+                        if ($key['unitName'] == "") {
+
+                            return response()->json([
+                                'message' => 'The given data was invalid.',
+                                'errors' => ['Unit name can not be empty!'],
+                            ], 422);
+                        }
+
+
+
                         if ($check->fails()) {
-    
+
                             $errors = $check->errors()->all();
-    
+
                             foreach ($errors as $checkisu) {
-    
+
                                 if (!(in_array($checkisu, $data_item))) {
                                     array_push($data_item, $checkisu);
                                 }
                             }
                         }
+
+                        $filtered[$key['unitName']][] = $key;
                     }
 
 
@@ -656,10 +692,20 @@ class FacilityController extends Controller
                             'errors' => $data_item,
                         ], 422);
                     }
-                    
-                }
 
-            }else {
+
+                    $filtered = array_filter($filtered, function ($v) {
+                        return count($v) > 1;
+                    });
+
+                    if ($filtered) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => ['Identical unit name, please check again'],
+                        ], 422);
+                    }
+                }
+            } else {
 
                 return response()->json([
                     'message' => 'The given data was invalid.',
@@ -679,79 +725,50 @@ class FacilityController extends Controller
                 ]);
 
 
-            foreach ($request->unit as $val) {
+            foreach ($inputUnitReal as $val) {
 
-                if (isset($val['id'])) {
+                if ($val['id'] == "") {
 
-                    if (isset($val['command'])) {
-
-                        DB::table('facility_unit')
-                            ->where([
-                                ['locationId', '=', $request->input('locationId')],
-                                ['id', '=', $val['id']],
-                                ['isDeleted', '=', '0']
-                            ])
-                            ->update([
-                                'unitName' => $val['unitName'],
-                                'isDeleted' => 1,
-                                'updated_at' => now(),
-                            ]);
-
-                        DB::table('facility_images')
-                            ->where([
-                                ['locationId', '=', $request->input('locationId')],
-                                ['id', '=', $val['id']],
-                                ['isDeleted', '=', '0']
-                            ])
-                            ->update([
-                                'isDeleted' => 1,
-                                'updated_at' => now()
-                            ]);
-                    } else {
-
-                        DB::table('facility_unit')
-                            ->where([
-                                ['locationId', '=', $request->input('locationId')],
-                                ['id', '=', $val['id']],
-                            ])
-                            ->update([
-                                'unitName' => $val['unitName'],
-                                'capacity' => $val['capacity'],
-                                'amount' => $val['amount'],
-                                'status' => $val['status'],
-                                'notes' => $val['notes'],
-                                'updated_at' => now(),
-                            ]);
-                    }
-                    
+                    DB::table('facility_unit')
+                        ->insert([
+                            'locationId' => $request->input('locationId'),
+                            'unitName' => $val['unitName'],
+                            'status' => $val['status'],
+                            'capacity' => $val['capacity'],
+                            'amount' => $val['amount'],
+                            'notes' => $val['notes'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
                 } else {
 
-                    $checkIfDataExits = DB::table('facility_unit')
-                        ->where([
-                            ['locationId', '=', $request->input('locationId')],
-                            ['unitName', '=', $val['unitName']],
-                            ['isDeleted', '=', '0']
-                        ])
-                        ->first();
+                    if ($val['command'] == "del") {
 
-                    if ($checkIfDataExits != null) {
-
-                        return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'Unit name : ' . $val['unitName'] . ', already exists, please try different unit name',
-                        ]);
+                        DB::table('facility_unit')
+                            ->where([
+                                ['locationId', '=', $request->input('locationId')],
+                                ['id', '=', $val['id']],
+                                ['isDeleted', '=', '0']
+                            ])
+                            ->update([
+                                'unitName' => $val['unitName'],
+                                'isDeleted' => 1,
+                                'updated_at' => now(),
+                            ]);
                     } else {
 
                         DB::table('facility_unit')
-                            ->insert([
-                                'locationId' => $request->input('locationId'),
+                            ->where([
+                                ['locationId', '=', $request->input('locationId')],
+                                ['id', '=', $val['id']],
+                            ])
+                            ->update([
                                 'unitName' => $val['unitName'],
-                                'status' => $val['status'],
                                 'capacity' => $val['capacity'],
                                 'amount' => $val['amount'],
+                                'status' => $val['status'],
                                 'notes' => $val['notes'],
-                                'isDeleted' => 0,
-                                'created_at' => now(),
+                                'updated_at' => now(),
                             ]);
                     }
                 }
@@ -922,12 +939,12 @@ class FacilityController extends Controller
             ->select(
                 'location.id as locationId',
                 'location.locationName as locationName',
-                'location.created_at as createdAt',
+                'facility.created_at as createdAt',
                 DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal")
             )
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'facility.created_at');
 
         if ($request->search || $request->search == 0) {
 
@@ -992,7 +1009,7 @@ class FacilityController extends Controller
             $data = $data->orderBy($request->orderColumn, $defaultOrderBy);
         }
 
-        $data = $data->orderBy('location.created_at', 'desc');
+        $data = $data->orderBy('facility.created_at', 'desc');
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;
@@ -1034,13 +1051,13 @@ class FacilityController extends Controller
             ->select(
                 'location.id as locationId',
                 'location.locationName as locationName',
-                'location.created_at as createdAt',
+                'facility.created_at as createdAt',
                 DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal")
             )
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'facility.created_at');
         if ($request->search || $request->search == 0) {
             $data = $data->where('location.id', '=', $request->search);
         }
@@ -1069,13 +1086,13 @@ class FacilityController extends Controller
             ->select(
                 'location.id as locationId',
                 'location.locationName as locationName',
-                'location.created_at as createdAt',
+                'facility.created_at as createdAt',
                 DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal")
             )
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'facility.created_at');
 
         if ($request->search || $request->search == 0) {
             $data = $data->where('location.locationName', 'like', '%' . $request->search . '%');
@@ -1104,13 +1121,13 @@ class FacilityController extends Controller
             ->select(
                 'location.id as locationId',
                 'location.locationName as locationName',
-                'location.created_at as createdAt',
+                'facility.created_at as createdAt',
                 DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal")
             )
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'facility.created_at');
 
         if ($request->search || $request->search == 0) {
             $data = $data->having(DB::raw('IFNULL (SUM(facility_unit.capacity),0)'), '=', $request->search);
@@ -1140,13 +1157,13 @@ class FacilityController extends Controller
             ->select(
                 'location.id as locationId',
                 'location.locationName as locationName',
-                'location.created_at as createdAt',
+                'facility.created_at as createdAt',
                 DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal")
             )
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'facility.created_at');
 
         if ($request->search || $request->search == 0) {
             $data = $data->having(DB::raw('IFNULL(count(DISTINCT(facility.locationId)),0)'), '=', $request->search);
@@ -1175,13 +1192,13 @@ class FacilityController extends Controller
             ->select(
                 'location.id as locationId',
                 'location.locationName as locationName',
-                'location.created_at as createdAt',
+                'facility.created_at as createdAt',
                 DB::raw("IFNULL (SUM(facility_unit.capacity),0) as capacityUsage"),
                 DB::raw("IFNULL (count(DISTINCT(facility.locationId)),0) as facilityVariation"),
                 DB::raw("IFNULL (count(facility_unit.unitName),0) as unitTotal")
             )
             ->where([['location.isDeleted', '=', '0']])
-            ->groupBy('location.locationName', 'location.id', 'location.created_at');
+            ->groupBy('location.locationName', 'location.id', 'facility.created_at');
 
         if ($request->search || $request->search == 0) {
             $data = $data->having(DB::raw('IFNULL(count(facility_unit.unitName),0)'), '=', $request->search);
@@ -1199,7 +1216,51 @@ class FacilityController extends Controller
     {
 
         try {
-            return Excel::download(new exportFacility, 'Facility.xlsx');
+
+
+            $tmp = "";
+            $fileName = "";
+            $date = Carbon::now()->format('d-m-y');
+
+            // if ($request->locationId) {
+
+            //     $location = DB::table('location')
+            //         ->select('locationName')
+            //         ->whereIn('id', $request->locationId)
+            //         ->get();
+
+            //     if ($location) {
+
+            //         foreach ($location as $key) {
+            //             $tmp = $tmp . (string) $key->locationName . ",";
+            //         }
+            //     }
+            //     $tmp = rtrim($tmp, ", ");
+            // }
+
+            // if ($tmp == "") {
+            //     $fileName = "Rekap Produk Jual " . $date . ".xlsx";
+            // } else {
+            //     $fileName = "Rekap Produk Jual " . $tmp . " " . $date . ".xlsx";
+            // }
+
+            // return Excel::download(
+            //     new ProductSellReport(
+            //         $request->orderValue,
+            //         $request->orderColumn,
+            //         $request->search,
+            //         $request->locationId,
+            //         $request->isExportAll,
+            //         $request->isExportLimit,
+            //         $request->user()->role
+            //     ),
+            //     $fileName
+            // );
+
+
+
+            // return Excel::download(new exportFacility, 'test.xlsx');
+
         } catch (Exception $e) {
 
             DB::rollback();
