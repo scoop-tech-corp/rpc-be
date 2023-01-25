@@ -99,7 +99,6 @@ class FacilityController extends Controller
 
                         $filteredimage[$json_array_name[$intcheck]['name']][] = $json_array_name[$intcheck];
                         $intcheck = $intcheck + 1;
-
                     }
                 }
 
@@ -665,7 +664,7 @@ class FacilityController extends Controller
 
                     $messages = [
                         'unitName.required' => 'Please input unit name, unit name is required',
-                        // 'unitName.max' => 'Exceeded maximum character, max character for unit name is 25',
+                        'unitName.max' => 'Exceeded maximum character, max character for unit name is 25',
                         'notes.max' => 'Exceeded maximum character, max character for notes name is 300',
                         'status.required' => 'Please input status, status is required',
                         'status.integer' => 'Status must be integer',
@@ -678,7 +677,7 @@ class FacilityController extends Controller
                     foreach ($inputUnitReal as $key) {
 
                         $check = Validator::make($key, [
-                            //"unitName" => 'required|max:25',
+                            "unitName" => 'required|max:25',
                             "notes" => 'max:300',
                             "status" => 'required|integer',
                             "capacity" => 'required|integer',
@@ -824,107 +823,116 @@ class FacilityController extends Controller
         try {
 
             $data_item = [];
-
+            $filteredimage = [];
             $files[] = $request->file('images');
+            $json_array_name = json_decode($request->imagesName, true);
 
-            foreach ($files as $file) {
+            if ($request->hasfile('images')) {
 
-                foreach ($file as $fil) {
+                foreach ($files as $file) {
 
-                    $file_size = $fil->getSize();
+                    $int = 0;
 
-                    $file_size = $file_size / 1024;
+                    foreach ($file as $fil) {
 
-                    $oldname = $fil->getClientOriginalName();
+                        $file_size = $fil->getSize();
 
-                    if ($file_size >= 5000) {
+                        $file_size = $file_size / 1024;
 
-                        array_push($data_item, 'Photo ' . $oldname . ' size more than 5mb! Please upload less than 5mb!');
+                        $oldname = $fil->getClientOriginalName();
+
+
+                        if ($file_size >= 5000) {
+
+                            array_push($data_item, 'Photo ' . $oldname . ' size more than 5mb! Please upload less than 5mb!');
+                        }
+
+                        $filteredimage[$json_array_name[$int]['name']][] = $json_array_name[$int];
+                        $int = $int + 1;
+                    }
+
+                    $filteredimage = array_filter($filteredimage, function ($v) {
+                        return count($v) > 1;
+                    });
+
+
+                    if ($filteredimage) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => ['Identical image name , please check again'],
+                        ], 422);
                     }
                 }
-            }
 
-            if ($data_item) {
 
-                return response()->json([
-                    'message' => 'Inputed photo is not valid',
-                    'errors' => $data_item,
-                ], 422);
-            }
+                if ($data_item) {
 
-            $json_array = json_decode($request->imagesName, true);
-            $int = 0;
+                    return response()->json([
+                        'message' => 'Inputed photo is not valid',
+                        'errors' => $data_item,
+                    ], 422);
+                }
 
-            if (count($json_array) != 0) {
+                foreach ($files as $file) {
 
-                foreach ($json_array as $val) {
+                    $intval = 0;
 
-                    if ($val['id'] != "") {
+                    foreach ($file as $fil) {
 
-                        if ($val['status'] == "del") {
+                        if ($json_array_name[$intval]['status'] == "del") {
 
-                            $find_image = DB::table('facility_images')
-                                ->select(
-                                    'facility_images.imageName',
-                                    'facility_images.imagePath'
-                                )
-                                ->where('id', '=', $val['id'])
-                                ->first();
+                            if ($json_array_name[$intval]['id'] != "" || $json_array_name[$intval]['id'] != 0) {
 
-                            if ($find_image) {
+                                $find_image = DB::table('facility_images')
+                                    ->select(
+                                        'facility_images.imageName',
+                                        'facility_images.imagePath'
+                                    )
+                                    ->where('id', '=', $json_array_name[$intval]['id'])
+                                    ->first();
 
-                                if (file_exists(public_path() . $find_image->imagePath)) {
+                                if ($find_image) {
 
-                                    File::delete(public_path() . $find_image->imagePath);
+                                    if (file_exists(public_path() . $find_image->imagePath)) {
 
-                                    DB::table('facility_images')->where([['id', '=', $val['id']]])->delete();
+                                        File::delete(public_path() . $find_image->imagePath);
+
+                                        DB::table('facility_images')->where([['id', '=', $json_array_name[$intval]['id']]])->delete();
+                                    }
                                 }
                             }
-                        } else {
+                        } elseif ($json_array_name[$intval]['status'] == ""  && ($json_array_name[$intval]['id'] == 0 || $json_array_name[$intval]['id'] == "")) {
 
-                            $find_image = DB::table('facility_images')
-                                ->select(
-                                    'facility_images.imageName',
-                                    'facility_images.imagePath'
-                                )
-                                ->where('id', '=', $val['id'])
-                                ->first();
+                            $name = $fil->hashName();
+                            $fil->move(public_path() . '/FacilityImages/', $name);
 
-                            if ($find_image) {
+                            $fileName = "/FacilityImages/" . $name;
 
-                                DB::table('facility_images')
-                                    ->where([['id', '=', $val['id']]])
-                                    ->update([
-                                        'labelName' => $val['name'],
-                                        'updated_at' => now(),
-                                    ]);
-                            }
+                            DB::table('facility_images')
+                                ->insert([
+                                    'locationId' => $request->input('locationId'),
+                                    'labelName' =>  $json_array_name[$intval]['name'],
+                                    'realImageName' => $fil->getClientOriginalName(),
+                                    'imageName' => $name,
+                                    'imagePath' => $fileName,
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                ]);
+                                
+                        } elseif ($json_array_name[$intval]['status'] == ""  && ($json_array_name[$intval]['id'] != 0 || $json_array_name[$intval]['id'] != "")) {
+
+                            DB::table('facility_images')
+                                ->where([['id', '=', $json_array_name[$intval]['id']]])
+                                ->update([
+                                    'labelName' => $json_array_name[$intval]['name'],
+                                    'updated_at' => now(),
+                                ]);
                         }
-                    } else {
 
-                        foreach ($files as $file) {
-
-                            foreach ($file as $fil) {
-
-                                $name = $fil->hashName();
-                                $fil->move(public_path() . '/FacilityImages/', $name);
-
-                                $fileName = "/FacilityImages/" . $name;
-
-                                DB::table('facility_images')
-                                    ->insert([
-                                        'locationId' => $request->input('locationId'),
-                                        'labelName' => $val['name'],
-                                        'realImageName' => $fil->getClientOriginalName(),
-                                        'imageName' => $name,
-                                        'imagePath' => $fileName,
-                                        'isDeleted' => 0,
-                                        'created_at' => now(),
-                                    ]);
-                            }
-                        }
+                        $intval =  $intval + 1;
                     }
                 }
+
 
                 DB::commit();
 
@@ -934,7 +942,113 @@ class FacilityController extends Controller
                 ]);
             }
 
-            
+
+
+
+
+            // foreach ($files as $file) {
+
+            //     foreach ($file as $fil) {
+
+            //         $file_size = $fil->getSize();
+
+            //         $file_size = $file_size / 1024;
+
+            //         $oldname = $fil->getClientOriginalName();
+
+            //         if ($file_size >= 5000) {
+
+            //             array_push($data_item, 'Photo ' . $oldname . ' size more than 5mb! Please upload less than 5mb!');
+            //         }
+            //     }
+            // }
+
+            // if ($data_item) {
+
+            //     return response()->json([
+            //         'message' => 'Inputed photo is not valid',
+            //         'errors' => $data_item,
+            //     ], 422);
+            // }
+
+            // $json_array = json_decode($request->imagesName, true);
+            // $int = 0;
+
+            // if (count($json_array) != 0) {
+
+            //     foreach ($json_array as $val) {
+
+            //         if ($val['id'] != "") {
+
+            //             if ($val['status'] == "del") {
+
+            //                 $find_image = DB::table('facility_images')
+            //                     ->select(
+            //                         'facility_images.imageName',
+            //                         'facility_images.imagePath'
+            //                     )
+            //                     ->where('id', '=', $val['id'])
+            //                     ->first();
+
+            //                 if ($find_image) {
+
+            //                     if (file_exists(public_path() . $find_image->imagePath)) {
+
+            //                         File::delete(public_path() . $find_image->imagePath);
+
+            //                         DB::table('facility_images')->where([['id', '=', $val['id']]])->delete();
+            //                     }
+            //                 }
+            //             } else {
+
+            //                 $find_image = DB::table('facility_images')
+            //                     ->select(
+            //                         'facility_images.imageName',
+            //                         'facility_images.imagePath'
+            //                     )
+            //                     ->where('id', '=', $val['id'])
+            //                     ->first();
+
+            //                 if ($find_image) {
+
+            //                     DB::table('facility_images')
+            //                         ->where([['id', '=', $val['id']]])
+            //                         ->update([
+            //                             'labelName' => $val['name'],
+            //                             'updated_at' => now(),
+            //                         ]);
+            //                 }
+            //             }
+            //         } else {
+
+            //             foreach ($files as $file) {
+
+            //                 foreach ($file as $fil) {
+
+            //                     $name = $fil->hashName();
+            //                     $fil->move(public_path() . '/FacilityImages/', $name);
+
+            //                     $fileName = "/FacilityImages/" . $name;
+
+            //                     DB::table('facility_images')
+            //                         ->insert([
+            //                             'locationId' => $request->input('locationId'),
+            //                             'labelName' => $val['name'],
+            //                             'realImageName' => $fil->getClientOriginalName(),
+            //                             'imageName' => $name,
+            //                             'imagePath' => $fileName,
+            //                             'isDeleted' => 0,
+            //                             'created_at' => now(),
+            //                         ]);
+            //                 }
+            //             }
+            //         }
+            //     }
+
+
+
+
+
         } catch (Exception $e) {
 
             DB::rollback();
