@@ -7,6 +7,7 @@ use DB;
 use File;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Carbon;
 use Validator;
 
 class FacilityController extends Controller
@@ -65,6 +66,9 @@ class FacilityController extends Controller
                 ], 422);
             }
 
+
+
+            $intcheck = 0;
             $flag = false;
 
             if ($request->hasfile('images')) {
@@ -72,8 +76,11 @@ class FacilityController extends Controller
                 $flag = true;
 
                 $data_item = [];
+                $filteredimage = [];
 
                 $files[] = $request->file('images');
+
+                $json_array_name = json_decode($request->imagesName, true);
 
                 foreach ($files as $file) {
 
@@ -89,6 +96,10 @@ class FacilityController extends Controller
 
                             array_push($data_item, 'Photo ' . $oldname . ' size more than 5mb! Please upload less than 5mb!');
                         }
+
+                        $filteredimage[$json_array_name[$intcheck]['name']][] = $json_array_name[$intcheck];
+                        $intcheck = $intcheck + 1;
+
                     }
                 }
 
@@ -97,6 +108,18 @@ class FacilityController extends Controller
                     return response()->json([
                         'message' => 'Inputed photo is not valid',
                         'errors' => $data_item,
+                    ], 422);
+                }
+
+
+                $filteredimage = array_filter($filteredimage, function ($v) {
+                    return count($v) > 1;
+                });
+
+                if ($filteredimage) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => ['Identical image name , please check again'],
                     ], 422);
                 }
             }
@@ -266,6 +289,7 @@ class FacilityController extends Controller
             if ($request->hasfile('images')) {
 
                 $json_array = json_decode($request->imagesName, true);
+
                 $int = 0;
 
                 if (count($files) != 0) {
@@ -274,21 +298,24 @@ class FacilityController extends Controller
 
                         foreach ($file as $fil) {
 
-                            $name = $fil->hashName();
-                            $fil->move(public_path() . '/FacilityImages/', $name);
+                            if ($json_array[$int]['status'] != "del") {
 
-                            $fileName = "/FacilityImages/" . $name;
+                                $name = $fil->hashName();
+                                $fil->move(public_path() . '/FacilityImages/', $name);
 
-                            DB::table('facility_images')
-                                ->insert([
-                                    'locationId' => $request->input('locationId'),
-                                    'labelName' => $json_array[$int]['name'],
-                                    'realImageName' => $fil->getClientOriginalName(),
-                                    'imageName' => $name,
-                                    'imagePath' => $fileName,
-                                    'isDeleted' => 0,
-                                    'created_at' => now(),
-                                ]);
+                                $fileName = "/FacilityImages/" . $name;
+
+                                DB::table('facility_images')
+                                    ->insert([
+                                        'locationId' => $request->input('locationId'),
+                                        'labelName' => $json_array[$int]['name'],
+                                        'realImageName' => $fil->getClientOriginalName(),
+                                        'imageName' => $name,
+                                        'imagePath' => $fileName,
+                                        'isDeleted' => 0,
+                                        'created_at' => now(),
+                                    ]);
+                            }
 
                             $int = $int + 1;
                         }
@@ -906,6 +933,8 @@ class FacilityController extends Controller
                     'message' => 'successfuly update image facility',
                 ]);
             }
+
+            
         } catch (Exception $e) {
 
             DB::rollback();
@@ -1241,21 +1270,18 @@ class FacilityController extends Controller
             // if ($tmp == "") {
             //     $fileName = "Rekap Produk Jual " . $date . ".xlsx";
             // } else {
-            //     $fileName = "Rekap Produk Jual " . $tmp . " " . $date . ".xlsx";
+            $fileName = "Rekap Fasilitas " . $date . ".xlsx";
             // }
+            echo ($fileName);
 
-            // return Excel::download(
-            //     new ProductSellReport(
-            //         $request->orderValue,
-            //         $request->orderColumn,
-            //         $request->search,
-            //         $request->locationId,
-            //         $request->isExportAll,
-            //         $request->isExportLimit,
-            //         $request->user()->role
-            //     ),
-            //     $fileName
-            // );
+            return Excel::download(
+                new exportFacility(
+                    $request->orderValue,
+                    $request->orderColumn,
+                    $request->search
+                ),
+                $fileName
+            );
 
 
 
@@ -1271,6 +1297,8 @@ class FacilityController extends Controller
             ]);
         }
     }
+
+
 
     public function facilityLocation(Request $request)
     {

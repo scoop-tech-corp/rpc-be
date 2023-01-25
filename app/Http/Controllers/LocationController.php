@@ -729,7 +729,7 @@ class LocationController extends Controller
                 foreach ($arraytelephone as $key) {
 
                     $telephoneDetail = Validator::make(
-                        $arraytelephone,
+                        $key,
                         [
                             'phoneNumber' => 'required',
                             'type' => 'required',
@@ -822,7 +822,7 @@ class LocationController extends Controller
                 foreach ($arraymessenger as $key) {
 
                     $messengerDetail = Validator::make(
-                        $arraymessenger,
+                        $key,
                         [
                             'messengerNumber' => 'required',
                             'type' => 'required',
