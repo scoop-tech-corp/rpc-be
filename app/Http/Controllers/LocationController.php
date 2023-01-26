@@ -539,6 +539,10 @@ class LocationController extends Controller
                             'created_at' => now(),
                         ]);
                 }
+            }else{
+
+                DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
+
             }
             /**End Delete location messenger*/
 
