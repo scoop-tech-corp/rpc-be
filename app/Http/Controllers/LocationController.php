@@ -509,15 +509,18 @@ class LocationController extends Controller
 
                 DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
-                foreach ($request->operationalHour as $val) {
-                    DB::table('location_operational')
-                        ->insert([
-                            'codeLocation' => $request->input('codeLocation'),
-                            'dayName' => $val['dayName'],
-                            'fromTime' => $val['fromTime'],
-                            'toTime' => $val['toTime'],
-                            'allDay' => $val['allDay'],
-                        ]);
+                if (count($request->operationalHour) != 0) {
+
+                    foreach ($request->operationalHour as $val) {
+                        DB::table('location_operational')
+                            ->insert([
+                                'codeLocation' => $request->input('codeLocation'),
+                                'dayName' => $val['dayName'],
+                                'fromTime' => $val['fromTime'],
+                                'toTime' => $val['toTime'],
+                                'allDay' => $val['allDay'],
+                            ]);
+                    }
                 }
             }
             /**End Delete location hours*/
@@ -539,10 +542,6 @@ class LocationController extends Controller
                             'created_at' => now(),
                         ]);
                 }
-            }else{
-
-                DB::table('location_messenger')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-
             }
             /**End Delete location messenger*/
 
