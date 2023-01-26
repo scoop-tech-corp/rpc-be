@@ -152,25 +152,27 @@ class LocationController extends Controller
 
                 if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { //create new
 
-                    foreach ($files[$index] as $fil) {
-                        info($files[$index + 1]);
+                    foreach ($files as $file) {
 
+                        foreach ($file as $fil) {
 
-                        $name = $files[$index]->hashName();
-                        $files[$index]->move(public_path() . '/LocationImages/', $name);
+                            $name = $fil->hashName();
 
-                        $fileName = "/LocationImages/" . $name;
+                            $fil->move(public_path() . '/LocationImages/', $name);
 
-                        DB::table('location_images')
-                            ->insert([
-                                'codeLocation' => $request->input('codeLocation'),
-                                'labelName' => $val['name'],
-                                'realImageName' => $files[$index]->getClientOriginalName(),
-                                'imageName' => $name,
-                                'imagePath' => $fileName,
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                            ]);
+                            $fileName = "/LocationImages/" . $name;
+
+                            DB::table('location_images')
+                                ->insert([
+                                    'codeLocation' => $request->input('codeLocation'),
+                                    'labelName' => $val['name'],
+                                    'realImageName' => $fil->getClientOriginalName(),
+                                    'imageName' => $name,
+                                    'imagePath' => $fileName,
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                ]);
+                        }
                     }
                 } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "del")) { // delete
 
