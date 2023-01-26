@@ -147,43 +147,8 @@ class LocationController extends Controller
             $files[] = $request->file('images');
             $index = 0;
 
-            $fil = $request->file('images')[2];
-
-
-            //     info($fil);
-            // info($fil);
-
-
-            //             foreach($fil as $asd){
-            // echo("asd");
-            //                 $name = $asd->hashName();
-            //                 echo($name);
-            //             }
-            // info($files[0][0]);
-
-
-
-            // foreach ($files as $file) {
-
-            //     foreach ($file as $fil) {
-            //         info($fil);
-            //         $name = $fil->hashName();
-            //     }
-
-            // }
-            // $photo as $index => $p
-
-            // foreach ($files as $file) {
-
-            //     foreach ($file  as $fil) {
-
-            //         $name = $fil->hashName();
-            //         echo($name);
-            //     }
-
-            // }
-
             foreach ($json_array as $val) {
+
 
                 if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { //create new
 
