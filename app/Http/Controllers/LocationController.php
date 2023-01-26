@@ -127,15 +127,15 @@ class LocationController extends Controller
     public function uploadexceltest(Request $request)
     {
 
-        $request->validate([
-            'file' => 'required|max:10000',
-        ]);
+        // $request->validate([
+        //     'file' => 'required|max:10000',
+        // ]);
 
-        Excel::import(new UsersImport, $request->file);
+        // Excel::import(new UsersImport, $request->file);
 
-        return response()->json([
-            'result' => 'success',
-        ]);
+        // return response()->json([
+        //     'result' => 'success',
+        // ]);
     }
 
     public function uploadImageLocation(Request $request)
@@ -144,88 +144,170 @@ class LocationController extends Controller
         try {
 
             $json_array = json_decode($request->imagesName, true);
-            $int = 0;
+            $files[] = $request->file('images');
+            $index = 0;
 
-            if (count($json_array) != 0) {
 
-                foreach ($json_array as $val) {
+            foreach ($json_array as $val) {
 
-                    if ($val['id'] != "") {
+                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { //create new
 
-                        if ($val['status'] == "del") {
+                    foreach ($files[$index] as $fil) {
+                        info($files[$index + 1]);
 
-                            $find_image = DB::table('location_images')
-                                ->select(
-                                    'location_images.imageName',
-                                    'location_images.imagePath'
-                                )
-                                ->where('id', '=', $val['id'])
-                                ->where('codeLocation', '=', $request->input('codeLocation'))
-                                ->first();
 
-                            if ($find_image) {
+                        $name = $files[$index]->hashName();
+                        $files[$index]->move(public_path() . '/LocationImages/', $name);
 
-                                if (file_exists(public_path() . $find_image->imagePath)) {
+                        $fileName = "/LocationImages/" . $name;
 
-                                    File::delete(public_path() . $find_image->imagePath);
+                        DB::table('location_images')
+                            ->insert([
+                                'codeLocation' => $request->input('codeLocation'),
+                                'labelName' => $val['name'],
+                                'realImageName' => $files[$index]->getClientOriginalName(),
+                                'imageName' => $name,
+                                'imagePath' => $fileName,
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                            ]);
+                    }
+                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "del")) { // delete
 
-                                    DB::table('location_images')->where([
-                                        ['codeLocation', '=', $request->input('codeLocation')],
-                                        ['id', '=', $val['id']]
-                                    ])->delete();
-                                }
-                            }
-                        } else {
+                    $find_image = DB::table('location_images')
+                        ->select(
+                            'location_images.imageName',
+                            'location_images.imagePath'
+                        )
+                        ->where('id', '=', $val['id'])
+                        ->where('codeLocation', '=', $request->input('codeLocation'))
+                        ->first();
 
-                            $find_image = DB::table('location_images')
-                                ->select(
-                                    'location_images.imageName',
-                                    'location_images.imagePath'
-                                )
-                                ->where('id', '=', $val['id'])
-                                ->where('codeLocation', '=', $request->input('codeLocation'))
-                                ->first();
+                    if ($find_image) {
 
-                            if ($find_image) {
+                        if (file_exists(public_path() . $find_image->imagePath)) {
 
-                                DB::table('location_images')
-                                    ->where([
-                                        ['codeLocation', '=', $request->input('codeLocation')],
-                                        ['id', '=', $val['id']]
-                                    ])
-                                    ->update([
-                                        'labelName' => $val['name'],
-                                        'updated_at' => now(),
-                                    ]);
-                            }
-                        }
-                    } else {
+                            File::delete(public_path() . $find_image->imagePath);
 
-                        $files[] = $request->file('images');
-
-                        foreach ($files as $file) {
-
-                            foreach ($file as $fil) {
-                                $name = $fil->hashName();
-                                $fil->move(public_path() . '/LocationImages/', $name);
-
-                                $fileName = "/LocationImages/" . $name;
-
-                                DB::table('location_images')
-                                    ->insert([
-                                        'codeLocation' => $request->input('codeLocation'),
-                                        'labelName' => $val['name'],
-                                        'realImageName' => $fil->getClientOriginalName(),
-                                        'imageName' => $name,
-                                        'imagePath' => $fileName,
-                                        'isDeleted' => 0,
-                                        'created_at' => now(),
-                                    ]);
-                            }
+                            DB::table('location_images')->where([
+                                ['codeLocation', '=', $request->input('codeLocation')],
+                                ['id', '=', $val['id']]
+                            ])->delete();
                         }
                     }
+                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) { // update
+
+                    $find_image = DB::table('location_images')
+                        ->select(
+                            'location_images.imageName',
+                            'location_images.imagePath'
+                        )
+                        ->where('id', '=', $val['id'])
+                        ->where('codeLocation', '=', $request->input('codeLocation'))
+                        ->first();
+
+                    if ($find_image) {
+
+                        DB::table('location_images')
+                            ->where([
+                                ['codeLocation', '=', $request->input('codeLocation')],
+                                ['id', '=', $val['id']]
+                            ])
+                            ->update([
+                                'labelName' => $val['name'],
+                                'updated_at' => now(),
+                            ]);
+                    }
                 }
+
+                $index = $index + 1;
             }
+
+
+
+
+            // $int = 0;
+
+            // if (count($json_array) != 0) {
+
+            //     foreach ($json_array as $val) {
+
+            //         if ($val['id'] != "") {
+
+            //             if ($val['status'] == "del") {
+
+            //                 $find_image = DB::table('location_images')
+            //                     ->select(
+            //                         'location_images.imageName',
+            //                         'location_images.imagePath'
+            //                     )
+            //                     ->where('id', '=', $val['id'])
+            //                     ->where('codeLocation', '=', $request->input('codeLocation'))
+            //                     ->first();
+
+            //                 if ($find_image) {
+
+            //                     if (file_exists(public_path() . $find_image->imagePath)) {
+
+            //                         File::delete(public_path() . $find_image->imagePath);
+
+            //                         DB::table('location_images')->where([
+            //                             ['codeLocation', '=', $request->input('codeLocation')],
+            //                             ['id', '=', $val['id']]
+            //                         ])->delete();
+            //                     }
+            //                 }
+            //             } else {
+
+            //                 $find_image = DB::table('location_images')
+            //                     ->select(
+            //                         'location_images.imageName',
+            //                         'location_images.imagePath'
+            //                     )
+            //                     ->where('id', '=', $val['id'])
+            //                     ->where('codeLocation', '=', $request->input('codeLocation'))
+            //                     ->first();
+
+            //                 if ($find_image) {
+
+            //                     DB::table('location_images')
+            //                         ->where([
+            //                             ['codeLocation', '=', $request->input('codeLocation')],
+            //                             ['id', '=', $val['id']]
+            //                         ])
+            //                         ->update([
+            //                             'labelName' => $val['name'],
+            //                             'updated_at' => now(),
+            //                         ]);
+            //                 }
+            //             }
+            //         } else {
+
+            //             $files[] = $request->file('images');
+
+            //             foreach ($files as $file) {
+
+            //                 foreach ($file as $fil) {
+            //                     $name = $fil->hashName();
+            //                     $fil->move(public_path() . '/LocationImages/', $name);
+
+            //                     $fileName = "/LocationImages/" . $name;
+
+            //                     DB::table('location_images')
+            //                         ->insert([
+            //                             'codeLocation' => $request->input('codeLocation'),
+            //                             'labelName' => $val['name'],
+            //                             'realImageName' => $fil->getClientOriginalName(),
+            //                             'imageName' => $name,
+            //                             'imagePath' => $fileName,
+            //                             'isDeleted' => 0,
+            //                             'created_at' => now(),
+            //                         ]);
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
 
             DB::commit();
 
@@ -1083,7 +1165,6 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1178,7 +1259,6 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1208,7 +1288,6 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1239,7 +1318,6 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1271,7 +1349,6 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1303,7 +1380,6 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
