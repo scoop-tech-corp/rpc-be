@@ -258,14 +258,13 @@ class LocationController extends Controller
             }
 
 
-     
             $messages = [
                 'locationName.required' => 'Please insert location name, location name is required',
                 'locationName.max' => 'Exceeded maximum character, max character for location name is 50',
                 'status.required' => 'Please insert status location, status location is required',
                 'description.required' => 'Overview on Tab Description is required!',
             ];
-         
+
             $validate = Validator::make(
                 $request->all(),
                 [
@@ -466,7 +465,6 @@ class LocationController extends Controller
                         'errors' => $data_error_messenger,
                     ], 422);
                 }
-
             }
 
 
@@ -476,6 +474,7 @@ class LocationController extends Controller
                 ->update([
                     'locationName' => $request->input('locationName'),
                     'description' => $request->input('description'),
+                    'status' => $request->input('status'),
                     'updated_at' => now(),
                 ]);
 
@@ -508,20 +507,17 @@ class LocationController extends Controller
 
             if ($request->operationalHour) {
 
-                if (count($request->operationalHour) != 0) {
+                DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
-                    DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
-
-                    foreach ($request->operationalHour as $val) {
-                        DB::table('location_operational')
-                            ->insert([
-                                'codeLocation' => $request->input('codeLocation'),
-                                'dayName' => $val['dayName'],
-                                'fromTime' => $val['fromTime'],
-                                'toTime' => $val['toTime'],
-                                'allDay' => $val['allDay'],
-                            ]);
-                    }
+                foreach ($request->operationalHour as $val) {
+                    DB::table('location_operational')
+                        ->insert([
+                            'codeLocation' => $request->input('codeLocation'),
+                            'dayName' => $val['dayName'],
+                            'fromTime' => $val['fromTime'],
+                            'toTime' => $val['toTime'],
+                            'allDay' => $val['allDay'],
+                        ]);
                 }
             }
             /**End Delete location hours*/
@@ -591,7 +587,6 @@ class LocationController extends Controller
                 'result' => 'success',
                 'message' => 'successfuly update data',
             ]);
-
         } catch (Exception $e) {
 
             DB::rollback();
