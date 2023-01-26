@@ -505,12 +505,11 @@ class LocationController extends Controller
 
             /**Delete location operational hours */
 
-            if ($request->operationalHour) {
+            if ($request->operationalHour > 0) {
 
                 DB::table('location_operational')->where('codeLocation', '=', $request->input('codeLocation'))->delete();
 
                 if (count($request->operationalHour) != 0) {
-
                     foreach ($request->operationalHour as $val) {
                         DB::table('location_operational')
                             ->insert([
