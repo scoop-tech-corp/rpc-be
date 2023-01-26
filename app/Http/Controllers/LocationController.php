@@ -147,34 +147,64 @@ class LocationController extends Controller
             $files[] = $request->file('images');
             $index = 0;
 
+            $fil = $request->file('images')[2];
+
+
+            //     info($fil);
+            // info($fil);
+
+
+            //             foreach($fil as $asd){
+            // echo("asd");
+            //                 $name = $asd->hashName();
+            //                 echo($name);
+            //             }
+            // info($files[0][0]);
+
+
+
+            // foreach ($files as $file) {
+
+            //     foreach ($file as $fil) {
+            //         info($fil);
+            //         $name = $fil->hashName();
+            //     }
+
+            // }
+            // $photo as $index => $p
+
+            // foreach ($files as $file) {
+
+            //     foreach ($file  as $fil) {
+
+            //         $name = $fil->hashName();
+            //         echo($name);
+            //     }
+
+            // }
 
             foreach ($json_array as $val) {
 
                 if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { //create new
 
-                    foreach ($files as $file) {
+                    $name = $files[0][$index]->hashName();
 
-                        foreach ($file as $fil) {
+                    $files[0][$index]->move(public_path() . '/LocationImages/', $name);
 
-                            $name = $fil->hashName();
+                    $fileName = "/LocationImages/" . $name;
 
-                            $fil->move(public_path() . '/LocationImages/', $name);
+                    DB::table('location_images')
+                        ->insert([
+                            'codeLocation' => $request->input('codeLocation'),
+                            'labelName' => $val['name'],
+                            'realImageName' => $files[0][$index]->getClientOriginalName(),
+                            'imageName' => $name,
+                            'imagePath' => $fileName,
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
+                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { // delete
 
-                            $fileName = "/LocationImages/" . $name;
-
-                            DB::table('location_images')
-                                ->insert([
-                                    'codeLocation' => $request->input('codeLocation'),
-                                    'labelName' => $val['name'],
-                                    'realImageName' => $fil->getClientOriginalName(),
-                                    'imageName' => $name,
-                                    'imagePath' => $fileName,
-                                    'isDeleted' => 0,
-                                    'created_at' => now(),
-                                ]);
-                        }
-                    }
-                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "del")) { // delete
 
                     $find_image = DB::table('location_images')
                         ->select(
@@ -224,92 +254,6 @@ class LocationController extends Controller
 
                 $index = $index + 1;
             }
-
-
-
-
-            // $int = 0;
-
-            // if (count($json_array) != 0) {
-
-            //     foreach ($json_array as $val) {
-
-            //         if ($val['id'] != "") {
-
-            //             if ($val['status'] == "del") {
-
-            //                 $find_image = DB::table('location_images')
-            //                     ->select(
-            //                         'location_images.imageName',
-            //                         'location_images.imagePath'
-            //                     )
-            //                     ->where('id', '=', $val['id'])
-            //                     ->where('codeLocation', '=', $request->input('codeLocation'))
-            //                     ->first();
-
-            //                 if ($find_image) {
-
-            //                     if (file_exists(public_path() . $find_image->imagePath)) {
-
-            //                         File::delete(public_path() . $find_image->imagePath);
-
-            //                         DB::table('location_images')->where([
-            //                             ['codeLocation', '=', $request->input('codeLocation')],
-            //                             ['id', '=', $val['id']]
-            //                         ])->delete();
-            //                     }
-            //                 }
-            //             } else {
-
-            //                 $find_image = DB::table('location_images')
-            //                     ->select(
-            //                         'location_images.imageName',
-            //                         'location_images.imagePath'
-            //                     )
-            //                     ->where('id', '=', $val['id'])
-            //                     ->where('codeLocation', '=', $request->input('codeLocation'))
-            //                     ->first();
-
-            //                 if ($find_image) {
-
-            //                     DB::table('location_images')
-            //                         ->where([
-            //                             ['codeLocation', '=', $request->input('codeLocation')],
-            //                             ['id', '=', $val['id']]
-            //                         ])
-            //                         ->update([
-            //                             'labelName' => $val['name'],
-            //                             'updated_at' => now(),
-            //                         ]);
-            //                 }
-            //             }
-            //         } else {
-
-            //             $files[] = $request->file('images');
-
-            //             foreach ($files as $file) {
-
-            //                 foreach ($file as $fil) {
-            //                     $name = $fil->hashName();
-            //                     $fil->move(public_path() . '/LocationImages/', $name);
-
-            //                     $fileName = "/LocationImages/" . $name;
-
-            //                     DB::table('location_images')
-            //                         ->insert([
-            //                             'codeLocation' => $request->input('codeLocation'),
-            //                             'labelName' => $val['name'],
-            //                             'realImageName' => $fil->getClientOriginalName(),
-            //                             'imageName' => $name,
-            //                             'imagePath' => $fileName,
-            //                             'isDeleted' => 0,
-            //                             'created_at' => now(),
-            //                         ]);
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
 
             DB::commit();
 
