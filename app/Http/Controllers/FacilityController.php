@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\exportFacility;
+
 use DB;
 use File;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Carbon;
 use Validator;
+use App\Exports\Facility\exportFacility;
 
 class FacilityController extends Controller
 {
@@ -849,7 +850,7 @@ class FacilityController extends Controller
                         ]);
 
                     $index = $index + 1;
-                    
+
                 } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { // delete
 
                     $find_image = DB::table('facility_images')
@@ -1248,7 +1249,6 @@ class FacilityController extends Controller
                 $fileName
             );
 
-            // return Excel::download(new exportFacility, 'test.xlsx');
 
         } catch (Exception $e) {
 

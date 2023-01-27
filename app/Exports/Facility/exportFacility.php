@@ -5,6 +5,7 @@ namespace App\Exports\Facility;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use App\Exports\Facility\DataFacilityAll;
+
 class exportFacility implements WithMultipleSheets
 {
     use Exportable;
