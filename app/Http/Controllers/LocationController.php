@@ -168,6 +168,9 @@ class LocationController extends Controller
                             'isDeleted' => 0,
                             'created_at' => now(),
                         ]);
+
+                    $index = $index + 1;
+                    
                 } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { // delete
 
 
@@ -216,8 +219,6 @@ class LocationController extends Controller
                             ]);
                     }
                 }
-
-                $index = $index + 1;
             }
 
             DB::commit();
