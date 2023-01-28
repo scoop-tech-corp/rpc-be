@@ -15,15 +15,14 @@ class exportFacility implements WithMultipleSheets
     protected $orderColumn;
     protected $search;
     protected $locationId;
-    protected $isExportAll;
-    protected $isExportLimit;
-    protected $role;
 
-    public function __construct($orderValue, $orderColumn, $search)
+
+    public function __construct($orderValue, $orderColumn, $search, $locationId)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->search = $search;
+        $this->locationId = $locationId;
     }
 
     function array(): array
@@ -36,7 +35,7 @@ class exportFacility implements WithMultipleSheets
         $sheets = [];
 
         $sheets = [
-            new DataFacilityAll($this->orderValue, $this->orderColumn, $this->search),
+            new DataFacilityAll($this->orderValue, $this->orderColumn, $this->search, $this->locationId),
         ];
 
         return $sheets;

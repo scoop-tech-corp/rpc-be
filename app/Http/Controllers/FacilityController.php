@@ -850,7 +850,6 @@ class FacilityController extends Controller
                         ]);
 
                     $index = $index + 1;
-
                 } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { // delete
 
                     $find_image = DB::table('facility_images')
@@ -1215,40 +1214,37 @@ class FacilityController extends Controller
             $fileName = "";
             $date = Carbon::now()->format('d-m-y');
 
-            // if ($request->locationId) {
+            if ($request->locationId) {
 
-            //     $location = DB::table('location')
-            //         ->select('locationName')
-            //         ->whereIn('id', $request->locationId)
-            //         ->get();
+                $location = DB::table('location')
+                    ->select('locationName')
+                    ->whereIn('id', $request->locationId)
+                    ->get();
 
-            //     if ($location) {
+                if ($location) {
 
-            //         foreach ($location as $key) {
-            //             $tmp = $tmp . (string) $key->locationName . ",";
-            //         }
-            //     }
-            //     $tmp = rtrim($tmp, ", ");
-            // }
+                    foreach ($location as $key) {
+                        $tmp = $tmp . (string) $key->locationName . ",";
+                    }
+                }
+                $tmp = rtrim($tmp, ", ");
+            }
 
-            // if ($tmp == "") {
-            //     $fileName = "Rekap Produk Jual " . $date . ".xlsx";
-            // } else {
-
-            $fileName = "Rekap Fasilitas " . $date . ".xlsx";
-            // }
-
-            //echo ($fileName);
+            if ($tmp == "") {
+                $fileName = "Rekap Fasilitas " . $date . ".xlsx";
+            } else {
+                $fileName = "Rekap Fasilitas " . $tmp . " " . $date . ".xlsx";
+            }
 
             return Excel::download(
                 new exportFacility(
                     $request->orderValue,
                     $request->orderColumn,
-                    $request->search
+                    $request->search,
+                    $request->locationId,
                 ),
                 $fileName
             );
-
 
         } catch (Exception $e) {
 
