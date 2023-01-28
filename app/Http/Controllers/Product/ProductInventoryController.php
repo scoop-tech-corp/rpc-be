@@ -469,24 +469,24 @@ class ProductInventoryController
                     ->first();
 
                 $result[] = array(
-                    'id' => $prodRes->id, 
-                    'productType' => $prodRes->productType, 
+                    'id' => $prodRes->id,
+                    'productType' => $prodRes->productType,
                     'productId' => $prodRes->productId,
-                    'productName' => $prodRes->productName, 
-                    'usageId' => $prodRes->usageId, 
-                    'usage' => $prodRes->usage, 
-                    'quantity' => $prodRes->quantity, 
+                    'productName' => $prodRes->productName,
+                    'usageId' => $prodRes->usageId,
+                    'usage' => $prodRes->usage,
+                    'quantity' => $prodRes->quantity,
                     'isApprovedOffice' => $prodRes->isApprovedOffice,
-                    'officeApprovedBy' => $prodRes->officeApprovedBy, 
-                    'officeApprovedAt' => $prodRes->officeApprovedAt, 
-                    'reasonOffice' => $prodRes->reasonOffice, 
+                    'officeApprovedBy' => $prodRes->officeApprovedBy,
+                    'officeApprovedAt' => $prodRes->officeApprovedAt,
+                    'reasonOffice' => $prodRes->reasonOffice,
                     'isApprovedAdmin' => $prodRes->isApprovedAdmin,
-                    'adminApprovedBy' => $prodRes->adminApprovedBy, 
-                    'adminApprovedAt' => $prodRes->adminApprovedAt, 
-                    'reasonAdmin' => $prodRes->reasonAdmin, 
-                    'dateCondition' => $prodRes->dateCondition, 
+                    'adminApprovedBy' => $prodRes->adminApprovedBy,
+                    'adminApprovedAt' => $prodRes->adminApprovedAt,
+                    'reasonAdmin' => $prodRes->reasonAdmin,
+                    'dateCondition' => $prodRes->dateCondition,
                     'itemCondition' => $prodRes->itemCondition,
-                    'imagePath' => $prodRes->imagePath, 
+                    'imagePath' => $prodRes->imagePath,
                     'realImageName' => $prodRes->realImageName,
                 );
             } else {
@@ -525,27 +525,27 @@ class ProductInventoryController
                     ->orderBy('pi.id', 'desc')
                     ->get();
 
-                    $result[] = array(
-                        'id' => $prodRes->id, 
-                        'productType' => $prodRes->productType, 
-                        'productId' => $prodRes->productId,
-                        'productName' => $prodRes->productName, 
-                        'usageId' => $prodRes->usageId, 
-                        'usage' => $prodRes->usage, 
-                        'quantity' => $prodRes->quantity, 
-                        'isApprovedOffice' => $prodRes->isApprovedOffice,
-                        'officeApprovedBy' => $prodRes->officeApprovedBy, 
-                        'officeApprovedAt' => $prodRes->officeApprovedAt, 
-                        'reasonOffice' => $prodRes->reasonOffice, 
-                        'isApprovedAdmin' => $prodRes->isApprovedAdmin,
-                        'adminApprovedBy' => $prodRes->adminApprovedBy, 
-                        'adminApprovedAt' => $prodRes->adminApprovedAt, 
-                        'reasonAdmin' => $prodRes->reasonAdmin, 
-                        'dateCondition' => $prodRes->dateCondition, 
-                        'itemCondition' => $prodRes->itemCondition,
-                        'imagePath' => $prodRes->imagePath, 
-                        'realImageName' => $prodRes->realImageName,
-                    );
+                $result[] = array(
+                    'id' => $prodRes->id,
+                    'productType' => $prodRes->productType,
+                    'productId' => $prodRes->productId,
+                    'productName' => $prodRes->productName,
+                    'usageId' => $prodRes->usageId,
+                    'usage' => $prodRes->usage,
+                    'quantity' => $prodRes->quantity,
+                    'isApprovedOffice' => $prodRes->isApprovedOffice,
+                    'officeApprovedBy' => $prodRes->officeApprovedBy,
+                    'officeApprovedAt' => $prodRes->officeApprovedAt,
+                    'reasonOffice' => $prodRes->reasonOffice,
+                    'isApprovedAdmin' => $prodRes->isApprovedAdmin,
+                    'adminApprovedBy' => $prodRes->adminApprovedBy,
+                    'adminApprovedAt' => $prodRes->adminApprovedAt,
+                    'reasonAdmin' => $prodRes->reasonAdmin,
+                    'dateCondition' => $prodRes->dateCondition,
+                    'itemCondition' => $prodRes->itemCondition,
+                    'imagePath' => $prodRes->imagePath,
+                    'realImageName' => $prodRes->realImageName,
+                );
             }
         }
 
@@ -872,6 +872,7 @@ class ProductInventoryController
 
     public function delete(Request $request)
     {
+        $userId = $request->user()->id;
 
         foreach ($request->id as $va) {
 
@@ -882,6 +883,35 @@ class ProductInventoryController
                     'message' => 'The given data was invalid.',
                     'errors' => ['Product Inventory Request not found!'],
                 ], 422);
+            }
+
+            if ($userId != $prod->userId) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is a difference between the user who deletes and the user who creates inventory!'],
+                ], 422);
+            }
+        }
+
+        foreach ($request->id as $va) {
+
+            $prod = ProductInventory::find($va);
+
+            $prodList = ProductInventoryList::where('ProductInventoryId', '=', $prod->id)->get();
+
+            foreach ($prodList as $value) {
+                if ($value['isApprovedAdmin'] == 1 || $value['isApprovedAdmin'] == 2) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['There is any product has already approved by Admin!'],
+                    ], 422);
+                }
+                elseif ($value['isApprovedOffice'] == 1 || $value['isApprovedOffice'] == 2) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['There is any product has already approved by Office!'],
+                    ], 422);
+                }
             }
         }
 
