@@ -183,13 +183,20 @@ class ProductSellController
                 DB::raw("TRIM(ps.weight)+0 as weight"),
                 DB::raw("IFNULL(ps.introduction,'') as introduction"),
                 DB::raw("IFNULL(ps.description,'') as description"),
+                'ps.isCustomerPurchase as isCustomerPurchase',
+                'ps.isCustomerPurchaseOnline as isCustomerPurchaseOnline',
+                'ps.isCustomerPurchaseOutStock as isCustomerPurchaseOutStock',
+                'ps.isStockLevelCheck as isStockLevelCheck',
+                'ps.isNonChargeable as isNonChargeable',
             )
             ->where('ps.id', '=', $request->id)
             ->first();
 
         $location =  DB::table('productSellLocations as psl')
             ->join('location as l', 'l.Id', 'psl.locationId')
-            ->select('psl.Id', 'l.locationName', 'psl.inStock', 'psl.lowStock')
+            ->select('psl.Id', 'l.locationName', 'psl.inStock', 'psl.lowStock',
+            DB::raw('(CASE WHEN psl.inStock = 0 THEN "NO STOCK" WHEN psl.inStock <= psl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
+            )
             ->where('psl.productSellId', '=', $request->id)
             ->first();
 
