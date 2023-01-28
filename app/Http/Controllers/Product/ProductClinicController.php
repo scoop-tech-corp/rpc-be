@@ -722,13 +722,20 @@ class ProductClinicController
                 DB::raw("TRIM(pc.weight)+0 as weight"),
                 DB::raw("IFNULL(pc.introduction,'') as introduction"),
                 DB::raw("IFNULL(pc.description,'') as description"),
+                'pc.isCustomerPurchase as isCustomerPurchase',
+                'pc.isCustomerPurchaseOnline as isCustomerPurchaseOnline',
+                'pc.isCustomerPurchaseOutStock as isCustomerPurchaseOutStock',
+                'pc.isStockLevelCheck as isStockLevelCheck',
+                'pc.isNonChargeable as isNonChargeable',
             )
             ->where('pc.id', '=', $request->id)
             ->first();
 
         $location =  DB::table('productClinicLocations as pcl')
             ->join('location as l', 'l.Id', 'pcl.locationId')
-            ->select('pcl.Id', 'l.locationName', 'pcl.inStock', 'pcl.lowStock')
+            ->select('pcl.Id', 'l.locationName', 'pcl.inStock', 'pcl.lowStock',
+            DB::raw('(CASE WHEN pcl.inStock = 0 THEN "NO STOCK" WHEN pcl.inStock <= pcl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
+            )
             ->where('pcl.productClinicId', '=', $request->id)
             ->first();
 
@@ -778,10 +785,10 @@ class ProductClinicController
         }
 
         $ProdClinic->categories = DB::table('productClinicCategories as pcc')
-            ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
+            ->join('productClinics as pcl', 'pcc.productClinicId', 'pcl.id')
             ->join('productCategories as pc', 'pcc.productCategoryId', 'pc.id')
             ->select(
-                'pcc.id as id',
+                'pc.id as id',
                 'pc.categoryName'
             )
             ->where('pcc.ProductClinicId', '=', $request->id)
@@ -797,6 +804,19 @@ class ProductClinicController
             )
             ->where('pci.productClinicId', '=', $request->id)
             ->get();
+
+            $ProdClinic->dosages = DB::table('productClinicDosages as pcd')
+            ->join('productClinics as pc', 'pcd.productClinicId', 'pc.id')
+            ->select(
+                // DB::raw("TRIM(pcd.from)+0 as capital_price"),
+                DB::raw("TRIM(pcd.from)+0 as fromWeight"),
+                DB::raw("TRIM(pcd.to)+0 as toWeight"),
+                DB::raw("TRIM(pcd.dosage)+0 as dosage"),
+                'pcd.unit',
+            )
+            ->where('pcd.productClinicId', '=', $request->id)
+            ->get();
+            // return $ProdClinic->dosage;
 
         return response()->json($ProdClinic, 200);
     }
