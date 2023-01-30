@@ -1238,6 +1238,8 @@ class FacilityController extends Controller
 
             return Excel::download(
                 new exportFacility(
+                    $request->rowPerPage,
+                    $request->goToPage,
                     $request->orderValue,
                     $request->orderColumn,
                     $request->search,

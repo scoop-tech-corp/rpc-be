@@ -14,11 +14,14 @@ class exportFacility implements WithMultipleSheets
     protected $orderValue;
     protected $orderColumn;
     protected $search;
-    protected $locationId;
+    protected $rowPerPage;
+    protected $goToPage;
 
-
-    public function __construct($orderValue, $orderColumn, $search, $locationId)
+    public function __construct($rowPerPage, $goToPage, $orderValue, $orderColumn, $search, $locationId)
     {
+
+        $this->rowPerPage = $rowPerPage;
+        $this->goToPage = $goToPage;
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->search = $search;
@@ -35,7 +38,7 @@ class exportFacility implements WithMultipleSheets
         $sheets = [];
 
         $sheets = [
-            new DataFacilityAll($this->orderValue, $this->orderColumn, $this->search, $this->locationId),
+            new DataFacilityAll($this->rowPerPage, $this->goToPage, $this->orderValue, $this->orderColumn, $this->search, $this->locationId),
         ];
 
         return $sheets;

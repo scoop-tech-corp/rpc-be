@@ -15,15 +15,18 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
     use Exportable;
 
     protected $sheets;
+    protected $rowPerPage;
+    protected $goToPage;
     protected $orderValue;
     protected $orderColumn;
     protected $search;
     protected $locationId;
 
 
-    public function __construct($orderValue, $orderColumn, $search, $locationId)
+    public function __construct($rowPerPage, $goToPage, $orderValue, $orderColumn, $search, $locationId)
     {
-
+        $this->rowPerPage = $rowPerPage;
+        $this->goToPage = $goToPage;
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->search = $search;
@@ -32,7 +35,7 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
 
     public function collection()
     {
-
+        $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
 
         $data = DB::table('location as a')
@@ -62,8 +65,6 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
         if ($this->locationId) {
             $data = $data->whereIn('a.id', $this->locationId);
         }
-
-
 
         if ($this->search) {
             $res = $this->Search($this->search);
@@ -120,7 +121,24 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             $data = $data->orderBy($this->orderColumn, $defaultOrderBy);
         }
 
-        $data = $data->orderBy('b.created_at', 'desc')->get();
+        $data = $data->orderBy('b.created_at', 'desc');
+
+        if ($this->rowPerPage > 0) {
+            $defaultRowPerPage = $this->rowPerPage;
+        }
+
+        $goToPage = $this->goToPage;
+
+        $offset = ($goToPage - 1) * $defaultRowPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+        }
 
         $val = 1;
         foreach ($data as $key) {
