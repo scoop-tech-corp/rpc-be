@@ -62,64 +62,60 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             ->where([['a.isDeleted', '=', '0']]);
 
 
-        if ($this->locationId) {
-            $data = $data->whereIn('a.id', $this->locationId);
-        }
+        // if ($this->locationId) {
+        //     $data = $data->whereIn('a.id', $this->locationId);
+        // }
 
-        if ($this->search) {
-            $res = $this->Search($this->search);
+        // if ($this->search) {
+        //     $res = $this->Search($this->search);
 
-            if ($res) {
+        //     if ($res) {
 
-                if (str_contains($res, "a.locationName")) {
+        //         if (str_contains($res, "a.locationName")) {
 
-                    $data = $data->where($res, 'like', '%' . $this->search . '%');
-                } else if (str_contains($res, "c.unitName")) {
+        //             $data = $data->where($res, 'like', '%' . $this->search . '%');
+        //         } else if (str_contains($res, "c.unitName")) {
 
-                    $data = $data->where($res, 'like', '%' . $this->search . '%');
-                }
-            } else {
-                $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
-            }
-        }
+        //             $data = $data->where($res, 'like', '%' . $this->search . '%');
+        //         }
+        //     } else {
+        //         $data = [];
+        //         return response()->json([
+        //             'totalPagination' => 0,
+        //             'data' => $data
+        //         ], 200);
+        //     }
+        // }
 
-        if ($this->orderValue) {
-            $defaultOrderBy = $this->orderValue;
-        }
+        // if ($this->orderValue) {
+        //     $defaultOrderBy = $this->orderValue;
+        // }
 
-        if ($this->orderColumn && $defaultOrderBy) {
+        // if ($this->orderColumn && $defaultOrderBy) {
 
-            $listOrder = array(
-                'a.locationName',
-                'c.unitName',
-                'c.status',
-                'c.capacity',
-                'c.amount',
-                'c.notes',
-            );
+        //     $listOrder = array(
+        //         'a.locationName',
+        //         'c.unitName',
+        //     );
 
-            if (!in_array($this->orderColumn, $listOrder)) {
+        //     if (!in_array($this->orderColumn, $listOrder)) {
 
-                return response()->json([
-                    'result' => 'failed',
-                    'message' => 'Please try different Order Column',
-                    'orderColumn' => $listOrder,
-                ]);
-            }
+        //         return response()->json([
+        //             'result' => 'failed',
+        //             'message' => 'Please try different Order Column',
+        //             'orderColumn' => $listOrder,
+        //         ]);
+        //     }
 
-            if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
-                return response()->json([
-                    'result' => 'failed',
-                    'message' => 'order value must Ascending: ASC or Descending: DESC ',
-                ]);
-            }
+        //     if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
+        //         return response()->json([
+        //             'result' => 'failed',
+        //             'message' => 'order value must Ascending: ASC or Descending: DESC ',
+        //         ]);
+        //     }
 
-            $data = $data->orderBy($this->orderColumn, $defaultOrderBy);
-        }
+        //     $data = $data->orderBy($this->orderColumn, $defaultOrderBy);
+        // }
 
         $data = $data->orderBy('b.created_at', 'desc')->get();
 
