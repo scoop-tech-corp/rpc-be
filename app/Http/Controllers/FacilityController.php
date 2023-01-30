@@ -967,10 +967,18 @@ class FacilityController extends Controller
             }
         }
 
+
+
         if ($request->orderValue) {
 
             $defaultOrderBy = $request->orderValue;
         }
+
+        
+        if ($request->locationId) {
+            $data = $data->whereIn('location.id', $request->locationId);
+        }
+
 
         if ($request->orderColumn && $defaultOrderBy) {
 
@@ -1238,8 +1246,8 @@ class FacilityController extends Controller
 
             return Excel::download(
                 new exportFacility(
-                    $request->rowPerPage,
-                    $request->goToPage,
+                    // $request->rowPerPage,
+                    // $request->goToPage,
                     $request->orderValue,
                     $request->orderColumn,
                     $request->search,
