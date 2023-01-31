@@ -62,13 +62,21 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             ->where([['a.isDeleted', '=', '0']]);
 
 
-        // if ($this->locationId) {
+        if ($this->locationId) {
 
-        //     if (sizeof($this->locationId)) {
-        //         $data = $data->whereIn('a.id', $this->locationId);
-        //     }
-            
-        // }
+            $val = [];
+            foreach ($this->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.id', $this->locationId);
+            }
+        }
+
+
+
+
 
         if ($this->search) {
             $res = $this->Search($this->search);
