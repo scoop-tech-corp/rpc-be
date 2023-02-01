@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Exports\exportValue;
 use App\Imports\UsersImport;
-use DB;
-use File;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Location;
 use Validator;
+use DB;
+use File;
+use PDF;
 
 class LocationController extends Controller
 {
@@ -170,7 +172,6 @@ class LocationController extends Controller
                         ]);
 
                     $index = $index + 1;
-                    
                 } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { // delete
 
 
@@ -593,6 +594,18 @@ class LocationController extends Controller
             ]);
         }
     }
+
+
+    //add by danny wahyudi 29/01/2023
+    public function cetak_pdf()
+    {
+        $location = Location::all();
+
+        $pdf = PDF::loadview('/pdf/location', ['location' => $location]);
+        return $pdf->download('laporan-location-pdf');
+    }
+    //end add by danny wahyudi 29/01/2023
+
 
     public function insertLocation(Request $request)
     {
@@ -1200,6 +1213,7 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
+                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1230,6 +1244,7 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
+                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1261,6 +1276,7 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
+                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1292,6 +1308,7 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
+                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 

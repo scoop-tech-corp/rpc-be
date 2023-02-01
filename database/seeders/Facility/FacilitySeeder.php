@@ -61,110 +61,110 @@ class FacilitySeeder extends Seeder
 
         $facilityunit = [
 
-            ['locationId' => '1', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '1', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '1', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '1', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '1', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '1', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
 
 
-            ['locationId' => '2', "unitName" => "OBAT KUTU KUCING PENGHILANG PARASIT CAPLAX KATOBU", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '2', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '2', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '2', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '2', "unitName" => "OBAT KUTU KUCING CAPLAX", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '2', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '2', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '2', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
 
             ['locationId' => '3', "unitName" => "KANDANG HAMSTER MURAH", "status" => 1, "capacity" => 25, "amount" => 25, "notes" => "Kandang Hamster mini cocok seagai penyimpanan hewan kecil hamster sebagai tempat tinggal ... terdapat joging welll atau alat olah raga untuk hamster berputar ", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '3', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '3', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '3', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '3', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
 
-            ['locationId' => '4', "unitName" => "Universal World Pet Tuna Freshpack", "status" => 1, "capacity" => 125, "amount" => 125, "notes" => "Makanan Kucing Merek Universal World Pet", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '4', "unitName" => "Universal World Pet Tuna", "status" => 1, "capacity" => 125, "amount" => 125, "notes" => "Makanan Kucing Merek Universal World Pet", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '4', "unitName" => "Makanan kucing kecil kucing kitten universal kitten 1,5 kg", "status" => 1, "capacity" => 200, "amount" => 200, "notes" => "mempercepat pertumbuhan kitten", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '4', "unitName" => "Makanan kitten universal", "status" => 1, "capacity" => 200, "amount" => 200, "notes" => "mempercepat pertumbuhan kitten", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '4', "unitName" => "OBAT PENUMBUH BULU KUCING VITAMIN BULU RONTOK PITAK BOTAK HAIRZ", "status" => 1, "capacity" => 2000, "amount" => 200, "notes" => "HAIRZ 30 ml penumbuh bulu kucing agar menjadi lebat, ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '4', "unitName" => "PENUMBUH BULU VITAMIN", "status" => 1, "capacity" => 2000, "amount" => 200, "notes" => "HAIRZ 30 ml penumbuh bulu kucing agar menjadi lebat, ", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '4', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '4', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '4', "unitName" => "OBAT KUTU KUCING PENGHILANG PARASIT CAPLAX KATOBU", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '4', "unitName" => "OBAT KUTU KUCING CAPLAX", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '4', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '4', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
-
-
-            ['locationId' => '5', "unitName" => "OBAT KUTU KUCING PENGHILANG PARASIT CAPLAX KATOBU", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
-
-            ['locationId' => '6', "unitName" => "OBAT KUTU KUCING PENGHILANG PARASIT CAPLAX KATOBU", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
-
-            ['locationId' => '7', "unitName" => "OBAT KUTU KUCING PENGHILANG PARASIT CAPLAX KATOBU", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '8', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '9', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-
-            ['locationId' => '10', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-
-            ['locationId' => '11', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '11', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '4', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '4', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
 
 
-            ['locationId' => '12', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '12', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '12', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '5', "unitName" => "OBAT KUTU KUCING CAPLAX", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '13', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '6', "unitName" => "OBAT KUTU KUCING CAPLAX", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
 
+            ['locationId' => '7', "unitName" => "OBAT KUTU KUCING CAPLAX", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '8', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '9', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '14', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '14', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '10', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '15', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-
-            ['locationId' => '16', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '16', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '11', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '11', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
 
-            ['locationId' => '17', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '12', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '12', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '12', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '18', "unitName" => "OBAT KUTU KUCING PENGHILANG PARASIT CAPLAX KATOBU", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '18', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '18', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '18', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-
-            ['locationId' => '19', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '19', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '13', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
 
-            ['locationId' => '20', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '14', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '14', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '21', "unitName" => "Mainan Kucing Anjing Kecoa Getar Bergerak", "status" => 1, "capacity" => 24, "amount" => 24, "notes" => "cat toys kecoa robot", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '21', "unitName" => "Mainan kucing dan anjing tikus remote jalan", "status" => 1, "capacity" => 64, "amount" => 64, "notes" => "memakai remote control", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '15', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '22', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '22', "unitName" => "Mainan Kucing Anjing Kecoa Getar Bergerak", "status" => 1, "capacity" => 24, "amount" => 24, "notes" => "cat toys kecoa robot", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '22', "unitName" => "Mainan kucing dan anjing tikus remote jalan", "status" => 1, "capacity" => 64, "amount" => 64, "notes" => "memakai remote control", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '16', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '16', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '23', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '23', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '23', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '24', "unitName" => "OBAT KUTU KUCING PENGHILANG PARASIT CAPLAX KATOBU", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '24', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '24', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '24', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '17', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '25', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '26', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '18', "unitName" => "OBAT KUTU KUCING CAPLAX", "status" => 1, "capacity" => 100, "amount" => 100, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '18', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '18', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '18', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '27', "unitName" => "Mainan Kucing Anjing Kecoa Getar Bergerak", "status" => 1, "capacity" => 24, "amount" => 24, "notes" => "cat toys kecoa robot", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '27', "unitName" => "Mainan kucing dan anjing tikus remote jalan", "status" => 1, "capacity" => 64, "amount" => 64, "notes" => "memakai remote control", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '19', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '19', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '28', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '28', "unitName" => "Mainan Kucing Anjing Kecoa Getar Bergerak", "status" => 1, "capacity" => 24, "amount" => 24, "notes" => "cat toys kecoa robot", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '28', "unitName" => "Mainan kucing dan anjing tikus remote jalan", "status" => 1, "capacity" => 64, "amount" => 64, "notes" => "memakai remote control", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '29', "unitName" => "Filter Air Aquarium dan AquaScape", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
-            ['locationId' => '29', "unitName" => "PET CARGO KERANJANG RIO KUCING ANJING KELINCI MUSANG HEWAN", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '20', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
-            ['locationId' => '30', "unitName" => "makan kucing MURAH bolt 1kg ikan", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '21', "unitName" => "Mainan Kucing Kecoa Getar", "status" => 1, "capacity" => 24, "amount" => 24, "notes" => "cat toys kecoa robot", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '21', "unitName" => "Mainan kucing remot jalan", "status" => 1, "capacity" => 64, "amount" => 64, "notes" => "memakai remote control", "isDeleted" => 0, 'created_at' => now(),],
+
+            ['locationId' => '22', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '22', "unitName" => "Mainan Kucing Kecoa Getar", "status" => 1, "capacity" => 24, "amount" => 24, "notes" => "cat toys kecoa robot", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '22', "unitName" => "Mainan kucing remot jalan", "status" => 1, "capacity" => 64, "amount" => 64, "notes" => "memakai remote control", "isDeleted" => 0, 'created_at' => now(),],
+
+            ['locationId' => '23', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '23', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '23', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+
+            ['locationId' => '24', "unitName" => "OBAT KUTU KUCING CAPLAX", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Penghilang kutu", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '24', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '24', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '24', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+
+            ['locationId' => '25', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '26', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+
+            ['locationId' => '27', "unitName" => "Mainan Kucing Kecoa Getar", "status" => 1, "capacity" => 24, "amount" => 24, "notes" => "cat toys kecoa robot", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '27', "unitName" => "Mainan kucing remot jalan", "status" => 1, "capacity" => 64, "amount" => 64, "notes" => "memakai remote control", "isDeleted" => 0, 'created_at' => now(),],
+
+            ['locationId' => '28', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '28', "unitName" => "Mainan Kucing Kecoa Getar", "status" => 1, "capacity" => 24, "amount" => 24, "notes" => "cat toys kecoa robot", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '28', "unitName" => "Mainan kucing remot jalan", "status" => 1, "capacity" => 64, "amount" => 64, "notes" => "memakai remote control", "isDeleted" => 0, 'created_at' => now(),],
+
+            ['locationId' => '29', "unitName" => "Filter Air Aquarium", "status" => 1, "capacity" => 50, "amount" => 50, "notes" => "Dan pembersi kotoran akuarium menjernihkan air akuarium", "isDeleted" => 0, 'created_at' => now(),],
+            ['locationId' => '29', "unitName" => "PET CARGO KERANJANG", "status" => 1, "capacity" => 20, "amount" => 20, "notes" => "Keranjang Rio Kecil dapat digunakan untuk berbagai macam keperluan anda sebagai keranjang belanja, keranjang piknik, untuk membawa hewan peliharaan anda ", "isDeleted" => 0, 'created_at' => now(),],
+
+            ['locationId' => '30', "unitName" => "makan kucing bolt", "status" => 1, "capacity" => 500, "amount" => 500, "notes" => "membuat kulit sehat dan berkilau mempertajam pengelihatan membantu kesehatan gigi meningkatkan sistem imunitas untuk kucing diatas 1tahun", "isDeleted" => 0, 'created_at' => now(),],
 
         ];
 

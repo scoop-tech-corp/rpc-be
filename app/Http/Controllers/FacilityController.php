@@ -200,6 +200,13 @@ class FacilityController extends Controller
                         ], 422);
                     }
 
+                    if (ctype_digit($key['unitName'])) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Unit name must be string'],
+                        ], 422);
+                    }
+
                     if ($check->fails()) {
 
                         $errors = $check->errors()->all();
@@ -696,7 +703,13 @@ class FacilityController extends Controller
                         }
 
 
-
+                        if (ctype_digit($key['unitName'])) {
+                            return response()->json([
+                                'message' => 'The given data was invalid.',
+                                'errors' => ['Unit name must be string'],
+                            ], 422);
+                        }
+    
                         if ($check->fails()) {
 
                             $errors = $check->errors()->all();
@@ -938,6 +951,7 @@ class FacilityController extends Controller
             )
             ->groupBy('location.locationName', 'location.id', 'facility.created_at');
 
+
         if ($request->search || $request->search == 0) {
 
             $res = $this->Search($request);
@@ -974,9 +988,16 @@ class FacilityController extends Controller
             $defaultOrderBy = $request->orderValue;
         }
 
-        
+
         if ($request->locationId) {
-            $data = $data->whereIn('location.id', $request->locationId);
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('location.id', $request->locationId);
+            }
         }
 
 
@@ -1220,8 +1241,10 @@ class FacilityController extends Controller
 
             $tmp = "";
             $fileName = "";
-            $date = Carbon::now()->format('d-m-y');
+            $date = Carbon::now()->format('d-m-Y');
 
+
+            //s $date = Carbon::createFromFormat('d/m/Y', '11/06/1990');
             if ($request->locationId) {
 
                 $location = DB::table('location')
@@ -1246,8 +1269,6 @@ class FacilityController extends Controller
 
             return Excel::download(
                 new exportFacility(
-                    // $request->rowPerPage,
-                    // $request->goToPage,
                     $request->orderValue,
                     $request->orderColumn,
                     $request->search,
@@ -1255,7 +1276,6 @@ class FacilityController extends Controller
                 ),
                 $fileName
             );
-
         } catch (Exception $e) {
 
             DB::rollback();
