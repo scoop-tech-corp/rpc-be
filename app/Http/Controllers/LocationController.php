@@ -1184,6 +1184,7 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
+                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
@@ -1308,7 +1309,7 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'],
+                ['location_telephone.usage', '=', 'utama'], 
                 ['location.isDeleted', '=', '0'],
             ]);
 
