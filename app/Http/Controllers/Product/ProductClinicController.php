@@ -748,8 +748,6 @@ class ProductClinicController
 
 
         $prodClinicSetting = DB::table('productClinics as pc')
-            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.id')
-            ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
             ->select(
                 'pc.isCustomerPurchase as isCustomerPurchase',
                 'pc.isCustomerPurchaseOnline as isCustomerPurchaseOnline',
