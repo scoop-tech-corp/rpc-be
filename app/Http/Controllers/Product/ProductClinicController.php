@@ -104,8 +104,6 @@ class ProductClinicController
 
     private function Search($request)
     {
-        $temp_column = null;
-
         $data = DB::table('productClinics as pc')
             ->select(
                 'pc.fullName as fullName'
@@ -157,6 +155,8 @@ class ProductClinicController
         if (count($data)) {
             $temp_column[] = 'pb.brandName';
         }
+
+        return $temp_column;
     }
 
     public function create(Request $request)
@@ -697,19 +697,14 @@ class ProductClinicController
 
     public function detail(Request $request)
     {
-        $ProdClinic = DB::table('productClinics as pc')
-            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
+        $prodClinic = DB::table('productClinics as pc')
+            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.id')
             ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.Id')
             ->select(
                 'pc.id',
                 'pc.fullName',
                 DB::raw("IFNULL(pc.simpleName,'') as simpleName"),
-                DB::raw("IFNULL(pc.sku,'') as sku"),
-                'pc.productBrandId',
-                'pb.brandName as brandName',
-                'pc.productSupplierId',
-                'psup.supplierName as supplierName',
-                'pc.status',
+                
                 'pc.pricingStatus',
                 DB::raw("TRIM(pc.costPrice)+0 as costPrice"),
                 DB::raw("TRIM(pc.marketPrice)+0 as marketPrice"),
@@ -722,26 +717,68 @@ class ProductClinicController
                 DB::raw("TRIM(pc.weight)+0 as weight"),
                 DB::raw("IFNULL(pc.introduction,'') as introduction"),
                 DB::raw("IFNULL(pc.description,'') as description"),
+            )
+            ->where('pc.id', '=', $request->id)
+            ->first();
+
+        $prodClinicDetails = DB::table('productClinics as pc')
+            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.id')
+            ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
+            ->select(
+                'pc.status',
+                'pc.productSupplierId',
+                'psup.supplierName as supplierName',
+                DB::raw("IFNULL(pc.sku,'') as sku"),
+                'pc.productBrandId',
+                'pb.brandName as brandName',
+            )
+            ->where('pc.id', '=', $request->id)
+            ->first();
+
+        $categories = DB::table('productCategories as pcat')
+            ->join('productClinicCategories as pcc', 'pcc.productCategoryId', 'pcat.id')
+            ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
+            ->select('pcat.id', 'pcat.categoryName')
+            ->where('pc.id', '=', $request->id)
+            ->get();
+
+        $prodClinicDetails->categories = $categories;
+
+        $prodClinic->details = $prodClinicDetails;
+
+
+        $prodClinicSetting = DB::table('productClinics as pc')
+            ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.id')
+            ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
+            ->select(
                 'pc.isCustomerPurchase as isCustomerPurchase',
                 'pc.isCustomerPurchaseOnline as isCustomerPurchaseOnline',
                 'pc.isCustomerPurchaseOutStock as isCustomerPurchaseOutStock',
                 'pc.isStockLevelCheck as isStockLevelCheck',
                 'pc.isNonChargeable as isNonChargeable',
+                'pc.isOfficeApproval as isOfficeApproval',
+                'pc.isAdminApproval as isAdminApproval',
             )
             ->where('pc.id', '=', $request->id)
             ->first();
 
+        $prodClinic->setting = $prodClinicSetting;
+
         $location =  DB::table('productClinicLocations as pcl')
             ->join('location as l', 'l.Id', 'pcl.locationId')
-            ->select('pcl.Id', 'l.locationName', 'pcl.inStock', 'pcl.lowStock',
-            DB::raw('(CASE WHEN pcl.inStock = 0 THEN "NO STOCK" WHEN pcl.inStock <= pcl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
+            ->select(
+                'pcl.Id',
+                'l.locationName',
+                'pcl.inStock',
+                'pcl.lowStock',
+                DB::raw('(CASE WHEN pcl.inStock = 0 THEN "NO STOCK" WHEN pcl.inStock <= pcl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
             )
             ->where('pcl.productClinicId', '=', $request->id)
             ->first();
 
-        $ProdClinic->location = $location;
+        $prodClinic->location = $location;
 
-        if ($ProdClinic->pricingStatus == "CustomerGroups") {
+        if ($prodClinic->pricingStatus == "CustomerGroups") {
 
             $CustomerGroups = DB::table('productClinicCustomerGroups as pcc')
                 ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
@@ -754,8 +791,8 @@ class ProductClinicController
                 ->where('pcc.productClinicId', '=', $request->id)
                 ->get();
 
-            $ProdClinic->customerGroups = $CustomerGroups;
-        } elseif ($ProdClinic->pricingStatus == "PriceLocations") {
+            $prodClinic->customerGroups = $CustomerGroups;
+        } elseif ($prodClinic->pricingStatus == "PriceLocations") {
             $PriceLocations = DB::table('productClinicPriceLocations as pcp')
                 ->join('productClinics as pc', 'pcp.productClinicId', 'pc.id')
                 ->join('location as l', 'pcp.locationId', 'l.id')
@@ -767,8 +804,8 @@ class ProductClinicController
                 ->where('pcp.productClinicId', '=', $request->id)
                 ->get();
 
-            $ProdClinic->priceLocations = $PriceLocations;
-        } else if ($ProdClinic->pricingStatus == "Quantities") {
+            $prodClinic->priceLocations = $PriceLocations;
+        } else if ($prodClinic->pricingStatus == "Quantities") {
 
             $Quantities = DB::table('productClinicQuantities as pcq')
                 ->join('productClinics as pc', 'pcq.productClinicId', 'pc.id')
@@ -781,20 +818,10 @@ class ProductClinicController
                 ->where('pcq.ProductClinicId', '=', $request->id)
                 ->get();
 
-            $ProdClinic->quantities = $Quantities;
+            $prodClinic->quantities = $Quantities;
         }
 
-        $ProdClinic->categories = DB::table('productClinicCategories as pcc')
-            ->join('productClinics as pcl', 'pcc.productClinicId', 'pcl.id')
-            ->join('productCategories as pc', 'pcc.productCategoryId', 'pc.id')
-            ->select(
-                'pc.id as id',
-                'pc.categoryName'
-            )
-            ->where('pcc.ProductClinicId', '=', $request->id)
-            ->get();
-
-        $ProdClinic->images = DB::table('productClinicImages as pci')
+        $prodClinic->images = DB::table('productClinicImages as pci')
             ->join('productClinics as pc', 'pci.productClinicId', 'pc.id')
             ->select(
                 'pci.id as id',
@@ -805,7 +832,7 @@ class ProductClinicController
             ->where('pci.productClinicId', '=', $request->id)
             ->get();
 
-            $ProdClinic->dosages = DB::table('productClinicDosages as pcd')
+        $prodClinic->dosages = DB::table('productClinicDosages as pcd')
             ->join('productClinics as pc', 'pcd.productClinicId', 'pc.id')
             ->select(
                 // DB::raw("TRIM(pcd.from)+0 as capital_price"),
@@ -816,9 +843,19 @@ class ProductClinicController
             )
             ->where('pcd.productClinicId', '=', $request->id)
             ->get();
-            // return $ProdClinic->dosage;
 
-        return response()->json($ProdClinic, 200);
+        $prodClinic->reminders = DB::table('productClinicReminders as pcr')
+        ->join('productClinics as pc', 'pcr.productClinicId', 'pc.id')
+        ->select(
+            'pcr.unit',
+            'pcr.timing',
+            'pcr.status',
+        )
+        ->where('pcr.productClinicId', '=', $request->id)
+        ->where('pcr.isDeleted', '=', 0)
+        ->get();
+
+        return response()->json($prodClinic, 200);
     }
 
     public function update(Request $request)

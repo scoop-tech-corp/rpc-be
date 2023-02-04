@@ -80,8 +80,6 @@ class ProductInventoryController
 
     public function Search($request)
     {
-        $temp_column = '';
-
         $data = DB::table('productInventories as p')
             ->select(
                 'p.requirementName as requirementName'
@@ -95,7 +93,7 @@ class ProductInventoryController
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'p.requirementName';
+            $temp_column[] = 'p.requirementName';
             return $temp_column;
         }
     }
@@ -226,8 +224,6 @@ class ProductInventoryController
 
     public function SearchHistory($request)
     {
-        $temp_column = null;
-
         $data = DB::table('productInventories as p')
             ->select('p.requirementName')
             ->where('p.isDeleted', '=', 0);
@@ -256,6 +252,8 @@ class ProductInventoryController
         if (count($data)) {
             $temp_column[] = 'u.firstName';
         }
+
+        return $temp_column;
     }
 
     public function indexApproval(Request $request)
@@ -384,8 +382,6 @@ class ProductInventoryController
 
     public function SearchApproval($request)
     {
-        $temp_column = null;
-
         $data = DB::table('productInventories as p')
             ->select('p.requirementName')
             ->where('p.isDeleted', '=', 0);
@@ -414,6 +410,8 @@ class ProductInventoryController
         if (count($data)) {
             $temp_column[] = 'u.firstName';
         }
+
+        return $temp_column;
     }
 
     public function detail(Request $request)
@@ -905,8 +903,7 @@ class ProductInventoryController
                         'message' => 'The given data was invalid.',
                         'errors' => ['There is any product has already approved by Admin!'],
                     ], 422);
-                }
-                elseif ($value['isApprovedOffice'] == 1 || $value['isApprovedOffice'] == 2) {
+                } elseif ($value['isApprovedOffice'] == 1 || $value['isApprovedOffice'] == 2) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
                         'errors' => ['There is any product has already approved by Office!'],
