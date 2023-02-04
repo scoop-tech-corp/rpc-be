@@ -101,8 +101,6 @@ class ProductSellController
 
     private function Search($request)
     {
-        $temp_column = null;
-
         $data = DB::table('productSells as ps')
             ->select(
                 'ps.fullName as fullName'
@@ -154,23 +152,20 @@ class ProductSellController
         if (count($data)) {
             $temp_column[] = 'pb.brandName';
         }
+
+        return $temp_column;
     }
 
     public function Detail(Request $request)
     {
-        $ProdSell = DB::table('productSells as ps')
-            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
+        $prodSell = DB::table('productSells as ps')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.id')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.Id')
             ->select(
                 'ps.id',
                 'ps.fullName',
                 DB::raw("IFNULL(ps.simpleName,'') as simpleName"),
-                DB::raw("IFNULL(ps.sku,'') as sku"),
-                'ps.productBrandId',
-                'pb.brandName as brandName',
-                'ps.productSupplierId',
-                'psup.supplierName as supplierName',
-                'ps.status',
+
                 'ps.pricingStatus',
                 DB::raw("TRIM(ps.costPrice)+0 as costPrice"),
                 DB::raw("TRIM(ps.marketPrice)+0 as marketPrice"),
@@ -183,26 +178,65 @@ class ProductSellController
                 DB::raw("TRIM(ps.weight)+0 as weight"),
                 DB::raw("IFNULL(ps.introduction,'') as introduction"),
                 DB::raw("IFNULL(ps.description,'') as description"),
+            )
+            ->where('ps.id', '=', $request->id)
+            ->first();
+
+        $prodSellDetails = DB::table('productSells as ps')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.id')
+            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
+            ->select(
+                'ps.status',
+                'ps.productSupplierId',
+                'psup.supplierName as supplierName',
+                DB::raw("IFNULL(ps.sku,'') as sku"),
+                'ps.productBrandId',
+                'pb.brandName as brandName',
+            )
+            ->where('ps.id', '=', $request->id)
+            ->first();
+
+        $categories = DB::table('productCategories as pcat')
+            ->join('productSellCategories as psc', 'psc.productCategoryId', 'pcat.id')
+            ->join('productSells as pc', 'psc.productSellId', 'pc.id')
+            ->select('pcat.id', 'pcat.categoryName')
+            ->where('pc.id', '=', $request->id)
+            ->get();
+
+        $prodSellDetails->categories = $categories;
+
+        $prodSell->details = $prodSellDetails;
+
+        $prodSellSetting = DB::table('productSells as ps')
+            ->select(
                 'ps.isCustomerPurchase as isCustomerPurchase',
                 'ps.isCustomerPurchaseOnline as isCustomerPurchaseOnline',
                 'ps.isCustomerPurchaseOutStock as isCustomerPurchaseOutStock',
                 'ps.isStockLevelCheck as isStockLevelCheck',
                 'ps.isNonChargeable as isNonChargeable',
+                'ps.isOfficeApproval as isOfficeApproval',
+                'ps.isAdminApproval as isAdminApproval',
             )
             ->where('ps.id', '=', $request->id)
             ->first();
 
+        $prodSell->setting = $prodSellSetting;
+
         $location =  DB::table('productSellLocations as psl')
             ->join('location as l', 'l.Id', 'psl.locationId')
-            ->select('psl.Id', 'l.locationName', 'psl.inStock', 'psl.lowStock',
-            DB::raw('(CASE WHEN psl.inStock = 0 THEN "NO STOCK" WHEN psl.inStock <= psl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
+            ->select(
+                'psl.Id',
+                'l.locationName',
+                'psl.inStock',
+                'psl.lowStock',
+                DB::raw('(CASE WHEN psl.inStock = 0 THEN "NO STOCK" WHEN psl.inStock <= psl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
             )
             ->where('psl.productSellId', '=', $request->id)
             ->first();
 
-        $ProdSell->location = $location;
+        $prodSell->location = $location;
 
-        if ($ProdSell->pricingStatus == "CustomerGroups") {
+        if ($prodSell->pricingStatus == "CustomerGroups") {
 
             $CustomerGroups = DB::table('productSellCustomerGroups as psc')
                 ->join('productSells as ps', 'psc.productSellId', 'ps.id')
@@ -215,8 +249,8 @@ class ProductSellController
                 ->where('psc.productSellId', '=', $request->id)
                 ->get();
 
-            $ProdSell->customerGroups = $CustomerGroups;
-        } elseif ($ProdSell->pricingStatus == "PriceLocations") {
+            $prodSell->customerGroups = $CustomerGroups;
+        } elseif ($prodSell->pricingStatus == "PriceLocations") {
             $PriceLocations = DB::table('productSellPriceLocations as psp')
                 ->join('productSells as ps', 'psp.productSellId', 'ps.id')
                 ->join('location as l', 'psp.locationId', 'l.id')
@@ -228,8 +262,8 @@ class ProductSellController
                 ->where('psp.productSellId', '=', $request->id)
                 ->get();
 
-            $ProdSell->priceLocations = $PriceLocations;
-        } else if ($ProdSell->pricingStatus == "Quantities") {
+            $prodSell->priceLocations = $PriceLocations;
+        } else if ($prodSell->pricingStatus == "Quantities") {
 
             $Quantities = DB::table('productSellQuantities as psq')
                 ->join('productSells as ps', 'psq.productSellId', 'ps.id')
@@ -242,10 +276,10 @@ class ProductSellController
                 ->where('psq.ProductSellId', '=', $request->id)
                 ->get();
 
-            $ProdSell->quantities = $Quantities;
+            $prodSell->quantities = $Quantities;
         }
 
-        $ProdSell->categories = DB::table('productSellCategories as psc')
+        $prodSell->categories = DB::table('productSellCategories as psc')
             ->join('productSells as ps', 'psc.productSellId', 'ps.id')
             ->join('productCategories as pc', 'psc.productCategoryId', 'pc.id')
             ->select(
@@ -255,7 +289,7 @@ class ProductSellController
             ->where('psc.ProductSellId', '=', $request->id)
             ->get();
 
-        $ProdSell->images = DB::table('productSellImages as psi')
+        $prodSell->images = DB::table('productSellImages as psi')
             ->join('productSells as ps', 'psi.productSellId', 'ps.id')
             ->select(
                 'psi.id as id',
@@ -266,7 +300,18 @@ class ProductSellController
             ->where('psi.productSellId', '=', $request->id)
             ->get();
 
-        return response()->json($ProdSell, 200);
+        $prodSell->reminders = DB::table('productSellReminders as psr')
+            ->join('productSells as pc', 'psr.productSellId', 'pc.id')
+            ->select(
+                'psr.unit',
+                'psr.timing',
+                'psr.status',
+            )
+            ->where('psr.productSellId', '=', $request->id)
+            ->where('psr.isDeleted', '=', 0)
+            ->get();
+
+        return response()->json($prodSell, 200);
     }
 
     public function Create(Request $request)
