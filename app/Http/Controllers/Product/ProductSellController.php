@@ -731,9 +731,11 @@ class ProductSellController
         } catch (Exception $th) {
             DB::rollback();
 
+            DB::rollback();
+
             return response()->json([
-                'message' => 'Insert Failed',
-                'errors' => $th,
+                'message' => $th->getMessage(),
+                'errors' => ['Insert Failed!'],
             ], 422);
         }
     }
