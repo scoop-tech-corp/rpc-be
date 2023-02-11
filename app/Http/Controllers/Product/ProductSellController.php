@@ -632,7 +632,7 @@ class ProductSellController
 
                 $count = 0;
 
-                $ResImageDatas = json_decode($request->imageDatas, true);
+                $ResImageDatas = json_decode($request->imagesName, true);
 
                 if ($flag == false) {
 
@@ -650,7 +650,7 @@ class ProductSellController
 
                                 $file = new ProductSellImages();
                                 $file->productSellId = $product->id;
-                                $file->labelName = $ResImageDatas[$count];
+                                $file->labelName = $ResImageDatas[$count]['name'];
                                 $file->realImageName = $fil->getClientOriginalName();
                                 $file->imagePath = $fileName;
                                 $file->userId = $request->user()->id;
@@ -731,8 +731,6 @@ class ProductSellController
         } catch (Exception $th) {
             DB::rollback();
 
-            DB::rollback();
-
             return response()->json([
                 'message' => $th->getMessage(),
                 'errors' => ['Insert Failed!'],
@@ -742,68 +740,71 @@ class ProductSellController
 
     private function ValidationImage($request)
     {
-        $flag = false;
+        try {
 
-        if ($request->file('images')) {
 
-            $flag = true;
+            $flag = false;
 
-            $data_item = [];
+            if ($request->file('images')) {
 
-            $files[] = $request->file('images');
+                $flag = true;
 
-            foreach ($files as $file) {
+                $data_item = [];
 
-                foreach ($file as $fil) {
+                $files[] = $request->file('images');
 
-                    $file_size = $fil->getSize();
+                foreach ($files as $file) {
 
-                    $file_size = $file_size / 1024;
+                    foreach ($file as $fil) {
 
-                    $oldname = $fil->getClientOriginalName();
+                        $file_size = $fil->getSize();
 
-                    if ($file_size >= 5000) {
+                        $file_size = $file_size / 1024;
 
-                        array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
-                    }
-                }
-            }
+                        $oldname = $fil->getClientOriginalName();
 
-            if ($data_item) {
+                        if ($file_size >= 5000) {
 
-                return response()->json([
-                    'message' => 'Foto yang dimasukkan tidak valid!',
-                    'errors' => $data_item,
-                ], 422);
-            }
-        }
-
-        if ($flag == true) {
-            if ($request->imageDatas) {
-                $ResultImageDatas = json_decode($request->imageDatas, true);
-
-                if (count($ResultImageDatas) != count($request->file('images'))) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Label Image and total image should same!'],
-                    ], 422);
-                } else {
-                    foreach ($ResultImageDatas as $value) {
-                        if ($value == "") {
-
-                            return response()->json([
-                                'message' => 'The given data was invalid.',
-                                'errors' => ['Label Image can not be empty!'],
-                            ], 422);
+                            array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
                         }
                     }
                 }
-            } else {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Image label cannot be empty!!'],
-                ], 422);
+
+                if ($data_item) {
+
+                    return response()->json([
+                        'message' => 'Foto yang dimasukkan tidak valid!',
+                        'errors' => $data_item,
+                    ], 422);
+                }
             }
+
+            if ($flag == true) {
+                if ($request->imagesName) {
+                    $ResultImageDatas = json_decode($request->imagesName, true);
+
+                    if (count($ResultImageDatas) != count($request->file('images'))) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Label Image and total image should same!'],
+                        ], 422);
+                    }
+
+                } else {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Image label cannot be empty!!'],
+                    ], 422);
+                }
+            }
+
+        } catch (Exception $th) {
+            DB::rollback();
+
+            return response()->json([
+                'message' => $th->getMessage(),
+                'errors' => ['Insert Failed!'],
+            ], 422);
         }
     }
 
