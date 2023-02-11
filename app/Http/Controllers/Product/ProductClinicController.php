@@ -367,7 +367,6 @@ class ProductClinicController
                 $validatePriceLocations = Validator::make(
                     $ResultPriceLocations,
                     [
-
                         'priceLocations.*.locationId' => 'required|integer',
                         'priceLocations.*.price' => 'required|numeric',
                     ],
@@ -399,7 +398,6 @@ class ProductClinicController
                 $validateQuantity = Validator::make(
                     $ResultQuantities,
                     [
-
                         'quantities.*.fromQty' => 'required|integer',
                         'quantities.*.toQty' => 'required|integer',
                         'quantities.*.price' => 'required|numeric',
@@ -511,7 +509,7 @@ class ProductClinicController
 
                 $count = 0;
 
-                $ResImageDatas = json_decode($request->imageDatas, true);
+                $ResImageDatas = json_decode($request->imagesName, true);
 
                 if ($flag == false) {
 
@@ -528,7 +526,7 @@ class ProductClinicController
 
                                 $file = new ProductClinicImages();
                                 $file->productClinicId = $product->id;
-                                $file->labelName = $ResImageDatas[$count];
+                                $file->labelName = $ResImageDatas[$count]['name'];
                                 $file->realImageName = $fil->getClientOriginalName();
                                 $file->imagePath = $fileName;
                                 $file->userId = $request->user()->id;
@@ -667,24 +665,14 @@ class ProductClinicController
         }
 
         if ($flag == true) {
-            if ($request->imageDatas) {
-                $ResultImageDatas = json_decode($request->imageDatas, true);
+            if ($request->imagesName) {
+                $ResultImageDatas = json_decode($request->imagesName, true);
 
                 if (count($ResultImageDatas) != count($request->file('images'))) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
                         'errors' => ['Label Image and total image should same!'],
                     ], 422);
-                } else {
-                    foreach ($ResultImageDatas as $value) {
-                        if ($value == "") {
-
-                            return response()->json([
-                                'message' => 'The given data was invalid.',
-                                'errors' => ['Label Image can not be empty!'],
-                            ], 422);
-                        }
-                    }
                 }
             } else {
                 return response()->json([
@@ -704,7 +692,7 @@ class ProductClinicController
                 'pc.id',
                 'pc.fullName',
                 DB::raw("IFNULL(pc.simpleName,'') as simpleName"),
-                
+
                 'pc.pricingStatus',
                 DB::raw("TRIM(pc.costPrice)+0 as costPrice"),
                 DB::raw("TRIM(pc.marketPrice)+0 as marketPrice"),
@@ -843,15 +831,15 @@ class ProductClinicController
             ->get();
 
         $prodClinic->reminders = DB::table('productClinicReminders as pcr')
-        ->join('productClinics as pc', 'pcr.productClinicId', 'pc.id')
-        ->select(
-            'pcr.unit',
-            'pcr.timing',
-            'pcr.status',
-        )
-        ->where('pcr.productClinicId', '=', $request->id)
-        ->where('pcr.isDeleted', '=', 0)
-        ->get();
+            ->join('productClinics as pc', 'pcr.productClinicId', 'pc.id')
+            ->select(
+                'pcr.unit',
+                'pcr.timing',
+                'pcr.status',
+            )
+            ->where('pcr.productClinicId', '=', $request->id)
+            ->where('pcr.isDeleted', '=', 0)
+            ->get();
 
         return response()->json($prodClinic, 200);
     }
