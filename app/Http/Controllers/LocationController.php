@@ -1158,7 +1158,8 @@ class LocationController extends Controller
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('location.created_at', 'desc');
+        $data = $data->orderBy('location.created_at', 'desc')
+            ->orderBy('location.updated_at', 'desc');
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;
@@ -1325,7 +1326,7 @@ class LocationController extends Controller
             )
             ->where([
                 ['location_detail_address.isPrimary', '=', '1'],
-                ['location_telephone.usage', '=', 'utama'], 
+                ['location_telephone.usage', '=', 'utama'],
                 ['location.isDeleted', '=', '0'],
             ]);
 
