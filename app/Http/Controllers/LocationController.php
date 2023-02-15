@@ -1158,7 +1158,7 @@ class LocationController extends Controller
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('location.created_at', 'desc');
+        //$data = $data->orderBy('location.created_at', 'desc');
         $data = $data->orderBy('location.updated_at', 'desc');
        // $data = $data->orderByRaw('IFNULL(location.updated_at, "")', 'desc');
 
