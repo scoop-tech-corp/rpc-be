@@ -1159,7 +1159,8 @@ class LocationController extends Controller
         }
 
         $data = $data->orderBy('location.created_at', 'desc');
-        $data = $data->orderByRaw('IFNULL(location.updated_at, "")', 'desc');
+        $data = $data->orderBy('location.updated_at', 'desc');
+       // $data = $data->orderByRaw('IFNULL(location.updated_at, "")', 'desc');
 
 
         if ($request->rowPerPage > 0) {

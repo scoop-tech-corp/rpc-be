@@ -1032,7 +1032,8 @@ class FacilityController extends Controller
 
 
         $data = $data->orderBy('facility.created_at', 'desc');
-        $data = $data->orderByRaw('IFNULL(facility.created_at, "")', 'desc');
+        $data = $data->orderBy('facility.updated_at', 'desc');
+        //$data = $data->orderByRaw('IFNULL(facility.created_at, "")', 'desc');
 
 
         if ($request->rowPerPage > 0) {
