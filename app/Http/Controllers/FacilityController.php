@@ -709,7 +709,7 @@ class FacilityController extends Controller
                                 'errors' => ['Unit name must be string'],
                             ], 422);
                         }
-    
+
                         if ($check->fails()) {
 
                             $errors = $check->errors()->all();
@@ -1030,7 +1030,10 @@ class FacilityController extends Controller
             $data = $data->orderBy($request->orderColumn, $defaultOrderBy);
         }
 
-        $data = $data->orderBy('facility.created_at', 'desc');
+        
+        $data = $data->orderBy('facility.created_at', 'desc')
+            ->orderByRaw('IFNULL(facility.created_at, "")', 'desc');
+
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;

@@ -1158,8 +1158,10 @@ class LocationController extends Controller
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('location.created_at', 'desc');
-         
+        $data = $data->orderBy('location.created_at', 'desc')
+            ->orderByRaw('IFNULL(location.updated_at, "")', 'desc');
+
+
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;
         }
@@ -1179,8 +1181,8 @@ class LocationController extends Controller
 
         $total_paging = $count_data / $defaultRowPerPage;
 
-       // $data = $data->orderBy('location.updated_at', 'desc');
-        
+        // $data = $data->orderBy('location.updated_at', 'desc');
+
         return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
     }
 
