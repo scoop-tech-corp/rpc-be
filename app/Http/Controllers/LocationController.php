@@ -279,12 +279,12 @@ class LocationController extends Controller
             }
 
 
-            if (ctype_digit($request->description)) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Description must be string'],
-                ], 422);
-            }
+            // if (ctype_digit($request->description)) {
+            //     return response()->json([
+            //         'message' => 'The given data was invalid.',
+            //         'errors' => ['Description must be string'],
+            //     ], 422);
+            // }
 
             $data_error_address = [];
 
@@ -663,12 +663,12 @@ class LocationController extends Controller
                 ], 422);
             }
 
-            if (ctype_digit($request->description)) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Description must be string'],
-                ], 422);
-            }
+            // if (ctype_digit($request->description)) {
+            //     return response()->json([
+            //         'message' => 'The given data was invalid.',
+            //         'errors' => ['Description must be string'],
+            //     ], 422);
+            // }
 
             $checkdataLocation = DB::table('location')
                 ->select('locationName')

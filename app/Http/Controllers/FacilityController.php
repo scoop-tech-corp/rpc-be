@@ -200,12 +200,12 @@ class FacilityController extends Controller
                         ], 422);
                     }
 
-                    if (ctype_digit($key['unitName'])) {
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Unit name must be string'],
-                        ], 422);
-                    }
+                    // if (ctype_digit($key['unitName'])) {
+                    //     return response()->json([
+                    //         'message' => 'The given data was invalid.',
+                    //         'errors' => ['Unit name must be string'],
+                    //     ], 422);
+                    // }
 
                     if ($check->fails()) {
 
@@ -706,12 +706,12 @@ class FacilityController extends Controller
                         }
 
 
-                        if (ctype_digit($key['unitName'])) {
-                            return response()->json([
-                                'message' => 'The given data was invalid.',
-                                'errors' => ['Unit name must be string'],
-                            ], 422);
-                        }
+                        // if (ctype_digit($key['unitName'])) {
+                        //     return response()->json([
+                        //         'message' => 'The given data was invalid.',
+                        //         'errors' => ['Unit name must be string'],
+                        //     ], 422);
+                        // }
 
                         if ($check->fails()) {
 

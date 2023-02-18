@@ -27,6 +27,8 @@ class RegionImport implements ToModel
         return new provinsi([
             "kodeProvinsi" =>  $row[0],
             "namaProvinsi" =>  $row[1],
+            "created_at" =>  now(),
+            "updated_at" =>  now(),
         ]);
     }
 

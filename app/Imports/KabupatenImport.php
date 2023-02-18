@@ -19,6 +19,8 @@ class KabupatenImport implements ToModel
             "kodeKabupaten" =>  $row[0],
             "kodeProvinsi" =>  $row[1],
             "namaKabupaten" =>  $row[2],
+            "created_at" =>  now(),
+            "updated_at" =>  now(),
         ]);
     }
 }
