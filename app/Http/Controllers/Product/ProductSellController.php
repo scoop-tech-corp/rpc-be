@@ -797,9 +797,11 @@ class ProductSellController
     public function Update(Request $request)
     {
 
+        // dd($request->isCustomerPurchase);
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
             'simpleName' => 'nullable|string',
+            'fullName' => 'nullable|string|max:30',
             'productBrandId' => 'nullable|integer',
             'productSupplierId' => 'nullable|integer',
             'sku' => 'nullable|string',
@@ -816,13 +818,21 @@ class ProductSellController
             'height' => 'nullable|numeric',
             'introduction' => 'nullable|string',
             'description' => 'nullable|string',
+
+            'isCustomerPurchase' => 'required|in:true,false,TRUE,FALSE',
+            'isCustomerPurchaseOnline' => 'required|in:true,false,TRUE,FALSE',
+            'isCustomerPurchaseOutStock' => 'required|in:true,false,TRUE,FALSE',
+            'isStockLevelCheck' => 'required|in:true,false,TRUE,FALSE',
+            'isNonChargeable' => 'required|in:true,false,TRUE,FALSE',
+            'isOfficeApproval' => 'required|in:true,false,TRUE,FALSE',
+            'isAdminApproval' => 'required|in:true,false,TRUE,FALSE'
         ]);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
             return response()->json([
-                'message' => 'The given data was invalid.',
+                'message' => 'The given data was invalid. 1',
                 'errors' => $errors,
             ], 422);
         }
@@ -1066,6 +1076,7 @@ class ProductSellController
 
                 $product = ProductSell::updateOrCreate([
                     'simpleName' => $request->simpleName,
+                    'fullName' => $request->fullName,
                     'sku' => $request->sku,
                     'productBrandId' => $request->productBrandId,
                     'productSupplierId' => $request->productSupplierId,
