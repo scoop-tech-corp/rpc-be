@@ -501,6 +501,8 @@ class LocationController extends Controller
                             'isPrimary' => $val['isPrimary'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
+                            
                         ]);
                 }
             }
@@ -521,6 +523,8 @@ class LocationController extends Controller
                                 'fromTime' => $val['fromTime'],
                                 'toTime' => $val['toTime'],
                                 'allDay' => $val['allDay'],
+                                'created_at' => now(),
+                                'updated_at' => now(),
                             ]);
                     }
                 }
@@ -542,6 +546,7 @@ class LocationController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -561,6 +566,7 @@ class LocationController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -581,6 +587,7 @@ class LocationController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -945,6 +952,7 @@ class LocationController extends Controller
                 'description' => $request->input('description'),
                 'isDeleted' => 0,
                 'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             if ($request->detailAddress) {
@@ -963,6 +971,7 @@ class LocationController extends Controller
                             'isPrimary' => $val['isPrimary'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -992,6 +1001,7 @@ class LocationController extends Controller
                                     'imagePath' => $fileName,
                                     'isDeleted' => 0,
                                     'created_at' => now(),
+                                    'updated_at' => now(),
                                 ]);
 
                             $int = $int + 1;
@@ -1015,6 +1025,8 @@ class LocationController extends Controller
                                 'fromTime' => $val['fromTime'],
                                 'toTime' => $val['toTime'],
                                 'allDay' => $val['allDay'],
+                                'created_at' => now(),
+                                'updated_at' => now(),
                             ]);
                     }
                 }
@@ -1032,6 +1044,7 @@ class LocationController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -1047,6 +1060,7 @@ class LocationController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -1063,6 +1077,7 @@ class LocationController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -1158,10 +1173,7 @@ class LocationController extends Controller
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        //$data = $data->orderBy('location.created_at', 'desc');
         $data = $data->orderBy('location.updated_at', 'desc');
-       // $data = $data->orderByRaw('IFNULL(location.updated_at, "")', 'desc');
-
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;

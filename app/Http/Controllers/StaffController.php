@@ -10,9 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use Validator;
+use GuzzleHttp\Client;
+use Carbon\Carbon;
 
 class StaffController extends Controller
 {
+
+    private $client;
+    private $api_key;
+    private $country;
 
     public function insertStaff(Request $request)
     {
@@ -747,6 +753,147 @@ class StaffController extends Controller
                 'message' => $e,
             ], 422);
         }
+    }
+
+
+
+    public function getWorkingDays(Request $request)
+    {
+
+
+        try {
+
+            $start = Carbon::parse($request->fromDate);
+            $end = Carbon::parse($request->toDate);
+
+            if ($end <= $start) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [''],
+                ], 422);
+            }
+
+
+            $results = DB::table('holidays')
+                ->whereBetween('date', [$start, $end])
+                ->get();
+
+            $nameDays = [];
+
+            while ($start <= $end) {
+
+                if ($start->isWeekday()) {
+
+                    if (!$results->contains('date', $start->toDateString())) {
+                        $nameDays[] = [
+                            'date' => $start->format('Y-m-d'),
+                            'name' => $start->format('l')
+                        ];
+                    }
+                }
+
+                $start->addDay();
+            }
+
+            return response()->json(['workdays' => $nameDays], 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+
+    public function getAllHolidaysDate(Request $request)
+    {
+
+        try {
+
+            $valYear = null;
+
+            if ($request->year) {
+                $valYear = $request->year;
+            } else {
+                $valYear = date('Y');
+            }
+
+
+            $response = $this->client->request('GET', 'holidays', [
+                'query' => [
+                    'api_key' => $this->api_key,
+                    'country' => $this->country,
+                    'year' => $valYear,
+                ],
+            ]);
+
+            $holidays = json_decode($response->getBody())->response->holidays;
+
+            foreach ($holidays as $val) {
+
+                if ($val->type[0] == "National holiday") {
+
+                    if (DB::table('holidays')
+                        ->where('type', $val->type[0])
+                        ->where('year', $valYear)
+                        ->where('date', $val->date->iso)
+                        ->exists()
+                    ) {
+
+                        DB::table('holidays')
+                            ->where('type', $val->type[0])
+                            ->where('date', $val->date->iso)
+                            ->where('year', $valYear)
+                            ->update([
+                                'date' => $val->date->iso,
+                                'type' => $val->type[0],
+                                'description' => $val->name,
+                                'year' => $valYear,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                    } else {
+
+                        DB::table('holidays')
+                            ->insert([
+                                'date' => $val->date->iso,
+                                'type' => $val->type[0],
+                                'year' => $valYear,
+                                'description' => $val->name,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'Success',
+                'message' => "Successfully input date holidays",
+            ], 200);
+
+          //  info("helloworld");
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+    public function __construct()
+    {
+        $this->client = new Client([
+            'base_uri' => 'https://calendarific.com/api/v2/',
+        ]);
+        $this->api_key = '40a18b1a57c593a8ba3e949ce44420e52b610171';
+        $this->country = 'ID';
     }
 
 

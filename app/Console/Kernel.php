@@ -15,9 +15,17 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->call(function(){
-            info('call every minute');
-        })->everyMinute();
+        // $schedule->call(function(){
+        //     info('call every minute');
+        // })->everyMinute();
+
+        //$schedule->command('App\Http\Controllers\StaffController@getAllHolidaysDate')->everyMinute(); //add by danny wahyudi 
+
+        $schedule->call('App\Http\Controllers\StaffController@getAllHolidaysDate')->everyMinute();
+        //$schedule->call('App\Http\Controllers\StaffController@getAllHolidaysDate')->weeklyOn(1, '8:00');
+        // $schedule->call(function(){
+        //         info('call every minute');
+        //     })->everyMinute();
     }
 
     /**
@@ -27,7 +35,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

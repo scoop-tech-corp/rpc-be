@@ -170,7 +170,7 @@ class FacilityController extends Controller
 
                 $messages = [
                     'unitName.required' => 'Please input unit name, unit name is required',
-                    'unitName.max' => 'Exceeded maximum character, max character for unit name is 25',
+                    'unitName.max' => 'Exceeded maximum character, max character for unit name is 255',
                     'notes.max' => 'Exceeded maximum character, max character for notes name is 300',
                     'status.required' => 'Please input status, status is required',
                     'status.integer' => 'Status must be integer',
@@ -186,7 +186,7 @@ class FacilityController extends Controller
                 foreach ($inputUnitReal as $key) {
 
                     $check = Validator::make($key, [
-                        "unitName" => 'required|max:25',
+                        "unitName" => 'required|max:255',
                         "notes" => 'max:300',
                         "status" => 'required|integer',
                         "capacity" => 'required|integer',
@@ -256,7 +256,8 @@ class FacilityController extends Controller
                 'introduction' => $request->input('introduction'),
                 'description' => $request->input('description'),
                 'isDeleted' => 0,
-                'created_at' => now()
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
 
             if ($request->unit) {
@@ -282,6 +283,7 @@ class FacilityController extends Controller
                             'notes' => $val['notes'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                     } else {
 
@@ -321,6 +323,7 @@ class FacilityController extends Controller
                                         'imagePath' => $fileName,
                                         'isDeleted' => 0,
                                         'created_at' => now(),
+                                        'updated_at' => now(),
                                     ]);
                             }
 
@@ -672,7 +675,7 @@ class FacilityController extends Controller
 
                     $messages = [
                         'unitName.required' => 'Please input unit name, unit name is required',
-                        'unitName.max' => 'Exceeded maximum character, max character for unit name is 25',
+                        'unitName.max' => 'Exceeded maximum character, max character for unit name is 255',
                         'notes.max' => 'Exceeded maximum character, max character for notes name is 300',
                         'status.required' => 'Please input status, status is required',
                         'status.integer' => 'Status must be integer',
@@ -685,7 +688,7 @@ class FacilityController extends Controller
                     foreach ($inputUnitReal as $key) {
 
                         $check = Validator::make($key, [
-                            "unitName" => 'required|max:25',
+                            "unitName" => 'required|max:255',
                             "notes" => 'max:300',
                             "status" => 'required|integer',
                             "capacity" => 'required|integer',
@@ -779,6 +782,7 @@ class FacilityController extends Controller
                             'notes' => $val['notes'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 } else {
 
@@ -860,6 +864,7 @@ class FacilityController extends Controller
                             'imagePath' => $fileName,
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
 
                     $index = $index + 1;
@@ -1030,11 +1035,7 @@ class FacilityController extends Controller
             $data = $data->orderBy($request->orderColumn, $defaultOrderBy);
         }
 
-
-        //$data = $data->orderBy('facility.created_at', 'desc');
         $data = $data->orderBy('facility.updated_at', 'desc');
-        //$data = $data->orderByRaw('IFNULL(facility.created_at, "")', 'desc');
-
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;

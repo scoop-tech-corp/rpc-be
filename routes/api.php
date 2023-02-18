@@ -22,7 +22,12 @@ Route::post('register', [ApiController::class, 'register']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
 
+    //location 
+
+
     Route::post('logout', [ApiController::class, 'logout']);
+
+    Route::get('locationpdf', [LocationController::class, 'cetak_pdf']);
     Route::get('locationImages', [LocationController::class, 'searchImageLocation']);
     Route::post('location', [LocationController::class, 'insertLocation']);
     Route::get('location', [LocationController::class, 'getLocationHeader']);
@@ -94,14 +99,14 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('product/inventory/history/export', [ProductInventoryController::class, 'exportHistory']);
     Route::get('product/inventory/approval', [ProductInventoryController::class, 'indexApproval']);
     Route::get('product/inventory/approval/export', [ProductInventoryController::class, 'exportApproval']);
-    
+
     Route::get('product/inventory/detail', [ProductInventoryController::class, 'detail']);
 
     Route::post('product/inventory', [ProductInventoryController::class, 'create']);
 
     Route::put('product/inventory', [ProductInventoryController::class, 'update']);
     Route::put('product/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
-    
+
     Route::delete('product/inventory', [ProductInventoryController::class, 'delete']);
 
     //product category
@@ -146,6 +151,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('exportstaff', [StaffController::class, 'exportStaff']);
     Route::post('sendEmail', [StaffController::class, 'sendEmailVerification']);
     Route::put('statusStaff', [StaffController::class, 'updateStatusUsers']);
+
+    Route::post('holidaysdate', [StaffController::class, 'getAllHolidaysDate']);
+    Route::get('workingdate', [StaffController::class, 'getWorkingDays']);
 
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
