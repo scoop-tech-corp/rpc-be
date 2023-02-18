@@ -21,8 +21,8 @@ class Kernel extends ConsoleKernel
 
         //$schedule->command('App\Http\Controllers\StaffController@getAllHolidaysDate')->everyMinute(); //add by danny wahyudi 
 
-        $schedule->call('App\Http\Controllers\StaffController@getAllHolidaysDate')->everyMinute();
-        //$schedule->call('App\Http\Controllers\StaffController@getAllHolidaysDate')->weeklyOn(1, '8:00');
+       // $schedule->call('App\Http\Controllers\StaffController@getAllHolidaysDate')->everyMinute();
+        $schedule->call('App\Http\Controllers\StaffController@getAllHolidaysDate')->weeklyOn(1, '8:00');
         // $schedule->call(function(){
         //         info('call every minute');
         //     })->everyMinute();
