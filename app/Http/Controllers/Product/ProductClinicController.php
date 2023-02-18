@@ -104,6 +104,8 @@ class ProductClinicController
 
     private function Search($request)
     {
+        $temp_column = null;
+
         $data = DB::table('productClinics as pc')
             ->select(
                 'pc.fullName as fullName'

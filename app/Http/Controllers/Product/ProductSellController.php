@@ -101,6 +101,8 @@ class ProductSellController
 
     private function Search($request)
     {
+        $temp_column = null;
+
         $data = DB::table('productSells as ps')
             ->select(
                 'ps.fullName as fullName'
@@ -278,16 +280,6 @@ class ProductSellController
 
             $prodSell->quantities = $Quantities;
         }
-
-        $prodSell->categories = DB::table('productSellCategories as psc')
-            ->join('productSells as ps', 'psc.productSellId', 'ps.id')
-            ->join('productCategories as pc', 'psc.productCategoryId', 'pc.id')
-            ->select(
-                'psc.id as id',
-                'pc.categoryName'
-            )
-            ->where('psc.ProductSellId', '=', $request->id)
-            ->get();
 
         $prodSell->images = DB::table('productSellImages as psi')
             ->join('productSells as ps', 'psi.productSellId', 'ps.id')
@@ -544,11 +536,7 @@ class ProductSellController
                 ], 422);
             }
         }
-        // info(count($request->file('images')));
-        // return count($ResultImageDatas);
-
-
-
+        
         //INSERT DATA
         $flag = false;
         $res_data = [];
@@ -789,7 +777,6 @@ class ProductSellController
                             'errors' => ['Label Image and total image should same!'],
                         ], 422);
                     }
-
                 } else {
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -797,7 +784,6 @@ class ProductSellController
                     ], 422);
                 }
             }
-
         } catch (Exception $th) {
             DB::rollback();
 

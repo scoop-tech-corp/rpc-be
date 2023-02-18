@@ -80,6 +80,8 @@ class ProductInventoryController
 
     public function Search($request)
     {
+        $temp_column = null;
+
         $data = DB::table('productInventories as p')
             ->select(
                 'p.requirementName as requirementName'
