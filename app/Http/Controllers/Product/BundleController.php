@@ -38,8 +38,7 @@ class BundleController
 
         if ($request->search) {
             $res = $this->Search($request);
-            if (!is_null($res[0])) {
-                info($res);
+            if ($res) {
                 $data = $data->where($res[0], 'like', '%' . $request->search . '%');
 
                 for ($i = 1; $i < count($res); $i++) {
@@ -81,6 +80,9 @@ class BundleController
 
     private function Search($request)
     {
+
+        $temp_column = null;
+
         $data = DB::table('productBundles as pb')
             ->select(
                 'pb.name',
