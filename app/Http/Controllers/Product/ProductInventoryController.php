@@ -657,7 +657,7 @@ class ProductInventoryController
 
                         $name = $fil->hashName();
 
-                        $fil->move(public_path() . '/ProductClinicImages/', $name);
+                        $fil->move(public_path() . '/ProductInventoryImages/', $name);
 
                         $fileName = "/ProductInventoryImages/" . $name;
 

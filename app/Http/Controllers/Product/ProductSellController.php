@@ -542,7 +542,7 @@ class ProductSellController
                 ], 422);
             }
         }
-        
+
         //INSERT DATA
         $flag = false;
         $res_data = [];
@@ -857,27 +857,28 @@ class ProductSellController
         $ResultReminders = null;
 
         if ($request->categories) {
-            $ResultCategories = json_decode($request->categories, true);
+            $ResultCategories = $request->categories;
         }
 
-        $ResultReminders = json_decode($request->reminders, true);
+        $ResultReminders = $request->reminders;
 
+        $ResultQuantities = $request->quantities;
 
         $validateLocation = Validator::make(
-            $request->locations,
+            $request->location,
             [
-                '*.id' => 'nullable|integer',
-                '*.locationId' => 'required|integer',
-                '*.inStock' => 'required|integer',
-                '*.lowStock' => 'required|integer',
-                '*.status' => 'required|string',
+                'id' => 'required|integer',
+                'locationId' => 'required|integer',
+                'inStock' => 'required|integer',
+                'lowStock' => 'required|integer',
+                'reStockLimit' => 'required|integer',
             ],
             [
-                '*.id.integer' => 'Id Should be Integer!',
-                '*.locationId.integer' => 'Location Id Should be Integer!',
-                '*.inStock.integer' => 'In Stock Should be Integer',
-                '*.lowStock.integer' => 'Low Stock Should be Integer',
-                '*.status.string' => 'Status Should be String'
+                'id.integer' => 'Id Should be Integer!',
+                'locationId.integer' => 'Location Id Should be Integer!',
+                'inStock.integer' => 'In Stock Should be Integer',
+                'lowStock.integer' => 'Low Stock Should be Integer',
+                'reStockLimit.integer' => 'Re Stock Limit Should be Integer',
             ]
         );
 
@@ -890,64 +891,10 @@ class ProductSellController
             ], 422);
         }
 
-
-
-        foreach ($request->locations as $Res) {
-
-            if ($Res['status'] == "new") {
-                $CheckDataBranch = DB::table('productSells as ps')
-                    ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
-                    ->join('location as loc', 'psl.locationId', 'loc.id')
-                    ->select('ps.fullName as fullName', 'loc.locationName')
-                    ->where('ps.fullName', '=', $request->fullName)
-                    ->where('psl.locationId', '=', $Res['locationId'])
-                    ->first();
-
-                if ($CheckDataBranch) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Product ' . $CheckDataBranch->fullName . ' Already Exist on Location ' . $CheckDataBranch->locationName . '!'],
-                    ], 422);
-                }
-            }
-        }
-
-        if ($request->hasfile('images')) {
-
-            $data_item = [];
-
-            $files[] = $request->file('images');
-
-            foreach ($files as $file) {
-
-                foreach ($file as $fil) {
-
-                    $file_size = $fil->getSize();
-
-                    $file_size = $file_size / 1024;
-
-                    $oldname = $fil->getClientOriginalName();
-
-                    if ($file_size >= 5000) {
-
-                        array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
-                    }
-                }
-            }
-
-            if ($data_item) {
-
-                return response()->json([
-                    'message' => 'Foto yang dimasukkan tidak valid!',
-                    'errors' => $data_item,
-                ], 422);
-            }
-        }
-
         if ($request->pricingStatus == "CustomerGroups") {
 
             if ($request->customerGroups) {
-                //$ResultCustomerGroups = json_decode($request->customerGroups, true);
+                $ResultCustomerGroups = $request->customerGroups;
 
                 $validateCustomer = Validator::make(
                     $request->customerGroups,
@@ -982,7 +929,7 @@ class ProductSellController
         } else if ($request->pricingStatus == "PriceLocations") {
 
             if ($request->priceLocations) {
-                //$ResultPriceLocations = json_decode($request->priceLocations, true);
+                $ResultPriceLocations = $request->priceLocations;
 
                 $validatePriceLocations = Validator::make(
                     $request->priceLocations,
@@ -1017,7 +964,6 @@ class ProductSellController
         } else if ($request->pricingStatus == "Quantities") {
 
             if ($request->quantities) {
-                // $ResultQuantities = json_decode($request->quantities, true);
 
                 $validateQuantity = Validator::make(
                     $request->quantities,
@@ -1055,176 +1001,211 @@ class ProductSellController
 
         //UPDATE DATA
 
+        $location = $request->location;
+
+        ProductSellLocation::updateOrCreate(
+            ['id' => $location['id']],
+            [
+                'inStock' => $location['inStock'],
+                'lowStock' => $location['lowStock'],
+                'reStockLimit' => $location['reStockLimit'],
+                'diffStock' => $location['inStock'] - $location['lowStock'],
+            ]
+        );
+
         try {
-            foreach ($request->locations as $value) {
 
-                $weight = 0;
-                if (!is_null($request->weight)) {
-                    $weight = $request->weight;
-                }
+        $weight = 0;
+        if (!is_null($request->weight)) {
+            $weight = $request->weight;
+        }
 
-                $length = 0;
-                if (!is_null($request->length)) {
-                    $length = $request->length;
-                }
+        $length = 0;
+        if (!is_null($request->length)) {
+            $length = $request->length;
+        }
 
-                $width = 0;
-                if (!is_null($request->width)) {
-                    $width = $request->width;
-                }
+        $width = 0;
+        if (!is_null($request->width)) {
+            $width = $request->width;
+        }
 
-                $height = 0;
-                if (!is_null($request->height)) {
-                    $height = $request->height;
-                }
+        $height = 0;
+        if (!is_null($request->height)) {
+            $height = $request->height;
+        }
 
-                $product = ProductSell::updateOrCreate([
-                    'simpleName' => $request->simpleName,
-                    'fullName' => $request->fullName,
-                    'sku' => $request->sku,
-                    'productBrandId' => $request->productBrandId,
-                    'productSupplierId' => $request->productSupplierId,
-                    'status' => $request->status,
-                    'pricingStatus' => $request->pricingStatus,
-                    'costPrice' => $request->costPrice,
-                    'marketPrice' => $request->marketPrice,
-                    'price' => $request->price,
-                    'isShipped' => $request->isShipped,
-                    'weight' => $weight,
-                    'length' => $length,
-                    'width' => $width,
-                    'height' => $height,
-                    'introduction' => $request->introduction,
-                    'description' => $request->description,
+        $product = ProductSell::updateOrCreate(
+            ['id' => $request->id],
+            [
+                'simpleName' => $request->simpleName,
+                'fullName' => $request->fullName,
+                'sku' => $request->sku,
+                'productBrandId' => $request->productBrandId,
+                'productSupplierId' => $request->productSupplierId,
+                'status' => $request->status,
+                'pricingStatus' => $request->pricingStatus,
+                'costPrice' => $request->costPrice,
+                'marketPrice' => $request->marketPrice,
+                'price' => $request->price,
+                'isShipped' => $request->isShipped,
+                'weight' => $weight,
+                'length' => $length,
+                'width' => $width,
+                'height' => $height,
+                'introduction' => $request->introduction,
+                'description' => $request->description,
 
-                    'isCustomerPurchase' => convertTrueFalse($request->isCustomerPurchase),
-                    'isCustomerPurchaseOnline' => convertTrueFalse($request->isCustomerPurchaseOnline),
-                    'isCustomerPurchaseOutStock' => convertTrueFalse($request->isCustomerPurchaseOutStock),
-                    'isStockLevelCheck' => convertTrueFalse($request->isStockLevelCheck),
-                    'isNonChargeable' => convertTrueFalse($request->isNonChargeable),
-                    'isOfficeApproval' => convertTrueFalse($request->isOfficeApproval),
-                    'isAdminApproval' => convertTrueFalse($request->isAdminApproval),
+                'isCustomerPurchase' => convertTrueFalse($request->isCustomerPurchase),
+                'isCustomerPurchaseOnline' => convertTrueFalse($request->isCustomerPurchaseOnline),
+                'isCustomerPurchaseOutStock' => convertTrueFalse($request->isCustomerPurchaseOutStock),
+                'isStockLevelCheck' => convertTrueFalse($request->isStockLevelCheck),
+                'isNonChargeable' => convertTrueFalse($request->isNonChargeable),
+                'isOfficeApproval' => convertTrueFalse($request->isOfficeApproval),
+                'isAdminApproval' => convertTrueFalse($request->isAdminApproval),
 
-                    'userId' => $request->user()->id,
-                ]);
+                'userId' => $request->user()->id,
+            ]
+        );
 
-                ProductSellLocation::updateOrCreate([
-                    'productSellId' => $request->id,
-                    'locationId' => $resLoc['locationId'],
-                    'inStock' => $resLoc['inStock'],
-                    'lowStock' => $resLoc['lowStock'],
-                    'userId' => $request->user()->id,
-                ]);
+        if ($ResultCategories) {
 
-                if ($ResultCategories) {
+            ProductSellCategory::where('ProductSellId', '=', $request->id)
+                ->where('isDeleted', '=', 0)
+                ->update(
+                    [
+                        'deletedBy' => $request->user()->id,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]
+                );
 
-                    foreach ($ResultCategories as $valCat) {
-                        ProductSellCategory::updateOrCreate([
-                            'productSellId' => $product->id,
-                            'productCategoryId' => $valCat,
-                            'userId' => $request->user()->id,
-                        ]);
-                    }
-                }
+            foreach ($ResultCategories as $valCat) {
+                ProductSellCategory::create(
+                    [
+                        'productSellId' => $request->id,
+                        'productCategoryId' => $valCat,
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
 
-                $count = 0;
+        foreach ($ResultReminders as $RemVal) {
 
-                $ResImageDatas = json_decode($request->imageDatas, true);
+            if ($RemVal['statusData'] == 'del') {
 
-                if ($flag == false) {
+                ProductSellReminder::where('id', '=', $RemVal['id'])
+                    ->where('isDeleted', '=', 0)
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } else {
 
-                    if ($request->hasfile('images')) {
-
-                        foreach ($files as $file) {
-
-                            foreach ($file as $fil) {
-
-                                $name = $fil->hashName();
-
-                                $fil->move(public_path() . '/ProductSellImages/', $name);
-
-                                $fileName = "/ProductSellImages/" . $name;
-
-                                $file = new ProductSellImages();
-                                $file->productSellId = $product->id;
-                                $file->labelName = $ResImageDatas[$count];
-                                $file->realImageName = $fil->getClientOriginalName();
-                                $file->imagePath = $fileName;
-                                $file->userId = $request->user()->id;
-                                $file->save();
-
-                                array_push($res_data, $file);
-
-                                $count += 1;
-                            }
-                        }
-
-                        $flag = true;
-                    }
-                } else {
-
-                    foreach ($res_data as $res) {
-                        ProductSellImages::create([
-                            'productSellId' => $product->id,
-                            'labelName' => $res['labelName'],
-                            'realImageName' => $res['realImageName'],
-                            'imagePath' => $res['imagePath'],
-                            'userId' => $request->user()->id,
-                        ]);
-                    }
-                }
-
-                foreach ($ResultReminders as $RemVal) {
-                    ProductSellReminder::updateOrCreate([
+                ProductSellReminder::updateOrCreate(
+                    ['id' => $RemVal['id']],
+                    [
                         'productSellId' => $product->id,
                         'unit' => $RemVal['unit'],
                         'timing' => $RemVal['timing'],
                         'status' => $RemVal['status'],
                         'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
+
+        if ($request->pricingStatus == "CustomerGroups") {
+
+            foreach ($ResultCustomerGroups as $CustVal) {
+
+                if ($CustVal['status'] == 'del') {
+
+                    ProductSellCustomerGroup::where('id', '=', $CustVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } else {
+
+                    ProductSellCustomerGroup::updateOrCreate([
+                        'productSellId' => $product->id,
+                        'customerGroupId' => $CustVal['customerGroupId'],
+                        'price' => $CustVal['price'],
+                        'userId' => $request->user()->id,
                     ]);
                 }
+            }
+        } else if ($request->pricingStatus == "PriceLocations") {
 
-                if ($request->pricingStatus == "CustomerGroups") {
+            foreach ($ResultPriceLocations as $PriceVal) {
 
-                    foreach ($ResultCustomerGroups as $CustVal) {
-                        ProductSellCustomerGroup::updateOrCreate([
-                            'productSellId' => $product->id,
-                            'customerGroupId' => $CustVal['customerGroupId'],
-                            'price' => $CustVal['price'],
-                            'userId' => $request->user()->id,
-                        ]);
-                    }
-                } else if ($request->pricingStatus == "PriceLocations") {
+                if ($PriceVal['status'] == 'del') {
 
-                    foreach ($ResultPriceLocations as $PriceVal) {
-                        ProductSellPriceLocation::updateOrCreate([
-                            'productSellId' => $product->id,
-                            'locationId' => $PriceVal['locationId'],
-                            'price' => $PriceVal['price'],
-                            'userId' => $request->user()->id,
-                        ]);
-                    }
-                } else if ($request->pricingStatus == "Quantities") {
+                    ProductSellPriceLocation::where('id', '=', $PriceVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } else {
 
-                    foreach ($ResultQuantities as $QtyVal) {
-                        ProductSellQuantity::updateOrCreate([
+                    ProductSellPriceLocation::updateOrCreate([
+                        'productSellId' => $product->id,
+                        'locationId' => $PriceVal['locationId'],
+                        'price' => $PriceVal['price'],
+                        'userId' => $request->user()->id,
+                    ]);
+                }
+            }
+        } else if ($request->pricingStatus == "Quantities") {
+
+            foreach ($ResultQuantities as $QtyVal) {
+
+                if ($QtyVal['status'] == 'del') {
+                    ProductSellQuantity::where('id', '=', $QtyVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } else {
+                    ProductSellQuantity::updateOrCreate(
+                        ['id' => $QtyVal['id']],
+                        [
                             'productSellId' => $product->id,
                             'fromQty' => $QtyVal['fromQty'],
                             'toQty' => $QtyVal['toQty'],
                             'price' => $QtyVal['price'],
                             'userId' => $request->user()->id,
-                        ]);
-                    }
+                        ]
+                    );
                 }
             }
-            DB::commit();
+        }
+        // }
+        DB::commit();
 
-            return response()->json(
-                [
-                    'message' => 'Update Data Successful!',
-                ],
-                200
-            );
+        return response()->json(
+            [
+                'message' => 'Update Data Successful!',
+            ],
+            200
+        );
         } catch (Exception $th) {
             DB::rollback();
 
@@ -1233,6 +1214,107 @@ class ProductSellController
                 'errors' => $th,
             ], 422);
         }
+    }
+
+    public function updateImages(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'message' => 'Produk tidak valid!',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $product = ProductSell::find($request->id);
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data not found!'],
+            ], 422);
+        }
+
+        $count = 0;
+
+        $files[] = $request->file('images');
+        $tmpImages = [];
+
+        if ($request->hasfile('images')) {
+            foreach ($files as $file) {
+
+                foreach ($file as $fil) {
+
+                    $name = $fil->hashName();
+
+                    $fil->move(public_path() . '/ProductSellImages/', $name);
+
+                    $fileName = "/ProductSellImages/" . $name;
+
+                    $file = new ProductSellImages();
+                    $file->productSellId = 1;
+                    $file->labelName = "";
+                    $file->realImageName = $fil->getClientOriginalName();
+                    $file->imagePath = $fileName;
+                    $file->userId = $request->user()->id;
+
+                    array_push($tmpImages, $file);
+                }
+            }
+        }
+
+        $imagesName = json_decode($request->imagesName, true);
+
+        foreach ($imagesName as $value) {
+
+            if ($value['status'] == 'new') {
+
+                ProductSellImages::create([
+                    'productSellId' => $request->id,
+                    'labelName' => $value['labelName'],
+                    'realImageName' => $tmpImages[$count]['realImageName'],
+                    'imagePath' => $tmpImages[$count]['imagePath'],
+                    'userId' => $request->user()->id,
+                ]);
+
+                $count += 1;
+            } else {
+
+                if ($value['status'] == 'change image') {
+                    ProductSellImages::updateorCreate(
+                        ['id' => $value['id']],
+                        [
+                            'productSellId' => $request->id,
+                            'labelName' => $value['labelName'],
+                            'realImageName' => $tmpImages[$count]['realImageName'],
+                            'imagePath' => $tmpImages[$count]['imagePath'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                    $count += 1;
+                } else {
+                    ProductSellImages::updateorCreate(
+                        ['id' => $value['id']],
+                        [
+                            'labelName' => $value['labelName'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                }
+            }
+        }
+
+        return response()->json(
+            [
+                'message' => 'Update Data Successful!',
+            ],
+            200
+        );
     }
 
     public function Delete(Request $request)

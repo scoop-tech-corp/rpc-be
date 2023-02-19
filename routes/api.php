@@ -84,6 +84,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('product/sell/detail', [ProductSellController::class, 'Detail']);
     Route::post('product/sell', [ProductSellController::class, 'Create']);
     Route::put('product/sell', [ProductSellController::class, 'Update']);
+    Route::post('product/sell/image', [ProductSellController::class, 'updateImages']);
     Route::delete('product/sell', [ProductSellController::class, 'Delete']);
     Route::get('product/sell/export', [ProductSellController::class, 'Export']);
 
@@ -91,6 +92,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('product/clinic/detail', [ProductClinicController::class, 'detail']);
     Route::post('product/clinic', [ProductClinicController::class, 'Create']);
     Route::put('product/clinic', [ProductClinicController::class, 'Update']);
+    Route::post('product/clinic/image', [ProductClinicController::class, 'updateImages']);
     Route::delete('product/clinic', [ProductClinicController::class, 'Delete']);
     Route::get('product/clinic/export', [ProductClinicController::class, 'Export']);
 
