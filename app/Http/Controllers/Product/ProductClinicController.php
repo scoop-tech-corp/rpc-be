@@ -730,6 +730,7 @@ class ProductClinicController
             ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
             ->select('pcat.id', 'pcat.categoryName')
             ->where('pc.id', '=', $request->id)
+            ->where('pcc.isDeleted', '=', 0)
             ->get();
 
         $prodClinicDetails->categories = $categories;
@@ -759,9 +760,11 @@ class ProductClinicController
                 'l.locationName',
                 'pcl.inStock',
                 'pcl.lowStock',
+                'pcl.reStockLimit',
                 DB::raw('(CASE WHEN pcl.inStock = 0 THEN "NO STOCK" WHEN pcl.inStock <= pcl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
             )
             ->where('pcl.productClinicId', '=', $request->id)
+            ->where('pcl.isDeleted', '=', 0)
             ->first();
 
         $prodClinic->location = $location;
@@ -777,6 +780,7 @@ class ProductClinicController
                     DB::raw("TRIM(pcc.price)+0 as price")
                 )
                 ->where('pcc.productClinicId', '=', $request->id)
+                ->where('pcc.isDeleted', '=', 0)
                 ->get();
 
             $prodClinic->customerGroups = $CustomerGroups;
@@ -790,6 +794,7 @@ class ProductClinicController
                     DB::raw("TRIM(pcp.price)+0 as Price")
                 )
                 ->where('pcp.productClinicId', '=', $request->id)
+                ->where('pcp.isDeleted', '=', 0)
                 ->get();
 
             $prodClinic->priceLocations = $PriceLocations;
@@ -804,6 +809,7 @@ class ProductClinicController
                     DB::raw("TRIM(pcq.Price)+0 as Price")
                 )
                 ->where('pcq.ProductClinicId', '=', $request->id)
+                ->where('pcq.isDeleted', '=', 0)
                 ->get();
 
             $prodClinic->quantities = $Quantities;
@@ -818,6 +824,7 @@ class ProductClinicController
                 'pci.imagePath'
             )
             ->where('pci.productClinicId', '=', $request->id)
+            ->where('pci.isDeleted', '=', 0)
             ->get();
 
         $prodClinic->dosages = DB::table('productClinicDosages as pcd')
@@ -830,6 +837,7 @@ class ProductClinicController
                 'pcd.unit',
             )
             ->where('pcd.productClinicId', '=', $request->id)
+            ->where('pcd.isDeleted', '=', 0)
             ->get();
 
         $prodClinic->reminders = DB::table('productClinicReminders as pcr')
