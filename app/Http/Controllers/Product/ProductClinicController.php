@@ -12,6 +12,7 @@ use App\Models\ProductClinicPriceLocation;
 use App\Models\ProductClinicQuantity;
 use App\Models\ProductClinicReminder;
 use App\Exports\Product\ProductClinicReport;
+use App\Models\ProductCategories;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -856,6 +857,551 @@ class ProductClinicController
 
     public function update(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'simpleName' => 'nullable|string',
+            'fullName' => 'nullable|string|max:30',
+            'productBrandId' => 'nullable|integer',
+            'productSupplierId' => 'nullable|integer',
+            'sku' => 'nullable|string',
+            'status' => 'required|bool',
+            'pricingStatus' => 'required|string',
+
+            'costPrice' => 'required|numeric',
+            'marketPrice' => 'required|numeric',
+            'price' => 'required|numeric',
+            'isShipped' => 'required|bool',
+            'weight' => 'nullable|numeric',
+            'length' => 'nullable|numeric',
+            'width' => 'nullable|numeric',
+            'height' => 'nullable|numeric',
+            'introduction' => 'nullable|string',
+            'description' => 'nullable|string',
+
+            'isCustomerPurchase' => 'required|in:true,false,TRUE,FALSE',
+            'isCustomerPurchaseOnline' => 'required|in:true,false,TRUE,FALSE',
+            'isCustomerPurchaseOutStock' => 'required|in:true,false,TRUE,FALSE',
+            'isStockLevelCheck' => 'required|in:true,false,TRUE,FALSE',
+            'isNonChargeable' => 'required|in:true,false,TRUE,FALSE',
+            'isOfficeApproval' => 'required|in:true,false,TRUE,FALSE',
+            'isAdminApproval' => 'required|in:true,false,TRUE,FALSE'
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $prodClinic = ProductClinic::find($request->id);
+
+        if (!$prodClinic) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data not found!'],
+            ], 422);
+        }
+
+        $ResultCategories = null;
+        $ResultPriceLocations = null;
+        $ResultQuantities = null;
+        $ResultCustomerGroups = null;
+        $ResultReminders = null;
+        $ResultDosages = null;
+
+        if ($request->categories) {
+            $ResultCategories = $request->categories;
+        }
+
+        $ResultReminders = $request->reminders;
+
+        $ResultQuantities = $request->quantities;
+
+        $ResultDosages = $request->dosages;
+
+        $validateLocation = Validator::make(
+            $request->location,
+            [
+                'id' => 'required|integer',
+                'locationId' => 'required|integer',
+                'inStock' => 'required|integer',
+                'lowStock' => 'required|integer',
+                'reStockLimit' => 'required|integer',
+            ],
+            [
+                'id.integer' => 'Id Should be Integer!',
+                'locationId.integer' => 'Location Id Should be Integer!',
+                'inStock.integer' => 'In Stock Should be Integer',
+                'lowStock.integer' => 'Low Stock Should be Integer',
+                'reStockLimit.integer' => 'Re Stock Limit Should be Integer',
+            ]
+        );
+
+        if ($validateLocation->fails()) {
+            $errors = $validateLocation->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        if ($request->pricingStatus == "CustomerGroups") {
+
+            if ($request->customerGroups) {
+                $ResultCustomerGroups = $request->customerGroups;
+
+                $validateCustomer = Validator::make(
+                    $request->customerGroups,
+                    [
+                        '*.id' => 'nullable|integer',
+                        '*.customerGroupId' => 'required|integer',
+                        '*.price' => 'required|numeric',
+                        '*.status' => 'required|string',
+                    ],
+                    [
+                        '*.id.integer' => 'Id Should be Integer!',
+                        '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.status.string' => 'Status Should be String!'
+                    ]
+                );
+
+                if ($validateCustomer->fails()) {
+                    $errors = $validateCustomer->errors()->all();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errors,
+                    ], 422);
+                }
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Customer Group can not be empty!'],
+                ], 422);
+            }
+        } else if ($request->pricingStatus == "PriceLocations") {
+
+            if ($request->priceLocations) {
+                $ResultPriceLocations = $request->priceLocations;
+
+                $validatePriceLocations = Validator::make(
+                    $request->priceLocations,
+                    [
+                        '*.id' => 'nullable|integer',
+                        '*.locationId' => 'required|integer',
+                        '*.price' => 'required|numeric',
+                        '*.status' => 'required|string',
+                    ],
+                    [
+                        '*.id.integer' => 'Id Should be Integer!',
+                        '*.locationId.integer' => 'Location Id Should be Integer!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.status.string' => 'Status Should be String!'
+                    ]
+                );
+
+                if ($validatePriceLocations->fails()) {
+                    $errors = $validatePriceLocations->errors()->all();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errors,
+                    ], 422);
+                }
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Price Location can not be empty!'],
+                ], 422);
+            }
+        } else if ($request->pricingStatus == "Quantities") {
+
+            if ($request->quantities) {
+
+                $validateQuantity = Validator::make(
+                    $request->quantities,
+                    [
+                        '*.id' => 'nullable|integer',
+                        '*.fromQty' => 'required|integer',
+                        '*.toQty' => 'required|integer',
+                        '*.price' => 'required|numeric',
+                        '*.status' => 'required|string',
+                    ],
+                    [
+                        '*.id.integer' => 'Id Should be Integer!',
+                        '*.fromQty.integer' => 'From Quantity Should be Integer!',
+                        '*.toQty.integer' => 'To Quantity Should be Integer!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.status.string' => 'Status Should be String!'
+                    ]
+                );
+
+                if ($validateQuantity->fails()) {
+                    $errors = $validateQuantity->errors()->all();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $errors,
+                    ], 422);
+                }
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Quantity can not be empty!'],
+                ], 422);
+            }
+        }
+
+        //UPDATE DATA
+
+        $location = $request->location;
+
+        ProductClinicLocation::updateOrCreate(
+            ['id' => $location['id']],
+            [
+                'inStock' => $location['inStock'],
+                'lowStock' => $location['lowStock'],
+                'reStockLimit' => $location['reStockLimit'],
+                'diffStock' => $location['inStock'] - $location['lowStock'],
+            ]
+        );
+
+        try {
+
+            $weight = 0;
+            if (!is_null($request->weight)) {
+                $weight = $request->weight;
+            }
+
+            $length = 0;
+            if (!is_null($request->length)) {
+                $length = $request->length;
+            }
+
+            $width = 0;
+            if (!is_null($request->width)) {
+                $width = $request->width;
+            }
+
+            $height = 0;
+            if (!is_null($request->height)) {
+                $height = $request->height;
+            }
+
+            $product = ProductClinic::updateOrCreate(
+                ['id' => $request->id],
+                [
+                    'simpleName' => $request->simpleName,
+                    'fullName' => $request->fullName,
+                    'sku' => $request->sku,
+                    'productBrandId' => $request->productBrandId,
+                    'productSupplierId' => $request->productSupplierId,
+                    'status' => $request->status,
+                    'pricingStatus' => $request->pricingStatus,
+                    'costPrice' => $request->costPrice,
+                    'marketPrice' => $request->marketPrice,
+                    'price' => $request->price,
+                    'isShipped' => $request->isShipped,
+                    'weight' => $weight,
+                    'length' => $length,
+                    'width' => $width,
+                    'height' => $height,
+                    'introduction' => $request->introduction,
+                    'description' => $request->description,
+
+                    'isCustomerPurchase' => convertTrueFalse($request->isCustomerPurchase),
+                    'isCustomerPurchaseOnline' => convertTrueFalse($request->isCustomerPurchaseOnline),
+                    'isCustomerPurchaseOutStock' => convertTrueFalse($request->isCustomerPurchaseOutStock),
+                    'isStockLevelCheck' => convertTrueFalse($request->isStockLevelCheck),
+                    'isNonChargeable' => convertTrueFalse($request->isNonChargeable),
+                    'isOfficeApproval' => convertTrueFalse($request->isOfficeApproval),
+                    'isAdminApproval' => convertTrueFalse($request->isAdminApproval),
+
+                    'userId' => $request->user()->id,
+                ]
+            );
+
+            if ($ResultCategories) {
+
+                ProductClinicCategory::where('ProductClinicId', '=', $request->id)
+                    ->where('isDeleted', '=', 0)
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+
+                foreach ($ResultCategories as $valCat) {
+                    ProductClinicCategory::create(
+                        [
+                            'productClinicId' => $request->id,
+                            'productCategoryId' => $valCat,
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                }
+            }
+
+            foreach ($ResultReminders as $RemVal) {
+
+                if ($RemVal['statusData'] == 'del') {
+
+                    ProductClinicReminder::where('id', '=', $RemVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } else {
+
+                    ProductClinicReminder::updateOrCreate(
+                        ['id' => $RemVal['id']],
+                        [
+                            'productClinicId' => $product->id,
+                            'unit' => $RemVal['unit'],
+                            'timing' => $RemVal['timing'],
+                            'status' => $RemVal['status'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                }
+            }
+
+            if ($ResultDosages) {
+
+                foreach ($ResultDosages as $val) {
+
+                    if ($val['status'] == 'del') {
+                        ProductClinicDosage::where('id', '=', $val['id'])
+                            ->where('isDeleted', '=', 0)
+                            ->update(
+                                [
+                                    'deletedBy' => $request->user()->id,
+                                    'isDeleted' => 1,
+                                    'deletedAt' => Carbon::now()
+                                ]
+                            );
+                    } else {
+                        ProductClinicDosage::updateOrCreate(
+                            ['id' => $val['id']],
+                            [
+                                'productClinicId' => $product->id,
+                                'unit' => $val['unit'],
+                                'timing' => $val['timing'],
+                                'status' => $val['status'],
+                                'userId' => $request->user()->id,
+                            ]
+                        );
+                    }
+                }
+            }
+
+            if ($request->pricingStatus == "CustomerGroups") {
+
+                foreach ($ResultCustomerGroups as $CustVal) {
+
+                    if ($CustVal['status'] == 'del') {
+
+                        ProductClinicCustomerGroup::where('id', '=', $CustVal['id'])
+                            ->where('isDeleted', '=', 0)
+                            ->update(
+                                [
+                                    'deletedBy' => $request->user()->id,
+                                    'isDeleted' => 1,
+                                    'deletedAt' => Carbon::now()
+                                ]
+                            );
+                    } else {
+
+                        ProductClinicCustomerGroup::updateOrCreate([
+                            'productClinicId' => $product->id,
+                            'customerGroupId' => $CustVal['customerGroupId'],
+                            'price' => $CustVal['price'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+            } else if ($request->pricingStatus == "PriceLocations") {
+
+                foreach ($ResultPriceLocations as $PriceVal) {
+
+                    if ($PriceVal['status'] == 'del') {
+
+                        ProductClinicPriceLocation::where('id', '=', $PriceVal['id'])
+                            ->where('isDeleted', '=', 0)
+                            ->update(
+                                [
+                                    'deletedBy' => $request->user()->id,
+                                    'isDeleted' => 1,
+                                    'deletedAt' => Carbon::now()
+                                ]
+                            );
+                    } else {
+
+                        ProductClinicPriceLocation::updateOrCreate([
+                            'productClinicId' => $product->id,
+                            'locationId' => $PriceVal['locationId'],
+                            'price' => $PriceVal['price'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+            } else if ($request->pricingStatus == "Quantities") {
+
+                foreach ($ResultQuantities as $QtyVal) {
+
+                    if ($QtyVal['status'] == 'del') {
+                        ProductClinicQuantity::where('id', '=', $QtyVal['id'])
+                            ->where('isDeleted', '=', 0)
+                            ->update(
+                                [
+                                    'deletedBy' => $request->user()->id,
+                                    'isDeleted' => 1,
+                                    'deletedAt' => Carbon::now()
+                                ]
+                            );
+                    } else {
+                        ProductClinicQuantity::updateOrCreate(
+                            ['id' => $QtyVal['id']],
+                            [
+                                'productClinicId' => $product->id,
+                                'fromQty' => $QtyVal['fromQty'],
+                                'toQty' => $QtyVal['toQty'],
+                                'price' => $QtyVal['price'],
+                                'userId' => $request->user()->id,
+                            ]
+                        );
+                    }
+                }
+            }
+            // }
+            DB::commit();
+
+            return response()->json(
+                [
+                    'message' => 'Update Data Successful!',
+                ],
+                200
+            );
+        } catch (Exception $th) {
+            DB::rollback();
+
+            return response()->json([
+                'message' => 'Insert Failed',
+                'errors' => $th,
+            ], 422);
+        }
+    }
+
+    public function updateImages(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'message' => 'Produk tidak valid!',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $product = ProductClinic::find($request->id);
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data not found!'],
+            ], 422);
+        }
+
+        $count = 0;
+
+        $files[] = $request->file('images');
+        $tmpImages = [];
+
+        if ($request->hasfile('images')) {
+            foreach ($files as $file) {
+
+                foreach ($file as $fil) {
+
+                    $name = $fil->hashName();
+
+                    $fil->move(public_path() . '/ProductClinicImages/', $name);
+
+                    $fileName = "/ProductClinicImages/" . $name;
+
+                    $file = new ProductClinicImages();
+                    $file->productClinicId = 1;
+                    $file->labelName = "";
+                    $file->realImageName = $fil->getClientOriginalName();
+                    $file->imagePath = $fileName;
+                    $file->userId = $request->user()->id;
+
+                    array_push($tmpImages, $file);
+                }
+            }
+        }
+
+        $imagesName = json_decode($request->imagesName, true);
+
+        foreach ($imagesName as $value) {
+
+            if ($value['status'] == 'new') {
+
+                ProductClinicImages::create([
+                    'productClinicId' => $request->id,
+                    'labelName' => $value['labelName'],
+                    'realImageName' => $tmpImages[$count]['realImageName'],
+                    'imagePath' => $tmpImages[$count]['imagePath'],
+                    'userId' => $request->user()->id,
+                ]);
+
+                $count += 1;
+            } else {
+
+                if ($value['status'] == 'change image') {
+                    ProductClinicImages::updateorCreate(
+                        ['id' => $value['id']],
+                        [
+                            'productClinicId' => $request->id,
+                            'labelName' => $value['labelName'],
+                            'realImageName' => $tmpImages[$count]['realImageName'],
+                            'imagePath' => $tmpImages[$count]['imagePath'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                    $count += 1;
+                } else {
+                    ProductClinicImages::updateorCreate(
+                        ['id' => $value['id']],
+                        [
+                            'labelName' => $value['labelName'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                }
+            }
+        }
+
+        return response()->json(
+            [
+                'message' => 'Update Data Successful!',
+            ],
+            200
+        );
     }
 
     public function delete(Request $request)
