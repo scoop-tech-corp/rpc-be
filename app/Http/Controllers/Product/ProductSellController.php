@@ -203,6 +203,7 @@ class ProductSellController
             ->join('productSells as pc', 'psc.productSellId', 'pc.id')
             ->select('pcat.id', 'pcat.categoryName')
             ->where('pc.id', '=', $request->id)
+            ->where('psc.isDeleted', '=', 0)
             ->get();
 
         $prodSellDetails->categories = $categories;
@@ -231,6 +232,7 @@ class ProductSellController
                 'l.locationName',
                 'psl.inStock',
                 'psl.lowStock',
+                'psl.reStockLimit',
                 DB::raw('(CASE WHEN psl.inStock = 0 THEN "NO STOCK" WHEN psl.inStock <= psl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
             )
             ->where('psl.productSellId', '=', $request->id)
@@ -249,6 +251,7 @@ class ProductSellController
                     DB::raw("TRIM(psc.price)+0 as price")
                 )
                 ->where('psc.productSellId', '=', $request->id)
+                ->where('psc.isDeleted', '=', 0)
                 ->get();
 
             $prodSell->customerGroups = $CustomerGroups;
@@ -262,6 +265,7 @@ class ProductSellController
                     DB::raw("TRIM(psp.price)+0 as Price")
                 )
                 ->where('psp.productSellId', '=', $request->id)
+                ->where('psp.isDeleted', '=', 0)
                 ->get();
 
             $prodSell->priceLocations = $PriceLocations;
@@ -276,6 +280,7 @@ class ProductSellController
                     DB::raw("TRIM(psq.Price)+0 as Price")
                 )
                 ->where('psq.ProductSellId', '=', $request->id)
+                ->where('psq.isDeleted', '=', 0)
                 ->get();
 
             $prodSell->quantities = $Quantities;
@@ -290,6 +295,7 @@ class ProductSellController
                 'psi.imagePath'
             )
             ->where('psi.productSellId', '=', $request->id)
+            ->where('psi.isDeleted', '=', 0)
             ->get();
 
         $prodSell->reminders = DB::table('productSellReminders as psr')
@@ -796,8 +802,6 @@ class ProductSellController
 
     public function Update(Request $request)
     {
-
-        // dd($request->isCustomerPurchase);
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
             'simpleName' => 'nullable|string',
@@ -832,7 +836,7 @@ class ProductSellController
             $errors = $validate->errors()->all();
 
             return response()->json([
-                'message' => 'The given data was invalid. 1',
+                'message' => 'The given data was invalid.',
                 'errors' => $errors,
             ], 422);
         }
