@@ -371,21 +371,22 @@ class ProductSellController
         $validateLocation = Validator::make(
             $ResultLocations,
             [
-                '*.locationId' => 'required|integer',
+                '*.locationId' => 'required|integer|distinct',
                 '*.inStock' => 'required|integer',
                 '*.lowStock' => 'required|integer',
                 '*.reStockLimit' => 'required|integer',
             ],
             [
                 '*.locationId.integer' => 'Location Id Should be Integer!',
-                '*.inStock.integer' => 'In Stock Should be Integer',
-                '*.lowStock.integer' => 'Low Stock Should be Integer',
-                '*.reStockLimit.integer' => 'Restock Limit Should be Integer'
+                '*.inStock.integer' => 'In Stock Should be Integer!',
+                '*.lowStock.integer' => 'Low Stock Should be Integer!',
+                '*.reStockLimit.integer' => 'Restock Limit Should be Integer!',
+                '*.locationId.distinct' => 'Cannot add duplicate Location!',
             ]
         );
 
         if ($validateLocation->fails()) {
-            $errors = $validateLocation->errors()->all();
+            $errors = $validateLocation->errors()->first();
 
             return response()->json([
                 'message' => 'The given data was invalid.',
@@ -409,6 +410,17 @@ class ProductSellController
                     'errors' => ['Product ' . $CheckDataBranch->fullName . ' Already Exist on Location ' . $CheckDataBranch->locationName . '!'],
                 ], 422);
             }
+
+            $checkLocation = DB::table('location as loc')
+                ->where('loc.id', '=', $Res['locationId'])
+                ->first();
+
+            if (!$checkLocation) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any location on system that is no recorded'],
+                ], 422);
+            }
         }
 
         $ResultReminders = json_decode($request->reminders, true);
@@ -430,7 +442,7 @@ class ProductSellController
             );
 
             if ($validateReminders->fails()) {
-                $errors = $validateReminders->errors()->all();
+                $errors = $validateReminders->errors()->first();
 
                 return response()->json([
                     'message' => 'The given data was invalid.',
@@ -450,17 +462,18 @@ class ProductSellController
                     $ResultCustomerGroups,
                     [
 
-                        '*.customerGroupId' => 'required|integer',
+                        '*.customerGroupId' => 'required|integer|distinct',
                         '*.price' => 'required|numeric',
                     ],
                     [
                         '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!'
+                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.customerGroupId.distinct' => 'Cannot add duplicate Customer!',
                     ]
                 );
 
                 if ($validateCustomer->fails()) {
-                    $errors = $validateCustomer->errors()->all();
+                    $errors = $validateCustomer->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -484,17 +497,18 @@ class ProductSellController
                     $ResultPriceLocations,
                     [
 
-                        'priceLocations.*.locationId' => 'required|integer',
+                        'priceLocations.*.locationId' => 'required|integer|distinct',
                         'priceLocations.*.price' => 'required|numeric',
                     ],
                     [
                         '*.locationId.integer' => 'Location Id Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!'
+                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.locationId.distinct' => 'Cannot add duplicate Location Id!',
                     ]
                 );
 
                 if ($validatePriceLocations->fails()) {
-                    $errors = $validatePriceLocations->errors()->all();
+                    $errors = $validatePriceLocations->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -528,7 +542,7 @@ class ProductSellController
                 );
 
                 if ($validateQuantity->fails()) {
-                    $errors = $validateQuantity->errors()->all();
+                    $errors = $validateQuantity->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -823,13 +837,13 @@ class ProductSellController
             'introduction' => 'nullable|string',
             'description' => 'nullable|string',
 
-            'isCustomerPurchase' => 'required|in:true,false,TRUE,FALSE',
-            'isCustomerPurchaseOnline' => 'required|in:true,false,TRUE,FALSE',
-            'isCustomerPurchaseOutStock' => 'required|in:true,false,TRUE,FALSE',
-            'isStockLevelCheck' => 'required|in:true,false,TRUE,FALSE',
-            'isNonChargeable' => 'required|in:true,false,TRUE,FALSE',
-            'isOfficeApproval' => 'required|in:true,false,TRUE,FALSE',
-            'isAdminApproval' => 'required|in:true,false,TRUE,FALSE'
+            'isCustomerPurchase' => 'required|bool',
+            'isCustomerPurchaseOnline' => 'required|bool',
+            'isCustomerPurchaseOutStock' => 'required|bool',
+            'isStockLevelCheck' => 'required|bool',
+            'isNonChargeable' => 'required|bool',
+            'isOfficeApproval' => 'required|bool',
+            'isAdminApproval' => 'required|bool'
         ]);
 
         if ($validate->fails()) {
@@ -1013,7 +1027,7 @@ class ProductSellController
             ]
         );
 
-        try {
+        // try {
 
         $weight = 0;
         if (!is_null($request->weight)) {
@@ -1056,13 +1070,13 @@ class ProductSellController
                 'introduction' => $request->introduction,
                 'description' => $request->description,
 
-                'isCustomerPurchase' => convertTrueFalse($request->isCustomerPurchase),
-                'isCustomerPurchaseOnline' => convertTrueFalse($request->isCustomerPurchaseOnline),
-                'isCustomerPurchaseOutStock' => convertTrueFalse($request->isCustomerPurchaseOutStock),
-                'isStockLevelCheck' => convertTrueFalse($request->isStockLevelCheck),
-                'isNonChargeable' => convertTrueFalse($request->isNonChargeable),
-                'isOfficeApproval' => convertTrueFalse($request->isOfficeApproval),
-                'isAdminApproval' => convertTrueFalse($request->isAdminApproval),
+                'isCustomerPurchase' => $request->isCustomerPurchase,
+                'isCustomerPurchaseOnline' => $request->isCustomerPurchaseOnline,
+                'isCustomerPurchaseOutStock' => $request->isCustomerPurchaseOutStock,
+                'isStockLevelCheck' => $request->isStockLevelCheck,
+                'isNonChargeable' => $request->isNonChargeable,
+                'isOfficeApproval' => $request->isOfficeApproval,
+                'isAdminApproval' => $request->isAdminApproval,
 
                 'userId' => $request->user()->id,
             ]
@@ -1206,14 +1220,14 @@ class ProductSellController
             ],
             200
         );
-        } catch (Exception $th) {
-            DB::rollback();
+        // } catch (Exception $th) {
+        //     DB::rollback();
 
-            return response()->json([
-                'message' => 'Insert Failed',
-                'errors' => $th,
-            ], 422);
-        }
+        //     return response()->json([
+        //         'message' => 'Insert Failed',
+        //         'errors' => $th,
+        //     ], 422);
+        // }
     }
 
     public function updateImages(Request $request)
