@@ -953,7 +953,7 @@ class ProductClinicController
         $ResultDosages = $request->dosages;
 
         $validateLocation = Validator::make(
-            $request->location,
+            $request->locations,
             [
                 'id' => 'required|integer',
                 'locationId' => 'required|integer',
@@ -1089,7 +1089,7 @@ class ProductClinicController
 
         //UPDATE DATA
 
-        $location = $request->location;
+        $location = $request->locations;
 
         ProductClinicLocation::updateOrCreate(
             ['id' => $location['id']],

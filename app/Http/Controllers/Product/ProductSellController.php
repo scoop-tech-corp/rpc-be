@@ -879,7 +879,7 @@ class ProductSellController
         $ResultQuantities = $request->quantities;
 
         $validateLocation = Validator::make(
-            $request->location,
+            $request->locations,
             [
                 'id' => 'required|integer',
                 'locationId' => 'required|integer',
@@ -1015,7 +1015,7 @@ class ProductSellController
 
         //UPDATE DATA
 
-        $location = $request->location;
+        $location = $request->locations;
 
         ProductSellLocation::updateOrCreate(
             ['id' => $location['id']],
