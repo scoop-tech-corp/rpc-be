@@ -1671,7 +1671,7 @@ class LocationController extends Controller
     {
 
         $request->validate([
-            'keyword' => 'required|max:2555',
+            'keyword' => 'required|max:255',
         ]);
 
         DB::beginTransaction();
@@ -1723,6 +1723,7 @@ class LocationController extends Controller
         $Data = DB::table('location')
             ->select('id', 'locationName')
             ->where('isDeleted', '=', 0)
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json($Data, 200);

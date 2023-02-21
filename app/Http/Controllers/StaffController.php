@@ -1571,6 +1571,8 @@ class StaffController extends Controller
                 ], 406);
             } else {
 
+
+
                 if ($request->hasfile('images')) {
 
                     $files[] = $request->file('images');
@@ -1601,6 +1603,7 @@ class StaffController extends Controller
                     }
 
                     DB::commit();
+
                     return response()->json(
                         [
                             'result' => 'success',
@@ -1618,73 +1621,6 @@ class StaffController extends Controller
                         406
                     );
                 }
-            }
-        }
-    }
-
-
-    public function deleteImageStaff(Request $request)
-    {
-        $validate = Validator::make($request->all(), [
-            'id' => 'required',
-        ]);
-
-        if ($validate->fails()) {
-
-            $errors = $validate->errors()->all();
-
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
-        }
-
-        $checkIfValueExits = DB::table('users')
-            ->where([
-                ['id', '=', $request->id],
-                ['isDeleted', '=', 0],
-            ])
-            ->first();
-
-        if ($checkIfValueExits === null) {
-
-            return response()->json([
-                'result' => 'Failed',
-                'message' => "Data not exists, please try another user id",
-            ], 406);
-        } else {
-
-            $checkImages = DB::table('usersImages')
-                ->where([
-                    ['usersId', '=', $request->id]
-                ])
-                ->first();
-
-
-            if ($checkImages == null) {
-
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'User images empty, please upload images first',
-                ], 406);
-            } else {
-
-                if (file_exists(public_path() . $checkImages->imagePath)) {
-
-                    File::delete(public_path() . $checkImages->imagePath);
-
-                    DB::table('usersImages')->where([
-                        ['usersId', '=', $request->id]
-                    ])->delete();
-                }
-
-                return response()->json(
-                    [
-                        'result' => 'success',
-                        'message' => 'Delete image users Success!',
-                    ],
-                    200
-                );
             }
         }
     }
@@ -2513,36 +2449,6 @@ class StaffController extends Controller
             ], 422);
         }
     }
-
-
-
-
-    public function getLocationStaff(Request $request)
-    {
-
-        try {
-
-            $getLocationStaff = DB::table('location as a')
-                ->select(
-                    'a.id as locationId',
-                    'a.locationName as locationName',
-                )
-                ->where([
-                    ['isDeleted', '=', 0],
-                ])
-                ->orderBy('a.created_at', 'desc')
-                ->get();
-
-            return response()->json($getLocationStaff, 200);
-        } catch (Exception $e) {
-
-            return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
-            ], 422);
-        }
-    }
-
 
 
     public function getTypeId(Request $request)

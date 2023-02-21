@@ -138,7 +138,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('staff', [StaffController::class, 'insertStaff']);
     Route::delete('staff', [StaffController::class, 'deleteStaff']);
     Route::get('rolestaff', [StaffController::class, 'getRoleStaff']);
-    Route::get('locationstaff', [StaffController::class, 'getLocationStaff']);
     Route::get('typeid', [StaffController::class, 'getTypeId']);
     Route::get('payperiod', [StaffController::class, 'getPayPeriod']);
     Route::get('jobtitle', [StaffController::class, 'getJobTitle']);
@@ -146,7 +145,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('payperiod', [StaffController::class, 'insertPayPeriod']);
     Route::post('jobtitle', [StaffController::class, 'insertJobTitle']);
     Route::post('imageStaff', [StaffController::class, 'uploadImageStaff']);
-    Route::delete('imageStaff', [StaffController::class, 'deleteImageStaff']);
     Route::get('staffdetail', [StaffController::class, 'getDetailStaff']);
     Route::put('staff', [StaffController::class, 'updateStaff']);
     Route::get('staff', [StaffController::class, 'index']);
