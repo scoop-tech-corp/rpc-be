@@ -876,7 +876,7 @@ class StaffController extends Controller
                 'message' => "Successfully input date holidays",
             ], 200);
 
-          //  info("helloworld");
+            //  info("helloworld");
         } catch (Exception $e) {
 
             return response()->json([
@@ -898,6 +898,31 @@ class StaffController extends Controller
 
 
     public function getRoleStaff(Request $request)
+    {
+
+        try {
+
+            $getRole = DB::table('usersRoles')
+                ->select(
+                    'id',
+                    'roleName'
+                )
+                ->where([['isActive', '=', '1']])
+                ->orderBy('id', 'asc')
+                ->get();
+
+            return response()->json($getRole, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+    public function getRoleName(Request $request)
     {
 
         try {
@@ -946,6 +971,7 @@ class StaffController extends Controller
                     DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                     DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                     'e.locationName as location',
+                    'a.locationId as locationId',
                     'a.createdBy as createdBy',
                     DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
                 )
@@ -957,6 +983,11 @@ class StaffController extends Controller
                     ['d.usage', '=', 'Utama'],
                     ['e.isDeleted', '=', '0'],
                 ]);
+
+
+
+
+
 
             //V2
             // $subquery = DB::table('users')
@@ -1007,6 +1038,33 @@ class StaffController extends Controller
             //     ]);
 
             $data = DB::table($subquery, 'a');
+
+            if ($request->locationId) {
+
+                $val = [];
+                foreach ($request->locationId as $temp) {
+                    $val = $temp;
+                }
+
+                if ($val) {
+                    $data = $data->whereIn('a.locationid', $request->locationId);
+                }
+            }
+
+            $data = DB::table($data)
+                ->select(
+                    'id',
+                    'name',
+                    'jobTitle',
+                    'emailAddress',
+                    'phoneNumber',
+                    'isWhatsapp',
+                    'status',
+                    'location',
+                    'createdBy',
+                    'createdAt'
+                );
+
 
             if ($request->search) {
 
@@ -1153,6 +1211,33 @@ class StaffController extends Controller
 
         $data = DB::table($subquery, 'a');
 
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
+
         if ($request->search) {
             $data = $data->where('id', 'like', '%' . $request->search . '%');
         }
@@ -1192,6 +1277,33 @@ class StaffController extends Controller
 
 
         $data = DB::table($subquery, 'a');
+
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
 
         if ($request->search) {
             $data = $data->where('name', 'like', '%' . $request->search . '%');
@@ -1233,6 +1345,32 @@ class StaffController extends Controller
 
         $data = DB::table($subquery, 'a');
 
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
+
         if ($request->search) {
             $data = $data->where('jobTitle', 'like', '%' . $request->search . '%');
         }
@@ -1271,6 +1409,33 @@ class StaffController extends Controller
             ]);
 
         $data = DB::table($subquery, 'a');
+
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
 
         if ($request->search) {
             $data = $data->where('emailAddress', 'like', '%' . $request->search . '%');
@@ -1312,6 +1477,32 @@ class StaffController extends Controller
 
         $data = DB::table($subquery, 'a');
 
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
+
         if ($request->search) {
             $data = $data->where('phoneNumber', 'like', '%' . $request->search . '%');
         }
@@ -1351,6 +1542,32 @@ class StaffController extends Controller
             ]);
 
         $data = DB::table($subquery, 'a');
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
 
         if ($request->search) {
             $data = $data->where('isWhatsapp', 'like', '%' . $request->search . '%');
@@ -1392,6 +1609,34 @@ class StaffController extends Controller
 
         $data = DB::table($subquery, 'a');
 
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
+
+
+
         if ($request->search) {
             $data = $data->where('status', 'like', '%' . $request->search . '%');
         }
@@ -1432,6 +1677,31 @@ class StaffController extends Controller
 
 
         $data = DB::table($subquery, 'a');
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
 
         if ($request->search) {
             $data = $data->where('location', 'like', '%' . $request->search . '%');
@@ -1471,6 +1741,31 @@ class StaffController extends Controller
             ]);
 
         $data = DB::table($subquery, 'a');
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
 
         if ($request->search) {
             $data = $data->where('createdBy', 'like', '%' . $request->search . '%');
@@ -1510,6 +1805,31 @@ class StaffController extends Controller
             ]);
 
         $data = DB::table($subquery, 'a');
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'name',
+                'jobTitle',
+                'emailAddress',
+                'phoneNumber',
+                'isWhatsapp',
+                'status',
+                'location',
+                'createdBy',
+                'createdAt'
+            );
 
         if ($request->search) {
             $data = $data->where('createdAt', 'like', '%' . $request->search . '%');
@@ -1563,45 +1883,52 @@ class StaffController extends Controller
                 ->first();
 
 
-            if ($checkImages != null) {
+            if ($request->status == "del") {
 
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'User images already exists, please delete first if you want to re-upload images',
-                ], 406);
+                if ($checkImages == null) {
+
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'User images empty, please upload images first',
+                    ], 406);
+                } else {
+
+                    if (file_exists(public_path() . $checkImages->imagePath)) {
+
+                        File::delete(public_path() . $checkImages->imagePath);
+
+                        DB::table('usersImages')->where([
+                            ['usersId', '=', $request->id]
+                        ])->delete();
+                    }
+
+                    return response()->json(
+                        [
+                            'result' => 'success',
+                            'message' => 'Delete image users Success!',
+                        ],
+                        200
+                    );
+                }
             } else {
-
-
 
                 if ($request->hasfile('images')) {
 
-                    $files[] = $request->file('images');
-                    $int = 0;
+                    $files = $request->file('images');
 
-                    if (count($files) != 0) {
+                    $name = $files->hashName();
+                    $files->move(public_path() . '/UsersImages/', $name);
 
-                        foreach ($files as $file) {
+                    $fileName = "/UsersImages/" . $name;
 
-                            foreach ($file as $fil) {
-
-                                $name = $fil->hashName();
-                                $fil->move(public_path() . '/UsersImages/', $name);
-
-                                $fileName = "/UsersImages/" . $name;
-
-                                DB::table('usersImages')
-                                    ->insert([
-                                        'usersId' => $request->id,
-                                        'imagePath' => $fileName,
-                                        'isDeleted' => 0,
-                                        'created_at' => now(),
-                                    ]);
-
-                                $int = $int + 1;
-                            }
-                        }
-                    }
-
+                    DB::table('usersImages')
+                        ->insert([
+                            'usersId' => $request->id,
+                            'imagePath' => $fileName,
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
+                        
                     DB::commit();
 
                     return response()->json(

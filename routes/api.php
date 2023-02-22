@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\VerifyUserandPasswordController;
-
+// use App\Http\Controllers\Staff\StaffLeaveController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -135,6 +135,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('customer/group', [CustomerController::class, 'Create']);
 
     //STAFF
+    Route::get('rolesid', [StaffController::class, 'getRoleName']);
     Route::post('staff', [StaffController::class, 'insertStaff']);
     Route::delete('staff', [StaffController::class, 'deleteStaff']);
     Route::get('rolestaff', [StaffController::class, 'getRoleStaff']);
@@ -154,6 +155,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::post('holidaysdate', [StaffController::class, 'getAllHolidaysDate']);
     Route::get('workingdate', [StaffController::class, 'getWorkingDays']);
+
+
+    //STAFF LEAVE
+    // Route::post('leavestaff', [StaffLeaveController::class, 'insertLeaveStaff']);
+    // Route::post('statusleaverequest', [StaffLeaveController::class, 'setStatusLeaveRequest']);
+    // Route::get('requestleave', [StaffLeaveController::class, 'getIndexRequestLeave']);
+    // Route::get('requeststaffbalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
+    // Route::get('leavetype', [StaffLeaveController::class, 'getLeaveType']);
+    // Route::get('leaverequest', [StaffLeaveController::class, 'getLeaveRequest']);
 
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
