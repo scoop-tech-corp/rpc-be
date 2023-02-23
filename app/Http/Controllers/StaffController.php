@@ -492,7 +492,8 @@ class StaffController extends Controller
                     )
                     ->where([
                         ['usersEmails.usersId', '=', $lastInsertedID],
-                        ['usersEmails.isDeleted', '=', '0']
+                        ['usersEmails.isDeleted', '=', '0'],
+                        ['usersEmails.usage', '=', 'Utama']
                     ])
                     ->first();
 
