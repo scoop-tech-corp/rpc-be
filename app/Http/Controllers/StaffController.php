@@ -357,7 +357,7 @@ class StaffController extends Controller
                 }
             }
 
-            //INSERT STAFF/USERS
+           // INSERT STAFF/USERS
 
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
@@ -389,6 +389,7 @@ class StaffController extends Controller
                     'createdBy' => $request->user()->firstName,
                     'email' => $insertEmailUsers,
                     'created_at' => now(),
+                    'updated_at' => now(),
                     'password' => null,
                 ]);
 
@@ -414,34 +415,22 @@ class StaffController extends Controller
             }
 
 
-            if ($request->hasfile('images')) {
+            if ($request->hasfile('image')) {
 
-                $files[] = $request->file('images');
-                $int = 0;
+                $files = $request->file('image');
 
-                if (count($files) != 0) {
+                $name = $files->hashName();
+                $files->move(public_path() . '/UsersImages/', $name);
 
-                    foreach ($files as $file) {
+                $fileName = "/UsersImages/" . $name;
 
-                        foreach ($file as $fil) {
-
-                            $name = $fil->hashName();
-                            $fil->move(public_path() . '/UsersImages/', $name);
-
-                            $fileName = "/UsersImages/" . $name;
-
-                            DB::table('usersImages')
-                                ->insert([
-                                    'usersId' => $lastInsertedID,
-                                    'imagePath' => $fileName,
-                                    'isDeleted' => 0,
-                                    'created_at' => now(),
-                                ]);
-
-                            $int = $int + 1;
-                        }
-                    }
-                }
+                DB::table('usersImages')
+                    ->insert([
+                        'usersId' => $lastInsertedID,
+                        'imagePath' => $fileName,
+                        'isDeleted' => 0,
+                        'created_at' => now(),
+                    ]);
             }
 
             if ($request->messenger) {
@@ -494,15 +483,16 @@ class StaffController extends Controller
             // check kalau akun aktif maka baru send email , kalau akun tidak aktif maka email tidak terkirim
             if ($request->status == 1) {
 
-                $sendEmailPrimary = DB::table('usersEmails')
+                $sendEmailPrimary = DB::table('usersEmails as usersEmails')
+                    ->leftjoin('users as users', 'users.id', '=', 'usersEmails.usersId')
                     ->select(
-                        'usersId',
-                        'email',
+                        'usersEmails.usersId',
+                        'usersEmails.email',
                         DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.middleName,'') ,' ', IFNULL(users.lastName,'') ,'(', IFNULL(users.nickName,'') ,')'  ) as name"),
                     )
                     ->where([
-                        ['usersId', '=', $lastInsertedID],
-                        ['isDeleted', '=', 0]
+                        ['usersEmails.usersId', '=', $lastInsertedID],
+                        ['usersEmails.isDeleted', '=', '0']
                     ])
                     ->first();
 
@@ -547,6 +537,17 @@ class StaffController extends Controller
                     200
                 );
             }
+
+
+            DB::commit();
+
+            return response()->json(
+                [
+                    'result' => 'success',
+                    'message' => 'Insert Data Users Successful!',
+                ],
+                200
+            );
         } catch (Exception $e) {
 
             DB::rollback();
@@ -750,56 +751,6 @@ class StaffController extends Controller
 
             return response()->json([
                 'result' => 'failed',
-                'message' => $e,
-            ], 422);
-        }
-    }
-
-
-
-    public function getWorkingDays(Request $request)
-    {
-
-
-        try {
-
-            $start = Carbon::parse($request->fromDate);
-            $end = Carbon::parse($request->toDate);
-
-            if ($end <= $start) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [''],
-                ], 422);
-            }
-
-
-            $results = DB::table('holidays')
-                ->whereBetween('date', [$start, $end])
-                ->get();
-
-            $nameDays = [];
-
-            while ($start <= $end) {
-
-                if ($start->isWeekday()) {
-
-                    if (!$results->contains('date', $start->toDateString())) {
-                        $nameDays[] = [
-                            'date' => $start->format('Y-m-d'),
-                            'name' => $start->format('l')
-                        ];
-                    }
-                }
-
-                $start->addDay();
-            }
-
-            return response()->json(['workdays' => $nameDays], 200);
-        } catch (Exception $e) {
-
-            return response()->json([
-                'result' => 'Failed',
                 'message' => $e,
             ], 422);
         }
@@ -1889,7 +1840,7 @@ class StaffController extends Controller
 
                     return response()->json([
                         'result' => 'Failed',
-                        'message' => 'User images empty, please upload images first',
+                        'message' => 'User image empty, please upload images first',
                     ], 406);
                 } else {
 
@@ -1912,9 +1863,9 @@ class StaffController extends Controller
                 }
             } else {
 
-                if ($request->hasfile('images')) {
+                if ($request->hasfile('image')) {
 
-                    $files = $request->file('images');
+                    $files = $request->file('image');
 
                     $name = $files->hashName();
                     $files->move(public_path() . '/UsersImages/', $name);
@@ -1928,7 +1879,7 @@ class StaffController extends Controller
                             'isDeleted' => 0,
                             'created_at' => now(),
                         ]);
-                        
+
                     DB::commit();
 
                     return response()->json(
@@ -1943,7 +1894,7 @@ class StaffController extends Controller
                     return response()->json(
                         [
                             'result' => 'failed',
-                            'message' => 'Please attach images first!',
+                            'message' => 'Please attach image first!',
                         ],
                         406
                     );
