@@ -35,7 +35,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
         $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
 
-        $data = DB::table('leaverequest as a')
+        $data = DB::table('leaveRequest as a')
             ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
             ->select(
                 'a.requesterName as requester',
