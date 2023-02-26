@@ -79,7 +79,7 @@ class StaffController extends Controller
 
             if ($request->detailAddress) {
 
-                $arrayDetailAddress = json_decode($request->detailAddress, true);
+            $arrayDetailAddress = json_decode($request->detailAddress, true);
 
                 $messageAddress = [
                     'addressName.required' => 'Address name on tab Address is required',
@@ -133,12 +133,12 @@ class StaffController extends Controller
 
 
 
-            //VALIDASI PHONE
+            //// VALIDASI PHONE
             $data_telephone = [];
 
             if ($request->telephone) {
 
-                $arraytelephone = json_decode($request->telephone, true);
+            $arraytelephone = json_decode($request->telephone, true);
 
                 $messagePhone = [
                     'phoneNumber.required' => 'Phone Number on tab telephone is required',
@@ -179,7 +179,7 @@ class StaffController extends Controller
                             ], 422);
                         }
                     }
-                    
+
                 }
 
                 if ($data_telephone) {
@@ -218,7 +218,7 @@ class StaffController extends Controller
             $insertEmailUsers = '';
             if ($request->email) {
 
-                $arrayemail = json_decode($request->email, true);
+            $arrayemail = json_decode($request->email, true);
 
                 $messageEmail = [
                     'email.required' => 'Email on tab email is required',
@@ -304,7 +304,7 @@ class StaffController extends Controller
 
             if ($request->messenger) {
 
-                $arraymessenger = json_decode($request->messenger, true);
+            $arraymessenger = json_decode($request->messenger, true);
 
                 $messageMessenger = [
                     'messengerNumber.required' => 'messenger number on tab messenger is required',
@@ -359,7 +359,7 @@ class StaffController extends Controller
                 }
 
 
-                //25122022 insert
+               //// 25122022 insert
                 $checkMessenger = [];
                 foreach ($arraymessenger as $val) {
 
@@ -383,7 +383,7 @@ class StaffController extends Controller
                 }
             }
 
-            // INSERT STAFF/USERS
+            //// INSERT STAFF/USERS
 
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
@@ -968,54 +968,6 @@ class StaffController extends Controller
                 ]);
 
 
-            //V2
-            // $subquery = DB::table('users')
-            //     ->leftjoin(
-            //         DB::raw('(select * from jobTitle where isActive=1) as jobTitle'),
-            //         function ($join) {
-            //             $join->on('jobTitle.id', '=', 'users.jobTitleId');
-            //         }
-            //     )
-            //     ->leftjoin(
-            //         DB::raw('(select * from usersEmails) as usersEmails'),
-            //         function ($join) {
-            //             $join->on('usersEmails.usersId', '=', 'users.id');
-            //         },
-            //     )->where([
-            //         ['usersEmails.isDeleted', '=', '0'],
-            //         ['usersEmails.usage', '=', 'Utama'],
-            //     ])
-            //     ->leftjoin(
-            //         DB::raw('(select * from userstelephones) as userstelephones'),
-            //         function ($join) {
-            //             $join->on('userstelephones.usersId', '=', 'users.id');
-            //         },
-            //     )->where([
-            //         ['userstelephones.isDeleted', '=', '0'],
-            //         ['userstelephones.usage', '=', 'Utama'],
-            //     ])
-            //     ->leftjoin(
-            //         DB::raw('(select * from location where isDeleted=0) as location'),
-            //         function ($join) {
-            //             $join->on('location.id', '=', 'users.locationId');
-            //         }
-            //     )
-            //     ->select(
-            //         'users.id as id',
-            //         DB::raw("CONCAT(users.firstName ,' ', users.middleName ,' ', users.lastName ,'(', users.nickName ,')'  ) as name"),
-            //         'jobTitle.jobName as jobTitle',
-            //         DB::raw("IFNULL(usersEmails.email,'') as emailAddress"),
-            //         DB::raw("CONCAT(userstelephones.phoneNumber ,' ', userstelephones.type) as phoneNumber"),
-            //         DB::raw("CASE WHEN users.status=1 then 'Active' else 'Non Active' end as status"),
-            //         'location.locationName as location',
-            //         'users.createdBy as createdBy',
-            //         DB::raw('DATE_FORMAT(users.created_at, "%d-%m-%Y") as createdAt')
-            //     )
-            //     ->where([
-            //         ['users.isDeleted', '=', '0'],
-            //         ['jobTitle.isActive', '=', '1'],
-            //     ]);
-
             $data = DB::table($subquery, 'a');
 
             if ($request->locationId) {
@@ -1031,10 +983,12 @@ class StaffController extends Controller
             }
 
 
+
             if ($request->search) {
 
                 $res = $this->Search($request);
-
+                echo ($res);
+                echo ("asdasd");
                 if ($res == "id") {
 
                     $data = $data->where('id', 'like', '%' . $request->search . '%');
@@ -1114,8 +1068,6 @@ class StaffController extends Controller
                 $data = $data->orderBy($request->orderColumn, $defaultOrderBy);
             }
 
-            $data = $data->orderBy('updated_at', 'desc');
-
             if ($request->rowPerPage > 0) {
                 $defaultRowPerPage = $request->rowPerPage;
             }
@@ -1126,7 +1078,6 @@ class StaffController extends Controller
 
             $count_data = $data->count();
             $count_result = $count_data - $offset;
-
 
             $data = DB::table($data)
                 ->select(
@@ -1140,9 +1091,8 @@ class StaffController extends Controller
                     'location',
                     'createdBy',
                     'createdAt',
-                    'updated_at',
-                );
-
+                )
+                ->orderBy('updated_at', 'desc');
 
             if ($count_result < 0) {
                 $data = $data->offset(0)->limit($defaultRowPerPage)->get();
@@ -1181,8 +1131,9 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at'
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
                 )
             )
             ->where([
@@ -1249,8 +1200,9 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at'
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
                 )
             )
             ->where([
@@ -1318,8 +1270,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at'),
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
+                ),
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1385,8 +1339,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at')
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1453,8 +1409,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at')
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1520,8 +1478,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at')
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1586,8 +1546,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at')
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1656,8 +1618,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at')
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1722,8 +1686,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at')
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1787,8 +1753,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                'a.updated_at')
+                DB::raw(
+                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                    'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -2337,7 +2305,6 @@ class StaffController extends Controller
                             ], 422);
                         }
                     }
-
                 }
 
                 if ($data_error_telephone) {
@@ -2514,9 +2481,7 @@ class StaffController extends Controller
                                 'errors' => 'Please check your phone number, for type whatshapp must start with +62',
                             ], 422);
                         }
-
                     }
-
                 }
 
                 if ($data_messenger_error) {

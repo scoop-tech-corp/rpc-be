@@ -112,7 +112,6 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
             $data = $data->orderBy($this->orderColumn, $defaultOrderBy);
         }
 
-        $data = $data->orderBy('updated_at', 'desc');
 
         $data = DB::table($data)
             ->select(
@@ -125,10 +124,12 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
                 'status',
                 'location',
                 'createdBy',
-                'createdAt'
-            )->get();
+                'createdAt')
+            ->orderBy('updated_at', 'desc')
+            ->get();
 
         $val = 1;
+
         foreach ($data as $key) {
             $key->number = $val;
             $val++;
