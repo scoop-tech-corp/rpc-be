@@ -148,7 +148,6 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
                 'Phone Number',
                 'IsWhatsapp',
                 'Status',
-                'Catatan',
                 'Location',
                 'Created By',
                 'Created At',
