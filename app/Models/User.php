@@ -45,16 +45,22 @@ class User extends Authenticatable implements JWTSubject
 
 
         $users = DB::table('users')
-            ->select('users.password',)
+            ->select(
+                'id',
+                'email',
+                'password',)
             ->where([
-                ['users.id', '=', $this->id],
-                ['users.isDeleted', '=', 0]
+                ['email', '=', $this->email],
+                ['isDeleted', '=', 0]
             ])
             ->first();
 
         if ($users->password != null) {
+
             return $this->getKey();
         }
+
+
     }
     public function getJWTCustomClaims()
     {

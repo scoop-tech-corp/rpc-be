@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\exportStaff;
-use App\Mail\SendEmail;
-use DB;
-use File;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
-use Validator;
+use App\Exports\Staff\exportStaff;
+use Illuminate\Http\Request;
+use App\Mail\SendEmail;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
+use Validator;
+use File;
+use DB;
 
 class StaffController extends Controller
 {
@@ -61,7 +61,7 @@ class StaffController extends Controller
                     'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
                     'reminderEmail' => 'integer|nullable',
                     'reminderWhatsapp' => 'integer|nullable',
-                    'roleId' => 'integer|nullable',
+                    'roleId' => 'required|integer',
                 ]
             );
 
@@ -76,6 +76,7 @@ class StaffController extends Controller
 
 
             $data_item = [];
+
             if ($request->detailAddress) {
 
                 $arrayDetailAddress = json_decode($request->detailAddress, true);
@@ -168,6 +169,17 @@ class StaffController extends Controller
                             }
                         }
                     }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                            ], 422);
+                        }
+                    }
+                    
                 }
 
                 if ($data_telephone) {
@@ -323,6 +335,20 @@ class StaffController extends Controller
                             }
                         }
                     }
+
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['messengerNumber'], 0, 3) === "+62")) {
+
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                            ], 422);
+                        }
+                    }
+
+
                 }
 
                 if ($data_error_messenger) {
@@ -357,7 +383,7 @@ class StaffController extends Controller
                 }
             }
 
-           // INSERT STAFF/USERS
+            // INSERT STAFF/USERS
 
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
@@ -410,6 +436,7 @@ class StaffController extends Controller
                             'isPrimary' => $val['isPrimary'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -430,6 +457,7 @@ class StaffController extends Controller
                         'imagePath' => $fileName,
                         'isDeleted' => 0,
                         'created_at' => now(),
+                        'updated_at' => now(),
                     ]);
             }
 
@@ -445,6 +473,7 @@ class StaffController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -460,6 +489,7 @@ class StaffController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -476,6 +506,7 @@ class StaffController extends Controller
                             'usage' => $val['usage'],
                             'isDeleted' => 0,
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
                 }
             }
@@ -549,6 +580,7 @@ class StaffController extends Controller
                 ],
                 200
             );
+
         } catch (Exception $e) {
 
             DB::rollback();
@@ -632,7 +664,7 @@ class StaffController extends Controller
                         )
                         ->where([
                             ['id', '=', $request->id],
-                            ['users.isDeleted', '=', 0],
+                            ['isDeleted', '=', 0],
 
                         ])
                         ->first();
@@ -827,8 +859,6 @@ class StaffController extends Controller
                 'result' => 'Success',
                 'message' => "Successfully input date holidays",
             ], 200);
-
-            //  info("helloworld");
         } catch (Exception $e) {
 
             return response()->json([
@@ -925,7 +955,8 @@ class StaffController extends Controller
                     'e.locationName as location',
                     'a.locationId as locationId',
                     'a.createdBy as createdBy',
-                    DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                    DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                    'a.updated_at'
                 )
                 ->where([
                     ['a.isDeleted', '=', '0'],
@@ -935,10 +966,6 @@ class StaffController extends Controller
                     ['d.usage', '=', 'Utama'],
                     ['e.isDeleted', '=', '0'],
                 ]);
-
-
-
-
 
 
             //V2
@@ -1002,20 +1029,6 @@ class StaffController extends Controller
                     $data = $data->whereIn('a.locationid', $request->locationId);
                 }
             }
-
-            $data = DB::table($data)
-                ->select(
-                    'id',
-                    'name',
-                    'jobTitle',
-                    'emailAddress',
-                    'phoneNumber',
-                    'isWhatsapp',
-                    'status',
-                    'location',
-                    'createdBy',
-                    'createdAt'
-                );
 
 
             if ($request->search) {
@@ -1101,7 +1114,7 @@ class StaffController extends Controller
                 $data = $data->orderBy($request->orderColumn, $defaultOrderBy);
             }
 
-            $data = $data->orderBy('createdAt', $defaultOrderBy);
+            $data = $data->orderBy('updated_at', 'desc');
 
             if ($request->rowPerPage > 0) {
                 $defaultRowPerPage = $request->rowPerPage;
@@ -1114,6 +1127,23 @@ class StaffController extends Controller
             $count_data = $data->count();
             $count_result = $count_data - $offset;
 
+
+            $data = DB::table($data)
+                ->select(
+                    'id',
+                    'name',
+                    'jobTitle',
+                    'emailAddress',
+                    'phoneNumber',
+                    'isWhatsapp',
+                    'status',
+                    'location',
+                    'createdBy',
+                    'createdAt',
+                    'updated_at',
+                );
+
+
             if ($count_result < 0) {
                 $data = $data->offset(0)->limit($defaultRowPerPage)->get();
             } else {
@@ -1121,6 +1151,7 @@ class StaffController extends Controller
             }
 
             $total_paging = $count_data / $defaultRowPerPage;
+
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
         } catch (Exception $e) {
 
@@ -1150,7 +1181,9 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1216,7 +1249,9 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at'
+                )
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1283,7 +1318,8 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at'),
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1349,7 +1385,8 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at')
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1416,7 +1453,8 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at')
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1482,7 +1520,8 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at')
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1547,7 +1586,8 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at')
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1616,7 +1656,8 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at')
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1681,7 +1722,8 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at')
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1745,7 +1787,8 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt')
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
+                'a.updated_at')
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -2079,7 +2122,52 @@ class StaffController extends Controller
 
     public function exportStaff(Request $request)
     {
-        return Excel::download(new exportStaff, 'Staff.xlsx');
+
+        try {
+
+            $tmp = "";
+            $fileName = "";
+            $date = Carbon::now()->format('d-m-Y');
+
+            if ($request->locationId) {
+
+                $location = DB::table('location')
+                    ->select('locationName')
+                    ->whereIn('id', $request->locationId)
+                    ->get();
+
+                if ($location) {
+
+                    foreach ($location as $key) {
+                        $tmp = $tmp . (string) $key->locationName . ",";
+                    }
+                }
+                $tmp = rtrim($tmp, ", ");
+            }
+
+            if ($tmp == "") {
+                $fileName = "Staff " . $date . ".xlsx";
+            } else {
+                $fileName = "Staff " . $tmp . " " . $date . ".xlsx";
+            }
+
+            return Excel::download(
+                new exportStaff(
+                    $request->orderValue,
+                    $request->orderColumn,
+                    $request->locationId,
+                ),
+                $fileName
+            );
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ]);
+        }
     }
 
 
@@ -2124,7 +2212,7 @@ class StaffController extends Controller
                     'generalCustomerCanSchedule' => 'integer|nullable',
                     'generalCustomerReceiveDailyEmail' => 'integer|nullable',
                     'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
-                    'roleId' => 'integer|nullable',
+                    'roleId' => 'required|integer',
                     'reminderEmail' => 'integer|nullable',
                     'reminderWhatsapp' => 'integer|nullable',
                 ]
@@ -2238,6 +2326,18 @@ class StaffController extends Controller
                             }
                         }
                     }
+
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                            ], 422);
+                        }
+                    }
+
                 }
 
                 if ($data_error_telephone) {
@@ -2393,6 +2493,7 @@ class StaffController extends Controller
                         $messageMessenger
                     );
 
+
                     if ($messengerDetail->fails()) {
 
                         $errors = $messengerDetail->errors()->all();
@@ -2404,6 +2505,18 @@ class StaffController extends Controller
                             }
                         }
                     }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['messengerNumber'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                            ], 422);
+                        }
+
+                    }
+
                 }
 
                 if ($data_messenger_error) {
@@ -2496,7 +2609,6 @@ class StaffController extends Controller
                                 'country' => $val['country'],
                                 'isPrimary' => $val['isPrimary'],
                                 'isDeleted' => 0,
-                                'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
                     }
@@ -2514,7 +2626,6 @@ class StaffController extends Controller
                                 'type' => $val['type'],
                                 'usage' => $val['usage'],
                                 'isDeleted' => 0,
-                                'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
                     }
@@ -2531,7 +2642,6 @@ class StaffController extends Controller
                                 'email' => $val['email'],
                                 'usage' => $val['usage'],
                                 'isDeleted' => 0,
-                                'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
                     }
@@ -2551,7 +2661,6 @@ class StaffController extends Controller
                                 'type' => $val['type'],
                                 'usage' => $val['usage'],
                                 'isDeleted' => 0,
-                                'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
                     }
@@ -2650,7 +2759,6 @@ class StaffController extends Controller
                                 'country' => $val['country'],
                                 'isPrimary' => $val['isPrimary'],
                                 'isDeleted' => 0,
-                                'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
                     }
@@ -2669,7 +2777,6 @@ class StaffController extends Controller
                                 'type' => $val['type'],
                                 'usage' => $val['usage'],
                                 'isDeleted' => 0,
-                                'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
                     }
@@ -2687,7 +2794,6 @@ class StaffController extends Controller
                                 'usage' => $val['usage'],
                                 'email_verified_at' => now(),
                                 'isDeleted' => 0,
-                                'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
                     }
@@ -2705,7 +2811,6 @@ class StaffController extends Controller
                                 'type' => $val['type'],
                                 'usage' => $val['usage'],
                                 'isDeleted' => 0,
-                                'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
                     }

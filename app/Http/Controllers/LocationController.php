@@ -372,6 +372,16 @@ class LocationController extends Controller
                             }
                         }
                     }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                            ], 422);
+                        }
+                    }
                 }
 
                 if ($data_error_telephone) {
@@ -448,7 +458,6 @@ class LocationController extends Controller
                         $messageMessenger
                     );
 
-
                     if ($messengerDetail->fails()) {
 
                         $errors = $messengerDetail->errors()->all();
@@ -460,6 +469,17 @@ class LocationController extends Controller
                             }
                         }
                     }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                            ], 422);
+                        }
+                    }
+
                 }
 
                 if ($data_error_messenger) {
@@ -502,7 +522,7 @@ class LocationController extends Controller
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
-                            
+
                         ]);
                 }
             }
@@ -775,6 +795,16 @@ class LocationController extends Controller
                             }
                         }
                     }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                            ], 422);
+                        }
+                    }
                 }
 
 
@@ -866,6 +896,16 @@ class LocationController extends Controller
                             if (!(in_array($checkisu, $data_error_email))) {
                                 array_push($data_error_email, $checkisu);
                             }
+                        }
+                    }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                            ], 422);
                         }
                     }
                 }

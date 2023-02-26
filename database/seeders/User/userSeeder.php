@@ -114,7 +114,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'Danny', 'middleName' => '', 'lastName' => 'Wahyudi', 'nickName' => 'danny', 'gender' => 'male', 'status' => 1, 'locationId' => 11,
                 'jobTitleId' => 1, 'startDate' => '2022-12-01', 'endDate' => '2023-11-02',
-                'annualSickAllowance' => 9, 'annualLeaveAllowance' => 9, 'payPeriodId' =>  2, 'payAmount' =>  '10000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '10000000',
                 'typeId' => 3, 'identificationNumber' => 1501145032, 'additionalInfo' => 'Testing additional information for inputted database',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 1,
                 'isDeleted' => 0,  'created_at' => now(),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -125,7 +125,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'Adiyansyah', 'middleName' => 'Dwi', 'lastName' => 'Putra', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1, 'locationId' => 12,
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 10, 'annualLeaveAllowance' => 10, 'payPeriodId' => 3, 'payAmount' =>  '20000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' => 3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 15013534555, 'additionalInfo' => 'Your additional information RPC petshop care',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 1,
                 'isDeleted' => 0,  'created_at' => now()->addDay(1),  'updated_at' => now(), 'password' => bcrypt("160196"),
@@ -133,15 +133,11 @@ class userSeeder extends Seeder
             ],
 
 
-
-  
-
-
             //3
             [
                 'firstName' => 'Johnson', 'middleName' => 'Mega', 'lastName' => 'Yolo', 'nickName' => 'Supreme', 'gender' => 'male', 'status' => 0, 'locationId' => 13,
                 'jobTitleId' => 3, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 100, 'annualLeaveAllowance' => 200, 'payPeriodId' =>  1, 'payAmount' =>  '30000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '30000000',
                 'typeId' => 1, 'identificationNumber' => 15013534555, 'additionalInfo' => 'Your additional information RPC petshop care',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 0, 'reminderEmail' => 0, 'reminderWhatsapp' => 0, 'roleId' => 6,
                 'isDeleted' => 0,  'created_at' => now()->addDay(2),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -152,7 +148,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'Alucard', 'middleName' => '', 'lastName' => '', 'nickName' => 'Alucard van helsing', 'gender' => 'male', 'status' => 1, 'locationId' => 14,
                 'jobTitleId' => 4, 'startDate' => '2022-08-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 10, 'annualLeaveAllowance' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 1, 'identificationNumber' => 1234567890, 'additionalInfo' => 'Nothing last forever we can change the future',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 1,
                 'isDeleted' => 0,  'created_at' => now()->addDay(3),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -163,7 +159,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'clint', 'middleName' => 'east', 'lastName' => 'wood', 'nickName' => 'clint', 'gender' => 'male', 'status' => 0, 'locationId' => 15,
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 10, 'annualLeaveAllowance' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '20000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '20000000',
                 'typeId' => 3, 'identificationNumber' => 298765345678, 'additionalInfo' => 'Your additional information RPC petshop care',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 2,
                 'isDeleted' => 0,  'created_at' => now()->addDay(4),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -174,7 +170,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'squidward', 'middleName' => 'testing', 'lastName' => 'tenpoles', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1, 'locationId' => 16,
                 'jobTitleId' => 3, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 10, 'annualLeaveAllowance' => 10, 'payPeriodId' =>  3, 'payAmount' =>  '20000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 627254893472, 'additionalInfo' => 'Klarinet is my way',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 3,
                 'isDeleted' => 0,  'created_at' => now()->addDay(5),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -185,7 +181,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'spongebob', 'middleName' => '', 'lastName' => 'squarepants', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1, 'locationId' => 17,
                 'jobTitleId' => 1, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 10, 'annualLeaveAllowance' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 15013534555, 'additionalInfo' => 'i love krabby patty',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 1,
                 'isDeleted' => 0,  'created_at' => now()->addDay(6),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -196,7 +192,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'Smithy', 'middleName' => 'webermen', 'lastName' => 'jensen', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 0, 'locationId' => 18,
                 'jobTitleId' => 1, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 10, 'annualLeaveAllowance' => 10, 'payPeriodId' =>  3, 'payAmount' =>  '20000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 1111111111, 'additionalInfo' => 'Im number one',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 4,
                 'isDeleted' => 0,  'created_at' => now()->addDay(7),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -207,7 +203,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'Patrik', 'middleName' => '', 'lastName' => 'Star', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1, 'locationId' => 19,
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 100, 'annualLeaveAllowance' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 24729258888, 'additionalInfo' => 'Patrik si bintang laut',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 6,
                 'isDeleted' => 0,  'created_at' => now()->addDay(8),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -218,7 +214,7 @@ class userSeeder extends Seeder
             [
                 'firstName' => 'Krab', 'middleName' => '', 'lastName' => 'Eugene', 'nickName' => 'Mr Krab', 'gender' => 'male', 'status' => 0, 'locationId' => 20,
                 'jobTitleId' => 4, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
-                'annualSickAllowance' => 100000, 'annualLeaveAllowance' => 100000, 'payPeriodId' =>  1, 'payAmount' =>  '9999999999',
+                'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '9999999999',
                 'typeId' => 2, 'identificationNumber' => 111512312342, 'additionalInfo' => 'uang uang uang uang uang',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 2,
                 'isDeleted' => 0,  'created_at' => now()->addDay(9),  'updated_at' => now(), 'password' => bcrypt("123"),
@@ -278,9 +274,11 @@ class userSeeder extends Seeder
 
         for ($j = 3; $j <= 10; $j++) {
 
+            $phoneNumber = $faker->regexify('/^\+628\d{9,10}$/');
+
             $phone = [
-                ["usersId" => $j, "phoneNumber" => $faker->phoneNumber, "type" => $faker->randomElement(['Telepon Selular', 'Whatshapp']), "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
-                ["usersId" => $j, "phoneNumber" => $faker->phoneNumber, "type" => $faker->randomElement(['Telepon Selular', 'Whatshapp']), "usage" =>  "Secondary", "isDeleted" => 0, 'created_at' => now(),]
+                ["usersId" => $j, "phoneNumber" => $phoneNumber, "type" => $faker->randomElement(['Telepon Selular', 'Whatshapp']), "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
+                ["usersId" => $j, "phoneNumber" => $phoneNumber, "type" => $faker->randomElement(['Telepon Selular', 'Whatshapp']), "usage" =>  "Secondary", "isDeleted" => 0, 'created_at' => now(),]
             ];
 
             DB::table('usersTelephones')->insert($phone);
@@ -289,9 +287,11 @@ class userSeeder extends Seeder
 
         for ($j = 3; $j <= 10; $j++) {
 
+            $phoneNumber = '(021) ' . $faker->numerify('########');
+
             $messenger = [
-                ["usersId" => $j, "messengerNumber" => $faker->phoneNumber, "type" => $faker->randomElement(['Office', 'Fax']), "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
-                ["usersId" => $j, "messengerNumber" => $faker->phoneNumber, "type" => $faker->randomElement(['Office', 'Fax']), "usage" =>  'Secondary', "isDeleted" => 0, 'created_at' => now(),]
+                ["usersId" => $j, "messengerNumber" => $phoneNumber, "type" => $faker->randomElement(['Office', 'Fax']), "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
+                ["usersId" => $j, "messengerNumber" => $phoneNumber, "type" => $faker->randomElement(['Office', 'Fax']), "usage" =>  'Secondary', "isDeleted" => 0, 'created_at' => now(),]
             ];
 
             DB::table('usersMessengers')->insert($messenger);

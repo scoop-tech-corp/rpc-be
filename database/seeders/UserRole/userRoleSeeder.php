@@ -28,12 +28,7 @@ class userRoleSeeder extends Seeder
                 'isDeleted' => 0,
                 'created_at' => now(), 'updated_at' => now(), 
             ],
-            [
-                'value' => 'Usage',
-                'name' => 'Whatsap',
-                'isDeleted' => 0,
-                'created_at' => now(), 'updated_at' => now(), 
-            ],
+
             [
                 'value' => 'Telephone',
                 'name' => 'Rumah',
@@ -43,17 +38,11 @@ class userRoleSeeder extends Seeder
 
             [
                 'value' => 'Telephone',
-                'name' => 'Whatshap',
+                'name' => 'Whatshapp',
                 'isDeleted' => 0,
                 'created_at' => now(), 'updated_at' => now(), 
             ],
 
-            [
-                'value' => 'Telephone',
-                'name' => 'Rumah',
-                'isDeleted' => 0,
-                'created_at' => now(), 'updated_at' => now(), 
-            ],
 
             [
                 'value' => 'Messenger',

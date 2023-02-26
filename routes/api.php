@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\VerifyUserandPasswordController;
-// use App\Http\Controllers\Staff\StaffLeaveController;
+use App\Http\Controllers\Staff\StaffLeaveController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -154,16 +154,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::put('statusStaff', [StaffController::class, 'updateStatusUsers']);
 
     Route::post('holidaysdate', [StaffController::class, 'getAllHolidaysDate']);
-    Route::get('workingdate', [StaffController::class, 'getWorkingDays']);
-
 
     //STAFF LEAVE
-    // Route::post('leavestaff', [StaffLeaveController::class, 'insertLeaveStaff']);
-    // Route::post('statusleaverequest', [StaffLeaveController::class, 'setStatusLeaveRequest']);
-    // Route::get('requestleave', [StaffLeaveController::class, 'getIndexRequestLeave']);
-    // Route::get('requeststaffbalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
-    // Route::get('leavetype', [StaffLeaveController::class, 'getLeaveType']);
-    // Route::get('leaverequest', [StaffLeaveController::class, 'getLeaveRequest']);
+    // naming url dirapikan statusleaverequest
+    Route::get('staff/workingdate', [StaffLeaveController::class, 'getWorkingDays']);
+    Route::get('staff/leavetype', [StaffLeaveController::class, 'getLeaveRequest']);
+    Route::post('staff/leave', [StaffLeaveController::class, 'insertLeaveStaff']);
+    Route::post('statff/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
+    Route::get('staff/leave', [StaffLeaveController::class, 'getIndexRequestLeave']);
+    Route::get('staff/leavebalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
+    Route::get('staff/exportleave', [StaffLeaveController::class, 'exportLeaveRequest']);
+    Route::get('staff/exportbalance', [StaffLeaveController::class, 'exportBalance']);
+
 
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);

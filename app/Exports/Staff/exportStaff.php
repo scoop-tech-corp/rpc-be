@@ -1,31 +1,26 @@
 <?php
 
-namespace App\Exports\Facility;
+namespace App\Exports\Staff;
 
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use App\Exports\Facility\DataFacilityAll;
+use App\Exports\Staff\DataStaffAll;
 
-class exportFacility implements WithMultipleSheets
+class exportStaff implements WithMultipleSheets
 {
     use Exportable;
 
     protected $sheets;
     protected $orderValue;
     protected $orderColumn;
-    protected $search;
     protected $locationId;
-    // protected $rowPerPage;
-    // protected $goToPage;
 
-    public function __construct($orderValue, $orderColumn, $search, $locationId)
+
+    public function __construct($orderValue, $orderColumn,  $locationId)
     {
 
-        // $this->rowPerPage = $rowPerPage;
-        // $this->goToPage = $goToPage;
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
-        $this->search = $search;
         $this->locationId = $locationId;
     }
 
@@ -39,7 +34,7 @@ class exportFacility implements WithMultipleSheets
         $sheets = [];
 
         $sheets = [
-            new DataFacilityAll($this->orderValue, $this->orderColumn, $this->search, $this->locationId),
+            new DataStaffAll($this->orderValue, $this->orderColumn,  $this->locationId),
         ];
 
         return $sheets;

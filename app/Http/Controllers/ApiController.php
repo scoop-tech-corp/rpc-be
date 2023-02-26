@@ -152,7 +152,6 @@ class ApiController extends Controller
             return response()->json(['error' => $validator->messages()], 200);
         }
 
-        //check emaul users
         $checkIfValueExits = DB::table('usersEmails')
             ->select(
                 'usersEmails.usersId',
@@ -167,82 +166,102 @@ class ApiController extends Controller
 
         if ($checkIfValueExits != null) {
 
-            //Request is validated
-            //Create token
-            try {
-
-                if (!$token = JWTAuth::attempt($credentials)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Email address is not verified, Please check your email to verify your account and set the password',
-                    ], 400);
-                }
-            } catch (JWTException $e) {
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Could not create token.',
-                ], 500);
-            }
-
-            $userId = $checkIfValueExits->usersId;
-            $emailaddress = $checkIfValueExits->email;
-
             $users = DB::table('users')
-                ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
-                ->leftjoin('usersRoles', 'usersRoles.id', '=', 'users.roleId')
                 ->select(
-                    'users.id',
-                    'users.roleId',
-                    'usersRoles.roleName',
-                    'jobTitle.jobName as jobName',
-                    DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.lastName,'')) as name"),
+                    'firstName',
+                    'password',
                 )
                 ->where([
-                    ['users.id', '=', $userId],
-                    ['users.isDeleted', '=', '0'],
-                    ['jobTitle.isActive', '=', '1']
+                    ['email', '=', $request->email],
+                    ['isDeleted', '=', 0]
                 ])
                 ->first();
 
+            if ($users->password == null) {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email address is not verified, Please check your email to verify your account and set the password',
+                ], 400);
+
+            } else {
+
+                //Request is validated
+                //Create token
+
+                try {
+
+                    if (!$token = JWTAuth::attempt($credentials)) {
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Password unmatch, please check again",
+                        ], 400);
+                    }
+
+                } catch (JWTException $e) {
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Could not create token.',
+                    ], 500);
+                }
+
+                $userId = $checkIfValueExits->usersId;
+                $emailaddress = $checkIfValueExits->email;
+
+                $users = DB::table('users')
+                    ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
+                    ->leftjoin('usersRoles', 'usersRoles.id', '=', 'users.roleId')
+                    ->select(
+                        'users.id',
+                        'users.roleId',
+                        'usersRoles.roleName',
+                        'jobTitle.jobName as jobName',
+                        DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.lastName,'')) as name"),
+                    )
+                    ->where([
+                        ['users.id', '=', $userId],
+                        ['users.isDeleted', '=', '0'],
+                        ['jobTitle.isActive', '=', '1']
+                    ])
+                    ->first();
+
+                $data = DB::table('tableAccess as a')
+                    ->join('menuList as b', 'b.id', '=', 'a.menuListId')
+                    ->join('tableRoleAccess as c', 'c.id', '=', 'a.roleAccessId')
+                    ->select(
+                        'b.menuName',
+                        'c.accessType',
+                    )
+                    ->where([['a.roleId', '=', $users->roleId],])
+                    ->get();
+
+                $accessLimit = DB::table('tableAccess as a')
+                    ->join('menuList as b', 'b.id', '=', 'a.menulistId')
+                    ->join('accessLimit as c', 'c.id', '=', 'a.accessLimitId')
+                    ->join('tableRoleAccess as d', 'd.id', '=', 'a.roleAccessId')
+                    ->select(
+                        'b.menuName',
+                        'd.accessType',
+                        'c.timeLimit',
+                    )
+                    ->where([['a.roleId', '=', $users->roleId],])
+                    ->get();
 
 
-            $data = DB::table('tableAccess as a')
-                ->join('menuList as b', 'b.id', '=', 'a.menuListId')
-                ->join('tableRoleAccess as c', 'c.id', '=', 'a.roleAccessId')
-                ->select(
-                    'b.menuName',
-                    'c.accessType',
-                )
-                ->where([['a.roleId', '=', $users->roleId],])
-                ->get();
-
-
-
-            $accessLimit = DB::table('tableAccess as a')
-                ->join('menuList as b', 'b.id', '=', 'a.menulistId')
-                ->join('accessLimit as c', 'c.id', '=', 'a.accessLimitId')
-                ->join('tableRoleAccess as d', 'd.id', '=', 'a.roleAccessId')
-                ->select(
-                    'b.menuName',
-                    'd.accessType',
-                    'c.timeLimit',
-                )
-                ->where([['a.roleId', '=', $users->roleId],])
-                ->get();
-
-
-            return response()->json([
-                'success' => true,
-                'token' => $token,
-                'usersId' => $userId,
-                "userName" => $users->name,
-                "emailAddress" => $emailaddress,
-                "jobName" => $users->jobName,
-                "role" => $users->roleName,
-                "menuLevel" => $data,
-                "accessLimit" => $accessLimit,
-            ]);
+                return response()->json([
+                    'success' => true,
+                    'token' => $token,
+                    'usersId' => $userId,
+                    "userName" => $users->name,
+                    "emailAddress" => $emailaddress,
+                    "jobName" => $users->jobName,
+                    "role" => $users->roleName,
+                    "menuLevel" => $data,
+                    "accessLimit" => $accessLimit,
+                ]);
+            }
         } else {
 
             return response()->json([

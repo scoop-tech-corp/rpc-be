@@ -2,27 +2,114 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Exports\StaffLeave\exportStaffLeave;
+use App\Exports\StaffLeave\exportBalance;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Exports\exportValue;
-use App\Imports\UsersImport;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\Location;
+use Illuminate\Http\Request;
+use GuzzleHttp\Client;
+use Carbon\Carbon;
 use Validator;
 use DB;
-use File;
-use PDF;
-
 
 class StaffLeaveController extends Controller
 {
-
+    private $client;
+    private $api_key;
+    private $country;
 
     public function insertLeaveStaff(Request $request)
     {
         DB::beginTransaction();
 
         try {
+
+            $validate = Validator::make(
+                $request->all(),
+                [
+                    'usersId' => 'required|integer',
+                    'leaveType' => 'required|string',
+                    'fromDate' => 'required|date_format:Y-m-d',
+                    'toDate' => 'required|date_format:Y-m-d',
+                    'duration' => 'required|integer',
+                    // 'workingDays' => 'required|array',
+                    'remark' => 'required|string',
+
+                ]
+            );
+
+
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            $valueDays = null;
+            $json_array_name = json_decode($request->workingDays, true);
+
+            foreach ($json_array_name as $val) {
+
+
+                if (preg_match('/\d+/', $val['name'])) {
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => 'Working days contain number, please check again'
+                    ], 422);
+                } else {
+
+
+                    $listOrder = array(
+                        'monday',
+                        'tuesday',
+                        'wednesday',
+                        'thursday',
+                        'friday',
+                    );
+
+                    $listOrderUpper = array(
+                        'Monday',
+                        'Tuesday',
+                        'Wednesday',
+                        'Thursday',
+                        'Friday',
+                    );
+
+                    if (!in_array(strtolower($val['name']), $listOrder)) {
+
+                        return response()->json([
+                            'result' =>  'The given data was invalid.',
+                            'message' => 'Working days value must same within the array',
+                            'workingDays' => $listOrderUpper,
+                        ]);
+                    }
+
+                    if ($valueDays == null) {
+
+                        $valueDays =  $val['name'];
+
+                    } else {
+
+                        $valueDays = $valueDays . ',' . $val['name'];
+                    }
+                }
+            }
+
+
+
+            $start = Carbon::parse($request->fromDate);
+            $end = Carbon::parse($request->toDate);
+
+            if ($end <= $start) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['To date must higher than from date!!'],
+                ], 422);
+            }
 
             $checkIfDataExits = DB::table('users')
                 ->where([
@@ -40,8 +127,8 @@ class StaffLeaveController extends Controller
                 ], 422);
             } else {
 
+
                 $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
-                // $workingDays = implode(', ', $request->workingDays);
 
                 DB::table('leaverequest')->insert([
                     'usersId' => $request->usersId,
@@ -52,7 +139,7 @@ class StaffLeaveController extends Controller
                     'fromDate' => $request->fromDate,
                     'toDate' => $request->toDate,
                     'duration' => $request->duration,
-                    'workingdays' => $request->workingDays,
+                    'workingdays' => $valueDays,
                     'status' => "pending",
                     'remark' => $request->remark,
                     'created_at' => now(),
@@ -77,6 +164,63 @@ class StaffLeaveController extends Controller
         }
     }
 
+
+    public function getWorkingDays(Request $request)
+    {
+
+
+        try {
+
+            $start = Carbon::parse($request->fromDate);
+            $end = Carbon::parse($request->toDate);
+
+            if ($end <= $start) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['To date must higher than from date!!'],
+                ], 422);
+            }
+
+            $results = DB::table('holidays')
+                ->whereBetween('date', [$start, $end])
+                ->get();
+
+            $nameDays = [];
+            $totalDays = 0;
+            while ($start <= $end) {
+
+                if ($start->isWeekday()) {
+
+                    if (!$results->contains('date', $start->toDateString())) {
+                        $nameDays[] = [
+                            'date' => $start->format('Y-m-d'),
+                            'name' => $start->format('l')
+                        ];
+
+                        $totalDays = $totalDays + 1;
+                    }
+                }
+
+                $start->addDay();
+            }
+
+            return response()->json(
+                [
+                    'workDays' => $nameDays,
+                    'totalDays' => $totalDays,
+                ],
+                200
+            );
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
     public function setStatusLeaveRequest(Request $request)
     {
 
@@ -85,7 +229,7 @@ class StaffLeaveController extends Controller
             DB::beginTransaction();
 
             $request->validate([
-                'id' => 'required|max:25',
+                'userId' => 'required|max:25',
                 'status' => 'required|max:25',
             ]);
 
@@ -108,7 +252,7 @@ class StaffLeaveController extends Controller
 
             $checkIfDataExits = DB::table('leaverequest')
                 ->where([
-                    ['usersId', '=', $request->id],
+                    ['usersId', '=', $request->userId],
                     ['status', '=', 'pending'],
                 ])
                 ->first();
@@ -123,7 +267,7 @@ class StaffLeaveController extends Controller
 
             $checkdataUsers = DB::table('users')
                 ->where([
-                    ['id', '=', $request->id],
+                    ['id', '=', $request->userId],
                     ['isDeleted', '=', '0'],
                 ])
                 ->first();
@@ -145,7 +289,7 @@ class StaffLeaveController extends Controller
             $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
 
             DB::table('leaverequest')
-                ->where('id', '=', $request->id)
+                ->where('id', '=', $request->userId)
                 ->update([
                     'status' => $request->status,
                     'rejectedReason' => $reason,
@@ -160,14 +304,14 @@ class StaffLeaveController extends Controller
                 if (str_contains($checkIfDataExits->leaveType, "sick")) {
 
                     DB::table('users')
-                        ->where('id', '=', $request->id)
+                        ->where('id', '=', $request->userId)
                         ->update([
                             'annualSickAllowanceRemaining' => $totalsisaCuti,
                         ]);
                 } else {
 
                     DB::table('users')
-                        ->where('id', '=', $request->id)
+                        ->where('id', '=', $request->userId)
                         ->update([
                             'annualLeaveAllowanceRemaining' => $totalsisaCuti,
                         ]);
@@ -231,7 +375,7 @@ class StaffLeaveController extends Controller
         if ($request->orderColumn && $defaultOrderBy) {
 
             $listOrder = array(
-                'firstName',
+                'name',
                 'annualLeaveAllowance',
                 'annualLeaveAllowanceRemaining',
                 'annualSickAllowance',
@@ -280,6 +424,9 @@ class StaffLeaveController extends Controller
 
         return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
     }
+
+
+
 
 
 
@@ -404,10 +551,105 @@ class StaffLeaveController extends Controller
         }
     }
 
+    public function exportLeaveRequest(Request $request)
+    {
+
+        try {
+
+            $request->validate([
+                'status' => 'required'
+            ]);
+
+            if (strtolower($request->status) != "approve" && strtolower($request->status) != "reject" and strtolower($request->status) != "pending") {
+                return response()->json([
+                    'result' => 'failed',
+                    'message' => 'Status must Pending, Approve or Reject',
+                ], 422);
+            }
+
+            $tmp = "";
+            $fileName = "";
+            $date = Carbon::now()->format('d-m-Y');
+
+            // if ($request->locationId) {
+
+            //     $location = DB::table('location')
+            //         ->select('locationName')
+            //         ->whereIn('id', $request->locationId)
+            //         ->get();
+
+            //     if ($location) {
+
+            //         foreach ($location as $key) {
+            //             $tmp = $tmp . (string) $key->locationName . ",";
+            //         }
+            //     }
+            //     $tmp = rtrim($tmp, ", ");
+            // }
+
+            // if ($tmp == "") {
+            $fileName = "Leave Request " . $date . ".xlsx";
+            // } else {
+            //     $fileName = "Staff " . $tmp . " " . $date . ".xlsx";
+            // }
+
+
+
+            return Excel::download(
+                new exportStaffLeave(
+                    $request->orderValue,
+                    $request->orderColumn,
+                    $request->status,
+                ),
+                $fileName
+            );
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ]);
+        }
+    }
+
+    public function exportBalance(Request $request)
+    {
+
+        try {
+
+            $tmp = "";
+            $fileName = "";
+            $date = Carbon::now()->format('d-m-Y');
+
+
+            $fileName = "Leave Balace " . $date . ".xlsx";
+
+
+
+            return Excel::download(
+                new exportBalance(
+                    $request->orderValue,
+                    $request->orderColumn,
+                ),
+                $fileName
+            );
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ]);
+        }
+    }
+
+
 
     public function getIndexRequestLeave(Request $request)
     {
-
 
 
         $validate = Validator::make($request->all(), [
@@ -721,14 +963,14 @@ class StaffLeaveController extends Controller
         try {
 
             $request->validate([
-                'id' => 'required|max:25',
+                'userId' => 'required|max:25',
             ]);
 
             DB::beginTransaction();
 
             $checkIfDataExits = DB::table('users')
                 ->where([
-                    ['id', '=', $request->id],
+                    ['id', '=', $request->userId],
                 ])
                 ->first();
 
@@ -741,16 +983,28 @@ class StaffLeaveController extends Controller
                 ]);
             } else {
 
-                $getAllowance = DB::table('users')
+                $annualLeaveAllowance = DB::table('users')
                     ->select(
-                        DB::raw("CONCAT('Annual Leave' ,' ', IFNULL(annualLeaveAllowance,'0') ,' ', 'days remaining') as annualLeaveAllowance"),
-                        DB::raw("CONCAT('Sick Leave' ,' ', IFNULL(annualSickAllowance,'0') ,' ', 'days remaining') as annualSickAllowance"),
+                        DB::raw("1  as id"),
+                        DB::raw("'Leave Allowance'  as leaveType"),
+                        DB::raw("CONCAT('Annual Leave' ,' ', IFNULL(annualLeaveAllowance,'0') ,' ', 'days remaining') as value"),
                     )
                     ->where([
-                        ['id', '=', $request->id],
+                        ['id', '=', $request->userId],
                         ['isDeleted', '=', '0']
-                    ])
-                    ->get();
+                    ]);
+
+                $annualSickAllowance = DB::table('users')
+                    ->select(
+                        DB::raw("2  as id"),
+                        DB::raw("'Sick Allowance'  as leaveType"),
+                        DB::raw("CONCAT('Sick Leave' ,' ', IFNULL(annualSickAllowance,'0') ,' ', 'days remaining') as value"),
+                    )
+                    ->where([
+                        ['id', '=', $request->userId],
+                        ['isDeleted', '=', '0']
+                    ]);
+                $getAllowance = $annualLeaveAllowance->union($annualSickAllowance)->get();
             }
 
             DB::commit();
@@ -765,55 +1019,89 @@ class StaffLeaveController extends Controller
         }
     }
 
-
-    public function getLeaveType(Request $request)
+    public function getAllHolidaysDate(Request $request)
     {
 
         try {
 
-            $request->validate([
-                'id' => 'required|max:25',
+            $valYear = null;
+
+            if ($request->year) {
+                $valYear = $request->year;
+            } else {
+                $valYear = date('Y');
+            }
+
+
+            $response = $this->client->request('GET', 'holidays', [
+                'query' => [
+                    'api_key' => $this->api_key,
+                    'country' => $this->country,
+                    'year' => $valYear,
+                ],
             ]);
 
-            DB::beginTransaction();
+            $holidays = json_decode($response->getBody())->response->holidays;
 
-            $checkIfDataExits = DB::table('users')
-                ->where([
-                    ['id', '=', $request->id],
-                    ['isDeleted', '=', '0']
-                ])
-                ->first();
+            foreach ($holidays as $val) {
 
+                if ($val->type[0] == "National holiday") {
 
-            if ($checkIfDataExits == null) {
+                    if (DB::table('holidays')
+                        ->where('type', $val->type[0])
+                        ->where('year', $valYear)
+                        ->where('date', $val->date->iso)
+                        ->exists()
+                    ) {
 
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'User id not found, please try different id',
-                ]);
-            } else {
+                        DB::table('holidays')
+                            ->where('type', $val->type[0])
+                            ->where('date', $val->date->iso)
+                            ->where('year', $valYear)
+                            ->update([
+                                'date' => $val->date->iso,
+                                'type' => $val->type[0],
+                                'description' => $val->name,
+                                'year' => $valYear,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                    } else {
 
-                $getAllowance = DB::table('users')
-                    ->select(
-                        DB::raw("CONCAT('Annual Leave' ,' ', IFNULL(annualLeaveAllowance,'0') ,' ', 'days remaining') as annualLeaveAllowance"),
-                        DB::raw("CONCAT(IFNULL(annualSickAllowance,'0') ,' ', 'days remaining') as annualSickAllowance"),
-                    )
-                    ->where([
-                        ['id', '=', $request->id],
-                        ['isDeleted', '=', '0']
-                    ])
-                    ->get();
+                        DB::table('holidays')
+                            ->insert([
+                                'date' => $val->date->iso,
+                                'type' => $val->type[0],
+                                'year' => $valYear,
+                                'description' => $val->name,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
             }
 
             DB::commit();
 
-            return response()->json($getAllowance, 200);
+            return response()->json([
+                'result' => 'Success',
+                'message' => "Successfully input date holidays",
+            ], 200);
         } catch (Exception $e) {
 
             return response()->json([
                 'result' => 'Failed',
                 'message' => $e,
-            ]);
+            ], 422);
         }
+    }
+
+    public function __construct()
+    {
+        $this->client = new Client([
+            'base_uri' => 'https://calendarific.com/api/v2/',
+        ]);
+        $this->api_key = '40a18b1a57c593a8ba3e949ce44420e52b610171';
+        $this->country = 'ID';
     }
 }
