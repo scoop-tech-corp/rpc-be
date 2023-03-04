@@ -787,7 +787,7 @@ class ProductClinicController
         $location =  DB::table('productClinicLocations as pcl')
             ->join('location as l', 'l.Id', 'pcl.locationId')
             ->select(
-                'pcl.Id',
+                'pcl.id',
                 'l.locationName',
                 'pcl.inStock',
                 'pcl.lowStock',
@@ -806,7 +806,7 @@ class ProductClinicController
                 ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
                 ->join('customerGroups as cg', 'pcc.customerGroupId', 'cg.id')
                 ->select(
-                    'pcc.id as id',
+                    'pcc.id',
                     'cg.customerGroup',
                     DB::raw("TRIM(pcc.price)+0 as price")
                 )
@@ -820,7 +820,7 @@ class ProductClinicController
                 ->join('productClinics as pc', 'pcp.productClinicId', 'pc.id')
                 ->join('location as l', 'pcp.locationId', 'l.id')
                 ->select(
-                    'pcp.id as id',
+                    'pcp.id',
                     'l.locationName',
                     DB::raw("TRIM(pcp.price)+0 as Price")
                 )
@@ -834,7 +834,7 @@ class ProductClinicController
             $Quantities = DB::table('productClinicQuantities as pcq')
                 ->join('productClinics as pc', 'pcq.productClinicId', 'pc.id')
                 ->select(
-                    'pcq.id as id',
+                    'pcq.id',
                     'pcq.fromQty',
                     'pcq.toQty',
                     DB::raw("TRIM(pcq.Price)+0 as Price")
@@ -849,7 +849,7 @@ class ProductClinicController
         $prodClinic->images = DB::table('productClinicImages as pci')
             ->join('productClinics as pc', 'pci.productClinicId', 'pc.id')
             ->select(
-                'pci.id as id',
+                'pci.id',
                 'pci.labelName',
                 'pci.realImageName',
                 'pci.imagePath'
@@ -861,7 +861,7 @@ class ProductClinicController
         $prodClinic->dosages = DB::table('productClinicDosages as pcd')
             ->join('productClinics as pc', 'pcd.productClinicId', 'pc.id')
             ->select(
-                // DB::raw("TRIM(pcd.from)+0 as capital_price"),
+                'pcd.id',
                 DB::raw("TRIM(pcd.from)+0 as fromWeight"),
                 DB::raw("TRIM(pcd.to)+0 as toWeight"),
                 DB::raw("TRIM(pcd.dosage)+0 as dosage"),
@@ -874,6 +874,7 @@ class ProductClinicController
         $prodClinic->reminders = DB::table('productClinicReminders as pcr')
             ->join('productClinics as pc', 'pcr.productClinicId', 'pc.id')
             ->select(
+                'pcr.id',
                 'pcr.unit',
                 'pcr.timing',
                 'pcr.status',
