@@ -228,7 +228,7 @@ class ProductSellController
         $location =  DB::table('productSellLocations as psl')
             ->join('location as l', 'l.Id', 'psl.locationId')
             ->select(
-                'psl.Id',
+                'psl.id',
                 'l.locationName',
                 'psl.inStock',
                 'psl.lowStock',
