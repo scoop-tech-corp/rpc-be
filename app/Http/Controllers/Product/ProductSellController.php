@@ -301,6 +301,7 @@ class ProductSellController
         $prodSell->reminders = DB::table('productSellReminders as psr')
             ->join('productSells as pc', 'psr.productSellId', 'pc.id')
             ->select(
+                'psr.id',
                 'psr.unit',
                 'psr.timing',
                 'psr.status',
