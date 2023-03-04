@@ -914,20 +914,24 @@ class ProductSellController
                     $request->customerGroups,
                     [
                         '*.id' => 'nullable|integer',
-                        '*.customerGroupId' => 'required|integer',
+                        '*.customerGroupId' => 'required|integer|distinct',
                         '*.price' => 'required|numeric',
                         '*.status' => 'required|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.customerGroupId.required' => 'Customer Group is Required!',
                         '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
+                        '*.customerGroupId.distinct' => 'Cannot add duplicate Customer Group!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
 
                 if ($validateCustomer->fails()) {
-                    $errors = $validateCustomer->errors()->all();
+                    $errors = $validateCustomer->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -946,23 +950,27 @@ class ProductSellController
                 $ResultPriceLocations = $request->priceLocations;
 
                 $validatePriceLocations = Validator::make(
-                    $request->priceLocations,
+                    $ResultPriceLocations,
                     [
                         '*.id' => 'nullable|integer',
-                        '*.locationId' => 'required|integer',
+                        '*.locationId' => 'required|integer|distinct',
                         '*.price' => 'required|numeric',
                         '*.status' => 'required|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.locationId.required' => 'Location is Required!',
                         '*.locationId.integer' => 'Location Id Should be Integer!',
+                        '*.locationId.distinct' => 'Cannot add duplicate Location!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
 
                 if ($validatePriceLocations->fails()) {
-                    $errors = $validatePriceLocations->errors()->all();
+                    $errors = $validatePriceLocations->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -990,10 +998,14 @@ class ProductSellController
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.fromQty.required' => 'From Quantity is Required!',
                         '*.fromQty.integer' => 'From Quantity Should be Integer!',
+                        '*.toQty.required' => 'To Quantity is Required!',
                         '*.toQty.integer' => 'To Quantity Should be Integer!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.string' => 'Status Should be String!'
+                        '*.status.required' => 'Status is Required!',
+                        '*.status.string' => 'Status Should be String!',
                     ]
                 );
 
@@ -1020,10 +1032,13 @@ class ProductSellController
         ProductSellLocation::updateOrCreate(
             ['id' => $location['id']],
             [
+                'productSellId' => $request->id,
+                'locationId' => $location['locationId'],
                 'inStock' => $location['inStock'],
                 'lowStock' => $location['lowStock'],
                 'reStockLimit' => $location['reStockLimit'],
                 'diffStock' => $location['inStock'] - $location['lowStock'],
+                'userId' => $request->user()->id,
             ]
         );
 

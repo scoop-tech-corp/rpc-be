@@ -719,6 +719,7 @@ class ProductInventoryController
 
     public function update(Request $request)
     {
+        
     }
 
     public function updateApproval(Request $request)
@@ -732,19 +733,19 @@ class ProductInventoryController
             ], 422);
         }
 
-        // if (role($request->user()->id) == 'Office' && $prod->isApprovedOffice != 0) {
-        //     return response()->json([
-        //         'message' => 'The given data was invalid.',
-        //         'errors' => ['Data has already signed by Office!'],
-        //     ], 422);
-        // }
+        if (role($request->user()->id) == 'Office' && $prod->isApprovedOffice != 0) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data has already signed by Office!'],
+            ], 422);
+        }
 
-        // if (role($request->user()->id) == 'Administrator' && $prod->isApprovedAdmin != 0) {
-        //     return response()->json([
-        //         'message' => 'The given data was invalid.',
-        //         'errors' => ['Data has already signed by Administrator!'],
-        //     ], 422);
-        // }
+        if (role($request->user()->id) == 'Administrator' && $prod->isApprovedAdmin != 0) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data has already signed by Administrator!'],
+            ], 422);
+        }
 
         if ($request->status == 2 && $request->reason == "") {
             return response()->json([
