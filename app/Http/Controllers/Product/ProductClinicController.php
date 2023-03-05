@@ -788,6 +788,7 @@ class ProductClinicController
             ->join('location as l', 'l.Id', 'pcl.locationId')
             ->select(
                 'pcl.id',
+                'l.id as locationId',
                 'l.locationName',
                 'pcl.inStock',
                 'pcl.lowStock',
