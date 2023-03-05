@@ -87,6 +87,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('product/sell/image', [ProductSellController::class, 'updateImages']);
     Route::delete('product/sell', [ProductSellController::class, 'Delete']);
     Route::get('product/sell/export', [ProductSellController::class, 'Export']);
+    Route::post('product/sell/split', [ProductSellController::class, 'Split']);
 
     Route::get('product/clinic', [ProductClinicController::class, 'index']);
     Route::get('product/clinic/detail', [ProductClinicController::class, 'detail']);
