@@ -1524,8 +1524,9 @@ class ProductSellController
     {
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
-            'name' => 'required|string',
-            'quantity' => 'required|integer',
+            'fullName' => 'required|string',
+            'qtyReduction' => 'required|integer',
+            'qtyIncrease' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -1547,6 +1548,7 @@ class ProductSellController
         }
 
         $newProduct = $product->replicate();
+        $newProduct->fullName = $request->fullName;
         $newProduct->created_at = Carbon::now();
         $newProduct->updated_at = Carbon::now();
         $newProduct->userId = $request->user()->id;
@@ -1572,8 +1574,8 @@ class ProductSellController
 
         $newProdSellLoc = $prodSellLoc->replicate();
         $newProdSellLoc->productSellId = $newProduct->id;
-        $newProdSellLoc->inStock = $request->quantity;
-        $newProdSellLoc->diffStock = $request->quantity - $prodSellLoc->lowStock;
+        $newProdSellLoc->inStock = $request->qtyIncrease;
+        $newProdSellLoc->diffStock = $request->qtyIncrease - $prodSellLoc->lowStock;
         $newProdSellLoc->userId = $request->user()->id;
         $newProdSellLoc->created_at = Carbon::now();
         $newProdSellLoc->updated_at = Carbon::now();
@@ -1651,6 +1653,16 @@ class ProductSellController
                 $newProductSellReminder->save();
             }
         }
+
+        $oldProdLoc = ProductSellLocation::where('productSellId','=',$request->id)->first();
+
+        $instock = $oldProdLoc->inStock;
+        $lowstock = $oldProdLoc->lowStock;
+        
+        $oldProdLoc->inStock = $instock - $request->qtyReduction;        
+        $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
+        $oldProdLoc->updated_at = Carbon::now();
+        $oldProdLoc->save();
 
         return response()->json([
             'message' => 'Split Data Successful',
