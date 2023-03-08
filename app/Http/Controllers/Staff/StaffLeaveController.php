@@ -1775,18 +1775,18 @@ class StaffLeaveController extends Controller
                         ->exists()
                     ) {
 
-                        DB::table('holidays')
-                            ->where('type', $val->type[0])
-                            ->where('date', $val->date->iso)
-                            ->where('year', $valYear)
-                            ->update([
-                                'date' => $val->date->iso,
-                                'type' => $val->type[0],
-                                'description' => $val->name,
-                                'year' => $valYear,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
+                        Holidays::where('type', $val->type[0])
+                                ->where('date', $val->date->iso)
+                                ->where('year', $valYear)
+                                ->update([
+                                    'date' => $val->date->iso,
+                                    'type' => $val->type[0],
+                                    'description' => $val->name,
+                                    'year' => $valYear,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+
                     } else {
 
                         holidays::insert([
