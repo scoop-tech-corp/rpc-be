@@ -823,7 +823,7 @@ class ProductClinicController
                 ->select(
                     'pcp.id',
                     'l.locationName',
-                    DB::raw("TRIM(pcp.price)+0 as Price")
+                    DB::raw("TRIM(pcp.price)+0 as price")
                 )
                 ->where('pcp.productClinicId', '=', $request->id)
                 ->where('pcp.isDeleted', '=', 0)
@@ -1395,7 +1395,7 @@ class ProductClinicController
 
                 ProductClinicImages::create([
                     'productClinicId' => $request->id,
-                    'labelName' => $value['labelName'],
+                    'labelName' => $value['name'],
                     'realImageName' => $tmpImages[$count]['realImageName'],
                     'imagePath' => $tmpImages[$count]['imagePath'],
                     'userId' => $request->user()->id,
@@ -1409,7 +1409,7 @@ class ProductClinicController
                         ['id' => $value['id']],
                         [
                             'productClinicId' => $request->id,
-                            'labelName' => $value['labelName'],
+                            'labelName' => $value['name'],
                             'realImageName' => $tmpImages[$count]['realImageName'],
                             'imagePath' => $tmpImages[$count]['imagePath'],
                             'userId' => $request->user()->id,
@@ -1420,7 +1420,7 @@ class ProductClinicController
                     ProductClinicImages::updateorCreate(
                         ['id' => $value['id']],
                         [
-                            'labelName' => $value['labelName'],
+                            'labelName' => $value['name'],
                             'userId' => $request->user()->id,
                         ]
                     );
