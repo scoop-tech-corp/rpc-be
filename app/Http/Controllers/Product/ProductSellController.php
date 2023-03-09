@@ -278,7 +278,7 @@ class ProductSellController
                     'psq.id as id',
                     'psq.fromQty',
                     'psq.toQty',
-                    DB::raw("TRIM(psq.Price)+0 as Price")
+                    DB::raw("TRIM(psq.Price)+0 as price")
                 )
                 ->where('psq.ProductSellId', '=', $request->id)
                 ->where('psq.isDeleted', '=', 0)
@@ -1307,7 +1307,7 @@ class ProductSellController
 
                 ProductSellImages::create([
                     'productSellId' => $request->id,
-                    'labelName' => $value['labelName'],
+                    'labelName' => $value['name'],
                     'realImageName' => $tmpImages[$count]['realImageName'],
                     'imagePath' => $tmpImages[$count]['imagePath'],
                     'userId' => $request->user()->id,
@@ -1321,7 +1321,7 @@ class ProductSellController
                         ['id' => $value['id']],
                         [
                             'productSellId' => $request->id,
-                            'labelName' => $value['labelName'],
+                            'labelName' => $value['name'],
                             'realImageName' => $tmpImages[$count]['realImageName'],
                             'imagePath' => $tmpImages[$count]['imagePath'],
                             'userId' => $request->user()->id,
@@ -1332,7 +1332,7 @@ class ProductSellController
                     ProductSellImages::updateorCreate(
                         ['id' => $value['id']],
                         [
-                            'labelName' => $value['labelName'],
+                            'labelName' => $value['name'],
                             'userId' => $request->user()->id,
                         ]
                     );
@@ -1654,12 +1654,12 @@ class ProductSellController
             }
         }
 
-        $oldProdLoc = ProductSellLocation::where('productSellId','=',$request->id)->first();
+        $oldProdLoc = ProductSellLocation::where('productSellId', '=', $request->id)->first();
 
         $instock = $oldProdLoc->inStock;
         $lowstock = $oldProdLoc->lowStock;
-        
-        $oldProdLoc->inStock = $instock - $request->qtyReduction;        
+
+        $oldProdLoc->inStock = $instock - $request->qtyReduction;
         $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
         $oldProdLoc->updated_at = Carbon::now();
         $oldProdLoc->save();
