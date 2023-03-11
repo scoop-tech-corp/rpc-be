@@ -21,8 +21,40 @@ class StaffLeaveController extends Controller
     private $api_key;
     private $country;
 
-    public function insertLeaveStaff(Request $request)
+
+    public function getAllStaffActive(Request $request)
     {
+
+        try {
+
+            $getUser = User::select(
+                'id as usersId',
+                DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name"),
+            )
+                ->where('isDeleted', '0')
+                ->get();
+
+            return response()->json($getUser, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+    public function adjustLeaveRequest(Request $request)
+    {
+
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
         DB::beginTransaction();
 
         try {
@@ -51,6 +83,9 @@ class StaffLeaveController extends Controller
 
             $valueDays = null;
             $json_array_name = json_decode($request->workingDays, true);
+
+
+            $hitungNameDays  = 0;
 
             foreach ($json_array_name as $val) {
 
@@ -96,16 +131,282 @@ class StaffLeaveController extends Controller
 
                         $valueDays = $valueDays . ',' . $val['name'];
                     }
+                    $hitungNameDays =  $hitungNameDays + 1;
                 }
             }
 
             $start = Carbon::parse($request->fromDate);
             $end = Carbon::parse($request->toDate);
 
-            if ($end <= $start) {
+            if ($end < $start) {
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => ['To date must higher than from date!!'],
+                ], 422);
+            }
+
+            $countDays = 0;
+
+            while ($start <= $end) {
+
+                $start->addDay();
+                $countDays = $countDays + 1;
+            }
+
+
+            if ($countDays != $request->duration) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Wrong duration, please check again. Your duration day must be ' . $countDays,
+                ], 422);
+            }
+
+
+            if ($countDays != $hitungNameDays) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Wrong working days, please check again. Your working days must be ' .  $countDays . ' days '
+                ], 422);
+            }
+
+
+            if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'User id not found, please try different id',
+                ], 422);
+            } else {
+
+                $listOrder = array(
+                    'leave allowance',
+                    'sick allowance',
+                );
+
+                if (!in_array(strtolower($request->leaveType), $listOrder)) {
+
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'Only leave allowance or sick allowance is allowed',
+                    ], 422);
+                }
+
+                $sickallowance =  $request->user()->annualSickAllowanceRemaining;
+                $leaveallowance =  $request->user()->annualLeaveAllowanceRemaining;
+
+                if (str_contains(strtolower($request->leaveType), "sick")) {
+
+                    if ($sickallowance == 0) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'You dont have any sick allowance left : ' .  $sickallowance,
+                        ], 422);
+                    }
+
+
+                    if ($request->duration > $sickallowance) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance,
+                        ], 422);
+                    }
+                } else {
+
+                    if ($leaveallowance == 0) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'You dont have any leave allowance left : ' .  $leaveallowance,
+                        ], 422);
+                    }
+
+
+                    if ($request->duration > $leaveallowance) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance,
+                        ], 422);
+                    }
+                }
+
+                $from_date = $request->fromDate;
+                $to_date = $request->toDate;
+
+                $resultCheckExists =  LeaveRequest::where('usersId', $request->usersId)
+                    ->where('status', 'pending')
+                    ->where('fromDate', '<=', $to_date)
+                    ->where('toDate', '>=', $from_date)
+                    ->exists();
+
+                if ($resultCheckExists) {
+
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'You already had request leave on the spesific date, please check again.'
+                    ], 422);
+                }
+
+                $userName =  User::select(
+                    'jobTitleId',
+                    'locationId',
+                    DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
+                )
+                    ->where('id', '=', $request->usersId)
+                    ->where('isDeleted', '=', '0')
+                    ->first();
+
+                $staffLeave = new LeaveRequest();
+                $staffLeave->usersId = $request->usersId;
+                $staffLeave->requesterName = $userName->name;
+                $staffLeave->jobTitle = $userName->jobTitleId;
+                $staffLeave->locationId =  $userName->locationId;
+                $staffLeave->leaveType = $request->leaveType;
+                $staffLeave->fromDate = $request->fromDate;
+                $staffLeave->toDate = $request->toDate;
+                $staffLeave->duration = $request->duration;
+                $staffLeave->workingDays = $valueDays;
+                $staffLeave->status = "pending";
+                $staffLeave->remark =  $request->remark;
+                $staffLeave->save();
+
+                DB::commit();
+
+                return response()->json([
+                    'result' => 'Success',
+                    'message' => 'Successfully input request leave',
+                ], 200);
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+    public function insertLeaveStaff(Request $request)
+    {
+        DB::beginTransaction();
+
+        try {
+
+            $validate = Validator::make(
+                $request->all(),
+                [
+                    'usersId' => 'required|integer',
+                    'leaveType' => 'required|string',
+                    'fromDate' => 'required|date_format:Y-m-d|after_or_equal:today',
+                    'toDate' => 'required|date_format:Y-m-d',
+                    'duration' => 'required|integer',
+                    'workingDays' => 'required',
+                    'remark' => 'required|string',
+
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            $valueDays = null;
+            $json_array_name = json_decode($request->workingDays, true);
+
+            $hitungNameDays = 0;
+
+            foreach ($json_array_name as $val) {
+
+
+                if (preg_match('/\d+/', $val['name'])) {
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => 'Working days contain number, please check again'
+                    ], 422);
+                } else {
+
+
+                    $listOrder = array(
+                        'monday',
+                        'tuesday',
+                        'wednesday',
+                        'thursday',
+                        'friday',
+                    );
+
+                    $listOrderUpper = array(
+                        'Monday',
+                        'Tuesday',
+                        'Wednesday',
+                        'Thursday',
+                        'Friday',
+                    );
+
+                    if (!in_array(strtolower($val['name']), $listOrder)) {
+
+                        return response()->json([
+                            'result' =>  'The given data was invalid.',
+                            'message' => 'Working days value must same within the array',
+                            'workingDays' => $listOrderUpper,
+                        ]);
+                    }
+
+                    if ($valueDays == null) {
+
+                        $valueDays =  $val['name'];
+                    } else {
+
+                        $valueDays = $valueDays . ',' . $val['name'];
+                    }
+
+                    $hitungNameDays = $hitungNameDays + 1;
+                }
+            }
+
+            $start = Carbon::parse($request->fromDate);
+            $end = Carbon::parse($request->toDate);
+
+            if ($end < $start) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['To date must higher than from date!!'],
+                ], 422);
+            }
+
+
+            $countDays = 0;
+
+            while ($start <= $end) {
+
+                $start->addDay();
+                $countDays = $countDays + 1;
+            }
+
+
+            if ($countDays != $request->duration) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Wrong duration, please check again. Your duration day must be ' . $countDays,
+                ], 422);
+            }
+
+            if ($countDays != $hitungNameDays) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Wrong working days, please check again. Your working days must be ' .  $countDays . ' days '
                 ], 422);
             }
 
@@ -117,22 +418,100 @@ class StaffLeaveController extends Controller
                 ], 422);
             } else {
 
+                $listOrder = array(
+                    'leave allowance',
+                    'sick allowance',
+                );
 
-                $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
+                if (!in_array(strtolower($request->leaveType), $listOrder)) {
+
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'Only leave allowance or sick allowance is allowed',
+                    ], 422);
+                }
+
+
+                $sickallowance =  $request->user()->annualSickAllowanceRemaining;
+                $leaveallowance =  $request->user()->annualLeaveAllowanceRemaining;
+
+
+                if (str_contains(strtolower($request->leaveType), "sick")) {
+
+                    if ($sickallowance == 0) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'You dont have any sick allowance left : ' .  $sickallowance,
+                        ], 422);
+                    }
+
+
+                    if ($request->duration > $sickallowance) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance,
+                        ], 422);
+                    }
+                } else {
+
+                    if ($leaveallowance == 0) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'You dont have any leave allowance left : ' .  $leaveallowance,
+                        ], 422);
+                    }
+
+
+                    if ($request->duration > $leaveallowance) {
+
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance,
+                        ], 422);
+                    }
+                }
+
+                $from_date = $request->fromDate;
+                $to_date = $request->toDate;
+
+                $resultCheckExists =  LeaveRequest::where('usersId', $request->usersId)
+                    ->where('status', 'pending')
+                    ->where('fromDate', '<=', $to_date)
+                    ->where('toDate', '>=', $from_date)
+                    ->exists();
+
+                if ($resultCheckExists) {
+
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'You already had request leave on the spesific date, please check again.'
+                    ], 422);
+                }
+
+                $userName =  User::select(
+                    'jobTitleId',
+                    'locationId',
+                    DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
+                )
+                    ->where('id', '=', $request->usersId)
+                    ->where('isDeleted', '=', '0')
+                    ->first();
+
                 $staffLeave = new LeaveRequest();
                 $staffLeave->usersId = $request->usersId;
-                $staffLeave->requesterName = $userName;
-                $staffLeave->jobtitle = $request->user()->jobTitleId;
-                $staffLeave->locationId =  $request->user()->locationId;
+                $staffLeave->requesterName = $userName->name;
+                $staffLeave->jobTitle = $userName->jobTitleId;
+                $staffLeave->locationId =  $userName->locationId;
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
                 $staffLeave->duration = $request->duration;
-                $staffLeave->workingdays = $valueDays;
+                $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
-                $staffLeave->created_at = now();
-                $staffLeave->updated_at = now();
                 $staffLeave->save();
 
                 DB::commit();
@@ -161,7 +540,7 @@ class StaffLeaveController extends Controller
             $start = Carbon::parse($request->fromDate);
             $end = Carbon::parse($request->toDate);
 
-            if ($end <= $start) {
+            if ($end < $start) {
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => ['To date must higher than from date!!'],
@@ -210,6 +589,13 @@ class StaffLeaveController extends Controller
     public function setStatusLeaveRequest(Request $request)
     {
 
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
         try {
 
             DB::beginTransaction();
@@ -236,7 +622,7 @@ class StaffLeaveController extends Controller
             }
 
 
-            $leaveRequest = leaveRequest::where('usersId', '=', $request->usersId)
+            $leaveRequest = LeaveRequest::where('usersId', '=', $request->usersId)
                 ->where('status', '=', 'pending')
                 ->first();
 
@@ -319,20 +705,12 @@ class StaffLeaveController extends Controller
             $data = $this->indexBalanceLeaveDoctorandStaff($request);
         }
 
-        $data = DB::table($data)
-            ->select(
-                'name',
-                'annualLeaveAllowance',
-                'annualLeaveAllowanceRemaining',
-                'annualSickAllowance',
-                'annualSickAllowanceRemaining'
-            )
-            ->orderBy('updated_at', 'desc');
-
-
         if ($request->orderValue) {
             $defaultOrderBy = $request->orderValue;
         }
+
+        $checkOrder = null;
+
 
         if ($request->orderColumn && $defaultOrderBy) {
 
@@ -361,9 +739,33 @@ class StaffLeaveController extends Controller
                 ]);
             }
 
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+            $checkOrder = true;
         }
 
+        if ($checkOrder == true) {
+
+            $data = DB::table($data)
+                ->select(
+                    'name',
+                    'annualLeaveAllowance',
+                    'annualLeaveAllowanceRemaining',
+                    'annualSickAllowance',
+                    'annualSickAllowanceRemaining'
+                )
+                ->orderBy($request->orderColumn, $defaultOrderBy)
+                ->orderBy('updated_at', 'desc');
+        } else {
+
+            $data = DB::table($data)
+                ->select(
+                    'name',
+                    'annualLeaveAllowance',
+                    'annualLeaveAllowanceRemaining',
+                    'annualSickAllowance',
+                    'annualSickAllowanceRemaining'
+                )
+                ->orderBy('updated_at', 'desc');
+        }
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;
@@ -661,6 +1063,8 @@ class StaffLeaveController extends Controller
     public function exportLeaveRequest(Request $request)
     {
 
+        $rolesIndex = roleStaffLeave($request->user()->id);
+
         try {
 
             $request->validate([
@@ -678,35 +1082,36 @@ class StaffLeaveController extends Controller
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
 
-            // if ($request->locationId) {
+            if ($request->locationId) {
 
-            //     $location = DB::table('location')
-            //         ->select('locationName')
-            //         ->whereIn('id', $request->locationId)
-            //         ->get();
+                $location = DB::table('location')
+                    ->select('locationName')
+                    ->whereIn('id', $request->locationId)
+                    ->get();
 
-            //     if ($location) {
+                if ($location) {
 
-            //         foreach ($location as $key) {
-            //             $tmp = $tmp . (string) $key->locationName . ",";
-            //         }
-            //     }
-            //     $tmp = rtrim($tmp, ", ");
-            // }
+                    foreach ($location as $key) {
+                        $tmp = $tmp . (string) $key->locationName . ",";
+                    }
+                }
+                $tmp = rtrim($tmp, ", ");
+            }
 
-            // if ($tmp == "") {
-            $fileName = "Leave Request " . $date . ".xlsx";
-            // } else {
-            //     $fileName = "Staff " . $tmp . " " . $date . ".xlsx";
-            // }
-
-
+            if ($tmp == "") {
+                $fileName = "Leave Request " . $date . ".xlsx";
+            } else {
+                $fileName = "Leave Request " . $tmp . " " . $date . ".xlsx";
+            }
 
             return Excel::download(
                 new exportStaffLeave(
                     $request->orderValue,
                     $request->orderColumn,
                     $request->status,
+                    $rolesIndex,
+                    $request->user()->id,
+                    $request->locationId,
                 ),
                 $fileName
             );
@@ -726,19 +1131,43 @@ class StaffLeaveController extends Controller
 
         try {
 
+            $rolesIndex = roleStaffLeave($request->user()->id);
+
             $tmp = "";
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
 
+            if ($request->locationId) {
+
+                $location = DB::table('location')
+                    ->select('locationName')
+                    ->whereIn('id', $request->locationId)
+                    ->get();
+
+                if ($location) {
+
+                    foreach ($location as $key) {
+                        $tmp = $tmp . (string) $key->locationName . ",";
+                    }
+                }
+                $tmp = rtrim($tmp, ", ");
+            }
+
+            if ($tmp == "") {
+                $fileName = "Leave Request " . $date . ".xlsx";
+            } else {
+                $fileName = "Leave Request " . $tmp . " " . $date . ".xlsx";
+            }
 
             $fileName = "Leave Balace " . $date . ".xlsx";
-
-
 
             return Excel::download(
                 new exportBalance(
                     $request->orderValue,
                     $request->orderColumn,
+                    $request->user()->id,
+                    $rolesIndex,
+                    $request->locationId,
                 ),
                 $fileName
             );
@@ -749,34 +1178,14 @@ class StaffLeaveController extends Controller
             return response()->json([
                 'result' => 'Failed',
                 'message' => $e,
-            ]);
+            ], 422);
         }
     }
 
-
-
     public function indexBalanceLeaveAdminandOffice(Request $request)
     {
-        $defaultOrderBy = "asc";
 
-        // $data = DB::table('users as a')
-        //     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-        //     ->select(
-        //         DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-        //         'a.annualLeaveAllowance as annualLeaveAllowance',
-        //         'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
-        //         'a.annualSickAllowance as annualSickAllowance',
-        //         'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
-        //         'a.updated_at as updated_at',
-        //     )
-        //     ->where([
-        //         ['a.isDeleted', '=', '0'],
-        //     ])->get();
-
-        // info($data);
-
-
-        $data = User::from('Users as a')
+        $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -823,21 +1232,6 @@ class StaffLeaveController extends Controller
     {
         $defaultOrderBy = "asc";
 
-        // $data = DB::table('users as a')
-        //     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-        //     ->select(
-        //         DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-        //         'a.annualLeaveAllowance as annualLeaveAllowance',
-        //         'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
-        //         'a.annualSickAllowance as annualSickAllowance',
-        //         'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
-        //         'a.updated_at as updated_at',
-        //     )
-        //     ->where([
-        //         ['a.isDeleted', '=', '0'],
-        //         ['a.id', '=', $request->user()->id],
-        //     ]);
-
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
@@ -852,7 +1246,6 @@ class StaffLeaveController extends Controller
                 ['a.isDeleted', '=', '0'],
                 ['a.id', '=', $request->user()->id],
             ]);
-
 
         if ($request->locationId) {
 
@@ -888,28 +1281,8 @@ class StaffLeaveController extends Controller
     {
         $defaultOrderBy = "asc";
 
-        // $data = DB::table('leaveRequest as a')
-        //     ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
-        //     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-        //     ->select(
-        //         'a.requesterName as requesterName',
-        //         'b.jobName as jobName',
-        //         'c.locationName as locationName',
-        //         'a.locationId as locationId',
-        //         'a.leaveType as leaveType',
-        //         'a.fromDate as fromDate',
-        //         'a.duration as duration',
-        //         'a.remark as remark',
-        //         'a.created_at as createdAt',
-        //         'a.updated_at as updatedAt',
-        //     )
-        //     ->where([
-        //         ['a.status', '=', $request->status],
-        //     ]);
-
-
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -956,36 +1329,13 @@ class StaffLeaveController extends Controller
         return $data;
     }
 
-
-
-
     public function indexLeaveDoctorandStaff(Request $request)
     {
 
         $defaultOrderBy = "asc";
 
-        // $data = DB::table('leaveRequest as a')
-        //     ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
-        //     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-        //     ->select(
-        //         'a.requesterName as requesterName',
-        //         'b.jobName as jobName',
-        //         'c.locationName as locationName',
-        //         'a.locationId as locationId',
-        //         'a.leaveType as leaveType',
-        //         'a.fromDate as fromDate',
-        //         'a.duration as duration',
-        //         'a.remark as remark',
-        //         'a.created_at as createdAt',
-        //         'a.updated_at as updatedAt',
-        //     )
-        //     ->where([
-        //         ['a.status', '=', $request->status],
-        //         ['a.usersId', '=', $request->user()->id],
-        //     ]);
-
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1047,10 +1397,167 @@ class StaffLeaveController extends Controller
     }
 
 
-    public function getIndexRequestLeave(Request $request)
+    public function approveAll(Request $request)
     {
 
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
+
+        try {
+
+            $validate = Validator::make($request->all(), [
+                'leaveRequestId' => 'required',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            $data_item = [];
+            foreach ($request->leaveRequestId as $val) {
+
+                $checkIfDataExits = LeaveRequest::where([
+                    ['id', '=', $val],
+                    ['status', '=', 'pending']
+                ])->first();
+
+                if (!$checkIfDataExits) {
+                    array_push($data_item, 'leave request id: ' . $val . ' not found, please try different id');
+                }
+            }
+
+
+            if ($data_item) {
+                return response()->json([
+                    'message' => 'Inputed data is not valid',
+                    'errors' => $data_item,
+                ], 422);
+            }
+
+            $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
+
+            foreach ($request->leaveRequestId as $val) {
+
+                LeaveRequest::where('id', '=', $val)
+                    ->update(
+                        [
+                            'status' => 'approve',
+                            'approveOrRejectedBy' => $userName,
+                            'approveOrRejectedDate' => now()
+                        ],
+                    );
+
+                DB::commit();
+            }
+
+            return response()->json([
+                'result' => 'Success',
+                'message' => 'Successfully approve all leave request',
+            ], 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+    public function rejectAll(Request $request)
+    {
+
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
+        try {
+
+            $validate = Validator::make($request->all(), [
+                'leaveRequestId' => 'required',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            $data_item = [];
+            foreach ($request->leaveRequestId as $val) {
+
+                $checkIfDataExits = LeaveRequest::where([
+                    ['id', '=', $val],
+                    ['status', '=', 'pending']
+                ])->first();
+
+                if (!$checkIfDataExits) {
+                    array_push($data_item, 'leave request id: ' . $val . ' not found, please try different id');
+                }
+            }
+
+
+            if ($data_item) {
+                return response()->json([
+                    'message' => 'Inputed data is not valid',
+                    'errors' => $data_item,
+                ], 422);
+            }
+
+            $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
+
+            foreach ($request->leaveRequestId as $val) {
+
+                LeaveRequest::where('id', '=', $val)
+                    ->update(
+                        [
+                            'status' => 'reject',
+                            'approveOrRejectedBy' => $userName,
+                            'approveOrRejectedDate' => now(),
+                            'rejectedReason' => 'Rejected by admin'
+                        ],
+                    );
+
+                DB::commit();
+            }
+            return response()->json([
+                'result' => 'Success',
+                'message' => 'Successfully reject all leave request',
+            ], 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+    public function getIndexRequestLeave(Request $request)
+    {
         $defaultRowPerPage = 5;
+        $defaultOrderBy = "asc";
 
         $rolesIndex = roleStaffLeave($request->user()->id);
 
@@ -1076,34 +1583,73 @@ class StaffLeaveController extends Controller
                 ], 422);
             } else {
 
+                $listOrder = null;
 
-                $data = DB::table('leaveRequest as a')
-                    ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
-                    ->select(
-                        'a.requesterName as requester',
-                        'b.jobName as jobName',
-                        'a.leaveType as leave type',
-                        'a.fromDate as date',
-                        'a.duration as days',
-                        'a.remark as remark',
-                        'a.created_at as created at',
-                    )
-                    ->where([
-                        ['a.status', '=', $request->status],
-                    ]);
+                if ($rolesIndex == 1) {
 
-                if ($request->search) {
+                    $data = $this->indexLeaveAdminandOffice($request);
+                } else {
 
-                    $listOrder = null;
+                    $data = $this->indexLeaveDoctorandStaff($request);
+                }
 
-                    if ($rolesIndex == 1) {
+                if ($request->orderValue) {
 
-                        $data = $this->indexLeaveAdminandOffice($request);
-                    } else {
-                        $data = $this->indexLeaveDoctorandStaff($request);
+                    $defaultOrderBy = $request->orderValue;
+                }
+
+                $checkOrder = null;
+
+                if ($request->orderColumn && $defaultOrderBy) {
+
+                    $listOrder = array(
+                        'requesterName',
+                        'jobName',
+                        'locationName',
+                        'leaveType',
+                        'fromDate',
+                        'duration',
+                        'remark',
+                        'createdAt',
+                    );
+
+                    if (!in_array($request->orderColumn, $listOrder)) {
+
+                        return response()->json([
+                            'result' => 'failed',
+                            'message' => 'Please try different order column',
+                            'orderColumn' => $listOrder,
+                        ]);
                     }
 
+                    if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
 
+                        return response()->json([
+                            'result' => 'failed',
+                            'message' => 'order value must Ascending: ASC or Descending: DESC ',
+                        ]);
+                    }
+
+                    $checkOrder == true;
+                }
+
+
+                if ($checkOrder == true) {
+
+                    $data = DB::table($data)
+                        ->select(
+                            'requesterName',
+                            'jobName',
+                            'locationName',
+                            'leaveType',
+                            'fromDate',
+                            'duration',
+                            'remark',
+                            'createdAt',
+                        )
+                        ->orderBy($request->orderColumn, $request->orderValue)
+                        ->orderBy('updatedAt', 'desc');
+                } else {
 
                     $data = DB::table($data)
                         ->select(
@@ -1117,75 +1663,36 @@ class StaffLeaveController extends Controller
                             'createdAt',
                         )
                         ->orderBy('updatedAt', 'desc');
-
-                    if ($request->orderValue) {
-                        $defaultOrderBy = $request->orderValue;
-                    }
-
-                    if ($request->orderColumn && $defaultOrderBy) {
-
-                        $listOrder = array(
-                            'requesterName',
-                            'jobName',
-                            'locationName',
-                            'leaveType',
-                            'fromDate',
-                            'duration',
-                            'remark',
-                            'createdAt',
-                        );
-
-                        if (!in_array($request->orderColumn, $listOrder)) {
-
-                            return response()->json([
-                                'result' => 'failed',
-                                'message' => 'Please try different order column',
-                                'orderColumn' => $listOrder,
-                            ]);
-                        }
-
-                        if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
-
-                            return response()->json([
-                                'result' => 'failed',
-                                'message' => 'order value must Ascending: ASC or Descending: DESC ',
-                            ]);
-                        }
-
-                        $data = $data->orderBy($request->orderColumn, $request->orderValue);
-                    }
-
-                    $data = $data->orderBy('createdAt', 'desc');
-
-                    if ($request->rowPerPage > 0) {
-                        $defaultRowPerPage = $request->rowPerPage;
-                    }
-
-                    $goToPage = $request->goToPage;
-
-                    $offset = ($goToPage - 1) * $defaultRowPerPage;
-
-                    $count_data = $data->count();
-                    $count_result = $count_data - $offset;
-
-                    if ($count_result < 0) {
-                        $data = $data->offset(0)->limit($defaultRowPerPage)->get();
-                    } else {
-                        $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
-                    }
-
-                    $total_paging = $count_data / $defaultRowPerPage;
-
-                    return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
                 }
+
+                if ($request->rowPerPage > 0) {
+                    $defaultRowPerPage = $request->rowPerPage;
+                }
+
+                $goToPage = $request->goToPage;
+
+                $offset = ($goToPage - 1) * $defaultRowPerPage;
+
+                $count_data = $data->count();
+                $count_result = $count_data - $offset;
+
+                if ($count_result < 0) {
+                    $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+                } else {
+                    $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+                }
+
+                $total_paging = $count_data / $defaultRowPerPage;
+
+                return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
             }
         }
     }
 
     public function SearchRequestLeaveStaffDoctor($request)
     {
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1218,8 +1725,8 @@ class StaffLeaveController extends Controller
 
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1253,8 +1760,8 @@ class StaffLeaveController extends Controller
 
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1286,8 +1793,8 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1320,8 +1827,8 @@ class StaffLeaveController extends Controller
 
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1353,8 +1860,8 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1386,8 +1893,8 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1418,8 +1925,8 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1454,8 +1961,8 @@ class StaffLeaveController extends Controller
     private function SearchRequestLeaveAdminOffice($request)
     {
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1485,8 +1992,8 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1515,8 +2022,8 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1546,8 +2053,8 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1576,8 +2083,8 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1606,8 +2113,8 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1637,8 +2144,8 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1667,8 +2174,8 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-        $data = leaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = LeaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 'a.requesterName as requesterName',
@@ -1781,7 +2288,7 @@ class StaffLeaveController extends Controller
 
                 if ($val->type[0] == "National holiday") {
 
-                    if (holidays::where('type', $val->type[0])
+                    if (Holidays::where('type', $val->type[0])
                         ->where('year', $valYear)
                         ->where('date', $val->date->iso)
                         ->exists()
@@ -1795,18 +2302,14 @@ class StaffLeaveController extends Controller
                                 'type' => $val->type[0],
                                 'description' => $val->name,
                                 'year' => $valYear,
-                                'created_at' => now(),
-                                'updated_at' => now(),
                             ]);
                     } else {
 
-                        holidays::insert([
+                        Holidays::insert([
                             'date' => $val->date->iso,
                             'type' => $val->type[0],
                             'year' => $valYear,
                             'description' => $val->name,
-                            'created_at' => now(),
-                            'updated_at' => now(),
                         ]);
                     }
                 }

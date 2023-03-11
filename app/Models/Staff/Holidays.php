@@ -15,6 +15,8 @@ class Holidays extends Model
 
     protected $guarded = ['id'];
 
+    public $timestamps = true;
+
     protected $fillable = [
         'date', 'year', 'type', 'description', 'created_at','updated_at'
     ];

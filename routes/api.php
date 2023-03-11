@@ -161,13 +161,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('staff/workingdate', [StaffLeaveController::class, 'getWorkingDays']);
     Route::get('staff/leavetype', [StaffLeaveController::class, 'getLeaveRequest']);
     Route::post('staff/leave', [StaffLeaveController::class, 'insertLeaveStaff']);
-    Route::post('statff/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
+    Route::post('staff/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
+    Route::post('staff/adjustleave', [StaffLeaveController::class, 'adjustLeaveRequest']);
     Route::get('staff/leave', [StaffLeaveController::class, 'getIndexRequestLeave']);
     Route::get('staff/leavebalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
     Route::get('staff/exportleave', [StaffLeaveController::class, 'exportLeaveRequest']);
     Route::get('staff/exportbalance', [StaffLeaveController::class, 'exportBalance']);
-
-
+    Route::get('staff/allactive', [StaffLeaveController::class, 'getAllStaffActive']);
+    Route::put('staff/approveall', [StaffLeaveController::class, 'approveAll']);
+    Route::put('staff/rejectall', [StaffLeaveController::class, 'rejectAll']);
+    
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
     Route::get('provinsi', [GlobalVariableController::class, 'getProvinsi']);
