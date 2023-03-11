@@ -1091,6 +1091,9 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->search) {
+                
                 $listOrder = null;
 
                 if ($rolesIndex == 1) {
@@ -1178,12 +1181,8 @@ class StaffLeaveController extends Controller
         }
     }
 
-
-
     private function SearchRequestLeaveStaffDoctor($request)
     {
-
-
         $data = leaveRequest::from('leaveRequest as a')
             ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
@@ -1606,7 +1605,6 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-
         $data = leaveRequest::from('leaveRequest as a')
             ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
@@ -1667,7 +1665,6 @@ class StaffLeaveController extends Controller
             $temp_column = 'a.remark';
             return $temp_column;
         }
-
 
         $data = leaveRequest::from('leaveRequest as a')
             ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
