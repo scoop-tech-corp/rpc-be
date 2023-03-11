@@ -1181,12 +1181,8 @@ class StaffLeaveController extends Controller
         }
     }
 
-
-
     private function SearchRequestLeaveStaffDoctor($request)
     {
-
-
         $data = leaveRequest::from('leaveRequest as a')
             ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
