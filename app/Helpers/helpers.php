@@ -105,13 +105,34 @@ if (!function_exists('role')) {
     }
 }
 
-if(!function_exists('convertTrueFalse')){
+
+
+if (!function_exists('roleStaffLeave')) {
+    function roleStaffLeave($id)
+    {
+        $user = DB::table('users as u')
+            ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
+            ->select('u.id', 'ur.roleName')
+            ->where('u.id', '=', $id)
+            ->first();
+
+
+        if ($user->roleName == "Administrator" || $user->roleName == "Office") {
+            return 1;
+        } else {
+
+            return 2;
+        }
+    }
+}
+
+
+if (!function_exists('convertTrueFalse')) {
     function convertTrueFalse($value)
     {
-        if($value == 'true' || $value =='TRUE'){
+        if ($value == 'true' || $value == 'TRUE') {
             return 1;
-        }
-        elseif ($value == 'false'|| $value == 'FALSE') {
+        } elseif ($value == 'false' || $value == 'FALSE') {
             return 0;
         }
     }

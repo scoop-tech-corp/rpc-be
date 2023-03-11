@@ -7,6 +7,9 @@ use App\Exports\StaffLeave\exportBalance;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
+use App\Models\Staff\LeaveRequest;
+use App\Models\Staff\Holidays;
+use App\Models\User;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use Validator;
@@ -32,13 +35,11 @@ class StaffLeaveController extends Controller
                     'fromDate' => 'required|date_format:Y-m-d',
                     'toDate' => 'required|date_format:Y-m-d',
                     'duration' => 'required|integer',
-                    // 'workingDays' => 'required|array',
+                    'workingDays' => 'required',
                     'remark' => 'required|string',
 
                 ]
             );
-
-
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
@@ -91,15 +92,12 @@ class StaffLeaveController extends Controller
                     if ($valueDays == null) {
 
                         $valueDays =  $val['name'];
-
                     } else {
 
                         $valueDays = $valueDays . ',' . $val['name'];
                     }
                 }
             }
-
-
 
             $start = Carbon::parse($request->fromDate);
             $end = Carbon::parse($request->toDate);
@@ -111,15 +109,7 @@ class StaffLeaveController extends Controller
                 ], 422);
             }
 
-            $checkIfDataExits = DB::table('users')
-                ->where([
-                    ['id', '=', $request->usersId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->first();
-
-
-            if ($checkIfDataExits == null) {
+            if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
 
                 return response()->json([
                     'result' => 'Failed',
@@ -129,27 +119,26 @@ class StaffLeaveController extends Controller
 
 
                 $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
-
-                DB::table('leaveRequest')->insert([
-                    'usersId' => $request->usersId,
-                    'requesterName' => $userName,
-                    'jobtitle' => $request->user()->jobTitleId,
-                    'locationId' => $request->user()->locationId,
-                    'leaveType' => $request->leaveType,
-                    'fromDate' => $request->fromDate,
-                    'toDate' => $request->toDate,
-                    'duration' => $request->duration,
-                    'workingdays' => $valueDays,
-                    'status' => "pending",
-                    'remark' => $request->remark,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                $staffLeave = new LeaveRequest();
+                $staffLeave->usersId = $request->usersId;
+                $staffLeave->requesterName = $userName;
+                $staffLeave->jobtitle = $request->user()->jobTitleId;
+                $staffLeave->locationId =  $request->user()->locationId;
+                $staffLeave->leaveType = $request->leaveType;
+                $staffLeave->fromDate = $request->fromDate;
+                $staffLeave->toDate = $request->toDate;
+                $staffLeave->duration = $request->duration;
+                $staffLeave->workingdays = $valueDays;
+                $staffLeave->status = "pending";
+                $staffLeave->remark =  $request->remark;
+                $staffLeave->created_at = now();
+                $staffLeave->updated_at = now();
+                $staffLeave->save();
 
                 DB::commit();
 
                 return response()->json([
-                    'result' => 'success',
+                    'result' => 'Success',
                     'message' => 'Successfully input request leave',
                 ], 200);
             }
@@ -158,16 +147,14 @@ class StaffLeaveController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
+                'result' => 'Failed',
                 'message' => $e,
             ], 422);
         }
     }
 
-
     public function getWorkingDays(Request $request)
     {
-
 
         try {
 
@@ -181,12 +168,11 @@ class StaffLeaveController extends Controller
                 ], 422);
             }
 
-            $results = DB::table('holidays')
-                ->whereBetween('date', [$start, $end])
-                ->get();
+            $results = Holidays::whereBetween('date', [$start, $end])->get();
 
             $nameDays = [];
             $totalDays = 0;
+
             while ($start <= $end) {
 
                 if ($start->isWeekday()) {
@@ -229,7 +215,7 @@ class StaffLeaveController extends Controller
             DB::beginTransaction();
 
             $request->validate([
-                'userId' => 'required|max:25',
+                'usersId' => 'required|max:25',
                 'status' => 'required|max:25',
             ]);
 
@@ -250,29 +236,23 @@ class StaffLeaveController extends Controller
             }
 
 
-            $checkIfDataExits = DB::table('leaveRequest')
-                ->where([
-                    ['usersId', '=', $request->userId],
-                    ['status', '=', 'pending'],
-                ])
+            $leaveRequest = leaveRequest::where('usersId', '=', $request->usersId)
+                ->where('status', '=', 'pending')
                 ->first();
 
-            if ($checkIfDataExits == null) {
-
+            if ($leaveRequest == null) {
                 return response()->json([
                     'result' => 'Failed',
                     'message' => 'Leave request not found, please try different id',
                 ], 422);
             }
 
-            $checkdataUsers = DB::table('users')
-                ->where([
-                    ['id', '=', $request->userId],
-                    ['isDeleted', '=', '0'],
-                ])
-                ->first();
+            $users = User::where([
+                ['id', '=', $request->usersId],
+                ['isDeleted', '=', '0'],
+            ])->first();
 
-            if ($checkdataUsers == null) {
+            if ($users == null) {
 
                 return response()->json([
                     'result' => 'Failed',
@@ -288,36 +268,23 @@ class StaffLeaveController extends Controller
 
             $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
 
-            DB::table('leaveRequest')
-                ->where('id', '=', $request->userId)
-                ->update([
-                    'status' => $request->status,
-                    'rejectedReason' => $reason,
-                    'approveOrRejectedBy' =>  $userName,
-                    'approveOrRejectedDate' =>  now(),
-                ]);
+            $leaveRequest->status = $request->status;
+            $leaveRequest->rejectedReason = $reason;
+            $leaveRequest->approveOrRejectedBy = $userName;
+            $leaveRequest->approveOrRejectedDate = now();
 
             if (strtolower($request->status) == "approve") {
 
-                $totalsisaCuti = $checkdataUsers->annualLeaveAllowanceRemaining - $checkIfDataExits->duration;
+                $totalsisaCuti = $users->annualLeaveAllowanceRemaining - $leaveRequest->duration;
 
-                if (str_contains($checkIfDataExits->leaveType, "sick")) {
-
-                    DB::table('users')
-                        ->where('id', '=', $request->userId)
-                        ->update([
-                            'annualSickAllowanceRemaining' => $totalsisaCuti,
-                        ]);
+                if (str_contains($leaveRequest->leaveType, "sick")) {
+                    $users->annualSickAllowanceRemaining =  $totalsisaCuti;
                 } else {
-
-                    DB::table('users')
-                        ->where('id', '=', $request->userId)
-                        ->update([
-                            'annualLeaveAllowanceRemaining' => $totalsisaCuti,
-                        ]);
+                    $users->annualLeaveAllowanceRemaining =  $totalsisaCuti;
                 }
             }
-
+            $leaveRequest->save();
+            $users->save();
             $statusMessage = strtolower($request->status);
 
             DB::commit();
@@ -341,32 +308,27 @@ class StaffLeaveController extends Controller
         $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
 
-        $data = DB::table('users as a')
-            ->select(
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-                'a.annualLeaveAllowance as Vacation Allowance',
-                'a.annualLeaveAllowanceRemaining as Vacation Balance',
-                'a.annualSickAllowance as Sick Allowance',
-                'a.annualSickAllowanceRemaining as Sick Balance',
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-            ]);
+        $rolesIndex = roleStaffLeave($request->user()->id);
 
-        if ($request->search) {
-            $res = $this->SearchStaffBalance($request);
 
-            if ($res) {
+        if ($rolesIndex == 1) {
 
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
-            } else {
-                $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
-            }
+            $data = $this->indexBalanceLeaveAdminandOffice($request);
+        } else {
+
+            $data = $this->indexBalanceLeaveDoctorandStaff($request);
         }
+
+        $data = DB::table($data)
+            ->select(
+                'name',
+                'annualLeaveAllowance',
+                'annualLeaveAllowanceRemaining',
+                'annualSickAllowance',
+                'annualSickAllowanceRemaining'
+            )
+            ->orderBy('updated_at', 'desc');
+
 
         if ($request->orderValue) {
             $defaultOrderBy = $request->orderValue;
@@ -392,6 +354,7 @@ class StaffLeaveController extends Controller
             }
 
             if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
+
                 return response()->json([
                     'result' => 'failed',
                     'message' => 'order value must Ascending: ASC or Descending: DESC ',
@@ -401,7 +364,6 @@ class StaffLeaveController extends Controller
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('a.updated_at', 'desc');
 
         if ($request->rowPerPage > 0) {
             $defaultRowPerPage = $request->rowPerPage;
@@ -426,20 +388,19 @@ class StaffLeaveController extends Controller
     }
 
 
-
-
-
-
-    private function SearchStaffBalance($request)
+    private function SearchBalanceAdminandOffice($request)
     {
 
-        $data = DB::table('users as a')
+
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-                'a.annualLeaveAllowance as Vacation Allowance',
-                'a.annualLeaveAllowanceRemaining as Vacation Balance',
-                'a.annualSickAllowance as Sick Allowance',
-                'a.annualSickAllowanceRemaining as Sick Balance',
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -457,13 +418,15 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = DB::table('users as a')
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-                'a.annualLeaveAllowance as Vacation Allowance',
-                'a.annualLeaveAllowanceRemaining as Vacation Balance',
-                'a.annualSickAllowance as Sick Allowance',
-                'a.annualSickAllowanceRemaining as Sick Balance',
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -481,13 +444,15 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = DB::table('users as a')
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-                'a.annualLeaveAllowance as Vacation Allowance',
-                'a.annualLeaveAllowanceRemaining as Vacation Balance',
-                'a.annualSickAllowance as Sick Allowance',
-                'a.annualSickAllowanceRemaining as Sick Balance',
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -504,13 +469,15 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-        $data = DB::table('users as a')
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-                'a.annualLeaveAllowance as Vacation Allowance',
-                'a.annualLeaveAllowanceRemaining as Vacation Balance',
-                'a.annualSickAllowance as Sick Allowance',
-                'a.annualSickAllowanceRemaining as Sick Balance',
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -527,16 +494,156 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-        $data = DB::table('users as a')
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-                'a.annualLeaveAllowance as Vacation Allowance',
-                'a.annualLeaveAllowanceRemaining as Vacation Balance',
-                'a.annualSickAllowance as Sick Allowance',
-                'a.annualSickAllowanceRemaining as Sick Balance',
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
+            ]);
+
+        if ($request->search) {
+            $data = $data->where('a.annualSickAllowanceRemaining', '=', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.annualSickAllowanceRemaining';
+            return $temp_column;
+        }
+    }
+
+
+
+    private function SearchBalanceDoctorandStaff($request)
+    {
+
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['a.id', '=', $request->user()->id],
+            ]);
+
+        if ($request->search) {
+            $data = $data->where('a.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.firstName';
+            return $temp_column;
+        }
+
+
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['a.id', '=', $request->user()->id],
+            ]);
+
+        if ($request->search) {
+            $data = $data->where('a.annualLeaveAllowance', '=', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.annualLeaveAllowance';
+            return $temp_column;
+        }
+
+
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['a.id', '=', $request->user()->id],
+            ]);
+
+        if ($request->search) {
+            $data = $data->where('a.annualLeaveAllowanceRemaining', '=', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.annualLeaveAllowanceRemaining';
+            return $temp_column;
+        }
+
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['a.id', '=', $request->user()->id],
+            ]);
+
+        if ($request->search) {
+            $data = $data->where('a.annualSickAllowance', '=', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.annualSickAllowance';
+            return $temp_column;
+        }
+
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['a.id', '=', $request->user()->id],
             ]);
 
         if ($request->search) {
@@ -648,9 +755,304 @@ class StaffLeaveController extends Controller
 
 
 
+    public function indexBalanceLeaveAdminandOffice(Request $request)
+    {
+        $defaultOrderBy = "asc";
+
+        // $data = DB::table('users as a')
+        //     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+        //     ->select(
+        //         DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+        //         'a.annualLeaveAllowance as annualLeaveAllowance',
+        //         'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+        //         'a.annualSickAllowance as annualSickAllowance',
+        //         'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+        //         'a.updated_at as updated_at',
+        //     )
+        //     ->where([
+        //         ['a.isDeleted', '=', '0'],
+        //     ])->get();
+
+        // info($data);
+
+
+        $data = User::from('Users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+            ]);
+
+        if ($request->locationId) {
+
+            $val = [];
+
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationId', $request->locationId);
+            }
+        }
+
+
+        if ($request->search) {
+
+            $res = $this->SearchBalanceAdminandOffice($request);
+
+            if ($res) {
+                $data = $data->where($res, 'like', '%' . $request->search . '%');
+            } else {
+                $data = [];
+                return $data;
+            }
+        }
+
+        return $data;
+    }
+
+    public function indexBalanceLeaveDoctorandStaff(Request $request)
+    {
+        $defaultOrderBy = "asc";
+
+        // $data = DB::table('users as a')
+        //     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+        //     ->select(
+        //         DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+        //         'a.annualLeaveAllowance as annualLeaveAllowance',
+        //         'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+        //         'a.annualSickAllowance as annualSickAllowance',
+        //         'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+        //         'a.updated_at as updated_at',
+        //     )
+        //     ->where([
+        //         ['a.isDeleted', '=', '0'],
+        //         ['a.id', '=', $request->user()->id],
+        //     ]);
+
+        $data = User::from('users as a')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                'a.annualLeaveAllowance as annualLeaveAllowance',
+                'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
+                'a.annualSickAllowance as annualSickAllowance',
+                'a.annualSickAllowanceRemaining as annualSickAllowanceRemaining',
+                'a.updated_at as updated_at',
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['a.id', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->locationId) {
+
+            $val = [];
+
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationId', $request->locationId);
+            }
+        }
+
+
+        if ($request->search) {
+
+            $res = $this->SearchBalanceDoctorandStaff($request);
+
+            if ($res) {
+                $data = $data->where($res, 'like', '%' . $request->search . '%');
+            } else {
+                $data = [];
+                return $data;
+            }
+        }
+
+        return $data;
+    }
+
+
+    public function indexLeaveAdminandOffice(Request $request)
+    {
+        $defaultOrderBy = "asc";
+
+        // $data = DB::table('leaveRequest as a')
+        //     ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        //     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+        //     ->select(
+        //         'a.requesterName as requesterName',
+        //         'b.jobName as jobName',
+        //         'c.locationName as locationName',
+        //         'a.locationId as locationId',
+        //         'a.leaveType as leaveType',
+        //         'a.fromDate as fromDate',
+        //         'a.duration as duration',
+        //         'a.remark as remark',
+        //         'a.created_at as createdAt',
+        //         'a.updated_at as updatedAt',
+        //     )
+        //     ->where([
+        //         ['a.status', '=', $request->status],
+        //     ]);
+
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+            ]);
+
+        if ($request->locationId) {
+
+            $val = [];
+
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationId', $request->locationId);
+            }
+        }
+
+
+        if ($request->search) {
+
+            $res = $this->SearchRequestLeaveAdminOffice($request);
+
+            if ($res) {
+                $data = $data->where($res, 'like', '%' . $request->search . '%');
+            } else {
+                $data = [];
+                return $data;
+            }
+        }
+
+        return $data;
+    }
+
+
+
+
+    public function indexLeaveDoctorandStaff(Request $request)
+    {
+
+        $defaultOrderBy = "asc";
+
+        // $data = DB::table('leaveRequest as a')
+        //     ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+        //     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+        //     ->select(
+        //         'a.requesterName as requesterName',
+        //         'b.jobName as jobName',
+        //         'c.locationName as locationName',
+        //         'a.locationId as locationId',
+        //         'a.leaveType as leaveType',
+        //         'a.fromDate as fromDate',
+        //         'a.duration as duration',
+        //         'a.remark as remark',
+        //         'a.created_at as createdAt',
+        //         'a.updated_at as updatedAt',
+        //     )
+        //     ->where([
+        //         ['a.status', '=', $request->status],
+        //         ['a.usersId', '=', $request->user()->id],
+        //     ]);
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->locationId) {
+
+            $val = [];
+
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationId', $request->locationId);
+            }
+        }
+
+
+        if ($request->search) {
+
+            $res = $this->SearchRequestLeaveStaffDoctor($request);
+
+            if ($res) {
+                $data = $data->where($res, 'like', '%' . $request->search . '%');
+            } else {
+                $data = [];
+                return $data;
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'requesterName',
+                'jobName',
+                'locationName',
+                'leaveType',
+                'fromDate',
+                'duration',
+                'remark',
+                'createdAt',
+            );
+
+        return $data;
+    }
+
+
     public function getIndexRequestLeave(Request $request)
     {
 
+        $defaultRowPerPage = 5;
+
+        $rolesIndex = roleStaffLeave($request->user()->id);
 
         $validate = Validator::make($request->all(), [
             'status' => 'required',
@@ -667,14 +1069,13 @@ class StaffLeaveController extends Controller
         } else {
 
             if (strtolower($request->status) != "approve" && strtolower($request->status) != "reject" && strtolower($request->status) != "pending") {
+
                 return response()->json([
                     'result' => 'failed',
                     'message' => 'Value status must Pending, Approve or Reject',
                 ], 422);
             } else {
 
-                $defaultRowPerPage = 5;
-                $defaultOrderBy = "asc";
 
                 $data = DB::table('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
@@ -692,19 +1093,30 @@ class StaffLeaveController extends Controller
                     ]);
 
                 if ($request->search) {
+                
+                $listOrder = null;
 
-                    $res = $this->SearchRequestLeave($request);
+                if ($rolesIndex == 1) {
 
-                    if ($res) {
-                        $data = $data->where($res, 'like', '%' . $request->search . '%');
-                    } else {
-                        $data = [];
-                        return response()->json([
-                            'totalPagination' => 0,
-                            'data' => $data
-                        ], 200);
-                    }
+                    $data = $this->indexLeaveAdminandOffice($request);
+                } else {
+                    $data = $this->indexLeaveDoctorandStaff($request);
                 }
+
+
+
+                $data = DB::table($data)
+                    ->select(
+                        'requesterName',
+                        'jobName',
+                        'locationName',
+                        'leaveType',
+                        'fromDate',
+                        'duration',
+                        'remark',
+                        'createdAt',
+                    )
+                    ->orderBy('updatedAt', 'desc');
 
                 if ($request->orderValue) {
                     $defaultOrderBy = $request->orderValue;
@@ -715,11 +1127,12 @@ class StaffLeaveController extends Controller
                     $listOrder = array(
                         'requesterName',
                         'jobName',
+                        'locationName',
                         'leaveType',
                         'fromDate',
                         'duration',
                         'remark',
-                        'created_at',
+                        'createdAt',
                     );
 
                     if (!in_array($request->orderColumn, $listOrder)) {
@@ -732,6 +1145,7 @@ class StaffLeaveController extends Controller
                     }
 
                     if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
+
                         return response()->json([
                             'result' => 'failed',
                             'message' => 'order value must Ascending: ASC or Descending: DESC ',
@@ -741,8 +1155,7 @@ class StaffLeaveController extends Controller
                     $data = $data->orderBy($request->orderColumn, $request->orderValue);
                 }
 
-                $data = $data->orderBy('a.created_at', 'desc');
-
+                $data = $data->orderBy('createdAt', 'desc');
 
                 if ($request->rowPerPage > 0) {
                     $defaultRowPerPage = $request->rowPerPage;
@@ -768,22 +1181,299 @@ class StaffLeaveController extends Controller
         }
     }
 
-    private function SearchRequestLeave($request)
+
+
+    private function SearchRequestLeaveStaffDoctor($request)
     {
 
-        $data = DB::table('leaverequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
-                'a.requesterName as requester',
+                'a.requesterName as requesterName',
                 'b.jobName as jobName',
-                'a.leaveType as leave type',
-                'a.fromDate as date',
-                'a.duration as days',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
                 'a.remark as remark',
-                'a.created_at as created at',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
             )
             ->where([
-                ['a.status', '=', 'pending'],
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->search) {
+            $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.requesterName';
+            return $temp_column;
+        }
+
+
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->search) {
+            $data = $data->where('a.jobName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.jobName';
+            return $temp_column;
+        }
+
+
+
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->search) {
+            $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'c.locationName';
+            return $temp_column;
+        }
+
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->search) {
+            $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.leaveType';
+            return $temp_column;
+        }
+
+
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->search) {
+            $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.fromDate';
+            return $temp_column;
+        }
+
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->search) {
+            $data = $data->where('a.duration', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.duration';
+            return $temp_column;
+        }
+
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->search) {
+            $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.remark';
+            return $temp_column;
+        }
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
+                ['a.usersId', '=', $request->user()->id],
+            ]);
+
+
+        if ($request->search) {
+            $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.created_at';
+            return $temp_column;
+        }
+    }
+
+    private function SearchRequestLeaveAdminOffice($request)
+    {
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
             ]);
 
         if ($request->search) {
@@ -798,45 +1488,84 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = DB::table('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
-                'a.requesterName as requester',
+                'a.requesterName as requesterName',
                 'b.jobName as jobName',
-                'a.leaveType as leave type',
-                'a.fromDate as date',
-                'a.duration as days',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
                 'a.remark as remark',
-                'a.created_at as created at',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
             )
             ->where([
-                ['a.status', '=', 'pending'],
+                ['a.status', '=', $request->status],
             ]);
 
         if ($request->search) {
-            $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
+            $data = $data->where('a.jobName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'b.jobName';
+            $temp_column = 'a.jobName';
             return $temp_column;
         }
 
-        $data = DB::table('leaverequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
-                'a.requesterName as requester',
+                'a.requesterName as requesterName',
                 'b.jobName as jobName',
-                'a.leaveType as leave type',
-                'a.fromDate as date',
-                'a.duration as days',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
                 'a.remark as remark',
-                'a.created_at as created at',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
             )
             ->where([
-                ['a.status', '=', 'pending'],
+                ['a.status', '=', $request->status],
+            ]);
+
+        if ($request->search) {
+            $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'c.locationName';
+            return $temp_column;
+        }
+
+
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->select(
+                'a.requesterName as requesterName',
+                'b.jobName as jobName',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
+                'a.remark as remark',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
+            )
+            ->where([
+                ['a.status', '=', $request->status],
             ]);
 
         if ($request->search) {
@@ -850,19 +1579,23 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-        $data = DB::table('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
-                'a.requesterName as requester',
+                'a.requesterName as requesterName',
                 'b.jobName as jobName',
-                'a.leaveType as leave type',
-                'a.fromDate as date',
-                'a.duration as days',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
                 'a.remark as remark',
-                'a.created_at as created at',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
             )
             ->where([
-                ['a.status', '=', 'pending'],
+                ['a.status', '=', $request->status],
             ]);
 
         if ($request->search) {
@@ -876,20 +1609,23 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-
-        $data = DB::table('leaverequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
-                'a.requesterName as requester',
+                'a.requesterName as requesterName',
                 'b.jobName as jobName',
-                'a.leaveType as leave type',
-                'a.fromDate as date',
-                'a.duration as days',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
                 'a.remark as remark',
-                'a.created_at as created at',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
             )
             ->where([
-                ['a.status', '=', 'pending'],
+                ['a.status', '=', $request->status],
             ]);
 
         if ($request->search) {
@@ -904,19 +1640,23 @@ class StaffLeaveController extends Controller
         }
 
 
-        $data = DB::table('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
-                'a.requesterName as requester',
+                'a.requesterName as requesterName',
                 'b.jobName as jobName',
-                'a.leaveType as leave type',
-                'a.fromDate as date',
-                'a.duration as days',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
                 'a.remark as remark',
-                'a.created_at as created at',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
             )
             ->where([
-                ['a.status', '=', 'pending'],
+                ['a.status', '=', $request->status],
             ]);
 
         if ($request->search) {
@@ -930,20 +1670,23 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-
-        $data = DB::table('leaverequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
+        $data = leaveRequest::from('leaveRequest as a')
+            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
-                'a.requesterName as requester',
+                'a.requesterName as requesterName',
                 'b.jobName as jobName',
-                'a.leaveType as leave type',
-                'a.fromDate as date',
-                'a.duration as days',
+                'c.locationName as locationName',
+                'a.locationId as locationId',
+                'a.leaveType as leaveType',
+                'a.fromDate as fromDate',
+                'a.duration as duration',
                 'a.remark as remark',
-                'a.created_at as created at',
+                'a.created_at as createdAt',
+                'a.updated_at as updatedAt',
             )
             ->where([
-                ['a.status', '=', 'pending'],
+                ['a.status', '=', $request->status],
             ]);
 
         if ($request->search) {
@@ -968,12 +1711,7 @@ class StaffLeaveController extends Controller
 
             DB::beginTransaction();
 
-            $checkIfDataExits = DB::table('users')
-                ->where([
-                    ['id', '=', $request->userId],
-                ])
-                ->first();
-
+            $checkIfDataExits = User::where([['id', '=', $request->userId]])->first();
 
             if ($checkIfDataExits == null) {
 
@@ -983,27 +1721,26 @@ class StaffLeaveController extends Controller
                 ]);
             } else {
 
-                $annualLeaveAllowance = DB::table('users')
-                    ->select(
-                        DB::raw("1  as id"),
-                        DB::raw("'Leave Allowance'  as leaveType"),
-                        DB::raw("CONCAT('Annual Leave' ,' ', IFNULL(annualLeaveAllowance,'0') ,' ', 'days remaining') as value"),
-                    )
+                $annualLeaveAllowance = User::select(
+                    DB::raw("1  as id"),
+                    DB::raw("'Leave Allowance'  as leaveType"),
+                    DB::raw("CONCAT('Annual Leave' ,' ', IFNULL(annualLeaveAllowance,'0') ,' ', 'days remaining') as value"),
+                )
                     ->where([
                         ['id', '=', $request->userId],
                         ['isDeleted', '=', '0']
                     ]);
 
-                $annualSickAllowance = DB::table('users')
-                    ->select(
-                        DB::raw("2  as id"),
-                        DB::raw("'Sick Allowance'  as leaveType"),
-                        DB::raw("CONCAT('Sick Leave' ,' ', IFNULL(annualSickAllowance,'0') ,' ', 'days remaining') as value"),
-                    )
+                $annualSickAllowance = User::select(
+                    DB::raw("2  as id"),
+                    DB::raw("'Sick Allowance'  as leaveType"),
+                    DB::raw("CONCAT('Sick Leave' ,' ', IFNULL(annualSickAllowance,'0') ,' ', 'days remaining') as value"),
+                )
                     ->where([
                         ['id', '=', $request->userId],
                         ['isDeleted', '=', '0']
                     ]);
+
                 $getAllowance = $annualLeaveAllowance->union($annualSickAllowance)->get();
             }
 
@@ -1047,36 +1784,34 @@ class StaffLeaveController extends Controller
 
                 if ($val->type[0] == "National holiday") {
 
-                    if (DB::table('holidays')
-                        ->where('type', $val->type[0])
+                    if (holidays::where('type', $val->type[0])
                         ->where('year', $valYear)
                         ->where('date', $val->date->iso)
                         ->exists()
                     ) {
 
-                        DB::table('holidays')
-                            ->where('type', $val->type[0])
-                            ->where('date', $val->date->iso)
-                            ->where('year', $valYear)
-                            ->update([
-                                'date' => $val->date->iso,
-                                'type' => $val->type[0],
-                                'description' => $val->name,
-                                'year' => $valYear,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
+                        Holidays::where('type', $val->type[0])
+                                ->where('date', $val->date->iso)
+                                ->where('year', $valYear)
+                                ->update([
+                                    'date' => $val->date->iso,
+                                    'type' => $val->type[0],
+                                    'description' => $val->name,
+                                    'year' => $valYear,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+
                     } else {
 
-                        DB::table('holidays')
-                            ->insert([
-                                'date' => $val->date->iso,
-                                'type' => $val->type[0],
-                                'year' => $valYear,
-                                'description' => $val->name,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
+                        holidays::insert([
+                            'date' => $val->date->iso,
+                            'type' => $val->type[0],
+                            'year' => $valYear,
+                            'description' => $val->name,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
                     }
                 }
             }
