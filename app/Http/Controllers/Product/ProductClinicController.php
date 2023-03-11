@@ -795,6 +795,7 @@ class ProductClinicController
                 'pcl.reStockLimit',
                 DB::raw('(CASE WHEN pcl.inStock = 0 THEN "NO STOCK" WHEN pcl.inStock <= pcl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
             )
+            
             ->where('pcl.productClinicId', '=', $request->id)
             ->where('pcl.isDeleted', '=', 0)
             ->first();
