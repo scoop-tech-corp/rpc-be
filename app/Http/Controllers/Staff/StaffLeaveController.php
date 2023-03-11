@@ -1077,6 +1077,23 @@ class StaffLeaveController extends Controller
             } else {
 
 
+                $data = DB::table('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
+                    ->select(
+                        'a.requesterName as requester',
+                        'b.jobName as jobName',
+                        'a.leaveType as leave type',
+                        'a.fromDate as date',
+                        'a.duration as days',
+                        'a.remark as remark',
+                        'a.created_at as created at',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                
                 $listOrder = null;
 
                 if ($rolesIndex == 1) {
@@ -1592,7 +1609,6 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-
         $data = leaveRequest::from('leaveRequest as a')
             ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
@@ -1653,7 +1669,6 @@ class StaffLeaveController extends Controller
             $temp_column = 'a.remark';
             return $temp_column;
         }
-
 
         $data = leaveRequest::from('leaveRequest as a')
             ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
