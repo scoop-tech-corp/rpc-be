@@ -1013,7 +1013,7 @@ class ProductSellController
                 );
 
                 if ($validateQuantity->fails()) {
-                    $errors = $validateQuantity->errors()->all();
+                    $errors = $validateQuantity->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -1548,6 +1548,26 @@ class ProductSellController
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => ['There is any Data not found!'],
+            ], 422);
+        }
+
+        $currentBranch = DB::table('productSells as ps')
+            ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+            ->select('psl.locationId')
+            ->where('ps.id', '=', $request->id)
+            ->first();
+
+        $findDuplicate = DB::table('productSells as ps')
+            ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+            ->select('psl.locationId')
+            ->where('ps.fullName', '=', $request->fullName)
+            ->where('psl.locationId', '=', $currentBranch->locationId)
+            ->get();
+
+        if ($findDuplicate) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Name ' . $request->fullName . ' in this branch has already exist!'],
             ], 422);
         }
 
