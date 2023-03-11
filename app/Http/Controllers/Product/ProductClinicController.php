@@ -809,7 +809,7 @@ class ProductClinicController
                 ->join('customerGroups as cg', 'pcc.customerGroupId', 'cg.id')
                 ->select(
                     'pcc.id',
-                    'cg.customerGroup',
+                    'pcc.customerGroup',
                     'cg.customerGroupId',
                     DB::raw("TRIM(pcc.price)+0 as price")
                 )
