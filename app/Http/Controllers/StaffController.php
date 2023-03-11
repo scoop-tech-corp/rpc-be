@@ -987,8 +987,6 @@ class StaffController extends Controller
             if ($request->search) {
 
                 $res = $this->Search($request);
-                echo ($res);
-                echo ("asdasd");
                 if ($res == "id") {
 
                     $data = $data->where('id', 'like', '%' . $request->search . '%');

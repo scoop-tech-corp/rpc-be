@@ -278,6 +278,22 @@ class LocationController extends Controller
                 ], 422);
             }
 
+            $checkdataLocation = DB::table('location')
+                ->select('locationName')
+                ->where([
+                    ['locationName', '=', $request->locationName],
+                    ['isDeleted', '=', '0'],
+                ])
+                ->first();
+
+
+            if ($checkdataLocation) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Location ' . $checkdataLocation->locationName . ' Already Exist on Location, please try different name !'],
+                ], 422);
+            }
+
 
             // if (ctype_digit($request->description)) {
             //     return response()->json([
@@ -479,7 +495,6 @@ class LocationController extends Controller
                             ], 422);
                         }
                     }
-
                 }
 
                 if ($data_error_messenger) {
@@ -692,7 +707,10 @@ class LocationController extends Controller
 
             $checkdataLocation = DB::table('location')
                 ->select('locationName')
-                ->where('locationName', '=', $request->locationName)
+                ->where([
+                    ['locationName', '=', $request->locationName],
+                    ['isDeleted', '=', '0'],
+                ])
                 ->first();
 
             if ($checkdataLocation) {
