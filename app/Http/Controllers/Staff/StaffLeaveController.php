@@ -675,7 +675,7 @@ class StaffLeaveController extends Controller
 
                 $defaultRowPerPage = 5;
                 $defaultOrderBy = "asc";
-
+//
                 $data = DB::table('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
                     ->select(
