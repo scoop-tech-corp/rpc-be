@@ -248,7 +248,7 @@ class ProductSellController
                 ->join('customerGroups as cg', 'psc.customerGroupId', 'cg.id')
                 ->select(
                     'psc.id as id',
-                    'cg.customerGroupId',
+                    'psc.customerGroupId',
                     'cg.customerGroup',
                     DB::raw("TRIM(psc.price)+0 as price")
                 )
