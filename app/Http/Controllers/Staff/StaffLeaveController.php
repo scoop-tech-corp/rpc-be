@@ -147,10 +147,19 @@ class StaffLeaveController extends Controller
 
             $countDays = 0;
 
+            $results = Holidays::whereBetween('date', [$start, $end])->get();
+
             while ($start <= $end) {
 
+                if ($start->isWeekday()) {
+
+                    if (!$results->contains('date', $start->toDateString())) {
+
+                        $countDays = $countDays + 1;
+                    }
+                }
+
                 $start->addDay();
-                $countDays = $countDays + 1;
             }
 
 
@@ -387,12 +396,20 @@ class StaffLeaveController extends Controller
 
             $countDays = 0;
 
+            $results = Holidays::whereBetween('date', [$start, $end])->get();
+
             while ($start <= $end) {
 
-                $start->addDay();
-                $countDays = $countDays + 1;
-            }
+                if ($start->isWeekday()) {
 
+                    if (!$results->contains('date', $start->toDateString())) {
+
+                        $countDays = $countDays + 1;
+                    }
+                }
+
+                $start->addDay();
+            }
 
             if ($countDays != $request->duration) {
 
@@ -601,7 +618,7 @@ class StaffLeaveController extends Controller
             DB::beginTransaction();
 
             $request->validate([
-                'usersId' => 'required|max:25',
+                'leaveRequestId' => 'required|max:25',
                 'status' => 'required|max:25',
             ]);
 
@@ -622,7 +639,7 @@ class StaffLeaveController extends Controller
             }
 
 
-            $leaveRequest = LeaveRequest::where('usersId', '=', $request->usersId)
+            $leaveRequest = LeaveRequest::where('id', '=', $request->leaveRequestId)
                 ->where('status', '=', 'pending')
                 ->first();
 
@@ -634,7 +651,7 @@ class StaffLeaveController extends Controller
             }
 
             $users = User::where([
-                ['id', '=', $request->usersId],
+                ['id', '=', $leaveRequest->usersId],
                 ['isDeleted', '=', '0'],
             ])->first();
 
