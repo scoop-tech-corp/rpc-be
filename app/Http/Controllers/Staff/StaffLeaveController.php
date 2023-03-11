@@ -677,7 +677,7 @@ class StaffLeaveController extends Controller
                 $defaultOrderBy = "asc";
 
                 $data = DB::table('leaveRequest as a')
-                    ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+                    ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
                     ->select(
                         'a.requesterName as requester',
                         'b.jobName as jobName',
@@ -772,7 +772,7 @@ class StaffLeaveController extends Controller
     {
 
         $data = DB::table('leaverequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
             ->select(
                 'a.requesterName as requester',
                 'b.jobName as jobName',
@@ -799,7 +799,7 @@ class StaffLeaveController extends Controller
 
 
         $data = DB::table('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
             ->select(
                 'a.requesterName as requester',
                 'b.jobName as jobName',
@@ -825,7 +825,7 @@ class StaffLeaveController extends Controller
         }
 
         $data = DB::table('leaverequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
             ->select(
                 'a.requesterName as requester',
                 'b.jobName as jobName',
@@ -851,7 +851,7 @@ class StaffLeaveController extends Controller
         }
 
         $data = DB::table('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
             ->select(
                 'a.requesterName as requester',
                 'b.jobName as jobName',
@@ -878,7 +878,7 @@ class StaffLeaveController extends Controller
 
 
         $data = DB::table('leaverequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
             ->select(
                 'a.requesterName as requester',
                 'b.jobName as jobName',
@@ -905,7 +905,7 @@ class StaffLeaveController extends Controller
 
 
         $data = DB::table('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
             ->select(
                 'a.requesterName as requester',
                 'b.jobName as jobName',
@@ -932,7 +932,7 @@ class StaffLeaveController extends Controller
 
 
         $data = DB::table('leaverequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+            ->leftjoin('jobTitle as b', 'a.jobtitle', '=', 'b.id')
             ->select(
                 'a.requesterName as requester',
                 'b.jobName as jobName',
