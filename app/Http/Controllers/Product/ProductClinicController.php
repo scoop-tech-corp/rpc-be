@@ -809,8 +809,8 @@ class ProductClinicController
                 ->join('customerGroups as cg', 'pcc.customerGroupId', 'cg.id')
                 ->select(
                     'pcc.id',
-                    'pcc.customerGroup',
-                    'cg.customerGroupId',
+                    'pcc.customerGroupId',
+                    'cg.customerGroup',
                     DB::raw("TRIM(pcc.price)+0 as price")
                 )
                 ->where('pcc.productClinicId', '=', $request->id)
@@ -998,14 +998,18 @@ class ProductClinicController
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.customerGroupId.required' => 'Customer Group is Required!',
                         '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
+                        '*.customerGroupId.distinct' => 'Cannot add duplicate Customer Group!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
 
                 if ($validateCustomer->fails()) {
-                    $errors = $validateCustomer->errors()->all();
+                    $errors = $validateCustomer->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -1033,14 +1037,18 @@ class ProductClinicController
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.locationId.required' => 'Location is Required!',
                         '*.locationId.integer' => 'Location Id Should be Integer!',
+                        '*.locationId.distinct' => 'Cannot add duplicate Location!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
 
                 if ($validatePriceLocations->fails()) {
-                    $errors = $validatePriceLocations->errors()->all();
+                    $errors = $validatePriceLocations->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -1068,15 +1076,19 @@ class ProductClinicController
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.fromQty.required' => 'From Quantity is Required!',
                         '*.fromQty.integer' => 'From Quantity Should be Integer!',
+                        '*.toQty.required' => 'To Quantity is Required!',
                         '*.toQty.integer' => 'To Quantity Should be Integer!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.string' => 'Status Should be String!'
+                        '*.status.required' => 'Status is Required!',
+                        '*.status.string' => 'Status Should be String!',
                     ]
                 );
 
                 if ($validateQuantity->fails()) {
-                    $errors = $validateQuantity->errors()->all();
+                    $errors = $validateQuantity->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -1105,7 +1117,7 @@ class ProductClinicController
             ]
         );
 
-        try {
+        // try {
 
             $weight = 0;
             if (!is_null($request->weight)) {
@@ -1327,14 +1339,14 @@ class ProductClinicController
                 ],
                 200
             );
-        } catch (Exception $th) {
-            DB::rollback();
+        // } catch (Exception $th) {
+        //     DB::rollback();
 
-            return response()->json([
-                'message' => 'Insert Failed',
-                'errors' => $th,
-            ], 422);
-        }
+        //     return response()->json([
+        //         'message' => 'Insert Failed',
+        //         'errors' => $th,
+        //     ], 422);
+        // }
     }
 
     public function updateImages(Request $request)
