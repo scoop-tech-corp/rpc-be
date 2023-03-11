@@ -795,7 +795,7 @@ class ProductClinicController
                 'pcl.reStockLimit',
                 DB::raw('(CASE WHEN pcl.inStock = 0 THEN "NO STOCK" WHEN pcl.inStock <= pcl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
             )
-            
+
             ->where('pcl.productClinicId', '=', $request->id)
             ->where('pcl.isDeleted', '=', 0)
             ->first();
@@ -810,6 +810,7 @@ class ProductClinicController
                 ->select(
                     'pcc.id',
                     'cg.customerGroup',
+                    'cg.customerGroupId',
                     DB::raw("TRIM(pcc.price)+0 as price")
                 )
                 ->where('pcc.productClinicId', '=', $request->id)
@@ -1421,7 +1422,10 @@ class ProductClinicController
                     ProductClinicImages::updateorCreate(
                         ['id' => $value['id']],
                         [
+                            'productClinicId' => $request->id,
                             'labelName' => $value['name'],
+                            'realImageName' => $tmpImages[$count]['realImageName'],
+                            'imagePath' => $tmpImages[$count]['imagePath'],
                             'userId' => $request->user()->id,
                         ]
                     );

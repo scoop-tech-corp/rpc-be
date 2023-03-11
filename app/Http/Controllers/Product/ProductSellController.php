@@ -248,6 +248,7 @@ class ProductSellController
                 ->join('customerGroups as cg', 'psc.customerGroupId', 'cg.id')
                 ->select(
                     'psc.id as id',
+                    'cg.customerGroupId',
                     'cg.customerGroup',
                     DB::raw("TRIM(psc.price)+0 as price")
                 )
@@ -1332,7 +1333,10 @@ class ProductSellController
                     ProductSellImages::updateorCreate(
                         ['id' => $value['id']],
                         [
+                            'productSellId' => $request->id,
                             'labelName' => $value['name'],
+                            'realImageName' => $tmpImages[$count]['realImageName'],
+                            'imagePath' => $tmpImages[$count]['imagePath'],
                             'userId' => $request->user()->id,
                         ]
                     );
