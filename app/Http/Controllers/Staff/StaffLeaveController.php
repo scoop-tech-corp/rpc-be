@@ -1093,95 +1093,96 @@ class StaffLeaveController extends Controller
                     ]);
 
                 if ($request->search) {
-                
-                $listOrder = null;
 
-                if ($rolesIndex == 1) {
+                    $listOrder = null;
 
-                    $data = $this->indexLeaveAdminandOffice($request);
-                } else {
-                    $data = $this->indexLeaveDoctorandStaff($request);
-                }
+                    if ($rolesIndex == 1) {
 
-
-
-                $data = DB::table($data)
-                    ->select(
-                        'requesterName',
-                        'jobName',
-                        'locationName',
-                        'leaveType',
-                        'fromDate',
-                        'duration',
-                        'remark',
-                        'createdAt',
-                    )
-                    ->orderBy('updatedAt', 'desc');
-
-                if ($request->orderValue) {
-                    $defaultOrderBy = $request->orderValue;
-                }
-
-                if ($request->orderColumn && $defaultOrderBy) {
-
-                    $listOrder = array(
-                        'requesterName',
-                        'jobName',
-                        'locationName',
-                        'leaveType',
-                        'fromDate',
-                        'duration',
-                        'remark',
-                        'createdAt',
-                    );
-
-                    if (!in_array($request->orderColumn, $listOrder)) {
-
-                        return response()->json([
-                            'result' => 'failed',
-                            'message' => 'Please try different order column',
-                            'orderColumn' => $listOrder,
-                        ]);
+                        $data = $this->indexLeaveAdminandOffice($request);
+                    } else {
+                        $data = $this->indexLeaveDoctorandStaff($request);
                     }
 
-                    if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
 
-                        return response()->json([
-                            'result' => 'failed',
-                            'message' => 'order value must Ascending: ASC or Descending: DESC ',
-                        ]);
+
+                    $data = DB::table($data)
+                        ->select(
+                            'requesterName',
+                            'jobName',
+                            'locationName',
+                            'leaveType',
+                            'fromDate',
+                            'duration',
+                            'remark',
+                            'createdAt',
+                        )
+                        ->orderBy('updatedAt', 'desc');
+
+                    if ($request->orderValue) {
+                        $defaultOrderBy = $request->orderValue;
                     }
 
-                    $data = $data->orderBy($request->orderColumn, $request->orderValue);
+                    if ($request->orderColumn && $defaultOrderBy) {
+
+                        $listOrder = array(
+                            'requesterName',
+                            'jobName',
+                            'locationName',
+                            'leaveType',
+                            'fromDate',
+                            'duration',
+                            'remark',
+                            'createdAt',
+                        );
+
+                        if (!in_array($request->orderColumn, $listOrder)) {
+
+                            return response()->json([
+                                'result' => 'failed',
+                                'message' => 'Please try different order column',
+                                'orderColumn' => $listOrder,
+                            ]);
+                        }
+
+                        if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
+
+                            return response()->json([
+                                'result' => 'failed',
+                                'message' => 'order value must Ascending: ASC or Descending: DESC ',
+                            ]);
+                        }
+
+                        $data = $data->orderBy($request->orderColumn, $request->orderValue);
+                    }
+
+                    $data = $data->orderBy('createdAt', 'desc');
+
+                    if ($request->rowPerPage > 0) {
+                        $defaultRowPerPage = $request->rowPerPage;
+                    }
+
+                    $goToPage = $request->goToPage;
+
+                    $offset = ($goToPage - 1) * $defaultRowPerPage;
+
+                    $count_data = $data->count();
+                    $count_result = $count_data - $offset;
+
+                    if ($count_result < 0) {
+                        $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+                    } else {
+                        $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+                    }
+
+                    $total_paging = $count_data / $defaultRowPerPage;
+
+                    return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
                 }
-
-                $data = $data->orderBy('createdAt', 'desc');
-
-                if ($request->rowPerPage > 0) {
-                    $defaultRowPerPage = $request->rowPerPage;
-                }
-
-                $goToPage = $request->goToPage;
-
-                $offset = ($goToPage - 1) * $defaultRowPerPage;
-
-                $count_data = $data->count();
-                $count_result = $count_data - $offset;
-
-                if ($count_result < 0) {
-                    $data = $data->offset(0)->limit($defaultRowPerPage)->get();
-                } else {
-                    $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
-                }
-
-                $total_paging = $count_data / $defaultRowPerPage;
-
-                return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
             }
         }
     }
 
-    private function SearchRequestLeaveStaffDoctor($request)
+    public function SearchRequestLeaveStaffDoctor($request)
     {
         $data = leaveRequest::from('leaveRequest as a')
             ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
@@ -1787,17 +1788,16 @@ class StaffLeaveController extends Controller
                     ) {
 
                         Holidays::where('type', $val->type[0])
-                                ->where('date', $val->date->iso)
-                                ->where('year', $valYear)
-                                ->update([
-                                    'date' => $val->date->iso,
-                                    'type' => $val->type[0],
-                                    'description' => $val->name,
-                                    'year' => $valYear,
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
-
+                            ->where('date', $val->date->iso)
+                            ->where('year', $valYear)
+                            ->update([
+                                'date' => $val->date->iso,
+                                'type' => $val->type[0],
+                                'description' => $val->name,
+                                'year' => $valYear,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
                     } else {
 
                         holidays::insert([
