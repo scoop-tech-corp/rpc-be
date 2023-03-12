@@ -994,7 +994,7 @@ class ProductClinicController
                         '*.id' => 'nullable|integer',
                         '*.customerGroupId' => 'required|integer',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
@@ -1003,7 +1003,6 @@ class ProductClinicController
                         '*.customerGroupId.distinct' => 'Cannot add duplicate Customer Group!',
                         '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
@@ -1033,7 +1032,7 @@ class ProductClinicController
                         '*.id' => 'nullable|integer',
                         '*.locationId' => 'required|integer',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
@@ -1042,7 +1041,6 @@ class ProductClinicController
                         '*.locationId.distinct' => 'Cannot add duplicate Location!',
                         '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
@@ -1072,7 +1070,7 @@ class ProductClinicController
                         '*.fromQty' => 'required|integer',
                         '*.toQty' => 'required|integer',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
@@ -1082,7 +1080,6 @@ class ProductClinicController
                         '*.toQty.integer' => 'To Quantity Should be Integer!',
                         '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!',
                     ]
                 );
@@ -1188,7 +1185,7 @@ class ProductClinicController
                     ProductClinicCategory::create(
                         [
                             'productClinicId' => $request->id,
-                            'productCategoryId' => $valCat,
+                            'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
                         ]
                     );
