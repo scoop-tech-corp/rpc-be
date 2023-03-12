@@ -1113,7 +1113,7 @@ class ProductSellController
                 ProductSellCategory::create(
                     [
                         'productSellId' => $request->id,
-                        'productCategoryId' => $valCat,
+                        'productCategoryId' => $valCat['id'],
                         'userId' => $request->user()->id,
                     ]
                 );
