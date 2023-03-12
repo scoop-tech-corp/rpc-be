@@ -44,6 +44,156 @@ class StaffLeaveController extends Controller
         }
     }
 
+    public function adjustBalance(Request $request)
+    {
+
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+
+            $validate = Validator::make(
+                $request->all(),
+                [
+                    'usersId' => 'required|integer',
+                    'balanceTypeId' => 'required|integer',
+                    'amount' => 'required|integer',
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+
+            $User =  User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->first();
+
+            if ($User == null)
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'User id not found, please try different id',
+                ], 422);
+
+
+
+            $listOrder = array(
+                1, 2, 3, 4
+            );
+
+            if (!in_array($request->balanceTypeId, $listOrder)) {
+
+                return response()->json([
+                    'result' =>  'The given data was invalid.',
+                    'message' => 'Balance type id must same within the array',
+                    'balanceTypeId' => $listOrder,
+                ]);
+            }
+
+
+            if ($request->balanceTypeId == 1) {
+
+
+
+                User::where('id', '=', $request->usersId)
+                    ->update(
+                        [
+                            'annualLeaveAllowance' => $request->amount,
+                        ],
+                    );
+            } else if ($request->balanceTypeId == 2) {
+
+                User::where('id', '=', $request->usersId)
+                    ->update(
+                        [
+                            'annualLeaveAllowanceRemaining' => $request->amount,
+                        ],
+                    );
+            } else if ($request->balanceTypeId == 3) {
+
+                User::where('id', '=', $request->usersId)
+                    ->update(
+                        [
+                            'annualSickAllowance' => $request->amount,
+                        ],
+                    );
+            } else if ($request->balanceTypeId == 4) {
+
+                User::where('id', '=', $request->usersId)
+                    ->update(
+                        [
+                            'annualSickAllowanceRemaining' => $request->amount,
+                        ],
+                    );
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'Success',
+                'message' => 'Successfully update balance user',
+            ], 200);
+            
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+    public function getDropdownBalanceType(Request $request)
+    {
+
+        try {
+
+            $array1 = array(
+                'id' => '1',
+                'balanceType' => 'Annual Leave Allowance'
+            );
+
+            $array2 = array(
+                'id' => '2',
+                'balanceType' => 'Annual Leave Allowance Remaining'
+            );
+
+            $array3 = array(
+                'id' => '3',
+                'balanceType' => 'Annual Sick Allowance'
+            );
+
+            $array4 = array(
+                'id' => '4',
+                'balanceType' => 'Annual Sick Allowance Remaining'
+            );
+
+            $combinedArray = array($array1, $array2, $array3, $array4);
+
+            return response()->json($combinedArray, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ]);
+        }
+    }
+
 
     public function adjustLeaveRequest(Request $request)
     {
@@ -727,7 +877,6 @@ class StaffLeaveController extends Controller
         }
 
         $checkOrder = null;
-
 
         if ($request->orderColumn && $defaultOrderBy) {
 

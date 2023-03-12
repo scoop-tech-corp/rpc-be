@@ -163,7 +163,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('staff/leave', [StaffLeaveController::class, 'insertLeaveStaff']);
     Route::post('staff/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
     Route::post('staff/adjustleave', [StaffLeaveController::class, 'adjustLeaveRequest']);
+    Route::put('staff/adjustbalance', [StaffLeaveController::class, 'adjustBalance']);
     Route::get('staff/leave', [StaffLeaveController::class, 'getIndexRequestLeave']);
+    Route::get('staff/balancetype', [StaffLeaveController::class, 'getDropdownBalanceType']);
     Route::get('staff/leavebalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
     Route::get('staff/exportleave', [StaffLeaveController::class, 'exportLeaveRequest']);
     Route::get('staff/exportbalance', [StaffLeaveController::class, 'exportBalance']);
