@@ -919,7 +919,7 @@ class ProductSellController
                         '*.id' => 'nullable|integer',
                         '*.customerGroupId' => 'required|integer|distinct',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
@@ -928,7 +928,6 @@ class ProductSellController
                         '*.customerGroupId.distinct' => 'Cannot add duplicate Customer Group!',
                         '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
@@ -958,7 +957,7 @@ class ProductSellController
                         '*.id' => 'nullable|integer',
                         '*.locationId' => 'required|integer|distinct',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
@@ -967,7 +966,6 @@ class ProductSellController
                         '*.locationId.distinct' => 'Cannot add duplicate Location!',
                         '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
@@ -997,7 +995,7 @@ class ProductSellController
                         '*.fromQty' => 'required|integer',
                         '*.toQty' => 'required|integer',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
@@ -1007,7 +1005,6 @@ class ProductSellController
                         '*.toQty.integer' => 'To Quantity Should be Integer!',
                         '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.required' => 'Status is Required!',
                         '*.status.string' => 'Status Should be String!',
                     ]
                 );
