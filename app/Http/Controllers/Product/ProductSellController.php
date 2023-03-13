@@ -521,8 +521,8 @@ class ProductSellController
                     $errors = $validatePriceLocations->errors()->first();
 
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => [$errors],
+                        'message' => $errors,
+                        'errors' => 'The given data was invalid.',
                     ], 422);
                 }
             } else {
