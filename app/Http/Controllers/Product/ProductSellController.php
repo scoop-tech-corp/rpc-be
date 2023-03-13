@@ -380,11 +380,16 @@ class ProductSellController
                 '*.reStockLimit' => 'required|integer',
             ],
             [
+                '*.locationId.required' => 'Location Id Should be Required!',
                 '*.locationId.integer' => 'Location Id Should be Integer!',
-                '*.inStock.integer' => 'In Stock Should be Integer!',
-                '*.lowStock.integer' => 'Low Stock Should be Integer!',
-                '*.reStockLimit.integer' => 'Restock Limit Should be Integer!',
                 '*.locationId.distinct' => 'Cannot add duplicate Location!',
+                '*.inStock.required' => 'In Stock Should be Required!',
+                '*.inStock.integer' => 'In Stock Should be Integer!',
+                '*.lowStock.required' => 'Low Stock Should be Required!',
+                '*.lowStock.integer' => 'Low Stock Should be Integer!',
+                '*.reStockLimit.required' => 'Restock Limit Should be Required!',
+                '*.reStockLimit.integer' => 'Restock Limit Should be Integer!',
+                
             ]
         );
 
