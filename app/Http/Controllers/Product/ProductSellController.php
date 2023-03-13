@@ -509,10 +509,10 @@ class ProductSellController
                     ],
                     [
                         '*.locationId.integer' => 'Location Id Should be Integer!',
-                        '*.locationId.required' => 'Location Id Should be Required!',
-                        '*.locationId.distinct' => 'Cannot add duplicate Location Id!',
-                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.locationId.required' => 'Location Should be Required!',
+                        '*.locationId.distinct' => 'Cannot add duplicate Location!',
                         '*.price.required' => 'Price Should be Required!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
 
                     ]
                 );
@@ -522,7 +522,7 @@ class ProductSellController
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
