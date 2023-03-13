@@ -413,8 +413,8 @@ class ProductSellController
 
             if ($CheckDataBranch) {
                 return response()->json([
-                    'message' => ['Product ' . $CheckDataBranch->fullName . ' Already Exist on Location ' . $CheckDataBranch->locationName . '!'],
-                    'errors' => 'The given data was invalid.',
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Product ' . $CheckDataBranch->fullName . ' Already Exist on Location ' . $CheckDataBranch->locationName . '!'],
                 ], 422);
             }
 
