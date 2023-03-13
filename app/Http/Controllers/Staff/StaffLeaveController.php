@@ -871,6 +871,10 @@ class StaffLeaveController extends Controller
             $data = $this->indexBalanceLeaveDoctorandStaff($request);
         }
 
+        if ($data == null) {
+            return response()->json(['totalPagination' => 0, 'data' => []], 200);
+        }
+
         if ($request->orderValue) {
             $defaultOrderBy = $request->orderValue;
         }
@@ -1409,8 +1413,7 @@ class StaffLeaveController extends Controller
             if ($res) {
                 $data = $data->where($res, 'like', '%' . $request->search . '%');
             } else {
-                $data = [];
-                return $data;
+                return null;
             }
         }
 
@@ -1444,8 +1447,7 @@ class StaffLeaveController extends Controller
             if ($res) {
                 $data = $data->where($res, 'like', '%' . $request->search . '%');
             } else {
-                $data = [];
-                return $data;
+                return null;
             }
         }
 
@@ -1455,7 +1457,6 @@ class StaffLeaveController extends Controller
 
     public function indexLeaveAdminandOffice(Request $request)
     {
-        $defaultOrderBy = "asc";
 
         $data = LeaveRequest::from('leaveRequest as a')
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
@@ -1498,8 +1499,7 @@ class StaffLeaveController extends Controller
             if ($res) {
                 $data = $data->where($res, 'like', '%' . $request->search . '%');
             } else {
-                $data = [];
-                return $data;
+                return null;
             }
         }
 
@@ -1539,8 +1539,7 @@ class StaffLeaveController extends Controller
             if ($res) {
                 $data = $data->where($res, 'like', '%' . $request->search . '%');
             } else {
-                $data = [];
-                return $data;
+                return null;
             }
         }
 
@@ -1744,6 +1743,12 @@ class StaffLeaveController extends Controller
                     $data = $this->indexLeaveDoctorandStaff($request);
                 }
 
+
+                if ($data == null) {
+                    return response()->json(['totalPagination' => 0, 'data' => []], 200);
+                }
+
+
                 if ($request->orderValue) {
 
                     $defaultOrderBy = $request->orderValue;
@@ -1899,17 +1904,15 @@ class StaffLeaveController extends Controller
 
 
         if ($request->search) {
-            $data = $data->where('a.jobName', 'like', '%' . $request->search . '%');
+            $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'a.jobName';
+            $temp_column = 'b.jobName';
             return $temp_column;
         }
-
-
 
 
         $data = LeaveRequest::from('leaveRequest as a')
@@ -2143,6 +2146,7 @@ class StaffLeaveController extends Controller
             $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
         }
 
+
         $data = $data->get();
 
         if (count($data)) {
@@ -2172,13 +2176,13 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.jobName', 'like', '%' . $request->search . '%');
+            $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'a.jobName';
+            $temp_column = 'b.jobName';
             return $temp_column;
         }
 

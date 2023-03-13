@@ -45,10 +45,11 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
 
             $data = DB::table('leaveRequest as a')
                 ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-                ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
                 ->select(
                     'a.id as usersId',
                     'a.requesterName as requester',
+                    'c.locationName as locationName',
                     'b.jobName as jobName',
                     'a.leaveType as leaveType',
                     'a.fromDate as date',
@@ -76,10 +77,11 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
         } else {
             $data = DB::table('leaveRequest as a')
                 ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-                ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
                 ->select(
                     'a.id as usersId',
                     'a.requesterName as requester',
+                    'c.locationName as locationName',
                     'b.jobName as jobName',
                     'a.leaveType as leaveType',
                     'a.fromDate as date',
@@ -133,13 +135,13 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
             $checkOrder = true;
         }
 
-info("asdasdada");
         if ($checkOrder == true) {
 
             $data = DB::table($data)
                 ->select(
                     'requester',
                     'jobName',
+                    'locationName',
                     'leaveType',
                     'date',
                     'days',
@@ -154,6 +156,7 @@ info("asdasdada");
                 ->select(
                     'requester',
                     'jobName',
+                    'locationName',
                     'leaveType',
                     'date',
                     'days',
@@ -179,13 +182,14 @@ info("asdasdada");
         return [
             [
                 'No.',
-                'Requester',
-                'Job Name',
-                'Leave Type',
-                'Date',
-                'Days',
-                'Remark',
-                'Created At'
+                'Pemohon',
+                'Jabatan',
+                'Lokasi',
+                'Tipe Cuti',
+                'Tanggal Cuti',
+                'Hari',
+                'Keterangan',
+                'Dibuat Pada'
             ],
         ];
     }
@@ -203,6 +207,7 @@ info("asdasdada");
                 $item->number,
                 $item->requester,
                 $item->jobName,
+                $item->locationName,
                 $item->leaveType,
                 $item->date,
                 $item->days,
