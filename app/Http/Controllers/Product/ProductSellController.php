@@ -347,15 +347,15 @@ class ProductSellController
             $errors = $validate->errors()->all();
 
             return response()->json([
-                'message' => $errors,
-                'errors' => 'The given data was invalid.',
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
             ], 422);
         }
 
         if ($request->isOfficeApproval == 'false' && $request->isAdminApproval == 'false') {
             return response()->json([
-                'message' => ['Office Approval or Admin Approval cannot false'],
-                'errors' => 'The given data was invalid.',
+                'message' => 'The given data was invalid.',
+                'errors' => ['Office Approval or Admin Approval cannot false'],
             ], 422);
         }
 
@@ -396,8 +396,8 @@ class ProductSellController
             $errors = $validateLocation->errors()->first();
 
             return response()->json([
-                'message' => $errors,
-                'errors' => 'The given data was invalid.',
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
             ], 422);
         }
 
@@ -916,8 +916,8 @@ class ProductSellController
             $errors = $validateLocation->errors()->all();
 
             return response()->json([
-                'message' => $errors,
-                'errors' => 'The given data was invalid.',
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
             ], 422);
         }
 
