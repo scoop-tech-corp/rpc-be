@@ -394,7 +394,7 @@ class ProductSellController
 
         if ($validateLocation->fails()) {
             $errors = $validateLocation->errors()->first();
-            
+
             return response()->json([
                 'message' => $errors,
                 'errors' => 'The given data was invalid.',
@@ -424,8 +424,8 @@ class ProductSellController
 
             if (!$checkLocation) {
                 return response()->json([
-                    'message' => ['There is any location on system that is no recorded'],
-                    'errors' => 'The given data was invalid.',
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any location on system that is no recorded'],
                 ], 422);
             }
         }
@@ -455,8 +455,8 @@ class ProductSellController
                 $errors = $validateReminders->errors()->first();
 
                 return response()->json([
-                    'message' => $errors,
-                    'errors' => 'The given data was invalid.',
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
                 ], 422);
             }
         }
@@ -489,14 +489,14 @@ class ProductSellController
                     $errors = $validateCustomer->errors()->first();
 
                     return response()->json([
-                        'message' => $errors,
-                        'errors' => 'The given data was invalid.',
+                        'message' => 'The given data was invalid.',
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
                 return response()->json([
-                    'message' => ['Customer Group can not be empty!'],
-                    'errors' => 'The given data was invalid.',
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Customer Group can not be empty!'],
                 ], 422);
             }
         } else if ($request->pricingStatus == "PriceLocations") {
@@ -525,14 +525,14 @@ class ProductSellController
                     $errors = $validatePriceLocations->errors()->first();
 
                     return response()->json([
-                        'message' => $errors,
-                        'errors' => 'The given data was invalid.',
+                        'message' => 'The given data was invalid.',
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
                 return response()->json([
-                    'message' => ['Price Location can not be empty!'],
-                    'errors' => 'The given data was invalid.',
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Price Location can not be empty!'],
                 ], 422);
             }
         } else if ($request->pricingStatus == "Quantities") {
@@ -561,14 +561,14 @@ class ProductSellController
                     $errors = $validateQuantity->errors()->first();
 
                     return response()->json([
-                        'message' => $errors,
-                        'errors' => 'The given data was invalid.',
+                        'message' => 'The given data was invalid.',
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
                 return response()->json([
-                    'message' => ['Quantity can not be empty!'],
-                    'errors' => 'The given data was invalid.',
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Quantity can not be empty!'],
                 ], 422);
             }
         }
