@@ -235,11 +235,15 @@ class ProductClinicController
                 '*.reStockLimit' => 'required|integer',
             ],
             [
+                '*.locationId.required' => 'Location Id Should be Required!',
                 '*.locationId.integer' => 'Location Id Should be Integer!',
-                '*.inStock.integer' => 'In Stock Should be Integer',
-                '*.lowStock.integer' => 'Low Stock Should be Integer',
-                '*.reStockLimit.integer' => 'Restock Limit Should be Integer',
                 '*.locationId.distinct' => 'Cannot add duplicate Location!',
+                '*.inStock.integer' => 'In Stock Should be Integer',
+                '*.inStock.required' => 'In Stock Should be Required',
+                '*.lowStock.required' => 'Low Stock Should be Integer',
+                '*.lowStock.integer' => 'Low Stock Should be Integer',
+                '*.reStockLimit.required' => 'Restock Limit Should be Required',
+                '*.reStockLimit.integer' => 'Restock Limit Should be Integer',
             ]
         );
 
@@ -293,9 +297,12 @@ class ProductClinicController
                     '*.status' => 'required|string',
                 ],
                 [
+                    '*.unit.required' => 'Unit Should be Required!',
                     '*.unit.integer' => 'Unit Should be Integer!',
+                    '*.timing.required' => 'Timing Should be Required',
                     '*.timing.string' => 'Timing Should be String',
-                    '*.status.string' => 'Status Should be String'
+                    '*.status.required' => 'Status Should be Required',
+                    '*.status.string' => 'Status Should be String',
                 ]
             );
 
@@ -322,9 +329,13 @@ class ProductClinicController
                     '*.unit' => 'required|string',
                 ],
                 [
+                    '*.from.required' => 'From Weight Should be Required!',
                     '*.from.integer' => 'From Weight Should be Integer!',
+                    '*.to.required' => 'To Weight Should be Required!',
                     '*.to.integer' => 'To Weight Should be Integer!',
+                    '*.dosage.required' => 'Dosage Should be Required!',
                     '*.dosage.numeric' => 'Dosage Should be Numeric!',
+                    '*.unit.required' => 'Unit Should be Required!',
                     '*.unit.string' => 'Unit Should be String!',
                 ]
             );
@@ -371,9 +382,12 @@ class ProductClinicController
                         '*.price' => 'required|numeric',
                     ],
                     [
+                        '*.customerGroupId.required' => 'Customer Group Id Should be Required!',
                         '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!',
                         '*.customerGroupId.distinct' => 'Cannot add duplicate Customer!',
+                        '*.price.required' => 'Price Should be Required!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+
                     ]
                 );
 
@@ -399,13 +413,16 @@ class ProductClinicController
                 $validatePriceLocations = Validator::make(
                     $ResultPriceLocations,
                     [
-                        'priceLocations.*.locationId' => 'required|integer|distinct',
-                        'priceLocations.*.price' => 'required|numeric',
+                        '*.locationId' => 'required|integer|distinct',
+                        '*.price' => 'required|numeric',
                     ],
                     [
+                        '*.locationId.required' => 'Location Id Should be Required!',
                         '*.locationId.integer' => 'Location Id Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!',
                         '*.locationId.distinct' => 'Cannot add duplicate Location Id!',
+                        '*.price.required' => 'Price Should be Required!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+
                     ]
                 );
 
@@ -431,14 +448,17 @@ class ProductClinicController
                 $validateQuantity = Validator::make(
                     $ResultQuantities,
                     [
-                        'quantities.*.fromQty' => 'required|integer',
-                        'quantities.*.toQty' => 'required|integer',
-                        'quantities.*.price' => 'required|numeric',
+                        '*.fromQty' => 'required|integer',
+                        '*.toQty' => 'required|integer',
+                        '*.price' => 'required|numeric',
                     ],
                     [
+                        '*.fromQty.required' => 'From Quantity Should be Required!',
                         '*.fromQty.integer' => 'From Quantity Should be Integer!',
+                        '*.toQty.required' => 'To Quantity Should be Required!',
                         '*.toQty.integer' => 'To Quantity Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!'
+                        '*.price.required' => 'Price Should be Required!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
                     ]
                 );
 
@@ -1114,7 +1134,7 @@ class ProductClinicController
             ]
         );
 
-        // try {
+        try {
 
             $weight = 0;
             if (!is_null($request->weight)) {
@@ -1336,14 +1356,14 @@ class ProductClinicController
                 ],
                 200
             );
-        // } catch (Exception $th) {
-        //     DB::rollback();
+        } catch (Exception $th) {
+            DB::rollback();
 
-        //     return response()->json([
-        //         'message' => 'Insert Failed',
-        //         'errors' => $th,
-        //     ], 422);
-        // }
+            return response()->json([
+                'message' => 'Insert Failed',
+                'errors' => $th,
+            ], 422);
+        }
     }
 
     public function updateImages(Request $request)

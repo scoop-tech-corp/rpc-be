@@ -439,8 +439,11 @@ class ProductSellController
                 ],
                 [
                     '*.unit.integer' => 'Unit Should be Integer!',
-                    '*.timing.string' => 'Timing Should be String',
-                    '*.status.string' => 'Status Should be String'
+                    '*.unit.required' => 'Unit Should be Required!',
+                    '*.timing.string' => 'Timing Should be String!',
+                    '*.timing.required' => 'Timing Should be Required!',
+                    '*.status.string' => 'Status Should be String!',
+                    '*.status.required' => 'Status Should be Required!',
                 ]
             );
 
@@ -469,9 +472,12 @@ class ProductSellController
                         '*.price' => 'required|numeric',
                     ],
                     [
+                        '*.customerGroupId.required' => 'Customer Group Id Should be Required!',
                         '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!',
                         '*.customerGroupId.distinct' => 'Cannot add duplicate Customer!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.price.required' => 'Price Should be Required!',
+
                     ]
                 );
 
@@ -495,18 +501,19 @@ class ProductSellController
 
                 $ResultPriceLocations = json_decode($request->priceLocations, true);
 
-
                 $validatePriceLocations = Validator::make(
                     $ResultPriceLocations,
                     [
-
-                        'priceLocations.*.locationId' => 'required|integer|distinct',
-                        'priceLocations.*.price' => 'required|numeric',
+                        '*.locationId' => 'required|integer|distinct',
+                        '*.price' => 'required|numeric',
                     ],
                     [
                         '*.locationId.integer' => 'Location Id Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.locationId.required' => 'Location Id Should be Required!',
                         '*.locationId.distinct' => 'Cannot add duplicate Location Id!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.price.required' => 'Price Should be Required!',
+
                     ]
                 );
 
@@ -532,15 +539,17 @@ class ProductSellController
                 $validateQuantity = Validator::make(
                     $ResultQuantities,
                     [
-
-                        'quantities.*.fromQty' => 'required|integer',
-                        'quantities.*.toQty' => 'required|integer',
-                        'quantities.*.price' => 'required|numeric',
+                        '*.fromQty' => 'required|integer',
+                        '*.toQty' => 'required|integer',
+                        '*.price' => 'required|numeric',
                     ],
                     [
+                        '*.fromQty.required' => 'From Quantity Should be Required!',
                         '*.fromQty.integer' => 'From Quantity Should be Integer!',
+                        '*.toQty.required' => 'To Quantity Should be Required!',
                         '*.toQty.integer' => 'To Quantity Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!'
+                        '*.price.required' => 'Price Should be Required!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
                     ]
                 );
 
@@ -1559,6 +1568,7 @@ class ProductSellController
             ->select('psl.locationId')
             ->where('ps.fullName', '=', $request->fullName)
             ->where('psl.locationId', '=', $currentBranch->locationId)
+            ->where('ps.isDeleted', '=', 0)
             ->get();
 
         if ($findDuplicate) {
