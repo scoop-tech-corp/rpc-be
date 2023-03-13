@@ -144,7 +144,6 @@ class StaffLeaveController extends Controller
                 'result' => 'Success',
                 'message' => 'Successfully update balance user',
             ], 200);
-            
         } catch (Exception $e) {
 
             DB::rollback();
@@ -912,6 +911,7 @@ class StaffLeaveController extends Controller
 
             $data = DB::table($data)
                 ->select(
+                    'usersId',
                     'name',
                     'annualLeaveAllowance',
                     'annualLeaveAllowanceRemaining',
@@ -924,6 +924,7 @@ class StaffLeaveController extends Controller
 
             $data = DB::table($data)
                 ->select(
+                    'usersId',
                     'name',
                     'annualLeaveAllowance',
                     'annualLeaveAllowanceRemaining',
@@ -963,6 +964,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -989,6 +991,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1015,6 +1018,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1040,6 +1044,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1065,6 +1070,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1096,6 +1102,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1123,6 +1130,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1150,6 +1158,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1176,6 +1185,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1202,6 +1212,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1248,27 +1259,34 @@ class StaffLeaveController extends Controller
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
 
-            if ($request->locationId) {
+            if ($rolesIndex == 1) {
 
-                $location = DB::table('location')
-                    ->select('locationName')
-                    ->whereIn('id', $request->locationId)
-                    ->get();
+                if ($request->locationId) {
 
-                if ($location) {
+                    $location = DB::table('location')
+                        ->select('locationName')
+                        ->whereIn('id', $request->locationId)
+                        ->get();
 
-                    foreach ($location as $key) {
-                        $tmp = $tmp . (string) $key->locationName . ",";
+                    if ($location) {
+
+                        foreach ($location as $key) {
+                            $tmp = $tmp . (string) $key->locationName . ",";
+                        }
                     }
+                    $tmp = rtrim($tmp, ", ");
                 }
-                $tmp = rtrim($tmp, ", ");
+
+                if ($tmp == "") {
+                    $fileName = "Leave Request " . $date . ".xlsx";
+                } else {
+                    $fileName = "Leave Request " . $tmp . " " . $date . ".xlsx";
+                }
+            } else {
+
+                $fileName = "Leave Request " . $date . ".xlsx";
             }
 
-            if ($tmp == "") {
-                $fileName = "Leave Request " . $date . ".xlsx";
-            } else {
-                $fileName = "Leave Request " . $tmp . " " . $date . ".xlsx";
-            }
 
             return Excel::download(
                 new exportStaffLeave(
@@ -1303,36 +1321,40 @@ class StaffLeaveController extends Controller
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
 
-            if ($request->locationId) {
+            if ($rolesIndex == 1) {
 
-                $location = DB::table('location')
-                    ->select('locationName')
-                    ->whereIn('id', $request->locationId)
-                    ->get();
+                if ($request->locationId) {
 
-                if ($location) {
+                    $location = DB::table('location')
+                        ->select('locationName')
+                        ->whereIn('id', $request->locationId)
+                        ->get();
 
-                    foreach ($location as $key) {
-                        $tmp = $tmp . (string) $key->locationName . ",";
+                    if ($location) {
+
+                        foreach ($location as $key) {
+                            $tmp = $tmp . (string) $key->locationName . ",";
+                        }
                     }
+                    $tmp = rtrim($tmp, ", ");
                 }
-                $tmp = rtrim($tmp, ", ");
-            }
 
-            if ($tmp == "") {
-                $fileName = "Leave Request " . $date . ".xlsx";
+                if ($tmp == "") {
+                    $fileName = "Balance Allowance" . $date . ".xlsx";
+                } else {
+                    $fileName = "Balance Allowance " . $tmp . " " . $date . ".xlsx";
+                }
             } else {
-                $fileName = "Leave Request " . $tmp . " " . $date . ".xlsx";
-            }
 
-            $fileName = "Leave Balace " . $date . ".xlsx";
+                $fileName = "Balance Allowance " . $date . ".xlsx";
+            }
 
             return Excel::download(
                 new exportBalance(
                     $request->orderValue,
                     $request->orderColumn,
-                    $request->user()->id,
                     $rolesIndex,
+                    $request->user()->id,
                     $request->locationId,
                 ),
                 $fileName
@@ -1354,6 +1376,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId', //add by danny wahyudi
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1401,6 +1424,7 @@ class StaffLeaveController extends Controller
         $data = User::from('users as a')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
                 'a.annualLeaveAllowanceRemaining as annualLeaveAllowanceRemaining',
@@ -1412,20 +1436,6 @@ class StaffLeaveController extends Controller
                 ['a.isDeleted', '=', '0'],
                 ['a.id', '=', $request->user()->id],
             ]);
-
-        if ($request->locationId) {
-
-            $val = [];
-
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationId', $request->locationId);
-            }
-        }
-
 
         if ($request->search) {
 
@@ -1451,6 +1461,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -1504,6 +1515,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -1520,21 +1532,6 @@ class StaffLeaveController extends Controller
                 ['a.usersId', '=', $request->user()->id],
             ]);
 
-
-        if ($request->locationId) {
-
-            $val = [];
-
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationId', $request->locationId);
-            }
-        }
-
-
         if ($request->search) {
 
             $res = $this->SearchRequestLeaveStaffDoctor($request);
@@ -1546,18 +1543,6 @@ class StaffLeaveController extends Controller
                 return $data;
             }
         }
-
-        $data = DB::table($data)
-            ->select(
-                'requesterName',
-                'jobName',
-                'locationName',
-                'leaveType',
-                'fromDate',
-                'duration',
-                'remark',
-                'createdAt',
-            );
 
         return $data;
     }
@@ -1804,6 +1789,7 @@ class StaffLeaveController extends Controller
 
                     $data = DB::table($data)
                         ->select(
+                            'leaveRequestId',
                             'requesterName',
                             'jobName',
                             'locationName',
@@ -1819,6 +1805,7 @@ class StaffLeaveController extends Controller
 
                     $data = DB::table($data)
                         ->select(
+                            'leaveRequestId',
                             'requesterName',
                             'jobName',
                             'locationName',
@@ -1861,6 +1848,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -1877,7 +1865,6 @@ class StaffLeaveController extends Controller
                 ['a.usersId', '=', $request->user()->id],
             ]);
 
-
         if ($request->search) {
             $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
         }
@@ -1889,12 +1876,11 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-
-
         $data = LeaveRequest::from('leaveRequest as a')
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -1930,6 +1916,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -1963,6 +1950,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -1997,6 +1985,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2030,6 +2019,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2063,6 +2053,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2095,6 +2086,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2131,6 +2123,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2162,6 +2155,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2192,6 +2186,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2223,6 +2218,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2253,6 +2249,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2283,6 +2280,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2314,6 +2312,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',
@@ -2344,6 +2343,7 @@ class StaffLeaveController extends Controller
             ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
             ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
             ->select(
+                'a.id as leaveRequestId', //add by danny wahyudi
                 'a.requesterName as requesterName',
                 'b.jobName as jobName',
                 'c.locationName as locationName',

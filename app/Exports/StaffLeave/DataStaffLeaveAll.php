@@ -47,6 +47,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
                 ->select(
+                    'a.id as usersId',
                     'a.requesterName as requester',
                     'b.jobName as jobName',
                     'a.leaveType as leaveType',
@@ -77,6 +78,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
                 ->select(
+                    'a.id as usersId',
                     'a.requesterName as requester',
                     'b.jobName as jobName',
                     'a.leaveType as leaveType',
@@ -88,7 +90,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 )
                 ->where([
                     ['a.status', '=', $this->status],
-                    ['a.usersId', '=', $this->userId],
+                    ['a.id', '=', $this->userId],
                 ]);
         }
 
@@ -131,7 +133,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
             $checkOrder = true;
         }
 
-
+info("asdasdada");
         if ($checkOrder == true) {
 
             $data = DB::table($data)

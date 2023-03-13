@@ -20,6 +20,8 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
     protected $userId;
     protected $locationId;
 
+
+
     public function __construct($orderValue, $orderColumn, $rolesIndex, $userId, $locationId)
     {
         $this->orderValue = $orderValue;
@@ -77,7 +79,7 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
                 )
                 ->where([
                     ['a.isDeleted', '=', '0'],
-                    ['a.usersId', '=', $this->userId],
+                    ['a.id', '=', $this->userId],
                 ]);
         }
 
@@ -86,7 +88,7 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
         }
 
         $checkOrder = null;
-        
+
         if ($this->orderColumn && $defaultOrderBy) {
 
             $listOrder = array(
@@ -113,10 +115,10 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
                 ]);
             }
 
-            //   $data = $data->orderBy($this->orderColumn, $defaultOrderBy);
-
             $checkOrder = true;
         }
+
+
 
         if ($checkOrder == true) {
 
@@ -144,9 +146,6 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
                 ->orderBy('updated_at', 'desc')
                 ->get();
         }
-
-
-
 
         $val = 1;
         foreach ($data as $key) {
