@@ -1496,7 +1496,7 @@ class ProductSellController
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
 
-        if ($request->locationId) {
+        if (empty($request->locationId)) {
 
             $location = DB::table('location')
                 ->select('locationName')
