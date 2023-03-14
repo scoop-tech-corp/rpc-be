@@ -47,7 +47,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
                 ->select(
-                    'a.id as usersId',
+                    'a.id as leaveRequestId',
                     'a.requesterName as requester',
                     'c.locationName as locationName',
                     'b.jobName as jobName',
@@ -79,7 +79,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
                 ->select(
-                    'a.id as usersId',
+                    'a.id as leaveRequestId',
                     'a.requesterName as requester',
                     'c.locationName as locationName',
                     'b.jobName as jobName',
@@ -92,7 +92,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 )
                 ->where([
                     ['a.status', '=', $this->status],
-                    ['a.id', '=', $this->userId],
+                    ['a.usersId', '=', $this->userId],
                 ]);
         }
 

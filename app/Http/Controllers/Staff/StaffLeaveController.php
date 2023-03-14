@@ -182,22 +182,22 @@ class StaffLeaveController extends Controller
         try {
 
             $array1 = array(
-                'id' => '1',
+                'balanceTypeId' => '1',
                 'balanceType' => 'Annual Leave Allowance'
             );
 
             $array2 = array(
-                'id' => '2',
+                'balanceTypeId' => '2',
                 'balanceType' => 'Annual Leave Allowance Remaining'
             );
 
             $array3 = array(
-                'id' => '3',
+                'balanceTypeId' => '3',
                 'balanceType' => 'Annual Sick Allowance'
             );
 
             $array4 = array(
-                'id' => '4',
+                'balanceTypeId' => '4',
                 'balanceType' => 'Annual Sick Allowance Remaining'
             );
 
