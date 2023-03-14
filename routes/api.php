@@ -170,6 +170,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('staff/exportleave', [StaffLeaveController::class, 'exportLeaveRequest']);
     Route::get('staff/exportbalance', [StaffLeaveController::class, 'exportBalance']);
     Route::get('staff/allactive', [StaffLeaveController::class, 'getAllStaffActive']);
+    Route::get('staff/staffid', [StaffLeaveController::class, 'getUsersId']);
     Route::put('staff/approveall', [StaffLeaveController::class, 'approveAll']);
     Route::put('staff/rejectall', [StaffLeaveController::class, 'rejectAll']);
     

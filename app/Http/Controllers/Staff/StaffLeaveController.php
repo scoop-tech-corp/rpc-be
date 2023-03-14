@@ -21,7 +21,30 @@ class StaffLeaveController extends Controller
     private $api_key;
     private $country;
 
+	public function getUsersId(Request $request)
+	{
+		try {
 
+			$getUser = User::select(
+                'id as usersId',
+                DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name"),
+            )->where('id', $request->user()->id)
+             ->where('isDeleted', '0')
+             ->get();
+			
+			return response()->json($getUser, 200);
+			
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+			
+        }
+
+	}
+	
     public function getAllStaffActive(Request $request)
     {
 
@@ -215,7 +238,7 @@ class StaffLeaveController extends Controller
                     'leaveType' => 'required|string',
                     'fromDate' => 'required|date_format:Y-m-d',
                     'toDate' => 'required|date_format:Y-m-d',
-                    'duration' => 'required|integer',
+                    'totalDays' => 'required|integer',
                     'workingDays' => 'required',
                     'remark' => 'required|string',
 
@@ -312,7 +335,7 @@ class StaffLeaveController extends Controller
             }
 
 
-            if ($countDays != $request->duration) {
+            if ($countDays != $request->totalDays) {
 
                 return response()->json([
                     'result' => 'Failed',
@@ -365,7 +388,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->duration > $sickallowance) {
+                    if ($request->totalDays > $sickallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -383,7 +406,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->duration > $leaveallowance) {
+                    if ($request->totalDays > $leaveallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -426,7 +449,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $request->duration;
+                $staffLeave->duration = $request->totalDays;
                 $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
@@ -463,7 +486,7 @@ class StaffLeaveController extends Controller
                     'leaveType' => 'required|string',
                     'fromDate' => 'required|date_format:Y-m-d|after_or_equal:today',
                     'toDate' => 'required|date_format:Y-m-d',
-                    'duration' => 'required|integer',
+                    'totalDays' => 'required|integer',
                     'workingDays' => 'required',
                     'remark' => 'required|string',
 
@@ -560,7 +583,7 @@ class StaffLeaveController extends Controller
                 $start->addDay();
             }
 
-            if ($countDays != $request->duration) {
+            if ($countDays != $request->totalDays) {
 
                 return response()->json([
                     'result' => 'Failed',
@@ -613,7 +636,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->duration > $sickallowance) {
+                    if ($request->totalDays > $sickallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -631,7 +654,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->duration > $leaveallowance) {
+                    if ($request->totalDays > $leaveallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -674,7 +697,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $request->duration;
+                $staffLeave->duration = $request->totalDays;
                 $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
@@ -686,6 +709,7 @@ class StaffLeaveController extends Controller
                     'result' => 'Success',
                     'message' => 'Successfully input request leave',
                 ], 200);
+				
             }
         } catch (Exception $e) {
 
@@ -737,7 +761,7 @@ class StaffLeaveController extends Controller
 
             return response()->json(
                 [
-                    'workDays' => $nameDays,
+                    'workingDays' => $nameDays,
                     'totalDays' => $totalDays,
                 ],
                 200
@@ -2380,12 +2404,12 @@ class StaffLeaveController extends Controller
         try {
 
             $request->validate([
-                'userId' => 'required|max:25',
+                'usersId' => 'required|max:25',
             ]);
 
             DB::beginTransaction();
 
-            $checkIfDataExits = User::where([['id', '=', $request->userId]])->first();
+            $checkIfDataExits = User::where([['id', '=', $request->usersId]])->first();
 
             if ($checkIfDataExits == null) {
 
@@ -2401,7 +2425,7 @@ class StaffLeaveController extends Controller
                     DB::raw("CONCAT('Annual Leave' ,' ', IFNULL(annualLeaveAllowance,'0') ,' ', 'days remaining') as value"),
                 )
                     ->where([
-                        ['id', '=', $request->userId],
+                        ['id', '=', $request->usersId],
                         ['isDeleted', '=', '0']
                     ]);
 
@@ -2411,7 +2435,7 @@ class StaffLeaveController extends Controller
                     DB::raw("CONCAT('Sick Leave' ,' ', IFNULL(annualSickAllowance,'0') ,' ', 'days remaining') as value"),
                 )
                     ->where([
-                        ['id', '=', $request->userId],
+                        ['id', '=', $request->usersId],
                         ['isDeleted', '=', '0']
                     ]);
 
