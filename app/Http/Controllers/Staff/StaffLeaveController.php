@@ -2480,7 +2480,7 @@ class StaffLeaveController extends Controller
                 $annualLeaveAllowance = User::select(
                     DB::raw("1  as id"),
                     DB::raw("'Leave Allowance'  as leaveType"),
-                    DB::raw("CONCAT('Annual Leave' ,' ', IFNULL(annualLeaveAllowance,'0') ,' ', 'days remaining') as value"),
+                    DB::raw("CONCAT('Annual Leave' ,' ', IFNULL(annualLeaveAllowanceRemaining,'0') ,' ', 'days remaining') as value"),
                 )
                     ->where([
                         ['id', '=', $request->usersId],
@@ -2490,7 +2490,7 @@ class StaffLeaveController extends Controller
                 $annualSickAllowance = User::select(
                     DB::raw("2  as id"),
                     DB::raw("'Sick Allowance'  as leaveType"),
-                    DB::raw("CONCAT('Sick Leave' ,' ', IFNULL(annualSickAllowance,'0') ,' ', 'days remaining') as value"),
+                    DB::raw("CONCAT('Sick Leave' ,' ', IFNULL(annualSickAllowanceRemaining,'0') ,' ', 'days remaining') as value"),
                 )
                     ->where([
                         ['id', '=', $request->usersId],
