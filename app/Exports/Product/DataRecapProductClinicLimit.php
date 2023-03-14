@@ -53,7 +53,9 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
             ->where('pc.isDeleted', '=', 0)
             ->where('pcl.diffStock', '<=', 0);
 
-        if ($this->locationId) {
+        $locations = $this->locationId;
+
+        if (!$locations == null) {
 
             $data = $data->whereIn('loc.id', $this->locationId);
         }

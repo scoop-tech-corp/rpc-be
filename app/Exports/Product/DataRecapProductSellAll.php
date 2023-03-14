@@ -52,7 +52,9 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
             )
             ->where('ps.isDeleted', '=', 0);
 
-        if ($this->locationId) {
+        $locations = $this->locationId;
+
+        if (!$locations[0] == null) {
 
             $data = $data->whereIn('loc.id', $this->locationId);
         }
