@@ -847,12 +847,26 @@ class StaffLeaveController extends Controller
 
             if (strtolower($request->status) == "approve") {
 
-                $totalsisaCuti = $users->annualLeaveAllowanceRemaining - $leaveRequest->duration;
-
                 if (str_contains($leaveRequest->leaveType, "sick")) {
-                    $users->annualSickAllowanceRemaining =  $totalsisaCuti;
+
+                    if (($leaveRequest->duration) > ($users->annualSickAllowanceRemaining)) {
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'Invalid input, your sick leave remaining ' . $users->annualSickAllowanceRemaining,
+                        ], 422);
+                    } else {
+                        $users->annualSickAllowanceRemaining =  $users->annualSickAllowanceRemaining - $leaveRequest->duration;
+                    }
                 } else {
-                    $users->annualLeaveAllowanceRemaining =  $totalsisaCuti;
+
+                    if (($leaveRequest->duration) > ($users->annualLeaveAllowanceRemaining)) {
+                        return response()->json([
+                            'result' => 'Failed',
+                            'message' => 'Invalid input, your leave allowance remaining ' . $users->annualLeaveAllowanceRemaining,
+                        ], 422);
+                    } else {
+                        $users->annualLeaveAllowanceRemaining =  $users->annualLeaveAllowanceRemaining - $leaveRequest->duration;
+                    }
                 }
             }
             $leaveRequest->save();
@@ -1620,6 +1634,54 @@ class StaffLeaveController extends Controller
 
             foreach ($request->leaveRequestId as $val) {
 
+                $leaveRequest = LeaveRequest::where('id', '=', $request->leaveRequestId)
+                    ->where('status', '=', 'pending')
+                    ->first();
+
+                if ($leaveRequest == null) {
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'Leave request not found, please try different id',
+                    ], 422);
+                }
+
+                $users = User::where([
+                    ['id', '=', $leaveRequest->usersId],
+                    ['isDeleted', '=', '0'],
+                ])->first();
+
+                if ($users == null) {
+
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'Users not found, please try different id',
+                    ], 422);
+                }
+
+                if (str_contains($leaveRequest->leaveType, "sick")) {
+
+                    if (($leaveRequest->duration) > ($users->annualSickAllowanceRemaining)) {
+
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'User Id ' . $leaveRequest->usersId . ' , with request sick leave id ' .  $request->leaveRequestId . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining'
+                        ], 422);
+                    } else {
+                        $users->annualSickAllowanceRemaining = $users->annualSickAllowanceRemaining  - $leaveRequest->duration;
+                    }
+                } else {
+
+                    if (($leaveRequest->duration) > ($users->annualLeaveAllowanceRemaining)) {
+
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'User Id ' . $leaveRequest->usersId . ' , with request leave id ' .  $request->leaveRequestId . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining'
+                        ], 422);
+                    } else {
+                        $users->annualLeaveAllowanceRemaining = $users->annualLeaveAllowanceRemaining  - $leaveRequest->duration;
+                    }
+                }
+
                 LeaveRequest::where('id', '=', $val)
                     ->update(
                         [
@@ -1628,7 +1690,7 @@ class StaffLeaveController extends Controller
                             'approveOrRejectedDate' => now()
                         ],
                     );
-
+                $users->save();
                 DB::commit();
             }
 
@@ -1644,6 +1706,7 @@ class StaffLeaveController extends Controller
             ], 422);
         }
     }
+
 
 
     public function rejectAll(Request $request)
