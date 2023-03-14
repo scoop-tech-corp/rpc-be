@@ -585,21 +585,27 @@ class ProductInventoryController
                 '*.itemCondition' => 'required|string',
             ],
             [
+                '*.productType.required' => 'Product Type Should be Required!',
                 '*.productType.string' => 'Product Type Should be String!',
+                '*.productId.required' => 'Product Id Should be Required',
                 '*.productId.integer' => 'Product Id Should be Integer',
+                '*.usage.required' => 'Usage Should be Required',
                 '*.usage.integer' => 'Usage Should be Integer',
+                '*.quantity.required' => 'Quantity Should be Required',
                 '*.quantity.integer' => 'Quantity Should be Integer',
+                '*.dateCondition.required' => 'Quantity Should be Required',
                 '*.dateCondition.date' => 'Quantity Should be Date',
-                '*.itemCondition.string' => 'Quantity Should be Integer'
+                '*.itemCondition.required' => 'Quantity Should be Required',
+                '*.itemCondition.string' => 'Quantity Should be String',
             ]
         );
 
         if ($validateProducts->fails()) {
-            $errors = $validateProducts->errors()->all();
+            $errors = $validateProducts->errors()->first();
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'errors' => [$errors],
             ], 422);
         }
 
@@ -719,7 +725,145 @@ class ProductInventoryController
 
     public function update(Request $request)
     {
-        
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer|',
+            'requirementName' => 'required|string|max:30',
+            'locationId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $product = ProductInventory::where('id', '=', $request->id)
+            ->where('isDeleted', '=', 0)->get();
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Product inventory does not exist'],
+            ], 422);
+        }
+
+        $ResultProducts = null;
+
+        if ($request->listProducts) {
+            $ResultProducts = $request->listProducts;
+        }
+
+        $validateProducts = Validator::make(
+            $ResultProducts,
+            [
+                '*.productType' => 'required|string',
+                '*.productId' => 'required|integer',
+                '*.usageId' => 'required|integer',
+                '*.quantity' => 'required|integer',
+                '*.dateCondition' => 'required|date',
+                '*.itemCondition' => 'required|string',
+                '*.status' => 'nullable|string',
+            ],
+            [
+                '*.productType.required' => 'Product Type is Required!',
+                '*.productType.string' => 'Product Type Should be String!',
+
+                '*.productId.required' => 'Product Id Should be Required',
+                '*.productId.integer' => 'Product Id Should be Integer',
+
+                '*.usage.required' => 'Usage Should be Required',
+                '*.usage.integer' => 'Usage Should be Integer',
+
+                '*.quantity.required' => 'Quantity Should be Required',
+                '*.quantity.integer' => 'Quantity Should be Integer',
+
+                '*.dateCondition.required' => 'Quantity Should be Required',
+                '*.dateCondition.date' => 'Quantity Should be Date',
+
+                '*.itemCondition.required' => 'Quantity Should be Required',
+                '*.itemCondition.string' => 'Quantity Should be String',
+            ]
+        );
+
+        if ($validateProducts->fails()) {
+            $errors = $validateProducts->errors()->first();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
+            ], 422);
+        }
+
+        $approvalAdmin = 0;
+        $approvalOffice = 0;
+
+        foreach ($ResultProducts as $value) {
+
+            if ($value['productType'] == 'productSell') {
+
+                $findProduct = ProductSell::find($value['productId']);
+
+                if ($findProduct->isAdminApproval == 1) {
+                    $approvalAdmin = 1;
+                }
+
+                if ($findProduct->isOfficeApproval == 1) {
+                    $approvalOffice = 1;
+                }
+            } elseif ($value['productType'] == 'productClinic') {
+
+                $findProduct = ProductClinic::find($value['productId']);
+
+                if ($findProduct->isAdminApproval == 1) {
+                    $approvalAdmin = 1;
+                }
+
+                if ($findProduct->isOfficeApproval == 1) {
+                    $approvalOffice = 1;
+                }
+            }
+        }
+
+        ProductInventory::where('id', '=', $request->id)
+            ->update(
+                [
+                    'requirementName' => $request->requirementName,
+                    'locationId' => $request->locationId,
+                    'totalItem' => count($ResultProducts),
+                    'isApprovalAdmin' => $approvalAdmin,
+                    'isApprovalOffice' => $approvalOffice,
+                    'userUpdateId' => $request->user()->id,
+                    'updated_at' => Carbon::now(),
+                ]
+            );
+
+        foreach ($ResultProducts as $value) {
+
+            ProductInventoryList::updateOrCreate(
+                ['id' => $value['id']],
+                [
+                    'productInventoryId' => $request->id,
+                    'productType' => $value['productType'],
+                    'productId' => $value['productId'],
+                    'usageId' => $value['usageId'],
+                    'quantity' => $value['quantity'],
+                    'dateCondition' => $value['dateCondition'],
+                    'itemCondition' => $value['itemCondition'],
+                    'isAnyImage' => $value['isAnyImage'],
+                    'userUpdateId' => $request->user()->id,
+                ]
+            );
+        }
+
+        return response()->json(
+            [
+                'message' => 'Update Data Successful!',
+            ],
+            200
+        );
     }
 
     public function updateApproval(Request $request)
