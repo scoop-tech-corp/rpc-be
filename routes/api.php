@@ -66,11 +66,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::put('update/{product}', [ProductController::class, 'update']);
     Route::delete('delete/{product}', [ProductController::class, 'destroy']);
 
-    Route::post('product/supplier', [ProductController::class, 'addProductSupplier']);
-    Route::get('product/supplier', [ProductController::class, 'IndexProductSupplier']);
 
-    Route::post('product/brand', [ProductController::class, 'addProductBrand']);
-    Route::get('product/brand', [ProductController::class, 'IndexProductBrand']);
 
     Route::post('productstatus', [ProductController::class, 'addProductStatus']);
     Route::post('product', [ProductController::class, 'createNewProduct']);
@@ -80,55 +76,64 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     //MODULE PRODUCT
     //list produk
-    Route::get('product/sell', [ProductSellController::class, 'Index']);
-    Route::get('product/sell/detail', [ProductSellController::class, 'Detail']);
-    Route::post('product/sell', [ProductSellController::class, 'Create']);
-    Route::put('product/sell', [ProductSellController::class, 'Update']);
-    Route::post('product/sell/image', [ProductSellController::class, 'updateImages']);
-    Route::delete('product/sell', [ProductSellController::class, 'Delete']);
-    Route::get('product/sell/export', [ProductSellController::class, 'Export']);
-    Route::post('product/sell/split', [ProductSellController::class, 'Split']);
+    Route::group(['prefix' => 'product'], function () {
 
-    Route::get('product/clinic', [ProductClinicController::class, 'index']);
-    Route::get('product/clinic/detail', [ProductClinicController::class, 'detail']);
-    Route::post('product/clinic', [ProductClinicController::class, 'Create']);
-    Route::put('product/clinic', [ProductClinicController::class, 'Update']);
-    Route::post('product/clinic/image', [ProductClinicController::class, 'updateImages']);
-    Route::delete('product/clinic', [ProductClinicController::class, 'Delete']);
-    Route::get('product/clinic/export', [ProductClinicController::class, 'Export']);
+        Route::post('/supplier', [ProductController::class, 'addProductSupplier']);
+        Route::get('/supplier', [ProductController::class, 'IndexProductSupplier']);
 
-    Route::get('product/inventory', [ProductInventoryController::class, 'index']);
-    Route::get('product/inventory/history', [ProductInventoryController::class, 'indexHistory']);
-    Route::get('product/inventory/history/export', [ProductInventoryController::class, 'exportHistory']);
-    Route::get('product/inventory/approval', [ProductInventoryController::class, 'indexApproval']);
-    Route::get('product/inventory/approval/export', [ProductInventoryController::class, 'exportApproval']);
+        Route::post('/brand', [ProductController::class, 'addProductBrand']);
+        Route::get('/brand', [ProductController::class, 'IndexProductBrand']);
 
-    Route::get('product/inventory/detail', [ProductInventoryController::class, 'detail']);
+        Route::get('/sell', [ProductSellController::class, 'Index']);
+        Route::get('/sell/detail', [ProductSellController::class, 'Detail']);
+        Route::post('/sell', [ProductSellController::class, 'Create']);
+        Route::put('/sell', [ProductSellController::class, 'Update']);
+        Route::post('/sell/image', [ProductSellController::class, 'updateImages']);
+        Route::delete('/sell', [ProductSellController::class, 'Delete']);
+        Route::get('/sell/export', [ProductSellController::class, 'Export']);
+        Route::post('/sell/split', [ProductSellController::class, 'Split']);
 
-    Route::post('product/inventory', [ProductInventoryController::class, 'create']);
+        Route::get('/clinic', [ProductClinicController::class, 'index']);
+        Route::get('/clinic/detail', [ProductClinicController::class, 'detail']);
+        Route::post('/clinic', [ProductClinicController::class, 'Create']);
+        Route::put('/clinic', [ProductClinicController::class, 'Update']);
+        Route::post('/clinic/image', [ProductClinicController::class, 'updateImages']);
+        Route::delete('/clinic', [ProductClinicController::class, 'Delete']);
+        Route::get('/clinic/export', [ProductClinicController::class, 'Export']);
 
-    Route::put('product/inventory', [ProductInventoryController::class, 'update']);
-    Route::put('product/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
+        Route::get('/inventory', [ProductInventoryController::class, 'index']);
+        Route::get('/inventory/history', [ProductInventoryController::class, 'indexHistory']);
+        Route::get('/inventory/history/export', [ProductInventoryController::class, 'exportHistory']);
+        Route::get('/inventory/approval', [ProductInventoryController::class, 'indexApproval']);
+        Route::get('/inventory/approval/export', [ProductInventoryController::class, 'exportApproval']);
 
-    Route::delete('product/inventory', [ProductInventoryController::class, 'delete']);
+        Route::get('/inventory/detail', [ProductInventoryController::class, 'detail']);
 
-    //product category
-    Route::get('product/category', [ProductController::class, 'IndexProductCategory']);
-    Route::post('product/category', [ProductController::class, 'CreateProductCategory']);
+        Route::post('/inventory', [ProductInventoryController::class, 'create']);
 
-    Route::get('product/sell/dropdown', [ProductController::class, 'IndexProductSell']);
-    Route::get('product/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
+        Route::put('/inventory', [ProductInventoryController::class, 'update']);
+        Route::put('/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
 
-    Route::post('product/usage', [ProductController::class, 'CreateUsage']);
-    Route::get('product/usage', [ProductController::class, 'IndexUsage']);
+        Route::delete('/inventory', [ProductInventoryController::class, 'delete']);
 
-    //product bundle
-    Route::get('product/bundle', [BundleController::class, 'index']);
-    Route::get('product/bundle/detail', [BundleController::class, 'detail']);
-    Route::post('product/bundle', [BundleController::class, 'create']);
-    Route::put('product/bundle', [BundleController::class, 'update']);
-    Route::put('product/bundle/status', [BundleController::class, 'changeStatus']);
-    Route::delete('product/bundle', [BundleController::class, 'delete']);
+        //product category
+        Route::get('/category', [ProductController::class, 'IndexProductCategory']);
+        Route::post('/category', [ProductController::class, 'CreateProductCategory']);
+
+        Route::get('/sell/dropdown', [ProductController::class, 'IndexProductSell']);
+        Route::get('/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
+
+        Route::post('/usage', [ProductController::class, 'CreateUsage']);
+        Route::get('/usage', [ProductController::class, 'IndexUsage']);
+
+        //product bundle
+        Route::get('/bundle', [BundleController::class, 'index']);
+        Route::get('/bundle/detail', [BundleController::class, 'detail']);
+        Route::post('/bundle', [BundleController::class, 'create']);
+        Route::put('/bundle', [BundleController::class, 'update']);
+        Route::put('/bundle/status', [BundleController::class, 'changeStatus']);
+        Route::delete('/bundle', [BundleController::class, 'delete']);
+    });
 
     //MODULE CUSTOMER
     //customer group

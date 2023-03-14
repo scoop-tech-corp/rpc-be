@@ -345,10 +345,9 @@ class ProductSellController
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => [$errors],
+                'errors' => $errors,
             ], 422);
         }
 
@@ -798,7 +797,7 @@ class ProductSellController
 
                     return response()->json([
                         'message' => 'Foto yang dimasukkan tidak valid!',
-                        'errors' => $data_item,
+                        'errors' => [$data_item],
                     ], 422);
                 }
             }
@@ -809,14 +808,14 @@ class ProductSellController
 
                     if (count($ResultImageDatas) != count($request->file('images'))) {
                         return response()->json([
-                            'message' => ['Label Image and total image should same!'],
-                            'errors' => 'The given data was invalid.',
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Label Image and total image should same!'],
                         ], 422);
                     }
                 } else {
                     return response()->json([
-                        'message' => ['Image label cannot be empty!!'],
-                        'errors' => 'The given data was invalid.',
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Image label cannot be empty!'],
                     ], 422);
                 }
             }
@@ -875,8 +874,8 @@ class ProductSellController
 
         if (!$prodSell) {
             return response()->json([
-                'message' => ['Data not found!'],
-                'errors' => 'The given data was invalid.',
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data not found!'],
             ], 422);
         }
 
@@ -948,8 +947,8 @@ class ProductSellController
                 if ($validateCustomer->fails()) {
                     $errors = $validateCustomer->errors()->first();
                     return response()->json([
-                        'message' => $errors,
-                        'errors' => 'The given data was invalid.',
+                        'message' => 'The given data was invalid.',
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -986,14 +985,14 @@ class ProductSellController
                     $errors = $validatePriceLocations->errors()->first();
 
                     return response()->json([
-                        'message' => $errors,
-                        'errors' => 'The given data was invalid.',
+                        'message' => 'The given data was invalid.',
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
                 return response()->json([
-                    'message' => ['Price Location can not be empty!'],
-                    'errors' => 'The given data was invalid.',
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Price Location can not be empty!'],
                 ], 422);
             }
         } else if ($request->pricingStatus == "Quantities") {
@@ -1025,14 +1024,14 @@ class ProductSellController
                     $errors = $validateQuantity->errors()->first();
 
                     return response()->json([
-                        'message' => $errors,
-                        'errors' => 'The given data was invalid.',
+                        'message' => 'The given data was invalid.',
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
                 return response()->json([
-                    'message' => ['Quantity can not be empty!'],
-                    'errors' => 'The given data was invalid.',
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Quantity can not be empty!'],
                 ], 422);
             }
         }
@@ -1268,7 +1267,7 @@ class ProductSellController
 
             return response()->json([
                 'message' => 'Produk tidak valid!',
-                'errors' => $errors,
+                'errors' => [$errors],
             ], 422);
         }
 
@@ -1497,7 +1496,7 @@ class ProductSellController
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
 
-        if ($request->locationId) {
+        if (empty($request->locationId)) {
 
             $location = DB::table('location')
                 ->select('locationName')
@@ -1547,7 +1546,7 @@ class ProductSellController
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'errors' => [$errors],
             ], 422);
         }
 

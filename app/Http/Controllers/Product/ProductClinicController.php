@@ -252,7 +252,7 @@ class ProductClinicController
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'errors' => [$errors],
             ], 422);
         }
 
@@ -311,7 +311,7 @@ class ProductClinicController
 
                 return response()->json([
                     'message' => 'The given data was invalid.',
-                    'errors' => $errors,
+                    'errors' => [$errors],
                 ], 422);
             }
         }
@@ -345,7 +345,7 @@ class ProductClinicController
 
                 return response()->json([
                     'message' => 'The given data was invalid.',
-                    'errors' => $errors,
+                    'errors' => [$errors],
                 ], 422);
             }
 
@@ -396,7 +396,7 @@ class ProductClinicController
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -419,9 +419,9 @@ class ProductClinicController
                     [
                         '*.locationId.required' => 'Location Id Should be Required!',
                         '*.locationId.integer' => 'Location Id Should be Integer!',
-                        '*.locationId.distinct' => 'Cannot add duplicate Location Id!',
-                        '*.price.required' => 'Price Should be Required!',
+                        '*.locationId.distinct' => 'Cannot add duplicate Location!',
                         '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.price.required' => 'Price Should be Required!',
 
                     ]
                 );
@@ -431,7 +431,7 @@ class ProductClinicController
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -467,7 +467,7 @@ class ProductClinicController
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -712,7 +712,7 @@ class ProductClinicController
 
                 return response()->json([
                     'message' => 'Foto yang dimasukkan tidak valid!',
-                    'errors' => $data_item,
+                    'errors' => [$data_item],
                 ], 422);
             }
         }
@@ -730,7 +730,7 @@ class ProductClinicController
             } else {
                 return response()->json([
                     'message' => 'The given data was invalid.',
-                    'errors' => ['Image label cannot be empty!!'],
+                    'errors' => ['Image label cannot be empty!'],
                 ], 422);
             }
         }
@@ -1032,7 +1032,7 @@ class ProductClinicController
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -1070,7 +1070,7 @@ class ProductClinicController
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -1109,7 +1109,7 @@ class ProductClinicController
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -1361,7 +1361,7 @@ class ProductClinicController
 
             return response()->json([
                 'message' => 'Insert Failed',
-                'errors' => $th,
+                'errors' => [$th],
             ], 422);
         }
     }
@@ -1606,7 +1606,7 @@ class ProductClinicController
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
 
-        if ($request->locationId) {
+        if (empty($request->locationId)) {
 
             $location = DB::table('location')
                 ->select('locationName')
