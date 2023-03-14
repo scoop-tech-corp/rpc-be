@@ -1634,7 +1634,7 @@ class StaffLeaveController extends Controller
 
             foreach ($request->leaveRequestId as $val) {
 
-                $leaveRequest = LeaveRequest::where('id', '=', $request->leaveRequestId)
+                $leaveRequest = LeaveRequest::where('id', '=', $val)
                     ->where('status', '=', 'pending')
                     ->first();
 
@@ -1664,7 +1664,7 @@ class StaffLeaveController extends Controller
 
                         return response()->json([
                             'message' => 'Inputed data is not valid',
-                            'errors' => 'User Id ' . $leaveRequest->usersId . ' , with request sick leave id ' .  $request->leaveRequestId . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining'
+                            'errors' => 'User Id ' . $leaveRequest->usersId . ' , with request sick leave id ' .  $val . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining'
                         ], 422);
                     } else {
                         $users->annualSickAllowanceRemaining = $users->annualSickAllowanceRemaining  - $leaveRequest->duration;
@@ -1675,7 +1675,7 @@ class StaffLeaveController extends Controller
 
                         return response()->json([
                             'message' => 'Inputed data is not valid',
-                            'errors' => 'User Id ' . $leaveRequest->usersId . ' , with request leave id ' .  $request->leaveRequestId . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining'
+                            'errors' => 'User Id ' . $leaveRequest->usersId . ' , with request leave id ' . $val . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining'
                         ], 422);
                     } else {
                         $users->annualLeaveAllowanceRemaining = $users->annualLeaveAllowanceRemaining  - $leaveRequest->duration;
