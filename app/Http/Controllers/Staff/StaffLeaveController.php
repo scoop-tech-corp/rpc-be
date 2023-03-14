@@ -235,7 +235,7 @@ class StaffLeaveController extends Controller
                     'leaveType' => 'required|string',
                     'fromDate' => 'required|date_format:Y-m-d',
                     'toDate' => 'required|date_format:Y-m-d',
-                    'totalDays' => 'required|integer',
+                    // 'totalDays' => 'required|integer',
                     'workingDays' => 'required',
                     'remark' => 'required|string',
 
@@ -332,13 +332,13 @@ class StaffLeaveController extends Controller
             }
 
 
-            if ($countDays != $request->totalDays) {
+            // if ($countDays != $request->totalDays) {
 
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Wrong duration, please check again. Your duration day must be ' . $countDays,
-                ], 422);
-            }
+            //     return response()->json([
+            //         'result' => 'Failed',
+            //         'message' => 'Wrong duration, please check again. Your duration day must be ' . $countDays,
+            //     ], 422);
+            // }
 
 
             if ($countDays != $hitungNameDays) {
@@ -385,7 +385,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->totalDays > $sickallowance) {
+                    if ($countDays > $sickallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -403,7 +403,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->totalDays > $leaveallowance) {
+                    if ($countDays > $leaveallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -446,7 +446,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $request->totalDays;
+                $staffLeave->duration = $countDays;
                 $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
@@ -483,7 +483,7 @@ class StaffLeaveController extends Controller
                     'leaveType' => 'required|string',
                     'fromDate' => 'required|date_format:Y-m-d|after_or_equal:today',
                     'toDate' => 'required|date_format:Y-m-d',
-                    'totalDays' => 'required|integer',
+                    // 'totalDays' => 'required|integer',
                     'workingDays' => 'required',
                     'remark' => 'required|string',
 
@@ -580,13 +580,13 @@ class StaffLeaveController extends Controller
                 $start->addDay();
             }
 
-            if ($countDays != $request->totalDays) {
+            // if ($countDays != $request->totalDays) {
 
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Wrong duration, please check again. Your duration day must be ' . $countDays,
-                ], 422);
-            }
+            //     return response()->json([
+            //         'result' => 'Failed',
+            //         'message' => 'Wrong duration, please check again. Your duration day must be ' . $countDays,
+            //     ], 422);
+            // }
 
             if ($countDays != $hitungNameDays) {
 
@@ -633,7 +633,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->totalDays > $sickallowance) {
+                    if ($countDays > $sickallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -651,7 +651,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->totalDays > $leaveallowance) {
+                    if ($countDays > $leaveallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -694,7 +694,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $request->totalDays;
+                $staffLeave->duration = $countDays;
                 $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
@@ -762,6 +762,7 @@ class StaffLeaveController extends Controller
                 ],
                 200
             );
+
         } catch (Exception $e) {
 
             return response()->json([
