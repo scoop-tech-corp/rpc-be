@@ -1606,7 +1606,9 @@ class ProductClinicController
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
 
-        if (empty($request->locationId)) {
+        $locations = $request->locationId;
+
+        if (!$locations[0] == null) {
 
             $location = DB::table('location')
                 ->select('locationName')
