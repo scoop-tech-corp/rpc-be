@@ -135,7 +135,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
             $checkOrder = true;
         }
 
-        if ($checkOrder == true) {
+        if ($checkOrder) {
 
             $data = DB::table($data)
                 ->select(

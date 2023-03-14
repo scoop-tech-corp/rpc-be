@@ -21,30 +21,27 @@ class StaffLeaveController extends Controller
     private $api_key;
     private $country;
 
-	public function getUsersId(Request $request)
-	{
-		try {
+    public function getUsersId(Request $request)
+    {
+        try {
 
-			$getUser = User::select(
+            $getUser = User::select(
                 'id as usersId',
                 DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name"),
             )->where('id', $request->user()->id)
-             ->where('isDeleted', '0')
-             ->get();
-			
-			return response()->json($getUser, 200);
-			
+                ->where('isDeleted', '0')
+                ->get();
+
+            return response()->json($getUser, 200);
         } catch (Exception $e) {
 
             return response()->json([
                 'result' => 'Failed',
                 'message' => $e,
             ], 422);
-			
         }
+    }
 
-	}
-	
     public function getAllStaffActive(Request $request)
     {
 
@@ -709,7 +706,6 @@ class StaffLeaveController extends Controller
                     'result' => 'Success',
                     'message' => 'Successfully input request leave',
                 ], 200);
-				
             }
         } catch (Exception $e) {
 
@@ -935,7 +931,7 @@ class StaffLeaveController extends Controller
             $checkOrder = true;
         }
 
-        if ($checkOrder == true) {
+        if ($checkOrder) {
 
             $data = DB::table($data)
                 ->select(
@@ -1810,11 +1806,10 @@ class StaffLeaveController extends Controller
                         ]);
                     }
 
-                    $checkOrder == true;
+                    $checkOrder = true;
                 }
 
-
-                if ($checkOrder == true) {
+                if ($checkOrder) {
 
                     $data = DB::table($data)
                         ->select(
@@ -1828,7 +1823,7 @@ class StaffLeaveController extends Controller
                             'remark',
                             'createdAt',
                         )
-                        ->orderBy($request->orderColumn, $request->orderValue)
+                        ->orderBy($request->orderColumn, $defaultOrderBy)
                         ->orderBy('updatedAt', 'desc');
                 } else {
 

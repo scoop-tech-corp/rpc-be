@@ -120,7 +120,7 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
 
 
 
-        if ($checkOrder == true) {
+        if ($checkOrder) {
 
             $data = DB::table($data)
                 ->select(
