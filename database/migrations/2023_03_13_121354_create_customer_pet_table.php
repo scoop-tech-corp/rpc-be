@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('races')->nullable();
             $table->string('condition');
             $table->enum('petGender',['J', 'B']);
-            $table->enum('isSteril',[true, false]);
+            $table->enum('isSteril',['1', '0']);
             $table->integer('petAge')->default(0);
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->string('deletedBy')->nullable();

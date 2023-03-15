@@ -187,4 +187,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::get('title', [CustomerController::class, 'getTitle']);
     Route::post('title', [CustomerController::class, 'insertTitle']);
+
+    Route::get('source', [CustomerController::class, 'getSource']);
+    Route::post('source', [CustomerController::class, 'insertSource']);
 });

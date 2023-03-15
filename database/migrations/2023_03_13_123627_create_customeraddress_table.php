@@ -18,7 +18,7 @@ return new class extends Migration
             $table->integer('usersId');
             $table->string('addressName');
             $table->string('additionalInfo')->nullable();
-            $table->integer('country');
+            $table->string('country');
             $table->integer('provinceCode');
             $table->integer('cityCode');
             $table->string('postalCode')->nullable();

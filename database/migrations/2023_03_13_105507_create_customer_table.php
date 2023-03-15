@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('notes')->nullable();
             $table->date('joinDate');
             $table->integer('typeId');
-            $table->integer('numberId');
+            $table->string('numberId')->nullable();
             $table->integer('jobTitleId');
             $table->date('birthDate')->nullable();
             $table->integer('referenceId')->nullable();

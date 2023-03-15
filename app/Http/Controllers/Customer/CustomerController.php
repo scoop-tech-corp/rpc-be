@@ -89,7 +89,7 @@ class CustomerController extends Controller
                     'notes' => 'nullable|string',
                     'joinDate' => 'nullable|date',
                     'typeId' => 'required|integer',
-                    'numberId' => 'required|integer|max:50',
+                    'numberId' => 'required|string|max:50',
                     'gender' => 'required|in:P,W',
                     'jobTitleId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
@@ -113,18 +113,18 @@ class CustomerController extends Controller
 
             if ($request->customerPet) {
 
-            $arrayCutomerPet = json_decode($request->arrayCutomerPet, true);
+                $arrayCustomerPet = json_decode($request->customerPet, true);
             
                 $messageCustomerPet = [
                     'petName.required' => 'Pet name on tab Customer Pet is required',
                     'petCategoryId.required' => 'Category Pet tab Customer Pet is required',
                     'condition.required' => 'Condition on tab Customer Pet is required',
                     'petGender.required' => 'Pet Gender on tab Cutomer Pet is required',
-                    'isSteril.required' => 'Pet Staril  on tab Cutomer Pet is required',
+                    'isSteril.required' => 'Pet Steril  on tab Cutomer Pet is required',
                 ];
 
 
-                foreach ($arrayCutomerPet as $key) {
+                foreach ($arrayCustomerPet as $key) {
 
                     $validateDetail = Validator::make(
                         $key,
@@ -134,7 +134,7 @@ class CustomerController extends Controller
                             'race' => 'nullable|string|max:100',
                             'condition' => 'required|string|max:100',
                             'petGender' => 'required|in:J,B',
-                            'isSteril' => 'required|in:true,false,TRUE,FALSE',
+                            'isSteril' => 'required|in:1,0',
                             'petAge' => 'nullable|integer',
                         ],
                         $messageCustomerPet
@@ -155,7 +155,7 @@ class CustomerController extends Controller
 
 
 
-                if ($data_item) {
+                if ($data_item_pet) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
                         'errors' => $data_item_pet,
@@ -658,7 +658,7 @@ class CustomerController extends Controller
 
             if ($request->customerPet) {
 
-                foreach ($arrayCutomerPet as $val) {
+                foreach ($arrayCustomerPet as $val) {
 
                     DB::table('customerPet')
                         ->insert([
@@ -666,8 +666,7 @@ class CustomerController extends Controller
                             'petName' => $val['petName'],
                             'petCategoryId' => $val['petCategoryId'],
                             'races' => $val['races'],
-                            'condition' => $val['cityCode'],
-                            'postalCode' => $val['condition'],
+                            'condition' => $val['condition'],
                             'petGender' => $val['petGender'],
                             'isSteril' => $val['isSteril'],
                             'isDeleted' => 0,
@@ -687,6 +686,7 @@ class CustomerController extends Controller
                             'sourceId' => $val['sourceId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
+                            'timeDate' => $val['timeDate'],
                             'type' => 'B',
                             'isDeleted' => 0,
                             'created_at' => now(),
@@ -705,6 +705,7 @@ class CustomerController extends Controller
                             'sourceId' => $val['sourceId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
+                            'timeDate' => $val['timeDate'],
                             'type' => 'P',
                             'isDeleted' => 0,
                             'created_at' => now(),
@@ -723,6 +724,7 @@ class CustomerController extends Controller
                             'sourceId' => $val['sourceId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
+                            'timeDate' => $val['timeDate'],
                             'type' => 'LP',
                             'isDeleted' => 0,
                             'created_at' => now(),
