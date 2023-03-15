@@ -137,9 +137,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     //MODULE CUSTOMER
     //customer group
-    Route::get('customer/group', [CustomerController::class, 'Index']);
-    Route::post('customer/group', [CustomerController::class, 'Create']);
-    Route::post('customer', [CustomerController::class, 'CreateCustomer']);
+
+    Route::prefix(['prefix' => 'customer'], function () {
+
+        Route::get('customer/group', [CustomerController::class, 'indexCustomerGroup']);
+        Route::post('customer/group', [CustomerController::class, 'Create']);
+        Route::post('/', [CustomerController::class, 'createCustomerGroup']);
+    });
 
     //STAFF
     Route::get('rolesid', [StaffController::class, 'getRoleName']);
@@ -179,7 +183,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('staff/staffid', [StaffLeaveController::class, 'getUsersId']);
     Route::put('staff/approveall', [StaffLeaveController::class, 'approveAll']);
     Route::put('staff/rejectall', [StaffLeaveController::class, 'rejectAll']);
-    
+
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
     Route::get('provinsi', [GlobalVariableController::class, 'getProvinsi']);
