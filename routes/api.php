@@ -139,6 +139,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //customer group
     Route::get('customer/group', [CustomerController::class, 'Index']);
     Route::post('customer/group', [CustomerController::class, 'Create']);
+    Route::post('customer', [CustomerController::class, 'CreateCustomer']);
 
     //STAFF
     Route::get('rolesid', [StaffController::class, 'getRoleName']);
@@ -166,17 +167,33 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('staff/workingdate', [StaffLeaveController::class, 'getWorkingDays']);
     Route::get('staff/leavetype', [StaffLeaveController::class, 'getLeaveRequest']);
     Route::post('staff/leave', [StaffLeaveController::class, 'insertLeaveStaff']);
-    Route::post('statff/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
+    Route::post('staff/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
+    Route::post('staff/adjustleave', [StaffLeaveController::class, 'adjustLeaveRequest']);
+    Route::put('staff/adjustbalance', [StaffLeaveController::class, 'adjustBalance']);
     Route::get('staff/leave', [StaffLeaveController::class, 'getIndexRequestLeave']);
+    Route::get('staff/balancetype', [StaffLeaveController::class, 'getDropdownBalanceType']);
     Route::get('staff/leavebalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
     Route::get('staff/exportleave', [StaffLeaveController::class, 'exportLeaveRequest']);
     Route::get('staff/exportbalance', [StaffLeaveController::class, 'exportBalance']);
-
-
+    Route::get('staff/allactive', [StaffLeaveController::class, 'getAllStaffActive']);
+    Route::get('staff/staffid', [StaffLeaveController::class, 'getUsersId']);
+    Route::put('staff/approveall', [StaffLeaveController::class, 'approveAll']);
+    Route::put('staff/rejectall', [StaffLeaveController::class, 'rejectAll']);
+    
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
     Route::get('provinsi', [GlobalVariableController::class, 'getProvinsi']);
     Route::get('datastaticglobal', [GlobalVariableController::class, 'getDataStatic']);
     Route::post('datastaticglobal', [GlobalVariableController::class, 'insertDataStatic']);
     Route::post('uploadregion', [GlobalVariableController::class, 'uploadRegion']);
+
+    // Naufal task
+    Route::get('reference', [CustomerController::class, 'getReference']);
+    Route::post('reference', [CustomerController::class, 'insertReference']);
+
+    Route::get('title', [CustomerController::class, 'getTitle']);
+    Route::post('title', [CustomerController::class, 'insertTitle']);
+
+    Route::get('source', [CustomerController::class, 'getSource']);
+    Route::post('source', [CustomerController::class, 'insertSource']);
 });

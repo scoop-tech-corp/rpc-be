@@ -18,15 +18,19 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
     protected $orderValue;
     protected $orderColumn;
     protected $status;
-    //protected $locationId;
+    protected $locationId;
+    protected $userId;
+    protected $rolesIndex;
 
 
-    public function __construct($orderValue, $orderColumn, $status)
+    public function __construct($orderValue, $orderColumn, $status, $rolesIndex, $userId, $locationId)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->status = $status;
-        // $this->locationId = $locationId;
+        $this->rolesIndex = $rolesIndex;
+        $this->userId = $userId;
+        $this->locationId = $locationId;
     }
 
     public function collection()
@@ -35,26 +39,69 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
         $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
 
-        $data = DB::table('leaveRequest as a')
-            ->leftjoin('jobtitle as b', 'a.jobtitle', '=', 'b.id')
-            ->select(
-                'a.requesterName as requester',
-                'b.jobName as jobName',
-                'a.leaveType as leaveType',
-                'a.fromDate as date',
-                'a.duration as days',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $this->status],
-            ]);
+        $data = null;
 
+        if ($this->rolesIndex  == 1) {
+
+            $data = DB::table('leaveRequest as a')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->select(
+                    'a.id as leaveRequestId',
+                    'a.requesterName as requester',
+                    'c.locationName as locationName',
+                    'b.jobName as jobName',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as date',
+                    'a.duration as days',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.updated_at as updatedAt',
+                )
+                ->where([
+                    ['a.status', '=', $this->status],
+                ]);
+
+            if ($this->locationId) {
+
+                $val = [];
+
+                foreach ($this->locationId as $temp) {
+                    $val = $temp;
+                }
+
+                if ($val) {
+                    $data = $data->whereIn('a.locationId', $this->locationId);
+                }
+            }
+        } else {
+            $data = DB::table('leaveRequest as a')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->select(
+                    'a.id as leaveRequestId',
+                    'a.requesterName as requester',
+                    'c.locationName as locationName',
+                    'b.jobName as jobName',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as date',
+                    'a.duration as days',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.updated_at as updatedAt',
+                )
+                ->where([
+                    ['a.status', '=', $this->status],
+                    ['a.usersId', '=', $this->userId],
+                ]);
+        }
 
         if ($this->orderValue) {
             $defaultOrderBy = $this->orderValue;
         }
+
+
+        $checkOrder = null;
 
         if ($this->orderColumn && $defaultOrderBy) {
 
@@ -85,21 +132,40 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 ]);
             }
 
-            $data = $data->orderBy($this->orderColumn, $defaultOrderBy);
+            $checkOrder = true;
         }
 
-        $data = $data->orderBy('updatedAt', 'desc');
+        if ($checkOrder) {
 
-        $data = DB::table($data)
-            ->select(
-                'requester',
-                'jobName',
-                'leaveType',
-                'date',
-                'days',
-                'remark',
-                'createdAt',
-            )->get();
+            $data = DB::table($data)
+                ->select(
+                    'requester',
+                    'jobName',
+                    'locationName',
+                    'leaveType',
+                    'date',
+                    'days',
+                    'remark',
+                    'createdAt',
+                )
+                ->orderBy($this->orderColumn, $defaultOrderBy)
+                ->orderBy('updatedAt', 'desc')
+                ->get();
+        } else {
+            $data = DB::table($data)
+                ->select(
+                    'requester',
+                    'jobName',
+                    'locationName',
+                    'leaveType',
+                    'date',
+                    'days',
+                    'remark',
+                    'createdAt',
+                )
+                ->orderBy('updatedAt', 'desc')
+                ->get();
+        }
 
         $val = 1;
 
@@ -116,13 +182,14 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
         return [
             [
                 'No.',
-                'Requester',
-                'Job Name',
-                'Leave Type',
-                'Date',
-                'Days',
-                'Remark',
-                'Created At'
+                'Pemohon',
+                'Jabatan',
+                'Lokasi',
+                'Tipe Cuti',
+                'Tanggal Cuti',
+                'Hari',
+                'Keterangan',
+                'Dibuat Pada'
             ],
         ];
     }
@@ -140,6 +207,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 $item->number,
                 $item->requester,
                 $item->jobName,
+                $item->locationName,
                 $item->leaveType,
                 $item->date,
                 $item->days,

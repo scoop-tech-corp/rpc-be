@@ -16,11 +16,19 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
     protected $sheets;
     protected $orderValue;
     protected $orderColumn;
+    protected $rolesIndex;
+    protected $userId;
+    protected $locationId;
 
-    public function __construct($orderValue, $orderColumn)
+
+
+    public function __construct($orderValue, $orderColumn, $rolesIndex, $userId, $locationId)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
+        $this->rolesIndex = $rolesIndex;
+        $this->userId = $userId;
+        $this->locationId = $locationId;
     }
 
     public function collection()
@@ -28,23 +36,58 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
         $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
 
+        $data = null;
 
-        $data = DB::table('users as a')
-            ->select(
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
-                'a.annualLeaveAllowance',
-                'a.annualLeaveAllowanceRemaining',
-                'a.annualSickAllowance',
-                'a.annualSickAllowanceRemaining',
-                'a.updated_at',
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-            ]);
+        if ($this->rolesIndex == 1) {
+
+            $data = DB::table('users as a')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                    'a.annualLeaveAllowance',
+                    'a.annualLeaveAllowanceRemaining',
+                    'a.annualSickAllowance',
+                    'a.annualSickAllowanceRemaining',
+                    'a.updated_at',
+                )
+                ->where([
+                    ['a.isDeleted', '=', '0'],
+                ]);
+
+            if ($this->locationId) {
+
+                $val = [];
+
+                foreach ($this->locationId as $temp) {
+                    $val = $temp;
+                }
+
+                if ($val) {
+                    $data = $data->whereIn('a.locationId', $this->locationId);
+                }
+            }
+        } else {
+
+            $data = DB::table('users as a')
+                ->select(
+                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
+                    'a.annualLeaveAllowance',
+                    'a.annualLeaveAllowanceRemaining',
+                    'a.annualSickAllowance',
+                    'a.annualSickAllowanceRemaining',
+                    'a.updated_at',
+                )
+                ->where([
+                    ['a.isDeleted', '=', '0'],
+                    ['a.id', '=', $this->userId],
+                ]);
+        }
 
         if ($this->orderValue) {
             $defaultOrderBy = $this->orderValue;
         }
+
+        $checkOrder = null;
 
         if ($this->orderColumn && $defaultOrderBy) {
 
@@ -72,11 +115,37 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
                 ]);
             }
 
-            $data = $data->orderBy($this->orderColumn, $defaultOrderBy);
+            $checkOrder = true;
         }
 
-        $data = $data->orderBy('updated_at', 'desc');
-        $data = $data->get();
+
+
+        if ($checkOrder) {
+
+            $data = DB::table($data)
+                ->select(
+                    'name',
+                    'annualLeaveAllowance',
+                    'annualLeaveAllowanceRemaining',
+                    'annualSickAllowance',
+                    'annualSickAllowanceRemaining'
+                )
+                ->orderBy($this->orderColumn, $defaultOrderBy)
+                ->orderBy('updated_at', 'desc')
+                ->get();
+        } else {
+
+            $data = DB::table($data)
+                ->select(
+                    'name',
+                    'annualLeaveAllowance',
+                    'annualLeaveAllowanceRemaining',
+                    'annualSickAllowance',
+                    'annualSickAllowanceRemaining'
+                )
+                ->orderBy('updated_at', 'desc')
+                ->get();
+        }
 
         $val = 1;
         foreach ($data as $key) {

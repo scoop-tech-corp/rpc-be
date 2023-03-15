@@ -13,15 +13,19 @@ class exportStaffLeave implements WithMultipleSheets
     protected $orderValue;
     protected $orderColumn;
     protected $status;
-    // protected $locationId;
+    protected $rolesIndex;
+    protected $userId;
+    protected $locationId;
 
-    public function __construct($orderValue, $orderColumn, $status)
+    public function __construct($orderValue, $orderColumn, $status, $rolesIndex, $userId, $locationId)
     {
 
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->status = $status;
-        // $this->locationId = $locationId;
+        $this->rolesIndex = $rolesIndex;
+        $this->userId = $userId;
+        $this->locationId = $locationId;
     }
 
     function array(): array
@@ -34,8 +38,7 @@ class exportStaffLeave implements WithMultipleSheets
         $sheets = [];
 
         $sheets = [
-            //  new DataStaffLeaveAll($this->orderValue, $this->orderColumn, $this->search, $this->locationId),
-            new DataStaffLeaveAll($this->orderValue, $this->orderColumn, $this->status),
+            new DataStaffLeaveAll($this->orderValue, $this->orderColumn, $this->status, $this->rolesIndex,$this->userId, $this->locationId),
         ];
 
         return $sheets;

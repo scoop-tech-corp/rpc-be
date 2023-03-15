@@ -12,16 +12,18 @@ class exportBalance implements WithMultipleSheets
     protected $sheets;
     protected $orderValue;
     protected $orderColumn;
-    // protected $search;
-    // protected $locationId;
+    protected $rolesIndex;
+    protected $userId;
+    protected $locationId;
 
-    public function __construct($orderValue, $orderColumn)
+    public function __construct($orderValue, $orderColumn, $rolesIndex, $userId, $locationId)
     {
 
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
-        // $this->search = $search;
-        // $this->locationId = $locationId;
+        $this->rolesIndex = $rolesIndex;
+        $this->userId = $userId;
+        $this->locationId = $locationId;
     }
 
     function array(): array
@@ -31,10 +33,11 @@ class exportBalance implements WithMultipleSheets
 
     public function sheets(): array
     {
+  
         $sheets = [];
 
         $sheets = [
-            new DataBalanceAll($this->orderValue, $this->orderColumn),
+            new DataBalanceAll($this->orderValue, $this->orderColumn, $this->rolesIndex, $this->userId, $this->locationId),
         ];
 
         return $sheets;

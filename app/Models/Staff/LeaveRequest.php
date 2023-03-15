@@ -9,14 +9,16 @@ class LeaveRequest extends Model
 {
     use HasFactory;
 
-    protected $table = "leaverequest";
+    protected $table = "leaveRequest";
 
     protected $dates = ['fromDate', 'toDate', 'created_at', 'updated_at'];
 
     protected $guarded = ['id'];
 
+    public $timestamps = true;
+
     protected $fillable = [
-        'usersId', 'requesterName', 'jobtitle', 'locationId', 'leaveType','fromDate', 'toDate', 'duration', 'workingdays',
+        'usersId', 'requesterName', 'jobTitle', 'locationId', 'leaveType','fromDate', 'toDate', 'duration', 'workingDays',
         'status', 'remark', 'approveOrRejectedBy', 'approveOrRejectedDate', 'rejectedReason','created_at', 'updated_at'
     ];
 }

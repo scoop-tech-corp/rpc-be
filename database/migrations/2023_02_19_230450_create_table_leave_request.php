@@ -17,13 +17,13 @@ return new class extends Migration
             $table->id();
             $table->integer('usersId');
             $table->string('requesterName');
-            $table->string('jobtitle');
+            $table->string('jobTitle');
             $table->integer('locationId');
             $table->string('leaveType');
             $table->date('fromDate');
             $table->date('toDate');
             $table->integer('duration');
-            $table->string('workingdays');
+            $table->string('workingDays');
             $table->string('status');
             $table->string('remark');
             $table->string('approveOrRejectedBy')->nullable();
