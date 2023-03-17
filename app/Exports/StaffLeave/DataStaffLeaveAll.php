@@ -3,6 +3,7 @@
 namespace App\Exports\StaffLeave;
 
 use DB;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -21,14 +22,18 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
     protected $locationId;
     protected $userId;
     protected $rolesIndex;
+    protected $fromDate;
+    protected $toDate;
 
 
-    public function __construct($orderValue, $orderColumn, $status, $rolesIndex, $userId, $locationId)
+    public function __construct($orderValue, $orderColumn, $status, $rolesIndex, $fromDate, $toDate, $userId, $locationId)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->status = $status;
         $this->rolesIndex = $rolesIndex;
+        $this->fromDate =   $fromDate;
+        $this->toDate = $toDate;
         $this->userId = $userId;
         $this->locationId = $locationId;
     }
@@ -51,7 +56,6 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
                     ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status],]);
-
             } elseif (strtolower($this->status) == "approve") {
 
                 $data = DB::table('leaveRequest as a')
@@ -67,6 +71,24 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                     ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as rejectedBy', 'a.rejectedReason as  rejectedReason', 'a.approveOrRejectedDate as rejectedAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status],]);
             }
+
+
+
+            if (strtotime($this->fromDate) !== false && strtotime($this->toDate) !== false) {
+
+                $start = Carbon::parse($this->fromDate);
+                $end = Carbon::parse($this->toDate);
+
+                if ($end < $start) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['To date must higher than from date!!'],
+                    ], 422);
+                }
+
+                $data = $data->whereBetween('fromDate', [$this->fromDate, $this->toDate]);
+            }
+
 
             if ($this->locationId) {
 
@@ -105,6 +127,22 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                     ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as rejectedBy', 'a.rejectedReason as  rejectedReason', 'a.approveOrRejectedDate as rejectedAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status], ['a.usersId', '=', $this->userId],]);
             }
+
+
+            if (strtotime($this->fromDate) !== false && strtotime($this->toDate) !== false) {
+
+                $start = Carbon::parse($this->fromDate);
+                $end = Carbon::parse($this->toDate);
+
+                if ($end < $start) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['To date must higher than from date!!'],
+                    ], 422);
+                }
+
+                $data = $data->whereBetween('fromDate', [$this->fromDate, $this->toDate]);
+            }
         }
 
         if ($this->orderValue) {
@@ -113,7 +151,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
 
         $checkOrder = null;
         $listOrder = [];
- 
+
         if ($this->orderColumn && $defaultOrderBy) {
 
             if (strtolower($this->status) == "pending") {
@@ -171,7 +209,6 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
         }
 
         return $data;
-
     }
 
     public function headings(): array

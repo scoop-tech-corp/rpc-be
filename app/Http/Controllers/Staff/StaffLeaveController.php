@@ -1332,6 +1332,8 @@ class StaffLeaveController extends Controller
                     $request->orderColumn,
                     $request->status,
                     $rolesIndex,
+                    $request->fromDate,
+                    $request->toDate,
                     $request->user()->id,
                     $request->locationId,
                 ),
