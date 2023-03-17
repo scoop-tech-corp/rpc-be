@@ -762,7 +762,6 @@ class StaffLeaveController extends Controller
                 ],
                 200
             );
-
         } catch (Exception $e) {
 
             return response()->json([
@@ -1317,13 +1316,13 @@ class StaffLeaveController extends Controller
                 }
 
                 if ($tmp == "") {
-                    $fileName = "Leave Request " . $date . ".xlsx";
+                    $fileName = "Leave Request " . ucfirst($request->status) . ' ' . $date . ".xlsx";
                 } else {
-                    $fileName = "Leave Request " . $tmp . " " . $date . ".xlsx";
+                    $fileName = "Leave Request " .  ucfirst($request->status) . ' ' . $tmp . " " . $date . ".xlsx";
                 }
             } else {
 
-                $fileName = "Leave Request " . $date . ".xlsx";
+                $fileName = "Leave Request " . ucfirst($request->status) . ' ' . $date  . ".xlsx";
             }
 
 
@@ -1493,25 +1492,75 @@ class StaffLeaveController extends Controller
     public function indexLeaveAdminandOffice(Request $request)
     {
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
+        if (strtolower($request->status) == "pending") {
+
+            $data = LeaveRequest::from('leaveRequest as a')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    'a.id as leaveRequestId',
+                    'a.requesterName as requesterName',
+                    'b.jobName as jobName',
+                    'c.locationName as locationName',
+                    'a.locationId as locationId',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as fromDate',
+                    'a.duration as duration',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.updated_at as updatedAt',
+                )
+                ->where([
+                    ['a.status', '=', $request->status],
+                ]);
+        } elseif (strtolower($request->status) == "approve") {
+
+            $data = LeaveRequest::from('leaveRequest as a')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    'a.id as leaveRequestId', //add by danny wahyudi
+                    'a.requesterName as requesterName',
+                    'b.jobName as jobName',
+                    'c.locationName as locationName',
+                    'a.locationId as locationId',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as fromDate',
+                    'a.duration as duration',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.approveOrRejectedBy as  approvedBy',
+                    'a.approveOrRejectedDate as approvedAt',
+                    'a.updated_at as updatedAt',
+                )->where([
+                    ['a.status', '=', $request->status],
+                ]);
+        } else {
+
+            $data = LeaveRequest::from('leaveRequest as a')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    'a.id as leaveRequestId',
+                    'a.requesterName as requesterName',
+                    'b.jobName as jobName',
+                    'c.locationName as locationName',
+                    'a.locationId as locationId',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as fromDate',
+                    'a.duration as duration',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.approveOrRejectedBy as  rejectedBy',
+                    'a.rejectedReason as  rejectedReason',
+                    'a.approveOrRejectedDate as rejectedAt',
+                    'a.updated_at as updatedAt',
+                )
+                ->where([
+                    ['a.status', '=', $request->status],
+                ]);
+        }
+
 
         if ($request->locationId) {
 
@@ -1526,13 +1575,33 @@ class StaffLeaveController extends Controller
             }
         }
 
+        if (strtotime($request->fromDate) !== false && strtotime($request->toDate) !== false) {
+
+            $start = Carbon::parse($request->fromDate);
+            $end = Carbon::parse($request->toDate);
+
+            if ($end < $start) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['To date must higher than from date!!'],
+                ], 422);
+            }
+
+            $data = $data->whereBetween('fromDate', [$request->fromDate, $request->toDate]);
+        }
+
 
         if ($request->search) {
 
             $res = $this->SearchRequestLeaveAdminOffice($request);
 
             if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
+
+                if (is_numeric($request->search)) {
+                    $data = $data->where($res, '=', $request->search);
+                } else {
+                    $data = $data->where($res, 'like', '%' . $request->search . '%');
+                }
             } else {
                 return null;
             }
@@ -1544,35 +1613,105 @@ class StaffLeaveController extends Controller
     public function indexLeaveDoctorandStaff(Request $request)
     {
 
-        $defaultOrderBy = "asc";
+        if (strtolower($request->status) == "pending") {
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
+            $data = LeaveRequest::from('leaveRequest as a')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    'a.id as leaveRequestId',
+                    'a.requesterName as requesterName',
+                    'b.jobName as jobName',
+                    'c.locationName as locationName',
+                    'a.locationId as locationId',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as fromDate',
+                    'a.duration as duration',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.updated_at as updatedAt',
+                )
+                ->where([
+                    ['a.status', '=', $request->status],
+                    ['a.usersId', '=', $request->user()->id],
+                ]);
+
+        } elseif (strtolower($request->status) == "approve") {
+
+            $data = LeaveRequest::from('leaveRequest as a')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    'a.id as leaveRequestId', //add by danny wahyudi
+                    'a.requesterName as requesterName',
+                    'b.jobName as jobName',
+                    'c.locationName as locationName',
+                    'a.locationId as locationId',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as fromDate',
+                    'a.duration as duration',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.approveOrRejectedBy as  approvedBy',
+                    'a.approveOrRejectedDate as approvedAt',
+                    'a.updated_at as updatedAt',
+                )->where([
+                    ['a.status', '=', $request->status],
+                    ['a.usersId', '=', $request->user()->id],
+                ]);
+        } else {
+
+            $data = LeaveRequest::from('leaveRequest as a')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    'a.id as leaveRequestId',
+                    'a.requesterName as requesterName',
+                    'b.jobName as jobName',
+                    'c.locationName as locationName',
+                    'a.locationId as locationId',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as fromDate',
+                    'a.duration as duration',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.approveOrRejectedBy as  rejectedBy',
+                    'a.rejectedReason as  rejectedReason',
+                    'a.approveOrRejectedDate as rejectedAt',
+                    'a.updated_at as updatedAt',
+                )
+                ->where([
+                    ['a.status', '=', $request->status],
+                    ['a.usersId', '=', $request->user()->id],
+                ]);
+        }
+
+        if (strtotime($request->fromDate) !== false && strtotime($request->toDate) !== false) {
+
+            $start = Carbon::parse($request->fromDate);
+            $end = Carbon::parse($request->toDate);
+
+            if ($end < $start) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['To date must higher than from date!!'],
+                ], 422);
+            }
+
+            $data = $data->whereBetween('fromDate', [$request->fromDate, $request->toDate]);
+        }
 
         if ($request->search) {
 
             $res = $this->SearchRequestLeaveStaffDoctor($request);
 
             if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
+
+                if (is_numeric($request->search)) {
+                    $data = $data->where($res, '=', $request->search);
+                } else {
+                    $data = $data->where($res, 'like', '%' . $request->search . '%');
+                }
             } else {
                 return null;
             }
@@ -1591,7 +1730,6 @@ class StaffLeaveController extends Controller
                 'errors' => ['User Access not Authorize!'],
             ], 403);
         }
-
 
         try {
 
@@ -1817,7 +1955,7 @@ class StaffLeaveController extends Controller
                 ], 422);
             } else {
 
-                $listOrder = null;
+                $listOrder = [];
 
                 if ($rolesIndex == 1) {
 
@@ -1842,16 +1980,13 @@ class StaffLeaveController extends Controller
 
                 if ($request->orderColumn && $defaultOrderBy) {
 
-                    $listOrder = array(
-                        'requesterName',
-                        'jobName',
-                        'locationName',
-                        'leaveType',
-                        'fromDate',
-                        'duration',
-                        'remark',
-                        'createdAt',
-                    );
+                    if (strtolower($request->status) == "pending") {
+                        $listOrder = array('requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt');
+                    } elseif (strtolower($request->status) == "approve") {
+                        $listOrder = array('requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt', 'approvedBy', 'approvedAt');
+                    } else {
+                        $listOrder = array('requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt', 'rejectedBy', 'rejectedReason', 'rejectedAt');
+                    }
 
                     if (!in_array($request->orderColumn, $listOrder)) {
 
@@ -1875,35 +2010,23 @@ class StaffLeaveController extends Controller
 
                 if ($checkOrder) {
 
-                    $data = DB::table($data)
-                        ->select(
-                            'leaveRequestId',
-                            'requesterName',
-                            'jobName',
-                            'locationName',
-                            'leaveType',
-                            'fromDate',
-                            'duration',
-                            'remark',
-                            'createdAt',
-                        )
-                        ->orderBy($request->orderColumn, $defaultOrderBy)
-                        ->orderBy('updatedAt', 'desc');
+                    if (strtolower($request->status) == "pending") {
+                        $data = DB::table($data)->select('leaveRequestId', 'requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt')->orderBy($request->orderColumn, $defaultOrderBy)->orderBy('updatedAt', 'desc');
+                    } elseif (strtolower($request->status) == "approve") {
+                        $data = DB::table($data)->select('leaveRequestId', 'requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt', 'approvedBy', 'approvedAt')->orderBy($request->orderColumn, $defaultOrderBy)->orderBy('updatedAt', 'desc');
+                    } else {
+                        $data = DB::table($data)->select('leaveRequestId', 'requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt', 'rejectedBy', 'rejectedReason', 'rejectedAt')->orderBy($request->orderColumn, $defaultOrderBy)->orderBy('updatedAt', 'desc');
+                    }
+
                 } else {
 
-                    $data = DB::table($data)
-                        ->select(
-                            'leaveRequestId',
-                            'requesterName',
-                            'jobName',
-                            'locationName',
-                            'leaveType',
-                            'fromDate',
-                            'duration',
-                            'remark',
-                            'createdAt',
-                        )
-                        ->orderBy('updatedAt', 'desc');
+                    if (strtolower($request->status) == "pending") {
+                        $data = DB::table($data)->select('leaveRequestId', 'requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt')->orderBy('updatedAt', 'desc');
+                    } elseif (strtolower($request->status) == "approve") {
+                        $data = DB::table($data)->select('leaveRequestId', 'requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt', 'approvedBy', 'approvedAt')->orderBy('updatedAt', 'desc');
+                    } else {
+                        $data = DB::table($data)->select('leaveRequestId', 'requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt', 'rejectedBy', 'rejectedReason', 'rejectedAt')->orderBy('updatedAt', 'desc');
+                    }
                 }
 
                 if ($request->rowPerPage > 0) {
@@ -1930,531 +2053,1911 @@ class StaffLeaveController extends Controller
         }
     }
 
-    public function SearchRequestLeaveStaffDoctor($request)
+
+    private function SearchRequestLeaveStaffDoctor($request)
     {
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
 
-        if ($request->search) {
-            $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
-        }
+        if (is_numeric($request->search)) {
 
-        $data = $data->get();
+            $data = LeaveRequest::from('leaveRequest as a')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    'a.id as leaveRequestId', //add by danny wahyudi
+                    'a.requesterName as requesterName',
+                    'b.jobName as jobName',
+                    'c.locationName as locationName',
+                    'a.locationId as locationId',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as fromDate',
+                    'a.duration as duration',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.updated_at as updatedAt',
+                )
+                ->where([
+                    ['a.status', '=', $request->status],
+                    ['a.usersId', '=', $request->user()->id],
+                ]);
 
-        if (count($data)) {
-            $temp_column = 'a.requesterName';
-            return $temp_column;
-        }
+            if ($request->search) {
+                $data = $data->where('a.duration', '=', $request->search);
+            }
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
+            $data = $data->get();
 
+            if (count($data)) {
+                $temp_column = 'a.duration';
+                return $temp_column;
+            }
+        } else {
 
-        if ($request->search) {
-            $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
-        }
+            if (strtolower($request->status) == "pending") {
 
-        $data = $data->get();
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
 
-        if (count($data)) {
-            $temp_column = 'b.jobName';
-            return $temp_column;
-        }
+                if ($request->search) {
+                    $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
+                }
 
+                $data = $data->get();
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
+                if (count($data)) {
+                    $temp_column = 'a.requesterName';
+                    return $temp_column;
+                }
 
 
-        if ($request->search) {
-            $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
-        }
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
 
-        $data = $data->get();
+                if ($request->search) {
+                    $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
+                }
 
-        if (count($data)) {
-            $temp_column = 'c.locationName';
-            return $temp_column;
-        }
+                $data = $data->get();
 
+                if (count($data)) {
+                    $temp_column = 'b.jobName';
+                    return $temp_column;
+                }
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
 
+                if ($request->search) {
+                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                }
 
-        if ($request->search) {
-            $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
-        }
+                $data = $data->get();
 
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'a.leaveType';
-            return $temp_column;
-        }
-
-
-
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
+                if (count($data)) {
+                    $temp_column = 'c.locationName';
+                    return $temp_column;
+                }
 
 
-        if ($request->search) {
-            $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
-        }
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
 
-        $data = $data->get();
+                if ($request->search) {
+                    $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
+                }
 
-        if (count($data)) {
-            $temp_column = 'a.fromDate';
-            return $temp_column;
-        }
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.leaveType';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.fromDate';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.remark';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.created_at';
+                    return $temp_column;
+                }
+            } elseif (strtolower($request->status) == "approve") {
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.requesterName';
+                    return $temp_column;
+                }
 
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'b.jobName';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'c.locationName';
+                    return $temp_column;
+                }
 
 
-        if ($request->search) {
-            $data = $data->where('a.duration', 'like', '%' . $request->search . '%');
-        }
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
 
-        $data = $data->get();
+                if ($request->search) {
+                    $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
+                }
 
-        if (count($data)) {
-            $temp_column = 'a.duration';
-            return $temp_column;
-        }
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.leaveType';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.fromDate';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.remark';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.created_at';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.created_at';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.approveOrRejectedBy';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.approveOrRejectedDate';
+                    return $temp_column;
+                }
+            } else {
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.requesterName';
+                    return $temp_column;
+                }
 
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'b.jobName';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'c.locationName';
+                    return $temp_column;
+                }
 
 
-        if ($request->search) {
-            $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
-        }
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
 
-        $data = $data->get();
+                if ($request->search) {
+                    $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
+                }
 
-        if (count($data)) {
-            $temp_column = 'a.remark';
-            return $temp_column;
-        }
+                $data = $data->get();
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-                ['a.usersId', '=', $request->user()->id],
-            ]);
+                if (count($data)) {
+                    $temp_column = 'a.leaveType';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.fromDate';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.remark';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.created_at';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.approveOrRejectedBy';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.rejectedReason', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.rejectedReason';
+                    return $temp_column;
+                }
 
 
-        if ($request->search) {
-            $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
-        }
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                        ['a.usersId', '=', $request->user()->id],
+                    ]);
 
-        $data = $data->get();
+                if ($request->search) {
+                    $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
+                }
 
-        if (count($data)) {
-            $temp_column = 'a.created_at';
-            return $temp_column;
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.approveOrRejectedDate';
+                    return $temp_column;
+                }
+            }
         }
     }
 
     private function SearchRequestLeaveAdminOffice($request)
     {
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
+        if (is_numeric($request->search)) {
 
-        if ($request->search) {
-            $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
-        }
+            $data = LeaveRequest::from('leaveRequest as a')
+                ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->select(
+                    'a.id as leaveRequestId', //add by danny wahyudi
+                    'a.requesterName as requesterName',
+                    'b.jobName as jobName',
+                    'c.locationName as locationName',
+                    'a.locationId as locationId',
+                    'a.leaveType as leaveType',
+                    'a.fromDate as fromDate',
+                    'a.duration as duration',
+                    'a.remark as remark',
+                    'a.created_at as createdAt',
+                    'a.updated_at as updatedAt',
+                )
+                ->where([
+                    ['a.status', '=', $request->status],
+                ]);
 
+            if ($request->search) {
+                $data = $data->where('a.duration', '=', $request->search);
+            }
 
-        $data = $data->get();
+            $data = $data->get();
 
-        if (count($data)) {
-            $temp_column = 'a.requesterName';
-            return $temp_column;
-        }
+            if (count($data)) {
+                $temp_column = 'a.duration';
+                return $temp_column;
+            }
+        } else {
 
+            if (strtolower($request->status) == "pending") {
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
 
-        if ($request->search) {
-            $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
-        }
+                if ($request->search) {
+                    $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
+                }
 
-        $data = $data->get();
+                $data = $data->get();
 
-        if (count($data)) {
-            $temp_column = 'b.jobName';
-            return $temp_column;
-        }
-
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
-
-        if ($request->search) {
-            $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'c.locationName';
-            return $temp_column;
-        }
+                if (count($data)) {
+                    $temp_column = 'a.requesterName';
+                    return $temp_column;
+                }
 
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
 
-        if ($request->search) {
-            $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
-        }
+                if ($request->search) {
+                    $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
+                }
 
-        $data = $data->get();
+                $data = $data->get();
 
-        if (count($data)) {
-            $temp_column = 'a.leaveType';
-            return $temp_column;
-        }
+                if (count($data)) {
+                    $temp_column = 'b.jobName';
+                    return $temp_column;
+                }
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
 
-        if ($request->search) {
-            $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
-        }
+                if ($request->search) {
+                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                }
 
-        $data = $data->get();
+                $data = $data->get();
 
-        if (count($data)) {
-            $temp_column = 'a.fromDate';
-            return $temp_column;
-        }
-
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
-
-        if ($request->search) {
-            $data = $data->where('a.duration', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'a.duration';
-            return $temp_column;
-        }
+                if (count($data)) {
+                    $temp_column = 'c.locationName';
+                    return $temp_column;
+                }
 
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
 
-        if ($request->search) {
-            $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
-        }
+                if ($request->search) {
+                    $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
+                }
 
-        $data = $data->get();
+                $data = $data->get();
 
-        if (count($data)) {
-            $temp_column = 'a.remark';
-            return $temp_column;
-        }
+                if (count($data)) {
+                    $temp_column = 'a.leaveType';
+                    return $temp_column;
+                }
 
-        $data = LeaveRequest::from('leaveRequest as a')
-            ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
-                'a.id as leaveRequestId', //add by danny wahyudi
-                'a.requesterName as requesterName',
-                'b.jobName as jobName',
-                'c.locationName as locationName',
-                'a.locationId as locationId',
-                'a.leaveType as leaveType',
-                'a.fromDate as fromDate',
-                'a.duration as duration',
-                'a.remark as remark',
-                'a.created_at as createdAt',
-                'a.updated_at as updatedAt',
-            )
-            ->where([
-                ['a.status', '=', $request->status],
-            ]);
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
 
-        if ($request->search) {
-            $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
-        }
+                if ($request->search) {
+                    $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
+                }
 
-        $data = $data->get();
+                $data = $data->get();
 
-        if (count($data)) {
-            $temp_column = 'a.created_at';
-            return $temp_column;
+                if (count($data)) {
+                    $temp_column = 'a.fromDate';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.remark';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.created_at';
+                    return $temp_column;
+                }
+            } elseif (strtolower($request->status) == "approve") {
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.requesterName';
+                    return $temp_column;
+                }
+
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'b.jobName';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'c.locationName';
+                    return $temp_column;
+                }
+
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.leaveType';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.fromDate';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.remark';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.created_at';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.created_at';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.approveOrRejectedBy';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  approvedBy',
+                        'a.approveOrRejectedDate as approvedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.approveOrRejectedDate';
+                    return $temp_column;
+                }
+            } else {
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.requesterName';
+                    return $temp_column;
+                }
+
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'b.jobName';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'c.locationName';
+                    return $temp_column;
+                }
+
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.leaveType';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.fromDate';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.remark';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.created_at';
+                    return $temp_column;
+                }
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.approveOrRejectedBy';
+                    return $temp_column;
+                }
+
+
+
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.rejectedReason', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.rejectedReason';
+                    return $temp_column;
+                }
+
+
+                $data = LeaveRequest::from('leaveRequest as a')
+                    ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
+                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                    ->select(
+                        'a.id as leaveRequestId', //add by danny wahyudi
+                        'a.requesterName as requesterName',
+                        'b.jobName as jobName',
+                        'c.locationName as locationName',
+                        'a.locationId as locationId',
+                        'a.leaveType as leaveType',
+                        'a.fromDate as fromDate',
+                        'a.duration as duration',
+                        'a.remark as remark',
+                        'a.created_at as createdAt',
+                        'a.approveOrRejectedBy as  rejectedBy',
+                        'a.rejectedReason as  rejectedReason',
+                        'a.approveOrRejectedDate as rejectedAt',
+                        'a.updated_at as updatedAt',
+                    )
+                    ->where([
+                        ['a.status', '=', $request->status],
+                    ]);
+
+                if ($request->search) {
+                    $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
+                }
+
+                $data = $data->get();
+
+                if (count($data)) {
+                    $temp_column = 'a.approveOrRejectedDate';
+                    return $temp_column;
+                }
+            }
         }
     }
 
