@@ -51,6 +51,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
                     ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status],]);
+
             } elseif (strtolower($this->status) == "approve") {
 
                 $data = DB::table('leaveRequest as a')
@@ -112,7 +113,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
 
         $checkOrder = null;
         $listOrder = [];
-
+ 
         if ($this->orderColumn && $defaultOrderBy) {
 
             if (strtolower($this->status) == "pending") {
@@ -162,6 +163,15 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 $data = DB::table($data)->select('requester', 'jobName', 'locationName', 'leaveType', 'date', 'days', 'remark', 'createdAt', 'rejectedBy', 'rejectedReason', 'rejectedAt')->orderBy('updatedAt', 'desc')->get();
             }
         }
+
+        $val = 1;
+        foreach ($data as $key) {
+            $key->number = $val;
+            $val++;
+        }
+
+        return $data;
+
     }
 
     public function headings(): array
