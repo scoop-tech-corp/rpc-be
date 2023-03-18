@@ -282,6 +282,7 @@ class LocationController extends Controller
                 ->select('locationName')
                 ->where([
                     ['locationName', '=', $request->locationName],
+                    ['codeLocation', '<>', $request->codeLocation],
                     ['isDeleted', '=', '0'],
                 ])
                 ->first();
@@ -976,24 +977,27 @@ class LocationController extends Controller
                 if ($request->imagesName) {
                     $ResultImageDatas = json_decode($request->imagesName, true);
 
-                    if (count($ResultImageDatas) != count($request->file('images'))) {
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Images name and Total image should same!'],
-                        ], 422);
-                    } else {
+                    // if (count($ResultImageDatas) != count($request->file('images'))) {
+                    //     return response()->json([
+                    //         'message' => 'The given data was invalid.',
+                    //         'errors' => ['Images name and Total image should same!'],
+                    //     ], 422);
 
-                        foreach ($ResultImageDatas as $value) {
 
-                            if ($value['name'] == "") {
+                    // } else {
 
-                                return response()->json([
-                                    'message' => 'The given data was invalid.',
-                                    'errors' => ['Image name can not be empty!'],
-                                ], 422);
-                            }
+                    foreach ($ResultImageDatas as $value) {
+
+                        if ($value['name'] == "") {
+
+                            return response()->json([
+                                'message' => 'The given data was invalid.',
+                                'errors' => ['Image name can not be empty!'],
+                            ], 422);
                         }
                     }
+
+                    //   }
                 } else {
                     return response()->json([
                         'message' => 'The given data was invalid.',
