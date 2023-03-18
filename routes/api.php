@@ -145,44 +145,46 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/', [CustomerController::class, 'createCustomerGroup']);
     });
 
-    //STAFF
-    Route::get('rolesid', [StaffController::class, 'getRoleName']);
-    Route::post('staff', [StaffController::class, 'insertStaff']);
-    Route::delete('staff', [StaffController::class, 'deleteStaff']);
-    Route::get('rolestaff', [StaffController::class, 'getRoleStaff']);
-    Route::get('typeid', [StaffController::class, 'getTypeId']);
-    Route::get('payperiod', [StaffController::class, 'getPayPeriod']);
-    Route::get('jobtitle', [StaffController::class, 'getJobTitle']);
-    Route::post('typeid', [StaffController::class, 'insertTypeId']);
-    Route::post('payperiod', [StaffController::class, 'insertPayPeriod']);
-    Route::post('jobtitle', [StaffController::class, 'insertJobTitle']);
-    Route::post('imageStaff', [StaffController::class, 'uploadImageStaff']);
-    Route::get('staffdetail', [StaffController::class, 'getDetailStaff']);
-    Route::put('staff', [StaffController::class, 'updateStaff']);
-    Route::get('staff', [StaffController::class, 'index']);
-    Route::get('exportstaff', [StaffController::class, 'exportStaff']);
-    Route::post('sendEmail', [StaffController::class, 'sendEmailVerification']);
-    Route::put('statusStaff', [StaffController::class, 'updateStatusUsers']);
 
-    Route::post('holidaysdate', [StaffController::class, 'getAllHolidaysDate']);
+   //STAFF
+    Route::group(['prefix' => 'staff'], function () {
 
-    //STAFF LEAVE
-    // naming url dirapikan statusleaverequest
-    Route::get('staff/workingdate', [StaffLeaveController::class, 'getWorkingDays']);
-    Route::get('staff/leavetype', [StaffLeaveController::class, 'getLeaveRequest']);
-    Route::post('staff/leave', [StaffLeaveController::class, 'insertLeaveStaff']);
-    Route::post('staff/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
-    Route::post('staff/adjustleave', [StaffLeaveController::class, 'adjustLeaveRequest']);
-    Route::put('staff/adjustbalance', [StaffLeaveController::class, 'adjustBalance']);
-    Route::get('staff/leave', [StaffLeaveController::class, 'getIndexRequestLeave']);
-    Route::get('staff/balancetype', [StaffLeaveController::class, 'getDropdownBalanceType']);
-    Route::get('staff/leavebalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
-    Route::get('staff/exportleave', [StaffLeaveController::class, 'exportLeaveRequest']);
-    Route::get('staff/exportbalance', [StaffLeaveController::class, 'exportBalance']);
-    Route::get('staff/allactive', [StaffLeaveController::class, 'getAllStaffActive']);
-    Route::get('staff/staffid', [StaffLeaveController::class, 'getUsersId']);
-    Route::put('staff/approveall', [StaffLeaveController::class, 'approveAll']);
-    Route::put('staff/rejectall', [StaffLeaveController::class, 'rejectAll']);
+        Route::get('/rolesid', [StaffController::class, 'getRoleName']);
+        Route::post('/', [StaffController::class, 'insertStaff']);
+        Route::delete('/', [StaffController::class, 'deleteStaff']);
+        Route::get('/rolestaff', [StaffController::class, 'getRoleStaff']);
+        Route::get('/typeid', [StaffController::class, 'getTypeId']);
+        Route::get('/payperiod', [StaffController::class, 'getPayPeriod']);
+        Route::get('/jobtitle', [StaffController::class, 'getJobTitle']);
+        Route::post('/typeid', [StaffController::class, 'insertTypeId']);
+        Route::post('/payperiod', [StaffController::class, 'insertPayPeriod']);
+        Route::post('/jobtitle', [StaffController::class, 'insertJobTitle']);
+        Route::post('/imageStaff', [StaffController::class, 'uploadImageStaff']);
+        Route::get('/staffdetail', [StaffController::class, 'getDetailStaff']);
+        Route::put('/', [StaffController::class, 'updateStaff']);
+        Route::get('/', [StaffController::class, 'index']);
+        Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
+        Route::post('/sendEmail', [StaffController::class, 'sendEmailVerification']);
+        Route::put('/statusStaff', [StaffController::class, 'updateStatusUsers']);
+        Route::post('/holidaysdate', [StaffController::class, 'getAllHolidaysDate']);
+
+        Route::get('/leave/workingdate', [StaffLeaveController::class, 'getWorkingDays']);
+        Route::get('/leave/leavetype', [StaffLeaveController::class, 'getLeaveRequest']);
+        Route::post('/leave', [StaffLeaveController::class, 'insertLeaveStaff']);
+        Route::post('/leave/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
+        Route::post('/leave/adjustleave', [StaffLeaveController::class, 'adjustLeaveRequest']);
+        Route::put('/leave/adjustbalance', [StaffLeaveController::class, 'adjustBalance']);
+        Route::get('/leave', [StaffLeaveController::class, 'getIndexRequestLeave']);
+        Route::get('/leave/balancetype', [StaffLeaveController::class, 'getDropdownBalanceType']);
+        Route::get('/leave/leavebalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
+        Route::get('/leave/exportleave', [StaffLeaveController::class, 'exportLeaveRequest']);
+        Route::get('/leave/exportbalance', [StaffLeaveController::class, 'exportBalance']);
+        Route::get('/leave/allactive', [StaffLeaveController::class, 'getAllStaffActive']);
+        Route::get('/leave/staffid', [StaffLeaveController::class, 'getUsersId']);
+        Route::put('/leave/approveall', [StaffLeaveController::class, 'approveAll']);
+        Route::put('/leave/rejectall', [StaffLeaveController::class, 'rejectAll']);
+
+    });
 
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);

@@ -235,7 +235,7 @@ class StaffLeaveController extends Controller
                     'leaveType' => 'required|string',
                     'fromDate' => 'required|date_format:Y-m-d',
                     'toDate' => 'required|date_format:Y-m-d',
-                    'totalDays' => 'required|integer',
+                    // 'totalDays' => 'required|integer',
                     'workingDays' => 'required',
                     'remark' => 'required|string',
 
@@ -341,13 +341,13 @@ class StaffLeaveController extends Controller
             // }
 
 
-            if ($request->totalDays != $hitungNameDays) {
+            // if ($request->totalDays != $hitungNameDays) {
 
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Wrong working days, please check again. Your working days must be ' .  $request->totalDays . ' days '
-                ], 422);
-            }
+            //     return response()->json([
+            //         'result' => 'Failed',
+            //         'message' => 'Wrong working days, please check again. Your working days must be ' .  $request->totalDays . ' days '
+            //     ], 422);
+            // }
 
 
             if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
@@ -385,7 +385,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->totalDays > $sickallowance) {
+                    if ($hitungNameDays > $sickallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -403,7 +403,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->totalDays > $leaveallowance) {
+                    if ($hitungNameDays > $leaveallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -446,7 +446,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $request->totalDays;
+                $staffLeave->duration = $hitungNameDays;
                 $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
@@ -483,7 +483,7 @@ class StaffLeaveController extends Controller
                     'leaveType' => 'required|string',
                     'fromDate' => 'required|date_format:Y-m-d|after_or_equal:today',
                     'toDate' => 'required|date_format:Y-m-d',
-                    'totalDays' => 'required|integer',
+                    // 'totalDays' => 'required|integer',
                     'workingDays' => 'required',
                     'remark' => 'required|string',
 
@@ -588,13 +588,13 @@ class StaffLeaveController extends Controller
             //     ], 422);
             // }
 
-            if ($request->totalDays != $hitungNameDays) {
+            // if ($request->totalDays != $hitungNameDays) {
 
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Wrong working days, please check again. Your working days must be ' .  $request->totalDays . ' days '
-                ], 422);
-            }
+            //     return response()->json([
+            //         'result' => 'Failed',
+            //         'message' => 'Wrong working days, please check again. Your working days must be ' .  $request->totalDays . ' days '
+            //     ], 422);
+            // }
 
             if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
 
@@ -633,7 +633,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->totalDays > $sickallowance) {
+                    if ($hitungNameDays > $sickallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -651,7 +651,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($request->totalDays > $leaveallowance) {
+                    if ($hitungNameDays > $leaveallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -694,7 +694,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $request->totalDays;
+                $staffLeave->duration = $hitungNameDays;
                 $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
