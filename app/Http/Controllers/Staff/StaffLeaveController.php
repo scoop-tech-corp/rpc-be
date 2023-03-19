@@ -235,7 +235,7 @@ class StaffLeaveController extends Controller
                     'leaveType' => 'required|string',
                     'fromDate' => 'required|date_format:Y-m-d',
                     'toDate' => 'required|date_format:Y-m-d',
-                    // 'totalDays' => 'required|integer',
+                    'totalDays' => 'required|integer',
                     'workingDays' => 'required',
                     'remark' => 'required|string',
 
@@ -385,7 +385,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($hitungNameDays > $sickallowance) {
+                    if ($request->totalDays > $sickallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -403,7 +403,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($hitungNameDays > $leaveallowance) {
+                    if ($request->totalDays > $leaveallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -446,7 +446,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $hitungNameDays;
+                $staffLeave->duration = $request->totalDays;
                 $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
@@ -483,7 +483,7 @@ class StaffLeaveController extends Controller
                     'leaveType' => 'required|string',
                     'fromDate' => 'required|date_format:Y-m-d|after_or_equal:today',
                     'toDate' => 'required|date_format:Y-m-d',
-                    // 'totalDays' => 'required|integer',
+                    'totalDays' => 'required|integer',
                     'workingDays' => 'required',
                     'remark' => 'required|string',
 
@@ -633,7 +633,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($hitungNameDays > $sickallowance) {
+                    if ($request->totalDays > $sickallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -651,7 +651,7 @@ class StaffLeaveController extends Controller
                     }
 
 
-                    if ($hitungNameDays > $leaveallowance) {
+                    if ($request->totalDays > $leaveallowance) {
 
                         return response()->json([
                             'result' => 'Failed',
@@ -694,7 +694,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $hitungNameDays;
+                $staffLeave->duration = $request->totalDays;
                 $staffLeave->workingDays = $valueDays;
                 $staffLeave->status = "pending";
                 $staffLeave->remark =  $request->remark;
@@ -1637,7 +1637,6 @@ class StaffLeaveController extends Controller
                     ['a.status', '=', $request->status],
                     ['a.usersId', '=', $request->user()->id],
                 ]);
-
         } elseif (strtolower($request->status) == "approve") {
 
             $data = LeaveRequest::from('leaveRequest as a')
@@ -2019,7 +2018,6 @@ class StaffLeaveController extends Controller
                     } else {
                         $data = DB::table($data)->select('leaveRequestId', 'requesterName', 'jobName', 'locationName', 'leaveType', 'fromDate', 'duration', 'remark', 'createdAt', 'rejectedBy', 'rejectedReason', 'rejectedAt')->orderBy($request->orderColumn, $defaultOrderBy)->orderBy('updatedAt', 'desc');
                     }
-
                 } else {
 
                     if (strtolower($request->status) == "pending") {
