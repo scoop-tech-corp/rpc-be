@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('petCategory', function (Blueprint $table) {
             $table->id();
-            $table->string('categoryName');
+            $table->string('petCategoryName');
             $table->boolean('isActive'); 
             $table->timestamps();
         });

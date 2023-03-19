@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('reminderCustomer', function (Blueprint $table) {
             $table->id();
             $table->integer('usersId');
-            $table->integer('sourceId');
+            $table->integer('sourceCustomerId');
             $table->integer('unit');
             $table->string('time')->nullable();
             $table->string('timeDate')->nullable();

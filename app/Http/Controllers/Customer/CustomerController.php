@@ -83,7 +83,7 @@ class CustomerController extends Controller
                     'middleName' => 'nullable|string|max:100',
                     'lastName' => 'nullable|string|max:100',
                     'nickName' => 'nullable|string|max:100',
-                    'titleId' => 'nullable|integer',
+                    'titleCustomerId' => 'nullable|integer',
                     'customerGroupId' => 'nullable|integer',
                     'locationId' => 'nullable|integer',
                     'notes' => 'nullable|string',
@@ -93,7 +93,7 @@ class CustomerController extends Controller
                     'gender' => 'required|in:P,W',
                     'jobTitleId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
-                    'referenceId' => 'required|integer',
+                    'referenceCustomerId' => 'required|integer',
 
                     'generalCustomerCanConfigReminderBooking' => 'integer|nullable',
                     'generalCustomerCanConfigReminderPayment' => 'integer|nullable',
@@ -177,7 +177,7 @@ class CustomerController extends Controller
             $arrayReminderBooking = json_decode($request->reminderBooking, true);
 
                 $messageReminderBooking = [
-                    'sourceId.required' => 'Source on tab Reminder and on Reminder Booking is required',
+                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
                     'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
                     'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
@@ -189,7 +189,7 @@ class CustomerController extends Controller
                     $validateReminderBooking = Validator::make(
                         $key,
                         [
-                            'sourceId' => 'required|integer',
+                            'sourceCustomerId' => 'required|integer',
                             'unit' => 'required|integer',
                             'time' => 'required',
                             'timeDate' => 'required',
@@ -227,7 +227,7 @@ class CustomerController extends Controller
             $arrayReminderPayment = json_decode($request->reminderPayment, true);
 
                 $messageReminderPayment = [
-                    'sourceId.required' => 'Source on tab Reminder and on Reminder Booking is required',
+                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
                     'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
                     'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
@@ -239,7 +239,7 @@ class CustomerController extends Controller
                     $validateReminderPayment = Validator::make(
                         $key,
                         [
-                            'sourceId' => 'required|integer',
+                            'sourceCustomerId' => 'required|integer',
                             'unit' => 'required|integer',
                             'time' => 'required',
                             'timeDate' => 'required',
@@ -277,7 +277,7 @@ class CustomerController extends Controller
             $reminderLatePayment = json_decode($request->reminderLatePayment, true);
 
                 $messageReminderLatePayment = [
-                    'sourceId.required' => 'Source on tab Reminder and on Reminder Booking is required',
+                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
                     'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
                     'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
@@ -289,7 +289,7 @@ class CustomerController extends Controller
                     $validateReminderLatePayment = Validator::make(
                         $key,
                         [
-                            'sourceId' => 'required|integer',
+                            'sourceCustomerId' => 'required|integer',
                             'unit' => 'required|integer',
                             'time' => 'required',
                             'timeDate' => 'required',
@@ -635,7 +635,7 @@ class CustomerController extends Controller
                     'lastName' => $request->lastName,
                     'nickName' => $request->nickName,
                     'gender' => $request->gender,
-                    'titleId' => $request->titleId,
+                    'titleCustomerId' => $request->titleCustomerId,
                     'customerGroupId' => $request->customerGroupId,
                     'locationId' => $request->locationId,
                     'notes' => $request->notes,
@@ -644,7 +644,7 @@ class CustomerController extends Controller
                     'numberId' => $request->numberId,
                     'jobTitleId' => $request->jobTitleId,
                     'birthDate' => $request->birthDate,
-                    'referenceId' => $request->referenceId,
+                    'referenceCustomerId' => $request->referenceCustomerId,
 
                     'generalCustomerCanConfigReminderBooking' => $request->generalCustomerCanConfigReminderBooking,
                     'generalCustomerCanConfigReminderPayment' => $request->generalCustomerCanConfigReminderPayment,
@@ -683,7 +683,7 @@ class CustomerController extends Controller
                     DB::table('reminderCustomer')
                         ->insert([
                             'usersId' => $lastInsertedID,
-                            'sourceId' => $val['sourceId'],
+                            'sourceCustomerId' => $val['sourceCustomerId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
                             'timeDate' => $val['timeDate'],
@@ -702,7 +702,7 @@ class CustomerController extends Controller
                     DB::table('reminderCustomer')
                         ->insert([
                             'usersId' => $lastInsertedID,
-                            'sourceId' => $val['sourceId'],
+                            'sourceCustomerId' => $val['sourceCustomerId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
                             'timeDate' => $val['timeDate'],
@@ -721,7 +721,7 @@ class CustomerController extends Controller
                     DB::table('reminderCustomer')
                         ->insert([
                             'usersId' => $lastInsertedID,
-                            'sourceId' => $val['sourceId'],
+                            'sourceCustomerId' => $val['sourceCustomerId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
                             'timeDate' => $val['timeDate'],
@@ -835,6 +835,234 @@ class CustomerController extends Controller
                 200
             );
 
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+    public function getSourceCustomer(Request $request)
+    {
+
+        try {
+
+            $getSourceCustomer = DB::table('sourceCustomer as a')
+                ->select(
+                    'a.id as sourceCustomerId',
+                    'a.sourceName as sourceCustomerName',
+                )
+                ->where([
+                    ['isActive', '=', 1],
+                ])
+                ->orderBy('a.created_at', 'desc')
+                ->get();
+
+            return response()->json($getSourceCustomer, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+    public function insertSourceCustomer(Request $request)
+    {
+
+        $request->validate([
+            'sourceName' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $checkIfValueExits = DB::table('sourceCustomer as a')
+                ->where([
+                    ['a.sourceName', '=', $request->sourceName],
+                    ['a.isActive', '=', 1]
+                ])
+                ->first();
+
+            if ($checkIfValueExits != null) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Source Customer title already exists, please choose another name',
+                ]);
+            } else {
+
+                DB::table('sourceCustomer')->insert([
+                    'sourceName' => $request->sourceName,
+                    'created_at' => now(),
+                    'isActive' => 1,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'result' => 'success',
+                    'message' => 'Successfully inserted Source Customer',
+                ]);
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+    public function getReferenceCustomer(Request $request)
+    {
+
+        try {
+
+            $getRefrenceCustomer = DB::table('referenceCustomer as a')
+                ->select(
+                    'a.id as referenceCustomerId',
+                    'a.referenceName as referenceCustomerName',
+                )
+                ->where([
+                    ['isActive', '=', 1],
+                ])
+                ->orderBy('a.created_at', 'desc')
+                ->get();
+
+            return response()->json($getRefrenceCustomer, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+    public function insertReferenceCustomer(Request $request)
+    {
+
+        $request->validate([
+            'referenceName' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $checkIfValueExits = DB::table('referenceCustomer as a')
+                ->where([
+                    ['a.referenceName', '=', $request->sourceName],
+                    ['a.isActive', '=', 1]
+                ])
+                ->first();
+
+            if ($checkIfValueExits != null) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Reference Customer title already exists, please choose another name',
+                ]);
+            } else {
+
+                DB::table('referenceCustomer')->insert([
+                    'referenceName' => $request->sourceName,
+                    'created_at' => now(),
+                    'isActive' => 1,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'result' => 'success',
+                    'message' => 'Successfully inserted Reference Customer',
+                ]);
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+    public function getTitleCustomer(Request $request)
+    {
+
+        try {
+
+            $getRefrenceCustomer = DB::table('titleCustomer as a')
+                ->select(
+                    'a.id as titleCustomerId',
+                    'a.titleName as titleCustomerName',
+                )
+                ->where([
+                    ['isActive', '=', 1],
+                ])
+                ->orderBy('a.created_at', 'desc')
+                ->get();
+
+            return response()->json($getRefrenceCustomer, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+    public function insertTitleCustomer(Request $request)
+    {
+
+        $request->validate([
+            'titleName' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $checkIfValueExits = DB::table('titleCustomer as a')
+                ->where([
+                    ['a.titleName', '=', $request->sourceName],
+                    ['a.isActive', '=', 1]
+                ])
+                ->first();
+
+            if ($checkIfValueExits != null) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Title Customer title already exists, please choose another name',
+                ]);
+            } else {
+
+                DB::table('titleCustomer')->insert([
+                    'titleName' => $request->sourceName,
+                    'created_at' => now(),
+                    'isActive' => 1,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'result' => 'success',
+                    'message' => 'Successfully inserted Title Customer',
+                ]);
+            }
         } catch (Exception $e) {
 
             DB::rollback();
