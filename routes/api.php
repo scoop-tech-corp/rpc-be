@@ -27,37 +27,45 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::post('logout', [ApiController::class, 'logout']);
 
-    Route::get('locationpdf', [LocationController::class, 'cetak_pdf']);
-    Route::get('locationImages', [LocationController::class, 'searchImageLocation']);
-    Route::post('location', [LocationController::class, 'insertLocation']);
-    Route::get('location', [LocationController::class, 'getLocationHeader']);
-    Route::get('detaillocation', [LocationController::class, 'getLocationDetail']);
-    Route::get('datastaticlocation', [LocationController::class, 'getDataStaticLocation']);
-    Route::get('provinsilocation', [LocationController::class, 'getProvinsiLocation']);
-    Route::get('kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
-    Route::get('exportlocation', [LocationController::class, 'exportLocation']);
-    Route::delete('location', [LocationController::class, "deleteLocation"]);
 
-    Route::get('location/list', [LocationController::class, 'locationList']);
+    Route::group(['prefix' => 'location'], function () {
 
-    Route::put('location', [LocationController::class, 'updateLocation']);
-    Route::put('facility', [FacilityController::class, 'updateFacility']);
+        //location
+        Route::get('/locationpdf', [LocationController::class, 'cetak_pdf']);
+        Route::get('/locationImages', [LocationController::class, 'searchImageLocation']);
+        Route::post('/', [LocationController::class, 'insertLocation']);
+        Route::get('/', [LocationController::class, 'getLocationHeader']);
+        Route::get('/detaillocation', [LocationController::class, 'getLocationDetail']);
+        Route::get('/datastaticlocation', [LocationController::class, 'getDataStaticLocation']);
+        Route::get('/provinsilocation', [LocationController::class, 'getProvinsiLocation']);
+        Route::get('/kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
+        Route::get('/exportlocation', [LocationController::class, 'exportLocation']);
+        Route::delete('/', [LocationController::class, "deleteLocation"]);
+        Route::get('location/list', [LocationController::class, 'locationList']);
+        Route::put('/', [LocationController::class, 'updateLocation']);
+        Route::post('/uploadexceltest', [LocationController::class, 'uploadexceltest']);
+        Route::post('/datastatic', [LocationController::class, 'insertdatastatic']);
+        Route::post('/imagelocation', [LocationController::class, 'uploadImageLocation']);
 
-    Route::post('imagelocation', [LocationController::class, 'uploadImageLocation']);
-    Route::post('imagefacility', [FacilityController::class, 'uploadImageFacility']);
+        //facility
+        Route::get('/facility', [FacilityController::class, 'facilityMenuHeader']);
+        Route::put('/facility', [FacilityController::class, 'updateFacility']);
+        Route::post('/facility', [FacilityController::class, 'createFacility']);
+        Route::delete('/facility', [FacilityController::class, 'deleteFacility']);
+        Route::get('/facility/facilityexport', [FacilityController::class, 'facilityExport']);
+        Route::get('/facility/facilitylocation', [FacilityController::class, 'facilityLocation']);
+        Route::get('/facility/facilitydetail', [FacilityController::class, 'facilityDetail']);
+        Route::get('/facility/facilityimages', [FacilityController::class, 'searchImageFacility']);
+        Route::post('/facility/imagefacility', [FacilityController::class, 'uploadImageFacility']);
 
-    Route::post('upload', [ImportRegionController::class, 'uploadRegion']);
-    Route::get('datastatic', [DataStaticController::class, 'datastatic']);
-    Route::post('datastatic', [LocationController::class, 'insertdatastatic']);
-    Route::delete('datastatic', [DataStaticController::class, 'datastaticlocation']);
-    Route::post('uploadexceltest', [LocationController::class, 'uploadexceltest']);
-    Route::get('facility', [FacilityController::class, 'facilityMenuHeader']);
-    Route::get('facilityexport', [FacilityController::class, 'facilityExport']);
-    Route::get('facilitylocation', [FacilityController::class, 'facilityLocation']);
-    Route::get('facilitydetail', [FacilityController::class, 'facilityDetail']);
-    Route::post('facility', [FacilityController::class, 'createFacility']);
-    Route::delete('facility', [FacilityController::class, 'deleteFacility']);
-    Route::get('facilityimages', [FacilityController::class, 'searchImageFacility']);
+        //data static
+        Route::get('/datastatic', [DataStaticController::class, 'datastatic']);
+        Route::delete('/datastatic', [DataStaticController::class, 'datastaticlocation']);
+        
+    });
+
+
+
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
 
