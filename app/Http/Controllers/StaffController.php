@@ -79,7 +79,7 @@ class StaffController extends Controller
 
             if ($request->detailAddress) {
 
-            $arrayDetailAddress = json_decode($request->detailAddress, true);
+                $arrayDetailAddress = json_decode($request->detailAddress, true);
 
                 $messageAddress = [
                     'addressName.required' => 'Address name on tab Address is required',
@@ -131,14 +131,11 @@ class StaffController extends Controller
                 ], 422);
             }
 
-
-
-            //// VALIDASI PHONE
             $data_telephone = [];
 
             if ($request->telephone) {
 
-            $arraytelephone = json_decode($request->telephone, true);
+                $arraytelephone = json_decode($request->telephone, true);
 
                 $messagePhone = [
                     'phoneNumber.required' => 'Phone Number on tab telephone is required',
@@ -172,14 +169,13 @@ class StaffController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
-
                 }
 
                 if ($data_telephone) {
@@ -218,7 +214,7 @@ class StaffController extends Controller
             $insertEmailUsers = '';
             if ($request->email) {
 
-            $arrayemail = json_decode($request->email, true);
+                $arrayemail = json_decode($request->email, true);
 
                 $messageEmail = [
                     'email.required' => 'Email on tab email is required',
@@ -304,7 +300,7 @@ class StaffController extends Controller
 
             if ($request->messenger) {
 
-            $arraymessenger = json_decode($request->messenger, true);
+                $arraymessenger = json_decode($request->messenger, true);
 
                 $messageMessenger = [
                     'messengerNumber.required' => 'messenger number on tab messenger is required',
@@ -339,16 +335,14 @@ class StaffController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['messengerNumber'], 0, 3) === "+62")) {
+                        if (!(substr($key['messengerNumber'], 0, 3) === "62")) {
 
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
-
-
                 }
 
                 if ($data_error_messenger) {
@@ -358,8 +352,6 @@ class StaffController extends Controller
                     ], 422);
                 }
 
-
-               //// 25122022 insert
                 $checkMessenger = [];
                 foreach ($arraymessenger as $val) {
 
@@ -382,8 +374,6 @@ class StaffController extends Controller
                     ], 422);
                 }
             }
-
-            //// INSERT STAFF/USERS
 
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
@@ -511,7 +501,6 @@ class StaffController extends Controller
                 }
             }
 
-            // check kalau akun aktif maka baru send email , kalau akun tidak aktif maka email tidak terkirim
             if ($request->status == 1) {
 
                 $sendEmailPrimary = DB::table('usersEmails as usersEmails')
@@ -580,7 +569,6 @@ class StaffController extends Controller
                 ],
                 200
             );
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -594,7 +582,7 @@ class StaffController extends Controller
 
     public function sendEmailVerification(Request $request)
     {
-        //29122022
+
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
                 'message' => 'The user role was invalid.',
@@ -710,7 +698,7 @@ class StaffController extends Controller
 
     public function updateStatusUsers(Request $request)
     {
-        //update 29122022
+
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
                 'message' => 'The user role was invalid.',
@@ -938,7 +926,7 @@ class StaffController extends Controller
             $defaultRowPerPage = 5;
             $defaultOrderBy = "asc";
 
-            //V1
+
             $subquery = DB::table('users as a')
                 ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
                 ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
@@ -2140,7 +2128,7 @@ class StaffController extends Controller
     public function updateStaff(Request $request)
     {
 
-        //25122022 update
+
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
                 'message' => 'The user role was invalid.',
@@ -2296,10 +2284,10 @@ class StaffController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -2312,7 +2300,6 @@ class StaffController extends Controller
                     ], 422);
                 }
 
-                //25122022 update
                 $checkTelephone = [];
 
                 foreach ($request->telephone as $val) {
@@ -2338,8 +2325,6 @@ class StaffController extends Controller
                 }
             }
 
-
-            //25122022 update
             $data_error_email = [];
             $insertEmailUsers = '';
 
@@ -2405,7 +2390,6 @@ class StaffController extends Controller
                     if ($val['usage'] == 'Utama') {
                         $checkUsageEmail = true;
 
-                        //28122022
                         $checkEmailUtama = DB::table('usersEmails')
                             ->where([
                                 ['usage', '=', 'Utama'],
@@ -2415,7 +2399,7 @@ class StaffController extends Controller
                             ->first();
 
                         if ($checkEmailUtama->email != $val['email']) {
-                            //data berubah change email primary maka data loop dimasukan
+
                             $insertEmailUsers = $val['email'];
                         }
                     }
@@ -2473,10 +2457,10 @@ class StaffController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['messengerNumber'], 0, 3) === "+62")) {
+                        if (!(substr($key['messengerNumber'], 0, 2) === "62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -2489,8 +2473,6 @@ class StaffController extends Controller
                     ], 422);
                 }
 
-
-                //25122022 update
                 $checkMessenger = [];
 
                 foreach ($request->messenger as $val) {
@@ -2516,11 +2498,8 @@ class StaffController extends Controller
                 }
             }
 
-            //UPDATE
-            if ($insertEmailUsers) {
 
-                //kalau ada isi maka harus resend kembali untuk verifikasi ulang email ada send
-                //tapi check terlebih dahulu apakah status data is active
+            if ($insertEmailUsers) {
 
                 DB::table('users')
                     ->where('id', '=', $request->id)
@@ -2629,7 +2608,7 @@ class StaffController extends Controller
                     }
                 }
 
-                //check if status nya 0 pada saat update 
+
 
                 if ($request->status == 0) {
 
@@ -3039,7 +3018,7 @@ class StaffController extends Controller
 
     public function deleteStaff(Request $request)
     {
-        //25122022 delete
+
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
                 'message' => 'The user role was invalid.',

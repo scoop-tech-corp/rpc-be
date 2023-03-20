@@ -128,16 +128,6 @@ class LocationController extends Controller
 
     public function uploadexceltest(Request $request)
     {
-
-        // $request->validate([
-        //     'file' => 'required|max:10000',
-        // ]);
-
-        // Excel::import(new UsersImport, $request->file);
-
-        // return response()->json([
-        //     'result' => 'success',
-        // ]);
     }
 
     public function uploadImageLocation(Request $request)
@@ -152,7 +142,7 @@ class LocationController extends Controller
             foreach ($json_array as $val) {
 
 
-                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { //create new
+                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { 
 
                     $name = $files[0][$index]->hashName();
 
@@ -172,7 +162,7 @@ class LocationController extends Controller
                         ]);
 
                     $index = $index + 1;
-                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { // delete
+                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) {
 
 
                     $find_image = DB::table('location_images')
@@ -196,7 +186,7 @@ class LocationController extends Controller
                             ])->delete();
                         }
                     }
-                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) { // update
+                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) {
 
                     $find_image = DB::table('location_images')
                         ->select(
@@ -295,14 +285,6 @@ class LocationController extends Controller
                 ], 422);
             }
 
-
-            // if (ctype_digit($request->description)) {
-            //     return response()->json([
-            //         'message' => 'The given data was invalid.',
-            //         'errors' => ['Description must be string'],
-            //     ], 422);
-            // }
-
             $data_error_address = [];
 
             if ($request->detailAddress) {
@@ -392,10 +374,10 @@ class LocationController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -489,10 +471,10 @@ class LocationController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
+                        if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -506,8 +488,6 @@ class LocationController extends Controller
                 }
             }
 
-
-            //UPDATE 
             DB::table('location')
                 ->where('codeLocation', '=', $request->input('codeLocation'))
                 ->update([
@@ -516,8 +496,6 @@ class LocationController extends Controller
                     'status' => $request->input('status'),
                     'updated_at' => now(),
                 ]);
-
-            /**Delete location detail address */
 
             if ($request->detailAddress) {
 
@@ -542,9 +520,7 @@ class LocationController extends Controller
                         ]);
                 }
             }
-            /**End Delete location detail address */
 
-            /**Delete location operational hours */
 
             if ($request->operationalHour > 0) {
 
@@ -565,9 +541,7 @@ class LocationController extends Controller
                     }
                 }
             }
-            /**End Delete location hours*/
 
-            /**Delete location messenger */
 
             if ($request->messenger) {
 
@@ -586,9 +560,6 @@ class LocationController extends Controller
                         ]);
                 }
             }
-            /**End Delete location messenger*/
-
-            /**Delete location email */
 
             if ($request->email) {
 
@@ -606,9 +577,6 @@ class LocationController extends Controller
                         ]);
                 }
             }
-            /**End Delete location email*/
-
-            /**Delete location telephone */
 
             if ($request->telephone) {
 
@@ -627,7 +595,6 @@ class LocationController extends Controller
                         ]);
                 }
             }
-            /**End Delete location telephone*/
 
             DB::commit();
 
@@ -646,8 +613,6 @@ class LocationController extends Controller
         }
     }
 
-
-    //add by danny wahyudi 29/01/2023
     public function cetak_pdf()
     {
         $location = Location::all();
@@ -655,8 +620,6 @@ class LocationController extends Controller
         $pdf = PDF::loadview('/pdf/location', ['location' => $location]);
         return $pdf->download('laporan-location-pdf');
     }
-    //end add by danny wahyudi 29/01/2023
-
 
     public function insertLocation(Request $request)
     {
@@ -698,13 +661,6 @@ class LocationController extends Controller
                     'errors' => $errors,
                 ], 422);
             }
-
-            // if (ctype_digit($request->description)) {
-            //     return response()->json([
-            //         'message' => 'The given data was invalid.',
-            //         'errors' => ['Description must be string'],
-            //     ], 422);
-            // }
 
             $checkdataLocation = DB::table('location')
                 ->select('locationName')
@@ -817,10 +773,10 @@ class LocationController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -920,10 +876,10 @@ class LocationController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
+                        if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -977,15 +933,6 @@ class LocationController extends Controller
                 if ($request->imagesName) {
                     $ResultImageDatas = json_decode($request->imagesName, true);
 
-                    // if (count($ResultImageDatas) != count($request->file('images'))) {
-                    //     return response()->json([
-                    //         'message' => 'The given data was invalid.',
-                    //         'errors' => ['Images name and Total image should same!'],
-                    //     ], 422);
-
-
-                    // } else {
-
                     foreach ($ResultImageDatas as $value) {
 
                         if ($value['name'] == "") {
@@ -996,8 +943,6 @@ class LocationController extends Controller
                             ], 422);
                         }
                     }
-
-                    //   }
                 } else {
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -1006,7 +951,6 @@ class LocationController extends Controller
                 }
             }
 
-            //INSERT
             DB::table('location')->insert([
                 'codeLocation' => $getvaluesp,
                 'locationName' => $request->input('locationName'),
@@ -1256,8 +1200,6 @@ class LocationController extends Controller
 
         $total_paging = $count_data / $defaultRowPerPage;
 
-        // $data = $data->orderBy('location.updated_at', 'desc');
-
         return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
     }
 
@@ -1356,7 +1298,6 @@ class LocationController extends Controller
             return $temp_column;
         }
 
-        // ***************************************
 
         $data = DB::table('location')
             ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
@@ -1387,8 +1328,6 @@ class LocationController extends Controller
             $temp_column = 'kabupaten.namaKabupaten';
             return $temp_column;
         }
-
-        // ----------------------------------
 
         $data = DB::table('location')
             ->leftjoin('location_detail_address', 'location_detail_address.codeLocation', '=', 'location.codeLocation')
@@ -1488,30 +1427,6 @@ class LocationController extends Controller
         }
 
         $data = $data->get();
-
-        // if (count($data)) {
-        //     $temp_column = 'location_images.labelName';
-        //     return $temp_column;
-        // }
-
-        // $data = DB::table('location_images')
-        //         ->select('location_images.labelName as labelName',
-        //                 'location_images.realImageName as realImageName',
-        //                 'location_images.imageName as imageName',
-        //                 'location_images.imagePath as imagePath',)
-        //         ->where([['location_images.codeLocation', '=', $request->codeLocation],
-        //                 ['location_images.isDeleted', '=', '0']]);
-
-        // if ($request->name) {
-        //     $data = $data->where('location_images.realImageName', 'like', '%' . $request->name . '%');
-        // }
-
-        // $data = $data->get();
-
-        // if (count($data)) {
-        //     $temp_column = 'location_images.realImageName';
-        //     return $temp_column;
-        // }
 
     }
 

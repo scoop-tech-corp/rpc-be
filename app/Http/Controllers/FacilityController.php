@@ -236,7 +236,6 @@ class FacilityController extends Controller
                 ], 422);
             }
 
-            //INSERT DATA
             $Facility = new Facility();
             $Facility->locationId = $request->input('locationId');
             $Facility->introduction = $request->input('introduction');
@@ -711,8 +710,6 @@ class FacilityController extends Controller
             }
 
 
-
-            //UPDATE
             Facility::where('locationId', '=', $request->locationId)
                 ->update([
                     'introduction' => $request->introduction,
@@ -795,7 +792,7 @@ class FacilityController extends Controller
 
             foreach ($json_array as $val) {
 
-                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { //create new
+                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { 
 
                     $name = $files[0][$index]->hashName();
 
@@ -815,7 +812,7 @@ class FacilityController extends Controller
                     $facilityimages->save();
 
                     $index = $index + 1;
-                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { // delete
+                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { 
 
                     $find_image = FacilityImages::select(
                         'facility_images.imageName',
@@ -833,7 +830,7 @@ class FacilityController extends Controller
                             FacilityImages::where([['id', '=', $val['id']]])->delete();
                         }
                     }
-                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) { // update
+                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) { 
 
                     $find_image = FacilityImages::select(
                         'facility_images.imageName',
@@ -1190,12 +1187,9 @@ class FacilityController extends Controller
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
 
-
-            //s $date = Carbon::createFromFormat('d/m/Y', '11/06/1990');
             if ($request->locationId) {
 
-                $location = DB::table('location')
-                    ->select('locationName')
+                $location = Location::select('locationName')
                     ->whereIn('id', $request->locationId)
                     ->get();
 
@@ -1258,7 +1252,6 @@ class FacilityController extends Controller
                 ->get();
 
             return response()->json($getLocationFasilitas, 200);
-            
         } catch (Exception $e) {
 
             return response()->json([
