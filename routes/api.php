@@ -60,19 +60,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('facilityimages', [FacilityController::class, 'searchImageFacility']);
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
-    Route::get('products', [ProductController::class, 'index']);
-    Route::get('products/{id}', [ProductController::class, 'show']);
-    Route::post('create', [ProductController::class, 'store']);
-    Route::put('update/{product}', [ProductController::class, 'update']);
-    Route::delete('delete/{product}', [ProductController::class, 'destroy']);
-
-
-
-    Route::post('productstatus', [ProductController::class, 'addProductStatus']);
-    Route::post('product', [ProductController::class, 'createNewProduct']);
-    Route::delete('product', [ProductController::class, 'deleteProduct']);
-    Route::get('product', [ProductController::class, 'indexProduct']);
-    Route::get('productdetail', [ProductController::class, 'getProductDetail']);
 
     //MODULE PRODUCT
     //list produk
@@ -140,13 +127,24 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::prefix(['prefix' => 'customer'], function () {
 
-        Route::get('customer/group', [CustomerController::class, 'indexCustomerGroup']);
-        Route::post('customer/group', [CustomerController::class, 'Create']);
-        Route::post('/', [CustomerController::class, 'createCustomerGroup']);
+        Route::get('/group', [CustomerController::class, 'indexCustomerGroup']);
+        Route::post('/group', [CustomerController::class, 'createCustomerGroup']);
+
+        Route::post('/', [CustomerController::class, 'create']);
+
+        // Naufal task
+        Route::get('/reference', [CustomerController::class, 'getReferenceCustomer']);
+        Route::post('/reference', [CustomerController::class, 'insertReferenceCustomer']);
+
+        Route::get('/title', [CustomerController::class, 'getTitleCustomer']);
+        Route::post('/title', [CustomerController::class, 'insertTitleCustomer']);
+
+        Route::get('/source', [CustomerController::class, 'getSourceCustomer']);
+        Route::post('/source', [CustomerController::class, 'insertSourceCustomer']);
     });
 
 
-   //STAFF
+    //STAFF
     Route::group(['prefix' => 'staff'], function () {
 
         Route::get('/rolesid', [StaffController::class, 'getRoleName']);
@@ -183,7 +181,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/leave/staffid', [StaffLeaveController::class, 'getUsersId']);
         Route::put('/leave/approveall', [StaffLeaveController::class, 'approveAll']);
         Route::put('/leave/rejectall', [StaffLeaveController::class, 'rejectAll']);
-
     });
 
     //GLOBAL VARIABLE
@@ -192,14 +189,4 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('datastaticglobal', [GlobalVariableController::class, 'getDataStatic']);
     Route::post('datastaticglobal', [GlobalVariableController::class, 'insertDataStatic']);
     Route::post('uploadregion', [GlobalVariableController::class, 'uploadRegion']);
-
-    // Naufal task
-    Route::get('referencecustomer', [CustomerController::class, 'getReferenceCustomer']);
-    Route::post('referencecustomer', [CustomerController::class, 'insertReferenceCustomer']);
-
-    Route::get('titleCustomer', [CustomerController::class, 'getTitleCustomer']);
-    Route::post('titleCustomer', [CustomerController::class, 'insertTitleCustomer']);
-
-    Route::get('sourcecustomer', [CustomerController::class, 'getSourceCustomer']);
-    Route::post('sourcecustomer', [CustomerController::class, 'insertSourceCustomer']);
 });
