@@ -10,17 +10,17 @@ use Validator;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request)
+    public function indexCustomerGroup(Request $request)
     {
-        $Data = DB::table('customerGroups')
+        $data = DB::table('customerGroups')
             ->select('id', 'customerGroup')
             ->where('isDeleted', '=', 0)
             ->get();
 
-        return response()->json($Data, 200);
+        return response()->json($data, 200);
     }
 
-    public function create(Request $request)
+    public function createCustomerGroup(Request $request)
     {
 
         $validate = Validator::make($request->all(), [
@@ -63,7 +63,7 @@ class CustomerController extends Controller
         }
     }
 
-    public function CreateCustomer(Request $request)
+    public function create(Request $request)
     {
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
@@ -214,7 +214,7 @@ class CustomerController extends Controller
                 if ($data_reminder_booking) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
-                        'errors' => $data_telephone,
+                        'errors' => $data_reminder_booking,
                     ], 422);
                 }
             }
@@ -264,7 +264,7 @@ class CustomerController extends Controller
                 if ($data_reminder_payment) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
-                        'errors' => $data_telephone,
+                        'errors' => $data_reminder_payment,
                     ], 422);
                 }
             }
@@ -284,7 +284,7 @@ class CustomerController extends Controller
                 ];
 
 
-                foreach ($arrayReminderLatePayment as $key) {
+                foreach ($reminderLatePayment as $key) {
 
                     $validateReminderLatePayment = Validator::make(
                         $key,
@@ -314,7 +314,7 @@ class CustomerController extends Controller
                 if ($data_reminder_late_payment) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
-                        'errors' => $data_telephone,
+                        'errors' => $data_reminder_late_payment,
                     ], 422);
                 }
             }
@@ -716,7 +716,7 @@ class CustomerController extends Controller
 
             if ($request->reminderLatePayment) {
 
-                foreach ($arrayReminderLatePayment as $val) {
+                foreach ($data_reminder_late_payment as $val) {
 
                     DB::table('reminderCustomer')
                         ->insert([
