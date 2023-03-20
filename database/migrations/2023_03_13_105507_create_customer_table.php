@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('lastName')->nullable();
             $table->string('nickName')->nullable();
             $table->enum('gender',['P', 'W']);
-            $table->integer('titleId');
+            $table->integer('titleCustomerId');
             $table->integer('customerGroupId');
             $table->integer('locationId');
             $table->string('notes')->nullable();
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('numberId')->nullable();
             $table->integer('jobTitleId');
             $table->date('birthDate')->nullable();
-            $table->integer('referenceId')->nullable();
+            $table->integer('referenceCustomerId')->nullable();
             $table->boolean('generalCustomerCanConfigReminderBooking')->nullable();
             $table->boolean('generalCustomerCanConfigReminderPayment')->nullable();
             $table->boolean('isDeleted')->nullable()->default(false);

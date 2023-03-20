@@ -194,12 +194,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::post('uploadregion', [GlobalVariableController::class, 'uploadRegion']);
 
     // Naufal task
-    Route::get('reference', [CustomerController::class, 'getReference']);
-    Route::post('reference', [CustomerController::class, 'insertReference']);
+    Route::get('referencecustomer', [CustomerController::class, 'getReferenceCustomer']);
+    Route::post('referencecustomer', [CustomerController::class, 'insertReferenceCustomer']);
 
-    Route::get('title', [CustomerController::class, 'getTitle']);
-    Route::post('title', [CustomerController::class, 'insertTitle']);
+    Route::get('titleCustomer', [CustomerController::class, 'getTitleCustomer']);
+    Route::post('titleCustomer', [CustomerController::class, 'insertTitleCustomer']);
 
-    Route::get('source', [CustomerController::class, 'getSource']);
-    Route::post('source', [CustomerController::class, 'insertSource']);
+    Route::get('sourcecustomer', [CustomerController::class, 'getSourceCustomer']);
+    Route::post('sourcecustomer', [CustomerController::class, 'insertSourceCustomer']);
 });

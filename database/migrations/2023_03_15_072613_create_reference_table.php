@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('reference', function (Blueprint $table) {
+        Schema::create('referenceCustomer', function (Blueprint $table) {
             $table->id();
             $table->string('referenceName');
             $table->boolean('isActive');

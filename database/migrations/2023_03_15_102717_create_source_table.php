@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('source', function (Blueprint $table) {
+        Schema::create('sourceCustomer', function (Blueprint $table) {
             $table->id();
             $table->string('sourceName');
             $table->boolean('isActive');
