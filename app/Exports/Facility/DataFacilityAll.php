@@ -15,8 +15,6 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
     use Exportable;
 
     protected $sheets;
-    // protected $rowPerPage;
-    // protected $goToPage;
     protected $orderValue;
     protected $orderColumn;
     protected $search;
@@ -25,8 +23,6 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
 
     public function __construct($orderValue, $orderColumn, $search, $locationId)
     {
-        // $this->rowPerPage = $rowPerPage;
-        // $this->goToPage = $goToPage;
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->search = $search;
@@ -38,26 +34,29 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
         $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
 
-        $data = DB::table('location as a')
+
+        
+        $data = DB::table('location as location')
             ->leftjoin(
-                DB::raw('(select * from facility where isDeleted=0) as b'),
+                DB::raw('(select * from facility where isDeleted=0) as facility'),
                 function ($join) {
-                    $join->on('b.locationId', '=', 'a.id');
+                    $join->on('facility.locationId', '=', 'location.id');
                 }
             )
             ->leftjoin(
-                DB::raw('(select * from facility_unit where isDeleted=0) as c'),
+                DB::raw('(select * from facility_unit where isDeleted=0) as facility_unit'),
                 function ($join) {
-                    $join->on('c.locationId', '=', 'b.locationId');
+                    $join->on('facility_unit.locationId', '=', 'facility.locationId');
                 }
             )
             ->select(
-                'a.locationName as locationName',
-                DB::raw("IFNULL ((c.unitName),'-') as NamaFasilitas"),
-                DB::raw("CASE WHEN c.status = 1 THEN 'Aktif' else 'Tidak Aktif' END as Status"),
-                DB::raw("IFNULL ((c.capacity),'-') as Kapasitas"),
-                DB::raw("IFNULL ((c.amount),'-') as Jumlah"),
-                DB::raw("IFNULL ((c.notes),'-') as Catatan"),
+                'location.id as locationId',
+                'location.locationName as locationName',
+                DB::raw("IFNULL ((facility_unit.unitName),'-') as NamaFasilitas"),
+                DB::raw("CASE WHEN facility_unit.status = 1 THEN 'Aktif' else 'Tidak Aktif' END as Status"),
+                DB::raw("IFNULL ((facility_unit.capacity),'-') as Kapasitas"),
+                DB::raw("IFNULL ((facility_unit.amount),'-') as Jumlah"),
+                DB::raw("IFNULL ((facility_unit.notes),'-') as Catatan"),
             )
             ->where([['a.isDeleted', '=', '0']]);
 
@@ -70,32 +69,7 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             }
 
             if ($val) {
-                $data = $data->whereIn('a.id', $this->locationId);
-            }
-        }
-
-
-
-
-
-        if ($this->search) {
-            $res = $this->Search($this->search);
-
-            if ($res) {
-
-                if (str_contains($res, "a.locationName")) {
-
-                    $data = $data->where($res, 'like', '%' . $this->search . '%');
-                } else if (str_contains($res, "c.unitName")) {
-
-                    $data = $data->where($res, 'like', '%' . $this->search . '%');
-                }
-            } else {
-                $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                $data = $data->whereIn('location.id', $this->locationId);
             }
         }
 
@@ -106,8 +80,11 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
         if ($this->orderColumn && $defaultOrderBy) {
 
             $listOrder = array(
-                'a.locationName',
-                'c.unitName',
+                'location.id',
+                'location.locationName',
+                'facility_unit.capacity',
+                'facility.locationId',
+                'facility_unit.unitName',
             );
 
             if (!in_array($this->orderColumn, $listOrder)) {
@@ -131,22 +108,6 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
 
         $data = $data->orderBy('b.created_at', 'desc')->get();
 
-        // if ($this->rowPerPage > 0) {
-        //     $defaultRowPerPage = $this->rowPerPage;
-        // }
-
-        // $goToPage = $this->goToPage;
-
-        // $offset = ($goToPage - 1) * $defaultRowPerPage;
-
-        // $count_data = $data->count();
-        // $count_result = $count_data - $offset;
-
-        // if ($count_result < 0) {
-        //     $data = $data->offset(0)->limit($defaultRowPerPage)->get();
-        // } else {
-        //     $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
-        // }
 
         $val = 1;
         foreach ($data as $key) {
