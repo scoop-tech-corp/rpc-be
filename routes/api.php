@@ -41,7 +41,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
         Route::get('/exportlocation', [LocationController::class, 'exportLocation']);
         Route::delete('/', [LocationController::class, "deleteLocation"]);
-        Route::get('location/list', [LocationController::class, 'locationList']);
+        Route::get('/list', [LocationController::class, 'locationList']);
         Route::put('/', [LocationController::class, 'updateLocation']);
         Route::post('/uploadexceltest', [LocationController::class, 'uploadexceltest']);
         Route::post('/datastatic', [LocationController::class, 'insertdatastatic']);
