@@ -106,7 +106,7 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             $data = $data->orderBy($this->orderColumn, $defaultOrderBy);
         }
 
-        $data = $data->orderBy('b.created_at', 'desc')->get();
+        $data = $data->orderBy('facility.created_at', 'desc')->get();
 
 
         $val = 1;
