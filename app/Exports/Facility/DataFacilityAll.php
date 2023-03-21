@@ -58,7 +58,7 @@ class DataFacilityAll implements FromCollection, ShouldAutoSize, WithHeadings, W
                 DB::raw("IFNULL ((facility_unit.amount),'-') as Jumlah"),
                 DB::raw("IFNULL ((facility_unit.notes),'-') as Catatan"),
             )
-            ->where([['a.isDeleted', '=', '0']]);
+            ->where([['location.isDeleted', '=', '0']]);
 
 
         if ($this->locationId) {
