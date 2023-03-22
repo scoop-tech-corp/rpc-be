@@ -24,9 +24,10 @@ class StaffController extends Controller
     {
 
         if (adminAccess($request->user()->id) != 1) {
+
             return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
+                'result' => 'The user role was invalid.',
+                'message' => 'User Access not Authorize!',
             ], 403);
         }
 
@@ -116,21 +117,18 @@ class StaffController extends Controller
                     }
                 }
 
-
-
                 if ($data_item) {
+
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_item,
+                        'result' =>  'Inputed data is not valid',
+                        'message' => $data_item,
                     ], 422);
                 }
-
-
             } else {
 
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Detail address can not be empty!'],
+                    'result' => 'The given data was invalid.',
+                    'message' => ['Detail address can not be empty!'],
                 ], 422);
             }
 
@@ -251,8 +249,8 @@ class StaffController extends Controller
 
                 if ($data_error_email) {
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_email,
+                        'result' => 'The given data was invalid.',
+                        'message' =>  $data_error_email,
                     ], 422);
                 }
 
@@ -279,22 +277,22 @@ class StaffController extends Controller
 
                 if ($checkEmail) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkEmail,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $checkEmail,
                     ], 422);
                 }
 
                 if ($checkUsageEmail == false) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Must have one primary email',
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Must have one primary email',
                     ], 422);
                 }
             } else {
 
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Email can not be empty!'],
+                    'result' => 'The given data was invalid.',
+                    'message' => ['Email can not be empty!'],
                 ], 422);
             }
 
@@ -341,8 +339,8 @@ class StaffController extends Controller
                         if (!(substr($key['messengerNumber'], 0, 3) === "62")) {
 
                             return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'result' => 'Inputed data is not valid',
+                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -350,8 +348,8 @@ class StaffController extends Controller
 
                 if ($data_error_messenger) {
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_messenger,
+                        'result' => 'The given data was invalid.',
+                        'message' => $data_error_messenger,
                     ], 422);
                 }
 
@@ -372,8 +370,8 @@ class StaffController extends Controller
 
                 if ($checkMessenger) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkMessenger,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $checkMessenger,
                     ], 422);
                 }
             }
@@ -1855,7 +1853,6 @@ class StaffController extends Controller
             ], 406);
         } else {
 
-
             $checkImages = DB::table('usersImages')
                 ->where([
                     ['usersId', '=', $request->id],
@@ -1863,52 +1860,38 @@ class StaffController extends Controller
                 ])
                 ->first();
 
+            File::delete(public_path() . $checkImages->imagePath);
 
-            if ($request->status == "del") {
+            DB::table('usersImages')->where([
+                ['usersId', '=', $request->id],
+            ])->delete();
 
+            if ($request->hasfile('image')) {
 
-                File::delete(public_path() . $checkImages->imagePath);
+                $files = $request->file('image');
 
-                DB::table('usersImages')->where([
-                    ['usersId', '=', $request->id],
-                ])->delete();
+                $name = $files->hashName();
+                $files->move(public_path() . '/UsersImages/', $name);
+
+                $fileName = "/UsersImages/" . $name;
+
+                DB::table('usersImages')
+                    ->insert([
+                        'usersId' => $request->id,
+                        'imagePath' => $fileName,
+                        'isDeleted' => 0,
+                        'created_at' => now(),
+                    ]);
+
+                DB::commit();
 
                 return response()->json(
                     [
                         'result' => 'success',
-                        'message' => 'Delete image users Success!',
+                        'message' => 'Upload image users Success!',
                     ],
                     200
                 );
-            } else {
-
-                if ($request->hasfile('image')) {
-
-                    $files = $request->file('image');
-
-                    $name = $files->hashName();
-                    $files->move(public_path() . '/UsersImages/', $name);
-
-                    $fileName = "/UsersImages/" . $name;
-
-                    DB::table('usersImages')
-                        ->insert([
-                            'usersId' => $request->id,
-                            'imagePath' => $fileName,
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                        ]);
-
-                    DB::commit();
-
-                    return response()->json(
-                        [
-                            'result' => 'success',
-                            'message' => 'Upload image users Success!',
-                        ],
-                        200
-                    );
-                }
             }
         }
     }
@@ -2143,8 +2126,8 @@ class StaffController extends Controller
 
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
+                'result' => 'The user role was invalid.',
+                'message' => ['User Access not Authorize!'],
             ], 403);
         }
 
@@ -2187,8 +2170,8 @@ class StaffController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
+                    'result' => 'The given data was invalid.',
+                    'message' => $errors,
                 ], 422);
             }
 
@@ -2201,8 +2184,8 @@ class StaffController extends Controller
 
             if (!$checkIfUsersExists) {
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Spesific users not exists please try different id!'],
+                    'result' => 'The given data was invalid.',
+                    'message' => ['Spesific users not exists please try different id!'],
                 ], 422);
             }
 
@@ -2246,15 +2229,15 @@ class StaffController extends Controller
 
                 if ($data_error_detailaddress) {
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_detailaddress,
+                        'result' => 'The given data was invalid.',
+                        'message' => $data_error_detailaddress,
                     ], 422);
                 }
             } else {
 
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Detail address can not be empty!'],
+                    'result' => 'The given data was invalid.',
+                    'message' => ['Detail address can not be empty!'],
                 ], 422);
             }
 
@@ -2308,8 +2291,8 @@ class StaffController extends Controller
 
                 if ($data_error_telephone) {
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_telephone,
+                        'result' => 'The given data was invalid.',
+                        'message' => $data_error_telephone,
                     ], 422);
                 }
 
@@ -2332,8 +2315,8 @@ class StaffController extends Controller
 
                 if ($checkTelephone) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkTelephone,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $checkTelephone,
                     ], 422);
                 }
             }
@@ -2376,8 +2359,8 @@ class StaffController extends Controller
 
                 if ($data_error_email) {
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_email,
+                        'result' => 'The given data was invalid.',
+                        'message' => $data_error_email,
                     ], 422);
                 }
 
@@ -2420,15 +2403,16 @@ class StaffController extends Controller
 
                 if ($checkEmail) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkEmail,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $checkEmail,
                     ], 422);
                 }
 
                 if ($checkUsageEmail == false) {
+
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Must have one primary email',
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Must have one primary email',
                     ], 422);
                 }
             }
@@ -2625,8 +2609,6 @@ class StaffController extends Controller
                             ]);
                     }
                 }
-
-
 
                 if ($request->status == 0) {
 
