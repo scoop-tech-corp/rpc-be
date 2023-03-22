@@ -1827,7 +1827,8 @@ class StaffController extends Controller
 
             $checkImages = DB::table('usersImages')
                 ->where([
-                    ['usersId', '=', $request->id]
+                    ['usersId', '=', $request->id],
+                    ['isDeleted', '=', 0],
                 ])
                 ->first();
 
@@ -1840,7 +1841,6 @@ class StaffController extends Controller
                         'result' => 'Failed',
                         'message' => 'User image empty, please upload images first',
                     ], 406);
-
                 } else {
 
                     if (file_exists(public_path() . $checkImages->imagePath)) {
@@ -1848,7 +1848,8 @@ class StaffController extends Controller
                         File::delete(public_path() . $checkImages->imagePath);
 
                         DB::table('usersImages')->where([
-                            ['usersId', '=', $request->id]
+                            ['usersId', '=', $request->id],
+                            ['isDeleted', '=', 0],
                         ])->delete();
                     }
 
@@ -1888,7 +1889,7 @@ class StaffController extends Controller
                         ],
                         200
                     );
-                } 
+                }
             }
         }
     }
@@ -2752,10 +2753,10 @@ class StaffController extends Controller
 
             //     DB::commit();
 
-                return response()->json([
-                    'result' => 'success',
-                    'message' => 'successfuly update user',
-                ]);
+            return response()->json([
+                'result' => 'success',
+                'message' => 'successfuly update user',
+            ]);
             // }
         } catch (Exception $e) {
 
