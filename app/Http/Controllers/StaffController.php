@@ -1020,6 +1020,9 @@ class StaffController extends Controller
                 $defaultOrderBy = $request->orderValue;
             }
 
+
+
+            $checkOrder = null;
             if ($request->orderColumn && $defaultOrderBy) {
 
                 $listOrder = array(
@@ -1051,8 +1054,45 @@ class StaffController extends Controller
                     ]);
                 }
 
-                $data = $data->orderBy($request->orderColumn, $defaultOrderBy);
+                $checkOrder = true;
             }
+
+            if ($checkOrder) {
+
+                $data = DB::table($data)
+                    ->select(
+                        'id',
+                        'name',
+                        'jobTitle',
+                        'emailAddress',
+                        'phoneNumber',
+                        'isWhatsapp',
+                        'status',
+                        'location',
+                        'createdBy',
+                        'createdAt',
+                    )
+                    ->orderBy($request->orderColumn, $defaultOrderBy)
+                    ->orderBy('updated_at', 'desc');
+            } else {
+
+
+                $data = DB::table($data)
+                    ->select(
+                        'id',
+                        'name',
+                        'jobTitle',
+                        'emailAddress',
+                        'phoneNumber',
+                        'isWhatsapp',
+                        'status',
+                        'location',
+                        'createdBy',
+                        'createdAt',
+                    )
+                    ->orderBy('updated_at', 'desc');
+            }
+
 
             if ($request->rowPerPage > 0) {
                 $defaultRowPerPage = $request->rowPerPage;
@@ -1065,21 +1105,6 @@ class StaffController extends Controller
             $count_data = $data->count();
             $count_result = $count_data - $offset;
 
-            $data = DB::table($data)
-                ->select(
-                    'id',
-                    'name',
-                    'jobTitle',
-                    'emailAddress',
-                    'phoneNumber',
-                    'isWhatsapp',
-                    'status',
-                    'location',
-                    'createdBy',
-                    'createdAt',
-                )
-                ->orderBy('updated_at', 'desc');
-
             if ($count_result < 0) {
                 $data = $data->offset(0)->limit($defaultRowPerPage)->get();
             } else {
@@ -1089,6 +1114,7 @@ class StaffController extends Controller
             $total_paging = $count_data / $defaultRowPerPage;
 
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
+
         } catch (Exception $e) {
 
             return response()->json([
@@ -1795,92 +1821,91 @@ class StaffController extends Controller
 
     public function uploadImageStaff(Request $request)
     {
-        // $validate = Validator::make($request->all(), [
-        //     'id' => 'required',
-        // ]);
+        $validate = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
 
-        // if ($validate->fails()) {
+        if ($validate->fails()) {
 
-        //     $errors = $validate->errors()->all();
+            $errors = $validate->errors()->all();
 
-        //     return response()->json([
-        //         'message' => 'The given data was invalid.',
-        //         'errors' => $errors,
-        //     ], 422);
-        // }
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
 
-        // $checkIfValueExits = DB::table('users')
-        //     ->where([
-        //         ['id', '=', $request->id],
-        //         ['isDeleted', '=', 0],
-        //     ])
-        //     ->first();
+        $checkIfValueExits = DB::table('users')
+            ->where([
+                ['id', '=', $request->id],
+                ['isDeleted', '=', 0],
+            ])
+            ->first();
 
-        // if ($checkIfValueExits === null) {
+        if ($checkIfValueExits === null) {
 
-        //     return response()->json([
-        //         'result' => 'Failed',
-        //         'message' => "Data not exists, please try another user id",
-        //     ], 406);
-        // } else {
-
-
-        //     $checkImages = DB::table('usersImages')
-        //         ->where([
-        //             ['usersId', '=', $request->id],
-        //             ['isDeleted', '=', 0],
-        //         ])
-        //         ->first();
+            return response()->json([
+                'result' => 'Failed',
+                'message' => "Data not exists, please try another user id",
+            ], 406);
+        } else {
 
 
-        //     if ($request->status == "del") {
+            $checkImages = DB::table('usersImages')
+                ->where([
+                    ['usersId', '=', $request->id],
+                    ['isDeleted', '=', 0],
+                ])
+                ->first();
 
 
-        //         File::delete(public_path() . $checkImages->imagePath);
+            if ($request->status == "del") {
 
-        //         DB::table('usersImages')->where([
-        //             ['usersId', '=', $request->id],
-        //         ])->delete();
 
-        //         return response()->json(
-        //             [
-        //                 'result' => 'success',
-        //                 'message' => 'Delete image users Success!',
-        //             ],
-        //             200
-        //         );
+                File::delete(public_path() . $checkImages->imagePath);
 
-        //     } else {
+                DB::table('usersImages')->where([
+                    ['usersId', '=', $request->id],
+                ])->delete();
 
-        //         if ($request->hasfile('image')) {
+                return response()->json(
+                    [
+                        'result' => 'success',
+                        'message' => 'Delete image users Success!',
+                    ],
+                    200
+                );
+            } else {
 
-        //             $files = $request->file('image');
+                if ($request->hasfile('image')) {
 
-        //             $name = $files->hashName();
-        //             $files->move(public_path() . '/UsersImages/', $name);
+                    $files = $request->file('image');
 
-        //             $fileName = "/UsersImages/" . $name;
+                    $name = $files->hashName();
+                    $files->move(public_path() . '/UsersImages/', $name);
 
-        //             DB::table('usersImages')
-        //                 ->insert([
-        //                     'usersId' => $request->id,
-        //                     'imagePath' => $fileName,
-        //                     'isDeleted' => 0,
-        //                     'created_at' => now(),
-        //                 ]);
+                    $fileName = "/UsersImages/" . $name;
 
-        //             DB::commit();
+                    DB::table('usersImages')
+                        ->insert([
+                            'usersId' => $request->id,
+                            'imagePath' => $fileName,
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
 
-        //             return response()->json(
-        //                 [
-        //                     'result' => 'success',
-        //                     'message' => 'Upload image users Success!',
-        //                 ],
-        //                 200
-        //             );
-        //         }
-        //     }
-        // }
+                    DB::commit();
+
+                    return response()->json(
+                        [
+                            'result' => 'success',
+                            'message' => 'Upload image users Success!',
+                        ],
+                        200
+                    );
+                }
+            }
+        }
     }
 
 
