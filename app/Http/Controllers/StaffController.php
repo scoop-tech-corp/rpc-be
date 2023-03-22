@@ -68,9 +68,10 @@ class StaffController extends Controller
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
+
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
+                    'result' => 'The given data was invalid.',
+                    'message' => $errors,
                 ], 422);
             }
 
@@ -123,6 +124,8 @@ class StaffController extends Controller
                         'errors' => $data_item,
                     ], 422);
                 }
+
+
             } else {
 
                 return response()->json([
@@ -390,6 +393,9 @@ class StaffController extends Controller
                     'designation' => $request->designation,
                     'locationId' => $request->locationId,
                     'annualSickAllowance' => $request->annualSickAllowance,
+                    'annualSickAllowanceRemaining' => $request->annualSickAllowance,
+                    'annualLeaveAllowance' => $request->annualLeaveAllowance,
+                    'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
                     'payPeriodId' => $request->payPeriodId,
                     'payAmount' => $request->payAmount,
                     'typeId' => $request->typeId,
@@ -1114,7 +1120,6 @@ class StaffController extends Controller
             $total_paging = $count_data / $defaultRowPerPage;
 
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
-
         } catch (Exception $e) {
 
             return response()->json([
@@ -2292,9 +2297,10 @@ class StaffController extends Controller
                     if (strtolower($key['type']) == "whatshapp") {
 
                         if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
+
                             return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'result' => 'Failed',
+                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -2466,17 +2472,18 @@ class StaffController extends Controller
 
                         if (!(substr($key['messengerNumber'], 0, 2) === "62")) {
                             return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'result' => 'Failed',
+                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
                 }
 
                 if ($data_messenger_error) {
+
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_messenger_error,
+                        'result' => 'Failed',
+                        'message' => $data_messenger_error,
                     ], 422);
                 }
 
@@ -2498,9 +2505,10 @@ class StaffController extends Controller
                 }
 
                 if ($checkMessenger) {
+
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkMessenger,
+                        'result' => 'Failed',
+                        'message' => $checkMessenger,
                     ], 422);
                 }
             }
@@ -2524,6 +2532,9 @@ class StaffController extends Controller
                         'designation' => $request->designation,
                         'locationId' => $request->locationId,
                         'annualSickAllowance' => $request->annualSickAllowance,
+                        'annualSickAllowanceRemaining' => $request->annualSickAllowance,
+                        'annualLeaveAllowance' => $request->annualLeaveAllowance,
+                        'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
                         'payPeriodId' => $request->payPeriodId,
                         'payAmount' => $request->payAmount,
                         'typeId' => $request->typeId,
@@ -2674,6 +2685,9 @@ class StaffController extends Controller
                         'designation' => $request->designation,
                         'locationId' => $request->locationId,
                         'annualSickAllowance' => $request->annualSickAllowance,
+                        'annualSickAllowanceRemaining' => $request->annualSickAllowance,
+                        'annualLeaveAllowance' => $request->annualLeaveAllowance,
+                        'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
                         'payPeriodId' => $request->payPeriodId,
                         'payAmount' => $request->payAmount,
                         'typeId' => $request->typeId,
@@ -3041,8 +3055,8 @@ class StaffController extends Controller
             $errors = $validate->errors()->all();
 
             return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'result' => 'The given data was invalid.',
+                'message' => $errors,
             ], 422);
         }
 
