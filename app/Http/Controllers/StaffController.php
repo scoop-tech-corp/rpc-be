@@ -1840,6 +1840,7 @@ class StaffController extends Controller
                         'result' => 'Failed',
                         'message' => 'User image empty, please upload images first',
                     ], 406);
+
                 } else {
 
                     if (file_exists(public_path() . $checkImages->imagePath)) {
@@ -1887,16 +1888,7 @@ class StaffController extends Controller
                         ],
                         200
                     );
-                } else {
-
-                    return response()->json(
-                        [
-                            'result' => 'failed',
-                            'message' => 'Please attach image first!',
-                        ],
-                        406
-                    );
-                }
+                } 
             }
         }
     }
