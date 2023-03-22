@@ -2133,631 +2133,631 @@ class StaffController extends Controller
 
         try {
 
-            // $validate = Validator::make(
-            //     $request->all(),
-            //     [
-            //         'id' => 'required',
-            //         'firstName' => 'required|max:20|min:3',
-            //         'middleName' => 'max:20|min:3|nullable',
-            //         'lastName' => 'max:20|min:3|nullable',
-            //         'nickName' => 'max:20|min:3|nullable',
-            //         'gender' => 'string|nullable',
-            //         'status' => 'required|integer',
-            //         'jobTitleId' => 'required|integer',
-            //         'startDate' => 'required|date',
-            //         'endDate' => 'required|date|after:startDate',
-            //         'registrationNo' => 'string|max:20|min:5|nullable',
-            //         'designation' => 'string|max:20|min:5|nullable',
-            //         'locationId' => 'required|integer',
-            //         'annualSickAllowance' => 'integer|nullable',
-            //         'annualLeaveAllowance' => 'integer|nullable',
-            //         'payPeriodId' => 'required|integer',
-            //         'payAmount' => 'numeric|nullable',
-            //         'typeId' => 'required|integer',
-            //         'identificationNumber' => 'string|nullable|max:30',
-            //         'additionalInfo' => 'string|nullable|max:100',
-            //         'generalCustomerCanSchedule' => 'integer|nullable',
-            //         'generalCustomerReceiveDailyEmail' => 'integer|nullable',
-            //         'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
-            //         'roleId' => 'required|integer',
-            //         'reminderEmail' => 'integer|nullable',
-            //         'reminderWhatsapp' => 'integer|nullable',
-            //     ]
-            // );
-
-            // if ($validate->fails()) {
-            //     $errors = $validate->errors()->all();
-            //     return response()->json([
-            //         'message' => 'The given data was invalid.',
-            //         'errors' => $errors,
-            //     ], 422);
-            // }
-
-            // $checkIfUsersExists = DB::table('users')
-            //     ->where([
-            //         ['id', '=', $request->id],
-            //         ['isDeleted', '=', '0']
-            //     ])
-            //     ->first();
-
-            // if (!$checkIfUsersExists) {
-            //     return response()->json([
-            //         'message' => 'The given data was invalid.',
-            //         'errors' => ['Spesific users not exists please try different id!'],
-            //     ], 422);
-            // }
-
-
-            // $data_error_detailaddress = [];
-
-            // if ($request->detailAddress) {
-
-            //     $messageAddress = [
-            //         'addressName.required' => 'Address name on tab Address is required',
-            //         'provinceCode.required' => 'Province code on tab Address is required',
-            //         'cityCode.required' => 'City code on tab Address is required',
-            //         'country.required' => 'Country on tab Address is required',
-            //     ];
-
-            //     foreach ($request->detailAddress as $key) {
-
-            //         $validateDetail = Validator::make(
-            //             $key,
-            //             [
-            //                 'addressName' => 'required',
-            //                 'provinceCode' => 'required',
-            //                 'cityCode' => 'required',
-            //                 'country' => 'required',
-            //             ],
-            //             $messageAddress
-            //         );
-
-            //         if ($validateDetail->fails()) {
-
-            //             $errors = $validateDetail->errors()->all();
-
-            //             foreach ($errors as $checkisu) {
-
-            //                 if (!(in_array($checkisu, $data_error_detailaddress))) {
-            //                     array_push($data_error_detailaddress, $checkisu);
-            //                 }
-            //             }
-            //         }
-            //     }
-
-            //     if ($data_error_detailaddress) {
-            //         return response()->json([
-            //             'message' => 'The given data was invalid.',
-            //             'errors' => $data_error_detailaddress,
-            //         ], 422);
-            //     }
-            // } else {
-
-            //     return response()->json([
-            //         'message' => 'The given data was invalid.',
-            //         'errors' => ['Detail address can not be empty!'],
-            //     ], 422);
-            // }
-
-
-            // $data_error_telephone = [];
-
-            // if ($request->telephone) {
-
-            //     $messagePhone = [
-            //         'phoneNumber.required' => 'Phone Number on tab telephone is required',
-            //         'type.required' => 'Type on tab telephone is required',
-            //         'usage.required' => 'Usage on tab telephone is required',
-            //     ];
+            $validate = Validator::make(
+                $request->all(),
+                [
+                    'id' => 'required',
+                    'firstName' => 'required|max:20|min:3',
+                    'middleName' => 'max:20|min:3|nullable',
+                    'lastName' => 'max:20|min:3|nullable',
+                    'nickName' => 'max:20|min:3|nullable',
+                    'gender' => 'string|nullable',
+                    'status' => 'required|integer',
+                    'jobTitleId' => 'required|integer',
+                    'startDate' => 'required|date',
+                    'endDate' => 'required|date|after:startDate',
+                    'registrationNo' => 'string|max:20|min:5|nullable',
+                    'designation' => 'string|max:20|min:5|nullable',
+                    'locationId' => 'required|integer',
+                    'annualSickAllowance' => 'integer|nullable',
+                    'annualLeaveAllowance' => 'integer|nullable',
+                    'payPeriodId' => 'required|integer',
+                    'payAmount' => 'numeric|nullable',
+                    'typeId' => 'required|integer',
+                    'identificationNumber' => 'string|nullable|max:30',
+                    'additionalInfo' => 'string|nullable|max:100',
+                    'generalCustomerCanSchedule' => 'integer|nullable',
+                    'generalCustomerReceiveDailyEmail' => 'integer|nullable',
+                    'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
+                    'roleId' => 'required|integer',
+                    'reminderEmail' => 'integer|nullable',
+                    'reminderWhatsapp' => 'integer|nullable',
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            $checkIfUsersExists = DB::table('users')
+                ->where([
+                    ['id', '=', $request->id],
+                    ['isDeleted', '=', '0']
+                ])
+                ->first();
+
+            if (!$checkIfUsersExists) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Spesific users not exists please try different id!'],
+                ], 422);
+            }
+
+
+            $data_error_detailaddress = [];
+
+            if ($request->detailAddress) {
+
+                $messageAddress = [
+                    'addressName.required' => 'Address name on tab Address is required',
+                    'provinceCode.required' => 'Province code on tab Address is required',
+                    'cityCode.required' => 'City code on tab Address is required',
+                    'country.required' => 'Country on tab Address is required',
+                ];
+
+                foreach ($request->detailAddress as $key) {
+
+                    $validateDetail = Validator::make(
+                        $key,
+                        [
+                            'addressName' => 'required',
+                            'provinceCode' => 'required',
+                            'cityCode' => 'required',
+                            'country' => 'required',
+                        ],
+                        $messageAddress
+                    );
+
+                    if ($validateDetail->fails()) {
+
+                        $errors = $validateDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_detailaddress))) {
+                                array_push($data_error_detailaddress, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_error_detailaddress) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_detailaddress,
+                    ], 422);
+                }
+            } else {
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
+                ], 422);
+            }
+
+
+            $data_error_telephone = [];
+
+            if ($request->telephone) {
+
+                $messagePhone = [
+                    'phoneNumber.required' => 'Phone Number on tab telephone is required',
+                    'type.required' => 'Type on tab telephone is required',
+                    'usage.required' => 'Usage on tab telephone is required',
+                ];
 
-            //     foreach ($request->telephone as $key) {
-
-            //         $telephoneDetail = Validator::make(
-            //             $key,
-            //             [
-            //                 'phoneNumber' => 'required',
-            //                 'type' => 'required',
-            //                 'usage' => 'required',
-            //             ],
-            //             $messagePhone
-            //         );
+                foreach ($request->telephone as $key) {
+
+                    $telephoneDetail = Validator::make(
+                        $key,
+                        [
+                            'phoneNumber' => 'required',
+                            'type' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messagePhone
+                    );
 
-            //         if ($telephoneDetail->fails()) {
+                    if ($telephoneDetail->fails()) {
 
-            //             $errors = $telephoneDetail->errors()->all();
+                        $errors = $telephoneDetail->errors()->all();
 
-            //             foreach ($errors as $checkisu) {
+                        foreach ($errors as $checkisu) {
 
-            //                 if (!(in_array($checkisu, $data_error_telephone))) {
-            //                     array_push($data_error_telephone, $checkisu);
-            //                 }
-            //             }
-            //         }
+                            if (!(in_array($checkisu, $data_error_telephone))) {
+                                array_push($data_error_telephone, $checkisu);
+                            }
+                        }
+                    }
 
-
-            //         if (strtolower($key['type']) == "whatshapp") {
+
+                    if (strtolower($key['type']) == "whatshapp") {
 
-            //             if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
-            //                 return response()->json([
-            //                     'message' => 'Inputed data is not valid',
-            //                     'errors' => 'Please check your phone number, for type whatshapp must start with 62',
-            //                 ], 422);
-            //             }
-            //         }
-            //     }
+                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                            ], 422);
+                        }
+                    }
+                }
 
-            //     if ($data_error_telephone) {
-            //         return response()->json([
-            //             'message' => 'The given data was invalid.',
-            //             'errors' => $data_error_telephone,
-            //         ], 422);
-            //     }
+                if ($data_error_telephone) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_telephone,
+                    ], 422);
+                }
 
-            //     $checkTelephone = [];
+                $checkTelephone = [];
 
-            //     foreach ($request->telephone as $val) {
+                foreach ($request->telephone as $val) {
 
-            //         $checkIfTelephoneAlreadyExists = DB::table('usersTelephones')
-            //             ->where([
-            //                 ['phoneNumber', '=', $val['phoneNumber'],],
-            //                 ['isDeleted', '=', '0'],
-            //                 ['usersId', '!=', $request->id]
-            //             ])
-            //             ->first();
-
-            //         if ($checkIfTelephoneAlreadyExists) {
-            //             array_push($checkTelephone, 'Phonenumber : ' . $val['phoneNumber'] . ' already exists, please try different number');
-            //         }
-            //     }
-
-            //     if ($checkTelephone) {
-            //         return response()->json([
-            //             'message' => 'Inputed data is not valid',
-            //             'errors' => $checkTelephone,
-            //         ], 422);
-            //     }
-            // }
+                    $checkIfTelephoneAlreadyExists = DB::table('usersTelephones')
+                        ->where([
+                            ['phoneNumber', '=', $val['phoneNumber'],],
+                            ['isDeleted', '=', '0'],
+                            ['usersId', '!=', $request->id]
+                        ])
+                        ->first();
+
+                    if ($checkIfTelephoneAlreadyExists) {
+                        array_push($checkTelephone, 'Phonenumber : ' . $val['phoneNumber'] . ' already exists, please try different number');
+                    }
+                }
+
+                if ($checkTelephone) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkTelephone,
+                    ], 422);
+                }
+            }
 
-            // $data_error_email = [];
-            // $insertEmailUsers = '';
-
-            // if ($request->email) {
-
-            //     $messageEmail = [
-            //         'email.required' => 'Email on tab email is required',
-            //         'usage.required' => 'Usage on tab email is required',
-            //     ];
-
-            //     foreach ($request->email as $key) {
-
-            //         $emailDetail = Validator::make(
-            //             $key,
-            //             [
-            //                 'email' => 'required',
-            //                 'usage' => 'required',
-            //             ],
-            //             $messageEmail
-            //         );
-
-
-            //         if ($emailDetail->fails()) {
+            $data_error_email = [];
+            $insertEmailUsers = '';
+
+            if ($request->email) {
+
+                $messageEmail = [
+                    'email.required' => 'Email on tab email is required',
+                    'usage.required' => 'Usage on tab email is required',
+                ];
+
+                foreach ($request->email as $key) {
+
+                    $emailDetail = Validator::make(
+                        $key,
+                        [
+                            'email' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messageEmail
+                    );
+
+
+                    if ($emailDetail->fails()) {
 
-            //             $errors = $emailDetail->errors()->all();
+                        $errors = $emailDetail->errors()->all();
 
-            //             foreach ($errors as $checkisu) {
+                        foreach ($errors as $checkisu) {
 
-            //                 if (!(in_array($checkisu, $data_error_email))) {
-            //                     array_push($data_error_email, $checkisu);
-            //                 }
-            //             }
-            //         }
-            //     }
+                            if (!(in_array($checkisu, $data_error_email))) {
+                                array_push($data_error_email, $checkisu);
+                            }
+                        }
+                    }
+                }
 
 
-            //     if ($data_error_email) {
-            //         return response()->json([
-            //             'message' => 'The given data was invalid.',
-            //             'errors' => $data_error_email,
-            //         ], 422);
-            //     }
-
-
-            //     $checkEmail = [];
-            //     $checkUsageEmail = false;
-
-            //     foreach ($request->email as $val) {
-
-            //         $checkIfEmailExists = DB::table('usersEmails')
-            //             ->where([
-            //                 ['email', '=', $val['email'],],
-            //                 ['isDeleted', '=', '0'],
-            //                 ['usersId', '!=', $request->id]
-            //             ])
-            //             ->first();
-
-            //         if ($checkIfEmailExists) {
-            //             array_push($checkEmail, 'Email : ' . $val['email'] . ' already exists, please try different email address');
-            //         }
-
-
-            //         if ($val['usage'] == 'Utama') {
-            //             $checkUsageEmail = true;
-
-            //             $checkEmailUtama = DB::table('usersEmails')
-            //                 ->where([
-            //                     ['usage', '=', 'Utama'],
-            //                     ['isDeleted', '=', '0'],
-            //                     ['usersId', '=', $request->id]
-            //                 ])
-            //                 ->first();
-
-            //             if ($checkEmailUtama->email != $val['email']) {
-
-            //                 $insertEmailUsers = $val['email'];
-            //             }
-            //         }
-            //     }
-
-            //     if ($checkEmail) {
-            //         return response()->json([
-            //             'message' => 'Inputed data is not valid',
-            //             'errors' => $checkEmail,
-            //         ], 422);
-            //     }
-
-            //     if ($checkUsageEmail == false) {
-            //         return response()->json([
-            //             'message' => 'Inputed data is not valid',
-            //             'errors' => 'Must have one primary email',
-            //         ], 422);
-            //     }
-            // }
-
-
-            // $data_messenger_error = [];
-            // if ($request->messenger) {
-
-            //     $messageMessenger = [
-            //         'messengerNumber.required' => 'messenger number on tab messenger is required',
-            //         'type.required' => 'Type on tab messenger is required',
-            //         'usage.required' => 'Usage on tab messenger is required',
-            //     ];
-
-            //     foreach ($request->messenger as $key) {
-
-            //         $messengerDetail = Validator::make(
-            //             $key,
-            //             [
-            //                 'messengerNumber' => 'required',
-            //                 'type' => 'required',
-            //                 'usage' => 'required',
-            //             ],
-            //             $messageMessenger
-            //         );
-
-
-            //         if ($messengerDetail->fails()) {
-
-            //             $errors = $messengerDetail->errors()->all();
-
-            //             foreach ($errors as $checkisu) {
-
-            //                 if (!(in_array($checkisu, $data_messenger_error))) {
-            //                     array_push($data_messenger_error, $checkisu);
-            //                 }
-            //             }
-            //         }
-
-            //         if (strtolower($key['type']) == "whatshapp") {
-
-            //             if (!(substr($key['messengerNumber'], 0, 2) === "62")) {
-            //                 return response()->json([
-            //                     'message' => 'Inputed data is not valid',
-            //                     'errors' => 'Please check your phone number, for type whatshapp must start with 62',
-            //                 ], 422);
-            //             }
-            //         }
-            //     }
-
-            //     if ($data_messenger_error) {
-            //         return response()->json([
-            //             'message' => 'The given data was invalid.',
-            //             'errors' => $data_messenger_error,
-            //         ], 422);
-            //     }
-
-            //     $checkMessenger = [];
-
-            //     foreach ($request->messenger as $val) {
-
-            //         $checkifMessengerExists = DB::table('usersMessengers')
-            //             ->where([
-            //                 ['messengerNumber', '=', $val['messengerNumber'],],
-            //                 ['isDeleted', '=', '0'],
-            //                 ['usersId', '!=', $request->id]
-            //             ])
-            //             ->first();
-
-            //         if ($checkifMessengerExists) {
-            //             array_push($checkMessenger, 'Messenger number  : ' . $val['messengerNumber'] . ' already exists, please try different number');
-            //         }
-            //     }
-
-            //     if ($checkMessenger) {
-            //         return response()->json([
-            //             'message' => 'Inputed data is not valid',
-            //             'errors' => $checkMessenger,
-            //         ], 422);
-            //     }
-            // }
-
-
-            // if ($insertEmailUsers) {
-
-            //     DB::table('users')
-            //         ->where('id', '=', $request->id)
-            //         ->update([
-            //             'firstName' => $request->firstName,
-            //             'middleName' => $request->middleName,
-            //             'lastName' => $request->lastName,
-            //             'nickName' => $request->nickName,
-            //             'gender' => $request->gender,
-            //             'status' => $request->status,
-            //             'jobTitleId' => $request->jobTitleId,
-            //             'startDate' => $request->startDate,
-            //             'endDate' => $request->endDate,
-            //             'registrationNo' => $request->registrationNo,
-            //             'designation' => $request->designation,
-            //             'locationId' => $request->locationId,
-            //             'annualSickAllowance' => $request->annualSickAllowance,
-            //             'payPeriodId' => $request->payPeriodId,
-            //             'payAmount' => $request->payAmount,
-            //             'typeId' => $request->typeId,
-            //             'identificationNumber' => $request->identificationNumber,
-            //             'additionalInfo' => $request->additionalInfo,
-            //             'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
-            //             'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
-            //             'generalAllowMemberToLogUsingEmail' => $request->generalAllowMemberToLogUsingEmail,
-            //             'reminderEmail' => $request->reminderEmail,
-            //             'reminderWhatsapp' => $request->reminderWhatsapp,
-            //             'roleId' => $request->roleId,
-            //             'createdBy' => $request->user()->firstName,
-            //             'updated_at' => now(),
-            //             'password' => null,
-            //             'email' => $insertEmailUsers,
-            //         ]);
-
-            //     if ($request->detailAddress) {
-
-            //         DB::table('usersDetailAddresses')->where('usersId', '=', $request->id)->delete();
-
-            //         foreach ($request->detailAddress as $val) {
-
-            //             DB::table('usersDetailAddresses')
-            //                 ->insert([
-            //                     'usersId' => $request->id,
-            //                     'addressName' => $val['addressName'],
-            //                     'additionalInfo' => $val['additionalInfo'],
-            //                     'provinceCode' => $val['provinceCode'],
-            //                     'cityCode' => $val['cityCode'],
-            //                     'postalCode' => $val['postalCode'],
-            //                     'country' => $val['country'],
-            //                     'isPrimary' => $val['isPrimary'],
-            //                     'isDeleted' => 0,
-            //                     'updated_at' => now(),
-            //                 ]);
-            //         }
-            //     }
-
-            //     if ($request->messenger) {
-
-            //         DB::table('usersMessengers')->where('usersId', '=', $request->id)->delete();
-
-            //         foreach ($request->messenger as $val) {
-            //             DB::table('usersMessengers')
-            //                 ->insert([
-            //                     'usersId' => $request->id,
-            //                     'messengerNumber' => $val['messengerNumber'],
-            //                     'type' => $val['type'],
-            //                     'usage' => $val['usage'],
-            //                     'isDeleted' => 0,
-            //                     'updated_at' => now(),
-            //                 ]);
-            //         }
-            //     }
-
-            //     if ($request->email) {
-
-            //         DB::table('usersEmails')->where('usersId', '=', $request->id)->delete();
-
-            //         foreach ($request->email as $val) {
-            //             DB::table('usersEmails')
-            //                 ->insert([
-            //                     'usersId' => $request->id,
-            //                     'email' => $val['email'],
-            //                     'usage' => $val['usage'],
-            //                     'isDeleted' => 0,
-            //                     'updated_at' => now(),
-            //                 ]);
-            //         }
-            //     }
-
-
-
-            //     if ($request->telephone) {
-
-            //         DB::table('usersTelephones')->where('usersId', '=', $request->id)->delete();
-
-            //         foreach ($request->telephone as $val) {
-            //             DB::table('usersTelephones')
-            //                 ->insert([
-            //                     'usersId' => $request->id,
-            //                     'phoneNumber' => $val['phoneNumber'],
-            //                     'type' => $val['type'],
-            //                     'usage' => $val['usage'],
-            //                     'isDeleted' => 0,
-            //                     'updated_at' => now(),
-            //                 ]);
-            //         }
-            //     }
-
-
-
-            //     if ($request->status == 0) {
-
-            //         DB::commit();
-            //         return response()->json([
-            //             'result' => 'success',
-            //             'message' => 'successfuly update user ',
-            //         ]);
-            //     } else {
-
-
-            //         $jobtitleName = DB::table('jobTitle')
-            //             ->select('jobName')
-            //             ->where([
-            //                 ['id', '=', $request->jobTitleId],
-            //                 ['isActive', '=', 1]
-            //             ])
-            //             ->first();
-
-
-            //         $data = [
-            //             'subject' => 'RPC Petshop',
-            //             'body' => 'Please verify your account',
-            //             'isi' => 'This e-mail was sent from a notification-only address that cannot accept incoming e-mails. Please do not reply to this message.',
-            //             'name' => $request->firstName,
-            //             'email' => $insertEmailUsers,
-            //             'jobTitle' => $jobtitleName->jobName,
-            //             'usersId' => $request->id,
-            //         ];
-
-            //         Mail::to($insertEmailUsers)->send(new SendEmail($data));
-
-            //         DB::commit();
-
-            //         return response()->json([
-            //             'result' => 'success',
-            //             'message' => 'successfuly update user, your primary email has updated, please check your new email to verify your password',
-            //         ]);
-            //     }
-            // } else {
-
-
-            //     DB::table('users')
-            //         ->where('id', '=', $request->id)
-            //         ->update([
-            //             'firstName' => $request->firstName,
-            //             'middleName' => $request->middleName,
-            //             'lastName' => $request->lastName,
-            //             'nickName' => $request->nickName,
-            //             'gender' => $request->gender,
-            //             'status' => $request->status,
-            //             'jobTitleId' => $request->jobTitleId,
-            //             'startDate' => $request->startDate,
-            //             'endDate' => $request->endDate,
-            //             'registrationNo' => $request->registrationNo,
-            //             'designation' => $request->designation,
-            //             'locationId' => $request->locationId,
-            //             'annualSickAllowance' => $request->annualSickAllowance,
-            //             'payPeriodId' => $request->payPeriodId,
-            //             'payAmount' => $request->payAmount,
-            //             'typeId' => $request->typeId,
-            //             'identificationNumber' => $request->identificationNumber,
-            //             'additionalInfo' => $request->additionalInfo,
-            //             'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
-            //             'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
-            //             'generalAllowMemberToLogUsingEmail' => $request->generalAllowMemberToLogUsingEmail,
-            //             'reminderEmail' => $request->reminderEmail,
-            //             'reminderWhatsapp' => $request->reminderWhatsapp,
-            //             'roleId' => $request->roleId,
-            //             'createdBy' => $request->user()->firstName,
-            //             'updated_at' => now(),
-
-            //         ]);
-
-
-            //     if ($request->detailAddress) {
-
-            //         DB::table('usersDetailAddresses')->where('usersId', '=', $request->id)->delete();
-
-            //         foreach ($request->detailAddress as $val) {
-
-            //             DB::table('usersDetailAddresses')
-            //                 ->insert([
-            //                     'usersId' => $request->id,
-            //                     'addressName' => $val['addressName'],
-            //                     'additionalInfo' => $val['additionalInfo'],
-            //                     'provinceCode' => $val['provinceCode'],
-            //                     'cityCode' => $val['cityCode'],
-            //                     'postalCode' => $val['postalCode'],
-            //                     'country' => $val['country'],
-            //                     'isPrimary' => $val['isPrimary'],
-            //                     'isDeleted' => 0,
-            //                     'updated_at' => now(),
-            //                 ]);
-            //         }
-            //     }
-
-
-            //     if ($request->messenger) {
-
-            //         DB::table('usersMessengers')->where('usersId', '=', $request->id)->delete();
-
-            //         foreach ($request->messenger as $val) {
-            //             DB::table('usersMessengers')
-            //                 ->insert([
-            //                     'usersId' => $request->id,
-            //                     'messengerNumber' => $val['messengerNumber'],
-            //                     'type' => $val['type'],
-            //                     'usage' => $val['usage'],
-            //                     'isDeleted' => 0,
-            //                     'updated_at' => now(),
-            //                 ]);
-            //         }
-            //     }
-
-            //     if ($request->email) {
-
-            //         DB::table('usersEmails')->where('usersId', '=', $request->id)->delete();
-
-            //         foreach ($request->email as $val) {
-            //             DB::table('usersEmails')
-            //                 ->insert([
-            //                     'usersId' => $request->id,
-            //                     'email' => $val['email'],
-            //                     'usage' => $val['usage'],
-            //                     'email_verified_at' => now(),
-            //                     'isDeleted' => 0,
-            //                     'updated_at' => now(),
-            //                 ]);
-            //         }
-            //     }
-
-            //     if ($request->telephone) {
-
-            //         DB::table('usersTelephones')->where('usersId', '=', $request->id)->delete();
-
-            //         foreach ($request->telephone as $val) {
-            //             DB::table('usersTelephones')
-            //                 ->insert([
-            //                     'usersId' => $request->id,
-            //                     'phoneNumber' => $val['phoneNumber'],
-            //                     'type' => $val['type'],
-            //                     'usage' => $val['usage'],
-            //                     'isDeleted' => 0,
-            //                     'updated_at' => now(),
-            //                 ]);
-            //         }
-            //     }
-
-            //     DB::commit();
+                if ($data_error_email) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_email,
+                    ], 422);
+                }
+
+
+                $checkEmail = [];
+                $checkUsageEmail = false;
+
+                foreach ($request->email as $val) {
+
+                    $checkIfEmailExists = DB::table('usersEmails')
+                        ->where([
+                            ['email', '=', $val['email'],],
+                            ['isDeleted', '=', '0'],
+                            ['usersId', '!=', $request->id]
+                        ])
+                        ->first();
+
+                    if ($checkIfEmailExists) {
+                        array_push($checkEmail, 'Email : ' . $val['email'] . ' already exists, please try different email address');
+                    }
+
+
+                    if ($val['usage'] == 'Utama') {
+                        $checkUsageEmail = true;
+
+                        $checkEmailUtama = DB::table('usersEmails')
+                            ->where([
+                                ['usage', '=', 'Utama'],
+                                ['isDeleted', '=', '0'],
+                                ['usersId', '=', $request->id]
+                            ])
+                            ->first();
+
+                        if ($checkEmailUtama->email != $val['email']) {
+
+                            $insertEmailUsers = $val['email'];
+                        }
+                    }
+                }
+
+                if ($checkEmail) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkEmail,
+                    ], 422);
+                }
+
+                if ($checkUsageEmail == false) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Must have one primary email',
+                    ], 422);
+                }
+            }
+
+
+            $data_messenger_error = [];
+            if ($request->messenger) {
+
+                $messageMessenger = [
+                    'messengerNumber.required' => 'messenger number on tab messenger is required',
+                    'type.required' => 'Type on tab messenger is required',
+                    'usage.required' => 'Usage on tab messenger is required',
+                ];
+
+                foreach ($request->messenger as $key) {
+
+                    $messengerDetail = Validator::make(
+                        $key,
+                        [
+                            'messengerNumber' => 'required',
+                            'type' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messageMessenger
+                    );
+
+
+                    if ($messengerDetail->fails()) {
+
+                        $errors = $messengerDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_messenger_error))) {
+                                array_push($data_messenger_error, $checkisu);
+                            }
+                        }
+                    }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['messengerNumber'], 0, 2) === "62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                            ], 422);
+                        }
+                    }
+                }
+
+                if ($data_messenger_error) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_messenger_error,
+                    ], 422);
+                }
+
+                $checkMessenger = [];
+
+                foreach ($request->messenger as $val) {
+
+                    $checkifMessengerExists = DB::table('usersMessengers')
+                        ->where([
+                            ['messengerNumber', '=', $val['messengerNumber'],],
+                            ['isDeleted', '=', '0'],
+                            ['usersId', '!=', $request->id]
+                        ])
+                        ->first();
+
+                    if ($checkifMessengerExists) {
+                        array_push($checkMessenger, 'Messenger number  : ' . $val['messengerNumber'] . ' already exists, please try different number');
+                    }
+                }
+
+                if ($checkMessenger) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkMessenger,
+                    ], 422);
+                }
+            }
+
+
+            if ($insertEmailUsers) {
+
+                DB::table('users')
+                    ->where('id', '=', $request->id)
+                    ->update([
+                        'firstName' => $request->firstName,
+                        'middleName' => $request->middleName,
+                        'lastName' => $request->lastName,
+                        'nickName' => $request->nickName,
+                        'gender' => $request->gender,
+                        'status' => $request->status,
+                        'jobTitleId' => $request->jobTitleId,
+                        'startDate' => $request->startDate,
+                        'endDate' => $request->endDate,
+                        'registrationNo' => $request->registrationNo,
+                        'designation' => $request->designation,
+                        'locationId' => $request->locationId,
+                        'annualSickAllowance' => $request->annualSickAllowance,
+                        'payPeriodId' => $request->payPeriodId,
+                        'payAmount' => $request->payAmount,
+                        'typeId' => $request->typeId,
+                        'identificationNumber' => $request->identificationNumber,
+                        'additionalInfo' => $request->additionalInfo,
+                        'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
+                        'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
+                        'generalAllowMemberToLogUsingEmail' => $request->generalAllowMemberToLogUsingEmail,
+                        'reminderEmail' => $request->reminderEmail,
+                        'reminderWhatsapp' => $request->reminderWhatsapp,
+                        'roleId' => $request->roleId,
+                        'createdBy' => $request->user()->firstName,
+                        'updated_at' => now(),
+                        'password' => null,
+                        'email' => $insertEmailUsers,
+                    ]);
+
+                if ($request->detailAddress) {
+
+                    DB::table('usersDetailAddresses')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->detailAddress as $val) {
+
+                        DB::table('usersDetailAddresses')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'addressName' => $val['addressName'],
+                                'additionalInfo' => $val['additionalInfo'],
+                                'provinceCode' => $val['provinceCode'],
+                                'cityCode' => $val['cityCode'],
+                                'postalCode' => $val['postalCode'],
+                                'country' => $val['country'],
+                                'isPrimary' => $val['isPrimary'],
+                                'isDeleted' => 0,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+                if ($request->messenger) {
+
+                    DB::table('usersMessengers')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->messenger as $val) {
+                        DB::table('usersMessengers')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'messengerNumber' => $val['messengerNumber'],
+                                'type' => $val['type'],
+                                'usage' => $val['usage'],
+                                'isDeleted' => 0,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+                if ($request->email) {
+
+                    DB::table('usersEmails')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->email as $val) {
+                        DB::table('usersEmails')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'email' => $val['email'],
+                                'usage' => $val['usage'],
+                                'isDeleted' => 0,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+
+
+                if ($request->telephone) {
+
+                    DB::table('usersTelephones')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->telephone as $val) {
+                        DB::table('usersTelephones')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'phoneNumber' => $val['phoneNumber'],
+                                'type' => $val['type'],
+                                'usage' => $val['usage'],
+                                'isDeleted' => 0,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+
+
+                if ($request->status == 0) {
+
+                    DB::commit();
+                    return response()->json([
+                        'result' => 'success',
+                        'message' => 'successfuly update user ',
+                    ]);
+                } else {
+
+
+                    $jobtitleName = DB::table('jobTitle')
+                        ->select('jobName')
+                        ->where([
+                            ['id', '=', $request->jobTitleId],
+                            ['isActive', '=', 1]
+                        ])
+                        ->first();
+
+
+                    $data = [
+                        'subject' => 'RPC Petshop',
+                        'body' => 'Please verify your account',
+                        'isi' => 'This e-mail was sent from a notification-only address that cannot accept incoming e-mails. Please do not reply to this message.',
+                        'name' => $request->firstName,
+                        'email' => $insertEmailUsers,
+                        'jobTitle' => $jobtitleName->jobName,
+                        'usersId' => $request->id,
+                    ];
+
+                    Mail::to($insertEmailUsers)->send(new SendEmail($data));
+
+                    DB::commit();
+
+                    return response()->json([
+                        'result' => 'success',
+                        'message' => 'successfuly update user, your primary email has updated, please check your new email to verify your password',
+                    ]);
+                }
+            } else {
+
+
+                DB::table('users')
+                    ->where('id', '=', $request->id)
+                    ->update([
+                        'firstName' => $request->firstName,
+                        'middleName' => $request->middleName,
+                        'lastName' => $request->lastName,
+                        'nickName' => $request->nickName,
+                        'gender' => $request->gender,
+                        'status' => $request->status,
+                        'jobTitleId' => $request->jobTitleId,
+                        'startDate' => $request->startDate,
+                        'endDate' => $request->endDate,
+                        'registrationNo' => $request->registrationNo,
+                        'designation' => $request->designation,
+                        'locationId' => $request->locationId,
+                        'annualSickAllowance' => $request->annualSickAllowance,
+                        'payPeriodId' => $request->payPeriodId,
+                        'payAmount' => $request->payAmount,
+                        'typeId' => $request->typeId,
+                        'identificationNumber' => $request->identificationNumber,
+                        'additionalInfo' => $request->additionalInfo,
+                        'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
+                        'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
+                        'generalAllowMemberToLogUsingEmail' => $request->generalAllowMemberToLogUsingEmail,
+                        'reminderEmail' => $request->reminderEmail,
+                        'reminderWhatsapp' => $request->reminderWhatsapp,
+                        'roleId' => $request->roleId,
+                        'createdBy' => $request->user()->firstName,
+                        'updated_at' => now(),
+
+                    ]);
+
+
+                if ($request->detailAddress) {
+
+                    DB::table('usersDetailAddresses')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->detailAddress as $val) {
+
+                        DB::table('usersDetailAddresses')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'addressName' => $val['addressName'],
+                                'additionalInfo' => $val['additionalInfo'],
+                                'provinceCode' => $val['provinceCode'],
+                                'cityCode' => $val['cityCode'],
+                                'postalCode' => $val['postalCode'],
+                                'country' => $val['country'],
+                                'isPrimary' => $val['isPrimary'],
+                                'isDeleted' => 0,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+
+                if ($request->messenger) {
+
+                    DB::table('usersMessengers')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->messenger as $val) {
+                        DB::table('usersMessengers')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'messengerNumber' => $val['messengerNumber'],
+                                'type' => $val['type'],
+                                'usage' => $val['usage'],
+                                'isDeleted' => 0,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+                if ($request->email) {
+
+                    DB::table('usersEmails')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->email as $val) {
+                        DB::table('usersEmails')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'email' => $val['email'],
+                                'usage' => $val['usage'],
+                                'email_verified_at' => now(),
+                                'isDeleted' => 0,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+                if ($request->telephone) {
+
+                    DB::table('usersTelephones')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->telephone as $val) {
+                        DB::table('usersTelephones')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'phoneNumber' => $val['phoneNumber'],
+                                'type' => $val['type'],
+                                'usage' => $val['usage'],
+                                'isDeleted' => 0,
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
+                DB::commit();
 
             return response()->json([
                 'result' => 'success',
                 'message' => 'successfuly update user',
             ]);
-            // }
+            }
         } catch (Exception $e) {
 
             DB::rollback();
