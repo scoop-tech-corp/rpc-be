@@ -1835,32 +1835,21 @@ class StaffController extends Controller
 
             if ($request->status == "del") {
 
-                if ($checkImages == null) {
 
-                    return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'User image empty, please upload images first',
-                    ], 406);
-                } else {
+                File::delete(public_path() . $checkImages->imagePath);
 
-                    if (file_exists(public_path() . $checkImages->imagePath)) {
+                DB::table('usersImages')->where([
+                    ['usersId', '=', $request->id],
+                ])->delete();
 
-                        File::delete(public_path() . $checkImages->imagePath);
-
-                        DB::table('usersImages')->where([
-                            ['usersId', '=', $request->id],
-                            ['isDeleted', '=', 0],
-                        ])->delete();
-                    }
-
-                    return response()->json(
-                        [
-                            'result' => 'success',
-                            'message' => 'Delete image users Success!',
-                        ],
-                        200
-                    );
-                }
+                return response()->json(
+                    [
+                        'result' => 'success',
+                        'message' => 'Delete image users Success!',
+                    ],
+                    200
+                );
+                
             } else {
 
                 if ($request->hasfile('image')) {
@@ -2753,10 +2742,10 @@ class StaffController extends Controller
 
                 DB::commit();
 
-            return response()->json([
-                'result' => 'success',
-                'message' => 'successfuly update user',
-            ]);
+                return response()->json([
+                    'result' => 'success',
+                    'message' => 'successfuly update user',
+                ]);
             }
         } catch (Exception $e) {
 
