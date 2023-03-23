@@ -1444,29 +1444,32 @@ class ProductClinicController
                 $count += 1;
             } else {
 
-                if ($value['status'] == 'change image') {
-                    ProductClinicImages::updateorCreate(
-                        ['id' => $value['id']],
-                        [
-                            'productClinicId' => $request->id,
-                            'labelName' => $value['name'],
-                            'realImageName' => $tmpImages[$count]['realImageName'],
-                            'imagePath' => $tmpImages[$count]['imagePath'],
-                            'userId' => $request->user()->id,
-                        ]
-                    );
-                    $count += 1;
-                } else {
-                    ProductClinicImages::updateorCreate(
-                        ['id' => $value['id']],
-                        [
-                            'productClinicId' => $request->id,
-                            'labelName' => $value['name'],
-                            'realImageName' => $tmpImages[$count]['realImageName'],
-                            'imagePath' => $tmpImages[$count]['imagePath'],
-                            'userId' => $request->user()->id,
-                        ]
-                    );
+                if (count($tmpImages) > 0) {
+
+                    if ($value['status'] == 'change image') {
+                        ProductClinicImages::updateorCreate(
+                            ['id' => $value['id']],
+                            [
+                                'productClinicId' => $request->id,
+                                'labelName' => $value['name'],
+                                'realImageName' => $tmpImages[$count]['realImageName'],
+                                'imagePath' => $tmpImages[$count]['imagePath'],
+                                'userId' => $request->user()->id,
+                            ]
+                        );
+                        $count += 1;
+                    } else {
+                        ProductClinicImages::updateorCreate(
+                            ['id' => $value['id']],
+                            [
+                                'productClinicId' => $request->id,
+                                'labelName' => $value['name'],
+                                'realImageName' => $tmpImages[$count]['realImageName'],
+                                'imagePath' => $tmpImages[$count]['imagePath'],
+                                'userId' => $request->user()->id,
+                            ]
+                        );
+                    }
                 }
             }
         }
