@@ -5,6 +5,11 @@
  *
  * @return response()
  */
+
+use App\Models\ProductClinic;
+use App\Models\ProductClinicLog;
+use App\Models\ProductSellLog;
+
 if (!function_exists('adminAccess')) {
     function adminAccess($id)
     {
@@ -138,6 +143,33 @@ if (!function_exists('convertTrueFalse')) {
     }
 }
 
+if (!function_exists('productSellLog')) {
+    function productSellLog($productId,$transaction,$remark,$quantity,$balance,$userId)
+    {
+        ProductSellLog::create([
+            'productSellId' => $productId,
+            'transaction' => $transaction,
+            'remark' => $remark,
+            'quantity' => $quantity,
+            'balance' => $balance,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('productClinicLog')) {
+    function productClinicLog($productId,$transaction,$remark,$quantity,$balance,$userId)
+    {
+        ProductClinicLog::create([
+            'productSellId' => $productId,
+            'transaction' => $transaction,
+            'remark' => $remark,
+            'quantity' => $quantity,
+            'balance' => $balance,
+            'userId' => $userId,
+        ]);
+    }
+}
 //add by danny wahyudi
 // if (!function_exists('securityGroupAdmin')) {
 //     function securityGroupAdmin($id)
