@@ -67,6 +67,10 @@ class StaffController extends Controller
             );
 
 
+
+            $start = Carbon::parse($request->startDate);
+            $end = Carbon::parse($request->endDate);
+
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
 
@@ -376,6 +380,7 @@ class StaffController extends Controller
                 }
             }
 
+
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
                     'firstName' => $request->firstName,
@@ -385,8 +390,8 @@ class StaffController extends Controller
                     'gender' => $request->gender,
                     'status' => $request->status,
                     'jobTitleId' => $request->jobTitleId,
-                    'startDate' => $request->startDate,
-                    'endDate' => $request->endDate,
+                    'startDate' =>  $start,
+                    'endDate' => $end,
                     'registrationNo' => $request->registrationNo,
                     'designation' => $request->designation,
                     'locationId' => $request->locationId,
@@ -938,7 +943,7 @@ class StaffController extends Controller
                 ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
                 ->select(
                     'a.id as id',
-                    DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                     'b.jobName as jobTitle',
                     'c.email as emailAddress',
                     DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1138,7 +1143,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1207,7 +1212,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1277,7 +1282,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1346,7 +1351,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1416,7 +1421,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1485,7 +1490,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1553,7 +1558,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1625,7 +1630,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1693,7 +1698,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -1760,7 +1765,7 @@ class StaffController extends Controller
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -2503,6 +2508,8 @@ class StaffController extends Controller
                 }
             }
 
+            $start = Carbon::parse($request->startDate);
+            $end = Carbon::parse($request->endDate);
 
             if ($insertEmailUsers) {
 
@@ -2516,8 +2523,8 @@ class StaffController extends Controller
                         'gender' => $request->gender,
                         'status' => $request->status,
                         'jobTitleId' => $request->jobTitleId,
-                        'startDate' => $request->startDate,
-                        'endDate' => $request->endDate,
+                        'startDate' => $start,
+                        'endDate' => $end,
                         'registrationNo' => $request->registrationNo,
                         'designation' => $request->designation,
                         'locationId' => $request->locationId,
@@ -2667,8 +2674,8 @@ class StaffController extends Controller
                         'gender' => $request->gender,
                         'status' => $request->status,
                         'jobTitleId' => $request->jobTitleId,
-                        'startDate' => $request->startDate,
-                        'endDate' => $request->endDate,
+                        'startDate' => $start,
+                        'endDate' => $end,
                         'registrationNo' => $request->registrationNo,
                         'designation' => $request->designation,
                         'locationId' => $request->locationId,
