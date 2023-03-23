@@ -1853,26 +1853,27 @@ class StaffController extends Controller
             ], 406);
         } else {
 
-            $checkImages = DB::table('usersImages')
-                ->where([
-                    ['usersId', '=', $request->id],
-                    ['isDeleted', '=', 0],
-                ])
-                ->first();
-
-
-            if ($checkImages) {
-
-                File::delete(public_path() . $checkImages->imagePath);
-
-                DB::table('usersImages')->where([
-                    ['usersId', '=', $request->id],
-                ])->delete();
-            }
-
 
 
             if ($request->hasfile('image')) {
+
+                $checkImages = DB::table('usersImages')
+                    ->where([
+                        ['usersId', '=', $request->id],
+                        ['isDeleted', '=', 0],
+                    ])
+                    ->first();
+
+
+                if ($checkImages) {
+
+                    File::delete(public_path() . $checkImages->imagePath);
+
+                    DB::table('usersImages')->where([
+                        ['usersId', '=', $request->id],
+                    ])->delete();
+                }
+
 
                 $files = $request->file('image');
 
