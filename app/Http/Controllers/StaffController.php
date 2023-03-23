@@ -1860,11 +1860,17 @@ class StaffController extends Controller
                 ])
                 ->first();
 
-            File::delete(public_path() . $checkImages->imagePath);
 
-            DB::table('usersImages')->where([
-                ['usersId', '=', $request->id],
-            ])->delete();
+            if ($checkImages) {
+
+                File::delete(public_path() . $checkImages->imagePath);
+
+                DB::table('usersImages')->where([
+                    ['usersId', '=', $request->id],
+                ])->delete();
+            }
+
+
 
             if ($request->hasfile('image')) {
 
