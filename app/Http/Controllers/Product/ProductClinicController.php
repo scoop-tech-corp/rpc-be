@@ -860,7 +860,7 @@ class ProductClinicController
                     'pcq.id',
                     'pcq.fromQty',
                     'pcq.toQty',
-                    DB::raw("TRIM(pcq.Price)+0 as Price")
+                    DB::raw("TRIM(pcq.price)+0 as price")
                 )
                 ->where('pcq.ProductClinicId', '=', $request->id)
                 ->where('pcq.isDeleted', '=', 0)
