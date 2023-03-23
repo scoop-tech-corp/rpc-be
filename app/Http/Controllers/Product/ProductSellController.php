@@ -743,6 +743,8 @@ class ProductSellController
                         ]);
                     }
                 }
+
+                productSellLog($product->id, "Create new Item", "", $value['inStock'], $value['inStock'], $request->user()->id);
             }
             DB::commit();
 
