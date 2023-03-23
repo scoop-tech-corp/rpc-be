@@ -55,7 +55,7 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
 
         $locations = $this->locationId;
 
-        if (!$locations == null) {
+        if (!$locations[0] == null) {
 
             $data = $data->whereIn('loc.id', $this->locationId);
         }
