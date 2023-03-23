@@ -38,7 +38,7 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
             ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(a.firstName ,' ', a.middleName ,' ', a.lastName ,'(', a.nickName ,')'  ) as name"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
@@ -124,7 +124,8 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
                 'status',
                 'location',
                 'createdBy',
-                'createdAt')
+                'createdAt'
+            )
             ->orderBy('updated_at', 'desc')
             ->get();
 
