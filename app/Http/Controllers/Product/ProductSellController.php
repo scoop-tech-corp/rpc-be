@@ -1343,30 +1343,32 @@ class ProductSellController
 
                 if (count($tmpImages) > 0) {
 
-                    if ($value['status'] == 'change image') {
-                        ProductSellImages::updateorCreate(
-                            ['id' => $value['id']],
-                            [
-                                'productSellId' => $request->id,
-                                'labelName' => $value['name'],
-                                'realImageName' => $tmpImages[$count]['realImageName'],
-                                'imagePath' => $tmpImages[$count]['imagePath'],
-                                'userId' => $request->user()->id,
-                            ]
-                        );
-                        $count += 1;
-                    } else {
-                        ProductSellImages::updateorCreate(
-                            ['id' => $value['id']],
-                            [
-                                'productSellId' => $request->id,
-                                'labelName' => $value['name'],
-                                'realImageName' => $tmpImages[$count]['realImageName'],
-                                'imagePath' => $tmpImages[$count]['imagePath'],
-                                'userId' => $request->user()->id,
-                            ]
-                        );
-                    }
+
+                    ProductSellImages::updateorCreate(
+                        ['id' => $value['id']],
+                        [
+                            'productSellId' => $request->id,
+                            'labelName' => $value['name'],
+                            //'realImageName' => $tmpImages[$count]['realImageName'],
+                            //'imagePath' => $tmpImages[$count]['imagePath'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                    // if ($value['status'] == 'change image') {
+                    //     ProductSellImages::updateorCreate(
+                    //         ['id' => $value['id']],
+                    //         [
+                    //             'productSellId' => $request->id,
+                    //             'labelName' => $value['name'],
+                    //             'realImageName' => $tmpImages[$count]['realImageName'],
+                    //             'imagePath' => $tmpImages[$count]['imagePath'],
+                    //             'userId' => $request->user()->id,
+                    //         ]
+                    //     );
+                    //     $count += 1;
+                    // } else {
+                        
+                    // }
                 }
             }
         }
