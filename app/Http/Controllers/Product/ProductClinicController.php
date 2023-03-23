@@ -845,6 +845,7 @@ class ProductClinicController
                 ->select(
                     'pcp.id',
                     'l.locationName',
+                    'l.id as locationId',
                     DB::raw("TRIM(pcp.price)+0 as price")
                 )
                 ->where('pcp.productClinicId', '=', $request->id)

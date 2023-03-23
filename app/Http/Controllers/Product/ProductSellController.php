@@ -264,6 +264,7 @@ class ProductSellController
                 ->select(
                     'psp.id as id',
                     'l.locationName',
+                    'l.id as locationId',
                     DB::raw("TRIM(psp.price)+0 as price")
                 )
                 ->where('psp.productSellId', '=', $request->id)
