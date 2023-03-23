@@ -1179,12 +1179,15 @@ class ProductSellController
                         );
                 } else {
 
-                    ProductSellCustomerGroup::updateOrCreate([
-                        'productSellId' => $product->id,
-                        'customerGroupId' => $CustVal['customerGroupId'],
-                        'price' => $CustVal['price'],
-                        'userId' => $request->user()->id,
-                    ]);
+                    ProductSellCustomerGroup::updateOrCreate(
+                        ['id' => $CustVal['id']],
+                        [
+                            'productSellId' => $product->id,
+                            'customerGroupId' => $CustVal['customerGroupId'],
+                            'price' => $CustVal['price'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
                 }
             }
         } else if ($request->pricingStatus == "PriceLocations") {
@@ -1204,12 +1207,15 @@ class ProductSellController
                         );
                 } else {
 
-                    ProductSellPriceLocation::updateOrCreate([
-                        'productSellId' => $product->id,
-                        'locationId' => $PriceVal['locationId'],
-                        'price' => $PriceVal['price'],
-                        'userId' => $request->user()->id,
-                    ]);
+                    ProductSellPriceLocation::updateOrCreate(
+                        ['id' => $PriceVal['id']],
+                        [
+                            'productSellId' => $product->id,
+                            'locationId' => $PriceVal['locationId'],
+                            'price' => $PriceVal['price'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
                 }
             }
         } else if ($request->pricingStatus == "Quantities") {
