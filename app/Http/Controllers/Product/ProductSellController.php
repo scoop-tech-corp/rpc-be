@@ -1339,37 +1339,16 @@ class ProductSellController
                 $ProdSell->isDeleted = true;
                 $ProdSell->DeletedAt = Carbon::now();
                 $ProdSell->save();
-            } else {
+            } else if ($value['id'] != 0) {
 
-                if (count($tmpImages) > 0) {
-
-
-                    ProductSellImages::updateorCreate(
-                        ['id' => $value['id']],
-                        [
-                            'productSellId' => $request->id,
-                            'labelName' => $value['name'],
-                            //'realImageName' => $tmpImages[$count]['realImageName'],
-                            //'imagePath' => $tmpImages[$count]['imagePath'],
-                            'userId' => $request->user()->id,
-                        ]
-                    );
-                    // if ($value['status'] == 'change image') {
-                    //     ProductSellImages::updateorCreate(
-                    //         ['id' => $value['id']],
-                    //         [
-                    //             'productSellId' => $request->id,
-                    //             'labelName' => $value['name'],
-                    //             'realImageName' => $tmpImages[$count]['realImageName'],
-                    //             'imagePath' => $tmpImages[$count]['imagePath'],
-                    //             'userId' => $request->user()->id,
-                    //         ]
-                    //     );
-                    //     $count += 1;
-                    // } else {
-                        
-                    // }
-                }
+                ProductSellImages::updateorCreate(
+                    ['id' => $value['id']],
+                    [
+                        'productSellId' => $request->id,
+                        'labelName' => $value['name'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
             }
         }
 
