@@ -1289,12 +1289,15 @@ class ProductClinicController
                             );
                     } else {
 
-                        ProductClinicCustomerGroup::updateOrCreate([
-                            'productClinicId' => $product->id,
-                            'customerGroupId' => $CustVal['customerGroupId'],
-                            'price' => $CustVal['price'],
-                            'userId' => $request->user()->id,
-                        ]);
+                        ProductClinicCustomerGroup::updateOrCreate(
+                            ['id' => $CustVal['id']],
+                            [
+                                'productClinicId' => $product->id,
+                                'customerGroupId' => $CustVal['customerGroupId'],
+                                'price' => $CustVal['price'],
+                                'userId' => $request->user()->id,
+                            ]
+                        );
                     }
                 }
             } else if ($request->pricingStatus == "PriceLocations") {
@@ -1314,12 +1317,15 @@ class ProductClinicController
                             );
                     } else {
 
-                        ProductClinicPriceLocation::updateOrCreate([
-                            'productClinicId' => $product->id,
-                            'locationId' => $PriceVal['locationId'],
-                            'price' => $PriceVal['price'],
-                            'userId' => $request->user()->id,
-                        ]);
+                        ProductClinicPriceLocation::updateOrCreate(
+                            ['id' => $PriceVal['id']],
+                            [
+                                'productClinicId' => $product->id,
+                                'locationId' => $PriceVal['locationId'],
+                                'price' => $PriceVal['price'],
+                                'userId' => $request->user()->id,
+                            ]
+                        );
                     }
                 }
             } else if ($request->pricingStatus == "Quantities") {
