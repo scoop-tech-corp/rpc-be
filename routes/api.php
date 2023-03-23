@@ -133,7 +133,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //MODULE CUSTOMER
     //customer group
 
-    Route::prefix(['prefix' => 'customer'], function () {
+    Route::group(['prefix' => 'customer'], function () {
 
         Route::get('/group', [CustomerController::class, 'indexCustomerGroup']);
         Route::post('/group', [CustomerController::class, 'createCustomerGroup']);
