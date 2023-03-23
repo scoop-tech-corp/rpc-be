@@ -1127,7 +1127,7 @@ class ProductSellController
                 ProductSellCategory::create(
                     [
                         'productSellId' => $request->id,
-                        'productCategoryId' => $valCat['id'],
+                        'productCategoryId' => $valCat,
                         'userId' => $request->user()->id,
                     ]
                 );
@@ -1332,6 +1332,14 @@ class ProductSellController
                 ]);
 
                 $count += 1;
+            } else if ($value['status'] == 'del') {
+
+                $ProdSell = ProductSellImages::find($value['id']);
+                $ProdSell->DeletedBy = $request->user()->id;
+                $ProdSell->isDeleted = true;
+                $ProdSell->DeletedAt = Carbon::now();
+                $ProdSell->save();
+
             } else {
 
                 if (count($tmpImages) > 0) {
