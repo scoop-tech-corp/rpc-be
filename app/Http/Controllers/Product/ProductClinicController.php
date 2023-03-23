@@ -82,7 +82,7 @@ class ProductClinicController
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('pc.id', 'desc');
+        $data = $data->orderBy('pc.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -1184,6 +1184,8 @@ class ProductClinicController
                     'isNonChargeable' => $request->isNonChargeable,
                     'isOfficeApproval' => $request->isOfficeApproval,
                     'isAdminApproval' => $request->isAdminApproval,
+
+                    'updated_at' => Carbon::now(),
 
                     'userId' => $request->user()->id,
                 ]

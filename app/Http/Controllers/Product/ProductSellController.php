@@ -78,7 +78,7 @@ class ProductSellController
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('ps.id', 'desc');
+        $data = $data->orderBy('ps.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -1103,6 +1103,8 @@ class ProductSellController
                 'isNonChargeable' => $request->isNonChargeable,
                 'isOfficeApproval' => $request->isOfficeApproval,
                 'isAdminApproval' => $request->isAdminApproval,
+
+                'updated_at' => Carbon::now(),
 
                 'userId' => $request->user()->id,
             ]
