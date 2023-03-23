@@ -1321,7 +1321,7 @@ class ProductSellController
 
         foreach ($imagesName as $value) {
 
-            if ($value['status'] == 'new') {
+            if ($value['status'] == '' && $value['id'] == 0) {
 
                 ProductSellImages::create([
                     'productSellId' => $request->id,
@@ -1332,14 +1332,13 @@ class ProductSellController
                 ]);
 
                 $count += 1;
-            } else if ($value['status'] == 'del') {
+            } else if ($value['status'] == 'del' && $value['id'] != 0) {
 
                 $ProdSell = ProductSellImages::find($value['id']);
                 $ProdSell->DeletedBy = $request->user()->id;
                 $ProdSell->isDeleted = true;
                 $ProdSell->DeletedAt = Carbon::now();
                 $ProdSell->save();
-
             } else {
 
                 if (count($tmpImages) > 0) {
