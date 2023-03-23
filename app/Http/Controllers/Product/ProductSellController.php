@@ -1548,7 +1548,7 @@ class ProductSellController
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => [$errors],
+                'errors' => $errors,
             ], 422);
         }
 
@@ -1573,7 +1573,7 @@ class ProductSellController
             ->where('ps.fullName', '=', $request->fullName)
             ->where('psl.locationId', '=', $currentBranch->locationId)
             ->where('ps.isDeleted', '=', 0)
-            ->get();
+            ->first();
 
         if ($findDuplicate) {
             return response()->json([
