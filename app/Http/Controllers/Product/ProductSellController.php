@@ -1516,10 +1516,16 @@ class ProductSellController
             $tmp = rtrim($tmp, ", ");
         }
 
+        $lowStockLabel = "";
+
+        if ($request->isExportLimit == 1) {
+            $lowStockLabel = "Low Stock";
+        }
+
         if ($tmp == "") {
-            $fileName = "Rekap Produk Jual " . $date . ".xlsx";
+            $fileName = "Rekap Produk Jual " . $lowStockLabel . " " . $date . ".xlsx";
         } else {
-            $fileName = "Rekap Produk Jual " . $tmp . " " . $date . ".xlsx";
+            $fileName = "Rekap Produk Jual " . $lowStockLabel . " " . $tmp . " " . $date . ".xlsx";
         }
 
         return Excel::download(

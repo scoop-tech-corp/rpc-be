@@ -1626,10 +1626,16 @@ class ProductClinicController
             $tmp = rtrim($tmp, ", ");
         }
 
+        $lowStockLabel = "";
+
+        if ($request->isExportLimit == 1) {
+            $lowStockLabel = "Low Stock";
+        }
+
         if ($tmp == "") {
-            $fileName = "Rekap Produk Klinik " . $date . ".xlsx";
+            $fileName = "Rekap Produk Klinik " . $lowStockLabel . " " . $date . ".xlsx";
         } else {
-            $fileName = "Rekap Produk Klinik " . $tmp . " " . $date . ".xlsx";
+            $fileName = "Rekap Produk Klinik " . $lowStockLabel . " " . $tmp . " " . $date . ".xlsx";
         }
 
         return Excel::download(
