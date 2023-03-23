@@ -56,7 +56,7 @@ class DataRecapProductSellLimit implements FromCollection, ShouldAutoSize, WithH
 
         $locations = $this->locationId;
 
-        if (!$locations == null) {
+        if (!$locations[0] == null) {
 
             $data = $data->whereIn('loc.id', $this->locationId);
         }
