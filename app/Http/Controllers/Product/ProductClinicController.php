@@ -660,7 +660,7 @@ class ProductClinicController
                     }
                 }
 
-                //productClinicLog($product->id, "Create new Item", "", $value['inStock'], $value['inStock'], $request->user()->id);
+                productClinicLog($product->id, "Create new Item", "", $value['inStock'], $value['inStock'], $request->user()->id);
             }
 
             DB::commit();
