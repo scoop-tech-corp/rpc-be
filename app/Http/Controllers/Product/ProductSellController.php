@@ -744,7 +744,7 @@ class ProductSellController
                     }
                 }
 
-                //productSellLog($product->id, "Create new Item", "", $value['inStock'], $value['inStock'], $request->user()->id);
+                productSellLog($product->id, "Create new Item", "", $value['inStock'], $value['inStock'], $request->user()->id);
             }
             DB::commit();
 
@@ -1546,9 +1546,10 @@ class ProductSellController
     {
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
-            'fullName' => 'required|string',
+            'fullName' => 'nullable|string',
             'qtyReduction' => 'required|integer',
             'qtyIncrease' => 'required|integer',
+            'productSellId' => 'nullable|integer',
         ]);
 
         if ($validate->fails()) {
@@ -1565,147 +1566,189 @@ class ProductSellController
         if (!$product) {
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['There is any Data not found!'],
+                'errors' => ['There is no any data found!'],
             ], 422);
         }
 
-        $currentBranch = DB::table('productSells as ps')
-            ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-            ->select('psl.locationId')
-            ->where('ps.id', '=', $request->id)
-            ->first();
+        if ($request->fullName != "") {
 
-        $findDuplicate = DB::table('productSells as ps')
-            ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-            ->select('psl.locationId')
-            ->where('ps.fullName', '=', $request->fullName)
-            ->where('psl.locationId', '=', $currentBranch->locationId)
-            ->where('ps.isDeleted', '=', 0)
-            ->first();
+            $currentBranch = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('psl.locationId')
+                ->where('ps.id', '=', $request->id)
+                ->first();
 
-        if ($findDuplicate) {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Name ' . $request->fullName . ' in this branch has already exist!'],
-            ], 422);
-        }
+            $findDuplicate = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('psl.locationId')
+                ->where('ps.fullName', '=', $request->fullName)
+                ->where('psl.locationId', '=', $currentBranch->locationId)
+                ->where('ps.isDeleted', '=', 0)
+                ->first();
 
-        $newProduct = $product->replicate();
-        $newProduct->fullName = $request->fullName;
-        $newProduct->created_at = Carbon::now();
-        $newProduct->updated_at = Carbon::now();
-        $newProduct->userId = $request->user()->id;
-        $newProduct->save();
-
-        $categories = ProductSellCategory::where('productSellId', '=', $request->id)->get();
-
-        foreach ($categories as $res) {
-
-            $category = ProductSellCategory::find($res['id']);
-
-            if ($category) {
-                $newCategory = $category->replicate();
-                $newCategory->productSellId = $newProduct->id;
-                $newCategory->created_at = Carbon::now();
-                $newCategory->updated_at = Carbon::now();
-                $newCategory->userId = $request->user()->id;
-                $newCategory->save();
+            if ($findDuplicate) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Name ' . $request->fullName . ' in this branch has already exist!'],
+                ], 422);
             }
         }
 
-        $prodSellLoc = ProductSellLocation::find($request->id);
+        if ($request->productSellId) {
 
-        $newProdSellLoc = $prodSellLoc->replicate();
-        $newProdSellLoc->productSellId = $newProduct->id;
-        $newProdSellLoc->inStock = $request->qtyIncrease;
-        $newProdSellLoc->diffStock = $request->qtyIncrease - $prodSellLoc->lowStock;
-        $newProdSellLoc->userId = $request->user()->id;
-        $newProdSellLoc->created_at = Carbon::now();
-        $newProdSellLoc->updated_at = Carbon::now();
-        $newProdSellLoc->save();
+            $prodDest = ProductSell::find($request->productSellId);
 
-        if ($product->pricingStatus == "CustomerGroups") {
+            if (!$prodDest) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is no any data found!'],
+                ], 422);
+            }
+        }
 
-            $productCustomerGroups = ProductSellCustomerGroup::where('productSellId', '=', $request->id)->get();
+        if ($request->fullName != "") {
 
-            foreach ($productCustomerGroups as $res) {
+            $newProduct = $product->replicate();
+            $newProduct->fullName = $request->fullName;
+            $newProduct->created_at = Carbon::now();
+            $newProduct->updated_at = Carbon::now();
+            $newProduct->userId = $request->user()->id;
+            $newProduct->save();
 
-                $prod = ProductSellCustomerGroup::find($res['id']);
+            $categories = ProductSellCategory::where('productSellId', '=', $request->id)->get();
 
-                if ($prod) {
-                    $newProductSell = $prod->replicate();
-                    $newProductSell->productSellId = $newProduct->id;
-                    $newProductSell->created_at = Carbon::now();
-                    $newProductSell->updated_at = Carbon::now();
-                    $newProductSell->userId = $request->user()->id;
-                    $newProductSell->save();
+            foreach ($categories as $res) {
+
+                $category = ProductSellCategory::find($res['id']);
+
+                if ($category) {
+                    $newCategory = $category->replicate();
+                    $newCategory->productSellId = $newProduct->id;
+                    $newCategory->created_at = Carbon::now();
+                    $newCategory->updated_at = Carbon::now();
+                    $newCategory->userId = $request->user()->id;
+                    $newCategory->save();
                 }
             }
-        }
 
-        if ($product->pricingStatus == "PriceLocations") {
+            $prodSellLoc = ProductSellLocation::find($request->id);
 
-            $prodSellPriceLoc = ProductSellPriceLocation::where('productSellId', '=', $request->id)->get();
+            $newProdSellLoc = $prodSellLoc->replicate();
+            $newProdSellLoc->productSellId = $newProduct->id;
+            $newProdSellLoc->inStock = $request->qtyIncrease;
+            $newProdSellLoc->diffStock = $request->qtyIncrease - $prodSellLoc->lowStock;
+            $newProdSellLoc->userId = $request->user()->id;
+            $newProdSellLoc->created_at = Carbon::now();
+            $newProdSellLoc->updated_at = Carbon::now();
+            $newProdSellLoc->save();
 
-            foreach ($prodSellPriceLoc as $res) {
+            if ($product->pricingStatus == "CustomerGroups") {
 
-                $prodSellLoc = ProductSellPriceLocation::find($res['id']);
+                $productCustomerGroups = ProductSellCustomerGroup::where('productSellId', '=', $request->id)->get();
 
-                if ($prodSellLoc) {
-                    $newProductSellLoc = $prodSellLoc->replicate();
-                    $newProductSellLoc->productSellId = $newProduct->id;
-                    $newProductSellLoc->created_at = Carbon::now();
-                    $newProductSellLoc->updated_at = Carbon::now();
-                    $newProductSellLoc->userId = $request->user()->id;
-                    $newProductSellLoc->save();
+                foreach ($productCustomerGroups as $res) {
+
+                    $prod = ProductSellCustomerGroup::find($res['id']);
+
+                    if ($prod) {
+                        $newProductSell = $prod->replicate();
+                        $newProductSell->productSellId = $newProduct->id;
+                        $newProductSell->created_at = Carbon::now();
+                        $newProductSell->updated_at = Carbon::now();
+                        $newProductSell->userId = $request->user()->id;
+                        $newProductSell->save();
+                    }
                 }
             }
-        }
 
-        if ($product->pricingStatus == "Quantities") {
+            if ($product->pricingStatus == "PriceLocations") {
 
-            $prodQty = ProductSellQuantity::where('productSellId', '=', $request->id)->get();
+                $prodSellPriceLoc = ProductSellPriceLocation::where('productSellId', '=', $request->id)->get();
 
-            foreach ($prodQty as $res) {
+                foreach ($prodSellPriceLoc as $res) {
 
-                $prodSellQty = ProductSellQuantity::find($res['id']);
+                    $prodSellLoc = ProductSellPriceLocation::find($res['id']);
 
-                if ($prodSellQty) {
-                    $newProductSellQty = $prodSellQty->replicate();
-                    $newProductSellQty->productSellId = $newProduct->id;
-                    $newProductSellQty->created_at = Carbon::now();
-                    $newProductSellQty->updated_at = Carbon::now();
-                    $newProductSellQty->userId = $request->user()->id;
-                    $newProductSellQty->save();
+                    if ($prodSellLoc) {
+                        $newProductSellLoc = $prodSellLoc->replicate();
+                        $newProductSellLoc->productSellId = $newProduct->id;
+                        $newProductSellLoc->created_at = Carbon::now();
+                        $newProductSellLoc->updated_at = Carbon::now();
+                        $newProductSellLoc->userId = $request->user()->id;
+                        $newProductSellLoc->save();
+                    }
                 }
             }
-        }
 
-        $prodReminder = ProductSellReminder::where('productSellId', '=', $request->id)->get();
+            if ($product->pricingStatus == "Quantities") {
 
-        foreach ($prodReminder as $res) {
+                $prodQty = ProductSellQuantity::where('productSellId', '=', $request->id)->get();
 
-            $prodSellReminder = ProductSellReminder::find($res['id']);
+                foreach ($prodQty as $res) {
 
-            if ($prodSellReminder) {
-                $newProductSellReminder = $prodSellReminder->replicate();
-                $newProductSellReminder->productSellId = $newProduct->id;
-                $newProductSellReminder->created_at = Carbon::now();
-                $newProductSellReminder->updated_at = Carbon::now();
-                $newProductSellReminder->userId = $request->user()->id;
-                $newProductSellReminder->save();
+                    $prodSellQty = ProductSellQuantity::find($res['id']);
+
+                    if ($prodSellQty) {
+                        $newProductSellQty = $prodSellQty->replicate();
+                        $newProductSellQty->productSellId = $newProduct->id;
+                        $newProductSellQty->created_at = Carbon::now();
+                        $newProductSellQty->updated_at = Carbon::now();
+                        $newProductSellQty->userId = $request->user()->id;
+                        $newProductSellQty->save();
+                    }
+                }
             }
+
+            $prodReminder = ProductSellReminder::where('productSellId', '=', $request->id)->get();
+
+            foreach ($prodReminder as $res) {
+
+                $prodSellReminder = ProductSellReminder::find($res['id']);
+
+                if ($prodSellReminder) {
+                    $newProductSellReminder = $prodSellReminder->replicate();
+                    $newProductSellReminder->productSellId = $newProduct->id;
+                    $newProductSellReminder->created_at = Carbon::now();
+                    $newProductSellReminder->updated_at = Carbon::now();
+                    $newProductSellReminder->userId = $request->user()->id;
+                    $newProductSellReminder->save();
+                }
+            }
+
+            $oldProdLoc = ProductSellLocation::where('productSellId', '=', $request->id)->first();
+
+            $instock = $oldProdLoc->inStock;
+            $lowstock = $oldProdLoc->lowStock;
+
+            $oldProdLoc->inStock = $instock - $request->qtyReduction;
+            $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
+            $oldProdLoc->updated_at = Carbon::now();
+            $oldProdLoc->save();
+        } elseif ($request->productSellId) {
+
+
+            $oldProdLoc = ProductSellLocation::where('productSellId', '=', $request->id)->first();
+
+            $instock = $oldProdLoc->inStock;
+            $lowstock = $oldProdLoc->lowStock;
+
+            $oldProdLoc->inStock = $instock - $request->qtyReduction;
+            $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
+            $oldProdLoc->updated_at = Carbon::now();
+            $oldProdLoc->save();
+
+
+            $prodSellLoc = ProductSellLocation::where('productSellId', '=', $request->productSellId)->first();
+
+            $instock = $prodSellLoc->inStock;
+            $lowstock = $prodSellLoc->lowStock;
+
+            $prodSellLoc->inStock = $instock + $request->qtyIncrease;
+            $prodSellLoc->diffStock = ($instock + $request->qtyIncrease) - $lowstock;
+            $prodSellLoc->userId = $request->user()->id;
+            $prodSellLoc->updated_at = Carbon::now();
+            $prodSellLoc->save();
         }
-
-        $oldProdLoc = ProductSellLocation::where('productSellId', '=', $request->id)->first();
-
-        $instock = $oldProdLoc->inStock;
-        $lowstock = $oldProdLoc->lowStock;
-
-        $oldProdLoc->inStock = $instock - $request->qtyReduction;
-        $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
-        $oldProdLoc->updated_at = Carbon::now();
-        $oldProdLoc->save();
 
         return response()->json([
             'message' => 'Split Data Successful',
