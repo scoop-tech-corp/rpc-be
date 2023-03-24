@@ -1137,7 +1137,7 @@ class ProductClinicController
             ]
         );
 
-        try {
+        //try {
 
             $weight = 0;
             if (!is_null($request->weight)) {
@@ -1359,7 +1359,7 @@ class ProductClinicController
                 }
             }
             // }
-            DB::commit();
+            // DB::commit();
 
             return response()->json(
                 [
@@ -1367,14 +1367,14 @@ class ProductClinicController
                 ],
                 200
             );
-        } catch (Exception $th) {
-            DB::rollback();
+        // } catch (Exception $th) {
+        //     DB::rollback();
 
-            return response()->json([
-                'message' => 'Insert Failed',
-                'errors' => [$th],
-            ], 422);
-        }
+        //     return response()->json([
+        //         'message' => 'Insert Failed',
+        //         'errors' => [$th],
+        //     ], 422);
+        // }
     }
 
     public function updateImages(Request $request)
