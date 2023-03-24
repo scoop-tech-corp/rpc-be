@@ -1561,6 +1561,14 @@ class ProductSellController
             ], 422);
         }
 
+        if($request->fullName == "" && !$request->productSellId){
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Please input product name or choose product!'],
+            ], 422);
+        }
+
         $product = ProductSell::find($request->id);
 
         if (!$product) {
