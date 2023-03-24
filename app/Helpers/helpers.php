@@ -144,7 +144,7 @@ if (!function_exists('convertTrueFalse')) {
 }
 
 if (!function_exists('productSellLog')) {
-    function productSellLog($productId,$transaction,$remark,$quantity,$balance,$userId)
+    function productSellLog($productId, $transaction, $remark, $quantity, $balance, $userId)
     {
         ProductSellLog::create([
             'productSellId' => $productId,
@@ -158,10 +158,10 @@ if (!function_exists('productSellLog')) {
 }
 
 if (!function_exists('productClinicLog')) {
-    function productClinicLog($productId,$transaction,$remark,$quantity,$balance,$userId)
+    function productClinicLog($productId, $transaction, $remark, $quantity, $balance, $userId)
     {
         ProductClinicLog::create([
-            'productSellId' => $productId,
+            'productClinicId' => $productId,
             'transaction' => $transaction,
             'remark' => $remark,
             'quantity' => $quantity,
