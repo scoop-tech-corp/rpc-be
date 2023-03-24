@@ -68,6 +68,28 @@ class StaffController extends Controller
 
 
 
+            if ($request->typeId == 3) {
+
+                if ((is_numeric($request->identificationNumber))) {
+
+                    return response()->json([
+                        'result' => 'The given data was invalid.',
+                        'message' => "Identification number must be alpanumeric if identification type is passport!",
+                    ], 422);
+                }
+            } else {
+
+                if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
+
+                    return response()->json([
+                        'result' => 'The given data was invalid.',
+                        'message' => "Identification number must be integer!",
+                    ], 422);
+                }
+            }
+
+
+
             $start = Carbon::parse($request->startDate);
             $end = Carbon::parse($request->endDate);
 
@@ -1943,7 +1965,7 @@ class StaffController extends Controller
             } else {
 
                 $users = DB::table('users as a')
-                    ->leftjoin('location as b', 'b.id', '=', 'a.id')
+                    ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
                     ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
                     ->leftjoin('typeId as d', 'd.id', '=', 'a.typeId')
                     ->leftjoin('payPeriod as e', 'e.id', '=', 'a.payPeriodId')
@@ -2198,6 +2220,27 @@ class StaffController extends Controller
                     'result' => 'The given data was invalid.',
                     'message' => ['Spesific users not exists please try different id!'],
                 ], 422);
+            }
+
+
+            if ($request->typeId == 3) {
+
+                if ((is_numeric($request->identificationNumber))) {
+
+                    return response()->json([
+                        'result' => 'The given data was invalid.',
+                        'message' => "Identification number must be alpanumeric if identification type is passport!",
+                    ], 422);
+                }
+            } else {
+
+                if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
+
+                    return response()->json([
+                        'result' => 'The given data was invalid.',
+                        'message' => "Identification number must be integer!",
+                    ], 422);
+                }
             }
 
 
