@@ -1264,9 +1264,10 @@ class ProductClinicController
                             ['id' => $val['id']],
                             [
                                 'productClinicId' => $product->id,
+                                'from' => $val['from'],
+                                'to' => $val['to'],
+                                'dosage' => $val['dosage'],
                                 'unit' => $val['unit'],
-                                'timing' => $val['timing'],
-                                'status' => $val['status'],
                                 'userId' => $request->user()->id,
                             ]
                         );
