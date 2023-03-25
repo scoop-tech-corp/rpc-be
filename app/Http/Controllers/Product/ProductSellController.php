@@ -1129,7 +1129,7 @@ class ProductSellController
                 ProductSellCategory::create(
                     [
                         'productSellId' => $request->id,
-                        'productCategoryId' => $valCat,
+                        'productCategoryId' => $valCat['id'],
                         'userId' => $request->user()->id,
                     ]
                 );
@@ -1561,7 +1561,7 @@ class ProductSellController
             ], 422);
         }
 
-        if($request->fullName == "" && !$request->productSellId){
+        if ($request->fullName == "" && !$request->productSellId) {
 
             return response()->json([
                 'message' => 'The given data was invalid.',
