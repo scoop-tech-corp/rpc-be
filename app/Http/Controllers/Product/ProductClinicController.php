@@ -554,7 +554,7 @@ class ProductClinicController
                     foreach ($ResultCategories as $valCat) {
                         ProductClinicCategory::create([
                             'productClinicId' => $product->id,
-                            'productCategoryId' => $valCat,
+                            'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
                         ]);
                     }
