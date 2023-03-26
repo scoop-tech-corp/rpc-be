@@ -62,6 +62,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/datastatic', [DataStaticController::class, 'datastatic']);
         Route::delete('/datastatic', [DataStaticController::class, 'datastaticlocation']);
         
+        //product
+        Route::get('/product/transfer', [LocationController::class, 'locationTransferProduct']);
     });
 
 
@@ -191,6 +193,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/leave/staffid', [StaffLeaveController::class, 'getUsersId']);
         Route::put('/leave/approveall', [StaffLeaveController::class, 'approveAll']);
         Route::put('/leave/rejectall', [StaffLeaveController::class, 'rejectAll']);
+
+        Route::get('/product/transfer', [StaffController::class, 'staffListTransferProduct']);
     });
 
     //GLOBAL VARIABLE

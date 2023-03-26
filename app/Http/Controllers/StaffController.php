@@ -3070,11 +3070,6 @@ class StaffController extends Controller
         }
     }
 
-
-
-
-
-
     public function deleteStaff(Request $request)
     {
 
@@ -3172,6 +3167,22 @@ class StaffController extends Controller
                 'result' => 'failed',
                 'message' => $e,
             ], 422);
+        }
+    }
+
+    public function staffListTransferProduct(Request $request)
+    {
+        if ($request->locationId) {
+
+            $data = DB::table('users as u')
+                ->join('location as l', 'u.locationId', 'l.id')
+                ->select('u.firstName as createdBy')
+                ->where('u.isDeleted', '=', 0)
+                ->where('u.locationId', '=', $request->locationId)
+                ->where('u.id', '<>', $request->user()->id)
+                ->orderBy('u.created_at', 'desc')
+                ->get();
+            return response()->json($data, 200);
         }
     }
 }
