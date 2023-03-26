@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Product;
 
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
-use App\Models\ProductSell;
 use App\Models\ProductSupplier;
 use App\Models\usages;
 use Illuminate\Http\Request;
@@ -316,6 +315,7 @@ class ProductController
                 ->where('ps.isDeleted', '=', 0)
                 ->where('psl.locationId', '=', $request->locationId)
                 ->where('ps.id', '<>', $request->productSellId)
+                ->orderBy('ps.created_at', 'desc')
                 ->get();
 
             return response()->json($product, 200);

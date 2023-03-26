@@ -142,7 +142,7 @@ class LocationController extends Controller
             foreach ($json_array as $val) {
 
 
-                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { 
+                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) {
 
                     $name = $files[0][$index]->hashName();
 
@@ -1427,7 +1427,6 @@ class LocationController extends Controller
         }
 
         $data = $data->get();
-
     }
 
     public function getLocationDetail(Request $request)
@@ -1704,5 +1703,19 @@ class LocationController extends Controller
             ->get();
 
         return response()->json($Data, 200);
+    }
+
+    public function locationTransferProduct(Request $request)
+    {
+        if ($request->locationId) {
+
+            $data = DB::table('location')
+                ->select('id', 'locationName')
+                ->where('isDeleted', '=', 0)
+                ->where('id', '<>', $request->locationId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            return response()->json($data, 200);
+        }
     }
 }
