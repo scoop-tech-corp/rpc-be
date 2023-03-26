@@ -549,6 +549,16 @@ class ProductClinicController
                     'userId' => $request->user()->id,
                 ]);
 
+                ProductClinicCategory::where('ProductClinicId', '=', $request->id)
+                    ->where('isDeleted', '=', 0)
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+
                 if ($ResultCategories) {
 
                     foreach ($ResultCategories as $valCat) {
@@ -1139,64 +1149,89 @@ class ProductClinicController
 
         //try {
 
-            $weight = 0;
-            if (!is_null($request->weight)) {
-                $weight = $request->weight;
+        $weight = 0;
+        if (!is_null($request->weight)) {
+            $weight = $request->weight;
+        }
+
+        $length = 0;
+        if (!is_null($request->length)) {
+            $length = $request->length;
+        }
+
+        $width = 0;
+        if (!is_null($request->width)) {
+            $width = $request->width;
+        }
+
+        $height = 0;
+        if (!is_null($request->height)) {
+            $height = $request->height;
+        }
+
+        $product = ProductClinic::updateOrCreate(
+            ['id' => $request->id],
+            [
+                'simpleName' => $request->simpleName,
+                'fullName' => $request->fullName,
+                'sku' => $request->sku,
+                'productBrandId' => $request->productBrandId,
+                'productSupplierId' => $request->productSupplierId,
+                'status' => $request->status,
+                'pricingStatus' => $request->pricingStatus,
+                'costPrice' => $request->costPrice,
+                'marketPrice' => $request->marketPrice,
+                'price' => $request->price,
+                'isShipped' => $request->isShipped,
+                'weight' => $weight,
+                'length' => $length,
+                'width' => $width,
+                'height' => $height,
+                'introduction' => $request->introduction,
+                'description' => $request->description,
+
+                'isCustomerPurchase' => $request->isCustomerPurchase,
+                'isCustomerPurchaseOnline' => $request->isCustomerPurchaseOnline,
+                'isCustomerPurchaseOutStock' => $request->isCustomerPurchaseOutStock,
+                'isStockLevelCheck' => $request->isStockLevelCheck,
+                'isNonChargeable' => $request->isNonChargeable,
+                'isOfficeApproval' => $request->isOfficeApproval,
+                'isAdminApproval' => $request->isAdminApproval,
+
+                'updated_at' => Carbon::now(),
+
+                'userId' => $request->user()->id,
+            ]
+        );
+
+        if ($ResultCategories) {
+
+            ProductClinicCategory::where('ProductClinicId', '=', $request->id)
+                ->where('isDeleted', '=', 0)
+                ->update(
+                    [
+                        'deletedBy' => $request->user()->id,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]
+                );
+
+            foreach ($ResultCategories as $valCat) {
+                ProductClinicCategory::create(
+                    [
+                        'productClinicId' => $request->id,
+                        'productCategoryId' => $valCat,
+                        'userId' => $request->user()->id,
+                    ]
+                );
             }
+        }
 
-            $length = 0;
-            if (!is_null($request->length)) {
-                $length = $request->length;
-            }
+        foreach ($ResultReminders as $RemVal) {
 
-            $width = 0;
-            if (!is_null($request->width)) {
-                $width = $request->width;
-            }
+            if ($RemVal['statusData'] == 'del') {
 
-            $height = 0;
-            if (!is_null($request->height)) {
-                $height = $request->height;
-            }
-
-            $product = ProductClinic::updateOrCreate(
-                ['id' => $request->id],
-                [
-                    'simpleName' => $request->simpleName,
-                    'fullName' => $request->fullName,
-                    'sku' => $request->sku,
-                    'productBrandId' => $request->productBrandId,
-                    'productSupplierId' => $request->productSupplierId,
-                    'status' => $request->status,
-                    'pricingStatus' => $request->pricingStatus,
-                    'costPrice' => $request->costPrice,
-                    'marketPrice' => $request->marketPrice,
-                    'price' => $request->price,
-                    'isShipped' => $request->isShipped,
-                    'weight' => $weight,
-                    'length' => $length,
-                    'width' => $width,
-                    'height' => $height,
-                    'introduction' => $request->introduction,
-                    'description' => $request->description,
-
-                    'isCustomerPurchase' => $request->isCustomerPurchase,
-                    'isCustomerPurchaseOnline' => $request->isCustomerPurchaseOnline,
-                    'isCustomerPurchaseOutStock' => $request->isCustomerPurchaseOutStock,
-                    'isStockLevelCheck' => $request->isStockLevelCheck,
-                    'isNonChargeable' => $request->isNonChargeable,
-                    'isOfficeApproval' => $request->isOfficeApproval,
-                    'isAdminApproval' => $request->isAdminApproval,
-
-                    'updated_at' => Carbon::now(),
-
-                    'userId' => $request->user()->id,
-                ]
-            );
-
-            if ($ResultCategories) {
-
-                ProductClinicCategory::where('ProductClinicId', '=', $request->id)
+                ProductClinicReminder::where('id', '=', $RemVal['id'])
                     ->where('isDeleted', '=', 0)
                     ->update(
                         [
@@ -1205,23 +1240,58 @@ class ProductClinicController
                             'deletedAt' => Carbon::now()
                         ]
                     );
+            } else {
 
-                foreach ($ResultCategories as $valCat) {
-                    ProductClinicCategory::create(
+                ProductClinicReminder::updateOrCreate(
+                    ['id' => $RemVal['id']],
+                    [
+                        'productClinicId' => $product->id,
+                        'unit' => $RemVal['unit'],
+                        'timing' => $RemVal['timing'],
+                        'status' => $RemVal['status'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
+
+        if ($ResultDosages) {
+
+            foreach ($ResultDosages as $val) {
+
+                if ($val['status'] == 'del') {
+                    ProductClinicDosage::where('id', '=', $val['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } else {
+                    ProductClinicDosage::updateOrCreate(
+                        ['id' => $val['id']],
                         [
-                            'productClinicId' => $request->id,
-                            'productCategoryId' => $valCat,
+                            'productClinicId' => $product->id,
+                            'from' => $val['from'],
+                            'to' => $val['to'],
+                            'dosage' => $val['dosage'],
+                            'unit' => $val['unit'],
                             'userId' => $request->user()->id,
                         ]
                     );
                 }
             }
+        }
 
-            foreach ($ResultReminders as $RemVal) {
+        if ($request->pricingStatus == "CustomerGroups") {
 
-                if ($RemVal['statusData'] == 'del') {
+            foreach ($ResultCustomerGroups as $CustVal) {
 
-                    ProductClinicReminder::where('id', '=', $RemVal['id'])
+                if ($CustVal['status'] == 'del') {
+
+                    ProductClinicCustomerGroup::where('id', '=', $CustVal['id'])
                         ->where('isDeleted', '=', 0)
                         ->update(
                             [
@@ -1232,142 +1302,82 @@ class ProductClinicController
                         );
                 } else {
 
-                    ProductClinicReminder::updateOrCreate(
-                        ['id' => $RemVal['id']],
+                    ProductClinicCustomerGroup::updateOrCreate(
+                        ['id' => $CustVal['id']],
                         [
                             'productClinicId' => $product->id,
-                            'unit' => $RemVal['unit'],
-                            'timing' => $RemVal['timing'],
-                            'status' => $RemVal['status'],
+                            'customerGroupId' => $CustVal['customerGroupId'],
+                            'price' => $CustVal['price'],
                             'userId' => $request->user()->id,
                         ]
                     );
                 }
             }
+        } else if ($request->pricingStatus == "PriceLocations") {
 
-            if ($ResultDosages) {
+            foreach ($ResultPriceLocations as $PriceVal) {
 
-                foreach ($ResultDosages as $val) {
+                if ($PriceVal['status'] == 'del') {
 
-                    if ($val['status'] == 'del') {
-                        ProductClinicDosage::where('id', '=', $val['id'])
-                            ->where('isDeleted', '=', 0)
-                            ->update(
-                                [
-                                    'deletedBy' => $request->user()->id,
-                                    'isDeleted' => 1,
-                                    'deletedAt' => Carbon::now()
-                                ]
-                            );
-                    } else {
-                        ProductClinicDosage::updateOrCreate(
-                            ['id' => $val['id']],
+                    ProductClinicPriceLocation::where('id', '=', $PriceVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
                             [
-                                'productClinicId' => $product->id,
-                                'from' => $val['from'],
-                                'to' => $val['to'],
-                                'dosage' => $val['dosage'],
-                                'unit' => $val['unit'],
-                                'userId' => $request->user()->id,
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
                             ]
                         );
-                    }
+                } else {
+
+                    ProductClinicPriceLocation::updateOrCreate(
+                        ['id' => $PriceVal['id']],
+                        [
+                            'productClinicId' => $product->id,
+                            'locationId' => $PriceVal['locationId'],
+                            'price' => $PriceVal['price'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
                 }
             }
+        } else if ($request->pricingStatus == "Quantities") {
 
-            if ($request->pricingStatus == "CustomerGroups") {
+            foreach ($ResultQuantities as $QtyVal) {
 
-                foreach ($ResultCustomerGroups as $CustVal) {
-
-                    if ($CustVal['status'] == 'del') {
-
-                        ProductClinicCustomerGroup::where('id', '=', $CustVal['id'])
-                            ->where('isDeleted', '=', 0)
-                            ->update(
-                                [
-                                    'deletedBy' => $request->user()->id,
-                                    'isDeleted' => 1,
-                                    'deletedAt' => Carbon::now()
-                                ]
-                            );
-                    } else {
-
-                        ProductClinicCustomerGroup::updateOrCreate(
-                            ['id' => $CustVal['id']],
+                if ($QtyVal['status'] == 'del') {
+                    ProductClinicQuantity::where('id', '=', $QtyVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
                             [
-                                'productClinicId' => $product->id,
-                                'customerGroupId' => $CustVal['customerGroupId'],
-                                'price' => $CustVal['price'],
-                                'userId' => $request->user()->id,
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
                             ]
                         );
-                    }
-                }
-            } else if ($request->pricingStatus == "PriceLocations") {
-
-                foreach ($ResultPriceLocations as $PriceVal) {
-
-                    if ($PriceVal['status'] == 'del') {
-
-                        ProductClinicPriceLocation::where('id', '=', $PriceVal['id'])
-                            ->where('isDeleted', '=', 0)
-                            ->update(
-                                [
-                                    'deletedBy' => $request->user()->id,
-                                    'isDeleted' => 1,
-                                    'deletedAt' => Carbon::now()
-                                ]
-                            );
-                    } else {
-
-                        ProductClinicPriceLocation::updateOrCreate(
-                            ['id' => $PriceVal['id']],
-                            [
-                                'productClinicId' => $product->id,
-                                'locationId' => $PriceVal['locationId'],
-                                'price' => $PriceVal['price'],
-                                'userId' => $request->user()->id,
-                            ]
-                        );
-                    }
-                }
-            } else if ($request->pricingStatus == "Quantities") {
-
-                foreach ($ResultQuantities as $QtyVal) {
-
-                    if ($QtyVal['status'] == 'del') {
-                        ProductClinicQuantity::where('id', '=', $QtyVal['id'])
-                            ->where('isDeleted', '=', 0)
-                            ->update(
-                                [
-                                    'deletedBy' => $request->user()->id,
-                                    'isDeleted' => 1,
-                                    'deletedAt' => Carbon::now()
-                                ]
-                            );
-                    } else {
-                        ProductClinicQuantity::updateOrCreate(
-                            ['id' => $QtyVal['id']],
-                            [
-                                'productClinicId' => $product->id,
-                                'fromQty' => $QtyVal['fromQty'],
-                                'toQty' => $QtyVal['toQty'],
-                                'price' => $QtyVal['price'],
-                                'userId' => $request->user()->id,
-                            ]
-                        );
-                    }
+                } else {
+                    ProductClinicQuantity::updateOrCreate(
+                        ['id' => $QtyVal['id']],
+                        [
+                            'productClinicId' => $product->id,
+                            'fromQty' => $QtyVal['fromQty'],
+                            'toQty' => $QtyVal['toQty'],
+                            'price' => $QtyVal['price'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
                 }
             }
-            // }
-            // DB::commit();
+        }
+        // }
+        // DB::commit();
 
-            return response()->json(
-                [
-                    'message' => 'Update Data Successful!',
-                ],
-                200
-            );
+        return response()->json(
+            [
+                'message' => 'Update Data Successful!',
+            ],
+            200
+        );
         // } catch (Exception $th) {
         //     DB::rollback();
 
