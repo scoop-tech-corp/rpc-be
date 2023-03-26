@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Product;
 
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
+use App\Models\ProductSell;
 use App\Models\ProductSupplier;
 use App\Models\usages;
 use Illuminate\Http\Request;
@@ -302,6 +303,22 @@ class ProductController
                 'message' => 'The given data was invalid.',
                 'errors' => ['Usage name already exists!'],
             ], 422);
+        }
+    }
+
+    public function IndexProductSellSplit(Request $request)
+    {
+        if ($request->locationId && $request->productSellId) {
+
+            $product = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('ps.id', 'ps.fullName')
+                ->where('ps.isDeleted', '=', 0)
+                ->where('psl.locationId', '=', $request->locationId)
+                ->where('ps.id', '<>', $request->productSellId)
+                ->get();
+
+            return response()->json($product, 200);
         }
     }
 }

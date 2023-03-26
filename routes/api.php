@@ -121,6 +121,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/usage', [ProductController::class, 'CreateUsage']);
         Route::get('/usage', [ProductController::class, 'IndexUsage']);
 
+        Route::get('/sell/dropdown/split', [ProductController::class, 'IndexProductSellSplit']);
+
         //product bundle
         Route::get('/bundle', [BundleController::class, 'index']);
         Route::get('/bundle/detail', [BundleController::class, 'detail']);
