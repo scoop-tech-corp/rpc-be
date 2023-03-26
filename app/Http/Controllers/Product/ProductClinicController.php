@@ -549,22 +549,12 @@ class ProductClinicController
                     'userId' => $request->user()->id,
                 ]);
 
-                ProductClinicCategory::where('ProductClinicId', '=', $request->id)
-                    ->where('isDeleted', '=', 0)
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
-                            'isDeleted' => 1,
-                            'deletedAt' => Carbon::now()
-                        ]
-                    );
-
                 if ($ResultCategories) {
 
                     foreach ($ResultCategories as $valCat) {
                         ProductClinicCategory::create([
                             'productClinicId' => $product->id,
-                            'productCategoryId' => $valCat['id'],
+                            'productCategoryId' => $valCat,
                             'userId' => $request->user()->id,
                         ]);
                     }
@@ -1204,23 +1194,23 @@ class ProductClinicController
             ]
         );
 
-        if ($ResultCategories) {
+        ProductClinicCategory::where('ProductClinicId', '=', $request->id)
+            ->where('isDeleted', '=', 0)
+            ->update(
+                [
+                    'deletedBy' => $request->user()->id,
+                    'isDeleted' => 1,
+                    'deletedAt' => Carbon::now()
+                ]
+            );
 
-            ProductClinicCategory::where('ProductClinicId', '=', $request->id)
-                ->where('isDeleted', '=', 0)
-                ->update(
-                    [
-                        'deletedBy' => $request->user()->id,
-                        'isDeleted' => 1,
-                        'deletedAt' => Carbon::now()
-                    ]
-                );
+        if ($ResultCategories) {
 
             foreach ($ResultCategories as $valCat) {
                 ProductClinicCategory::create(
                     [
                         'productClinicId' => $request->id,
-                        'productCategoryId' => $valCat,
+                        'productCategoryId' => $valCat['id'],
                         'userId' => $request->user()->id,
                     ]
                 );
