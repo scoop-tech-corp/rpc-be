@@ -1113,17 +1113,17 @@ class ProductSellController
             ]
         );
 
-        if ($ResultCategories) {
+        ProductSellCategory::where('ProductSellId', '=', $request->id)
+            ->where('isDeleted', '=', 0)
+            ->update(
+                [
+                    'deletedBy' => $request->user()->id,
+                    'isDeleted' => 1,
+                    'deletedAt' => Carbon::now()
+                ]
+            );
 
-            ProductSellCategory::where('ProductSellId', '=', $request->id)
-                ->where('isDeleted', '=', 0)
-                ->update(
-                    [
-                        'deletedBy' => $request->user()->id,
-                        'isDeleted' => 1,
-                        'deletedAt' => Carbon::now()
-                    ]
-                );
+        if ($ResultCategories) {
 
             foreach ($ResultCategories as $valCat) {
                 ProductSellCategory::create(
