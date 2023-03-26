@@ -72,30 +72,45 @@ class TransferProductController
 
             $prodOrigin = ProductSell::find($request->productId);
 
-            $prodDest = DB::table('productSells as ps')
-                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                ->select('ps.*','psl.diffStock')
-                ->where('psl.locationId', '=', $request->locationId)
-                ->where('ps.fullName', '=', $prodOrigin->fullName)
-                ->first();
+            if ($prodOrigin) {
 
+                $prodDest = DB::table('productSells as ps')
+                    ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                    ->select('ps.*', 'psl.diffStock')
+                    ->where('psl.locationId', '=', $request->locationId)
+                    ->where('ps.fullName', '=', $prodOrigin->fullName)
+                    ->first();
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Product does not exist!'],
+                ], 422);
+            }
         } elseif ($request->productCategory == 'productClinic') {
 
             $prodOrigin = ProductClinic::find($request->productId);
 
-            $prodDest = DB::table('productClinics as pc')
-                ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
-                ->select('pc.*','pcl.diffStock')
-                ->where('pcl.locationId', '=', $request->locationId)
-                ->where('pc.fullName', '=', $prodOrigin->fullName)
-                ->first();
+            if ($prodOrigin) {
+
+                $prodDest = DB::table('productClinics as pc')
+                    ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+                    ->select('pc.*', 'pcl.diffStock')
+                    ->where('pcl.locationId', '=', $request->locationId)
+                    ->where('pc.fullName', '=', $prodOrigin->fullName)
+                    ->first();
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Product does not exist!'],
+                ], 422);
+            }
         }
 
         $checkAdminApproval = false;
 
         if ($prodDest) {
 
-            if($prodDest->diffStock > 0){
+            if ($prodDest->diffStock > 0) {
                 $checkAdminApproval = true;
             }
 
