@@ -11,6 +11,7 @@ use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Product\ProductSellController;
+use App\Http\Controllers\Product\TransferProductController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GlobalVariableController;
@@ -124,6 +125,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/usage', [ProductController::class, 'IndexUsage']);
 
         Route::get('/sell/dropdown/split', [ProductController::class, 'IndexProductSellSplit']);
+
+        Route::get('/transfernumber', [TransferProductController::class, 'transferProductNumber']);
+        Route::post('/transfer', [TransferProductController::class, 'transferProduct']);
 
         //product bundle
         Route::get('/bundle', [BundleController::class, 'index']);
