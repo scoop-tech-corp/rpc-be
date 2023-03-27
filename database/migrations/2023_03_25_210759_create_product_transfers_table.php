@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('transferName');
             $table->integer('productIdOrigin');
             $table->integer('productIdDestination');
-            $table->string('productCategory');
+            $table->string('productType');
             $table->integer('totalItem');
             $table->integer('userIdReceiver');
             $table->decimal('additionalCost', $precision = 18, $scale = 2);
