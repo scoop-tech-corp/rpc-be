@@ -648,7 +648,7 @@ class ProductSellController
                     foreach ($ResultCategories as $valCat) {
                         ProductSellCategory::create([
                             'productSellId' => $product->id,
-                            'productCategoryId' => $valCat,
+                            'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
                         ]);
                     }
