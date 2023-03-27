@@ -39,7 +39,7 @@ class TransferProductController
             'totalItem' => 'required|integer',
             'userIdReceiver' => 'required|integer',
             'productId' => 'required|integer',
-            'productCategory' => 'required|string|in:productSell,productClinic',
+            'productType' => 'required|string|in:productSell,productClinic',
             'additionalCost' => 'numeric',
             'remark' => 'nullable|string',
         ]);
@@ -68,7 +68,7 @@ class TransferProductController
         }
 
         //find product id destination
-        if ($request->productCategory == 'productSell') {
+        if ($request->productType == 'productSell') {
 
             $prodOrigin = ProductSell::find($request->productId);
 
@@ -86,7 +86,7 @@ class TransferProductController
                     'errors' => ['Product does not exist!'],
                 ], 422);
             }
-        } elseif ($request->productCategory == 'productClinic') {
+        } elseif ($request->productType == 'productClinic') {
 
             $prodOrigin = ProductClinic::find($request->productId);
 
@@ -121,7 +121,7 @@ class TransferProductController
                 'userIdReceiver' => $request->userIdReceiver,
                 'productIdOrigin' => $request->productId,
                 'productIdDestination' => $prodDest->id,
-                'productCategory' => $request->productCategory,
+                'productType' => $request->productType,
                 'additionalCost' => $request->additionalCost,
                 'remark' => $request->remark,
                 'isAdminApproval' => $checkAdminApproval,

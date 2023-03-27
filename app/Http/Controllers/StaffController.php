@@ -3172,17 +3172,27 @@ class StaffController extends Controller
 
     public function staffListTransferProduct(Request $request)
     {
-        if ($request->locationId) {
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required|integer',
+        ]);
 
-            $data = DB::table('users as u')
-                ->join('location as l', 'u.locationId', 'l.id')
-                ->select('u.firstName as createdBy')
-                ->where('u.isDeleted', '=', 0)
-                ->where('u.locationId', '=', $request->locationId)
-                ->where('u.id', '<>', $request->user()->id)
-                ->orderBy('u.created_at', 'desc')
-                ->get();
-            return response()->json($data, 200);
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
         }
+
+        $data = DB::table('users as u')
+            ->join('location as l', 'u.locationId', 'l.id')
+            ->select('u.id', 'u.firstName as name')
+            ->where('u.isDeleted', '=', 0)
+            ->where('u.locationId', '=', $request->locationId)
+            ->where('u.id', '<>', $request->user()->id)
+            ->orderBy('u.created_at', 'desc')
+            ->get();
+        return response()->json($data, 200);
     }
 }

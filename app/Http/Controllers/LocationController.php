@@ -1707,13 +1707,45 @@ class LocationController extends Controller
 
     public function locationTransferProduct(Request $request)
     {
-        if ($request->locationId) {
 
-            $data = DB::table('location')
-                ->select('id', 'locationName')
-                ->where('isDeleted', '=', 0)
-                ->where('id', '<>', $request->locationId)
-                ->orderBy('created_at', 'desc')
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required|integer',
+            'productName' => 'required|string',
+            'productType' => 'required|string|in:productSell,productClinic',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        if ($request->productType == 'productSell') {
+
+            $data = DB::table('location as l')
+                ->join('productSellLocations as psl','l.id','psl.locationId')
+                ->join('productSells as ps','ps.id','psl.productSellId')
+                ->select('l.id', 'l.locationName')
+                ->where('l.isDeleted', '=', 0)
+                ->where('l.id', '<>', $request->locationId)
+                ->where('ps.fullName', '=', $request->productName)
+                ->orderBy('l.created_at', 'desc')
+                ->get();
+            return response()->json($data, 200);
+
+        } elseif ($request->productType == 'productClinic') {
+
+            $data = DB::table('location as l')
+                ->join('productClinicLocations as pcl','l.id','pcl.locationId')
+                ->join('productClinics as ps','ps.id','pcl.productClinicId')
+                ->select('l.id', 'l.locationName')
+                ->where('l.isDeleted', '=', 0)
+                ->where('l.id', '<>', $request->locationId)
+                ->where('ps.fullName', '=', $request->productName)
+                ->orderBy('l.created_at', 'desc')
                 ->get();
             return response()->json($data, 200);
         }

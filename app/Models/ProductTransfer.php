@@ -14,7 +14,7 @@ class ProductTransfer extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'transferNumber', 'transferName', 'productIdOrigin', 'productIdDestination', 'productCategory',
+        'transferNumber', 'transferName', 'productIdOrigin', 'productIdDestination', 'productType',
         'totalItem', 'userIdReceiver', 'additionalCost', 'remark',
 
         'isUserReceived', 'receivedAt', 'reference',
