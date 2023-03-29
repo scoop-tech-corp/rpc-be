@@ -173,7 +173,7 @@ class ApiController extends Controller
             return response()->json([
                 'result' => 'Failed',
                 'message' => 'Email login not found, please try different email',
-            ]);
+            ],422);
         }
     }
 
