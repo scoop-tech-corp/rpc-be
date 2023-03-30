@@ -236,14 +236,14 @@ class ProductClinicController
             ],
             [
                 '*.locationId.required' => 'Location Id Should be Required!',
-                '*.locationId.integer' => 'Location Id Should be Integer!',
+                '*.locationId.integer' => 'Location Id Should be Filled!',
                 '*.locationId.distinct' => 'Cannot add duplicate Location!',
-                '*.inStock.integer' => 'In Stock Should be Integer',
+                '*.inStock.integer' => 'In Stock Should be Filled',
                 '*.inStock.required' => 'In Stock Should be Required',
                 '*.lowStock.required' => 'Low Stock Should be Integer',
-                '*.lowStock.integer' => 'Low Stock Should be Integer',
+                '*.lowStock.integer' => 'Low Stock Should be Filled',
                 '*.reStockLimit.required' => 'Restock Limit Should be Required',
-                '*.reStockLimit.integer' => 'Restock Limit Should be Integer',
+                '*.reStockLimit.integer' => 'Restock Limit Should be Filled',
             ]
         );
 
@@ -374,6 +374,16 @@ class ProductClinicController
             if ($request->customerGroups) {
                 $ResultCustomerGroups = json_decode($request->customerGroups, true);
 
+                $count = 0;
+                while ($count < count($ResultCustomerGroups)) {
+
+                    if ($ResultCustomerGroups[$count]['status'] == 'del') {
+                        array_splice($ResultCustomerGroups, $count, 1);
+                    } else {
+                        $count++;
+                    }
+                }
+
                 $validateCustomer = Validator::make(
                     $ResultCustomerGroups,
                     [
@@ -384,7 +394,7 @@ class ProductClinicController
                     [
                         '*.customerGroupId.required' => 'Customer Group Id Should be Required!',
                         '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
-                        '*.customerGroupId.distinct' => 'Cannot add duplicate Customer!',
+                        '*.customerGroupId.distinct' => 'Cannot add duplicate Customer Group!',
                         '*.price.required' => 'Price Should be Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
 
@@ -409,6 +419,16 @@ class ProductClinicController
 
             if ($request->priceLocations) {
                 $ResultPriceLocations = json_decode($request->priceLocations, true);
+
+                $count = 0;
+                while ($count < count($ResultPriceLocations)) {
+
+                    if ($ResultPriceLocations[$count]['status'] == 'del') {
+                        array_splice($ResultPriceLocations, $count, 1);
+                    } else {
+                        $count++;
+                    }
+                }
 
                 $validatePriceLocations = Validator::make(
                     $ResultPriceLocations,
@@ -444,6 +464,16 @@ class ProductClinicController
 
             if ($request->quantities) {
                 $ResultQuantities = json_decode($request->quantities, true);
+
+                $count = 0;
+                while ($count < count($ResultQuantities)) {
+
+                    if ($ResultQuantities[$count]['status'] == 'del') {
+                        array_splice($ResultQuantities, $count, 1);
+                    } else {
+                        $count++;
+                    }
+                }
 
                 $validateQuantity = Validator::make(
                     $ResultQuantities,
