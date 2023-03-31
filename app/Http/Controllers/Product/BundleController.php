@@ -171,9 +171,27 @@ class BundleController
             ], 422);
         }
 
+        //validate existing data
+        $bundle = ProductBundle::where('locationId', '=', $request->locationId)
+            ->where('name', '=', $request->name)
+            ->where('isDeleted', '=', 0)
+            ->first();
+
+        if ($bundle) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Bundle Name in this branch has already exists!'],
+            ], 422);
+        }
+
         if ($request->products) {
 
             $products = json_decode($request->products, true);
+        } else {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Product List cannot be empty!'],
+            ], 422);
         }
 
         DB::beginTransaction();
@@ -291,34 +309,34 @@ class BundleController
             if ($request->products) {
 
                 $products = json_decode($request->products, true);
-            }
 
-            foreach ($products as $res) {
-                $validateDetail = Validator::make(
-                    $res,
-                    [
-                        'productId' => 'required|integer',
-                        'quantity' => 'required|integer|min:1',
-                        'total' => 'required|numeric',
+                foreach ($products as $res) {
+                    $validateDetail = Validator::make(
+                        $res,
+                        [
+                            'productId' => 'required|integer',
+                            'quantity' => 'required|integer|min:1',
+                            'total' => 'required|numeric',
 
-                    ],
-                    [
-                        'productId.integer' => 'Product Id Should be Integer',
-                        'quantity.integer' => 'Quantity Should be Integer',
-                        'total.numeric' => 'Total Should be Decimal',
+                        ],
+                        [
+                            'productId.integer' => 'Product Id Should be Integer',
+                            'quantity.integer' => 'Quantity Should be Integer',
+                            'total.numeric' => 'Total Should be Decimal',
 
-                        'productId.required' => 'Product Id Should be Required',
-                        'quantity.required' => 'Quantity Should be Required',
-                        'total.required' => 'Total Should be Required',
+                            'productId.required' => 'Product Id Should be Required',
+                            'quantity.required' => 'Quantity Should be Required',
+                            'total.required' => 'Total Should be Required',
 
-                        'quantity.min' => 'Quantity must be at least 1',
-                    ]
-                );
+                            'quantity.min' => 'Quantity must be at least 1',
+                        ]
+                    );
 
-                if ($validateDetail->fails()) {
-                    $errors = $validateDetail->errors()->all();
+                    if ($validateDetail->fails()) {
+                        $errors = $validateDetail->errors()->all();
 
-                    return $errors;
+                        return $errors;
+                    }
                 }
             }
 
