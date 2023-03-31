@@ -184,7 +184,7 @@ class BundleController
             ], 422);
         }
 
-        if (is_null($request->products)) {
+        if (!is_null($request->products)) {
             $products = json_decode($request->products, true);
         } else {
             return response()->json([
@@ -482,16 +482,18 @@ class BundleController
             ], 422);
         }
 
-        $bundle = ProductBundle::where('locationId', '=', $request->locationId)
-            ->where('name', '=', $request->name)
-            ->where('isDeleted', '=', 0)
-            ->first();
+        if ($prodBundle->name != $request->name || $prodBundle->locationId != $request->locationId) {
+            $bundle = ProductBundle::where('locationId', '=', $request->locationId)
+                ->where('name', '=', $request->name)
+                ->where('isDeleted', '=', 0)
+                ->first();
 
-        if ($bundle) {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Bundle Name in this branch has already exists!'],
-            ], 422);
+            if ($bundle) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Bundle Name in this branch has already exists!'],
+                ], 422);
+            }
         }
 
         $errorDetail = "";
