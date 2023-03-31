@@ -57,7 +57,7 @@ class BundleController
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('pb.id', 'desc');
+        $data = $data->orderBy('pb.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -409,6 +409,7 @@ class BundleController
                 DB::raw("DATE_FORMAT(pb.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pb.id', '=', $request->id)
+            ->where('pb.isDeleted', '=', 0)
             ->first();
 
         $prodDetail = DB::table('productBundleDetails as pbd')
@@ -426,6 +427,7 @@ class BundleController
                 DB::raw("DATE_FORMAT(pbd.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pbd.productBundleId', '=', $request->id)
+            ->where('pbd.isDeleted', '=', 0)
             ->get();
 
         $history = DB::table('productBundleLogs as pbl')
