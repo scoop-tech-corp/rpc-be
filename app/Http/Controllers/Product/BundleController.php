@@ -482,6 +482,18 @@ class BundleController
             ], 422);
         }
 
+        $bundle = ProductBundle::where('locationId', '=', $request->locationId)
+            ->where('name', '=', $request->name)
+            ->where('isDeleted', '=', 0)
+            ->first();
+
+        if ($bundle) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Bundle Name in this branch has already exists!'],
+            ], 422);
+        }
+
         $errorDetail = "";
 
         if ($request->products) {
