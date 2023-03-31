@@ -184,8 +184,7 @@ class BundleController
             ], 422);
         }
 
-        if ($request->products) {
-
+        if (is_null($request->products)) {
             $products = json_decode($request->products, true);
         } else {
             return response()->json([
@@ -306,7 +305,7 @@ class BundleController
 
         if ($status == 'create') {
 
-            if ($request->products) {
+            if (is_null($request->products)) {
 
                 $products = json_decode($request->products, true);
 
