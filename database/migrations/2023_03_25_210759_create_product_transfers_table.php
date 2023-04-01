@@ -18,6 +18,7 @@ return new class extends Migration
 
             $table->string('transferNumber');
             $table->string('transferName');
+            $table->string('groupData');
             $table->integer('productIdOrigin');
             $table->integer('productIdDestination');
             $table->string('productType');

@@ -128,6 +128,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/transfernumber', [TransferProductController::class, 'transferProductNumber']);
         Route::post('/transfer', [TransferProductController::class, 'transferProduct']);
+        Route::get('/transfer', [TransferProductController::class, 'index']);
+        Route::put('/transfer/approval', [TransferProductController::class, 'approval']);
+        Route::post('/transfer/receive', [TransferProductController::class, 'receive']);
+        Route::get('/transfer/detail', [TransferProductController::class, 'detail']);
 
         //product bundle
         Route::get('/bundle', [BundleController::class, 'index']);
