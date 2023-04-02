@@ -1781,6 +1781,9 @@ class ProductSellController
             $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
             $oldProdLoc->updated_at = Carbon::now();
             $oldProdLoc->save();
+
+            $product->updated_at = Carbon::now();
+            $product->save();
             ProductSellLog($request->id, 'Split Product', 'Product Decrease', $request->qtyReduction, $instock - $request->qtyReduction, $request->user()->id);
         } elseif ($request->productSellId) {
 
