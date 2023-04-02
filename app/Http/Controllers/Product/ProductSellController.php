@@ -322,6 +322,7 @@ class ProductSellController
                 'psl.remark',
                 'psl.quantity',
                 'psl.balance',
+                DB::raw("CONCAT(u.firstName,' ',u.middleName,CASE WHEN u.middleName = '' THEN '' ELSE ' ' END,u.lastName) as fullName"),
                 DB::raw("DATE_FORMAT(psl.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('ps.id', '=', $request->id)
