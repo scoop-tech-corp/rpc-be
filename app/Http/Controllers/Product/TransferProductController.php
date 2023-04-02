@@ -10,9 +10,9 @@ use App\Models\ProductSellLocation;
 use App\Models\ProductTransfer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx\Rels;
 use Validator;
 use DB;
+use Excel;
 
 class TransferProductController
 {
@@ -257,20 +257,11 @@ class TransferProductController
                         'pt.transferNumber',
                         'pt.totalItem',
                         'pt.status',
-                        // 'pt.isAdminApproval',
-                        // DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
-                        // DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
-                        // 'pt.isApprovedOffice',
                         'u.firstName as createdBy',
                         'ur.firstName as receivedBy',
-
-                        // DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                        // DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
                         DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
 
                         DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                        // DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y'),'') as officeApprovedAt"),
-                        // DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y'),'') as adminApprovedAt"),
                     )
                     ->where('pt.id', '=', $value->id);
 
@@ -280,33 +271,6 @@ class TransferProductController
                 }
 
                 $res = $res->first();
-                // if ($request->type == 'product') {
-                //     if ($role == 'Office') {
-                //         $res = $res->where('pt.isApprovedOffice', '=', 0)->first();
-                //     } elseif ($role == 'Administrator') {
-
-                //         if ($value->isAdminApproval == 1) {
-
-                //             $res = $res->where('pt.isApprovedAdmin', '=', 0)->first();
-                //         } else {
-                //             $res = [];
-                //         }
-                //     }
-                // }
-
-                // if ($request->type == 'history') {
-
-                //     if ($role == 'Office') {
-                //         $res = $res->where('pt.isApprovedOffice', '!=', 0)->first();
-                //     } elseif ($role == 'Administrator') {
-                //         if ($value->isAdminApproval == 1) {
-
-                //             $res = $res->where('pt.isApprovedAdmin', '!=', 0)->first();
-                //         } else {
-                //             $res = [];
-                //         }
-                //     }
-                // }
 
                 if ($res) {
                     array_push($tempData, $res);
@@ -341,52 +305,20 @@ class TransferProductController
                         'pt.transferNumber',
                         'pt.totalItem',
                         'pt.status',
-                        // DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as status"),
-                        // 'pt.isAdminApproval',
-                        // DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
-                        // DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
-                        // 'pt.isApprovedOffice',
                         'ur.firstName as receivedBy',
                         'u.firstName as createdBy',
-
-                        // DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                        // DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
                         DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
 
                         DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                        // DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y'),'') as officeApprovedAt"),
-                        // DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y'),'') as adminApprovedAt"),
                     )
                     ->where('pt.id', '=', $value->id);
 
+                if ($request->locationId) {
+
+                    $data = $data->whereIn('lo.id', $request->locationId);
+                }
+
                 $res = $res->first();
-                // if ($request->type == 'product') {
-                //     if ($role == 'Office') {
-                //         $res = $res->where('pt.isApprovedOffice', '=', 0)->first();
-                //     } elseif ($role == 'Administrator') {
-
-                //         if ($value->isAdminApproval == 1) {
-
-                //             $res = $res->where('pt.isApprovedAdmin', '=', 0)->first();
-                //         } else {
-                //             $res = [];
-                //         }
-                //     }
-                // }
-
-                // if ($request->type == 'history') {
-
-                //     if ($role == 'Office') {
-                //         $res = $res->where('pt.isApprovedOffice', '!=', 0)->first();
-                //     } elseif ($role == 'Administrator') {
-                //         if ($value->isAdminApproval == 1) {
-
-                //             $res = $res->where('pt.isApprovedAdmin', '!=', 0)->first();
-                //         } else {
-                //             $res = [];
-                //         }
-                //     }
-                // }
 
                 if ($res) {
                     array_push($tempData, $res);
@@ -418,7 +350,6 @@ class TransferProductController
             ->select(
                 'pt.productType'
             )
-            // ->where('pt.id', '=', $id)
             ->where('pt.isDeleted', '=', 0);
 
         if ($request->search) {
@@ -435,7 +366,6 @@ class TransferProductController
             ->select(
                 'pt.transferName'
             )
-            // ->where('pt.id', '=', $id)
             ->where('pt.isDeleted', '=', 0);
 
         if ($request->search) {
@@ -454,7 +384,6 @@ class TransferProductController
             ->select(
                 'u.firstName'
             )
-            // ->where('pt.id', '=', $id)
             ->where('pt.isDeleted', '=', 0);
 
         if ($request->search) {
@@ -473,7 +402,6 @@ class TransferProductController
             ->select(
                 'ur.firstName'
             )
-            // ->where('pt.id', '=', $id)
             ->where('pt.isDeleted', '=', 0);
 
         if ($request->search) {
@@ -492,7 +420,6 @@ class TransferProductController
             ->select(
                 'uo.firstName'
             )
-            // ->where('pt.id', '=', $id)
             ->where('pt.isDeleted', '=', 0);
 
         if ($request->search) {
@@ -505,13 +432,11 @@ class TransferProductController
             $temp_column[] = 'uo.firstName';
         }
 
-        // ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
         $data = DB::table('productTransfers as pt')
             ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
             ->select(
                 'ua.firstName'
             )
-            // ->where('pt.id', '=', $id)
             ->where('pt.isDeleted', '=', 0);
 
         if ($request->search) {
