@@ -1680,6 +1680,8 @@ class ProductSellController
             $newProdSellLoc->updated_at = Carbon::now();
             $newProdSellLoc->save();
 
+            productSellLog($newProduct->id, "Create New Item", "", $request->qtyIncrease, $request->qtyIncrease, $request->user()->id);
+
             if ($product->pricingStatus == "CustomerGroups") {
 
                 $productCustomerGroups = ProductSellCustomerGroup::where('productSellId', '=', $request->id)->get();
@@ -1762,6 +1764,7 @@ class ProductSellController
             $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
             $oldProdLoc->updated_at = Carbon::now();
             $oldProdLoc->save();
+            ProductSellLog($request->id, 'Split Product', 'Product Decrease', $request->qtyReduction, $instock - $request->qtyReduction, $request->user()->id);
         } elseif ($request->productSellId) {
 
 
@@ -1775,6 +1778,8 @@ class ProductSellController
             $oldProdLoc->updated_at = Carbon::now();
             $oldProdLoc->save();
 
+            ProductSellLog($request->id, 'Split Product', 'Product Decrease', $request->qtyReduction, $instock - $request->qtyReduction, $request->user()->id);
+
 
             $prodSellLoc = ProductSellLocation::where('productSellId', '=', $request->productSellId)->first();
 
@@ -1786,6 +1791,12 @@ class ProductSellController
             $prodSellLoc->userId = $request->user()->id;
             $prodSellLoc->updated_at = Carbon::now();
             $prodSellLoc->save();
+
+            $prod = ProductSell::find($request->productSellId);
+            $prod->updated_at = Carbon::now();
+            $prod->save();
+
+            ProductSellLog($request->productSellId, 'Split Product', 'Product Increase', $request->qtyIncrease, $instock - $request->qtyIncrease, $request->user()->id);
         }
 
         return response()->json([
