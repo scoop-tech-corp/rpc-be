@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Exports\Product\ProductTransferReport;
 use App\Models\ProductClinic;
+use App\Models\ProductClinicLocation;
 use App\Models\ProductSell;
+use App\Models\ProductSellLocation;
 use App\Models\ProductTransfer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -30,7 +33,7 @@ class TransferProductController
         return response()->json($number, 200);
     }
 
-    public function transferProduct(Request $request)
+    public function create(Request $request)
     {
         $validate = Validator::make($request->all(), [
             'transferNumber' => 'required|string',
@@ -170,10 +173,11 @@ class TransferProductController
                 'pt.productIdOrigin',
                 'pt.productIdDestination',
                 'pt.transferName',
+                'pt.transferNumber',
                 'pt.totalItem',
                 'pt.isAdminApproval',
                 DB::raw("CASE pt.isAdminApproval = 1 WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as Status"),
-                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y') as createdAt"),
+                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
                 'u.firstName as createdBy',
                 'ur.firstName as receivedBy',
 
@@ -183,6 +187,11 @@ class TransferProductController
             )
             ->where('pt.isDeleted', '=', 0)
             ->where('pt.groupData', '=', $request->type);
+
+        if ($role != "Administrator" && $role != "Office") {
+
+            $data = $data->where('pt.userIdReceiver', '=', $request->user()->id);
+        }
 
         $data = $data->orderBy('pt.updated_at', 'desc');
 
@@ -238,7 +247,6 @@ class TransferProductController
                         'pt.id as id',
                         'pt.productType',
                         'pt.productIdOrigin',
-                        'pt.productIdOrigin',
                         'pt.productIdDestination',
                         'lo.locationName as from',
                         'lo.id as locationIdOrigin',
@@ -246,21 +254,23 @@ class TransferProductController
                         'ld.id as locationIdDestination',
                         'pso.fullName as productName',
                         'pt.transferName',
+                        'pt.transferNumber',
                         'pt.totalItem as quantity',
-                        'pt.isAdminApproval',
-                        DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
-                        DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
-                        'pt.isApprovedOffice',
+                        'pt.status',
+                        // 'pt.isAdminApproval',
+                        // DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
+                        // DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
+                        // 'pt.isApprovedOffice',
                         'u.firstName as createdBy',
                         'ur.firstName as receivedBy',
 
-                        DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                        DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
+                        // DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
+                        // DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
                         DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
 
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y'),'') as createdAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y'),'') as officeApprovedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y'),'') as adminApprovedAt"),
+                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
+                        // DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y'),'') as officeApprovedAt"),
+                        // DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y'),'') as adminApprovedAt"),
                     )
                     ->where('pt.id', '=', $value->id);
 
@@ -328,21 +338,24 @@ class TransferProductController
                         'ld.locationName as to',
                         'pco.fullName as productName',
                         'pt.transferName',
+                        'pt.transferNumber',
                         'pt.totalItem as quantity',
-                        'pt.isAdminApproval',
-                        DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
-                        DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
-                        'pt.isApprovedOffice',
+                        'pt.status',
+                        // DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as status"),
+                        // 'pt.isAdminApproval',
+                        // DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
+                        // DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
+                        // 'pt.isApprovedOffice',
                         'ur.firstName as receivedBy',
                         'u.firstName as createdBy',
 
-                        DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                        DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
+                        // DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
+                        // DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
                         DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
 
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y'),'') as createdAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y'),'') as officeApprovedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y'),'') as adminApprovedAt"),
+                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
+                        // DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y'),'') as officeApprovedAt"),
+                        // DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y'),'') as adminApprovedAt"),
                     )
                     ->where('pt.id', '=', $value->id);
 
@@ -648,6 +661,43 @@ class TransferProductController
 
     public function export(Request $request)
     {
+        $tmp = "";
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-y');
+        $role = role($request->user()->id);
+        $locations = $request->locationId;
+
+        if (!$locations[0] == null) {
+
+            $location = DB::table('location')
+                ->select('locationName')
+                ->whereIn('id', $request->locationId)
+                ->get();
+
+            if ($location) {
+
+                foreach ($location as $key) {
+                    $tmp = $tmp . (string) $key->locationName . ",";
+                }
+            }
+            $tmp = rtrim($tmp, ", ");
+        }
+
+        if ($tmp == "") {
+            $fileName = "Rekap Produk Transfer " . $date . ".xlsx";
+        } else {
+            $fileName = "Rekap Produk Transfer " . $tmp . " " . $date . ".xlsx";
+        }
+
+        return Excel::download(
+            new ProductTransferReport(
+                $request->orderValue,
+                $request->orderColumn,
+                $request->locationId,
+                $role
+            ),
+            $fileName
+        );
     }
 
     private function validationApproval($request)
@@ -746,6 +796,34 @@ class TransferProductController
                         );
                 }
             }
+
+            $prod = ProductTransfer::find($request->id);
+
+            $status = 0;
+
+            if ($prod->isAdminApproval == 0) {
+                if ($prod->isApprovedOffice == 1) {
+                    $status = 1;
+                } elseif ($prod->isApprovedOffice == 2) {
+                    $status = 2;
+                }
+            } elseif ($prod->isAdminApproval == 1) {
+
+                if ($prod->isApprovedAdmin == 1 && $prod->isApprovedOffice == 1) {
+                    $status = 1;
+                }
+                elseif ($prod->isApprovedAdmin == 2) {
+                    $status = 2;
+                }
+            }
+
+            ProductTransfer::where('id', '=', $request->id)
+                        ->update(
+                            [
+                                'status' => $status,
+                            ]
+                        );
+
         } else {
             return $status;
         }
@@ -841,9 +919,70 @@ class TransferProductController
                         'isUserReceived' => 1,
                         'imagePath' => $imagePath,
                         'realImageName' => $realImageName,
+                        'status' => 3,
                         'receivedAt' => Carbon::now()
                     ]
                 );
+
+            //move product item and add log
+            if ($trf->produtType == 'Product Sell') {
+
+                $prodOrig = ProductSell::find($trf->productIdOrigin);
+                $prodDest = ProductSell::find($trf->productIdDestination);
+
+                $locOrig = ProductSellLocation::where('productSellId', '=', $prodOrig->id)->first();
+
+                $inStockOrig = $locOrig->inStock;
+                $lowStock = $locOrig->lowStock;
+
+                $locOrig->inStock = $inStockOrig - $trf->totalItem;
+                $locOrig->diffStock = ($inStockOrig - $trf->totalItem) - $lowStock;
+                $locOrig->updated_at = Carbon::now();
+                $locOrig->save();
+                $finalStockOrig = $inStockOrig - $trf->totalItem;
+
+                $locDest = ProductSellLocation::where('productSellId', '=', $prodDest->id)->first();
+
+                $inStockDest = $locDest->inStock;
+                $lowStock = $locDest->lowStock;
+
+                $locDest->inStock = $inStockDest + $trf->totalItem;
+                $locDest->diffStock = ($inStockDest + $trf->totalItem) - $lowStock;
+                $locDest->updated_at = Carbon::now();
+                $locDest->save();
+                $finalStockDest = $inStockDest + $trf->totalItem;
+
+                productSellLog($prodOrig->id, 'Transfer Item', 'Reduced item to be transferred', $trf->totalItem, $finalStockOrig, $trf->userId);
+                productSellLog($prodDest->id, 'Transfer Item', 'Added item from transfer product', $trf->totalItem, $finalStockDest, $trf->userId);
+            } elseif ($trf->productType == 'Product Clinic') {
+                $prodOrig = ProductClinic::find($trf->productIdOrigin);
+                $prodDest = ProductClinic::find($trf->productIdDestination);
+
+                $locOrig = ProductClinicLocation::where('productClinicId', '=', $prodOrig->id)->first();
+
+                $inStockOrig = $locOrig->inStock;
+                $lowStock = $locOrig->lowStock;
+
+                $locOrig->inStock = $inStockOrig - $trf->totalItem;
+                $locOrig->diffStock = ($inStockOrig - $trf->totalItem) - $lowStock;
+                $locOrig->updated_at = Carbon::now();
+                $locOrig->save();
+                $finalStockOrig = $inStockOrig - $trf->totalItem;
+
+                $locDest = ProductClinicLocation::where('productClinicId', '=', $prodDest->id)->first();
+
+                $inStockDest = $locDest->inStock;
+                $lowStock = $locDest->lowStock;
+
+                $locDest->inStock = $inStockDest + $trf->totalItem;
+                $locDest->diffStock = ($inStockDest + $trf->totalItem) - $lowStock;
+                $locDest->updated_at = Carbon::now();
+                $locDest->save();
+                $finalStockDest = $inStockDest + $trf->totalItem;
+
+                productClinicLog($prodOrig->id, 'Transfer Item', 'Reduced item to be transferred', $trf->totalItem, $finalStockOrig, $trf->userId);
+                productClinicLog($prodDest->id, 'Transfer Item', 'Added item from transfer product', $trf->totalItem, $finalStockDest, $trf->userId);
+            }
 
             return response()->json(
                 [

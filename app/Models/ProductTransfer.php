@@ -15,7 +15,7 @@ class ProductTransfer extends Model
 
     protected $fillable = [
         'transferNumber', 'transferName','groupData', 'productIdOrigin', 'productIdDestination', 'productType',
-        'totalItem', 'userIdReceiver', 'additionalCost', 'remark',
+        'totalItem', 'userIdReceiver', 'additionalCost', 'remark','status',
 
         'isUserReceived', 'receivedAt', 'reference',
 

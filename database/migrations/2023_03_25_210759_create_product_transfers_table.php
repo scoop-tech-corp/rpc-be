@@ -26,6 +26,7 @@ return new class extends Migration
             $table->integer('userIdReceiver');
             $table->decimal('additionalCost', $precision = 18, $scale = 2);
             $table->string('remark')->nullable();
+            $table->integer('status')->nullable()->default(0);
 
             $table->boolean('isUserReceived')->nullable()->default(false);
             $table->timestamp('receivedAt', 0)->nullable();

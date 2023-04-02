@@ -127,7 +127,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/sell/dropdown/split', [ProductController::class, 'IndexProductSellSplit']);
 
         Route::get('/transfernumber', [TransferProductController::class, 'transferProductNumber']);
-        Route::post('/transfer', [TransferProductController::class, 'transferProduct']);
+        Route::post('/transfer', [TransferProductController::class, 'create']);
         Route::get('/transfer', [TransferProductController::class, 'index']);
         Route::put('/transfer/approval', [TransferProductController::class, 'approval']);
         Route::post('/transfer/receive', [TransferProductController::class, 'receive']);
