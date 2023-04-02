@@ -1812,6 +1812,10 @@ class ProductSellController
             $prod->updated_at = Carbon::now();
             $prod->save();
 
+            $Oldprod = ProductSell::find($request->id);
+            $Oldprod->updated_at = Carbon::now();
+            $Oldprod->save();
+
             ProductSellLog($request->productSellId, 'Split Product', 'Product Increase', $request->qtyIncrease, $instock - $request->qtyIncrease, $request->user()->id);
         }
 
