@@ -427,6 +427,20 @@ class ProductInventoryController
             ], 422);
         }
 
+        $header = DB::table('productInventories as pi')
+            ->join('location as l', 'pi.locationId', 'l.id')
+            ->join('users as u', 'u.id', 'pi.userId')
+
+            ->select(
+            'pi.requirementName', 
+            'l.locationName',
+            DB::raw("CONCAT(u.firstName,' ',u.middleName,CASE WHEN u.middleName = '' THEN '' ELSE ' ' END,u.lastName) as createdBy"),
+            DB::raw("DATE_FORMAT(pi.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+
+            ->where('pi.id', '=', $request->id)
+            ->first();
+
         $prodDetail = ProductInventoryList::where('productInventoryId', '=', $prod->id)->get();
 
         foreach ($prodDetail as $value) {
@@ -441,7 +455,7 @@ class ProductInventoryController
                     ->leftJoin('productInventoryListImages as pimg', 'pi.id', 'pimg.productInventoryListId')
                     ->select(
                         'pi.id',
-                        'pi.productType',
+                        DB::raw("CASE WHEN pi.productType = 'productSell' THEN 'Product Sell' END as productType"),
                         'pi.productId',
                         'p.fullName as productName',
                         'pi.usageId',
@@ -468,7 +482,7 @@ class ProductInventoryController
                     ->orderBy('pi.id', 'desc')
                     ->first();
 
-                $result[] = array(
+                $data[] = array(
                     'id' => $prodRes->id,
                     'productType' => $prodRes->productType,
                     'productId' => $prodRes->productId,
@@ -499,7 +513,7 @@ class ProductInventoryController
                     ->leftJoin('productInventoryListImages as pimg', 'pi.id', 'pimg.productInventoryListId')
                     ->select(
                         'pi.id',
-                        'pi.productType',
+                        DB::raw("CASE WHEN pi.productType = 'productClinic' THEN 'Product Clinic' END as productType"),
                         'pi.productId',
                         'p.fullName as productName',
                         'pi.usageId',
@@ -525,7 +539,7 @@ class ProductInventoryController
                     ->orderBy('pi.id', 'desc')
                     ->get();
 
-                $result[] = array(
+                $data[] = array(
                     'id' => $prodRes->id,
                     'productType' => $prodRes->productType,
                     'productId' => $prodRes->productId,
@@ -549,7 +563,10 @@ class ProductInventoryController
             }
         }
 
-        return response()->json($result, 200);
+        return response()->json([
+            'header' => $header,
+            'data' => $data
+        ], 200);
     }
 
     public function create(Request $request)
@@ -1081,6 +1098,5 @@ class ProductInventoryController
 
     public function exportInventory(Request $request)
     {
-        
     }
 }
