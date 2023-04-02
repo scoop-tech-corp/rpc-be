@@ -1007,14 +1007,6 @@ class ProductInventoryController
         return $msg;
     }
 
-    private function LogProductSell()
-    {
-    }
-
-    private function LogProductClinic()
-    {
-    }
-
     public function delete(Request $request)
     {
         $userId = $request->user()->id;
@@ -1085,5 +1077,10 @@ class ProductInventoryController
         return response()->json([
             'message' => 'Delete Data Successful',
         ], 200);
+    }
+
+    public function exportInventory(Request $request)
+    {
+        
     }
 }
