@@ -167,7 +167,7 @@ class BundleController
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errorDetail,
+                'errors' => [$errorDetail],
             ], 422);
         }
 
@@ -307,75 +307,73 @@ class BundleController
 
         if ($status == 'create') {
 
-            if (is_null($request->products)) {
+            $products = json_decode($request->products, true);
 
-                $products = json_decode($request->products, true);
+            if (count($products) > 0) {
+                // foreach ($products as $res) {
+                $validateDetail = Validator::make(
+                    $products,
+                    [
+                        '*.productId' => 'required|integer',
+                        '*.quantity' => 'required|integer|min:1',
+                        '*.total' => 'required|numeric',
 
-                foreach ($products as $res) {
-                    $validateDetail = Validator::make(
-                        $res,
-                        [
-                            'productId' => 'required|integer',
-                            'quantity' => 'required|integer|min:1',
-                            'total' => 'required|numeric',
+                    ],
+                    [
+                        '*.productId.integer' => 'Product Id Should be Filled',
+                        '*.quantity.integer' => 'Quantity Should be Filled',
+                        '*.total.numeric' => 'Total Should be Filled',
 
-                        ],
-                        [
-                            'productId.integer' => 'Product Id Should be Integer',
-                            'quantity.integer' => 'Quantity Should be Integer',
-                            'total.numeric' => 'Total Should be Decimal',
+                        '*.productId.required' => 'Product Id Should be Required',
+                        '*.quantity.required' => 'Quantity Should be Required',
+                        '*.quantity.integer' => 'Quantity Should be Filled',
+                        '*.total.required' => 'Total Should be Required',
 
-                            'productId.required' => 'Product Id Should be Required',
-                            'quantity.required' => 'Quantity Should be Required',
-                            'total.required' => 'Total Should be Required',
+                        '*.quantity.min' => 'Quantity must be at least 1',
+                    ]
+                );
 
-                            'quantity.min' => 'Quantity must be at least 1',
-                        ]
-                    );
-
-                    if ($validateDetail->fails()) {
-                        $errors = $validateDetail->errors()->all();
-
-                        return $errors;
-                    }
+                if ($validateDetail->fails()) {
+                    $errors = $validateDetail->errors()->first();
+                    return $errors;
+                    // }
                 }
             }
 
             return '';
         } elseif ($status == 'update') {
 
-            if ($request->products) {
+            $products = $request->products;
 
-                $products = $request->products;
+            if (count($products) > 0) {
 
-                foreach ($products as $res) {
-                    $validateDetail = Validator::make(
-                        $res,
-                        [
-                            'productId' => 'required|integer',
-                            'quantity' => 'required|integer|min:1',
-                            'total' => 'required|numeric',
+                // foreach ($products as $res) {
+                $validateDetail = Validator::make(
+                    $products,
+                    [
+                        '*.productId' => 'required|integer',
+                        '*.quantity' => 'required|integer|min:1',
+                        '*.total' => 'required|numeric',
 
-                        ],
-                        [
-                            'productId.integer' => 'Product Id Should be Integer',
-                            'quantity.integer' => 'Quantity Should be Integer',
-                            'total.numeric' => 'Total Should be Decimal',
+                    ],
+                    [
+                        '*.productId.integer' => 'Product Id Should be Integer',
+                        '*.quantity.integer' => 'Quantity Should be Integer',
+                        '*.total.numeric' => 'Total Should be Decimal',
 
-                            'productId.required' => 'Product Id Should be Required',
-                            'quantity.required' => 'Quantity Should be Required',
-                            'total.required' => 'Total Should be Required',
+                        '*.productId.required' => 'Product Id Should be Required',
+                        '*.quantity.required' => 'Quantity Should be Required',
+                        '*.total.required' => 'Total Should be Required',
 
-                            'quantity.min' => 'Quantity must be at least 1',
-                        ]
-                    );
+                        '*.quantity.min' => 'Quantity must be at least 1',
+                    ]
+                );
 
-                    if ($validateDetail->fails()) {
-                        $errors = $validateDetail->errors()->all();
-
-                        return $errors;
-                    }
+                if ($validateDetail->fails()) {
+                    $errors = $validateDetail->errors()->first();
+                    return $errors;
                 }
+                // }
             }
 
             return '';
@@ -508,7 +506,7 @@ class BundleController
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errorDetail,
+                'errors' => [$errorDetail],
             ], 422);
         }
 
