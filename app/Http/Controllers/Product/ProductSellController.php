@@ -313,6 +313,22 @@ class ProductSellController
             ->where('psr.isDeleted', '=', 0)
             ->get();
 
+        $prodSellLog = DB::table('productSells as ps')
+            ->join('productSellLogs as psl', 'psl.productSellId', 'ps.id')
+            ->join('users as u', 'u.id', 'psl.userId')
+            ->select(
+                'psl.id',
+                'psl.transaction',
+                'psl.remark',
+                'psl.quantity',
+                'psl.balance',
+                DB::raw("DATE_FORMAT(psl.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('ps.id', '=', $request->id)
+            ->get();
+
+        $prodSell->log = $prodSellLog;
+
         return response()->json($prodSell, 200);
     }
 
