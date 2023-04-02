@@ -811,19 +811,17 @@ class TransferProductController
 
                 if ($prod->isApprovedAdmin == 1 && $prod->isApprovedOffice == 1) {
                     $status = 1;
-                }
-                elseif ($prod->isApprovedAdmin == 2) {
+                } elseif ($prod->isApprovedAdmin == 2) {
                     $status = 2;
                 }
             }
 
             ProductTransfer::where('id', '=', $request->id)
-                        ->update(
-                            [
-                                'status' => $status,
-                            ]
-                        );
-
+                ->update(
+                    [
+                        'status' => $status,
+                    ]
+                );
         } else {
             return $status;
         }
@@ -891,24 +889,19 @@ class TransferProductController
                 ], 422);
             }
 
-            $files[] = $request->file('image');
             $imagePath = "";
             $realImageName = "";
 
             if ($request->hasfile('image')) {
-                foreach ($files as $file) {
+                $file = $request->file('image');
 
-                    foreach ($file as $fil) {
+                $name = $file->hashName();
 
-                        $name = $fil->hashName();
+                $file->move(public_path() . '/ProductTransfer/', $name);
 
-                        $fil->move(public_path() . '/ProductTransfer/', $name);
+                $imagePath = "/ProductTransfer/" . $name;
 
-                        $imagePath = "/ProductTransfer/" . $name;
-
-                        $realImageName = $fil->getClientOriginalName();
-                    }
-                }
+                $realImageName = $file->getClientOriginalName();
             }
 
             ProductTransfer::where('id', '=', $request->id)
