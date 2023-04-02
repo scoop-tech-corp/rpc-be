@@ -939,6 +939,22 @@ class ProductClinicController
             ->where('pcr.isDeleted', '=', 0)
             ->get();
 
+            $prodClinicLog = DB::table('productClinics as ps')
+            ->join('productClinicLogs as psl', 'psl.productClinicId', 'ps.id')
+            ->join('users as u', 'u.id', 'psl.userId')
+            ->select(
+                'psl.id',
+                'psl.transaction',
+                'psl.remark',
+                'psl.quantity',
+                'psl.balance',
+                DB::raw("DATE_FORMAT(psl.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('ps.id', '=', $request->id)
+            ->get();
+
+        $prodClinic->log = $prodClinicLog;
+
         return response()->json($prodClinic, 200);
     }
 
