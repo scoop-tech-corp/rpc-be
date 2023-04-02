@@ -184,7 +184,9 @@ class BundleController
             ], 422);
         }
 
-        if (!is_null($request->products)) {
+        $products = json_decode($request->products, true);
+
+        if (count($products) > 0) {
             $products = json_decode($request->products, true);
         } else {
             return response()->json([
