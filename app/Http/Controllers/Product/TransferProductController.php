@@ -734,7 +734,7 @@ class TransferProductController
                 }
             } elseif ($prod->isAdminApproval == 1) {
 
-                if ($prod->isApprovedAdmin == 1) {
+                if ($prod->isApprovedAdmin == 1 && $prod->isApprovedOffice == 1) {
                     $status = 1;
                 } elseif ($prod->isApprovedAdmin == 2) {
                     $status = 2;
