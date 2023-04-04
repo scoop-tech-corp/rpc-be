@@ -106,12 +106,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/inventory/approval/export', [ProductInventoryController::class, 'exportApproval']);
 
         Route::get('/inventory/detail', [ProductInventoryController::class, 'detail']);
-
         Route::post('/inventory', [ProductInventoryController::class, 'create']);
-
         Route::put('/inventory', [ProductInventoryController::class, 'update']);
         Route::put('/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
-
         Route::delete('/inventory', [ProductInventoryController::class, 'delete']);
 
         //product category
@@ -123,6 +120,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::post('/usage', [ProductController::class, 'CreateUsage']);
         Route::get('/usage', [ProductController::class, 'IndexUsage']);
+        
+        Route::post('/adjust', [ProductController::class, 'adjust']);
 
         Route::get('/sell/dropdown/split', [ProductController::class, 'IndexProductSellSplit']);
 
