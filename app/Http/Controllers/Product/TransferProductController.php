@@ -471,7 +471,7 @@ class TransferProductController
 
         if ($findData) {
 
-            if ($findData->productType == 'productSell') {
+            if ($findData->productType == 'Product Sell') {
 
                 $data = DB::table('productTransfers as pt')
                     ->join('productSells as pso', 'pt.productIdOrigin', 'pso.id')
@@ -523,7 +523,7 @@ class TransferProductController
                     ->first();
 
                 return response()->json($data, 200);
-            } elseif ($findData->productType == 'productClinic') {
+            } elseif ($findData->productType == 'Product Clinic') {
 
                 $data = DB::table('productTransfers as pt')
                     ->join('productClinics as pco', 'pt.productIdOrigin', 'pco.id')
