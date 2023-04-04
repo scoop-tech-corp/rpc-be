@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Models\ProductAdjustment;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
+use App\Models\ProductSellLocation;
+use App\Models\ProductClinicLocation;
+use App\Models\ProductSell;
+use App\Models\ProductClinic;
 use App\Models\ProductSupplier;
 use App\Models\usages;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Validator;
+use Illuminate\Support\Carbon;
 
 class ProductController
 {
@@ -209,7 +215,7 @@ class ProductController
                 ->where('ps.status', '=', 1)
                 ->where('pl.locationId', '=', $request->locationId);
 
-            if ($request->brandId) {
+            if ($request->brandId || $request->brandId != '') {
                 $data = $data->where('ps.productBrandId', '=', $request->brandId);
             }
 
@@ -237,7 +243,7 @@ class ProductController
                 ->where('p.status', '=', 1)
                 ->where('pl.locationId', '=', $request->locationId);
 
-            if ($request->brandId) {
+            if ($request->brandId || $request->brandId != '') {
                 $data = $data->where('p.productBrandId', '=', $request->brandId);
             }
 
@@ -320,5 +326,137 @@ class ProductController
 
             return response()->json($product, 200);
         }
+    }
+
+    public function adjust(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'productId' => 'required|integer',
+            'productType' => 'required|string|in:productSell,productClinic',
+            'adjustment' => 'required|string|in:increase,decrease',
+            'totalAdjustment' => 'required|integer|min:1',
+            'remark' => 'required|string',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        if ($request->productType == 'productSell') {
+
+            $prod = ProductSell::find($request->productId);
+
+            if (!$prod) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is no any data found!'],
+                ], 422);
+            }
+
+            $num = 0;
+            $transaction = "";
+
+            if ($request->adjustment == 'increase') {
+                $num = $request->totalAdjustment;
+                $transaction = 'Stock Adjustment Increase';
+            } elseif ($request->adjustment == 'decrease') {
+                $num = $request->totalAdjustment * -1;
+                $transaction = 'Stock Adjustment Decrease';
+            }
+
+            $prodStock = ProductSellLocation::where('productSellId', '=', $request->productId)->first();
+
+            if (!$prodStock) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is no any data found!'],
+                ], 422);
+            }
+
+            ProductAdjustment::create([
+                'productId' => $request->productId,
+                'productType' => $request->productType,
+                'adjustment' => $request->adjustment,
+                'totalAdjustment' => $num,
+                'remark' => $request->remark,
+                'userId' => $request->user()->id,
+            ]);
+
+            $inStock = $prodStock->inStock;
+            $lowStock = $prodStock->lowStock;
+
+            $prodStock->inStock = $inStock + ($num);
+            $prodStock->diffStock = ($inStock + ($num)) - $lowStock;
+            $prodStock->userId = $request->user()->id;
+            $prodStock->updated_at = Carbon::now();
+            $prodStock->save();
+
+            $prod->updated_at = Carbon::now();
+            $prod->save();
+
+            ProductSellLog($request->productId, $transaction, $request->remark, $request->totalAdjustment, $inStock + ($num), $request->user()->id);
+        } elseif ($request->productType == 'productClinic') {
+
+            $prod = ProductClinic::find($request->productId);
+
+            if (!$prod) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is no any data found!'],
+                ], 422);
+            }
+
+            $num = 0;
+            $transaction = "";
+
+            if ($request->adjustment == 'increase') {
+                $num = $request->totalAdjustment;
+                $transaction = 'Stock Adjustment Increase';
+            } elseif ($request->adjustment == 'decrease') {
+                $num = $request->totalAdjustment * -1;
+                $transaction = 'Stock Adjustment Decrease';
+            }
+
+            $prodStock = ProductClinicLocation::where('productClinicId', '=', $request->productId)->first();
+
+            if (!$prodStock) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is no any data found!'],
+                ], 422);
+            }
+
+            ProductAdjustment::create([
+                'productId' => $request->productId,
+                'productType' => $request->productType,
+                'adjustment' => $request->adjustment,
+                'totalAdjustment' => $num,
+                'remark' => $request->remark,
+                'userId' => $request->user()->id,
+            ]);
+
+            $inStock = $prodStock->inStock;
+            $lowStock = $prodStock->lowStock;
+
+            $prodStock->inStock = $inStock + ($num);
+            $prodStock->diffStock = ($inStock + ($num)) - $lowStock;
+            $prodStock->userId = $request->user()->id;
+            $prodStock->updated_at = Carbon::now();
+            $prodStock->save();
+
+            $prod->updated_at = Carbon::now();
+            $prod->save();
+
+            ProductClinicLog($request->productId, $transaction, $request->remark, $request->totalAdjustment, $inStock + ($num), $request->user()->id);
+        }
+
+        return response()->json([
+            'message' => 'Adjustment Data Successful',
+        ], 200);
     }
 }
