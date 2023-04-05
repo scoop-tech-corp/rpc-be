@@ -208,6 +208,10 @@ class TransferProductController
                 }
             } else {
                 $data = [];
+                return response()->json([
+                    'totalPagination' => 0,
+                    'data' => $data
+                ], 200);
             }
         }
 
