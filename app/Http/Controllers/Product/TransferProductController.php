@@ -684,7 +684,16 @@ class TransferProductController
 
             $role = role($request->user()->id);
 
+            $trfProd = ProductTransfer::find($request->id);
+
             if ($role == 'Administrator') {
+
+                if ($trfProd->isApprovedAdmin == 1 || $trfProd->isApprovedAdmin == 2) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Product has already approved or rejected'],
+                    ], 422);
+                }
 
                 if ($request->status == 2) {
                     ProductTransfer::where('id', '=', $request->id)
@@ -709,6 +718,13 @@ class TransferProductController
                         );
                 }
             } elseif ($role == 'Office') {
+
+                if ($trfProd->isApprovedOffice == 1 || $trfProd->isApprovedOffice == 2) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Product has already approved or rejected'],
+                    ], 422);
+                }
 
                 if ($request->status == 2) {
                     ProductTransfer::where('id', '=', $request->id)
