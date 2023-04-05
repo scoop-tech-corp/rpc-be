@@ -271,9 +271,9 @@ class TransferProductController
 
                 if ($request->locationId) {
 
-                    if ($request->type == 'from') {
+                    if ($request->locationType == 'from') {
                         $res = $res->whereIn('lo.id', $request->locationId);
-                    } elseif ($request->type == 'to') {
+                    } elseif ($request->locationType == 'to') {
                         $res = $res->whereIn('ld.id', $request->locationId);
                     }
                 }
@@ -323,9 +323,9 @@ class TransferProductController
 
                 if ($request->locationId) {
 
-                    if ($request->type == 'from') {
+                    if ($request->locationType == 'from') {
                         $res = $res->whereIn('lo.id', $request->locationId);
-                    } elseif ($request->type == 'to') {
+                    } elseif ($request->locationType == 'to') {
                         $res = $res->whereIn('ld.id', $request->locationId);
                     }
                 }
