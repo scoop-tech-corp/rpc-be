@@ -271,7 +271,7 @@ class TransferProductController
 
                 if ($request->locationId) {
 
-                    $data = $data->whereIn('lo.id', $request->locationId);
+                    $res = $res->whereIn('lo.id', $request->locationId);
                 }
 
                 $res = $res->first();
@@ -319,7 +319,7 @@ class TransferProductController
 
                 if ($request->locationId) {
 
-                    $data = $data->whereIn('lo.id', $request->locationId);
+                    $res = $res->whereIn('lo.id', $request->locationId);
                 }
 
                 $res = $res->first();
