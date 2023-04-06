@@ -961,7 +961,7 @@ class CustomerController extends Controller
 
             $checkIfValueExits = DB::table('referenceCustomer as a')
                 ->where([
-                    ['a.referenceName', '=', $request->sourceName],
+                    ['a.referenceName', '=', $request->referenceName],
                     ['a.isActive', '=', 1]
                 ])
                 ->first();
@@ -975,7 +975,7 @@ class CustomerController extends Controller
             } else {
 
                 DB::table('referenceCustomer')->insert([
-                    'referenceName' => $request->sourceName,
+                    'referenceName' => $request->referenceName,
                     'created_at' => now(),
                     'isActive' => 1,
                 ]);
@@ -1037,7 +1037,7 @@ class CustomerController extends Controller
 
             $checkIfValueExits = DB::table('titleCustomer as a')
                 ->where([
-                    ['a.titleName', '=', $request->sourceName],
+                    ['a.titleName', '=', $request->titleName],
                     ['a.isActive', '=', 1]
                 ])
                 ->first();
@@ -1051,7 +1051,7 @@ class CustomerController extends Controller
             } else {
 
                 DB::table('titleCustomer')->insert([
-                    'titleName' => $request->sourceName,
+                    'titleName' => $request->titleName,
                     'created_at' => now(),
                     'isActive' => 1,
                 ]);
