@@ -158,6 +158,45 @@ class ProductSellController
         return $temp_column;
     }
 
+    // private function searchLog($request)
+    // {
+    //     $temp_column = null;
+
+    //     $data = DB::table('productSellLogs as psl')
+    //         ->select(
+    //             'psl.transaction'
+    //         );
+
+    //     if ($request->search) {
+    //         $data = $data->where('psl.transaction', 'like', '%' . $request->search . '%');
+    //     }
+
+    //     $data = $data->get();
+
+    //     if (count($data)) {
+    //         $temp_column[] = 'transaction';
+    //     }
+
+    //     //
+
+    //     $data = DB::table('productSellLogs as psl')
+    //         ->select(
+    //             'psl.remark'
+    //         );
+
+    //     if ($request->search) {
+    //         $data = $data->where('psl.remark', 'like', '%' . $request->search . '%');
+    //     }
+
+    //     $data = $data->get();
+
+    //     if (count($data)) {
+    //         $temp_column[] = 'remark';
+    //     }
+
+    //     return $temp_column;
+    // }
+
     public function Detail(Request $request)
     {
         $prodSell = DB::table('productSells as ps')

@@ -83,6 +83,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/brand', [ProductController::class, 'IndexProductBrand']);
 
         Route::get('/sell', [ProductSellController::class, 'Index']);
+        
         Route::get('/sell/detail', [ProductSellController::class, 'Detail']);
         Route::post('/sell', [ProductSellController::class, 'Create']);
         Route::put('/sell', [ProductSellController::class, 'Update']);
@@ -124,6 +125,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/adjust', [ProductController::class, 'adjust']);
 
         Route::get('/sell/dropdown/split', [ProductController::class, 'IndexProductSellSplit']);
+
+        Route::get('/log', [ProductController::class, 'indexLog']);
+        Route::get('/transaction', [ProductController::class, 'transaction']);
 
         Route::get('/transfernumber', [TransferProductController::class, 'transferProductNumber']);
         Route::post('/transfer', [TransferProductController::class, 'create']);
@@ -181,6 +185,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/staffdetail', [StaffController::class, 'getDetailStaff']);
         Route::put('/', [StaffController::class, 'updateStaff']);
         Route::get('/', [StaffController::class, 'index']);
+        Route::get('/list', [StaffController::class, 'listStaff']);
         Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
         Route::post('/sendEmail', [StaffController::class, 'sendEmailVerification']);
         Route::put('/statusStaff', [StaffController::class, 'updateStatusUsers']);

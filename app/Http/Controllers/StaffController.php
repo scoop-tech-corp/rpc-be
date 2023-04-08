@@ -3195,4 +3195,17 @@ class StaffController extends Controller
             ->get();
         return response()->json($data, 200);
     }
+
+    public function listStaff()
+    {
+        $data = DB::table('users')
+            ->select(
+                'id',
+                DB::raw("CONCAT(firstName,' ',middleName,CASE WHEN middleName = '' THEN '' ELSE ' ' END,lastName) as fullName")
+            )
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        return response()->json($data, 200);
+    }
 }
