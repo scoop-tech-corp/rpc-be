@@ -459,4 +459,130 @@ class ProductController
             'message' => 'Adjustment Data Successful',
         ], 200);
     }
+
+    public function indexLog(Request $request)
+    {
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        if ($request->productType == 'productSell') {
+
+            $data = DB::table('productSells as ps')
+                ->join('productSellLogs as psl', 'psl.productSellId', 'ps.id')
+                ->join('users as u', 'u.id', 'psl.userId')
+                ->join('productSellLocations as pLoc', 'ps.id', 'pLoc.productSellId')
+                ->select(
+                    'psl.id',
+                    'psl.transaction',
+                    'psl.remark',
+                    'psl.quantity',
+                    'psl.balance',
+                    DB::raw("CONCAT(u.firstName,' ',u.middleName,CASE WHEN u.middleName = '' THEN '' ELSE ' ' END,u.lastName) as fullName"),
+                    'u.id as userId',
+                    DB::raw("DATE_FORMAT(psl.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+                )->where('ps.id', '=', $request->productId);
+
+            if ($request->dateFrom && $request->dateTo) {
+
+                $data = $data->whereBetween(DB::raw('DATE(psl.created_at)'), [$request->dateFrom, $request->dateTo]);
+            }
+
+            if ($request->staffId) {
+
+                $data = $data->whereIn('u.id', $request->staffId);
+            }
+
+            if ($request->transaction) {
+                $data = $data->where('psl.transaction', 'like', '%' . $request->transaction . '%');
+            }
+
+            if ($request->orderValue) {
+                $data = $data->orderBy($request->orderColumn, $request->orderValue);
+            }
+
+            $data = $data->orderBy('psl.id', 'desc');
+
+            $offset = ($page - 1) * $itemPerPage;
+
+            $count_data = $data->count();
+            $count_result = $count_data - $offset;
+
+            if ($count_result < 0) {
+                $data = $data->offset(0)->limit($itemPerPage)->get();
+            } else {
+                $data = $data->offset($offset)->limit($itemPerPage)->get();
+            }
+
+            $totalPaging = $count_data / $itemPerPage;
+
+            return response()->json([
+                'totalPagination' => ceil($totalPaging),
+                'data' => $data
+            ], 200);
+        } elseif ($request->productType == 'productClinic') {
+
+            $data = DB::table('productClinics as pc')
+                ->join('productClinicLogs as pcl', 'pcl.productClinicId', 'pc.id')
+                ->join('users as u', 'u.id', 'pcl.userId')
+                ->join('productClinicLocations as pLoc', 'pc.id', 'pLoc.productClinicId')
+                ->select(
+                    'pcl.id',
+                    'pcl.transaction',
+                    'pcl.remark',
+                    'pcl.quantity',
+                    'pcl.balance',
+                    DB::raw("CONCAT(u.firstName,' ',u.middleName,CASE WHEN u.middleName = '' THEN '' ELSE ' ' END,u.lastName) as fullName"),
+                    'u.id as userId',
+                    DB::raw("DATE_FORMAT(pcl.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+                )->where('pc.id', '=', $request->productId);
+
+            if ($request->dateFrom && $request->dateTo) {
+
+                $data = $data->whereBetween(DB::raw('DATE(pcl.created_at)'), [$request->dateFrom, $request->dateTo]);
+            }
+
+            if ($request->staffId) {
+
+                $data = $data->whereIn('u.id', $request->staffId);
+            }
+
+            if ($request->transaction) {
+                $data = $data->where('pcl.transaction', 'like', '%' . $request->transaction . '%');
+            }
+
+            if ($request->orderValue) {
+                $data = $data->orderBy($request->orderColumn, $request->orderValue);
+            }
+
+            $data = $data->orderBy('pcl.id', 'desc');
+
+            $offset = ($page - 1) * $itemPerPage;
+
+            $count_data = $data->count();
+            $count_result = $count_data - $offset;
+
+            if ($count_result < 0) {
+                $data = $data->offset(0)->limit($itemPerPage)->get();
+            } else {
+                $data = $data->offset($offset)->limit($itemPerPage)->get();
+            }
+
+            $totalPaging = $count_data / $itemPerPage;
+
+            return response()->json([
+                'totalPagination' => ceil($totalPaging),
+                'data' => $data
+            ], 200);
+        }
+    }
+
+    public function transaction()
+    {
+        $data = ['Adjustment Increase', 'Adjustment Decrease', 'Transfer Item', 'Create New', 'Split Product', 'Restock Product'];
+
+        return response()->json([
+            'data' => $data
+        ], 200);
+    }
 }
