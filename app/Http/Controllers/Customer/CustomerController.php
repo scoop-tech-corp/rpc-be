@@ -4,71 +4,23 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\CustomerGroups;
-use DB;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Validator;
+use File;
+use DB;
 
 class CustomerController extends Controller
 {
-    public function indexCustomerGroup(Request $request)
-    {
-        $data = DB::table('customerGroups')
-            ->select('id', 'customerGroup')
-            ->where('isDeleted', '=', 0)
-            ->get();
 
-        return response()->json($data, 200);
-    }
 
-    public function createCustomerGroup(Request $request)
+    public function createCustomer(Request $request)
     {
 
-        $validate = Validator::make($request->all(), [
-            'customerGroupId' => 'nullable|integer'
-
-        ]);
-
-        if ($validate->fails()) {
-            $errors = $validate->errors()->all();
-
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
-        }
-
-        $checkIfValueExits = DB::table('customerGroups')
-            ->where('customerGroup', '=', $request->customerGroup)
-            ->first();
-
-        if ($checkIfValueExits === null) {
-
-            CustomerGroups::create([
-                'customerGroup' => $request->customerGroup,
-                'userId' => $request->user()->id,
-            ]);
-
-            return response()->json(
-                [
-                    'message' => 'Insert Data Successful!',
-                ], 200
-            );
-        } else {
-
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Customer Group already exists!'],
-            ], 422);
-
-        }
-    }
-
-    public function create(Request $request)
-    {
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
+                'result' => 'The user role was invalid.',
+                'message' => ['User Access not Authorize!'],
             ], 403);
         }
 
@@ -82,21 +34,21 @@ class CustomerController extends Controller
                     'firstName' => 'required|string|max:100',
                     'middleName' => 'nullable|string|max:100',
                     'lastName' => 'nullable|string|max:100',
-                    'nickName' => 'nullable|string|max:100',
                     'titleCustomerId' => 'nullable|integer',
+                    'nickName' => 'nullable|string|max:100',
                     'customerGroupId' => 'nullable|integer',
                     'locationId' => 'nullable|integer',
                     'notes' => 'nullable|string',
-                    'joinDate' => 'nullable|date',
+                    'joinDate' => 'required|date',
                     'typeId' => 'required|integer',
                     'numberId' => 'required|string|max:50',
                     'gender' => 'required|in:P,W',
-                    'jobTitleId' => 'nullable|integer',
+                    'occupationId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
                     'referenceCustomerId' => 'required|integer',
-
                     'generalCustomerCanConfigReminderBooking' => 'integer|nullable',
                     'generalCustomerCanConfigReminderPayment' => 'integer|nullable',
+
                 ]
             );
 
@@ -104,23 +56,26 @@ class CustomerController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
+                    'result' => 'The given data was invalid.',
+                    'message' => $errors,
                 ], 422);
             }
 
+
             $data_item_pet = [];
 
-            if ($request->customerPet) {
+            if ($request->customerPets) {
 
-                $arrayCustomerPet = json_decode($request->customerPet, true);
-            
+                $arrayCustomerPet = json_decode($request->customerPets, true);
+
                 $messageCustomerPet = [
                     'petName.required' => 'Pet name on tab Customer Pet is required',
                     'petCategoryId.required' => 'Category Pet tab Customer Pet is required',
+                    'races.required' => 'Pet Races in tab Customer Pet is required',
                     'condition.required' => 'Condition on tab Customer Pet is required',
                     'petGender.required' => 'Pet Gender on tab Cutomer Pet is required',
                     'isSteril.required' => 'Pet Steril  on tab Cutomer Pet is required',
+                    'color.required' => 'Pet Color  on tab Cutomer Pet is required',
                 ];
 
 
@@ -135,10 +90,34 @@ class CustomerController extends Controller
                             'condition' => 'required|string|max:100',
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
-                            'petAge' => 'nullable|integer',
+                            'color' => 'required|string|max:100',
                         ],
                         $messageCustomerPet
                     );
+
+
+
+                    if ($key['petAge'] == ""  ||  $key['petAge'] == "0") {
+
+                        if ($key['dateOfBirth'] == "") {
+                            return response()->json([
+                                'result' => 'Inputed data is not valid',
+                                'message' => "Please check again, Pet must have Age",
+                            ], 422);
+                        }
+                    }
+
+
+                    if ($key['dateOfBirth'] == "") {
+
+                        if ($key['petAge'] == ""  ||  $key['petAge'] == "0") {
+                            return response()->json([
+                                'result' => 'Inputed data is not valid',
+                                'message' => "Please check again, Pet must have Age",
+                            ], 422);
+                        }
+                    }
+
 
                     if ($validateDetail->fails()) {
 
@@ -153,34 +132,33 @@ class CustomerController extends Controller
                     }
                 }
 
-
-
                 if ($data_item_pet) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_item_pet,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_item_pet,
                     ], 422);
                 }
             } else {
 
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Customer pet can not be empty!'],
+                    'result' => 'The given data was invalid.',
+                    'message' => ['Customer pet can not be empty!'],
                 ], 422);
             }
 
-            //// VALIDASI Reminder Booking
+
             $data_reminder_booking = [];
 
             if ($request->reminderBooking) {
 
-            $arrayReminderBooking = json_decode($request->reminderBooking, true);
+                $arrayReminderBooking = json_decode($request->reminderBooking, true);
 
                 $messageReminderBooking = [
                     'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
                     'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
                     'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
+                    'notes.required' => 'Notes Reminder Booking is required',
                 ];
 
 
@@ -193,9 +171,18 @@ class CustomerController extends Controller
                             'unit' => 'required|integer',
                             'time' => 'required',
                             'timeDate' => 'required',
+                            'notes' => 'required',
                         ],
                         $messageReminderBooking
                     );
+
+
+                    if (!($key['notes'] === "sebelum memulai")) {
+                        return response()->json([
+                            'result' => 'Inputed data is not valid',
+                            'message' => 'Please check your notes for reminder booking, notes reminder booking must be sebelum memulai',
+                        ], 422);
+                    }
 
                     if ($validateReminderBooking->fails()) {
 
@@ -208,29 +195,30 @@ class CustomerController extends Controller
                             }
                         }
                     }
-
                 }
 
                 if ($data_reminder_booking) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_reminder_booking,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_reminder_booking,
                     ], 422);
                 }
             }
 
-            //// VALIDASI Reminder Payment
+
+
             $data_reminder_payment = [];
 
             if ($request->reminderPayment) {
 
-            $arrayReminderPayment = json_decode($request->reminderPayment, true);
+                $arrayReminderPayment = json_decode($request->reminderPayment, true);
 
                 $messageReminderPayment = [
                     'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
                     'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
                     'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
+                    'notes.required' => 'Notes Reminder Payment is required',
                 ];
 
 
@@ -243,9 +231,18 @@ class CustomerController extends Controller
                             'unit' => 'required|integer',
                             'time' => 'required',
                             'timeDate' => 'required',
+                            'notes' => 'required',
                         ],
                         $messageReminderPayment
                     );
+
+                    if (!($key['notes'] === "sebelum jatuh tempo")) {
+                        return response()->json([
+                            'result' => 'Inputed data is not valid',
+                            'message' => 'Please check your notes for reminder payment, notes reminder payment must be sebelum jatuh tempo',
+                        ], 422);
+                    }
+
 
                     if ($validateReminderPayment->fails()) {
 
@@ -258,29 +255,29 @@ class CustomerController extends Controller
                             }
                         }
                     }
-
                 }
 
                 if ($data_reminder_payment) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_reminder_payment,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_reminder_payment,
                     ], 422);
                 }
             }
 
-            //// VALIDASI Reminder Late Payment
+
             $data_reminder_late_payment = [];
 
             if ($request->reminderLatePayment) {
 
-            $reminderLatePayment = json_decode($request->reminderLatePayment, true);
+                $reminderLatePayment = json_decode($request->reminderLatePayment, true);
 
                 $messageReminderLatePayment = [
                     'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
                     'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
                     'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
+                    'notes.required' => 'Notes Reminder Late Payment is required',
                 ];
 
 
@@ -293,9 +290,17 @@ class CustomerController extends Controller
                             'unit' => 'required|integer',
                             'time' => 'required',
                             'timeDate' => 'required',
+                            'notes' => 'required',
                         ],
                         $messageReminderLatePayment
                     );
+
+                    if (!($key['notes'] === "setelah jatuh tempo")) {
+                        return response()->json([
+                            'result' => 'Inputed data is not valid',
+                            'message' => 'Please check your notes for reminder late payment, notes reminder late payment must be setelah jatuh tempo',
+                        ], 422);
+                    }
 
                     if ($validateReminderLatePayment->fails()) {
 
@@ -308,22 +313,23 @@ class CustomerController extends Controller
                             }
                         }
                     }
-
                 }
 
                 if ($data_reminder_late_payment) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_reminder_late_payment,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_reminder_late_payment,
                     ], 422);
                 }
             }
 
+
+
             $data_item = [];
 
-            if ($request->detailAddress) {
+            if ($request->detailAddresses) {
 
-            $arrayDetailAddress = json_decode($request->detailAddress, true);
+                $arrayDetailAddress = json_decode($request->detailAddresses, true);
 
                 $messageAddress = [
                     'addressName.required' => 'Address name on tab Address is required',
@@ -376,13 +382,11 @@ class CustomerController extends Controller
             }
 
 
+            $data_error_telephone = [];
 
-            //// VALIDASI PHONE
-            $data_telephone = [];
+            if ($request->telephones) {
 
-            if ($request->telephone) {
-
-            $arraytelephone = json_decode($request->telephone, true);
+                $arraytelephone = json_decode($request->telephones, true);
 
                 $messagePhone = [
                     'phoneNumber.required' => 'Phone Number on tab telephone is required',
@@ -390,9 +394,10 @@ class CustomerController extends Controller
                     'usage.required' => 'Usage on tab telephone is required',
                 ];
 
+
                 foreach ($arraytelephone as $key) {
 
-                    $validateTelephone = Validator::make(
+                    $telephoneDetail = Validator::make(
                         $key,
                         [
                             'phoneNumber' => 'required',
@@ -402,14 +407,14 @@ class CustomerController extends Controller
                         $messagePhone
                     );
 
-                    if ($validateTelephone->fails()) {
+                    if ($telephoneDetail->fails()) {
 
-                        $errors = $validateTelephone->errors()->all();
+                        $errors = $telephoneDetail->errors()->all();
 
                         foreach ($errors as $checkisu) {
 
-                            if (!(in_array($checkisu, $data_telephone))) {
-                                array_push($data_telephone, $checkisu);
+                            if (!(in_array($checkisu, $data_error_telephone))) {
+                                array_push($data_error_telephone, $checkisu);
                             }
                         }
                     }
@@ -418,71 +423,48 @@ class CustomerController extends Controller
 
                         if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
                             return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'result' => 'Inputed data is not valid',
+                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
-
                 }
 
-                if ($data_telephone) {
+
+                if ($data_error_telephone) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_telephone,
-                    ], 422);
-                }
-
-                $checkTelephone = [];
-
-                foreach ($arraytelephone as $val) {
-
-                    $checkIfTelephoneAlreadyExists = DB::table('usersTelephones')
-                        ->where([
-                            ['phoneNumber', '=', $val['phoneNumber'],],
-                            ['isDeleted', '=', '0']
-                        ])
-                        ->first();
-
-                    if ($checkIfTelephoneAlreadyExists) {
-                        array_push($checkTelephone, 'Phonenumber : ' . $val['phoneNumber'] . ' already exists, please try different number');
-                    }
-                }
-
-
-                if ($checkTelephone) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkTelephone,
+                        'result' => 'The given data was invalid.',
+                        'message' => $data_error_telephone,
                     ], 422);
                 }
             }
 
             $data_error_email = [];
-            $insertEmailUsers = '';
-            if ($request->email) {
 
-            $arrayemail = json_decode($request->email, true);
+            if ($request->emails) {
+
+                $arrayemail = json_decode($request->emails, true);
 
                 $messageEmail = [
-                    'email.required' => 'Email on tab email is required',
+                    'username.required' => 'Username on tab email is required',
                     'usage.required' => 'Usage on tab email is required',
                 ];
 
                 foreach ($arrayemail as $key) {
 
-                    $validateEmail = Validator::make(
+                    $emailDetail = Validator::make(
                         $key,
                         [
-                            'email' => 'required',
+                            'username' => 'required',
                             'usage' => 'required',
                         ],
                         $messageEmail
                     );
 
-                    if ($validateEmail->fails()) {
 
-                        $errors = $validateEmail->errors()->all();
+                    if ($emailDetail->fails()) {
+
+                        $errors = $emailDetail->errors()->all();
 
                         foreach ($errors as $checkisu) {
 
@@ -493,62 +475,19 @@ class CustomerController extends Controller
                     }
                 }
 
-
                 if ($data_error_email) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
                         'errors' => $data_error_email,
                     ], 422);
                 }
-
-                $checkUsageEmail = false;
-                $checkEmail = [];
-                foreach ($arrayemail as $val) {
-
-                    $checkIfEmailExists = DB::table('usersEmails')
-                        ->where([
-                            ['email', '=', $val['email'],],
-                            ['isDeleted', '=', '0']
-                        ])
-                        ->first();
-
-                    if ($checkIfEmailExists) {
-                        array_push($checkEmail, 'Email : ' . $val['email'] . ' already exists, please try different email address');
-                    }
-
-                    if ($val['usage'] == 'Utama') {
-                        $checkUsageEmail = true;
-                        $insertEmailUsers = $val['email'];
-                    }
-                }
-
-                if ($checkEmail) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkEmail,
-                    ], 422);
-                }
-
-                if ($checkUsageEmail == false) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Must have one primary email',
-                    ], 422);
-                }
-            } else {
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Email can not be empty!'],
-                ], 422);
             }
 
 
-            $data_error_messenger = [];
+            $data_error_messengers = [];
+            if ($request->messengers) {
 
-            if ($request->messenger) {
-
-            $arraymessenger = json_decode($request->messenger, true);
+                $arraymessenger = json_decode($request->messengers, true);
 
                 $messageMessenger = [
                     'messengerNumber.required' => 'messenger number on tab messenger is required',
@@ -558,7 +497,7 @@ class CustomerController extends Controller
 
                 foreach ($arraymessenger as $key) {
 
-                    $validateMessenger = Validator::make(
+                    $messengerDetail = Validator::make(
                         $key,
                         [
                             'messengerNumber' => 'required',
@@ -568,65 +507,98 @@ class CustomerController extends Controller
                         $messageMessenger
                     );
 
-                    if ($validateMessenger->fails()) {
+                    if ($messengerDetail->fails()) {
 
-                        $errors = $validateMessenger->errors()->all();
+                        $errors = $messengerDetail->errors()->all();
 
                         foreach ($errors as $checkisu) {
 
-                            if (!(in_array($checkisu, $data_error_messenger))) {
-                                array_push($data_error_messenger, $checkisu);
+                            if (!(in_array($checkisu, $data_error_messengers))) {
+                                array_push($data_error_messengers, $checkisu);
                             }
                         }
                     }
 
-
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['messengerNumber'], 0, 3) === "+62")) {
-
+                        if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with +62',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
-
-
                 }
 
-                if ($data_error_messenger) {
+                if ($data_error_messengers) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $data_error_messenger,
-                    ], 422);
-                }
-
-
-                $checkMessenger = [];
-                foreach ($arraymessenger as $val) {
-
-                    $checkifMessengerExists = DB::table('usersMessengers')
-                        ->where([
-                            ['messengerNumber', '=', $val['messengerNumber'],],
-                            ['isDeleted', '=', '0']
-                        ])
-                        ->first();
-
-                    if ($checkifMessengerExists) {
-                        array_push($checkMessenger, 'Messenger number  : ' . $val['messengerNumber'] . ' already exists, please try different number');
-                    }
-                }
-
-                if ($checkMessenger) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkMessenger,
+                        'errors' => $data_error_messengers,
                     ], 422);
                 }
             }
 
-            //// INSERT CUSTOMER
+
+
+            $flag = false;
+
+            if ($request->hasfile('images')) {
+
+                $flag = true;
+
+                $data_item = [];
+
+                $files[] = $request->file('images');
+
+                foreach ($files as $file) {
+
+                    foreach ($file as $fil) {
+
+                        $file_size = $fil->getSize();
+
+                        $file_size = $file_size / 1024;
+
+                        $oldname = $fil->getClientOriginalName();
+
+                        if ($file_size >= 5000) {
+
+                            array_push($data_item, 'Photo ' . $oldname . ' size more than 5mb! Please upload less than 5mb!');
+                        }
+                    }
+                }
+
+                if ($data_item) {
+
+                    return response()->json([
+                        'message' => 'Inputed photo is not valid',
+                        'errors' => $data_item,
+                    ], 422);
+                }
+            }
+
+            if ($flag == true) {
+                if ($request->imagesName) {
+                    $ResultImageDatas = json_decode($request->imagesName, true);
+
+                    foreach ($ResultImageDatas as $value) {
+
+                        if ($value['name'] == "") {
+
+                            return response()->json([
+                                'message' => 'The given data was invalid.',
+                                'errors' => ['Image name can not be empty!'],
+                            ], 422);
+                        }
+                    }
+                } else {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Image name can not be empty!'],
+                    ], 422);
+                }
+            }
+
+            // INSERT
 
             $lastInsertedID = DB::table('customer')
                 ->insertGetId([
@@ -642,13 +614,11 @@ class CustomerController extends Controller
                     'joinDate' => $request->joinDate,
                     'typeId' => $request->typeId,
                     'numberId' => $request->numberId,
-                    'jobTitleId' => $request->jobTitleId,
+                    'occupationId' => $request->occupationId,
                     'birthDate' => $request->birthDate,
                     'referenceCustomerId' => $request->referenceCustomerId,
-
                     'generalCustomerCanConfigReminderBooking' => $request->generalCustomerCanConfigReminderBooking,
                     'generalCustomerCanConfigReminderPayment' => $request->generalCustomerCanConfigReminderPayment,
-                    
                     'isDeleted' => 0,
                     'createdBy' => $request->user()->firstName,
                     'created_at' => now(),
@@ -656,17 +626,38 @@ class CustomerController extends Controller
 
                 ]);
 
-            if ($request->customerPet) {
+
+
+
+            if ($request->customerPets) {
 
                 foreach ($arrayCustomerPet as $val) {
 
-                    DB::table('customerPet')
+
+                    $dateOfBirth = Carbon::parse($val['dateOfBirth']);
+                    $age = 0;
+                    $month = 0;
+
+                    if ($val['petAge'] === "" || $val['petAge'] === 0) {
+
+                        $age = $dateOfBirth->diffInYears(Carbon::now());
+                        $month = $dateOfBirth->diffInMonths(Carbon::now());
+                    } else {
+
+                        $age = $val['petAge'];
+                    }
+
+                    DB::table('customerPets')
                         ->insert([
-                            'usersId' => $lastInsertedID,
+                            'customerId' => $lastInsertedID,
                             'petName' => $val['petName'],
                             'petCategoryId' => $val['petCategoryId'],
                             'races' => $val['races'],
                             'condition' => $val['condition'],
+                            'color' => $val['color'],
+                            'petAge' => $age,
+                            'petAgeMonth' => $month,
+                            'dateOfBirth' => $val['dateOfBirth'],
                             'petGender' => $val['petGender'],
                             'isSteril' => $val['isSteril'],
                             'isDeleted' => 0,
@@ -680,33 +671,35 @@ class CustomerController extends Controller
 
                 foreach ($arrayReminderBooking as $val) {
 
-                    DB::table('reminderCustomer')
+                    DB::table('customerReminders')
                         ->insert([
-                            'usersId' => $lastInsertedID,
+                            'customerId' => $lastInsertedID,
                             'sourceCustomerId' => $val['sourceCustomerId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
                             'timeDate' => $val['timeDate'],
                             'type' => 'B',
+                            'notes' => $val['notes'],
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
                 }
             }
-    
+
             if ($request->reminderPayment) {
 
                 foreach ($arrayReminderPayment as $val) {
 
-                    DB::table('reminderCustomer')
+                    DB::table('customerReminders')
                         ->insert([
-                            'usersId' => $lastInsertedID,
+                            'customerId' => $lastInsertedID,
                             'sourceCustomerId' => $val['sourceCustomerId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
                             'timeDate' => $val['timeDate'],
                             'type' => 'P',
+                            'notes' => $val['notes'],
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -714,18 +707,20 @@ class CustomerController extends Controller
                 }
             }
 
+
             if ($request->reminderLatePayment) {
 
-                foreach ($data_reminder_late_payment as $val) {
+                foreach ($reminderLatePayment as $val) {
 
-                    DB::table('reminderCustomer')
+                    DB::table('customerReminders')
                         ->insert([
-                            'usersId' => $lastInsertedID,
+                            'customerId' => $lastInsertedID,
                             'sourceCustomerId' => $val['sourceCustomerId'],
                             'unit' => $val['unit'],
                             'time' => $val['time'],
                             'timeDate' => $val['timeDate'],
                             'type' => 'LP',
+                            'notes' => $val['notes'],
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -733,13 +728,14 @@ class CustomerController extends Controller
                 }
             }
 
-            if ($request->detailAddress) {
+
+            if ($request->detailAddresses) {
 
                 foreach ($arrayDetailAddress as $val) {
 
-                    DB::table('customerAddress')
+                    DB::table('customerAddresses')
                         ->insert([
-                            'usersId' => $lastInsertedID,
+                            'customerId' => $lastInsertedID,
                             'addressName' => $val['addressName'],
                             'additionalInfo' => $val['additionalInfo'],
                             'provinceCode' => $val['provinceCode'],
@@ -754,66 +750,13 @@ class CustomerController extends Controller
                 }
             }
 
-
-            if ($request->hasfile('image')) {
-
-                $files = $request->file('image');
-
-                $name = $files->hashName();
-                $files->move(public_path() . '/PetImages/', $name);
-
-                $fileName = "/PetImages/" . $name;
-
-                DB::table('petImages')
-                    ->insert([
-                        'usersId' => $lastInsertedID,
-                        'imagePath' => $fileName,
-                        'isDeleted' => 0,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-            }
-
-            if ($request->messenger) {
-
-                foreach ($arraymessenger as $val) {
-
-                    DB::table('usersMessengers')
-                        ->insert([
-                            'usersId' => $lastInsertedID,
-                            'messengerNumber' => $val['messengerNumber'],
-                            'type' => $val['type'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
-
-            if ($request->email) {
-
-                foreach ($arrayemail as $val) {
-
-                    DB::table('usersEmails')
-                        ->insert([
-                            'usersId' => $lastInsertedID,
-                            'email' => $val['email'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
-
-            if ($request->telephone) {
+            if ($request->telephones) {
 
                 foreach ($arraytelephone as $val) {
 
-                    DB::table('usersTelephones')
+                    DB::table('customerTelephones')
                         ->insert([
-                            'usersId' => $lastInsertedID,
+                            'customerId' => $lastInsertedID,
                             'phoneNumber' => $val['phoneNumber'],
                             'type' => $val['type'],
                             'usage' => $val['usage'],
@@ -825,6 +768,74 @@ class CustomerController extends Controller
             }
 
 
+
+            if ($request->emails) {
+
+                foreach ($arrayemail as $val) {
+
+                    DB::table('customerEmails')
+                        ->insert([
+                            'customerId' => $lastInsertedID,
+                            'username' => $val['username'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+            if ($request->messengers) {
+
+                foreach ($arraymessenger as $val) {
+
+                    DB::table('customerMessengers')
+                        ->insert([
+                            'customerId' => $lastInsertedID,
+                            'messengerNumber' => $val['messengerNumber'],
+                            'type' => $val['type'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+            if ($request->hasfile('images')) {
+
+                $json_array = json_decode($request->imagesName, true);
+                $int = 0;
+
+                if (count($files) != 0) {
+
+                    foreach ($files as $file) {
+
+                        foreach ($file as $fil) {
+
+                            $name = $fil->hashName();
+                            $fil->move(public_path() . '/CustomerImages/', $name);
+
+                            $fileName = "/CustomerImages/" . $name;
+
+                            DB::table('customerImages')
+                                ->insert([
+                                    'customerId' => $lastInsertedID,
+                                    'labelName' => $json_array[$int]['name'],
+                                    'realImageName' => $fil->getClientOriginalName(),
+                                    'imageName' => $name,
+                                    'imagePath' => $fileName,
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+
+                            $int = $int + 1;
+                        }
+                    }
+                }
+            }
+
             DB::commit();
 
             return response()->json(
@@ -834,7 +845,6 @@ class CustomerController extends Controller
                 ],
                 200
             );
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -846,6 +856,1258 @@ class CustomerController extends Controller
         }
     }
 
+
+
+    public function updateCustomer(Request $request)
+    {
+
+        if (adminAccess($request->user()->id) != 1) {
+            return response()->json([
+                'result' => 'The user role was invalid.',
+                'message' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $validate = Validator::make(
+                $request->all(),
+                [
+                    'firstName' => 'required|string|max:100',
+                    'middleName' => 'nullable|string|max:100',
+                    'lastName' => 'nullable|string|max:100',
+                    'titleCustomerId' => 'nullable|integer',
+                    'nickName' => 'nullable|string|max:100',
+                    'customerGroupId' => 'nullable|integer',
+                    'locationId' => 'nullable|integer',
+                    'notes' => 'nullable|string',
+                    'joinDate' => 'required|date',
+                    'typeId' => 'required|integer',
+                    'numberId' => 'required|string|max:50',
+                    'gender' => 'required|in:P,W',
+                    'occupationId' => 'nullable|integer',
+                    'birthDate' => 'nullable|date',
+                    'referenceCustomerId' => 'required|integer',
+                    'generalCustomerCanConfigReminderBooking' => 'integer|nullable',
+                    'generalCustomerCanConfigReminderPayment' => 'integer|nullable',
+
+                ]
+            );
+
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return response()->json([
+                    'result' => 'The given data was invalid.',
+                    'message' => $errors,
+                ], 422);
+            }
+
+
+            $data_item_pet = [];
+
+            if ($request->customerPets) {
+
+                $arrayCustomerPet = json_decode($request->customerPets, true);
+
+                $messageCustomerPet = [
+                    'petName.required' => 'Pet name on tab Customer Pet is required',
+                    'petCategoryId.required' => 'Category Pet tab Customer Pet is required',
+                    'races.required' => 'Pet Races in tab Customer Pet is required',
+                    'condition.required' => 'Condition on tab Customer Pet is required',
+                    'petGender.required' => 'Pet Gender on tab Cutomer Pet is required',
+                    'isSteril.required' => 'Pet Steril  on tab Cutomer Pet is required',
+                    'color.required' => 'Pet Color  on tab Cutomer Pet is required',
+                ];
+
+
+                foreach ($arrayCustomerPet as $key) {
+
+                    $validateDetail = Validator::make(
+                        $key,
+                        [
+                            'petName' => 'required|string|max:100',
+                            'petCategoryId' => 'required:integer',
+                            'race' => 'nullable|string|max:100',
+                            'condition' => 'required|string|max:100',
+                            'petGender' => 'required|in:J,B',
+                            'isSteril' => 'required|in:1,0',
+                            'color' => 'required|string|max:100',
+                        ],
+                        $messageCustomerPet
+                    );
+
+
+
+                    if ($key['petAge'] == ""  ||  $key['petAge'] == "0") {
+
+                        if ($key['dateOfBirth'] == "") {
+                            return response()->json([
+                                'result' => 'Inputed data is not valid',
+                                'message' => "Please check again, Pet must have Age",
+                            ], 422);
+                        }
+                    }
+
+
+                    if ($key['dateOfBirth'] == "") {
+
+                        if ($key['petAge'] == ""  ||  $key['petAge'] == "0") {
+                            return response()->json([
+                                'result' => 'Inputed data is not valid',
+                                'message' => "Please check again, Pet must have Age",
+                            ], 422);
+                        }
+                    }
+
+
+                    if ($validateDetail->fails()) {
+
+                        $errors = $validateDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_item_pet))) {
+                                array_push($data_item_pet, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_item_pet) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_item_pet,
+                    ], 422);
+                }
+            } else {
+
+                return response()->json([
+                    'result' => 'The given data was invalid.',
+                    'message' => ['Customer pet can not be empty!'],
+                ], 422);
+            }
+
+
+            $data_reminder_booking = [];
+
+            if ($request->reminderBooking) {
+
+                $arrayReminderBooking = json_decode($request->reminderBooking, true);
+
+                $messageReminderBooking = [
+                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
+                    'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
+                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
+                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
+                    'notes.required' => 'Notes Reminder Booking is required',
+                ];
+
+
+                foreach ($arrayReminderBooking as $key) {
+
+                    $validateReminderBooking = Validator::make(
+                        $key,
+                        [
+                            'sourceCustomerId' => 'required|integer',
+                            'unit' => 'required|integer',
+                            'time' => 'required',
+                            'timeDate' => 'required',
+                            'notes' => 'required',
+                        ],
+                        $messageReminderBooking
+                    );
+
+
+                    if (!($key['notes'] === "sebelum memulai")) {
+                        return response()->json([
+                            'result' => 'Inputed data is not valid',
+                            'message' => 'Please check your notes for reminder booking, notes reminder booking must be sebelum memulai',
+                        ], 422);
+                    }
+
+                    if ($validateReminderBooking->fails()) {
+
+                        $errors = $validateReminderBooking->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_reminder_booking))) {
+                                array_push($data_reminder_booking, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_reminder_booking) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_reminder_booking,
+                    ], 422);
+                }
+            }
+
+
+
+            $data_reminder_payment = [];
+
+            if ($request->reminderPayment) {
+
+                $arrayReminderPayment = json_decode($request->reminderPayment, true);
+
+                $messageReminderPayment = [
+                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
+                    'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
+                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
+                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
+                    'notes.required' => 'Notes Reminder Payment is required',
+                ];
+
+
+                foreach ($arrayReminderPayment as $key) {
+
+                    $validateReminderPayment = Validator::make(
+                        $key,
+                        [
+                            'sourceCustomerId' => 'required|integer',
+                            'unit' => 'required|integer',
+                            'time' => 'required',
+                            'timeDate' => 'required',
+                            'notes' => 'required',
+                        ],
+                        $messageReminderPayment
+                    );
+
+                    if (!($key['notes'] === "sebelum jatuh tempo")) {
+                        return response()->json([
+                            'result' => 'Inputed data is not valid',
+                            'message' => 'Please check your notes for reminder payment, notes reminder payment must be sebelum jatuh tempo',
+                        ], 422);
+                    }
+
+
+                    if ($validateReminderPayment->fails()) {
+
+                        $errors = $validateReminderPayment->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_reminder_payment))) {
+                                array_push($data_reminder_payment, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_reminder_payment) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_reminder_payment,
+                    ], 422);
+                }
+            }
+
+
+            $data_reminder_late_payment = [];
+
+            if ($request->reminderLatePayment) {
+
+                $reminderLatePayment = json_decode($request->reminderLatePayment, true);
+
+                $messageReminderLatePayment = [
+                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
+                    'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
+                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
+                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
+                    'notes.required' => 'Notes Reminder Late Payment is required',
+                ];
+
+
+                foreach ($reminderLatePayment as $key) {
+
+                    $validateReminderLatePayment = Validator::make(
+                        $key,
+                        [
+                            'sourceCustomerId' => 'required|integer',
+                            'unit' => 'required|integer',
+                            'time' => 'required',
+                            'timeDate' => 'required',
+                            'notes' => 'required',
+                        ],
+                        $messageReminderLatePayment
+                    );
+
+                    if (!($key['notes'] === "setelah jatuh tempo")) {
+                        return response()->json([
+                            'result' => 'Inputed data is not valid',
+                            'message' => 'Please check your notes for reminder late payment, notes reminder late payment must be setelah jatuh tempo',
+                        ], 422);
+                    }
+
+                    if ($validateReminderLatePayment->fails()) {
+
+                        $errors = $validateReminderLatePayment->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_reminder_late_payment))) {
+                                array_push($data_reminder_late_payment, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_reminder_late_payment) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_reminder_late_payment,
+                    ], 422);
+                }
+            }
+
+
+
+            $data_item = [];
+
+            if ($request->detailAddresses) {
+
+                $arrayDetailAddress = json_decode($request->detailAddresses, true);
+
+                $messageAddress = [
+                    'addressName.required' => 'Address name on tab Address is required',
+                    'provinceCode.required' => 'Province code on tab Address is required',
+                    'cityCode.required' => 'City code on tab Address is required',
+                    'country.required' => 'Country on tab Address is required',
+                ];
+
+
+                foreach ($arrayDetailAddress as $key) {
+
+                    $validateDetail = Validator::make(
+                        $key,
+                        [
+                            'addressName' => 'required',
+                            'provinceCode' => 'required',
+                            'cityCode' => 'required',
+                            'country' => 'required',
+                        ],
+                        $messageAddress
+                    );
+
+                    if ($validateDetail->fails()) {
+
+                        $errors = $validateDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_item))) {
+                                array_push($data_item, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+
+
+                if ($data_item) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_item,
+                    ], 422);
+                }
+            } else {
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
+                ], 422);
+            }
+
+
+            $data_error_telephone = [];
+
+            if ($request->telephones) {
+
+                $arraytelephone = json_decode($request->telephones, true);
+
+                $messagePhone = [
+                    'phoneNumber.required' => 'Phone Number on tab telephone is required',
+                    'type.required' => 'Type on tab telephone is required',
+                    'usage.required' => 'Usage on tab telephone is required',
+                ];
+
+
+                foreach ($arraytelephone as $key) {
+
+                    $telephoneDetail = Validator::make(
+                        $key,
+                        [
+                            'phoneNumber' => 'required',
+                            'type' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messagePhone
+                    );
+
+                    if ($telephoneDetail->fails()) {
+
+                        $errors = $telephoneDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_telephone))) {
+                                array_push($data_error_telephone, $checkisu);
+                            }
+                        }
+                    }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'result' => 'Inputed data is not valid',
+                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
+                            ], 422);
+                        }
+                    }
+                }
+
+
+                if ($data_error_telephone) {
+                    return response()->json([
+                        'result' => 'The given data was invalid.',
+                        'message' => $data_error_telephone,
+                    ], 422);
+                }
+            }
+
+            $data_error_email = [];
+
+            if ($request->emails) {
+
+                $arrayemail = json_decode($request->emails, true);
+
+                $messageEmail = [
+                    'username.required' => 'Username on tab email is required',
+                    'usage.required' => 'Usage on tab email is required',
+                ];
+
+                foreach ($arrayemail as $key) {
+
+                    $emailDetail = Validator::make(
+                        $key,
+                        [
+                            'username' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messageEmail
+                    );
+
+
+                    if ($emailDetail->fails()) {
+
+                        $errors = $emailDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_email))) {
+                                array_push($data_error_email, $checkisu);
+                            }
+                        }
+                    }
+                }
+
+                if ($data_error_email) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_email,
+                    ], 422);
+                }
+            }
+
+
+            $data_error_messengers = [];
+            if ($request->messengers) {
+
+                $arraymessenger = json_decode($request->messengers, true);
+
+                $messageMessenger = [
+                    'messengerNumber.required' => 'messenger number on tab messenger is required',
+                    'type.required' => 'Type on tab messenger is required',
+                    'usage.required' => 'Usage on tab messenger is required',
+                ];
+
+                foreach ($arraymessenger as $key) {
+
+                    $messengerDetail = Validator::make(
+                        $key,
+                        [
+                            'messengerNumber' => 'required',
+                            'type' => 'required',
+                            'usage' => 'required',
+                        ],
+                        $messageMessenger
+                    );
+
+                    if ($messengerDetail->fails()) {
+
+                        $errors = $messengerDetail->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_error_messengers))) {
+                                array_push($data_error_messengers, $checkisu);
+                            }
+                        }
+                    }
+
+                    if (strtolower($key['type']) == "whatshapp") {
+
+                        if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                            ], 422);
+                        }
+                    }
+                }
+
+                if ($data_error_messengers) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_messengers,
+                    ], 422);
+                }
+            }
+
+
+
+            $flag = false;
+
+            if ($request->hasfile('images')) {
+
+                $flag = true;
+
+                $data_item = [];
+
+                $files[] = $request->file('images');
+
+                foreach ($files as $file) {
+
+                    foreach ($file as $fil) {
+
+                        $file_size = $fil->getSize();
+
+                        $file_size = $file_size / 1024;
+
+                        $oldname = $fil->getClientOriginalName();
+
+                        if ($file_size >= 5000) {
+
+                            array_push($data_item, 'Photo ' . $oldname . ' size more than 5mb! Please upload less than 5mb!');
+                        }
+                    }
+                }
+
+                if ($data_item) {
+
+                    return response()->json([
+                        'message' => 'Inputed photo is not valid',
+                        'errors' => $data_item,
+                    ], 422);
+                }
+            }
+
+            if ($flag == true) {
+                if ($request->imagesName) {
+                    $ResultImageDatas = json_decode($request->imagesName, true);
+
+                    foreach ($ResultImageDatas as $value) {
+
+                        if ($value['name'] == "") {
+
+                            return response()->json([
+                                'message' => 'The given data was invalid.',
+                                'errors' => ['Image name can not be empty!'],
+                            ], 422);
+                        }
+                    }
+                } else {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Image name can not be empty!'],
+                    ], 422);
+                }
+            }
+
+            // Update
+
+            DB::table('customer')
+                ->where('customerId', '=', $request->input('customerId'))
+                ->insertGetId([
+                    'firstName' => $request->firstName,
+                    'middleName' => $request->middleName,
+                    'lastName' => $request->lastName,
+                    'nickName' => $request->nickName,
+                    'gender' => $request->gender,
+                    'titleCustomerId' => $request->titleCustomerId,
+                    'customerGroupId' => $request->customerGroupId,
+                    'locationId' => $request->locationId,
+                    'notes' => $request->notes,
+                    'joinDate' => $request->joinDate,
+                    'typeId' => $request->typeId,
+                    'numberId' => $request->numberId,
+                    'occupationId' => $request->occupationId,
+                    'birthDate' => $request->birthDate,
+                    'referenceCustomerId' => $request->referenceCustomerId,
+                    'generalCustomerCanConfigReminderBooking' => $request->generalCustomerCanConfigReminderBooking,
+                    'generalCustomerCanConfigReminderPayment' => $request->generalCustomerCanConfigReminderPayment,
+                    'isDeleted' => 0,
+                    'createdBy' => $request->user()->firstName,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            if ($request->customerPets) {
+
+                DB::table('customerPets')
+                    ->where([['customerId', '=', $request->input('customerId')],])
+                    ->delete();
+
+                foreach ($arrayCustomerPet as $val) {
+
+
+                    $dateOfBirth = Carbon::parse($val['dateOfBirth']);
+                    $age = 0;
+                    $month = 0;
+
+                    if ($val['petAge'] === "" || $val['petAge'] === 0) {
+
+                        $age = $dateOfBirth->diffInYears(Carbon::now());
+                        $month = $dateOfBirth->diffInMonths(Carbon::now());
+                    } else {
+
+                        $age = $val['petAge'];
+                    }
+
+                    DB::table('customerPets')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'petName' => $val['petName'],
+                            'petCategoryId' => $val['petCategoryId'],
+                            'races' => $val['races'],
+                            'condition' => $val['condition'],
+                            'color' => $val['color'],
+                            'petAge' => $age,
+                            'petAgeMonth' => $month,
+                            'dateOfBirth' => $val['dateOfBirth'],
+                            'petGender' => $val['petGender'],
+                            'isSteril' => $val['isSteril'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+            if ($request->reminderBooking) {
+
+                DB::table('customerReminders')
+                    ->where([
+                        ['customerId', '=', $request->input('customerId')],
+                        ['type', '=', 'B'],
+                    ])
+                    ->delete();
+
+                foreach ($arrayReminderBooking as $val) {
+
+                    DB::table('customerReminders')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'sourceCustomerId' => $val['sourceCustomerId'],
+                            'unit' => $val['unit'],
+                            'time' => $val['time'],
+                            'timeDate' => $val['timeDate'],
+                            'type' => 'B',
+                            'notes' => $val['notes'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+            if ($request->reminderPayment) {
+
+                DB::table('customerReminders')
+                    ->where([
+                        ['customerId', '=', $request->input('customerId')],
+                        ['type', '=', 'P'],
+                    ])
+                    ->delete();
+
+                foreach ($arrayReminderPayment as $val) {
+
+                    DB::table('customerReminders')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'sourceCustomerId' => $val['sourceCustomerId'],
+                            'unit' => $val['unit'],
+                            'time' => $val['time'],
+                            'timeDate' => $val['timeDate'],
+                            'type' => 'P',
+                            'notes' => $val['notes'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+
+            if ($request->reminderLatePayment) {
+
+                DB::table('customerReminders')
+                    ->where([
+                        ['customerId', '=', $request->input('customerId')],
+                        ['type', '=', 'LP'],
+                    ])
+                    ->delete();
+
+                foreach ($reminderLatePayment as $val) {
+
+                    DB::table('customerReminders')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'sourceCustomerId' => $val['sourceCustomerId'],
+                            'unit' => $val['unit'],
+                            'time' => $val['time'],
+                            'timeDate' => $val['timeDate'],
+                            'type' => 'LP',
+                            'notes' => $val['notes'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+
+            if ($request->detailAddresses) {
+
+                DB::table('customerAddresses')->where('customerId', '=', $request->input('customerId'))->delete();
+
+                foreach ($arrayDetailAddress as $val) {
+
+                    DB::table('customerAddresses')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'addressName' => $val['addressName'],
+                            'additionalInfo' => $val['additionalInfo'],
+                            'provinceCode' => $val['provinceCode'],
+                            'cityCode' => $val['cityCode'],
+                            'postalCode' => $val['postalCode'],
+                            'country' => $val['country'],
+                            'isPrimary' => $val['isPrimary'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+            if ($request->telephones) {
+
+                DB::table('customerTelephones')->where('customerId', '=', $request->input('customerId'))->delete();
+
+                foreach ($arraytelephone as $val) {
+
+                    DB::table('customerTelephones')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'phoneNumber' => $val['phoneNumber'],
+                            'type' => $val['type'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+
+
+            if ($request->emails) {
+
+                DB::table('customerEmails')->where('customerId', '=', $request->input('customerId'))->delete();
+
+                foreach ($arrayemail as $val) {
+
+                    DB::table('customerEmails')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'username' => $val['username'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+            if ($request->messengers) {
+
+                DB::table('customerMessengers')->where('customerId', '=', $request->input('customerId'))->delete();
+
+                foreach ($arraymessenger as $val) {
+
+                    DB::table('customerMessengers')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'messengerNumber' => $val['messengerNumber'],
+                            'type' => $val['type'],
+                            'usage' => $val['usage'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json(
+                [
+                    'result' => 'success',
+                    'message' => 'Insert Data Customer Successful!',
+                ],
+                200
+            );
+
+            return response()->json(
+                [
+                    'result' => 'success',
+                    'message' => 'Insert Data Customer Successful!',
+                ],
+                200
+            );
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+    public function getDetailCustomer(Request $request)
+    {
+        $request->validate(['customerId' => 'required|max:10000']);
+        $customerId = $request->input('customerId');
+
+        $checkIfValueExits = DB::table('customer')
+            ->where([
+                ['id', '=', $request->input('customerId')],
+                ['isDeleted', '=', '0']
+            ])
+            ->first();
+
+        if ($checkIfValueExits === null) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => "Data not exists, please try another customer id",
+            ]);
+        } else {
+
+            $param_customer = DB::table('customer')
+                ->select(
+                    'firstName',
+                    'middleName',
+                    'lastName',
+                    'nickName',
+                    'gender',
+                    'titleCustomerId',
+                    'customerGroupId',
+                    'locationId',
+                    'notes',
+                    'joinDate',
+                    'typeId',
+                    'numberId',
+                    'occupationId',
+                    'birthDate',
+                    'referenceCustomerId',
+                    'generalCustomerCanConfigReminderBooking',
+                    'generalCustomerCanConfigReminderPayment'
+                )
+                ->where('id', '=', $customerId)
+                ->first();
+
+
+            $customerPets = DB::table('customerPets')
+                ->select(
+                    'customerId',
+                    'petName',
+                    'petCategoryId',
+                    'races',
+                    'condition',
+                    'color',
+                    'petAge',
+                    'petAgeMonth',
+                    'dateOfBirth',
+                    'petGender',
+                    'isSteril',
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->customerPets = $customerPets;
+
+
+            $reminderBooking = DB::table('customerReminders')
+                ->select(
+                    'sourceCustomerId',
+                    'unit',
+                    'time',
+                    'timeDate',
+                    'notes'
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['type', '=', 'B'],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->reminderBooking = $reminderBooking;
+
+
+
+            $reminderPayment = DB::table('customerReminders')
+                ->select(
+                    'sourceCustomerId',
+                    'unit',
+                    'time',
+                    'timeDate',
+                    'notes'
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['type', '=', 'P'],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->reminderPayment = $reminderPayment;
+
+
+            $reminderLatePayment = DB::table('customerReminders')
+                ->select(
+                    'sourceCustomerId',
+                    'unit',
+                    'time',
+                    'timeDate',
+                    'notes'
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['type', '=', 'LP'],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->reminderLatePayment = $reminderLatePayment;
+
+            $detailAddresses = DB::table('customerAddresses')
+                ->select(
+                    'addressName as addressName',
+                    'additionalInfo as additionalInfo',
+                    'provinceCode as provinceCode',
+                    'cityCode as cityCode',
+                    'postalCode as postalCode',
+                    'country as country',
+                    'isPrimary as isPrimary',
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->detailAddresses = $detailAddresses;
+
+            $telephones = DB::table('customerTelephones')
+                ->select(
+                    'phoneNumber as phoneNumber',
+                    'type as type',
+                    'usage as usage',
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->telephones = $telephones;
+
+            $emails = DB::table('customerEmails')
+                ->select(
+                    'username as username',
+                    'usage as usage',
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->emails = $emails;
+
+
+            $messengers = DB::table('customerMessengers')
+                ->select(
+                    'messengerNumber as messengerNumber',
+                    'type as type',
+                    'usage as usage',
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->messengers = $messengers;
+
+            $customeImages = DB::table('customerImages')
+                ->select(
+                    'id as id',
+                    'labelName as labelName',
+                    'imagePath as imagePath',
+                )
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->images = $customeImages;
+
+
+            return response()->json($param_customer, 200);
+        }
+    }
+
+
+
+    public function uploadImageCustomer(Request $request)
+    {
+
+        try {
+
+            $json_array = json_decode($request->imagesName, true);
+            $files[] = $request->file('images');
+            $index = 0;
+
+            foreach ($json_array as $val) {
+
+
+                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) {
+
+                    $name = $files[0][$index]->hashName();
+
+                    $files[0][$index]->move(public_path() . '/CustomerImages/', $name);
+
+                    $fileName = "/CustomerImages/" . $name;
+
+                    DB::table('customerImages')
+                        ->insert([
+                            'customerId' => $request->input('customerId'),
+                            'labelName' => $val['name'],
+                            'realImageName' => $files[0][$index]->getClientOriginalName(),
+                            'imageName' => $name,
+                            'imagePath' => $fileName,
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                        ]);
+
+                    $index = $index + 1;
+                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) {
+
+
+                    $find_image = DB::table('customerImages')
+                        ->select(
+                            'imageName',
+                            'imagePath'
+                        )
+                        ->where('id', '=', $val['id'])
+                        ->where('customerId', '=', $request->input('customerId'))
+                        ->first();
+
+                    if ($find_image) {
+
+                        if (file_exists(public_path() . $find_image->imagePath)) {
+
+                            File::delete(public_path() . $find_image->imagePath);
+
+                            DB::table('customerImages')->where([
+                                ['customerId', '=', $request->input('customerId')],
+                                ['id', '=', $val['id']]
+                            ])->delete();
+                        }
+                    }
+                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) {
+
+                    $find_image = DB::table('customerImages')
+                        ->select(
+                            'imageName',
+                            'imagePath'
+                        )
+                        ->where('id', '=', $val['id'])
+                        ->where('customerId', '=', $request->input('customerId'))
+                        ->first();
+
+                    if ($find_image) {
+
+                        DB::table('customerImages')
+                            ->where([
+                                ['customerId', '=', $request->input('customerId')],
+                                ['id', '=', $val['id']]
+                            ])
+                            ->update([
+                                'labelName' => $val['name'],
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'success',
+                'message' => 'successfuly update image customer',
+            ]);
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ]);
+        }
+    }
+
+
+    public function deleteCustomer(Request $request)
+    {
+
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'result' => 'The user role was invalid.',
+                'message' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
+        $validate = Validator::make($request->all(), [
+            'customerId' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'result' => 'The given data was invalid.',
+                'message' => $errors,
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $data_item = [];
+            foreach ($request->customerId as $val) {
+
+                $checkIfDataExits = DB::table('customer')
+                    ->where([
+                        ['id', '=', $val],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->first();
+
+                if (!$checkIfDataExits) {
+                    array_push($data_item, 'customer id : ' . $val . ' not found, please try different customer id');
+                }
+            }
+
+            if ($data_item) {
+                return response()->json([
+                    'result' => 'Inputed data is not valid',
+                    'message' => $data_item,
+                ], 422);
+            }
+
+            foreach ($request->customerId as $val) {
+
+                DB::table('customer')
+                    ->where('id', '=', $val)
+                    ->update(['isDeleted' => 1]);
+
+                DB::table('customerReminders')
+                    ->where('customerId', '=', $val)
+                    ->update(['isDeleted' => 1]);
+
+                DB::table('customerAddresses')
+                    ->where('customerId', '=', $val)
+                    ->update(['isDeleted' => 1]);
+
+
+                DB::table('customerEmails')
+                    ->where('customerId', '=', $val)
+                    ->update(['isDeleted' => 1]);
+
+                DB::table('customerMessengers')
+                    ->where('customerId', '=', $val)
+                    ->update(['isDeleted' => 1]);
+
+
+                DB::table('customerTelephones')
+                    ->where('customerId', '=', $val)
+                    ->update(['isDeleted' => 1]);
+
+                DB::table('customerImages')
+                    ->where('customerId', '=', $val)
+                    ->update(['isDeleted' => 1]);
+
+                DB::commit();
+            }
+
+            return response()->json([
+                'result' => 'success',
+                'message' => 'Successfully deleted Customer',
+            ]);
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ]);
+        }
+    }
+
+
+
     public function getSourceCustomer(Request $request)
     {
 
@@ -853,8 +2115,8 @@ class CustomerController extends Controller
 
             $getSourceCustomer = DB::table('sourceCustomer as a')
                 ->select(
-                    'a.id as sourceCustomerId',
-                    'a.sourceName as sourceCustomerName',
+                    'a.id as sourceId',
+                    'a.sourceName as sourceName',
                 )
                 ->where([
                     ['isActive', '=', 1],
@@ -894,7 +2156,7 @@ class CustomerController extends Controller
 
                 return response()->json([
                     'result' => 'Failed',
-                    'message' => 'Source Customer title already exists, please choose another name',
+                    'message' => 'Source Name Customer title already exists, please choose another name',
                 ]);
             } else {
 
@@ -922,31 +2184,6 @@ class CustomerController extends Controller
         }
     }
 
-    public function getReferenceCustomer(Request $request)
-    {
-
-        try {
-
-            $getRefrenceCustomer = DB::table('referenceCustomer as a')
-                ->select(
-                    'a.id as referenceCustomerId',
-                    'a.referenceName as referenceCustomerName',
-                )
-                ->where([
-                    ['isActive', '=', 1],
-                ])
-                ->orderBy('a.created_at', 'desc')
-                ->get();
-
-            return response()->json($getRefrenceCustomer, 200);
-        } catch (Exception $e) {
-
-            return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
-            ], 422);
-        }
-    }
 
     public function insertReferenceCustomer(Request $request)
     {
@@ -997,6 +2234,198 @@ class CustomerController extends Controller
             ], 422);
         }
     }
+
+
+
+    public function getReferenceCustomer(Request $request)
+    {
+
+        try {
+
+            $getRefrenceCustomer = DB::table('referenceCustomer as a')
+                ->select(
+                    'a.id as referenceCustomerId',
+                    'a.referenceName as referenceCustomerName',
+                )
+                ->where([
+                    ['isActive', '=', 1],
+                ])
+                ->orderBy('a.created_at', 'desc')
+                ->get();
+
+            return response()->json($getRefrenceCustomer, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+    public function getPetCategory(Request $request)
+    {
+
+        try {
+
+            $getCategory = DB::table('petCategory as a')
+                ->select(
+                    'a.id as petCategoryId',
+                    'a.petCategoryName as petCategoryName',
+                )
+                ->where([
+                    ['isActive', '=', 1],
+                ])
+                ->orderBy('a.created_at', 'desc')
+                ->get();
+
+            return response()->json($getCategory, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+
+    public function insertPetCategory(Request $request)
+    {
+
+        $request->validate([
+            'petCategoryName' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $checkIfValueExits = DB::table('petCategory as a')
+                ->where([
+                    ['a.petCategoryName', '=', $request->petCategoryName],
+                    ['a.isActive', '=', 1]
+                ])
+                ->first();
+
+            if ($checkIfValueExits != null) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Pet category name already exists, please choose another name',
+                ]);
+            } else {
+
+                DB::table('petCategory')->insert([
+                    'petCategoryName' => $request->petCategoryName,
+                    'created_at' => now(),
+                    'isActive' => 1,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'result' => 'Success',
+                    'message' => 'Successfully inserted Pet Category',
+                ]);
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+
+
+
+
+
+    public function getCustomerOccupation(Request $request)
+    {
+
+        try {
+
+            $getRefrenceCustomer = DB::table('customerOccupation as a')
+                ->select(
+                    'a.id as occupationId',
+                    'a.occupationName as occupationName',
+                )
+                ->where([
+                    ['isActive', '=', 1],
+                ])
+                ->orderBy('a.created_at', 'desc')
+                ->get();
+
+            return response()->json($getRefrenceCustomer, 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+
+    public function insertCustomerOccupation(Request $request)
+    {
+
+        $request->validate([
+            'occupationName' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $checkIfValueExits = DB::table('customerOccupation as a')
+                ->where([
+                    ['a.occupationName', '=', $request->occupationName],
+                    ['a.isActive', '=', 1]
+                ])
+                ->first();
+
+            if ($checkIfValueExits != null) {
+
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => 'Jobname already exists, please choose another name',
+                ]);
+            } else {
+
+                DB::table('customerOccupation')->insert([
+                    'occupationName' => $request->occupationName,
+                    'created_at' => now(),
+                    'isActive' => 1,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'result' => 'success',
+                    'message' => 'Successfully inserted Job Customer',
+                ]);
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
 
     public function getTitleCustomer(Request $request)
     {

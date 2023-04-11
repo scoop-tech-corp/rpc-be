@@ -27,7 +27,7 @@ return new class extends Migration
             $table->date('joinDate');
             $table->integer('typeId');
             $table->string('numberId')->nullable();
-            $table->integer('jobTitleId');
+            $table->integer('occupationId');
             $table->date('birthDate')->nullable();
             $table->integer('referenceCustomerId')->nullable();
             $table->boolean('generalCustomerCanConfigReminderBooking')->nullable();

@@ -13,9 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('petImages', function (Blueprint $table) {
+        Schema::create('customerImages', function (Blueprint $table) {
             $table->id();
-            $table->string('usersId');
+            $table->string('customerId');
+            $table->string('labelName');
+            $table->string('realImageName');
+            $table->string('imageName');
             $table->string('imagePath');
             $table->boolean('isDeleted');
             $table->timestamps();
@@ -29,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('petImages');
+        Schema::dropIfExists('customerImages');
     }
 };

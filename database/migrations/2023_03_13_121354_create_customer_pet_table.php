@@ -13,16 +13,19 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('customerPet', function (Blueprint $table) {
+        Schema::create('customerPets', function (Blueprint $table) {
             $table->id();
-            $table->integer('usersId');
+            $table->integer('customerId');
             $table->string('petName');
             $table->integer('petCategoryId');
             $table->string('races')->nullable();
             $table->string('condition');
+            $table->string('color');
             $table->enum('petGender',['J', 'B']);
             $table->enum('isSteril',['1', '0']);
             $table->integer('petAge')->default(0);
+            $table->integer('petAgeMonth')->default(0);
+            $table->date('dateOfBirth',0)->nullable();
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->string('deletedBy')->nullable();
             $table->timestamp('deletedAt',0)->nullable();
@@ -37,6 +40,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('customerPet');
+        Schema::dropIfExists('customerPets');
     }
 };

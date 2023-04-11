@@ -13,14 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('reminderCustomer', function (Blueprint $table) {
+        Schema::create('customerReminders', function (Blueprint $table) {
             $table->id();
-            $table->integer('usersId');
+            $table->integer('customerId');
             $table->integer('sourceCustomerId');
             $table->integer('unit');
             $table->string('time')->nullable();
             $table->string('timeDate')->nullable();
             $table->enum('type',['B', 'P', 'LP']);  // B = Booking, P = Payment, LP = Late Payment
+            $table->string('notes');
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->string('deletedBy')->nullable();
             $table->timestamp('deletedAt',0)->nullable();
@@ -35,6 +36,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('reminderCustomer');
+        Schema::dropIfExists('customerReminders');
     }
 };
