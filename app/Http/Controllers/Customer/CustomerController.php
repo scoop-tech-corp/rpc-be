@@ -12,8 +12,6 @@ use DB;
 
 class CustomerController extends Controller
 {
-
-
     public function createCustomer(Request $request)
     {
 
@@ -2480,6 +2478,57 @@ class CustomerController extends Controller
             return response()->json([
                 'result' => 'failed',
                 'message' => $e,
+            ], 422);
+        }
+    }
+
+    public function getCustomerGroup()
+    {
+        $data = DB::table('customerGroups as u')
+            ->select('u.id', 'u.customerGroup')
+            ->where('u.isDeleted', '=', 0)
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function createCustomerGroup(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'customerGroup' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $checkIfValueExits = DB::table('customerGroups')
+            ->where('customerGroup', '=', $request->customerGroup)
+            ->first();
+
+        if ($checkIfValueExits === null) {
+
+            CustomerGroups::create([
+                'customerGroup' => $request->customerGroup,
+                'userId' => $request->user()->id,
+            ]);
+
+            return response()->json(
+                [
+                    'message' => 'Insert Data Successful!',
+                ],
+                200
+            );
+        } else {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Customer Group name already exists!'],
             ], 422);
         }
     }
