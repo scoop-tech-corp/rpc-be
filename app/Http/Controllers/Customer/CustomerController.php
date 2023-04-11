@@ -1434,7 +1434,7 @@ class CustomerController extends Controller
 
             DB::table('customer')
                 ->where('customerId', '=', $request->input('customerId'))
-                ->insertGetId([
+                ->update([
                     'firstName' => $request->firstName,
                     'middleName' => $request->middleName,
                     'lastName' => $request->lastName,
@@ -1669,18 +1669,11 @@ class CustomerController extends Controller
             return response()->json(
                 [
                     'result' => 'success',
-                    'message' => 'Insert Data Customer Successful!',
+                    'message' => 'Update Data Customer Successful!',
                 ],
                 200
             );
 
-            return response()->json(
-                [
-                    'result' => 'success',
-                    'message' => 'Insert Data Customer Successful!',
-                ],
-                200
-            );
         } catch (Exception $e) {
 
             DB::rollback();
