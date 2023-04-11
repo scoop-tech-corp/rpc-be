@@ -871,7 +871,7 @@ class TransferProductController
                 );
 
             //move product item and add log
-            if ($trf->produtType == 'Product Sell') {
+            if ($trf->productType == 'Product Sell') {
 
                 $prodOrig = ProductSell::find($trf->productIdOrigin);
                 $prodDest = ProductSell::find($trf->productIdDestination);
