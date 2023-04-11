@@ -151,20 +151,31 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::group(['prefix' => 'customer'], function () {
 
-        Route::get('/group', [CustomerController::class, 'indexCustomerGroup']);
+        Route::post('/', [CustomerController::class, 'createCustomer']);
+        Route::put('/', [CustomerController::class, 'updateCustomer']); // add
+        Route::get('/', [CustomerController::class, 'getIndexCustomer']); // add
+        Route::delete('/', [CustomerController::class, 'deleteCustomer']); // add
+        Route::get('/detail', [CustomerController::class, 'getDetailCustomer']); // add
+        Route::post('/images', [CustomerController::class, 'uploadImageCustomer']); // add
+
+        Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
         Route::post('/group', [CustomerController::class, 'createCustomerGroup']);
 
-        Route::post('/', [CustomerController::class, 'create']);
-
-        // Naufal task
         Route::get('/reference', [CustomerController::class, 'getReferenceCustomer']);
         Route::post('/reference', [CustomerController::class, 'insertReferenceCustomer']);
 
-        Route::get('/title', [CustomerController::class, 'getTitleCustomer']);
-        Route::post('/title', [CustomerController::class, 'insertTitleCustomer']);
+        Route::get('/title', [CustomerController::class, 'getTitleCustomer']); // title : tuan nyonya
+        Route::post('/title', [CustomerController::class, 'insertTitleCustomer']); // title : tuan nyonya
 
-        Route::get('/source', [CustomerController::class, 'getSourceCustomer']);
+        Route::get('/occupation', [CustomerController::class, 'getCustomerOccupation']); // kerja : programmer, wirausaha
+        Route::post('/occupation', [CustomerController::class, 'insertCustomerOccupation']); // kerja : programmer, wirausaha
+
+        Route::get('/pet', [CustomerController::class, 'getPetCategory']); // binatang : anjing, kucing, ular, serangga, burung
+        Route::post('/pet', [CustomerController::class, 'insertPetCategory']); // binatang : anjing, kucing, ular, serangga, burung
+
+
         Route::post('/source', [CustomerController::class, 'insertSourceCustomer']);
+        Route::get('/source', [CustomerController::class, 'getSourceCustomer']);
     });
 
 
