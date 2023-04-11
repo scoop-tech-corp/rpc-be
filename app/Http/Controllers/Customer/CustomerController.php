@@ -910,7 +910,6 @@ class CustomerController extends Controller
 
             if ($request->customerPets) {
 
-                $arrayCustomerPet = json_decode($request->customerPets, true);
 
                 $messageCustomerPet = [
                     'petName.required' => 'Pet name on tab Customer Pet is required',
@@ -923,7 +922,7 @@ class CustomerController extends Controller
                 ];
 
 
-                foreach ($arrayCustomerPet as $key) {
+                foreach ($request->customerPets as $key) {
 
                     $validateDetail = Validator::make(
                         $key,
@@ -995,7 +994,6 @@ class CustomerController extends Controller
 
             if ($request->reminderBooking) {
 
-                $arrayReminderBooking = json_decode($request->reminderBooking, true);
 
                 $messageReminderBooking = [
                     'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
@@ -1006,7 +1004,7 @@ class CustomerController extends Controller
                 ];
 
 
-                foreach ($arrayReminderBooking as $key) {
+                foreach ($request->reminderBooking as $key) {
 
                     $validateReminderBooking = Validator::make(
                         $key,
@@ -1055,8 +1053,6 @@ class CustomerController extends Controller
 
             if ($request->reminderPayment) {
 
-                $arrayReminderPayment = json_decode($request->reminderPayment, true);
-
                 $messageReminderPayment = [
                     'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
@@ -1066,7 +1062,7 @@ class CustomerController extends Controller
                 ];
 
 
-                foreach ($arrayReminderPayment as $key) {
+                foreach ($request->reminderPayment as $key) {
 
                     $validateReminderPayment = Validator::make(
                         $key,
@@ -1114,8 +1110,6 @@ class CustomerController extends Controller
 
             if ($request->reminderLatePayment) {
 
-                $reminderLatePayment = json_decode($request->reminderLatePayment, true);
-
                 $messageReminderLatePayment = [
                     'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
@@ -1125,7 +1119,7 @@ class CustomerController extends Controller
                 ];
 
 
-                foreach ($reminderLatePayment as $key) {
+                foreach ($request->reminderLatePayment as $key) {
 
                     $validateReminderLatePayment = Validator::make(
                         $key,
@@ -1173,7 +1167,6 @@ class CustomerController extends Controller
 
             if ($request->detailAddresses) {
 
-                $arrayDetailAddress = json_decode($request->detailAddresses, true);
 
                 $messageAddress = [
                     'addressName.required' => 'Address name on tab Address is required',
@@ -1183,7 +1176,7 @@ class CustomerController extends Controller
                 ];
 
 
-                foreach ($arrayDetailAddress as $key) {
+                foreach ($request->detailAddresses as $key) {
 
                     $validateDetail = Validator::make(
                         $key,
@@ -1230,7 +1223,7 @@ class CustomerController extends Controller
 
             if ($request->telephones) {
 
-                $arraytelephone = json_decode($request->telephones, true);
+
 
                 $messagePhone = [
                     'phoneNumber.required' => 'Phone Number on tab telephone is required',
@@ -1239,7 +1232,7 @@ class CustomerController extends Controller
                 ];
 
 
-                foreach ($arraytelephone as $key) {
+                foreach ($request->telephones as $key) {
 
                     $telephoneDetail = Validator::make(
                         $key,
@@ -1287,14 +1280,12 @@ class CustomerController extends Controller
 
             if ($request->emails) {
 
-                $arrayemail = json_decode($request->emails, true);
-
                 $messageEmail = [
                     'username.required' => 'Username on tab email is required',
                     'usage.required' => 'Usage on tab email is required',
                 ];
 
-                foreach ($arrayemail as $key) {
+                foreach ($request->emails as $key) {
 
                     $emailDetail = Validator::make(
                         $key,
@@ -1331,15 +1322,13 @@ class CustomerController extends Controller
             $data_error_messengers = [];
             if ($request->messengers) {
 
-                $arraymessenger = json_decode($request->messengers, true);
-
                 $messageMessenger = [
                     'messengerNumber.required' => 'messenger number on tab messenger is required',
                     'type.required' => 'Type on tab messenger is required',
                     'usage.required' => 'Usage on tab messenger is required',
                 ];
 
-                foreach ($arraymessenger as $key) {
+                foreach ($request->messengers as $key) {
 
                     $messengerDetail = Validator::make(
                         $key,
@@ -1422,9 +1411,8 @@ class CustomerController extends Controller
 
             if ($flag == true) {
                 if ($request->imagesName) {
-                    $ResultImageDatas = json_decode($request->imagesName, true);
 
-                    foreach ($ResultImageDatas as $value) {
+                    foreach ($request->imagesName as $value) {
 
                         if ($value['name'] == "") {
 
@@ -1476,7 +1464,7 @@ class CustomerController extends Controller
                     ->where([['customerId', '=', $request->input('customerId')],])
                     ->delete();
 
-                foreach ($arrayCustomerPet as $val) {
+                foreach ($request->customerPets as $val) {
 
 
                     $dateOfBirth = Carbon::parse($val['dateOfBirth']);
@@ -1521,7 +1509,7 @@ class CustomerController extends Controller
                     ])
                     ->delete();
 
-                foreach ($arrayReminderBooking as $val) {
+                foreach ($request->reminderBooking as $val) {
 
                     DB::table('customerReminders')
                         ->insert([
@@ -1548,7 +1536,7 @@ class CustomerController extends Controller
                     ])
                     ->delete();
 
-                foreach ($arrayReminderPayment as $val) {
+                foreach ($request->reminderBooking as $val) {
 
                     DB::table('customerReminders')
                         ->insert([
@@ -1576,7 +1564,7 @@ class CustomerController extends Controller
                     ])
                     ->delete();
 
-                foreach ($reminderLatePayment as $val) {
+                foreach ($request->reminderLatePayment as $val) {
 
                     DB::table('customerReminders')
                         ->insert([
@@ -1599,7 +1587,7 @@ class CustomerController extends Controller
 
                 DB::table('customerAddresses')->where('customerId', '=', $request->input('customerId'))->delete();
 
-                foreach ($arrayDetailAddress as $val) {
+                foreach ($request->detailAddresses as $val) {
 
                     DB::table('customerAddresses')
                         ->insert([
@@ -1622,7 +1610,7 @@ class CustomerController extends Controller
 
                 DB::table('customerTelephones')->where('customerId', '=', $request->input('customerId'))->delete();
 
-                foreach ($arraytelephone as $val) {
+                foreach ($request->telephones as $val) {
 
                     DB::table('customerTelephones')
                         ->insert([
@@ -1643,7 +1631,7 @@ class CustomerController extends Controller
 
                 DB::table('customerEmails')->where('customerId', '=', $request->input('customerId'))->delete();
 
-                foreach ($arrayemail as $val) {
+                foreach ($request->emails as $val) {
 
                     DB::table('customerEmails')
                         ->insert([
@@ -1661,7 +1649,7 @@ class CustomerController extends Controller
 
                 DB::table('customerMessengers')->where('customerId', '=', $request->input('customerId'))->delete();
 
-                foreach ($arraymessenger as $val) {
+                foreach ($request->messengers as $val) {
 
                     DB::table('customerMessengers')
                         ->insert([
