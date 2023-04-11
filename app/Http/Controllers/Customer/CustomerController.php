@@ -1433,7 +1433,7 @@ class CustomerController extends Controller
             // Update
 
             DB::table('customer')
-                ->where('customerId', '=', $request->input('customerId'))
+                ->where('id', '=', $request->input('customerId'))
                 ->update([
                     'firstName' => $request->firstName,
                     'middleName' => $request->middleName,
