@@ -136,13 +136,7 @@ class CustomerController extends Controller
                         'message' => $data_item_pet,
                     ], 422);
                 }
-            } else {
-
-                return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => ['Customer pet can not be empty!'],
-                ], 422);
-            }
+            } 
 
 
             $data_reminder_booking = [];
@@ -979,12 +973,6 @@ class CustomerController extends Controller
                         'message' => $data_item_pet,
                     ], 422);
                 }
-            } else {
-
-                return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => ['Customer pet can not be empty!'],
-                ], 422);
             }
 
 

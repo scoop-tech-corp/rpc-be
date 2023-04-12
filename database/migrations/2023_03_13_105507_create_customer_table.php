@@ -20,14 +20,14 @@ return new class extends Migration
             $table->string('lastName')->nullable();
             $table->string('nickName')->nullable();
             $table->enum('gender',['P', 'W']);
-            $table->integer('titleCustomerId');
-            $table->integer('customerGroupId');
-            $table->integer('locationId');
+            $table->integer('titleCustomerId')->nullable();
+            $table->integer('customerGroupId')->nullable();
+            $table->integer('locationId')->nullable();
             $table->string('notes')->nullable();
             $table->date('joinDate');
             $table->integer('typeId');
             $table->string('numberId')->nullable();
-            $table->integer('occupationId');
+            $table->integer('occupationId')->nullable();
             $table->date('birthDate')->nullable();
             $table->integer('referenceCustomerId')->nullable();
             $table->boolean('generalCustomerCanConfigReminderBooking')->nullable();
