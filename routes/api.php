@@ -153,10 +153,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::post('/', [CustomerController::class, 'createCustomer']);
         Route::put('/', [CustomerController::class, 'updateCustomer']); // add
-        Route::get('/', [CustomerController::class, 'getIndexCustomer']); // add
+        Route::get('/', [CustomerController::class, 'indexCustomer']); // add
         Route::delete('/', [CustomerController::class, 'deleteCustomer']); // add
         Route::get('/detail', [CustomerController::class, 'getDetailCustomer']); // add
         Route::post('/images', [CustomerController::class, 'uploadImageCustomer']); // add
+        Route::get('/export', [CustomerController::class, 'exportCustomer']); //add
 
         Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
         Route::post('/group', [CustomerController::class, 'createCustomerGroup']);

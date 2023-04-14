@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\CustomerGroups;
+use App\Exports\Customer\exportCustomer;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Validator;
@@ -12,6 +14,831 @@ use DB;
 
 class CustomerController extends Controller
 {
+
+
+
+    public function indexCustomer(Request $request)
+    {
+
+        if (adminAccess($request->user()->id) != 1) {
+            return response()->json([
+                'result' => 'The user role was invalid.',
+                'message' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
+        try {
+
+            $defaultRowPerPage = 5;
+            $defaultOrderBy = "asc";
+
+            $data = DB::table('customer as a')
+                ->leftjoin(
+                    DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                    function ($join) {
+                        $join->on('b.customerId', '=', 'a.id');
+                    }
+                )
+                ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+                ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+                ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+                ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+                ->select(
+                    'a.id as id',
+                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                    DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                    'd.locationName as location',
+                    'a.locationId as locationId',
+                    DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                    DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                    'f.username as emailAddress',
+                    'a.createdBy as createdBy',
+                    DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                    'a.updated_at'
+                )
+                ->where([
+                    ['a.isDeleted', '=', '0'],
+                    ['c.isDeleted', '=', '0'],
+                    ['c.isPrimary', '=', '1'],
+                    ['d.isDeleted', '=', '0'],
+                    ['e.isDeleted', '=', '0'],
+                    ['e.usage', '=', 'Utama'],
+                    ['f.isDeleted', '=', '0'],
+                    ['f.usage', '=', 'Utama'],
+                ]);
+
+            if ($request->locationId) {
+
+                $val = [];
+                foreach ($request->locationId as $temp) {
+                    $val = $temp;
+                }
+
+                if ($val) {
+                    $data = $data->whereIn('a.locationid', $request->locationId);
+                }
+            }
+
+
+
+
+            if ($request->search) {
+
+                $res = $this->Search($request);
+
+                if ($res) {
+
+                    if ($res == "id") {
+
+                        $data = $data->where('id', 'like', '%' . $request->search . '%');
+                    } else if ($res == "a.firstName") {
+
+                        $data = $data->where('a.firstName', 'like', '%' . $request->search . '%');
+                    } else if ($res == "b.jumlah") {
+
+                        $data = $data->where('b.jumlah', 'like', '%' . $request->search . '%');
+                    } else if ($res == "d.locationName") {
+
+                        $data = $data->where('d.locationName', 'like', '%' . $request->search . '%');
+                    } else if ($res == "e.phoneNumber") {
+
+                        $data = $data->where('e.phoneNumber', 'like', '%' . $request->search . '%');
+                    } else if ($res == "e.type") {
+
+                        $data = $data->where('e.type', 'like', '%' . $request->search . '%');
+                    } else if ($res == "f.username") {
+
+                        $data = $data->where('f.username', 'like', '%' . $request->search . '%');
+                    } else if ($res == "a.createdBy") {
+
+                        $data = $data->where('a.createdBy', 'like', '%' . $request->search . '%');
+                    } else if ($res == "a.created_at") {
+
+                        $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                    } else {
+
+                        $data = [];
+                        return response()->json([
+                            'totalPagination' => 0,
+                            'data' => $data
+                        ], 200);
+                    }
+                }
+            }
+
+
+
+
+            if ($request->orderValue) {
+
+                $defaultOrderBy = $request->orderValue;
+            }
+
+
+            $checkOrder = null;
+            if ($request->orderColumn && $defaultOrderBy) {
+
+                $listOrder = array(
+                    'id',
+                    'customerName',
+                    'totalPet',
+                    'location',
+                    'phoneNumber',
+                    'isWhatsapp',
+                    'emailAddress',
+                    'createdBy',
+                    'createdAt',
+                );
+
+                if (!in_array($request->orderColumn, $listOrder)) {
+
+                    return response()->json([
+                        'result' => 'failed',
+                        'message' => 'Please try different order column',
+                        'orderColumn' => $listOrder,
+                    ]);
+                }
+
+                if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
+                    return response()->json([
+                        'result' => 'failed',
+                        'message' => 'order value must Ascending: ASC or Descending: DESC ',
+                    ]);
+                }
+
+                $checkOrder = true;
+            }
+
+
+
+
+            if ($checkOrder) {
+
+                $data = DB::table($data)
+                    ->select(
+                        'id',
+                        'customerName',
+                        'totalPet',
+                        'location',
+                        'phoneNumber',
+                        'isWhatsapp',
+                        'emailAddress',
+                        'createdBy',
+                        'createdAt',
+                    )
+                    ->orderBy($request->orderColumn, $defaultOrderBy)
+                    ->orderBy('updated_at', 'desc');
+            } else {
+
+
+                $data = DB::table($data)
+                    ->select(
+                        'id',
+                        'customerName',
+                        'totalPet',
+                        'location',
+                        'phoneNumber',
+                        'isWhatsapp',
+                        'emailAddress',
+                        'createdBy',
+                        'createdAt',
+                    )
+                    ->orderBy('updated_at', 'desc');
+            }
+
+
+            if ($request->rowPerPage > 0) {
+                $defaultRowPerPage = $request->rowPerPage;
+            }
+
+            $goToPage = $request->goToPage;
+
+            $offset = ($goToPage - 1) * $defaultRowPerPage;
+
+            $count_data = $data->count();
+            $count_result = $count_data - $offset;
+
+            if ($count_result < 0) {
+                $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+            } else {
+                $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+            }
+
+            $total_paging = $count_data / $defaultRowPerPage;
+
+            return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
+
+
+
+    public function exportCustomer(Request $request)
+    {
+        $tmp = "";
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-Y');
+        $rolesIndex = roleStaffLeave($request->user()->id);
+
+        try {
+            //  admin sama office
+            if ($rolesIndex == 1 || $rolesIndex == 6) {
+
+                if ($request->locationId) {
+
+                    $location = DB::table('location')
+                        ->select('locationName')
+                        ->whereIn('id', $request->locationId)
+                        ->get();
+
+                    if ($location) {
+
+                        foreach ($location as $key) {
+                            $tmp = $tmp . (string) $key->locationName . ",";
+                        }
+                    }
+                    $tmp = rtrim($tmp, ", ");
+                }
+
+                if ($tmp == "") {
+                    $fileName = "Customer " . ucfirst($request->status) . ' ' . $date . ".xlsx";
+                } else {
+                    $fileName = "Customer " .  ucfirst($request->status) . ' ' . $tmp . " " . $date . ".xlsx";
+                }
+
+
+                return Excel::download(
+                    new exportCustomer(
+                        $request->orderValue,
+                        $request->orderColumn,
+                        $request->locationId,
+                    ),
+                    $fileName
+                );
+            } else {
+
+                return response()->json([
+                    'result' => 'failed',
+                    'message' => 'Your role not autorize to access this feature',
+                ], 422);
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ]);
+        }
+    }
+
+
+    private function Search($request)
+    {
+
+        $data = DB::table('customer as a')
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+        if ($request->search) {
+
+            $data = $data->where('firstName', 'like', '%' . $request->search . '%');
+        }
+
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'firstName';
+            return $temp_column;
+        }
+
+        $data = DB::table('customer as a')
+
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+
+        if ($request->search) {
+            $data = $data->where('b.jumlah', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'b.jumlah';
+            return $temp_column;
+        }
+
+
+
+
+        $data = DB::table('customer as a')
+
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+        if ($request->search) {
+            $data = $data->where('d.locationName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'd.locationName';
+            return $temp_column;
+        }
+
+
+
+
+        $data = DB::table('customer as a')
+
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+        if ($request->search) {
+            $data = $data->where('e.phoneNumber', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'e.phoneNumber';
+            return $temp_column;
+        }
+
+
+
+        $data = DB::table('customer as a')
+
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+
+        if ($request->search) {
+            $data = $data->where('e.type', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'e.type';
+            return $temp_column;
+        }
+
+
+        $data = DB::table('customer as a')
+
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+        if ($request->search) {
+            $data = $data->where('f.username', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'f.username';
+            return $temp_column;
+        }
+
+
+        $data = DB::table('customer as a')
+
+            ->leftjoin(
+                DB::raw('(
+                select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+                GROUP by customerId
+            ) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+
+        if ($request->search) {
+            $data = $data->where('a.createdBy', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.createdBy';
+            return $temp_column;
+        }
+
+
+        $data = DB::table('customer as a')
+
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+
+        if ($request->search) {
+            $data = $data->where('a.createdAt', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'a.createdAt';
+            return $temp_column;
+        }
+    }
+
+
     public function createCustomer(Request $request)
     {
 
@@ -136,7 +963,7 @@ class CustomerController extends Controller
                         'message' => $data_item_pet,
                     ], 422);
                 }
-            } 
+            }
 
 
             $data_reminder_booking = [];
@@ -1659,7 +2486,6 @@ class CustomerController extends Controller
                 ],
                 200
             );
-
         } catch (Exception $e) {
 
             DB::rollback();
