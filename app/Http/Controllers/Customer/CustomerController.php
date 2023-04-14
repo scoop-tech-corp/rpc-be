@@ -356,8 +356,7 @@ class CustomerController extends Controller
                 $data = $data->whereIn('a.locationid', $request->locationId);
             }
         }
-
-
+     
         if ($request->search) {
 
             $data = $data->where('firstName', 'like', '%' . $request->search . '%');
@@ -827,13 +826,13 @@ class CustomerController extends Controller
 
 
         if ($request->search) {
-            $data = $data->where('a.createdAt', 'like', '%' . $request->search . '%');
+            $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'a.createdAt';
+            $temp_column = 'a.created_at';
             return $temp_column;
         }
     }
