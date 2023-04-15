@@ -55,7 +55,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -63,7 +63,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([

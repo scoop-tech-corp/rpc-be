@@ -48,7 +48,7 @@ class CustomerController extends Controller
                 ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
                 ->select(
                     'a.id as id',
-                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                     DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                     'd.locationName as location',
                     'a.locationId as locationId',
@@ -56,7 +56,7 @@ class CustomerController extends Controller
                     DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                     'f.username as emailAddress',
                     'a.createdBy as createdBy',
-                    DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                    DB::raw('a.created_at as createdAt'),
                     'a.updated_at'
                 )
                 ->where([
@@ -88,13 +88,10 @@ class CustomerController extends Controller
             if ($request->search) {
 
                 $res = $this->Search($request);
-
+                    echo($res);
                 if ($res) {
 
-                    if ($res == "id") {
-
-                        $data = $data->where('id', 'like', '%' . $request->search . '%');
-                    } else if ($res == "a.firstName") {
+                    if ($res == "a.firstName") {
 
                         $data = $data->where('a.firstName', 'like', '%' . $request->search . '%');
                     } else if ($res == "b.jumlah") {
@@ -321,7 +318,7 @@ class CustomerController extends Controller
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -329,7 +326,7 @@ class CustomerController extends Controller
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
@@ -356,17 +353,17 @@ class CustomerController extends Controller
                 $data = $data->whereIn('a.locationid', $request->locationId);
             }
         }
-     
+
         if ($request->search) {
 
-            $data = $data->where('firstName', 'like', '%' . $request->search . '%');
+            $data = $data->where('a.firstName', 'like', '%' . $request->search . '%');
         }
 
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'firstName';
+            $temp_column = 'a.firstName';
             return $temp_column;
         }
 
@@ -388,7 +385,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -396,7 +393,7 @@ class CustomerController extends Controller
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
@@ -457,7 +454,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -465,7 +462,7 @@ class CustomerController extends Controller
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
@@ -525,7 +522,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -533,7 +530,7 @@ class CustomerController extends Controller
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
@@ -592,7 +589,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -600,7 +597,7 @@ class CustomerController extends Controller
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
@@ -658,7 +655,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -666,7 +663,7 @@ class CustomerController extends Controller
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
@@ -723,7 +720,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -731,7 +728,7 @@ class CustomerController extends Controller
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
@@ -789,7 +786,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -797,7 +794,7 @@ class CustomerController extends Controller
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
