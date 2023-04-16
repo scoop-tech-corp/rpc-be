@@ -20,12 +20,12 @@ class CustomerController extends Controller
     public function indexCustomer(Request $request)
     {
 
-        if (adminAccess($request->user()->id) != 1) {
-            return response()->json([
-                'result' => 'The user role was invalid.',
-                'message' => ['User Access not Authorize!'],
-            ], 403);
-        }
+        // if (adminAccess($request->user()->id) != 1) {
+        //     return response()->json([
+        //         'result' => 'The user role was invalid.',
+        //         'message' => ['User Access not Authorize!'],
+        //     ], 403);
+        // }
 
         try {
 
@@ -88,7 +88,7 @@ class CustomerController extends Controller
             if ($request->search) {
 
                 $res = $this->Search($request);
-                    
+
                 if ($res) {
 
                     if ($res == "a.firstName") {
