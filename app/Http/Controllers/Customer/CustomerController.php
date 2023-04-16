@@ -113,7 +113,6 @@ class CustomerController extends Controller
                     } else if ($res == "totalPet") {
 
                         $data = $data->where('totalPet', 'like', '%' . $request->search . '%');
-
                     } else if ($res == "location") {
 
                         $data = $data->where('location', 'like', '%' . $request->search . '%');
@@ -628,19 +627,19 @@ class CustomerController extends Controller
 
 
         $data = DB::table($data)
-        ->select(
-            'id',
-            'customerName',
-            'totalPet',
-            'location',
-            'locationId',
-            'phoneNumber',
-            'isWhatsapp',
-            'emailAddress',
-            'createdBy',
-            'createdAt',
-            'updated_at'
-        );
+            ->select(
+                'id',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
 
         if ($request->search) {
             $data = $data->where('phoneNumber', 'like', '%' . $request->search . '%');
@@ -708,19 +707,19 @@ class CustomerController extends Controller
         }
 
         $data = DB::table($data)
-        ->select(
-            'id',
-            'customerName',
-            'totalPet',
-            'location',
-            'locationId',
-            'phoneNumber',
-            'isWhatsapp',
-            'emailAddress',
-            'createdBy',
-            'createdAt',
-            'updated_at'
-        );
+            ->select(
+                'id',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
 
         if ($request->search) {
             $data = $data->where('isWhatsapp', 'like', '%' . $request->search . '%');
@@ -786,19 +785,19 @@ class CustomerController extends Controller
             }
         }
         $data = DB::table($data)
-        ->select(
-            'id',
-            'customerName',
-            'totalPet',
-            'location',
-            'locationId',
-            'phoneNumber',
-            'isWhatsapp',
-            'emailAddress',
-            'createdBy',
-            'createdAt',
-            'updated_at'
-        );
+            ->select(
+                'id',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
 
         if ($request->search) {
             $data = $data->where('emailAddress', 'like', '%' . $request->search . '%');
@@ -865,19 +864,19 @@ class CustomerController extends Controller
         }
 
         $data = DB::table($data)
-        ->select(
-            'id',
-            'customerName',
-            'totalPet',
-            'location',
-            'locationId',
-            'phoneNumber',
-            'isWhatsapp',
-            'emailAddress',
-            'createdBy',
-            'createdAt',
-            'updated_at'
-        );
+            ->select(
+                'id',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
 
         if ($request->search) {
             $data = $data->where('createdBy', 'like', '%' . $request->search . '%');
@@ -944,19 +943,19 @@ class CustomerController extends Controller
         }
 
         $data = DB::table($data)
-        ->select(
-            'id',
-            'customerName',
-            'totalPet',
-            'location',
-            'locationId',
-            'phoneNumber',
-            'isWhatsapp',
-            'emailAddress',
-            'createdBy',
-            'createdAt',
-            'updated_at'
-        );
+            ->select(
+                'id',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
 
         if ($request->search) {
             $data = $data->where('createdAt', 'like', '%' . $request->search . '%');
@@ -968,6 +967,8 @@ class CustomerController extends Controller
             $temp_column = 'createdAt';
             return $temp_column;
         }
+
+        return 'empty';
     }
 
 
