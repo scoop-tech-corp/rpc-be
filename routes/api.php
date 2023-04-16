@@ -12,6 +12,7 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Product\ProductSellController;
 use App\Http\Controllers\Product\TransferProductController;
+use App\Http\Controllers\Product\RestockController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GlobalVariableController;
@@ -136,6 +137,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/transfer/receive', [TransferProductController::class, 'receive']);
         Route::get('/transfer/detail', [TransferProductController::class, 'detail']);
         Route::get('/transfer/export', [TransferProductController::class, 'export']);
+
+        Route::post('/restock', [RestockController::class, 'create']);
 
         //product bundle
         Route::get('/bundle', [BundleController::class, 'index']);
