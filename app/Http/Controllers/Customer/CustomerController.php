@@ -84,6 +84,22 @@ class CustomerController extends Controller
             }
 
 
+            $data = DB::table($data)
+                ->select(
+                    'id',
+                    'customerName',
+                    'totalPet',
+                    'location',
+                    'phoneNumber',
+                    'isWhatsapp',
+                    'emailAddress',
+                    'createdBy',
+                    'createdAt',
+                    'updated_at'
+                );
+
+
+
 
             if ($request->search) {
 
@@ -91,30 +107,31 @@ class CustomerController extends Controller
 
                 if ($res) {
 
-                    if ($res == "a.firstName") {
+                    if ($res == "customerName") {
 
-                        $data = $data->where('a.firstName', 'like', '%' . $request->search . '%');
-                    } else if ($res == "b.jumlah") {
+                        $data = $data->where('customerName', 'like', '%' . $request->search . '%');
+                    } else if ($res == "totalPet") {
 
-                        $data = $data->where('b.jumlah', 'like', '%' . $request->search . '%');
-                    } else if ($res == "d.locationName") {
+                        $data = $data->where('totalPet', 'like', '%' . $request->search . '%');
 
-                        $data = $data->where('d.locationName', 'like', '%' . $request->search . '%');
-                    } else if ($res == "e.phoneNumber") {
+                    } else if ($res == "location") {
 
-                        $data = $data->where('e.phoneNumber', 'like', '%' . $request->search . '%');
-                    } else if ($res == "e.type") {
+                        $data = $data->where('location', 'like', '%' . $request->search . '%');
+                    } else if ($res == "phoneNumber") {
 
-                        $data = $data->where('e.type', 'like', '%' . $request->search . '%');
-                    } else if ($res == "f.username") {
+                        $data = $data->where('phoneNumber', 'like', '%' . $request->search . '%');
+                    } else if ($res == "isWhatsapp") {
 
-                        $data = $data->where('f.username', 'like', '%' . $request->search . '%');
-                    } else if ($res == "a.createdBy") {
+                        $data = $data->where('isWhatsapp', 'like', '%' . $request->search . '%');
+                    } else if ($res == "emailAddress") {
 
-                        $data = $data->where('a.createdBy', 'like', '%' . $request->search . '%');
-                    } else if ($res == "a.created_at") {
+                        $data = $data->where('emailAddress', 'like', '%' . $request->search . '%');
+                    } else if ($res == "createdBy") {
 
-                        $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+                        $data = $data->where('createdBy', 'like', '%' . $request->search . '%');
+                    } else if ($res == "createdAt") {
+
+                        $data = $data->where('createdAt', 'like', '%' . $request->search . '%');
                     } else {
 
                         $data = [];
@@ -354,16 +371,36 @@ class CustomerController extends Controller
             }
         }
 
+
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
+
+
+
+
         if ($request->search) {
 
-            $data = $data->where('a.firstName', 'like', '%' . $request->search . '%');
+            $data = $data->where('customerName', 'like', '%' . $request->search . '%');
         }
 
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'a.firstName';
+            $temp_column = 'customerName';
             return $temp_column;
         }
 
@@ -421,83 +458,33 @@ class CustomerController extends Controller
         }
 
 
-
-        if ($request->search) {
-            $data = $data->where('b.jumlah', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'b.jumlah';
-            return $temp_column;
-        }
-
-
-
-
-        $data = DB::table('customer as a')
-
-            ->leftjoin(
-                DB::raw('(
-					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
-					GROUP by customerId
-				) as b'),
-                function ($join) {
-                    $join->on('b.customerId', '=', 'a.id');
-                }
-            )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
-            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
-
+        $data = DB::table($data)
             ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
-                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
-                'd.locationName as location',
-                'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
-                'a.createdBy as createdBy',
-                DB::raw('a.created_at as createdAt'),
-                'a.updated_at'
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
-            ]);
+                'id',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
 
 
-        if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
-        }
 
 
         if ($request->search) {
-            $data = $data->where('d.locationName', 'like', '%' . $request->search . '%');
+            $data = $data->where('totalPet', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'd.locationName';
+            $temp_column = 'totalPet';
             return $temp_column;
         }
 
@@ -557,15 +544,112 @@ class CustomerController extends Controller
             }
         }
 
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
 
         if ($request->search) {
-            $data = $data->where('e.phoneNumber', 'like', '%' . $request->search . '%');
+            $data = $data->where('location', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'e.phoneNumber';
+            $temp_column = 'location';
+            return $temp_column;
+        }
+
+
+
+
+        $data = DB::table('customer as a')
+
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+
+            ->select(
+                'a.id as id',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                'f.username as emailAddress',
+                'a.createdBy as createdBy',
+                DB::raw('a.created_at as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.isDeleted', '=', '0'],
+                ['c.isPrimary', '=', '1'],
+                ['d.isDeleted', '=', '0'],
+                ['e.isDeleted', '=', '0'],
+                ['e.usage', '=', 'Utama'],
+                ['f.isDeleted', '=', '0'],
+                ['f.usage', '=', 'Utama'],
+            ]);
+
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+
+        $data = DB::table($data)
+        ->select(
+            'id',
+            'customerName',
+            'totalPet',
+            'location',
+            'locationId',
+            'phoneNumber',
+            'isWhatsapp',
+            'emailAddress',
+            'createdBy',
+            'createdAt',
+            'updated_at'
+        );
+
+        if ($request->search) {
+            $data = $data->where('phoneNumber', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'phoneNumber';
             return $temp_column;
         }
 
@@ -623,16 +707,29 @@ class CustomerController extends Controller
             }
         }
 
-
+        $data = DB::table($data)
+        ->select(
+            'id',
+            'customerName',
+            'totalPet',
+            'location',
+            'locationId',
+            'phoneNumber',
+            'isWhatsapp',
+            'emailAddress',
+            'createdBy',
+            'createdAt',
+            'updated_at'
+        );
 
         if ($request->search) {
-            $data = $data->where('e.type', 'like', '%' . $request->search . '%');
+            $data = $data->where('isWhatsapp', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'e.type';
+            $temp_column = 'isWhatsapp';
             return $temp_column;
         }
 
@@ -688,16 +785,29 @@ class CustomerController extends Controller
                 $data = $data->whereIn('a.locationid', $request->locationId);
             }
         }
-
+        $data = DB::table($data)
+        ->select(
+            'id',
+            'customerName',
+            'totalPet',
+            'location',
+            'locationId',
+            'phoneNumber',
+            'isWhatsapp',
+            'emailAddress',
+            'createdBy',
+            'createdAt',
+            'updated_at'
+        );
 
         if ($request->search) {
-            $data = $data->where('f.username', 'like', '%' . $request->search . '%');
+            $data = $data->where('emailAddress', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'f.username';
+            $temp_column = 'emailAddress';
             return $temp_column;
         }
 
@@ -754,16 +864,29 @@ class CustomerController extends Controller
             }
         }
 
-
+        $data = DB::table($data)
+        ->select(
+            'id',
+            'customerName',
+            'totalPet',
+            'location',
+            'locationId',
+            'phoneNumber',
+            'isWhatsapp',
+            'emailAddress',
+            'createdBy',
+            'createdAt',
+            'updated_at'
+        );
 
         if ($request->search) {
-            $data = $data->where('a.createdBy', 'like', '%' . $request->search . '%');
+            $data = $data->where('createdBy', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'a.createdBy';
+            $temp_column = 'createdBy';
             return $temp_column;
         }
 
@@ -820,16 +943,29 @@ class CustomerController extends Controller
             }
         }
 
-
+        $data = DB::table($data)
+        ->select(
+            'id',
+            'customerName',
+            'totalPet',
+            'location',
+            'locationId',
+            'phoneNumber',
+            'isWhatsapp',
+            'emailAddress',
+            'createdBy',
+            'createdAt',
+            'updated_at'
+        );
 
         if ($request->search) {
-            $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
+            $data = $data->where('createdAt', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'a.created_at';
+            $temp_column = 'createdAt';
             return $temp_column;
         }
     }
