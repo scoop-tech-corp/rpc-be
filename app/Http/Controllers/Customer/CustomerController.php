@@ -88,7 +88,7 @@ class CustomerController extends Controller
             if ($request->search) {
 
                 $res = $this->Search($request);
-                    echo($res);
+                    
                 if ($res) {
 
                     if ($res == "a.firstName") {
