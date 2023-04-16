@@ -70,6 +70,7 @@ class CustomerController extends Controller
                     ['f.usage', '=', 'Utama'],
                 ]);
 
+
             if ($request->locationId) {
 
                 $val = [];
@@ -81,7 +82,6 @@ class CustomerController extends Controller
                     $data = $data->whereIn('a.locationid', $request->locationId);
                 }
             }
-
 
 
 

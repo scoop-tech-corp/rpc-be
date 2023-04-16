@@ -10,8 +10,10 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
+class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping, WithColumnFormatting
 {
     use Exportable;
 
@@ -59,7 +61,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                DB::raw("CONCAT(' ', e.phoneNumber, ' ') as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                 'f.username as emailAddress',
                 'a.createdBy as createdBy',
@@ -194,9 +196,19 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
         return 'Customer';
     }
 
+    public function columnFormats(): array
+    {
+  
+        return [
+            'E' => NumberFormat::FORMAT_TEXT,
+        ];
+
+       
+    }
+
     public function map($item): array
     {
-
+        
         $res = [
             [
                 $item->number,
