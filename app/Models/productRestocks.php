@@ -13,5 +13,8 @@ class productRestocks extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['userId', 'userUpdateId'];
+    protected $fillable = ['purchaseRequestNumber','purchaseOrderNumber','status',
+    'userIdOffice','isApprovedOffice','reasonOffice','officeApprovedAt',
+    'isAdminApproval','userIdAdmin','isApprovedAdmin','reasonAdmin','adminApprovedAt',
+    'userId', 'userUpdateId'];
 }
