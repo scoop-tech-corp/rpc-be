@@ -16,9 +16,26 @@ return new class extends Migration
         Schema::create('productRestocks', function (Blueprint $table) {
             $table->id();
 
-            $table->boolean('isDeleted')->nullable()->default(false);
+            $table->string('purchaseRequestNumber')->nullable();
+            $table->string('purchaseOrderNumber')->nullable();
+
+            $table->string('status')->nullable();
+
+            $table->integer('userIdOffice')->nullable();
+            $table->integer('isApprovedOffice')->nullable()->default(0);
+            $table->string('reasonOffice')->nullable();
+            $table->timestamp('officeApprovedAt', 0)->nullable();
+
+            $table->boolean('isAdminApproval');
+
+            $table->integer('userIdAdmin')->nullable();
+            $table->integer('isApprovedAdmin')->nullable()->default(0);
+            $table->string('reasonAdmin')->nullable();
+            $table->timestamp('adminApprovedAt', 0)->nullable();
+
             $table->integer('userId');
             $table->integer('userUpdateId')->nullable();
+            $table->boolean('isDeleted')->nullable()->default(false);
             $table->string('deletedBy')->nullable();
             $table->timestamp('deletedAt', 0)->nullable();
             $table->timestamps();

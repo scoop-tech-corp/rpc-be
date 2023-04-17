@@ -4,13 +4,16 @@ namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProductClinic;
+use App\Models\ProductClinicLocation;
 use App\Models\productRestockDetails;
 use App\Models\productRestockImages;
 use App\Models\productRestocks;
 use App\Models\ProductSell;
+use App\Models\ProductSellLocation;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx\Rels;
 use Validator;
+use Carbon\Carbon;
 
 class RestockController extends Controller
 {
@@ -40,6 +43,7 @@ class RestockController extends Controller
         }
 
         $prodType = "";
+        $checkAdminApproval = false;
 
         if ($request->productType == 'productSell') {
 
@@ -53,6 +57,8 @@ class RestockController extends Controller
                     'errors' => ['Product does not exist!'],
                 ], 422);
             }
+
+            $stockProd = ProductSellLocation::where('productSellId', '=', $request->productId)->first();
         } else {
             $prodType = "Product Clinic";
 
@@ -64,10 +70,32 @@ class RestockController extends Controller
                     'errors' => ['Product does not exist!'],
                 ], 422);
             }
+
+            $stockProd = ProductClinicLocation::where('productClinicId', '=', $request->productId)->first();
+        }
+
+        $findData = productRestocks::whereDate('created_at', Carbon::today())->count();
+
+        $number = "";
+
+        if ($findData == 0) {
+            $number = Carbon::today();
+            $number = 'RPC-PR-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+        } else {
+            $number = Carbon::today();
+            $number = 'RPC-PR-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+        }
+
+        if ($stockProd->diffStock > 0) {
+            $checkAdminApproval = true;
         }
 
         $prodRstk = productRestocks::create([
+            'purchaseRequestNumber' => $number,
+            'status' => 0,
+            'isAdminApproval' => $checkAdminApproval,
             'userId' => $request->user()->id,
+            //status 0 = waiting for approval, status 1 = approved, status 2 = reject, status 3 = product has arrive
         ]);
 
         productRestockDetails::create([
