@@ -77,7 +77,7 @@ class RestockController extends Controller
         if ($stockProd->reStockLimit < $request->reStockQuantity) {
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['Restock Quantity cannot greater than Restock Limit!'],
+                'errors' => ['Restock Quantity can not be greater than Restock Limit!'],
             ], 422);
         }
 
