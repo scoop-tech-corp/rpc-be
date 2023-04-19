@@ -74,6 +74,13 @@ class RestockController extends Controller
             $stockProd = ProductClinicLocation::where('productClinicId', '=', $request->productId)->first();
         }
 
+        if ($stockProd->reStockLimit < $request->reStockQuantity) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Restock Quantity cannot greater than Restock Limit!'],
+            ], 422);
+        }
+
         $findData = productRestocks::whereDate('created_at', Carbon::today())->count();
 
         $number = "";
