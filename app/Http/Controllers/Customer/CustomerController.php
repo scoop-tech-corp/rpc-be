@@ -5,7 +5,20 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\CustomerGroups;
+use App\Models\Customer\CustomerImages;
+use App\Models\Customer\CustomerMessengers;
+use App\Models\Customer\CustomerTelephones;
+use App\Models\Customer\CustomerEmails;
+use App\Models\Customer\CustomerAddresses;
+use App\Models\Customer\CustomerReminder;
+use App\Models\Customer\CustomerPets;
+use App\Models\Customer\Customer;
+use App\Models\Customer\TitleCustomer;
+use App\Models\Customer\CustomerOccupation;
+use App\Models\Customer\ReferenceCustomer;
+use App\Models\Customer\SourceCustomer;
 use App\Exports\Customer\exportCustomer;
+use App\Models\Customer\PetCategory;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Validator;
@@ -19,13 +32,6 @@ class CustomerController extends Controller
 
     public function indexCustomer(Request $request)
     {
-
-        // if (adminAccess($request->user()->id) != 1) {
-        //     return response()->json([
-        //         'result' => 'The user role was invalid.',
-        //         'message' => ['User Access not Authorize!'],
-        //     ], 403);
-        // }
 
         try {
 
@@ -98,9 +104,6 @@ class CustomerController extends Controller
                     'updated_at'
                 );
 
-
-
-
             if ($request->search) {
 
                 $res = $this->Search($request);
@@ -143,8 +146,6 @@ class CustomerController extends Controller
             }
 
 
-
-
             if ($request->orderValue) {
 
                 $defaultOrderBy = $request->orderValue;
@@ -184,8 +185,6 @@ class CustomerController extends Controller
 
                 $checkOrder = true;
             }
-
-
 
 
             if ($checkOrder) {
@@ -262,7 +261,7 @@ class CustomerController extends Controller
         $rolesIndex = roleStaffLeave($request->user()->id);
 
         try {
-            //  admin sama office
+
             if ($rolesIndex == 1 || $rolesIndex == 6) {
 
                 if ($request->locationId) {
@@ -486,8 +485,6 @@ class CustomerController extends Controller
             $temp_column = 'totalPet';
             return $temp_column;
         }
-
-
 
 
         $data = DB::table('customer as a')
@@ -1004,8 +1001,8 @@ class CustomerController extends Controller
                     'occupationId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
                     'referenceCustomerId' => 'required|integer',
-                    'generalCustomerCanConfigReminderBooking' => 'integer|nullable',
-                    'generalCustomerCanConfigReminderPayment' => 'integer|nullable',
+                    'isReminderBooking' => 'integer|nullable',
+                    'isReminderPayment' => 'integer|nullable',
 
                 ]
             );
@@ -1021,6 +1018,7 @@ class CustomerController extends Controller
 
 
             $data_item_pet = [];
+            $inputUnitReal = [];
 
             if ($request->customerPets) {
 
@@ -1037,7 +1035,15 @@ class CustomerController extends Controller
                 ];
 
 
-                foreach ($arrayCustomerPet as $key) {
+
+                foreach ($arrayCustomerPet as $val) {
+
+                    if ($val['command'] != "del") {
+                        array_push($inputUnitReal, $val);
+                    }
+                }
+
+                foreach ($inputUnitReal as $key) {
 
                     $validateDetail = Validator::make(
                         $key,
@@ -1049,33 +1055,21 @@ class CustomerController extends Controller
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
                             'color' => 'required|string|max:100',
+                            'dateOfBirth' => 'required_without_all:petMonth,petYear',
+                            'petMonth' => 'required_without_all:dateOfBirth,petYear',
+                            'petYear' => 'required_without_all:dateOfBirth,petMonth',
+
                         ],
                         $messageCustomerPet
                     );
 
 
-
-                    if ($key['petAge'] == ""  ||  $key['petAge'] == "0") {
-
-                        if ($key['dateOfBirth'] == "") {
-                            return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => "Please check again, Pet must have Age",
-                            ], 422);
-                        }
+                    if (!($key['dateOfBirth'] === "") && (!($key['petMonth'] === "") or !($key['petYear'] === ""))) {
+                        return response()->json([
+                            'result' => 'Inputed data is not valid',
+                            'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
+                        ], 422);
                     }
-
-
-                    if ($key['dateOfBirth'] == "") {
-
-                        if ($key['petAge'] == ""  ||  $key['petAge'] == "0") {
-                            return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => "Please check again, Pet must have Age",
-                            ], 422);
-                        }
-                    }
-
 
                     if ($validateDetail->fails()) {
 
@@ -1106,11 +1100,10 @@ class CustomerController extends Controller
                 $arrayReminderBooking = json_decode($request->reminderBooking, true);
 
                 $messageReminderBooking = [
-                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
+                    'sourceId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
-                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
-                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
-                    'notes.required' => 'Notes Reminder Booking is required',
+                    'timing.required' => 'Timing on tab Reminder and on Reminder Booking is required',
+                    'status.required' => 'Status Reminder Booking is required',
                 ];
 
 
@@ -1119,22 +1112,14 @@ class CustomerController extends Controller
                     $validateReminderBooking = Validator::make(
                         $key,
                         [
-                            'sourceCustomerId' => 'required|integer',
+                            'sourceId' => 'required|integer',
                             'unit' => 'required|integer',
-                            'time' => 'required',
-                            'timeDate' => 'required',
-                            'notes' => 'required',
+                            'timing' => 'required',
+                            'status' => 'required',
                         ],
                         $messageReminderBooking
                     );
 
-
-                    if (!($key['notes'] === "sebelum memulai")) {
-                        return response()->json([
-                            'result' => 'Inputed data is not valid',
-                            'message' => 'Please check your notes for reminder booking, notes reminder booking must be sebelum memulai',
-                        ], 422);
-                    }
 
                     if ($validateReminderBooking->fails()) {
 
@@ -1166,12 +1151,12 @@ class CustomerController extends Controller
                 $arrayReminderPayment = json_decode($request->reminderPayment, true);
 
                 $messageReminderPayment = [
-                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
-                    'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
-                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
-                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
-                    'notes.required' => 'Notes Reminder Payment is required',
+                    'sourceId.required' => 'Source on tab Reminder and on Reminder Payment is required',
+                    'unit.required' => 'Unit on tab Reminder and on Reminder Payment is required',
+                    'timing.required' => 'Timing on tab Reminder and on Reminder Payment is required',
+                    'status.required' => 'Status Reminder Payment is required',
                 ];
+
 
 
                 foreach ($arrayReminderPayment as $key) {
@@ -1179,22 +1164,13 @@ class CustomerController extends Controller
                     $validateReminderPayment = Validator::make(
                         $key,
                         [
-                            'sourceCustomerId' => 'required|integer',
+                            'sourceId' => 'required|integer',
                             'unit' => 'required|integer',
-                            'time' => 'required',
-                            'timeDate' => 'required',
-                            'notes' => 'required',
+                            'timing' => 'required',
+                            'status' => 'required',
                         ],
                         $messageReminderPayment
                     );
-
-                    if (!($key['notes'] === "sebelum jatuh tempo")) {
-                        return response()->json([
-                            'result' => 'Inputed data is not valid',
-                            'message' => 'Please check your notes for reminder payment, notes reminder payment must be sebelum jatuh tempo',
-                        ], 422);
-                    }
-
 
                     if ($validateReminderPayment->fails()) {
 
@@ -1225,11 +1201,10 @@ class CustomerController extends Controller
                 $reminderLatePayment = json_decode($request->reminderLatePayment, true);
 
                 $messageReminderLatePayment = [
-                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
-                    'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
-                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
-                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
-                    'notes.required' => 'Notes Reminder Late Payment is required',
+                    'sourceId.required' => 'Source on tab Reminder and on Reminder Late Payment is required',
+                    'unit.required' => 'Unit on tab Reminder and on Reminder Late Payment is required',
+                    'timing.required' => 'Time Date on tab Reminder and on Reminder Late Payment is required',
+                    'status.required' => 'Status Reminder Late Payment is required',
                 ];
 
 
@@ -1238,21 +1213,13 @@ class CustomerController extends Controller
                     $validateReminderLatePayment = Validator::make(
                         $key,
                         [
-                            'sourceCustomerId' => 'required|integer',
+                            'sourceId' => 'required|integer',
                             'unit' => 'required|integer',
-                            'time' => 'required',
-                            'timeDate' => 'required',
-                            'notes' => 'required',
+                            'timing' => 'required',
+                            'status' => 'required',
                         ],
                         $messageReminderLatePayment
                     );
-
-                    if (!($key['notes'] === "setelah jatuh tempo")) {
-                        return response()->json([
-                            'result' => 'Inputed data is not valid',
-                            'message' => 'Please check your notes for reminder late payment, notes reminder late payment must be setelah jatuh tempo',
-                        ], 422);
-                    }
 
                     if ($validateReminderLatePayment->fails()) {
 
@@ -1276,12 +1243,30 @@ class CustomerController extends Controller
             }
 
 
-
             $data_item = [];
 
             if ($request->detailAddresses) {
 
                 $arrayDetailAddress = json_decode($request->detailAddresses, true);
+
+                $primaryCount = 0;
+                foreach ($arrayDetailAddress as $item) {
+                    if (isset($item['isPrimary']) && $item['isPrimary'] == 1) {
+                        $primaryCount++;
+                    }
+                }
+
+                if ($primaryCount == 0) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Detail address must have at least 1 primary address',
+                    ], 422);
+                } elseif ($primaryCount > 1) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Detail address have 2 primary address, please check again',
+                    ], 422);
+                }
 
                 $messageAddress = [
                     'addressName.required' => 'Address name on tab Address is required',
@@ -1289,7 +1274,6 @@ class CustomerController extends Controller
                     'cityCode.required' => 'City code on tab Address is required',
                     'country.required' => 'Country on tab Address is required',
                 ];
-
 
                 foreach ($arrayDetailAddress as $key) {
 
@@ -1321,17 +1305,18 @@ class CustomerController extends Controller
 
                 if ($data_item) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_item,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_item,
                     ], 422);
                 }
             } else {
 
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Detail address can not be empty!'],
+                    'result' => 'The given data was invalid.',
+                    'message' => ['Detail address can not be empty!'],
                 ], 422);
             }
+
 
 
             $data_error_telephone = [];
@@ -1550,112 +1535,107 @@ class CustomerController extends Controller
                 }
             }
 
-            // INSERT
+            // // INSERT
 
-            $lastInsertedID = DB::table('customer')
-                ->insertGetId([
-                    'firstName' => $request->firstName,
-                    'middleName' => $request->middleName,
-                    'lastName' => $request->lastName,
-                    'nickName' => $request->nickName,
-                    'gender' => $request->gender,
-                    'titleCustomerId' => $request->titleCustomerId,
-                    'customerGroupId' => $request->customerGroupId,
-                    'locationId' => $request->locationId,
-                    'notes' => $request->notes,
-                    'joinDate' => $request->joinDate,
-                    'typeId' => $request->typeId,
-                    'numberId' => $request->numberId,
-                    'occupationId' => $request->occupationId,
-                    'birthDate' => $request->birthDate,
-                    'referenceCustomerId' => $request->referenceCustomerId,
-                    'generalCustomerCanConfigReminderBooking' => $request->generalCustomerCanConfigReminderBooking,
-                    'generalCustomerCanConfigReminderPayment' => $request->generalCustomerCanConfigReminderPayment,
-                    'isDeleted' => 0,
-                    'createdBy' => $request->user()->firstName,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+            $customer = new Customer();
+            $customer->firstName =  $request->firstName;
+            $customer->middleName = $request->middleName;
+            $customer->lastName = $request->lastName;
+            $customer->nickName = $request->nickName;
+            $customer->gender = $request->gender;
+            $customer->titleCustomerId =  $request->titleCustomerId;
+            $customer->customerGroupId = $request->customerGroupId;
+            $customer->locationId = $request->locationId;
+            $customer->notes =  $request->notes;
+            $customer->joinDate = $request->joinDate;
+            $customer->typeId =  $request->typeId;
+            $customer->numberId =  $request->numberId;
+            $customer->occupationId =  $request->occupationId;
+            $customer->birthDate =  $request->birthDate;
+            $customer->referenceCustomerId =  $request->referenceCustomerId;
+            $customer->isReminderBooking =  $request->isReminderBooking;
+            $customer->isReminderPayment =  $request->isReminderPayment;
+            $customer->isDeleted = 0;
+            $customer->createdBy = $request->user()->firstName;
+            $customer->save();
 
-                ]);
-
-
+            $lastInsertedID = $customer->id;
 
 
             if ($request->customerPets) {
 
-                foreach ($arrayCustomerPet as $val) {
+                foreach ($inputUnitReal as $val) {
 
+                    $valueDate = null;
+                    $valueMonth = null;
+                    $valueYear = null;
 
-                    $dateOfBirth = Carbon::parse($val['dateOfBirth']);
-                    $age = 0;
-                    $month = 0;
-
-                    if ($val['petAge'] === "" || $val['petAge'] === 0) {
-
-                        $age = $dateOfBirth->diffInYears(Carbon::now());
-                        $month = $dateOfBirth->diffInMonths(Carbon::now());
+                    if ($val['dateOfBirth'] == "") {
+                        $valueDate = null;
                     } else {
-
-                        $age = $val['petAge'];
+                        $valueDate = $val['dateOfBirth'];
                     }
 
-                    DB::table('customerPets')
-                        ->insert([
-                            'customerId' => $lastInsertedID,
-                            'petName' => $val['petName'],
-                            'petCategoryId' => $val['petCategoryId'],
-                            'races' => $val['races'],
-                            'condition' => $val['condition'],
-                            'color' => $val['color'],
-                            'petAge' => $age,
-                            'petAgeMonth' => $month,
-                            'dateOfBirth' => $val['dateOfBirth'],
-                            'petGender' => $val['petGender'],
-                            'isSteril' => $val['isSteril'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    if ($val['petMonth'] == "") {
+                        $valueMonth = null;
+                    } else {
+                        $valueMonth = $val['petMonth'];
+                    }
+
+                    if ($val['petYear'] == "") {
+                        $valueYear = null;
+                    } else {
+                        $valueYear = $val['petYear'];
+                    }
+
+                    $customerPets = new CustomerPets();
+                    $customerPets->customerId =  $lastInsertedID;
+                    $customerPets->petName = $val['petName'];
+                    $customerPets->petCategoryId = $val['petCategoryId'];
+                    $customerPets->races = $val['races'];
+                    $customerPets->condition = $val['condition'];
+                    $customerPets->color = $val['color'];
+                    $customerPets->petMonth = $valueMonth;
+                    $customerPets->petYear = $valueYear;
+                    $customerPets->dateOfBirth = $valueDate;
+                    $customerPets->petGender = $val['petGender'];
+                    $customerPets->isSteril = $val['isSteril'];
+                    $customerPets->save();
                 }
             }
+
 
             if ($request->reminderBooking) {
 
                 foreach ($arrayReminderBooking as $val) {
 
-                    DB::table('customerReminders')
-                        ->insert([
-                            'customerId' => $lastInsertedID,
-                            'sourceCustomerId' => $val['sourceCustomerId'],
-                            'unit' => $val['unit'],
-                            'time' => $val['time'],
-                            'timeDate' => $val['timeDate'],
-                            'type' => 'B',
-                            'notes' => $val['notes'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerReminder = new CustomerReminder();
+                    $customerReminder->customerId =  $lastInsertedID;
+                    $customerReminder->sourceId = $val['sourceId'];
+                    $customerReminder->unit = $val['unit'];
+                    $customerReminder->timing = $val['timing'];
+                    $customerReminder->status = $val['status'];
+                    $customerReminder->type = 'B';
+                    $customerReminder->isDeleted = 0;
+                    $customerReminder->save();
                 }
             }
+
+
 
             if ($request->reminderPayment) {
 
                 foreach ($arrayReminderPayment as $val) {
 
-                    DB::table('customerReminders')
-                        ->insert([
-                            'customerId' => $lastInsertedID,
-                            'sourceCustomerId' => $val['sourceCustomerId'],
-                            'unit' => $val['unit'],
-                            'time' => $val['time'],
-                            'timeDate' => $val['timeDate'],
-                            'type' => 'P',
-                            'notes' => $val['notes'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerReminderPayment = new CustomerReminder();
+                    $customerReminderPayment->customerId =  $lastInsertedID;
+                    $customerReminderPayment->sourceId = $val['sourceId'];
+                    $customerReminderPayment->unit = $val['unit'];
+                    $customerReminderPayment->timing = $val['timing'];
+                    $customerReminderPayment->status = $val['status'];
+                    $customerReminderPayment->type = 'P';
+                    $customerReminderPayment->isDeleted = 0;
+                    $customerReminderPayment->save();
                 }
             }
 
@@ -1664,19 +1644,15 @@ class CustomerController extends Controller
 
                 foreach ($reminderLatePayment as $val) {
 
-                    DB::table('customerReminders')
-                        ->insert([
-                            'customerId' => $lastInsertedID,
-                            'sourceCustomerId' => $val['sourceCustomerId'],
-                            'unit' => $val['unit'],
-                            'time' => $val['time'],
-                            'timeDate' => $val['timeDate'],
-                            'type' => 'LP',
-                            'notes' => $val['notes'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerReminderLatePayment = new CustomerReminder();
+                    $customerReminderLatePayment->customerId =  $lastInsertedID;
+                    $customerReminderLatePayment->sourceId = $val['sourceId'];
+                    $customerReminderLatePayment->unit = $val['unit'];
+                    $customerReminderLatePayment->timing = $val['timing'];
+                    $customerReminderLatePayment->status = $val['status'];
+                    $customerReminderLatePayment->type = 'LP';
+                    $customerReminderLatePayment->isDeleted = 0;
+                    $customerReminderLatePayment->save();
                 }
             }
 
@@ -1685,20 +1661,17 @@ class CustomerController extends Controller
 
                 foreach ($arrayDetailAddress as $val) {
 
-                    DB::table('customerAddresses')
-                        ->insert([
-                            'customerId' => $lastInsertedID,
-                            'addressName' => $val['addressName'],
-                            'additionalInfo' => $val['additionalInfo'],
-                            'provinceCode' => $val['provinceCode'],
-                            'cityCode' => $val['cityCode'],
-                            'postalCode' => $val['postalCode'],
-                            'country' => $val['country'],
-                            'isPrimary' => $val['isPrimary'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerAddresses = new CustomerAddresses();
+                    $customerAddresses->customerId =  $lastInsertedID;
+                    $customerAddresses->addressName =  $val['addressName'];
+                    $customerAddresses->additionalInfo =  $val['additionalInfo'];
+                    $customerAddresses->provinceCode =  $val['provinceCode'];
+                    $customerAddresses->cityCode =  $val['cityCode'];
+                    $customerAddresses->postalCode =  $val['postalCode'];
+                    $customerAddresses->country =  $val['country'];
+                    $customerAddresses->isPrimary =   $val['isPrimary'];
+                    $customerAddresses->isDeleted =  0;
+                    $customerAddresses->save();
                 }
             }
 
@@ -1706,16 +1679,13 @@ class CustomerController extends Controller
 
                 foreach ($arraytelephone as $val) {
 
-                    DB::table('customerTelephones')
-                        ->insert([
-                            'customerId' => $lastInsertedID,
-                            'phoneNumber' => $val['phoneNumber'],
-                            'type' => $val['type'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerTelephones = new CustomerTelephones();
+                    $customerTelephones->customerId =  $lastInsertedID;
+                    $customerTelephones->phoneNumber =  $val['phoneNumber'];
+                    $customerTelephones->type =  $val['type'];
+                    $customerTelephones->usage =  $val['usage'];
+                    $customerTelephones->isDeleted =  0;
+                    $customerTelephones->save();
                 }
             }
 
@@ -1725,32 +1695,27 @@ class CustomerController extends Controller
 
                 foreach ($arrayemail as $val) {
 
-                    DB::table('customerEmails')
-                        ->insert([
-                            'customerId' => $lastInsertedID,
-                            'username' => $val['username'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerEmails = new CustomerEmails();
+                    $customerEmails->customerId =  $lastInsertedID;
+                    $customerEmails->username =  $val['username'];
+                    $customerEmails->usage =  $val['usage'];
+                    $customerEmails->isDeleted =  0;
+                    $customerEmails->save();
                 }
             }
+
 
             if ($request->messengers) {
 
                 foreach ($arraymessenger as $val) {
 
-                    DB::table('customerMessengers')
-                        ->insert([
-                            'customerId' => $lastInsertedID,
-                            'messengerNumber' => $val['messengerNumber'],
-                            'type' => $val['type'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerMessengers = new CustomerMessengers();
+                    $customerMessengers->customerId =  $lastInsertedID;
+                    $customerMessengers->messengerNumber =  $val['messengerNumber'];
+                    $customerMessengers->type =  $val['type'];
+                    $customerMessengers->usage =  $val['usage'];
+                    $customerMessengers->isDeleted =  0;
+                    $customerMessengers->save();
                 }
             }
 
@@ -1770,17 +1735,14 @@ class CustomerController extends Controller
 
                             $fileName = "/CustomerImages/" . $name;
 
-                            DB::table('customerImages')
-                                ->insert([
-                                    'customerId' => $lastInsertedID,
-                                    'labelName' => $json_array[$int]['name'],
-                                    'realImageName' => $fil->getClientOriginalName(),
-                                    'imageName' => $name,
-                                    'imagePath' => $fileName,
-                                    'isDeleted' => 0,
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
+                            $customerImages = new CustomerImages();
+                            $customerImages->customerId =  $lastInsertedID;
+                            $customerImages->labelName =  $json_array[$int]['name'];
+                            $customerImages->realImageName =  $fil->getClientOriginalName();
+                            $customerImages->imageName =  $name;
+                            $customerImages->imagePath =  $fileName;
+                            $customerImages->isDeleted =  0;
+                            $customerImages->save();
 
                             $int = $int + 1;
                         }
@@ -1809,7 +1771,6 @@ class CustomerController extends Controller
     }
 
 
-
     public function updateCustomer(Request $request)
     {
 
@@ -1823,6 +1784,8 @@ class CustomerController extends Controller
         DB::beginTransaction();
 
         try {
+
+
 
             $validate = Validator::make(
                 $request->all(),
@@ -1842,8 +1805,8 @@ class CustomerController extends Controller
                     'occupationId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
                     'referenceCustomerId' => 'required|integer',
-                    'generalCustomerCanConfigReminderBooking' => 'integer|nullable',
-                    'generalCustomerCanConfigReminderPayment' => 'integer|nullable',
+                    'isReminderBooking' => 'integer|nullable',
+                    'isReminderPayment' => 'integer|nullable',
 
                 ]
             );
@@ -1858,10 +1821,11 @@ class CustomerController extends Controller
             }
 
 
+
             $data_item_pet = [];
+            $inputUnitReal = [];
 
             if ($request->customerPets) {
-
 
                 $messageCustomerPet = [
                     'petName.required' => 'Pet name on tab Customer Pet is required',
@@ -1873,7 +1837,7 @@ class CustomerController extends Controller
                     'color.required' => 'Pet Color  on tab Cutomer Pet is required',
                 ];
 
-
+             
                 foreach ($request->customerPets as $key) {
 
                     $validateDetail = Validator::make(
@@ -1886,33 +1850,14 @@ class CustomerController extends Controller
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
                             'color' => 'required|string|max:100',
+                            'dateOfBirth' => 'required_without_all:petMonth,petYear',
+                            'petMonth' => 'required_without_all:dateOfBirth,petYear',
+                            'petYear' => 'required_without_all:dateOfBirth,petMonth',
                         ],
                         $messageCustomerPet
                     );
 
-
-
-                    if ($key['petAge'] == ""  ||  $key['petAge'] == "0") {
-
-                        if ($key['dateOfBirth'] == "") {
-                            return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => "Please check again, Pet must have Age",
-                            ], 422);
-                        }
-                    }
-
-
-                    if ($key['dateOfBirth'] == "") {
-
-                        if ($key['petAge'] == ""  ||  $key['petAge'] == "0") {
-                            return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => "Please check again, Pet must have Age",
-                            ], 422);
-                        }
-                    }
-
+            
 
                     if ($validateDetail->fails()) {
 
@@ -1936,17 +1881,17 @@ class CustomerController extends Controller
             }
 
 
+
             $data_reminder_booking = [];
 
             if ($request->reminderBooking) {
 
 
                 $messageReminderBooking = [
-                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
+                    'sourceId.required' => 'Source on tab Reminder and on Reminder Booking is required',
                     'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
-                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
-                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
-                    'notes.required' => 'Notes Reminder Booking is required',
+                    'timing.required' => 'Timing on tab Reminder and on Reminder Booking is required',
+                    'status.required' => 'Status Reminder Booking is required',
                 ];
 
 
@@ -1955,22 +1900,14 @@ class CustomerController extends Controller
                     $validateReminderBooking = Validator::make(
                         $key,
                         [
-                            'sourceCustomerId' => 'required|integer',
+                            'sourceId' => 'required|integer',
                             'unit' => 'required|integer',
-                            'time' => 'required',
-                            'timeDate' => 'required',
-                            'notes' => 'required',
+                            'timing' => 'required',
+                            'status' => 'required',
                         ],
                         $messageReminderBooking
                     );
 
-
-                    if (!($key['notes'] === "sebelum memulai")) {
-                        return response()->json([
-                            'result' => 'Inputed data is not valid',
-                            'message' => 'Please check your notes for reminder booking, notes reminder booking must be sebelum memulai',
-                        ], 422);
-                    }
 
                     if ($validateReminderBooking->fails()) {
 
@@ -1993,18 +1930,15 @@ class CustomerController extends Controller
                 }
             }
 
-
-
             $data_reminder_payment = [];
 
             if ($request->reminderPayment) {
 
                 $messageReminderPayment = [
-                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
-                    'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
-                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
-                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
-                    'notes.required' => 'Notes Reminder Payment is required',
+                    'sourceId.required' => 'Source on tab Reminder and on Reminder Payment is required',
+                    'unit.required' => 'Unit on tab Reminder and on Reminder Payment is required',
+                    'timing.required' => 'Timing on tab Reminder and on Reminder Payment is required',
+                    'status.required' => 'Status Reminder Payment is required',
                 ];
 
 
@@ -2013,21 +1947,14 @@ class CustomerController extends Controller
                     $validateReminderPayment = Validator::make(
                         $key,
                         [
-                            'sourceCustomerId' => 'required|integer',
+                            'sourceId' => 'required|integer',
                             'unit' => 'required|integer',
-                            'time' => 'required',
-                            'timeDate' => 'required',
-                            'notes' => 'required',
+                            'timing' => 'required',
+                            'status' => 'required',
                         ],
                         $messageReminderPayment
                     );
 
-                    if (!($key['notes'] === "sebelum jatuh tempo")) {
-                        return response()->json([
-                            'result' => 'Inputed data is not valid',
-                            'message' => 'Please check your notes for reminder payment, notes reminder payment must be sebelum jatuh tempo',
-                        ], 422);
-                    }
 
 
                     if ($validateReminderPayment->fails()) {
@@ -2057,11 +1984,10 @@ class CustomerController extends Controller
             if ($request->reminderLatePayment) {
 
                 $messageReminderLatePayment = [
-                    'sourceCustomerId.required' => 'Source on tab Reminder and on Reminder Booking is required',
-                    'unit.required' => 'Unit on tab Reminder and on Reminder Booking is required',
-                    'time.required' => 'Time on tab Reminder and on Reminder Booking is required',
-                    'timeDate.required' => 'Time Date on tab Reminder and on Reminder Booking is required',
-                    'notes.required' => 'Notes Reminder Late Payment is required',
+                    'sourceId.required' => 'Source on tab Reminder and on Reminder Late Payment is required',
+                    'unit.required' => 'Unit on tab Reminder and on Reminder Late Payment is required',
+                    'timing.required' => 'Time Date on tab Reminder and on Reminder Late Payment is required',
+                    'status.required' => 'Status Reminder Late Payment is required',
                 ];
 
 
@@ -2070,21 +1996,14 @@ class CustomerController extends Controller
                     $validateReminderLatePayment = Validator::make(
                         $key,
                         [
-                            'sourceCustomerId' => 'required|integer',
+                            'sourceId' => 'required|integer',
                             'unit' => 'required|integer',
-                            'time' => 'required',
-                            'timeDate' => 'required',
-                            'notes' => 'required',
+                            'timing' => 'required',
+                            'status' => 'required',
                         ],
                         $messageReminderLatePayment
                     );
 
-                    if (!($key['notes'] === "setelah jatuh tempo")) {
-                        return response()->json([
-                            'result' => 'Inputed data is not valid',
-                            'message' => 'Please check your notes for reminder late payment, notes reminder late payment must be setelah jatuh tempo',
-                        ], 422);
-                    }
 
                     if ($validateReminderLatePayment->fails()) {
 
@@ -2122,6 +2041,25 @@ class CustomerController extends Controller
                 ];
 
 
+                $primaryCount = 0;
+                foreach ($request->detailAddresses as $item) {
+                    if (isset($item['isPrimary']) && $item['isPrimary'] == 1) {
+                        $primaryCount++;
+                    }
+                }
+
+                if ($primaryCount == 0) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Detail address must have at least 1 primary address',
+                    ], 422);
+                } elseif ($primaryCount > 1) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Detail address have 2 primary address, please check again',
+                    ], 422);
+                }
+
                 foreach ($request->detailAddresses as $key) {
 
                     $validateDetail = Validator::make(
@@ -2152,15 +2090,16 @@ class CustomerController extends Controller
 
                 if ($data_item) {
                     return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_item,
+                        'result' => 'Inputed data is not valid',
+                        'message' => $data_item,
                     ], 422);
                 }
             } else {
 
+
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Detail address can not be empty!'],
+                    'result' => 'The given data was invalid.',
+                    'message' => ['Detail address can not be empty!'],
                 ], 422);
             }
 
@@ -2258,8 +2197,8 @@ class CustomerController extends Controller
 
                 if ($data_error_email) {
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_email,
+                        'result' => 'The given data was invalid.',
+                        'message' => $data_error_email,
                     ], 422);
                 }
             }
@@ -2301,9 +2240,10 @@ class CustomerController extends Controller
                     if (strtolower($key['type']) == "whatshapp") {
 
                         if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
+
                             return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'result' => 'Inputed data is not valid',
+                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -2311,75 +2251,18 @@ class CustomerController extends Controller
 
                 if ($data_error_messengers) {
                     return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_messengers,
+                        'result' => 'The given data was invalid.',
+                        'message' => $data_error_messengers,
                     ], 422);
                 }
             }
 
 
 
-            $flag = false;
-
-            if ($request->hasfile('images')) {
-
-                $flag = true;
-
-                $data_item = [];
-
-                $files[] = $request->file('images');
-
-                foreach ($files as $file) {
-
-                    foreach ($file as $fil) {
-
-                        $file_size = $fil->getSize();
-
-                        $file_size = $file_size / 1024;
-
-                        $oldname = $fil->getClientOriginalName();
-
-                        if ($file_size >= 5000) {
-
-                            array_push($data_item, 'Photo ' . $oldname . ' size more than 5mb! Please upload less than 5mb!');
-                        }
-                    }
-                }
-
-                if ($data_item) {
-
-                    return response()->json([
-                        'message' => 'Inputed photo is not valid',
-                        'errors' => $data_item,
-                    ], 422);
-                }
-            }
-
-            if ($flag == true) {
-                if ($request->imagesName) {
-
-                    foreach ($request->imagesName as $value) {
-
-                        if ($value['name'] == "") {
-
-                            return response()->json([
-                                'message' => 'The given data was invalid.',
-                                'errors' => ['Image name can not be empty!'],
-                            ], 422);
-                        }
-                    }
-                } else {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Image name can not be empty!'],
-                    ], 422);
-                }
-            }
 
             // Update
 
-            DB::table('customer')
-                ->where('id', '=', $request->input('customerId'))
+            Customer::where('id', '=', $request->input('customerId'))
                 ->update([
                     'firstName' => $request->firstName,
                     'middleName' => $request->middleName,
@@ -2396,178 +2279,213 @@ class CustomerController extends Controller
                     'occupationId' => $request->occupationId,
                     'birthDate' => $request->birthDate,
                     'referenceCustomerId' => $request->referenceCustomerId,
-                    'generalCustomerCanConfigReminderBooking' => $request->generalCustomerCanConfigReminderBooking,
-                    'generalCustomerCanConfigReminderPayment' => $request->generalCustomerCanConfigReminderPayment,
+                    'isReminderBooking' => $request->isReminderBooking,
+                    'isReminderPayment' => $request->isReminderPayment,
                     'isDeleted' => 0,
-                    'createdBy' => $request->user()->firstName,
-                    'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-            if ($request->customerPets) {
 
-                DB::table('customerPets')
-                    ->where([['customerId', '=', $request->input('customerId')],])
-                    ->delete();
+            foreach ($request->customerPets as $val) {
 
-                foreach ($request->customerPets as $val) {
+                if ($val['id'] == "") {
 
+                    $valueDate = null;
+                    $valueMonth = null;
+                    $valueYear = null;
 
-                    $dateOfBirth = Carbon::parse($val['dateOfBirth']);
-                    $age = 0;
-                    $month = 0;
-
-                    if ($val['petAge'] === "" || $val['petAge'] === 0) {
-
-                        $age = $dateOfBirth->diffInYears(Carbon::now());
-                        $month = $dateOfBirth->diffInMonths(Carbon::now());
+                    if ($val['dateOfBirth'] == "") {
+                        $valueDate = null;
                     } else {
-
-                        $age = $val['petAge'];
+                        $valueDate = $val['dateOfBirth'];
                     }
 
-                    DB::table('customerPets')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
+                    if ($val['petMonth'] == "") {
+                        $valueMonth = null;
+                    } else {
+                        $valueMonth = $val['petMonth'];
+                    }
+
+                    if ($val['petYear'] == "") {
+                        $valueYear = null;
+                    } else {
+                        $valueYear = $val['petYear'];
+                    }
+
+
+                    $customerPets = new CustomerPets();
+                    $customerPets->customerId =  $request->input('customerId');
+                    $customerPets->petName = $val['petName'];
+                    $customerPets->petCategoryId = $val['petCategoryId'];
+                    $customerPets->races = $val['races'];
+                    $customerPets->condition = $val['condition'];
+                    $customerPets->color = $val['color'];
+                    $customerPets->petMonth = $valueMonth;
+                    $customerPets->petYear = $valueYear;
+                    $customerPets->dateOfBirth = $valueDate;
+                    $customerPets->petGender = $val['petGender'];
+                    $customerPets->isSteril = $val['isSteril'];
+                    $customerPets->save();
+                } else {
+
+                    if ($val['command'] == "del") {
+
+                        CustomerPets::where([
+                            ['customerId', '=', $request->input('customerId')],
+                            ['id', '=', $val['id']],
+                            ['isDeleted', '=', '0']
+                        ])->update([
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]);
+                    } else {
+
+                        $valueDate = null;
+                        $valueMonth = null;
+                        $valueYear = null;
+
+                        if ($val['dateOfBirth'] == "") {
+                            $valueDate = null;
+                        } else {
+                            $valueDate = $val['dateOfBirth'];
+                        }
+
+                        if ($val['petMonth'] == "") {
+                            $valueMonth = null;
+                        } else {
+                            $valueMonth = $val['petMonth'];
+                        }
+
+                        if ($val['petYear'] == "") {
+                            $valueYear = null;
+                        } else {
+                            $valueYear = $val['petYear'];
+                        }
+
+                        CustomerPets::where([
+                            ['customerId', '=', $request->input('customerId')],
+                            ['id', '=', $val['id']],
+                            ['isDeleted', '=', '0']
+                        ])->update([
                             'petName' => $val['petName'],
                             'petCategoryId' => $val['petCategoryId'],
                             'races' => $val['races'],
                             'condition' => $val['condition'],
                             'color' => $val['color'],
-                            'petAge' => $age,
-                            'petAgeMonth' => $month,
-                            'dateOfBirth' => $val['dateOfBirth'],
+                            'petMonth' => $valueMonth,
+                            'petYear' => $valueYear,
+                            'dateOfBirth' => $valueDate,
                             'petGender' => $val['petGender'],
                             'isSteril' => $val['isSteril'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
                             'updated_at' => now(),
                         ]);
+                    }
                 }
             }
 
+
             if ($request->reminderBooking) {
 
-                DB::table('customerReminders')
-                    ->where([
-                        ['customerId', '=', $request->input('customerId')],
-                        ['type', '=', 'B'],
-                    ])
+                CustomerReminder::where([
+                    ['customerId', '=', $request->input('customerId')],
+                    ['type', '=', 'B'],
+                ])
                     ->delete();
 
                 foreach ($request->reminderBooking as $val) {
 
-                    DB::table('customerReminders')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
-                            'sourceCustomerId' => $val['sourceCustomerId'],
-                            'unit' => $val['unit'],
-                            'time' => $val['time'],
-                            'timeDate' => $val['timeDate'],
-                            'type' => 'B',
-                            'notes' => $val['notes'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerReminder = new CustomerReminder();
+                    $customerReminder->customerId =  $request->input('customerId');
+                    $customerReminder->sourceId = $val['sourceId'];
+                    $customerReminder->unit = $val['unit'];
+                    $customerReminder->timing = $val['timing'];
+                    $customerReminder->status = $val['status'];
+                    $customerReminder->type = 'B';
+                    $customerReminder->isDeleted = 0;
+                    $customerReminder->save();
                 }
             }
 
             if ($request->reminderPayment) {
 
-                DB::table('customerReminders')
-                    ->where([
-                        ['customerId', '=', $request->input('customerId')],
-                        ['type', '=', 'P'],
-                    ])
+                CustomerReminder::where([
+                    ['customerId', '=', $request->input('customerId')],
+                    ['type', '=', 'P'],
+                ])
                     ->delete();
 
-                foreach ($request->reminderBooking as $val) {
+                foreach ($request->reminderPayment as $val) {
 
-                    DB::table('customerReminders')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
-                            'sourceCustomerId' => $val['sourceCustomerId'],
-                            'unit' => $val['unit'],
-                            'time' => $val['time'],
-                            'timeDate' => $val['timeDate'],
-                            'type' => 'P',
-                            'notes' => $val['notes'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerReminderPayment = new CustomerReminder();
+                    $customerReminderPayment->customerId =  $request->input('customerId');
+                    $customerReminderPayment->sourceId = $val['sourceId'];
+                    $customerReminderPayment->unit = $val['unit'];
+                    $customerReminderPayment->timing = $val['timing'];
+                    $customerReminderPayment->status = $val['status'];
+                    $customerReminderPayment->type = 'P';
+                    $customerReminderPayment->isDeleted = 0;
+                    $customerReminderPayment->save();
                 }
             }
 
 
             if ($request->reminderLatePayment) {
 
-                DB::table('customerReminders')
-                    ->where([
-                        ['customerId', '=', $request->input('customerId')],
-                        ['type', '=', 'LP'],
-                    ])
-                    ->delete();
+                CustomerReminder::where([
+                    ['customerId', '=', $request->input('customerId')],
+                    ['type', '=', 'LP'],
+                ])->delete();
 
                 foreach ($request->reminderLatePayment as $val) {
 
-                    DB::table('customerReminders')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
-                            'sourceCustomerId' => $val['sourceCustomerId'],
-                            'unit' => $val['unit'],
-                            'time' => $val['time'],
-                            'timeDate' => $val['timeDate'],
-                            'type' => 'LP',
-                            'notes' => $val['notes'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerReminderLatePayment = new CustomerReminder();
+                    $customerReminderLatePayment->customerId =  $request->input('customerId');
+                    $customerReminderLatePayment->sourceId = $val['sourceId'];
+                    $customerReminderLatePayment->unit = $val['unit'];
+                    $customerReminderLatePayment->timing = $val['timing'];
+                    $customerReminderLatePayment->status = $val['status'];
+                    $customerReminderLatePayment->type = 'LP';
+                    $customerReminderLatePayment->isDeleted = 0;
+                    $customerReminderLatePayment->save();
                 }
             }
 
 
             if ($request->detailAddresses) {
 
-                DB::table('customerAddresses')->where('customerId', '=', $request->input('customerId'))->delete();
+                CustomerAddresses::where('customerId', '=', $request->input('customerId'))->delete();
 
                 foreach ($request->detailAddresses as $val) {
 
-                    DB::table('customerAddresses')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
-                            'addressName' => $val['addressName'],
-                            'additionalInfo' => $val['additionalInfo'],
-                            'provinceCode' => $val['provinceCode'],
-                            'cityCode' => $val['cityCode'],
-                            'postalCode' => $val['postalCode'],
-                            'country' => $val['country'],
-                            'isPrimary' => $val['isPrimary'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerAddresses = new CustomerAddresses();
+                    $customerAddresses->customerId =  $request->input('customerId');
+                    $customerAddresses->addressName =  $val['addressName'];
+                    $customerAddresses->additionalInfo =  $val['additionalInfo'];
+                    $customerAddresses->provinceCode =  $val['provinceCode'];
+                    $customerAddresses->cityCode =  $val['cityCode'];
+                    $customerAddresses->postalCode =  $val['postalCode'];
+                    $customerAddresses->country =  $val['country'];
+                    $customerAddresses->isPrimary =   $val['isPrimary'];
+                    $customerAddresses->isDeleted =  0;
+                    $customerAddresses->save();
                 }
             }
 
             if ($request->telephones) {
 
-                DB::table('customerTelephones')->where('customerId', '=', $request->input('customerId'))->delete();
+                CustomerTelephones::where('customerId', '=', $request->input('customerId'))->delete();
 
                 foreach ($request->telephones as $val) {
 
-                    DB::table('customerTelephones')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
-                            'phoneNumber' => $val['phoneNumber'],
-                            'type' => $val['type'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+
+                    $CustomerTelephones = new CustomerTelephones();
+                    $CustomerTelephones->customerId =  $request->input('customerId');
+                    $CustomerTelephones->phoneNumber =  $val['phoneNumber'];
+                    $CustomerTelephones->type =  $val['type'];
+                    $CustomerTelephones->usage =  $val['usage'];
+                    $CustomerTelephones->isDeleted =  0;
+                    $CustomerTelephones->save();
                 }
             }
 
@@ -2575,38 +2493,32 @@ class CustomerController extends Controller
 
             if ($request->emails) {
 
-                DB::table('customerEmails')->where('customerId', '=', $request->input('customerId'))->delete();
+                CustomerEmails::where('customerId', '=', $request->input('customerId'))->delete();
 
                 foreach ($request->emails as $val) {
 
-                    DB::table('customerEmails')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
-                            'username' => $val['username'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerEmails = new CustomerEmails();
+                    $customerEmails->customerId =  $request->input('customerId');
+                    $customerEmails->username =  $val['username'];
+                    $customerEmails->usage =  $val['usage'];
+                    $customerEmails->isDeleted =  0;
+                    $customerEmails->save();
                 }
             }
 
             if ($request->messengers) {
 
-                DB::table('customerMessengers')->where('customerId', '=', $request->input('customerId'))->delete();
+                CustomerMessengers::where('customerId', '=', $request->input('customerId'))->delete();
 
                 foreach ($request->messengers as $val) {
 
-                    DB::table('customerMessengers')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
-                            'messengerNumber' => $val['messengerNumber'],
-                            'type' => $val['type'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    $customerMessengers = new CustomerMessengers();
+                    $customerMessengers->customerId =  $request->input('customerId');
+                    $customerMessengers->messengerNumber =  $val['messengerNumber'];
+                    $customerMessengers->type =  $val['type'];
+                    $customerMessengers->usage =  $val['usage'];
+                    $customerMessengers->isDeleted =  0;
+                    $customerMessengers->save();
                 }
             }
 
@@ -2636,11 +2548,10 @@ class CustomerController extends Controller
         $request->validate(['customerId' => 'required|max:10000']);
         $customerId = $request->input('customerId');
 
-        $checkIfValueExits = DB::table('customer')
-            ->where([
-                ['id', '=', $request->input('customerId')],
-                ['isDeleted', '=', '0']
-            ])
+        $checkIfValueExits = Customer::where([
+            ['id', '=', $request->input('customerId')],
+            ['isDeleted', '=', '0']
+        ])
             ->first();
 
         if ($checkIfValueExits === null) {
@@ -2651,44 +2562,48 @@ class CustomerController extends Controller
             ]);
         } else {
 
-            $param_customer = DB::table('customer')
-                ->select(
-                    'firstName',
-                    'middleName',
-                    'lastName',
-                    'nickName',
-                    'gender',
-                    'titleCustomerId',
-                    'customerGroupId',
-                    'locationId',
-                    'notes',
-                    'joinDate',
-                    'typeId',
-                    'numberId',
-                    'occupationId',
-                    'birthDate',
-                    'referenceCustomerId',
-                    'generalCustomerCanConfigReminderBooking',
-                    'generalCustomerCanConfigReminderPayment'
-                )
+
+
+            $param_customer = Customer::select(
+                'id as customerId',
+                'firstName',
+                'middleName',
+                'lastName',
+                'nickName',
+                'gender',
+                'titleCustomerId',
+                'customerGroupId',
+                'locationId',
+                'notes',
+                DB::raw("SUBSTR(CAST(joinDate AS CHAR), 1, 10) as joinDate"),
+                'typeId',
+                'numberId',
+                'occupationId',
+                DB::raw("SUBSTR(birthDate, 1, 10) as birthDate"),
+                'referenceCustomerId',
+                'isReminderBooking',
+                'isReminderPayment'
+            )
                 ->where('id', '=', $customerId)
                 ->first();
 
 
-            $customerPets = DB::table('customerPets')
-                ->select(
-                    'customerId',
-                    'petName',
-                    'petCategoryId',
-                    'races',
-                    'condition',
-                    'color',
-                    'petAge',
-                    'petAgeMonth',
-                    'dateOfBirth',
-                    'petGender',
-                    'isSteril',
-                )
+
+
+            $customerPets = CustomerPets::select(
+                'id',
+                'petName',
+                'petCategoryId',
+                'races',
+                'condition',
+                'color',
+                'petMonth',
+                'petYear',
+                DB::raw("SUBSTR(dateOfBirth, 1, 10) as dateOfBirth"),
+                'petGender',
+                'isSteril',
+                DB::raw("'' as command")
+            )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['isDeleted', '=', '0']
@@ -2698,14 +2613,13 @@ class CustomerController extends Controller
             $param_customer->customerPets = $customerPets;
 
 
-            $reminderBooking = DB::table('customerReminders')
-                ->select(
-                    'sourceCustomerId',
-                    'unit',
-                    'time',
-                    'timeDate',
-                    'notes'
-                )
+            $reminderBooking = CustomerReminder::select(
+                'id',
+                'sourceId',
+                'unit',
+                'timing',
+                'status'
+            )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['type', '=', 'B'],
@@ -2716,15 +2630,12 @@ class CustomerController extends Controller
             $param_customer->reminderBooking = $reminderBooking;
 
 
-
-            $reminderPayment = DB::table('customerReminders')
-                ->select(
-                    'sourceCustomerId',
-                    'unit',
-                    'time',
-                    'timeDate',
-                    'notes'
-                )
+            $reminderPayment = CustomerReminder::select(
+                'sourceId',
+                'unit',
+                'timing',
+                'status'
+            )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['type', '=', 'P'],
@@ -2734,34 +2645,29 @@ class CustomerController extends Controller
 
             $param_customer->reminderPayment = $reminderPayment;
 
-
-            $reminderLatePayment = DB::table('customerReminders')
-                ->select(
-                    'sourceCustomerId',
-                    'unit',
-                    'time',
-                    'timeDate',
-                    'notes'
-                )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['type', '=', 'LP'],
-                    ['isDeleted', '=', '0']
-                ])
+            $reminderLatePayment = CustomerReminder::select(
+                'sourceId',
+                'unit',
+                'timing',
+                'status'
+            )->where([
+                ['customerId', '=', $customerId],
+                ['type', '=', 'LP'],
+                ['isDeleted', '=', '0']
+            ])
                 ->get();
 
             $param_customer->reminderLatePayment = $reminderLatePayment;
 
-            $detailAddresses = DB::table('customerAddresses')
-                ->select(
-                    'addressName as addressName',
-                    'additionalInfo as additionalInfo',
-                    'provinceCode as provinceCode',
-                    'cityCode as cityCode',
-                    'postalCode as postalCode',
-                    'country as country',
-                    'isPrimary as isPrimary',
-                )
+            $detailAddresses = CustomerAddresses::select(
+                'addressName as addressName',
+                'additionalInfo as additionalInfo',
+                'provinceCode as provinceCode',
+                'cityCode as cityCode',
+                'postalCode as postalCode',
+                'country as country',
+                'isPrimary as isPrimary',
+            )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['isDeleted', '=', '0']
@@ -2770,12 +2676,12 @@ class CustomerController extends Controller
 
             $param_customer->detailAddresses = $detailAddresses;
 
-            $telephones = DB::table('customerTelephones')
-                ->select(
-                    'phoneNumber as phoneNumber',
-                    'type as type',
-                    'usage as usage',
-                )
+
+            $telephones = CustomerTelephones::select(
+                'phoneNumber as phoneNumber',
+                'type as type',
+                'usage as usage',
+            )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['isDeleted', '=', '0']
@@ -2784,11 +2690,11 @@ class CustomerController extends Controller
 
             $param_customer->telephones = $telephones;
 
-            $emails = DB::table('customerEmails')
-                ->select(
-                    'username as username',
-                    'usage as usage',
-                )
+
+            $emails = CustomerEmails::select(
+                'username as username',
+                'usage as usage',
+            )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['isDeleted', '=', '0']
@@ -2798,12 +2704,11 @@ class CustomerController extends Controller
             $param_customer->emails = $emails;
 
 
-            $messengers = DB::table('customerMessengers')
-                ->select(
-                    'messengerNumber as messengerNumber',
-                    'type as type',
-                    'usage as usage',
-                )
+            $messengers = CustomerMessengers::select(
+                'messengerNumber as messengerNumber',
+                'type as type',
+                'usage as usage',
+            )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['isDeleted', '=', '0']
@@ -2812,12 +2717,13 @@ class CustomerController extends Controller
 
             $param_customer->messengers = $messengers;
 
-            $customeImages = DB::table('customerImages')
-                ->select(
-                    'id as id',
-                    'labelName as labelName',
-                    'imagePath as imagePath',
-                )
+
+
+            $customeImages = CustomerImages::select(
+                'id as id',
+                'labelName as labelName',
+                'imagePath as imagePath',
+            )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['isDeleted', '=', '0']
@@ -2853,26 +2759,23 @@ class CustomerController extends Controller
 
                     $fileName = "/CustomerImages/" . $name;
 
-                    DB::table('customerImages')
-                        ->insert([
-                            'customerId' => $request->input('customerId'),
-                            'labelName' => $val['name'],
-                            'realImageName' => $files[0][$index]->getClientOriginalName(),
-                            'imageName' => $name,
-                            'imagePath' => $fileName,
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                        ]);
-
+                    $customerImages = new CustomerImages();
+                    $customerImages->customerId = $request->input('customerId');
+                    $customerImages->labelName = $val['name'];
+                    $customerImages->realImageName = $files[0][$index]->getClientOriginalName();
+                    $customerImages->imageName = $name;
+                    $customerImages->imagePath = $fileName;
+                    $customerImages->isDeleted = 0;
+                    $customerImages->save();
                     $index = $index + 1;
+                    DB::commit();
                 } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) {
 
 
-                    $find_image = DB::table('customerImages')
-                        ->select(
-                            'imageName',
-                            'imagePath'
-                        )
+                    $find_image = CustomerImages::select(
+                        'imageName',
+                        'imagePath'
+                    )
                         ->where('id', '=', $val['id'])
                         ->where('customerId', '=', $request->input('customerId'))
                         ->first();
@@ -2883,7 +2786,7 @@ class CustomerController extends Controller
 
                             File::delete(public_path() . $find_image->imagePath);
 
-                            DB::table('customerImages')->where([
+                            CustomerImages::where([
                                 ['customerId', '=', $request->input('customerId')],
                                 ['id', '=', $val['id']]
                             ])->delete();
@@ -2891,22 +2794,20 @@ class CustomerController extends Controller
                     }
                 } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) {
 
-                    $find_image = DB::table('customerImages')
-                        ->select(
-                            'imageName',
-                            'imagePath'
-                        )
+                    $find_image = CustomerImages::select(
+                        'imageName',
+                        'imagePath'
+                    )
                         ->where('id', '=', $val['id'])
                         ->where('customerId', '=', $request->input('customerId'))
                         ->first();
 
                     if ($find_image) {
 
-                        DB::table('customerImages')
-                            ->where([
-                                ['customerId', '=', $request->input('customerId')],
-                                ['id', '=', $val['id']]
-                            ])
+                        CustomerImages::where([
+                            ['customerId', '=', $request->input('customerId')],
+                            ['id', '=', $val['id']]
+                        ])
                             ->update([
                                 'labelName' => $val['name'],
                                 'updated_at' => now(),
@@ -2963,11 +2864,10 @@ class CustomerController extends Controller
             $data_item = [];
             foreach ($request->customerId as $val) {
 
-                $checkIfDataExits = DB::table('customer')
-                    ->where([
-                        ['id', '=', $val],
-                        ['isDeleted', '=', '0']
-                    ])
+                $checkIfDataExits = Customer::where([
+                    ['id', '=', $val],
+                    ['isDeleted', '=', '0']
+                ])
                     ->first();
 
                 if (!$checkIfDataExits) {
@@ -2984,35 +2884,47 @@ class CustomerController extends Controller
 
             foreach ($request->customerId as $val) {
 
-                DB::table('customer')
-                    ->where('id', '=', $val)
-                    ->update(['isDeleted' => 1]);
 
-                DB::table('customerReminders')
-                    ->where('customerId', '=', $val)
-                    ->update(['isDeleted' => 1]);
+                Customer::where('id', '=', $val)
+                    ->update([
+                        'deletedBy' => $request->user()->firstName,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]);
 
-                DB::table('customerAddresses')
-                    ->where('customerId', '=', $val)
-                    ->update(['isDeleted' => 1]);
+                CustomerReminder::where('customerId', '=', $val)
+                    ->update([
+                        'deletedBy' => $request->user()->firstName,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]);
 
+                CustomerAddresses::where('customerId', '=', $val)
+                    ->update([
+                        'deletedBy' => $request->user()->firstName,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]);
 
-                DB::table('customerEmails')
-                    ->where('customerId', '=', $val)
-                    ->update(['isDeleted' => 1]);
+                CustomerEmails::where('customerId', '=', $val)
+                    ->update([
+                        'isDeleted' => 1,
+                    ]);
 
-                DB::table('customerMessengers')
-                    ->where('customerId', '=', $val)
-                    ->update(['isDeleted' => 1]);
+                CustomerMessengers::where('customerId', '=', $val)
+                    ->update([
+                        'isDeleted' => 1,
+                    ]);
 
+                CustomerTelephones::where('customerId', '=', $val)
+                    ->update([
+                        'isDeleted' => 1,
+                    ]);
 
-                DB::table('customerTelephones')
-                    ->where('customerId', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('customerImages')
-                    ->where('customerId', '=', $val)
-                    ->update(['isDeleted' => 1]);
+                CustomerImages::where('customerId', '=', $val)
+                    ->update([
+                        'isDeleted' => 1,
+                    ]);
 
                 DB::commit();
             }
@@ -3039,15 +2951,14 @@ class CustomerController extends Controller
 
         try {
 
-            $getSourceCustomer = DB::table('sourceCustomer as a')
-                ->select(
-                    'a.id as sourceId',
-                    'a.sourceName as sourceName',
-                )
+            $getSourceCustomer = SourceCustomer::select(
+                'id as sourceId',
+                'sourceName as sourceName',
+            )
                 ->where([
                     ['isActive', '=', 1],
                 ])
-                ->orderBy('a.created_at', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             return response()->json($getSourceCustomer, 200);
@@ -3071,12 +2982,10 @@ class CustomerController extends Controller
 
         try {
 
-            $checkIfValueExits = DB::table('sourceCustomer as a')
-                ->where([
-                    ['a.sourceName', '=', $request->sourceName],
-                    ['a.isActive', '=', 1]
-                ])
-                ->first();
+            $checkIfValueExits = SourceCustomer::where([
+                ['sourceName', '=', $request->sourceName],
+                ['isActive', '=', 1]
+            ])->first();
 
             if ($checkIfValueExits != null) {
 
@@ -3086,12 +2995,11 @@ class CustomerController extends Controller
                 ]);
             } else {
 
-                DB::table('sourceCustomer')->insert([
-                    'sourceName' => $request->sourceName,
-                    'created_at' => now(),
-                    'isActive' => 1,
-                ]);
 
+                $sourceCustomer = new SourceCustomer();
+                $sourceCustomer->sourceName = $request->sourceName;
+                $sourceCustomer->isActive = 1;
+                $sourceCustomer->save();
                 DB::commit();
 
                 return response()->json([
@@ -3122,11 +3030,10 @@ class CustomerController extends Controller
 
         try {
 
-            $checkIfValueExits = DB::table('referenceCustomer as a')
-                ->where([
-                    ['a.referenceName', '=', $request->referenceName],
-                    ['a.isActive', '=', 1]
-                ])
+            $checkIfValueExits = ReferenceCustomer::where([
+                ['referenceName', '=', $request->referenceName],
+                ['isActive', '=', 1]
+            ])
                 ->first();
 
             if ($checkIfValueExits != null) {
@@ -3137,12 +3044,11 @@ class CustomerController extends Controller
                 ]);
             } else {
 
-                DB::table('referenceCustomer')->insert([
-                    'referenceName' => $request->referenceName,
-                    'created_at' => now(),
-                    'isActive' => 1,
-                ]);
 
+                $referenceCustomer = new ReferenceCustomer();
+                $referenceCustomer->referenceName = $request->referenceName;
+                $referenceCustomer->isActive = 1;
+                $referenceCustomer->save();
                 DB::commit();
 
                 return response()->json([
@@ -3168,15 +3074,14 @@ class CustomerController extends Controller
 
         try {
 
-            $getRefrenceCustomer = DB::table('referenceCustomer as a')
-                ->select(
-                    'a.id as referenceCustomerId',
-                    'a.referenceName as referenceCustomerName',
-                )
+            $getRefrenceCustomer = ReferenceCustomer::select(
+                'id as referenceCustomerId',
+                'referenceName as referenceCustomerName',
+            )
                 ->where([
                     ['isActive', '=', 1],
                 ])
-                ->orderBy('a.created_at', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             return response()->json($getRefrenceCustomer, 200);
@@ -3195,15 +3100,13 @@ class CustomerController extends Controller
 
         try {
 
-            $getCategory = DB::table('petCategory as a')
-                ->select(
-                    'a.id as petCategoryId',
-                    'a.petCategoryName as petCategoryName',
-                )
-                ->where([
-                    ['isActive', '=', 1],
-                ])
-                ->orderBy('a.created_at', 'desc')
+            $getCategory = PetCategory::select(
+                'id as petCategoryId',
+                'petCategoryName as petCategoryName',
+            )->where([
+                ['isActive', '=', 1],
+            ])
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             return response()->json($getCategory, 200);
@@ -3229,11 +3132,10 @@ class CustomerController extends Controller
 
         try {
 
-            $checkIfValueExits = DB::table('petCategory as a')
-                ->where([
-                    ['a.petCategoryName', '=', $request->petCategoryName],
-                    ['a.isActive', '=', 1]
-                ])
+            $checkIfValueExits = PetCategory::where([
+                ['petCategoryName', '=', $request->petCategoryName],
+                ['isActive', '=', 1]
+            ])
                 ->first();
 
             if ($checkIfValueExits != null) {
@@ -3244,12 +3146,10 @@ class CustomerController extends Controller
                 ]);
             } else {
 
-                DB::table('petCategory')->insert([
-                    'petCategoryName' => $request->petCategoryName,
-                    'created_at' => now(),
-                    'isActive' => 1,
-                ]);
-
+                $petCategory = new PetCategory();
+                $petCategory->petCategoryName = $request->petCategoryName;
+                $petCategory->isActive = 1;
+                $petCategory->save();
                 DB::commit();
 
                 return response()->json([
@@ -3268,26 +3168,18 @@ class CustomerController extends Controller
         }
     }
 
-
-
-
-
-
-
     public function getCustomerOccupation(Request $request)
     {
 
         try {
 
-            $getRefrenceCustomer = DB::table('customerOccupation as a')
-                ->select(
-                    'a.id as occupationId',
-                    'a.occupationName as occupationName',
-                )
-                ->where([
-                    ['isActive', '=', 1],
-                ])
-                ->orderBy('a.created_at', 'desc')
+            $getRefrenceCustomer = CustomerOccupation::select(
+                'id as occupationId',
+                'occupationName as occupationName',
+            )->where([
+                ['isActive', '=', 1],
+            ])
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             return response()->json($getRefrenceCustomer, 200);
@@ -3300,8 +3192,6 @@ class CustomerController extends Controller
         }
     }
 
-
-
     public function insertCustomerOccupation(Request $request)
     {
 
@@ -3313,11 +3203,10 @@ class CustomerController extends Controller
 
         try {
 
-            $checkIfValueExits = DB::table('customerOccupation as a')
-                ->where([
-                    ['a.occupationName', '=', $request->occupationName],
-                    ['a.isActive', '=', 1]
-                ])
+            $checkIfValueExits = CustomerOccupation::where([
+                ['occupationName', '=', $request->occupationName],
+                ['isActive', '=', 1]
+            ])
                 ->first();
 
             if ($checkIfValueExits != null) {
@@ -3328,12 +3217,10 @@ class CustomerController extends Controller
                 ]);
             } else {
 
-                DB::table('customerOccupation')->insert([
-                    'occupationName' => $request->occupationName,
-                    'created_at' => now(),
-                    'isActive' => 1,
-                ]);
-
+                $customerOccupation = new CustomerOccupation();
+                $customerOccupation->occupationName = $request->occupationName;
+                $customerOccupation->isActive = 1;
+                $customerOccupation->save();
                 DB::commit();
 
                 return response()->json([
@@ -3358,15 +3245,13 @@ class CustomerController extends Controller
 
         try {
 
-            $getRefrenceCustomer = DB::table('titleCustomer as a')
-                ->select(
-                    'a.id as titleCustomerId',
-                    'a.titleName as titleCustomerName',
-                )
-                ->where([
-                    ['isActive', '=', 1],
-                ])
-                ->orderBy('a.created_at', 'desc')
+            $getRefrenceCustomer = TitleCustomer::select(
+                'id as titleCustomerId',
+                'titleName as titleCustomerName',
+            )->where([
+                ['isActive', '=', 1],
+            ])
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             return response()->json($getRefrenceCustomer, 200);
@@ -3390,12 +3275,10 @@ class CustomerController extends Controller
 
         try {
 
-            $checkIfValueExits = DB::table('titleCustomer as a')
-                ->where([
-                    ['a.titleName', '=', $request->titleName],
-                    ['a.isActive', '=', 1]
-                ])
-                ->first();
+            $checkIfValueExits = TitleCustomer::where([
+                ['titleName', '=', $request->titleName],
+                ['isActive', '=', 1]
+            ])->first();
 
             if ($checkIfValueExits != null) {
 
@@ -3405,12 +3288,10 @@ class CustomerController extends Controller
                 ]);
             } else {
 
-                DB::table('titleCustomer')->insert([
-                    'titleName' => $request->titleName,
-                    'created_at' => now(),
-                    'isActive' => 1,
-                ]);
-
+                $titleCustomer = new TitleCustomer();
+                $titleCustomer->titleName = $request->titleName;
+                $titleCustomer->isActive = 1;
+                $titleCustomer->save();
                 DB::commit();
 
                 return response()->json([
@@ -3431,9 +3312,9 @@ class CustomerController extends Controller
 
     public function getCustomerGroup()
     {
-        $data = DB::table('customerGroups as u')
-            ->select('u.id', 'u.customerGroup')
-            ->where('u.isDeleted', '=', 0)
+        $data = CustomerGroups::select('id', 'customerGroup')
+            ->where('isDeleted', '=', 0)
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json($data, 200);
@@ -3449,21 +3330,21 @@ class CustomerController extends Controller
             $errors = $validate->errors()->all();
 
             return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'result' => 'The given data was invalid.',
+                'message' => $errors,
             ], 422);
         }
 
-        $checkIfValueExits = DB::table('customerGroups')
-            ->where('customerGroup', '=', $request->customerGroup)
+        $checkIfValueExits = CustomerGroups::where('customerGroup', '=', $request->customerGroup)
             ->first();
 
         if ($checkIfValueExits === null) {
 
-            CustomerGroups::create([
-                'customerGroup' => $request->customerGroup,
-                'userId' => $request->user()->id,
-            ]);
+            $customerGroups = new CustomerGroups();
+            $customerGroups->customerGroup = $request->customerGroup;
+            $customerGroups->userId =  $request->user()->id;
+            $customerGroups->save();
+            DB::commit();
 
             return response()->json(
                 [
@@ -3474,8 +3355,8 @@ class CustomerController extends Controller
         } else {
 
             return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Customer Group name already exists!'],
+                'result' => 'The given data was invalid.',
+                'message' => ['Customer Group name already exists!'],
             ], 422);
         }
     }

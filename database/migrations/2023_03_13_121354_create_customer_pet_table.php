@@ -23,8 +23,8 @@ return new class extends Migration
             $table->string('color');
             $table->enum('petGender',['J', 'B']);
             $table->enum('isSteril',['1', '0']);
-            $table->integer('petAge')->default(0);
-            $table->integer('petAgeMonth')->default(0);
+            $table->integer('petMonth')->nullable();
+            $table->integer('petYear')->nullable();
             $table->date('dateOfBirth',0)->nullable();
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->string('deletedBy')->nullable();

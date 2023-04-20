@@ -9,8 +9,10 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
+class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping, WithColumnFormatting
 {
     use Exportable;
 
@@ -41,8 +43,8 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CONCAT(' ', d.phoneNumber, ' ') as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then 'Ya' else 'Tidak' end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'a.locationId as locationId',
@@ -138,7 +140,13 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
 
         return $data;
     }
+    public function columnFormats(): array
+    {
 
+        return [
+            'D' => NumberFormat::FORMAT_TEXT,
+        ];
+    }
 
     public function headings(): array
     {
@@ -148,7 +156,7 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
                 'Nama Staff ',
                 'Email Address',
                 'Phone Number',
-                'IsWhatsapp',
+                'Nomor Whatshapp Aktif',
                 'Status',
                 'Location',
                 'Created By',

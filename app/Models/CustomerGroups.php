@@ -12,5 +12,7 @@ class CustomerGroups extends Model
 
     protected $guarded = ['id'];
 
+    public $timestamps = true;
+
     protected $fillable = ['customerGroup', 'userId', 'userUpdateId'];
 }

@@ -30,8 +30,8 @@ return new class extends Migration
             $table->integer('occupationId')->nullable();
             $table->date('birthDate')->nullable();
             $table->integer('referenceCustomerId')->nullable();
-            $table->boolean('generalCustomerCanConfigReminderBooking')->nullable();
-            $table->boolean('generalCustomerCanConfigReminderPayment')->nullable();
+            $table->boolean('isReminderBooking')->nullable();
+            $table->boolean('isReminderPayment')->nullable();
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->string('deletedBy')->nullable();
             $table->timestamp('deletedAt',0)->nullable();

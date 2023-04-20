@@ -16,15 +16,14 @@ return new class extends Migration
         Schema::create('customerReminders', function (Blueprint $table) {
             $table->id();
             $table->integer('customerId');
-            $table->integer('sourceCustomerId');
+            $table->integer('sourceId');
             $table->integer('unit');
-            $table->string('time')->nullable();
-            $table->string('timeDate')->nullable();
-            $table->enum('type',['B', 'P', 'LP']);  // B = Booking, P = Payment, LP = Late Payment
-            $table->string('notes');
+            $table->string('timing')->nullable();
+            $table->string('status')->nullable();
+            $table->enum('type', ['B', 'P', 'LP']);  // B = Booking, P = Payment, LP = Late Payment
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->string('deletedBy')->nullable();
-            $table->timestamp('deletedAt',0)->nullable();
+            $table->timestamp('deletedAt', 0)->nullable();
             $table->timestamps();
         });
     }
