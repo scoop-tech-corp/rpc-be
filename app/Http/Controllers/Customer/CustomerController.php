@@ -1064,11 +1064,21 @@ class CustomerController extends Controller
                     );
 
 
-                    if (!($key['dateOfBirth'] === "") && (!($key['petMonth'] === "") or !($key['petYear'] === ""))) {
-                        return response()->json([
-                            'result' => 'Inputed data is not valid',
-                            'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                        ], 422);
+                    // if (!($key['dateOfBirth'] === "") && (!($key['petMonth'] === "") or !($key['petYear'] === ""))) {
+                    //     return response()->json([
+                    //         'result' => 'Inputed data is not valid',
+                    //         'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
+                    //     ], 422);
+                    // }
+
+                    if ($key['command'] != "del") {
+
+                        if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
+                            return response()->json([
+                                'result' => 'Inputed data is not valid',
+                                'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
+                            ], 422);
+                        }
                     }
 
                     if ($validateDetail->fails()) {
@@ -1837,7 +1847,7 @@ class CustomerController extends Controller
                     'color.required' => 'Pet Color  on tab Cutomer Pet is required',
                 ];
 
-             
+
                 foreach ($request->customerPets as $key) {
 
                     $validateDetail = Validator::make(
@@ -1857,7 +1867,16 @@ class CustomerController extends Controller
                         $messageCustomerPet
                     );
 
-            
+                    if ($key['command'] != "del") {
+
+                        if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
+                            return response()->json([
+                                'result' => 'Inputed data is not valid',
+                                'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
+                            ], 422);
+                        }
+                    }
+
 
                     if ($validateDetail->fails()) {
 
@@ -2285,7 +2304,6 @@ class CustomerController extends Controller
                     'updated_at' => now(),
                 ]);
 
-
             foreach ($request->customerPets as $val) {
 
                 if ($val['id'] == "") {
@@ -2294,19 +2312,19 @@ class CustomerController extends Controller
                     $valueMonth = null;
                     $valueYear = null;
 
-                    if ($val['dateOfBirth'] == "") {
+                    if ($val['dateOfBirth'] == "" || $val['petMonth'] == null) {
                         $valueDate = null;
                     } else {
                         $valueDate = $val['dateOfBirth'];
                     }
 
-                    if ($val['petMonth'] == "") {
+                    if ($val['petMonth'] == "" || $val['petMonth'] == null) {
                         $valueMonth = null;
                     } else {
                         $valueMonth = $val['petMonth'];
                     }
 
-                    if ($val['petYear'] == "") {
+                    if ($val['petYear'] == "" || $val['petMonth'] == null) {
                         $valueYear = null;
                     } else {
                         $valueYear = $val['petYear'];
@@ -2563,47 +2581,45 @@ class CustomerController extends Controller
         } else {
 
 
-
-            $param_customer = Customer::select(
-                'id as customerId',
-                'firstName',
-                'middleName',
-                'lastName',
-                'nickName',
-                'gender',
-                'titleCustomerId',
-                'customerGroupId',
-                'locationId',
-                'notes',
-                DB::raw("SUBSTR(CAST(joinDate AS CHAR), 1, 10) as joinDate"),
-                'typeId',
-                'numberId',
-                'occupationId',
-                DB::raw("SUBSTR(birthDate, 1, 10) as birthDate"),
-                'referenceCustomerId',
-                'isReminderBooking',
-                'isReminderPayment'
-            )
+            $param_customer = DB::table('customer')
+                ->select(
+                    'id as customerId',
+                    'firstName',
+                    'middleName',
+                    'lastName',
+                    'nickName',
+                    'gender',
+                    'titleCustomerId',
+                    'customerGroupId',
+                    'locationId',
+                    'notes',
+                    DB::raw("DATE_FORMAT(joinDate, '%Y-%m-%d') as joinDate"),
+                    'typeId',
+                    'numberId',
+                    'occupationId',
+                    DB::raw("DATE_FORMAT(birthDate, '%Y-%m-%d') as birthDate"),
+                    'referenceCustomerId',
+                    'isReminderBooking',
+                    'isReminderPayment'
+                )
                 ->where('id', '=', $customerId)
                 ->first();
 
-
-
-
-            $customerPets = CustomerPets::select(
-                'id',
-                'petName',
-                'petCategoryId',
-                'races',
-                'condition',
-                'color',
-                'petMonth',
-                'petYear',
-                DB::raw("SUBSTR(dateOfBirth, 1, 10) as dateOfBirth"),
-                'petGender',
-                'isSteril',
-                DB::raw("'' as command")
-            )
+            $customerPets = DB::table('customerPets')
+                ->select(
+                    'id',
+                    'petName',
+                    'petCategoryId',
+                    'races',
+                    'condition',
+                    'color',
+                    'petMonth',
+                    'petYear',
+                    DB::raw("DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth"),
+                    'petGender',
+                    'isSteril',
+                    DB::raw("'' as command")
+                )
                 ->where([
                     ['customerId', '=', $customerId],
                     ['isDeleted', '=', '0']
