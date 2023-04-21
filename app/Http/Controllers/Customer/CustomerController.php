@@ -1368,7 +1368,7 @@ class CustomerController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
                             return response()->json([
                                 'result' => 'Inputed data is not valid',
                                 'message' => 'Please check your phone number, for type whatshapp must start with 62',
@@ -1468,7 +1468,7 @@ class CustomerController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
+                        if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
                             return response()->json([
                                 'message' => 'Inputed data is not valid',
                                 'errors' => 'Please check your phone number, for type whatshapp must start with 62',
@@ -2162,7 +2162,7 @@ class CustomerController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['phoneNumber'], 0, 3) === "+62")) {
+                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
                             return response()->json([
                                 'result' => 'Inputed data is not valid',
                                 'message' => 'Please check your phone number, for type whatshapp must start with 62',
@@ -2258,7 +2258,7 @@ class CustomerController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['messageMessenger'], 0, 3) === "+62")) {
+                        if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
 
                             return response()->json([
                                 'result' => 'Inputed data is not valid',
