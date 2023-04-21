@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('customerEmails', function (Blueprint $table) {
             $table->id();
             $table->string('customerId');
-            $table->string('username');
+            $table->string('email');
             $table->string('usage');
             $table->boolean('isDeleted');
             $table->timestamps();

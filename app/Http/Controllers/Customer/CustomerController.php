@@ -60,7 +60,7 @@ class CustomerController extends Controller
                     'a.locationId as locationId',
                     DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                     DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                    'f.username as emailAddress',
+                    'f.email as emailAddress',
                     'a.createdBy as createdBy',
                     DB::raw('a.created_at as createdAt'),
                     'a.updated_at'
@@ -339,7 +339,7 @@ class CustomerController extends Controller
                 'a.locationId as locationId',
                 DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -426,7 +426,7 @@ class CustomerController extends Controller
                 'a.locationId as locationId',
                 DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -511,7 +511,7 @@ class CustomerController extends Controller
                 'a.locationId as locationId',
                 DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -593,7 +593,7 @@ class CustomerController extends Controller
                 'a.locationId as locationId',
                 DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -675,7 +675,7 @@ class CustomerController extends Controller
                 'a.locationId as locationId',
                 DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -754,7 +754,7 @@ class CustomerController extends Controller
                 'a.locationId as locationId',
                 DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -832,7 +832,7 @@ class CustomerController extends Controller
                 'a.locationId as locationId',
                 DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -911,7 +911,7 @@ class CustomerController extends Controller
                 'a.locationId as locationId',
                 DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -1393,7 +1393,7 @@ class CustomerController extends Controller
                 $arrayemail = json_decode($request->emails, true);
 
                 $messageEmail = [
-                    'username.required' => 'Username on tab email is required',
+                    'email.required' => 'Email on tab email is required',
                     'usage.required' => 'Usage on tab email is required',
                 ];
 
@@ -1402,7 +1402,7 @@ class CustomerController extends Controller
                     $emailDetail = Validator::make(
                         $key,
                         [
-                            'username' => 'required',
+                            'email' => 'required',
                             'usage' => 'required',
                         ],
                         $messageEmail
@@ -1707,7 +1707,7 @@ class CustomerController extends Controller
 
                     $customerEmails = new CustomerEmails();
                     $customerEmails->customerId =  $lastInsertedID;
-                    $customerEmails->username =  $val['username'];
+                    $customerEmails->email =  $val['email'];
                     $customerEmails->usage =  $val['usage'];
                     $customerEmails->isDeleted =  0;
                     $customerEmails->save();
@@ -2185,7 +2185,7 @@ class CustomerController extends Controller
             if ($request->emails) {
 
                 $messageEmail = [
-                    'username.required' => 'Username on tab email is required',
+                    'email.required' => 'email on tab email is required',
                     'usage.required' => 'Usage on tab email is required',
                 ];
 
@@ -2194,7 +2194,7 @@ class CustomerController extends Controller
                     $emailDetail = Validator::make(
                         $key,
                         [
-                            'username' => 'required',
+                            'email' => 'required',
                             'usage' => 'required',
                         ],
                         $messageEmail
@@ -2517,7 +2517,7 @@ class CustomerController extends Controller
 
                     $customerEmails = new CustomerEmails();
                     $customerEmails->customerId =  $request->input('customerId');
-                    $customerEmails->username =  $val['username'];
+                    $customerEmails->email =  $val['email'];
                     $customerEmails->usage =  $val['usage'];
                     $customerEmails->isDeleted =  0;
                     $customerEmails->save();
@@ -2708,7 +2708,7 @@ class CustomerController extends Controller
 
 
             $emails = CustomerEmails::select(
-                'username as username',
+                'email as email',
                 'usage as usage',
             )
                 ->where([

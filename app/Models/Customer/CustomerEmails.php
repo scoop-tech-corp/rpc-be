@@ -19,7 +19,7 @@ class CustomerEmails extends Model
 
     protected $fillable = [
         'customerId',
-        'username',
+        'email',
         'usage',
         'isDeleted',
         'created_at',
