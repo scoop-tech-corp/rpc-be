@@ -76,7 +76,7 @@ class CustomerController extends Controller
                     ['f.usage', '=', 'Utama'],
                 ]);
 
-
+            info($data->get());
             if ($request->locationId) {
 
                 $val = [];
