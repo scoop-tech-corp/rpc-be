@@ -76,7 +76,6 @@ class CustomerController extends Controller
                     ['f.usage', '=', 'Utama'],
                 ]);
 
-            info($data->get());
             if ($request->locationId) {
 
                 $val = [];
@@ -1342,6 +1341,26 @@ class CustomerController extends Controller
                 ];
 
 
+                $primaryTelephone = 0;
+                foreach ($arraytelephone as $item) {
+                    if (strtolower($item['usage']) == "utama") {
+                        $primaryTelephone++;
+                    }
+                }
+
+                if ($primaryTelephone == 0) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Telephone must have at least 1 primary number',
+                    ], 422);
+                } elseif ($primaryTelephone > 1) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Telephone have 2 primary number, please check again',
+                    ], 422);
+                }
+
+
                 foreach ($arraytelephone as $key) {
 
                     $telephoneDetail = Validator::make(
@@ -1397,6 +1416,30 @@ class CustomerController extends Controller
                     'usage.required' => 'Usage on tab email is required',
                 ];
 
+
+
+                
+                $primaryEmail = 0;
+                foreach ($arrayemail as $item) {
+                    if (strtolower($item['usage']) == "utama") {
+                        $primaryEmail++;
+                    }
+                }
+
+                if ($primaryEmail == 0) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Email must have at least 1 primary email',
+                    ], 422);
+                } elseif ($primaryEmail > 1) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Email have 2 primary email, please check again',
+                    ], 422);
+                }
+
+
+
                 foreach ($arrayemail as $key) {
 
                     $emailDetail = Validator::make(
@@ -1435,6 +1478,27 @@ class CustomerController extends Controller
             if ($request->messengers) {
 
                 $arraymessenger = json_decode($request->messengers, true);
+
+
+                $primaryMessenger = 0;
+                foreach ($arraymessenger as $item) {
+                    if (strtolower($item['usage']) == "utama") {
+                        $primaryMessenger++;
+                    }
+                }
+
+                if ($primaryMessenger == 0) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Messenger must have at least 1 primary number',
+                    ], 422);
+                } elseif ($primaryMessenger > 1) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Messenger have 2 primary number, please check again',
+                    ], 422);
+                }
+
 
                 $messageMessenger = [
                     'messengerNumber.required' => 'messenger number on tab messenger is required',
@@ -2136,7 +2200,30 @@ class CustomerController extends Controller
                 ];
 
 
+                $primaryTelephone = 0;
+                foreach ($request->telephones as $item) {
+                    if (strtolower($item['usage']) == "utama") {
+                        $primaryTelephone++;
+                    }
+                }
+
+                if ($primaryTelephone == 0) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Telephone must have at least 1 primary number',
+                    ], 422);
+                } elseif ($primaryTelephone > 1) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Telephone have 2 primary number, please check again',
+                    ], 422);
+                }
+
+
+
                 foreach ($request->telephones as $key) {
+
+            
 
                     $telephoneDetail = Validator::make(
                         $key,
@@ -2189,6 +2276,28 @@ class CustomerController extends Controller
                     'usage.required' => 'Usage on tab email is required',
                 ];
 
+
+
+                $primaryEmail = 0;
+                foreach ($request->emails as $item) {
+                    if (strtolower($item['usage']) == "utama") {
+                        $primaryEmail++;
+                    }
+                }
+
+                if ($primaryEmail == 0) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Email must have at least 1 primary email',
+                    ], 422);
+                } elseif ($primaryEmail > 1) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Email have 2 primary email, please check again',
+                    ], 422);
+                }
+
+
                 foreach ($request->emails as $key) {
 
                     $emailDetail = Validator::make(
@@ -2225,6 +2334,26 @@ class CustomerController extends Controller
 
             $data_error_messengers = [];
             if ($request->messengers) {
+
+                $primaryMessenger = 0;
+                foreach ($request->messengers as $item) {
+                    if (strtolower($item['usage']) == "utama") {
+                        $primaryMessenger++;
+                    }
+                }
+
+                if ($primaryMessenger == 0) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Messenger must have at least 1 primary number',
+                    ], 422);
+                } elseif ($primaryMessenger > 1) {
+                    return response()->json([
+                        'result' => 'Inputed data is not valid',
+                        'message' => 'Messenger have 2 primary number, please check again',
+                    ], 422);
+                }
+
 
                 $messageMessenger = [
                     'messengerNumber.required' => 'messenger number on tab messenger is required',
