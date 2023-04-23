@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('condition');
             $table->string('color');
             $table->enum('petGender',['J', 'B']);
-            $table->enum('isSteril',['1', '0']);
+            $table->integer('isSteril');
             $table->integer('petMonth')->nullable();
             $table->integer('petYear')->nullable();
             $table->date('dateOfBirth',0)->nullable();
