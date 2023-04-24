@@ -450,7 +450,7 @@ class ProductInventoryController
 
         foreach ($prodDetail as $value) {
 
-            if ($value['productType'] = 'productSell') {
+            if ($value['productType'] == 'productSell') {
 
                 $prodRes = DB::table('productInventoryLists as pi')
                     ->join('productSells as p', 'p.id', 'pi.productId')
@@ -486,8 +486,7 @@ class ProductInventoryController
                     ->where('pi.id', '=', $value['id'])
                     ->orderBy('pi.id', 'desc')
                     ->first();
-                    
-            } elseif ($value['productType'] = 'productClinic') {
+            } elseif ($value['productType'] == 'productClinic') {
 
                 $prodRes = DB::table('productInventoryLists as pi')
                     ->join('productClinics as p', 'p.id', 'pi.productId')
