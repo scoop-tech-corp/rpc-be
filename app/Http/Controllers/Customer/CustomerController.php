@@ -973,8 +973,8 @@ class CustomerController extends Controller
 
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
-                'result' => 'The user role was invalid.',
-                'message' => ['User Access not Authorize!'],
+                'message' => 'The given data was invalid.',
+                'errors' => ['User Access not Authorize!'],
             ], 403);
         }
 
@@ -1009,10 +1009,12 @@ class CustomerController extends Controller
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
+
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => $errors,
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
                 ], 422);
+                
             }
 
 
@@ -1418,7 +1420,7 @@ class CustomerController extends Controller
 
 
 
-                
+
                 $primaryEmail = 0;
                 foreach ($arrayemail as $item) {
                     if (strtolower($item['usage']) == "utama") {
@@ -1884,7 +1886,7 @@ class CustomerController extends Controller
                         }
                     }
                 }
-            // } else {
+                // } else {
                 // $customerPets = DB::table('customerPets')
                 //     ->where([
                 //         ['isDeleted', '=', '0']
@@ -2313,7 +2315,7 @@ class CustomerController extends Controller
 
                 foreach ($request->telephones as $key) {
 
-            
+
 
                     $telephoneDetail = Validator::make(
                         $key,
