@@ -143,12 +143,12 @@ class DataProductInventory implements FromCollection, ShouldAutoSize, WithHeadin
                         'u.usage',
                         'pi.quantity',
 
-                        'pi.isApprovedOffice',
+                        DB::raw("CASE WHEN pi.isApprovedOffice = 0 THEN 'Menunggu Persetujuan' WHEN pi.isApprovedOffice = 1 THEN 'Diterima' WHEN pi.isApprovedOffice = 2 THEN 'Ditolak' END as isApprovedOffice"),
                         DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
                         DB::raw("IFNULL(DATE_FORMAT(pi.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
                         DB::raw("IFNULL(pi.reasonOffice,'') as reasonOffice"),
 
-                        'pi.isApprovedAdmin',
+                        DB::raw("CASE WHEN pi.isApprovedAdmin = 0 THEN 'Menunggu Persetujuan' WHEN pi.isApprovedAdmin = 1 THEN 'Diterima' WHEN pi.isApprovedAdmin = 2 THEN 'Ditolak' END as isApprovedAdmin"),
                         DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
                         DB::raw("IFNULL(DATE_FORMAT(pi.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
                         DB::raw("IFNULL(pi.reasonAdmin,'') as reasonAdmin"),
