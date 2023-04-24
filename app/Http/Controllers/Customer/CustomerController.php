@@ -1056,7 +1056,7 @@ class CustomerController extends Controller
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
 
-                           // 'dateOfBirth' => 'required_without_all:petMonth,petYear',
+                            // 'dateOfBirth' => 'required_without_all:petMonth,petYear',
                             // 'petMonth' => 'required_without_all:dateOfBirth,petYear',
                             // 'petYear' => 'required_without_all:dateOfBirth,petMonth',
 
@@ -1605,6 +1605,8 @@ class CustomerController extends Controller
 
                     foreach ($ResultImageDatas as $value) {
 
+                        // if ($value['status'] != "del") {
+
                         if ($value['name'] == "") {
 
                             return response()->json([
@@ -1612,8 +1614,10 @@ class CustomerController extends Controller
                                 'errors' => ['Image name can not be empty!'],
                             ], 422);
                         }
+                        // }
                     }
                 } else {
+
                     return response()->json([
                         'message' => 'The given data was invalid.',
                         'errors' => ['Image name can not be empty!'],
@@ -1835,6 +1839,23 @@ class CustomerController extends Controller
                     }
                 }
             }
+
+
+            // $json_array = json_decode($request->imagesName, true);
+            // $int = 0;
+            // //echo ($int);
+
+            // for ($i = 0; $i < count($json_array); $i++) {
+            //     $image = $json_array[$i];
+            //     //  echo $image['status'];
+
+            //     if ($image['status'] != "del") {
+            //         echo $image['name'];
+            //     }
+
+            // }
+
+
 
             DB::commit();
 
