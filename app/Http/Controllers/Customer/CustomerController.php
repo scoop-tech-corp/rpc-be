@@ -1844,6 +1844,96 @@ class CustomerController extends Controller
         }
     }
 
+    public function updatePetAge(Request $request)
+    {
+
+        try {
+
+            if (date('n') !== date('n', strtotime('yesterday'))) {
+
+                $customerPets = DB::table('customerPets')
+                    ->where([
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+
+                foreach ($customerPets as $key) {
+
+                    $getpetsbyID = DB::table('customerPets')
+                        ->where([
+                            ['isDeleted', '=', '0'],
+                            ['id', '=', $key->id]
+                        ])->first();
+
+                    if ($getpetsbyID->dateOfBirth == null) { //artinya menggunakan date of birth, jadi ga usah di rubah
+
+                        if ($getpetsbyID->petMonth == 12) { /// kalau udah 12 bulan makan set jadi 1 dan year ditambah satu
+
+                            CustomerPets::where('id', '=', $key->id)
+                                ->update([
+                                    'petMonth' => 1,
+                                    'petYear' => $getpetsbyID->petYear + 1,
+                                ]);
+                        } else {
+
+                            CustomerPets::where('id', '=', $key->id)
+                                ->update([
+                                    'petMonth' => $getpetsbyID->petMonth + 1,
+                                ]);
+                        }
+                    }
+                }
+            // } else {
+                // $customerPets = DB::table('customerPets')
+                //     ->where([
+                //         ['isDeleted', '=', '0']
+                //     ])
+                //     ->get();
+
+
+                // foreach ($customerPets as $key) {
+
+                //     $getpetsbyID = DB::table('customerPets')
+                //         ->where([
+                //             ['isDeleted', '=', '0'],
+                //             ['id', '=', $key->id]
+                //         ])->first();
+
+                //     if ($getpetsbyID->dateOfBirth == null) { //artinya menggunakan date of birth, jadi ga usah di rubah
+
+                //         if ($getpetsbyID->petMonth == 12) { /// kalau udah 12 bulan makan set jadi 1 dan year ditambah satu
+
+                //             CustomerPets::where('id', '=', $key->id)
+                //                 ->update([
+                //                     'petMonth' => 1,
+                //                     'petYear' => $getpetsbyID->petYear + 1,
+                //                 ]);
+                //         } else {
+
+                //             CustomerPets::where('id', '=', $key->id)
+                //                 ->update([
+                //                     'petMonth' => $getpetsbyID->petMonth + 1,
+                //                 ]);
+                //         }
+                //     }
+                // }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'Success',
+                'message' => "Successfully update all pet Age",
+            ], 200);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ], 422);
+        }
+    }
 
     public function updateCustomer(Request $request)
     {

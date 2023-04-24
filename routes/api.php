@@ -180,6 +180,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::post('/source', [CustomerController::class, 'insertSourceCustomer']);
         Route::get('/source', [CustomerController::class, 'getSourceCustomer']);
+
+        Route::put('/pet', [CustomerController::class, 'updatePetAge']);
+
     });
 
 
