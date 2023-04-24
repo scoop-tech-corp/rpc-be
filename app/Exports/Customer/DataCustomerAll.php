@@ -63,7 +63,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
                 'a.locationId as locationId',
                 DB::raw("CONCAT(' ', e.phoneNumber, ' ') as phoneNumber"),
                 DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.username as emailAddress',
+                'f.email as emailAddress',
                 'a.createdBy as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
@@ -198,17 +198,15 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
 
     public function columnFormats(): array
     {
-  
+
         return [
             'E' => NumberFormat::FORMAT_TEXT,
         ];
-
-       
     }
 
     public function map($item): array
     {
-        
+
         $res = [
             [
                 $item->number,
