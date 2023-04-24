@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Product;
 
 use App\Exports\Product\ProductSellReport;
+use App\Exports\Product\TemplateUploadProductSell;
 use App\Models\ProductSell;
 use App\Models\ProductSellCategory;
 use App\Models\ProductSellCustomerGroup;
@@ -1628,6 +1629,10 @@ class ProductSellController
         );
     }
 
+    public function downloadTemplate(Request $request)
+    {
+        return (new TemplateUploadProductSell())->download('Template Upload Produk Jual.xlsx');
+    }
     public function Split(Request $request)
     {
         $validate = Validator::make($request->all(), [
