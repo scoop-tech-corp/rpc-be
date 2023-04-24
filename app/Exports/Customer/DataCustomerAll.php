@@ -181,7 +181,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
                 'No.',
                 'Nama Customer',
                 'Jumlah Pet',
-                'Lokasi.',
+                'Lokasi',
                 'Nomor Telepon',
                 'Alamat Email',
                 'Dibuat Oleh',
