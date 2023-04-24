@@ -39,7 +39,11 @@ class ProductInventoryController
                 'p.totalItem',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(p.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
-            );
+            )->where('p.isDeleted', '=', 0);
+
+        if ($request->locationId) {
+            $data = $data->whereIn('p.locationId', $request->locationId);
+        }
 
         if ($request->search) {
             $res = $this->Search($request);
