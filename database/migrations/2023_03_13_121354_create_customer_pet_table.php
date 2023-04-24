@@ -20,7 +20,7 @@ return new class extends Migration
             $table->integer('petCategoryId');
             $table->string('races')->nullable();
             $table->string('condition');
-            $table->string('color');
+            $table->string('color')->nullable();
             $table->enum('petGender',['J', 'B']);
             $table->integer('isSteril');
             $table->integer('petMonth')->nullable();

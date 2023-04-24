@@ -182,7 +182,7 @@ class CustomerController extends Controller
                     ]);
                 }
 
-            
+
                 $checkOrder = true;
             }
 
@@ -1032,7 +1032,7 @@ class CustomerController extends Controller
                     'condition.required' => 'Condition on tab Customer Pet is required',
                     'petGender.required' => 'Pet Gender on tab Cutomer Pet is required',
                     'isSteril.required' => 'Pet Steril  on tab Cutomer Pet is required',
-                    'color.required' => 'Pet Color  on tab Cutomer Pet is required',
+
                 ];
 
 
@@ -1055,10 +1055,10 @@ class CustomerController extends Controller
                             'condition' => 'required|string|max:100',
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
-                            'color' => 'required|string|max:100',
-                            'dateOfBirth' => 'required_without_all:petMonth,petYear',
-                            'petMonth' => 'required_without_all:dateOfBirth,petYear',
-                            'petYear' => 'required_without_all:dateOfBirth,petMonth',
+
+                           // 'dateOfBirth' => 'required_without_all:petMonth,petYear',
+                            // 'petMonth' => 'required_without_all:dateOfBirth,petYear',
+                            // 'petYear' => 'required_without_all:dateOfBirth,petMonth',
 
                         ],
                         $messageCustomerPet
@@ -1072,15 +1072,15 @@ class CustomerController extends Controller
                     //     ], 422);
                     // }
 
-                    if ($key['command'] != "del") {
+                    // if ($key['command'] != "del") {
 
-                        if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
-                            return response()->json([
-                                'message' => 'The given data was invalid.',
-                                'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                            ], 422);
-                        }
-                    }
+                    //     if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
+                    //         return response()->json([
+                    //             'message' => 'The given data was invalid.',
+                    //             'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
+                    //         ], 422);
+                    //     }
+                    // }
 
                     if ($validateDetail->fails()) {
 
@@ -1443,7 +1443,7 @@ class CustomerController extends Controller
                         'errors' =>  'Email must have at least 1 primary email',
                     ], 422);
                 } elseif ($primaryEmail > 1) {
-              
+
                     return response()->json([
                         'message' => 'The given data was invalid.',
                         'errors' =>  'Email have 2 primary email, please check again',
@@ -1482,7 +1482,6 @@ class CustomerController extends Controller
                         'message' => 'The given data was invalid.',
                         'errors' => $data_error_email,
                     ], 422);
-
                 }
             }
 
@@ -1505,7 +1504,6 @@ class CustomerController extends Controller
                         'message' => 'Inputed data is not valid',
                         'errors' => 'Messenger must have at least 1 primary number',
                     ], 422);
-
                 } elseif ($primaryMessenger > 1) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
@@ -1985,7 +1983,7 @@ class CustomerController extends Controller
                     'referenceCustomerId' => 'nullable|integer',
                     'isReminderBooking' => 'integer|nullable',
                     'isReminderPayment' => 'integer|nullable',
-                    
+
                 ]
             );
 
@@ -2012,7 +2010,7 @@ class CustomerController extends Controller
                     'condition.required' => 'Condition on tab Customer Pet is required',
                     'petGender.required' => 'Pet Gender on tab Cutomer Pet is required',
                     'isSteril.required' => 'Pet Steril  on tab Cutomer Pet is required',
-                    'color.required' => 'Pet Color  on tab Cutomer Pet is required',
+
                 ];
 
 
@@ -2027,23 +2025,23 @@ class CustomerController extends Controller
                             'condition' => 'required|string|max:100',
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
-                            'color' => 'required|string|max:100',
-                            'dateOfBirth' => 'required_without_all:petMonth,petYear',
-                            'petMonth' => 'required_without_all:dateOfBirth,petYear',
-                            'petYear' => 'required_without_all:dateOfBirth,petMonth',
+
+                            //'dateOfBirth' => 'required_without_all:petMonth,petYear',
+                            // 'petMonth' => 'required_without_all:dateOfBirth,petYear',
+                            // 'petYear' => 'required_without_all:dateOfBirth,petMonth',
                         ],
                         $messageCustomerPet
                     );
 
-                    if ($key['command'] != "del") {
+                    // if ($key['command'] != "del") {
 
-                        if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
-                            return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                            ], 422);
-                        }
-                    }
+                    //     if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
+                    //         return response()->json([
+                    //             'message' => 'Inputed data is not valid',
+                    //             'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
+                    //         ], 422);
+                    //     }
+                    // }
 
 
                     if ($validateDetail->fails()) {
@@ -2233,7 +2231,7 @@ class CustomerController extends Controller
                     }
                 }
 
-    
+
                 if ($primaryCount == 0) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
@@ -2497,7 +2495,7 @@ class CustomerController extends Controller
                     }
                 }
 
-                
+
 
                 if ($data_error_messengers) {
                     return response()->json([
@@ -3090,7 +3088,7 @@ class CustomerController extends Controller
 
 
 
-    
+
         $validate = Validator::make($request->all(), [
             'customerId' => 'required',
         ]);
@@ -3243,7 +3241,7 @@ class CustomerController extends Controller
             } else {
 
 
-            
+
                 $sourceCustomer = new SourceCustomer();
                 $sourceCustomer->sourceName = $request->sourceName;
                 $sourceCustomer->isActive = 1;
@@ -3585,8 +3583,6 @@ class CustomerController extends Controller
                 'message' => 'The given data was invalid.',
                 'errors' => $errors,
             ], 422);
-
-
         }
 
         $checkIfValueExits = CustomerGroups::where('customerGroup', '=', $request->customerGroup)
