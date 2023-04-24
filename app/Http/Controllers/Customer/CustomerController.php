@@ -169,19 +169,20 @@ class CustomerController extends Controller
                 if (!in_array($request->orderColumn, $listOrder)) {
 
                     return response()->json([
-                        'result' => 'failed',
-                        'message' => 'Please try different order column',
+                        'message' => 'failed',
+                        'errors' => 'Please try different order column',
                         'orderColumn' => $listOrder,
                     ]);
                 }
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
                     return response()->json([
-                        'result' => 'failed',
-                        'message' => 'order value must Ascending: ASC or Descending: DESC ',
+                        'message' => 'failed',
+                        'errors' => 'order value must Ascending: ASC or Descending: DESC ',
                     ]);
                 }
 
+            
                 $checkOrder = true;
             }
 
@@ -244,8 +245,8 @@ class CustomerController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -297,8 +298,8 @@ class CustomerController extends Controller
             } else {
 
                 return response()->json([
-                    'result' => 'failed',
-                    'message' => 'Your role not autorize to access this feature',
+                    'message' => 'failed',
+                    'errors' => 'Your role not autorize to access this feature',
                 ], 422);
             }
         } catch (Exception $e) {
@@ -306,8 +307,8 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ]);
         }
     }
@@ -1014,7 +1015,6 @@ class CustomerController extends Controller
                     'message' => 'The given data was invalid.',
                     'errors' => $errors,
                 ], 422);
-                
             }
 
 
@@ -1076,8 +1076,8 @@ class CustomerController extends Controller
 
                         if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
                             return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
+                                'message' => 'The given data was invalid.',
+                                'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
                             ], 422);
                         }
                     }
@@ -1096,9 +1096,10 @@ class CustomerController extends Controller
                 }
 
                 if ($data_item_pet) {
+
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_item_pet,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_item_pet,
                     ], 422);
                 }
             }
@@ -1146,9 +1147,10 @@ class CustomerController extends Controller
                 }
 
                 if ($data_reminder_booking) {
+
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_reminder_booking,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_reminder_booking,
                     ], 422);
                 }
             }
@@ -1197,9 +1199,10 @@ class CustomerController extends Controller
                 }
 
                 if ($data_reminder_payment) {
+
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_reminder_payment,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_reminder_payment,
                     ], 422);
                 }
             }
@@ -1246,9 +1249,10 @@ class CustomerController extends Controller
                 }
 
                 if ($data_reminder_late_payment) {
+
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_reminder_late_payment,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_reminder_late_payment,
                     ], 422);
                 }
             }
@@ -1266,16 +1270,15 @@ class CustomerController extends Controller
                         $primaryCount++;
                     }
                 }
-
                 if ($primaryCount == 0) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Detail address must have at least 1 primary address',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address must have at least 1 primary address',
                     ], 422);
                 } elseif ($primaryCount > 1) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Detail address have 2 primary address, please check again',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address have 2 primary address, please check again',
                     ], 422);
                 }
 
@@ -1315,16 +1318,17 @@ class CustomerController extends Controller
 
 
                 if ($data_item) {
+
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_item,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_item,
                     ], 422);
                 }
             } else {
 
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => ['Detail address can not be empty!'],
+                    'message' => 'The given data was invalid.',
+                    'errors' =>  ['Detail address can not be empty!'],
                 ], 422);
             }
 
@@ -1351,14 +1355,16 @@ class CustomerController extends Controller
                 }
 
                 if ($primaryTelephone == 0) {
+
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Telephone must have at least 1 primary number',
+                        'message' => 'The given data was invalid.',
+                        'errors' =>  'Telephone must have at least 1 primary number',
                     ], 422);
                 } elseif ($primaryTelephone > 1) {
+
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Telephone have 2 primary number, please check again',
+                        'message' => 'The given data was invalid.',
+                        'errors' =>  'Telephone have 2 primary number, please check again',
                     ], 422);
                 }
 
@@ -1390,9 +1396,10 @@ class CustomerController extends Controller
                     if (strtolower($key['type']) == "whatshapp") {
 
                         if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
+
                             return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'message' => 'The given data was invalid.',
+                                'errors' =>  'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -1400,9 +1407,10 @@ class CustomerController extends Controller
 
 
                 if ($data_error_telephone) {
+
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => $data_error_telephone,
+                        'message' => 'The given data was invalid.',
+                        'errors' =>   $data_error_telephone,
                     ], 422);
                 }
             }
@@ -1429,14 +1437,16 @@ class CustomerController extends Controller
                 }
 
                 if ($primaryEmail == 0) {
+
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Email must have at least 1 primary email',
+                        'message' => 'The given data was invalid.',
+                        'errors' =>  'Email must have at least 1 primary email',
                     ], 422);
                 } elseif ($primaryEmail > 1) {
+              
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Email have 2 primary email, please check again',
+                        'message' => 'The given data was invalid.',
+                        'errors' =>  'Email have 2 primary email, please check again',
                     ], 422);
                 }
 
@@ -1472,6 +1482,7 @@ class CustomerController extends Controller
                         'message' => 'The given data was invalid.',
                         'errors' => $data_error_email,
                     ], 422);
+
                 }
             }
 
@@ -1491,13 +1502,14 @@ class CustomerController extends Controller
 
                 if ($primaryMessenger == 0) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Messenger must have at least 1 primary number',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Messenger must have at least 1 primary number',
                     ], 422);
+
                 } elseif ($primaryMessenger > 1) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Messenger have 2 primary number, please check again',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Messenger have 2 primary number, please check again',
                     ], 422);
                 }
 
@@ -1840,8 +1852,8 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -1931,8 +1943,8 @@ class CustomerController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -1942,8 +1954,8 @@ class CustomerController extends Controller
 
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
-                'result' => 'The user role was invalid.',
-                'message' => ['User Access not Authorize!'],
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
             ], 403);
         }
 
@@ -1981,8 +1993,8 @@ class CustomerController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => $errors,
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
                 ], 422);
             }
 
@@ -2027,8 +2039,8 @@ class CustomerController extends Controller
 
                         if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
                             return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
                             ], 422);
                         }
                     }
@@ -2049,13 +2061,11 @@ class CustomerController extends Controller
 
                 if ($data_item_pet) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_item_pet,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_item_pet,
                     ], 422);
                 }
             }
-
-
 
             $data_reminder_booking = [];
 
@@ -2099,11 +2109,12 @@ class CustomerController extends Controller
 
                 if ($data_reminder_booking) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_reminder_booking,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_reminder_booking,
                     ], 422);
                 }
             }
+
 
             $data_reminder_payment = [];
 
@@ -2147,8 +2158,8 @@ class CustomerController extends Controller
 
                 if ($data_reminder_payment) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_reminder_payment,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_reminder_payment,
                     ], 422);
                 }
             }
@@ -2195,12 +2206,11 @@ class CustomerController extends Controller
 
                 if ($data_reminder_late_payment) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_reminder_late_payment,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_reminder_late_payment,
                     ], 422);
                 }
             }
-
 
 
             $data_item = [];
@@ -2223,15 +2233,16 @@ class CustomerController extends Controller
                     }
                 }
 
+    
                 if ($primaryCount == 0) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Detail address must have at least 1 primary address',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address must have at least 1 primary address',
                     ], 422);
                 } elseif ($primaryCount > 1) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Detail address have 2 primary address, please check again',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address have 2 primary address, please check again',
                     ], 422);
                 }
 
@@ -2262,19 +2273,18 @@ class CustomerController extends Controller
                 }
 
 
-
                 if ($data_item) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $data_item,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_item,
                     ], 422);
                 }
             } else {
 
 
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => ['Detail address can not be empty!'],
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
                 ], 422);
             }
 
@@ -2301,16 +2311,15 @@ class CustomerController extends Controller
 
                 if ($primaryTelephone == 0) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Telephone must have at least 1 primary number',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Telephone must have at least 1 primary number',
                     ], 422);
                 } elseif ($primaryTelephone > 1) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Telephone have 2 primary number, please check again',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Telephone have 2 primary number, please check again',
                     ], 422);
                 }
-
 
 
                 foreach ($request->telephones as $key) {
@@ -2343,8 +2352,8 @@ class CustomerController extends Controller
 
                         if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
                             return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
@@ -2353,11 +2362,13 @@ class CustomerController extends Controller
 
                 if ($data_error_telephone) {
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => $data_error_telephone,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_telephone,
                     ], 422);
                 }
             }
+
+
 
             $data_error_email = [];
 
@@ -2379,16 +2390,15 @@ class CustomerController extends Controller
 
                 if ($primaryEmail == 0) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Email must have at least 1 primary email',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Email must have at least 1 primary email',
                     ], 422);
                 } elseif ($primaryEmail > 1) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Email have 2 primary email, please check again',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Email have 2 primary email, please check again',
                     ], 422);
                 }
-
 
                 foreach ($request->emails as $key) {
 
@@ -2417,12 +2427,11 @@ class CustomerController extends Controller
 
                 if ($data_error_email) {
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => $data_error_email,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_email,
                     ], 422);
                 }
             }
-
 
             $data_error_messengers = [];
             if ($request->messengers) {
@@ -2436,16 +2445,15 @@ class CustomerController extends Controller
 
                 if ($primaryMessenger == 0) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Messenger must have at least 1 primary number',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Messenger must have at least 1 primary number',
                     ], 422);
                 } elseif ($primaryMessenger > 1) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Messenger have 2 primary number, please check again',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Messenger have 2 primary number, please check again',
                     ], 422);
                 }
-
 
                 $messageMessenger = [
                     'messengerNumber.required' => 'messenger number on tab messenger is required',
@@ -2482,23 +2490,22 @@ class CustomerController extends Controller
                         if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
 
                             return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
                 }
 
+                
+
                 if ($data_error_messengers) {
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => $data_error_messengers,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_messengers,
                     ], 422);
                 }
             }
-
-
-
 
             // Update
 
@@ -2775,8 +2782,8 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -2796,8 +2803,8 @@ class CustomerController extends Controller
         if ($checkIfValueExits === null) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => "Data not exists, please try another customer id",
+                'message' => 'Failed',
+                'errors' => "Data not exists, please try another customer id",
             ]);
         } else {
 
@@ -3064,8 +3071,8 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ]);
         }
     }
@@ -3076,11 +3083,14 @@ class CustomerController extends Controller
 
         if (!adminAccess($request->user()->id)) {
             return response()->json([
-                'result' => 'The user role was invalid.',
-                'message' => ['User Access not Authorize!'],
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
             ], 403);
         }
 
+
+
+    
         $validate = Validator::make($request->all(), [
             'customerId' => 'required',
         ]);
@@ -3089,8 +3099,8 @@ class CustomerController extends Controller
             $errors = $validate->errors()->all();
 
             return response()->json([
-                'result' => 'The given data was invalid.',
-                'message' => $errors,
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
             ], 422);
         }
 
@@ -3114,8 +3124,8 @@ class CustomerController extends Controller
 
             if ($data_item) {
                 return response()->json([
-                    'result' => 'Inputed data is not valid',
-                    'message' => $data_item,
+                    'message' => 'Inputed data is not valid',
+                    'errors' => $data_item,
                 ], 422);
             }
 
@@ -3175,12 +3185,11 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ]);
         }
     }
-
 
 
     public function getSourceCustomer(Request $request)
@@ -3202,11 +3211,12 @@ class CustomerController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
+
 
     public function insertSourceCustomer(Request $request)
     {
@@ -3227,12 +3237,13 @@ class CustomerController extends Controller
             if ($checkIfValueExits != null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Source Name Customer title already exists, please choose another name',
+                    'message' => 'Failed',
+                    'errors' => 'Source Name Customer title already exists, please choose another name',
                 ]);
             } else {
 
 
+            
                 $sourceCustomer = new SourceCustomer();
                 $sourceCustomer->sourceName = $request->sourceName;
                 $sourceCustomer->isActive = 1;
@@ -3249,8 +3260,8 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -3276,10 +3287,11 @@ class CustomerController extends Controller
             if ($checkIfValueExits != null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Reference Customer title already exists, please choose another name',
+                    'message' => 'Failed',
+                    'errors' => 'Reference Customer title already exists, please choose another name',
                 ]);
             } else {
+
 
 
                 $referenceCustomer = new ReferenceCustomer();
@@ -3298,12 +3310,11 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
 
 
     public function getReferenceCustomer(Request $request)
@@ -3325,8 +3336,8 @@ class CustomerController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -3350,11 +3361,13 @@ class CustomerController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
+
+
 
 
 
@@ -3377,9 +3390,10 @@ class CustomerController extends Controller
 
             if ($checkIfValueExits != null) {
 
+
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Pet category name already exists, please choose another name',
+                    'message' => 'Failed',
+                    'errors' => 'Pet category name already exists, please choose another name',
                 ]);
             } else {
 
@@ -3399,8 +3413,8 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -3423,8 +3437,8 @@ class CustomerController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -3449,10 +3463,11 @@ class CustomerController extends Controller
             if ($checkIfValueExits != null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Jobname already exists, please choose another name',
+                    'message' => 'Failed',
+                    'errors' => 'Jobname already exists, please choose another name',
                 ]);
             } else {
+
 
                 $customerOccupation = new CustomerOccupation();
                 $customerOccupation->occupationName = $request->occupationName;
@@ -3470,12 +3485,11 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
 
     public function getTitleCustomer(Request $request)
     {
@@ -3495,11 +3509,12 @@ class CustomerController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
+
 
     public function insertTitleCustomer(Request $request)
     {
@@ -3520,8 +3535,8 @@ class CustomerController extends Controller
             if ($checkIfValueExits != null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Title Customer title already exists, please choose another name',
+                    'message' => 'Failed',
+                    'errors' => 'Title Customer title already exists, please choose another name',
                 ]);
             } else {
 
@@ -3541,8 +3556,8 @@ class CustomerController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -3567,9 +3582,11 @@ class CustomerController extends Controller
             $errors = $validate->errors()->all();
 
             return response()->json([
-                'result' => 'The given data was invalid.',
-                'message' => $errors,
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
             ], 422);
+
+
         }
 
         $checkIfValueExits = CustomerGroups::where('customerGroup', '=', $request->customerGroup)
@@ -3592,8 +3609,8 @@ class CustomerController extends Controller
         } else {
 
             return response()->json([
-                'result' => 'The given data was invalid.',
-                'message' => ['Customer Group name already exists!'],
+                'message' => 'The given data was invalid.',
+                'errors' => ['Customer Group name already exists!'],
             ], 422);
         }
     }
