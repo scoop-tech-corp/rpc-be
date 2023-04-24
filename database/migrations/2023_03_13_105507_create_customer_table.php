@@ -25,7 +25,7 @@ return new class extends Migration
             $table->integer('locationId')->nullable();
             $table->string('notes')->nullable();
             $table->date('joinDate');
-            $table->integer('typeId');
+            $table->integer('typeId')->nullable();
             $table->string('numberId')->nullable();
             $table->integer('occupationId')->nullable();
             $table->date('birthDate')->nullable();
