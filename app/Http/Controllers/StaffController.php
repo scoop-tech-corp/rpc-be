@@ -26,11 +26,10 @@ class StaffController extends Controller
         if (adminAccess($request->user()->id) != 1) {
 
             return response()->json([
-                'result' => 'The user role was invalid.',
-                'message' => 'User Access not Authorize!',
+                'message' => 'The user role was invalid.',
+                'errors' => 'User Access not Authorize!',
             ], 403);
         }
-
         DB::beginTransaction();
 
         try {
@@ -73,8 +72,8 @@ class StaffController extends Controller
                 if ((is_numeric($request->identificationNumber))) {
 
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => "Identification number must be alpanumeric if identification type is passport!",
+                        'message' => 'The given data was invalid.',
+                        'errors' => "Identification number must be alpanumeric if identification type is passport!",
                     ], 422);
                 }
             } else {
@@ -82,8 +81,8 @@ class StaffController extends Controller
                 if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
 
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => "Identification number must be integer!",
+                        'message' => 'The given data was invalid.',
+                        'errors' => "Identification number must be integer!",
                     ], 422);
                 }
             }
@@ -97,8 +96,8 @@ class StaffController extends Controller
                 $errors = $validate->errors()->all();
 
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => $errors,
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
                 ], 422);
             }
 
@@ -116,6 +115,25 @@ class StaffController extends Controller
                     'country.required' => 'Country on tab Address is required',
                 ];
 
+
+                $primaryCount = 0;
+                foreach ($arrayDetailAddress as $item) {
+                    if (isset($item['isPrimary']) && $item['isPrimary'] == 1) {
+                        $primaryCount++;
+                    }
+                }
+
+                if ($primaryCount == 0) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address must have at least 1 primary address',
+                    ], 422);
+                } elseif ($primaryCount > 1) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address have 2 primary address, please check again',
+                    ], 422);
+                }
 
                 foreach ($arrayDetailAddress as $key) {
 
@@ -146,17 +164,20 @@ class StaffController extends Controller
                 if ($data_item) {
 
                     return response()->json([
-                        'result' =>  'Inputed data is not valid',
-                        'message' => $data_item,
+                        'message' =>  'Inputed data is not valid',
+                        'errors' => $data_item,
                     ], 422);
                 }
             } else {
 
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => ['Detail address can not be empty!'],
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
                 ], 422);
             }
+
+
+
 
             $data_telephone = [];
 
@@ -275,11 +296,11 @@ class StaffController extends Controller
 
                 if ($data_error_email) {
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' =>  $data_error_email,
+                        'message' => 'The given data was invalid.',
+                        'errors' =>  $data_error_email,
                     ], 422);
                 }
-
+                
                 $checkUsageEmail = false;
                 $checkEmail = [];
                 foreach ($arrayemail as $val) {
@@ -303,22 +324,22 @@ class StaffController extends Controller
 
                 if ($checkEmail) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $checkEmail,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkEmail,
                     ], 422);
                 }
-
+                
                 if ($checkUsageEmail == false) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Must have one primary email',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Must have one primary email',
                     ], 422);
                 }
             } else {
 
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => ['Email can not be empty!'],
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Email can not be empty!'],
                 ], 422);
             }
 
@@ -365,17 +386,18 @@ class StaffController extends Controller
                         if (!(substr($key['messengerNumber'], 0, 3) === "62")) {
 
                             return response()->json([
-                                'result' => 'Inputed data is not valid',
-                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
                 }
+                
 
                 if ($data_error_messenger) {
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => $data_error_messenger,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_messenger,
                     ], 422);
                 }
 
@@ -396,12 +418,12 @@ class StaffController extends Controller
 
                 if ($checkMessenger) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $checkMessenger,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkMessenger,
                     ], 422);
                 }
             }
-
+            
 
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
@@ -662,16 +684,16 @@ class StaffController extends Controller
 
             if ($users->status == 0) {
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Please activated your account first',
+                    'message' => 'Failed',
+                    'errors' => 'Please activated your account first',
                 ], 406);
             } else {
 
-
+                
                 if ($users->password != null) {
                     return response()->json([
-                        'result' => 'failed',
-                        'message' => 'Your account password has been set and verified within email',
+                        'message' => 'failed',
+                        'errors' => 'Your account password has been set and verified within email',
                     ], 406);
                 } else {
 
@@ -720,12 +742,12 @@ class StaffController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
 
     public function updateStatusUsers(Request $request)
     {
@@ -774,11 +796,11 @@ class StaffController extends Controller
 
             if ($users->status == 1) {
                 return response()->json([
-                    'result' => 'failed',
-                    'message' => 'Your account already been activated',
+                    'message' => 'failed',
+                    'errors' => 'Your account already been activated',
                 ], 406);
             } else {
-
+                
                 $users = DB::table('users')
                     ->select('status')
                     ->where('id', '=', $request->id)
@@ -802,13 +824,13 @@ class StaffController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
-
+    
 
     public function getAllHolidaysDate(Request $request)
     {
@@ -881,13 +903,13 @@ class StaffController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
-
+    
     public function __construct()
     {
         $this->client = new Client([
@@ -916,13 +938,13 @@ class StaffController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
-
+    
     public function getRoleName(Request $request)
     {
 
@@ -941,14 +963,14 @@ class StaffController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
 
-
+    
     public function index(Request $request)
     {
 
@@ -1072,16 +1094,17 @@ class StaffController extends Controller
                 if (!in_array($request->orderColumn, $listOrder)) {
 
                     return response()->json([
-                        'result' => 'failed',
-                        'message' => 'Please try different order column',
+                        'message' => 'failed',
+                        'errors' => 'Please try different order column',
                         'orderColumn' => $listOrder,
                     ]);
                 }
+                
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
                     return response()->json([
-                        'result' => 'failed',
-                        'message' => 'order value must Ascending: ASC or Descending: DESC ',
+                        'message' => 'failed',
+                        'errors' => 'order value must Ascending: ASC or Descending: DESC ',
                     ]);
                 }
 
@@ -1148,13 +1171,13 @@ class StaffController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
-
+    
     private function Search($request)
     {
 
@@ -1875,11 +1898,11 @@ class StaffController extends Controller
         if ($checkIfValueExits === null) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => "Data not exists, please try another user id",
+                'message' => 'Failed',
+                'errors' => "Data not exists, please try another user id",
             ], 406);
         } else {
-
+            
             $checkImages = DB::table('usersImages')
                 ->where([
                     ['usersId', '=', $request->id],
@@ -1959,10 +1982,11 @@ class StaffController extends Controller
             if ($checkIfValueExits === null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => "Data not exists, please try another user id",
+                    'message' => 'Failed',
+                    'errors' => "Data not exists, please try another user id",
                 ], 406);
             } else {
+                
 
                 $users = DB::table('users as a')
                     ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
@@ -2096,11 +2120,13 @@ class StaffController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
+
+    
 
     public function exportStaff(Request $request)
     {
@@ -2146,21 +2172,21 @@ class StaffController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ]);
         }
     }
 
-
+    
     public function updateStaff(Request $request)
     {
 
 
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
-                'result' => 'The user role was invalid.',
-                'message' => ['User Access not Authorize!'],
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
             ], 403);
         }
 
@@ -2203,11 +2229,11 @@ class StaffController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => $errors,
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
                 ], 422);
             }
-
+            
             $checkIfUsersExists = DB::table('users')
                 ->where([
                     ['id', '=', $request->id],
@@ -2217,28 +2243,29 @@ class StaffController extends Controller
 
             if (!$checkIfUsersExists) {
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => ['Spesific users not exists please try different id!'],
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Spesific users not exists please try different id!'],
                 ], 422);
             }
-
+            
 
             if ($request->typeId == 3) {
 
                 if ((is_numeric($request->identificationNumber))) {
 
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => "Identification number must be alpanumeric if identification type is passport!",
+                        'message' => 'The given data was invalid.',
+                        'errors' => "Identification number must be alpanumeric if identification type is passport!",
                     ], 422);
+
                 }
             } else {
 
                 if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
 
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => "Identification number must be integer!",
+                        'message' => 'The given data was invalid.',
+                        'errors' => "Identification number must be integer!",
                     ], 422);
                 }
             }
@@ -2254,6 +2281,27 @@ class StaffController extends Controller
                     'cityCode.required' => 'City code on tab Address is required',
                     'country.required' => 'Country on tab Address is required',
                 ];
+
+
+                $primaryCount = 0;
+                foreach ($request->detailAddress as $item) {
+                    if (isset($item['isPrimary']) && $item['isPrimary'] == 1) {
+                        $primaryCount++;
+                    }
+                }
+
+                if ($primaryCount == 0) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address must have at least 1 primary address',
+                    ], 422);
+                } elseif ($primaryCount > 1) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address have 2 primary address, please check again',
+                    ], 422);
+                }
+
 
                 foreach ($request->detailAddress as $key) {
 
@@ -2280,18 +2328,18 @@ class StaffController extends Controller
                         }
                     }
                 }
-
+                
                 if ($data_error_detailaddress) {
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => $data_error_detailaddress,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_detailaddress,
                     ], 422);
                 }
             } else {
 
                 return response()->json([
-                    'result' => 'The given data was invalid.',
-                    'message' => ['Detail address can not be empty!'],
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
                 ], 422);
             }
 
@@ -2336,17 +2384,19 @@ class StaffController extends Controller
                         if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
 
                             return response()->json([
-                                'result' => 'Failed',
-                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'message' => 'Failed',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
                 }
 
+                
+
                 if ($data_error_telephone) {
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => $data_error_telephone,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_telephone,
                     ], 422);
                 }
 
@@ -2369,12 +2419,12 @@ class StaffController extends Controller
 
                 if ($checkTelephone) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $checkTelephone,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkTelephone,
                     ], 422);
                 }
             }
-
+            
             $data_error_email = [];
             $insertEmailUsers = '';
 
@@ -2413,11 +2463,11 @@ class StaffController extends Controller
 
                 if ($data_error_email) {
                     return response()->json([
-                        'result' => 'The given data was invalid.',
-                        'message' => $data_error_email,
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_email,
                     ], 422);
                 }
-
+                
 
                 $checkEmail = [];
                 $checkUsageEmail = false;
@@ -2457,16 +2507,16 @@ class StaffController extends Controller
 
                 if ($checkEmail) {
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => $checkEmail,
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkEmail,
                     ], 422);
                 }
-
+                
                 if ($checkUsageEmail == false) {
 
                     return response()->json([
-                        'result' => 'Inputed data is not valid',
-                        'message' => 'Must have one primary email',
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Must have one primary email',
                     ], 422);
                 }
             }
@@ -2510,18 +2560,18 @@ class StaffController extends Controller
 
                         if (!(substr($key['messengerNumber'], 0, 2) === "62")) {
                             return response()->json([
-                                'result' => 'Failed',
-                                'message' => 'Please check your phone number, for type whatshapp must start with 62',
+                                'message' => 'Failed',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
                             ], 422);
                         }
                     }
                 }
-
+                
                 if ($data_messenger_error) {
 
                     return response()->json([
-                        'result' => 'Failed',
-                        'message' => $data_messenger_error,
+                        'message' => 'Failed',
+                        'errors' => $data_messenger_error,
                     ], 422);
                 }
 
@@ -2545,12 +2595,12 @@ class StaffController extends Controller
                 if ($checkMessenger) {
 
                     return response()->json([
-                        'result' => 'Failed',
-                        'message' => $checkMessenger,
+                        'message' => 'Failed',
+                        'errors' => $checkMessenger,
                     ], 422);
                 }
             }
-
+            
             $start = Carbon::parse($request->startDate);
             $end = Carbon::parse($request->endDate);
 
@@ -2829,12 +2879,12 @@ class StaffController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
 
     public function getTypeId(Request $request)
     {
@@ -2856,12 +2906,12 @@ class StaffController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
 
     public function getPayPeriod(Request $request)
     {
@@ -2883,12 +2933,12 @@ class StaffController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
     public function getJobTitle(Request $request)
     {
 
@@ -2909,13 +2959,13 @@ class StaffController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
-
+    
     public function insertTypeId(Request $request)
     {
 
@@ -2935,10 +2985,10 @@ class StaffController extends Controller
                 ->first();
 
             if ($checkIfValueExits != null) {
-
+              
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Type name already exists, please choose another name',
+                    'message' => 'Failed',
+                    'errors' => 'Type name already exists, please choose another name',
                 ]);
             } else {
 
@@ -2960,12 +3010,12 @@ class StaffController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
 
 
     public function insertJobTitle(Request $request)
@@ -2989,9 +3039,10 @@ class StaffController extends Controller
             if ($checkIfValueExits != null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Job title already exists, please choose another name',
+                    'message' => 'Failed',
+                    'errors' => 'Job title already exists, please choose another name',
                 ]);
+                
             } else {
 
                 DB::table('jobTitle')->insert([
@@ -3003,17 +3054,19 @@ class StaffController extends Controller
                 DB::commit();
 
                 return response()->json([
-                    'result' => 'success',
-                    'message' => 'Successfully inserted Job Title',
+                    'message' => 'success',
+                    'errors' => 'Successfully inserted Job Title',
                 ]);
+
+                
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -3041,9 +3094,11 @@ class StaffController extends Controller
             if ($checkIfValueExits != null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Pay period already exists, please choose another name',
+                    'message' => 'Failed',
+                    'errors' => 'Pay period already exists, please choose another name',
                 ]);
+
+                
             } else {
 
                 DB::table('payPeriod')->insert([
@@ -3064,8 +3119,8 @@ class StaffController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -3086,10 +3141,10 @@ class StaffController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-
+            
             return response()->json([
-                'result' => 'The given data was invalid.',
-                'message' => $errors,
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
             ], 422);
         }
 
@@ -3164,12 +3219,12 @@ class StaffController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'failed',
-                'message' => $e,
+                'message' => 'failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
     public function staffListTransferProduct(Request $request)
     {
         $validate = Validator::make($request->all(), [

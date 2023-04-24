@@ -33,11 +33,12 @@ class StaffLeaveController extends Controller
                 ->get();
 
             return response()->json($getUser, 200);
+            
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
@@ -58,11 +59,13 @@ class StaffLeaveController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
+
+    
 
     public function adjustBalance(Request $request)
     {
@@ -102,11 +105,11 @@ class StaffLeaveController extends Controller
             if ($User == null)
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'User id not found, please try different id',
+                    'message' => 'Failed',
+                    'errors' => 'User id not found, please try different id',
                 ], 422);
 
-
+                
 
             $listOrder = array(
                 1, 2, 3, 4
@@ -115,12 +118,12 @@ class StaffLeaveController extends Controller
             if (!in_array($request->balanceTypeId, $listOrder)) {
 
                 return response()->json([
-                    'result' =>  'The given data was invalid.',
-                    'message' => 'Balance type id must same within the array',
+                    'message' =>  'The given data was invalid.',
+                    'errors' => 'Balance type id must same within the array',
                     'balanceTypeId' => $listOrder,
                 ]);
             }
-
+            
 
             if ($request->balanceTypeId == 1) {
 
@@ -169,12 +172,12 @@ class StaffLeaveController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
 
     public function getDropdownBalanceType(Request $request)
     {
@@ -207,12 +210,12 @@ class StaffLeaveController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ]);
         }
     }
-
+    
 
     public function adjustLeaveRequest(Request $request)
     {
@@ -287,11 +290,13 @@ class StaffLeaveController extends Controller
                     if (!in_array(strtolower($val['name']), $listOrder)) {
 
                         return response()->json([
-                            'result' =>  'The given data was invalid.',
-                            'message' => 'Working days value must same within the array',
+                            'message' =>  'The given data was invalid.',
+                            'errors' => 'Working days value must same within the array',
                             'workingDays' => $listOrderUpper,
                         ]);
                     }
+
+                    
 
                     if ($valueDays == null) {
 
@@ -353,8 +358,8 @@ class StaffLeaveController extends Controller
             if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'User id not found, please try different id',
+                    'message' => 'Failed',
+                    'errors' => 'User id not found, please try different id',
                 ], 422);
             } else {
 
@@ -366,10 +371,11 @@ class StaffLeaveController extends Controller
                 if (!in_array(strtolower($request->leaveType), $listOrder)) {
 
                     return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'Only leave allowance or sick allowance is allowed',
+                        'message' => 'Failed',
+                        'errors' => 'Only leave allowance or sick allowance is allowed',
                     ], 422);
                 }
+
 
                 $sickallowance =  $request->user()->annualSickAllowanceRemaining;
                 $leaveallowance =  $request->user()->annualLeaveAllowanceRemaining;
@@ -379,17 +385,17 @@ class StaffLeaveController extends Controller
                     if ($sickallowance == 0) {
 
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'You dont have any sick allowance left : ' .  $sickallowance,
+                            'message' => 'Failed',
+                            'errors' => 'You dont have any sick allowance left : ' .  $sickallowance,
                         ], 422);
                     }
 
-
+                    
                     if ($request->totalDays > $sickallowance) {
 
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance,
+                            'message' => 'Failed',
+                            'errors' => 'Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance,
                         ], 422);
                     }
                 } else {
@@ -397,17 +403,17 @@ class StaffLeaveController extends Controller
                     if ($leaveallowance == 0) {
 
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'You dont have any leave allowance left : ' .  $leaveallowance,
+                            'message' => 'Failed',
+                            'errors' => 'You dont have any leave allowance left : ' .  $leaveallowance,
                         ], 422);
                     }
 
-
+                    
                     if ($request->totalDays > $leaveallowance) {
 
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance,
+                            'message' => 'Failed',
+                            'errors' => 'Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance,
                         ], 422);
                     }
                 }
@@ -424,8 +430,8 @@ class StaffLeaveController extends Controller
                 if ($resultCheckExists) {
 
                     return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'You already had request leave on the spesific date, please check again.'
+                        'message' => 'Failed',
+                        'errors' => 'You already had request leave on the spesific date, please check again.'
                     ], 422);
                 }
 
@@ -464,12 +470,12 @@ class StaffLeaveController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
     public function insertLeaveStaff(Request $request)
     {
         DB::beginTransaction();
@@ -534,12 +540,12 @@ class StaffLeaveController extends Controller
                     if (!in_array(strtolower($val['name']), $listOrder)) {
 
                         return response()->json([
-                            'result' =>  'The given data was invalid.',
-                            'message' => 'Working days value must same within the array',
+                            'message' =>  'The given data was invalid.',
+                            'errors' => 'Working days value must same within the array',
                             'workingDays' => $listOrderUpper,
                         ]);
                     }
-
+                    
                     if ($valueDays == null) {
 
                         $valueDays =  $val['name'];
@@ -583,9 +589,10 @@ class StaffLeaveController extends Controller
             if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'User id not found, please try different id',
+                    'message' => 'Failed',
+                    'errors' => 'User id not found, please try different id',
                 ], 422);
+
             } else {
 
                 $listOrder = array(
@@ -596,12 +603,12 @@ class StaffLeaveController extends Controller
                 if (!in_array(strtolower($request->leaveType), $listOrder)) {
 
                     return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'Only leave allowance or sick allowance is allowed',
+                        'message' => 'Failed',
+                        'errors' => 'Only leave allowance or sick allowance is allowed',
                     ], 422);
                 }
 
-
+                
                 $sickallowance =  $request->user()->annualSickAllowanceRemaining;
                 $leaveallowance =  $request->user()->annualLeaveAllowanceRemaining;
 
@@ -611,26 +618,26 @@ class StaffLeaveController extends Controller
                     if ($sickallowance == 0) {
 
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'You dont have any sick allowance left : ' .  $sickallowance,
+                            'message' => 'Failed',
+                            'errors' => 'You dont have any sick allowance left : ' .  $sickallowance,
                         ], 422);
                     }
-
+                    
 
                     if ($request->totalDays > $sickallowance) {
 
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance,
+                            'message' => 'Failed',
+                            'errors' => 'Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance,
                         ], 422);
                     }
                 } else {
-
+                    
                     if ($leaveallowance == 0) {
 
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'You dont have any leave allowance left : ' .  $leaveallowance,
+                            'message' => 'Failed',
+                            'errors' => 'You dont have any leave allowance left : ' .  $leaveallowance,
                         ], 422);
                     }
 
@@ -638,8 +645,8 @@ class StaffLeaveController extends Controller
                     if ($request->totalDays > $leaveallowance) {
 
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance,
+                            'message' => 'Failed',
+                            'errors' => 'Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance,
                         ], 422);
                     }
                 }
@@ -656,11 +663,11 @@ class StaffLeaveController extends Controller
                 if ($resultCheckExists) {
 
                     return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'You already had request leave on the spesific date, please check again.'
+                        'message' => 'Failed',
+                        'errors' => 'You already had request leave on the spesific date, please check again.'
                     ], 422);
                 }
-
+                
                 $userName =  User::select(
                     'jobTitleId',
                     'locationId',
@@ -696,12 +703,12 @@ class StaffLeaveController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
     public function getWorkingDays(Request $request)
     {
 
@@ -749,13 +756,13 @@ class StaffLeaveController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
-
+    
     public function setStatusLeaveRequest(Request $request)
     {
 
@@ -777,17 +784,17 @@ class StaffLeaveController extends Controller
 
             if (strtolower($request->status) != "approve" && strtolower($request->status) != "reject") {
                 return response()->json([
-                    'result' => 'failed',
-                    'message' => 'Status must Approve or Reject',
+                    'message' => 'failed',
+                    'errors' => 'Status must Approve or Reject',
                 ], 422);
             }
-
+            
 
             if (strtolower($request->status) == "reject" && strtolower($request->reason) == "") {
 
                 return response()->json([
-                    'result' => 'failed',
-                    'message' => 'Please input reason if status is reject',
+                    'message' => 'failed',
+                    'errors' => 'Please input reason if status is reject',
                 ], 422);
             }
 
@@ -798,8 +805,8 @@ class StaffLeaveController extends Controller
 
             if ($leaveRequest == null) {
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Leave request not found, please try different id',
+                    'message' => 'Failed',
+                    'errors' => 'Leave request not found, please try different id',
                 ], 422);
             }
 
@@ -811,8 +818,8 @@ class StaffLeaveController extends Controller
             if ($users == null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Users not found, please try different id',
+                    'message' => 'Failed',
+                    'errors' => 'Users not found, please try different id',
                 ], 422);
             }
 
@@ -835,8 +842,8 @@ class StaffLeaveController extends Controller
 
                     if (($leaveRequest->duration) > ($users->annualSickAllowanceRemaining)) {
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'Invalid input, your sick leave remaining ' . $users->annualSickAllowanceRemaining,
+                            'message' => 'Failed',
+                            'errors' => 'Invalid input, your sick leave remaining ' . $users->annualSickAllowanceRemaining,
                         ], 422);
                     } else {
                         $users->annualSickAllowanceRemaining =  $users->annualSickAllowanceRemaining - $leaveRequest->duration;
@@ -845,8 +852,8 @@ class StaffLeaveController extends Controller
 
                     if (($leaveRequest->duration) > ($users->annualLeaveAllowanceRemaining)) {
                         return response()->json([
-                            'result' => 'Failed',
-                            'message' => 'Invalid input, your leave allowance remaining ' . $users->annualLeaveAllowanceRemaining,
+                            'message' => 'Failed',
+                            'errors' => 'Invalid input, your leave allowance remaining ' . $users->annualLeaveAllowanceRemaining,
                         ], 422);
                     } else {
                         $users->annualLeaveAllowanceRemaining =  $users->annualLeaveAllowanceRemaining - $leaveRequest->duration;
@@ -860,14 +867,14 @@ class StaffLeaveController extends Controller
             DB::commit();
 
             return response()->json([
-                'result' => 'Success',
-                'message' => 'Successfully ' . $statusMessage . ' leave request',
+                'message' => 'Success',
+                'errors' => 'Successfully ' . $statusMessage . ' leave request',
             ], 200);
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
 
             ], 422);
         }
@@ -912,17 +919,17 @@ class StaffLeaveController extends Controller
             if (!in_array($request->orderColumn, $listOrder)) {
 
                 return response()->json([
-                    'result' => 'failed',
-                    'message' => 'Please try different order column',
+                    'message' => 'failed',
+                    'errors' => 'Please try different order column',
                     'orderColumn' => $listOrder,
                 ]);
             }
-
+            
             if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
 
                 return response()->json([
-                    'result' => 'failed',
-                    'message' => 'order value must Ascending: ASC or Descending: DESC ',
+                    'message' => 'failed',
+                    'errors' => 'order value must Ascending: ASC or Descending: DESC ',
                 ]);
             }
 
@@ -1272,11 +1279,11 @@ class StaffLeaveController extends Controller
 
             if (strtolower($request->status) != "approve" && strtolower($request->status) != "reject" and strtolower($request->status) != "pending") {
                 return response()->json([
-                    'result' => 'failed',
-                    'message' => 'Status must Pending, Approve or Reject',
+                    'message' => 'failed',
+                    'errors' => 'Status must Pending, Approve or Reject',
                 ], 422);
             }
-
+            
             $tmp = "";
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
@@ -1328,12 +1335,12 @@ class StaffLeaveController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ]);
         }
     }
-
+    
     public function exportBalance(Request $request)
     {
 
@@ -1388,12 +1395,12 @@ class StaffLeaveController extends Controller
             DB::rollback();
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
     public function indexBalanceLeaveAdminandOffice(Request $request)
     {
 
@@ -1764,11 +1771,11 @@ class StaffLeaveController extends Controller
 
                 if ($leaveRequest == null) {
                     return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'Leave request not found, please try different id',
+                        'message' => 'Failed',
+                        'errors' => 'Leave request not found, please try different id',
                     ], 422);
                 }
-
+                
                 $users = User::where([
                     ['id', '=', $leaveRequest->usersId],
                     ['isDeleted', '=', '0'],
@@ -1777,11 +1784,11 @@ class StaffLeaveController extends Controller
                 if ($users == null) {
 
                     return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'Users not found, please try different id',
+                        'message' => 'Failed',
+                        'errors' => 'Users not found, please try different id',
                     ], 422);
                 }
-
+                
                 if (str_contains($leaveRequest->leaveType, "sick")) {
 
                     if (($leaveRequest->duration) > ($users->annualSickAllowanceRemaining)) {
@@ -1825,13 +1832,13 @@ class StaffLeaveController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
-
+    
 
     public function rejectAll(Request $request)
     {
@@ -1904,13 +1911,13 @@ class StaffLeaveController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
 
-
+    
     public function getIndexRequestLeave(Request $request)
     {
         $defaultRowPerPage = 5;
@@ -1935,9 +1942,10 @@ class StaffLeaveController extends Controller
             if (strtolower($request->status) != "approve" && strtolower($request->status) != "reject" && strtolower($request->status) != "pending") {
 
                 return response()->json([
-                    'result' => 'failed',
-                    'message' => 'Value status must Pending, Approve or Reject',
+                    'message' => 'failed',
+                    'errors' => 'Value status must Pending, Approve or Reject',
                 ], 422);
+
             } else {
 
                 $listOrder = [];
@@ -1976,8 +1984,8 @@ class StaffLeaveController extends Controller
                     if (!in_array($request->orderColumn, $listOrder)) {
 
                         return response()->json([
-                            'result' => 'failed',
-                            'message' => 'Please try different order column',
+                            'message' => 'failed',
+                            'errors' => 'Please try different order column',
                             'orderColumn' => $listOrder,
                         ]);
                     }
@@ -1985,8 +1993,8 @@ class StaffLeaveController extends Controller
                     if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
 
                         return response()->json([
-                            'result' => 'failed',
-                            'message' => 'order value must Ascending: ASC or Descending: DESC ',
+                            'message' => 'failed',
+                            'errors' => 'order value must Ascending: ASC or Descending: DESC ',
                         ]);
                     }
 
@@ -3960,9 +3968,11 @@ class StaffLeaveController extends Controller
             if ($checkIfDataExits == null) {
 
                 return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'User id not found, please try different id',
+                    'message' => 'Failed',
+                    'errors' => 'User id not found, please try different id',
                 ]);
+                
+
             } else {
 
                 $annualLeaveAllowance = User::select(
@@ -3994,11 +4004,13 @@ class StaffLeaveController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ]);
         }
     }
+
+    
 
     public function getAllHolidaysDate(Request $request)
     {
@@ -4064,12 +4076,12 @@ class StaffLeaveController extends Controller
         } catch (Exception $e) {
 
             return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
+                'message' => 'Failed',
+                'errors' => $e,
             ], 422);
         }
     }
-
+    
     public function __construct()
     {
         $this->client = new Client([
