@@ -102,6 +102,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/clinic/export', [ProductClinicController::class, 'Export']);
 
         Route::get('/inventory', [ProductInventoryController::class, 'index']);
+        Route::get('/inventory/export', [ProductInventoryController::class, 'exportInventory']);
         Route::get('/inventory/history', [ProductInventoryController::class, 'indexHistory']);
         Route::get('/inventory/history/export', [ProductInventoryController::class, 'exportHistory']);
         Route::get('/inventory/approval', [ProductInventoryController::class, 'indexApproval']);

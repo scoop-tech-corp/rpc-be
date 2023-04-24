@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Product;
 
 use App\Exports\Product\ProductInventoryApprovalReport;
 use App\Exports\Product\ProductInventoryHistoryReport;
+use App\Exports\Product\ProductInventoryReport;
 use App\Models\ProductClinic;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductInventory;
@@ -432,10 +433,10 @@ class ProductInventoryController
             ->join('users as u', 'u.id', 'pi.userId')
 
             ->select(
-            'pi.requirementName', 
-            'l.locationName',
-            DB::raw("CONCAT(u.firstName,' ',u.middleName,CASE WHEN u.middleName = '' THEN '' ELSE ' ' END,u.lastName) as createdBy"),
-            DB::raw("DATE_FORMAT(pi.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+                'pi.requirementName',
+                'l.locationName',
+                DB::raw("CONCAT(u.firstName,' ',u.middleName,CASE WHEN u.middleName = '' THEN '' ELSE ' ' END,u.lastName) as createdBy"),
+                DB::raw("DATE_FORMAT(pi.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
 
             ->where('pi.id', '=', $request->id)
@@ -897,14 +898,14 @@ class ProductInventoryController
         if (role($request->user()->id) == 'Office' && $prod->isApprovedOffice != 0) {
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['Data has already signed by Office!'],
+                'errors' => ['Product has already signed by Office!'],
             ], 422);
         }
 
         if (role($request->user()->id) == 'Administrator' && $prod->isApprovedAdmin != 0) {
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['Data has already signed by Administrator!'],
+                'errors' => ['Product has already signed by Administrator!'],
             ], 422);
         }
 
@@ -1098,5 +1099,40 @@ class ProductInventoryController
 
     public function exportInventory(Request $request)
     {
+        $tmp = "";
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-y');
+
+        if ($request->locationId) {
+
+            $location = DB::table('location')
+                ->select('locationName')
+                ->whereIn('id', $request->locationId)
+                ->get();
+
+            if ($location) {
+
+                foreach ($location as $key) {
+                    $tmp = $tmp . (string) $key->locationName . ",";
+                }
+            }
+            $tmp = rtrim($tmp, ", ");
+        }
+
+        if ($tmp == "") {
+            $fileName = "Rekap Produk Inventori " . $date . ".xlsx";
+        } else {
+            $fileName = "Rekap Produk Inventori " . $tmp . " " . $date . ".xlsx";
+        }
+
+        return Excel::download(
+            new ProductInventoryReport(
+                $request->orderValue,
+                $request->orderColumn,
+                $request->locationId,
+                role($request->user()->id)
+            ),
+            $fileName
+        );
     }
 }
