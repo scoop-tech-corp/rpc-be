@@ -138,7 +138,6 @@ class DataProductInventory implements FromCollection, ShouldAutoSize, WithHeadin
                         'pin.requirementName',
                         'loc.locationName',
                         DB::raw("CASE WHEN pi.productType = 'productSell' THEN 'Produk Jual' WHEN pi.productType = 'productClinic' THEN 'Produk Klinik' END as productType"),
-                        'pi.productType',
                         'p.fullName as productName',
                         'u.usage',
                         'pi.quantity',
