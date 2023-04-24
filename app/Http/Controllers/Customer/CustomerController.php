@@ -1000,7 +1000,7 @@ class CustomerController extends Controller
                     'gender' => 'required|in:P,W',
                     'occupationId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
-                    'referenceCustomerId' => 'required|integer',
+                    'referenceCustomerId' => 'nullable|integer',
                     'isReminderBooking' => 'integer|nullable',
                     'isReminderPayment' => 'integer|nullable',
 
@@ -1982,10 +1982,10 @@ class CustomerController extends Controller
                     'gender' => 'required|in:P,W',
                     'occupationId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
-                    'referenceCustomerId' => 'required|integer',
+                    'referenceCustomerId' => 'nullable|integer',
                     'isReminderBooking' => 'integer|nullable',
                     'isReminderPayment' => 'integer|nullable',
-
+                    
                 ]
             );
 
