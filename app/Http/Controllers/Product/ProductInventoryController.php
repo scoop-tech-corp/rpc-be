@@ -486,29 +486,8 @@ class ProductInventoryController
                     ->where('pi.id', '=', $value['id'])
                     ->orderBy('pi.id', 'desc')
                     ->first();
-
-                $data[] = array(
-                    'id' => $prodRes->id,
-                    'productType' => $prodRes->productType,
-                    'productId' => $prodRes->productId,
-                    'productName' => $prodRes->productName,
-                    'usageId' => $prodRes->usageId,
-                    'usage' => $prodRes->usage,
-                    'quantity' => $prodRes->quantity,
-                    'isApprovedOffice' => $prodRes->isApprovedOffice,
-                    'officeApprovedBy' => $prodRes->officeApprovedBy,
-                    'officeApprovedAt' => $prodRes->officeApprovedAt,
-                    'reasonOffice' => $prodRes->reasonOffice,
-                    'isApprovedAdmin' => $prodRes->isApprovedAdmin,
-                    'adminApprovedBy' => $prodRes->adminApprovedBy,
-                    'adminApprovedAt' => $prodRes->adminApprovedAt,
-                    'reasonAdmin' => $prodRes->reasonAdmin,
-                    'dateCondition' => $prodRes->dateCondition,
-                    'itemCondition' => $prodRes->itemCondition,
-                    'imagePath' => $prodRes->imagePath,
-                    'realImageName' => $prodRes->realImageName,
-                );
-            } else {
+                    
+            } elseif ($value['productType'] = 'productClinic') {
 
                 $prodRes = DB::table('productInventoryLists as pi')
                     ->join('productClinics as p', 'p.id', 'pi.productId')
@@ -543,29 +522,29 @@ class ProductInventoryController
                     ->where('pi.id', '=', $value['id'])
                     ->orderBy('pi.id', 'desc')
                     ->first();
-
-                $data[] = array(
-                    'id' => $prodRes->id,
-                    'productType' => $prodRes->productType,
-                    'productId' => $prodRes->productId,
-                    'productName' => $prodRes->productName,
-                    'usageId' => $prodRes->usageId,
-                    'usage' => $prodRes->usage,
-                    'quantity' => $prodRes->quantity,
-                    'isApprovedOffice' => $prodRes->isApprovedOffice,
-                    'officeApprovedBy' => $prodRes->officeApprovedBy,
-                    'officeApprovedAt' => $prodRes->officeApprovedAt,
-                    'reasonOffice' => $prodRes->reasonOffice,
-                    'isApprovedAdmin' => $prodRes->isApprovedAdmin,
-                    'adminApprovedBy' => $prodRes->adminApprovedBy,
-                    'adminApprovedAt' => $prodRes->adminApprovedAt,
-                    'reasonAdmin' => $prodRes->reasonAdmin,
-                    'dateCondition' => $prodRes->dateCondition,
-                    'itemCondition' => $prodRes->itemCondition,
-                    'imagePath' => $prodRes->imagePath,
-                    'realImageName' => $prodRes->realImageName,
-                );
             }
+
+            $data[] = array(
+                'id' => $prodRes->id,
+                'productType' => $prodRes->productType,
+                'productId' => $prodRes->productId,
+                'productName' => $prodRes->productName,
+                'usageId' => $prodRes->usageId,
+                'usage' => $prodRes->usage,
+                'quantity' => $prodRes->quantity,
+                'isApprovedOffice' => $prodRes->isApprovedOffice,
+                'officeApprovedBy' => $prodRes->officeApprovedBy,
+                'officeApprovedAt' => $prodRes->officeApprovedAt,
+                'reasonOffice' => $prodRes->reasonOffice,
+                'isApprovedAdmin' => $prodRes->isApprovedAdmin,
+                'adminApprovedBy' => $prodRes->adminApprovedBy,
+                'adminApprovedAt' => $prodRes->adminApprovedAt,
+                'reasonAdmin' => $prodRes->reasonAdmin,
+                'dateCondition' => $prodRes->dateCondition,
+                'itemCondition' => $prodRes->itemCondition,
+                'imagePath' => $prodRes->imagePath,
+                'realImageName' => $prodRes->realImageName,
+            );
         }
 
         return response()->json([
