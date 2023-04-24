@@ -542,7 +542,7 @@ class ProductInventoryController
                     )
                     ->where('pi.id', '=', $value['id'])
                     ->orderBy('pi.id', 'desc')
-                    ->get();
+                    ->first();
 
                 $data[] = array(
                     'id' => $prodRes->id,
