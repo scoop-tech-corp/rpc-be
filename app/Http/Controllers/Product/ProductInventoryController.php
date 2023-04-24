@@ -460,7 +460,7 @@ class ProductInventoryController
                     ->leftJoin('productInventoryListImages as pimg', 'pi.id', 'pimg.productInventoryListId')
                     ->select(
                         'pi.id',
-                        DB::raw("CASE WHEN pi.productType = 'productSell' THEN 'Product Sell' END as productType"),
+                        DB::raw("CASE WHEN pi.productType = 'productSell' THEN 'Produk Jual' WHEN pi.productType = 'productClinic' THEN 'Produk Klinik' END as productType"),
                         'pi.productId',
                         'p.fullName as productName',
                         'pi.usageId',
@@ -518,7 +518,7 @@ class ProductInventoryController
                     ->leftJoin('productInventoryListImages as pimg', 'pi.id', 'pimg.productInventoryListId')
                     ->select(
                         'pi.id',
-                        DB::raw("CASE WHEN pi.productType = 'productClinic' THEN 'Product Clinic' END as productType"),
+                        DB::raw("CASE WHEN pi.productType = 'productSell' THEN 'Produk Jual' WHEN pi.productType = 'productClinic' THEN 'Produk Klinik' END as productType"),
                         'pi.productId',
                         'p.fullName as productName',
                         'pi.usageId',
