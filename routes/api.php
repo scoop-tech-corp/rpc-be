@@ -84,6 +84,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/brand', [ProductController::class, 'IndexProductBrand']);
 
         Route::get('/sell', [ProductSellController::class, 'Index']);
+
+        Route::get('/sell/template', [ProductSellController::class, 'downloadTemplate']);
+        Route::post('/sell/import', [ProductSellController::class, 'Import']);
         
         Route::get('/sell/detail', [ProductSellController::class, 'Detail']);
         Route::post('/sell', [ProductSellController::class, 'Create']);
