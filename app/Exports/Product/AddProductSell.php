@@ -39,7 +39,7 @@ class AddProductSell implements ShouldAutoSize, WithHeadings, WithTitle, WithEve
                     ->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()
-                    ->setARGB('8DB4E2');
+                    ->setARGB('0070C0');
             },
         ];
     }
