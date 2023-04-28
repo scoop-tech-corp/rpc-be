@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Product;
 
 use App\Exports\Product\ProductSellReport;
 use App\Exports\Product\TemplateUploadProductSell;
+use App\Imports\Product\ImportProductSell;
+use App\Models\Location;
+use App\Models\ProductBrand;
+use App\Models\ProductCategories;
 use App\Models\ProductSell;
 use App\Models\ProductSellCategory;
 use App\Models\ProductSellCustomerGroup;
@@ -12,12 +16,14 @@ use App\Models\ProductSellLocation;
 use App\Models\ProductSellPriceLocation;
 use App\Models\ProductSellQuantity;
 use App\Models\ProductSellReminder;
+use App\Models\ProductSupplier;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Excel;
 use Validator;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class ProductSellController
 {
@@ -55,6 +61,27 @@ class ProductSellController
         if ($request->locationId) {
 
             $data = $data->whereIn('loc.id', $request->locationId);
+        }
+
+        if ($request->stock) {
+
+            if ($request->stock == "highStock") {
+                $data = $data->where('psl.diffStock', '<=', 0);
+            } elseif ($request->stock == "lowStock") {
+
+                $data = $data->where('psl.diffStock', '>', 0);
+            }
+        }
+
+        if ($request->category) {
+
+            $cat = DB::table('productSellCategories as pc')
+                ->select('productSellId')
+                ->whereIn('productCategoryId', $request->category)
+                ->distinct()
+                ->pluck('productSellId');
+
+            $data = $data->whereIn('ps.id', $cat);
         }
 
         if ($request->search) {
@@ -1633,6 +1660,280 @@ class ProductSellController
     {
         return (new TemplateUploadProductSell())->download('Template Upload Produk Jual.xlsx');
     }
+
+    public function Import(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $id = $request->user()->id;
+
+        $rows = Excel::toArray(new ImportProductSell($id), $request->file('file'));
+        $src = $rows[0];
+
+        foreach ($src as $value) {
+
+            if ($value['nama'] == "") {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any empty cell on column Nama'],
+                ], 422);
+            }
+
+            $name = ProductSell::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
+
+            if ($name) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any Nama has already exist on system'],
+                ], 422);
+            }
+
+            if ($value['kode_merk']) {
+                $brandCode = ProductBrand::where('brandName', '=', $value['kode_merk'])->where('isDeleted', '=', 0)->first();
+
+                if (!$brandCode) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['There is any invalid Kode Merk'],
+                    ], 422);
+                }
+            }
+
+            if ($value['kode_penyedia']) {
+                $supplierCode = ProductSupplier::where('supplierName', '=', $value['kode_penyedia'])->where('isDeleted', '=', 0)->first();
+
+                if (!$supplierCode) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['There is any invalid Kode Penyedia'],
+                    ], 422);
+                }
+            }
+
+            if ($value['status']) {
+
+                if ($value['status'] != 0 && $value['status'] != 1) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Invalid format for column Status'],
+                    ], 422);
+                }
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any empty Status please check again!'],
+                ], 422);
+            }
+            $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
+
+            $codeLocation = explode(';', $value['kode_lokasi']);
+
+            foreach ($codeLocation as $valcode) {
+
+                $chk = Location::where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
+
+                if (!$chk) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['There is any invalid Kode Lokasi'],
+                    ], 422);
+                }
+            }
+
+            $inStock = explode(';', $value['stok']);
+
+            foreach ($inStock as $valStock) {
+
+                if (is_numeric($valStock) == false) {
+                    return $valStock;
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Any column Stok is not a number'],
+                    ], 422);
+                }
+            }
+
+            $lowStock = explode(';', $value['stok_rendah']);
+
+            foreach ($lowStock as $valLowStock) {
+                if (is_numeric($valLowStock) == false) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Any column Stok Rendah is not a number'],
+                    ], 422);
+                }
+            }
+
+            $reStockLimit = explode(';', $value['batas_restock_ulang']);
+
+            foreach ($reStockLimit as $valStock) {
+                if (is_numeric($valStock) == false) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Any column Batas Restock Ulang is not a number'],
+                    ], 422);
+                }
+            }
+
+            $isCanBuy = $value['dapat_membeli_produk'];
+            $isDeliver = $value['dapat_dikirim'];
+            $isBuyOnline = $value['dapat_membeli_secara_online'];
+            $isBuyNoStock = $value['dapat_membeli_saat_stok_habis'];
+            $isCheckStockOnCreateReceipt = $value['pengecekan_stok_selama_ada_penambahan_atau_pembuatan_resep'];
+            $isNoAnyCharge = $value['tidak_dikenakan_biaya'];
+            $officeApproval = $value['persetujuan_office'];
+            $adminApproval = $value['persetujuan_admin'];
+            $introduction = $value['perkenalan'];
+            $description = $value['deskripsi'];
+            $productCategory = explode(';', $value['kode_kategori_produk']);
+
+            if ($isDeliver != 0 && $isDeliver != 1) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Invalid format for column Dapat Dikirim'],
+                ], 422);
+            }
+
+            if ($isBuyOnline != 0 && $isBuyOnline != 1) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Invalid format for column Dapat Membeli Secara Online'],
+                ], 422);
+            }
+
+            if ($isBuyNoStock != 0 && $isBuyNoStock != 1) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Invalid format for column Dapat Membeli Saat Stok Habis'],
+                ], 422);
+            }
+
+            if ($isCheckStockOnCreateReceipt != 0 && $isCheckStockOnCreateReceipt != 1) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Invalid format for column Pengecekan stok selama ada penambahan atau pembuatan resep'],
+                ], 422);
+            }
+
+            if ($isNoAnyCharge != 0 && $isNoAnyCharge != 1) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Invalid format for column Tidak Dikenakan Biaya'],
+                ], 422);
+            }
+            if ($officeApproval != 0 && $officeApproval != 1) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Invalid format for column Persetujuan Office'],
+                ], 422);
+            }
+            if ($adminApproval != 0 && $adminApproval != 1) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Invalid format for column Persetujuan Admin'],
+                ], 422);
+            }
+
+            foreach ($productCategory as $valProdCat) {
+
+                $chk = ProductCategories::where('id', '=', $valProdCat)->where('isDeleted', '=', 0)->first();
+
+                if (!$chk) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['There is any invalid Kode Kategori Produk'],
+                    ], 422);
+                }
+
+                if (is_numeric($valProdCat) == false) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Any column Stok is not a number'],
+                    ], 422);
+                }
+            }
+
+            //here
+            $count = 0;
+            foreach ($codeLocation as $locIns) {
+
+                $product = ProductSell::create([
+                    'fullName' => $value['nama'],
+                    'simpleName' => $value['nama_sederhana'],
+                    'sku' => $value['sku'],
+                    'productBrandId' => $value['kode_merk'],
+                    'productSupplierId' => $value['kode_penyedia'],
+                    'status' => $value['status'],
+                    'expiredDate' => $expiredDate,
+                    'pricingStatus' => 'Basic',
+                    'costPrice' => $value['pengeluaran'],
+                    'marketPrice' => $value['harga_pasar'],
+                    'price' => $value['harga_jual'],
+                    'isShipped' => $value['dapat_dikirim'],
+                    'weight' => $value['berat'],
+                    'length' => $value['panjang'],
+                    'width' => $value['lebar'],
+                    'height' => $value['tinggi'],
+                    'introduction' => $introduction,
+                    'description' => $description,
+
+                    'isCustomerPurchase' => $isCanBuy,
+                    'isCustomerPurchaseOnline' => $isBuyOnline,
+                    'isCustomerPurchaseOutStock' => $isBuyNoStock,
+                    'isStockLevelCheck' => $isCheckStockOnCreateReceipt,
+                    'isNonChargeable' => $isNoAnyCharge,
+                    'isOfficeApproval' => $officeApproval,
+                    'isAdminApproval' => $adminApproval,
+
+                    'userId' => $request->user()->id,
+                ]);
+
+                ProductSellLocation::create([
+                    'productSellId' => $product->id,
+                    'locationId' => $locIns,
+                    'inStock' => $inStock[$count],
+                    'lowStock' => $lowStock[$count],
+                    'reStockLimit' => $reStockLimit[$count],
+                    'diffStock' => $inStock[$count] - $lowStock[$count],
+                    'userId' => $request->user()->id,
+                ]);
+
+                if ($productCategory) {
+
+                    foreach ($productCategory as $valCat) {
+                        ProductSellCategory::create([
+                            'productSellId' => $product->id,
+                            'productCategoryId' => $valCat,
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+
+                productSellLog($product->id, "Create New Item with Import Excel", "", $inStock[$count], $inStock[$count], $request->user()->id);
+
+                $count += 1;
+            }
+        }
+
+        return response()->json(
+            [
+                'message' => 'Insert Data Successful!',
+            ],
+            200
+        );
+    }
+
     public function Split(Request $request)
     {
         $validate = Validator::make($request->all(), [
