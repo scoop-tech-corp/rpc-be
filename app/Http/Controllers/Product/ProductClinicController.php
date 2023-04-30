@@ -12,7 +12,8 @@ use App\Models\ProductClinicPriceLocation;
 use App\Models\ProductClinicQuantity;
 use App\Models\ProductClinicReminder;
 use App\Exports\Product\ProductClinicReport;
-use App\Models\ProductCategories;
+use App\Exports\Product\TemplateUploadProductClinic;
+use App\Imports\Product\ImportProductClinic;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -1697,6 +1698,291 @@ class ProductClinicController
                 $request->user()->role
             ),
             $fileName
+        );
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        return (new TemplateUploadProductClinic())->download('Template Upload Produk Klinik.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => $errors,
+            ], 422);
+        }
+
+        $id = $request->user()->id;
+
+        $rows = Excel::toArray(new ImportProductClinic($id), $request->file('file'));
+        $src = $rows[0];
+
+        if ($src) {
+            foreach ($src as $value) {
+
+                if ($value['nama'] == "") {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any empty cell on column Nama'],
+                    ], 422);
+                }
+
+                $name = ProductClinic::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
+
+                if ($name) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any Nama has already exist on system'],
+                    ], 422);
+                }
+
+                if ($value['kode_merk']) {
+                    $brandCode = ProductBrand::where('id', '=', $value['kode_merk'])->where('isDeleted', '=', 0)->first();
+
+                    if (!$brandCode) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid Kode Merk'],
+                        ], 422);
+                    }
+                }
+
+                if ($value['kode_penyedia']) {
+                    $supplierCode = ProductSupplier::where('id', '=', $value['kode_penyedia'])->where('isDeleted', '=', 0)->first();
+
+                    if (!$supplierCode) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid Kode Penyedia'],
+                        ], 422);
+                    }
+                }
+
+                if ($value['status']) {
+
+                    if ($value['status'] != 0 && $value['status'] != 1) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Invalid format for column Status'],
+                        ], 422);
+                    }
+                } else {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any empty Status please check again!'],
+                    ], 422);
+                }
+                $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
+
+                $codeLocation = explode(';', $value['kode_lokasi']);
+
+                foreach ($codeLocation as $valcode) {
+
+                    $chk = Location::where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
+
+                    if (!$chk) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid Kode Lokasi'],
+                        ], 422);
+                    }
+                }
+
+                $inStock = explode(';', $value['stok']);
+
+                foreach ($inStock as $valStock) {
+
+                    if (is_numeric($valStock) == false) {
+                        return $valStock;
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Any column Stok is not a number'],
+                        ], 422);
+                    }
+                }
+
+                $lowStock = explode(';', $value['stok_rendah']);
+
+                foreach ($lowStock as $valLowStock) {
+                    if (is_numeric($valLowStock) == false) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Any column Stok Rendah is not a number'],
+                        ], 422);
+                    }
+                }
+
+                $reStockLimit = explode(';', $value['batas_restock_ulang']);
+
+                foreach ($reStockLimit as $valStock) {
+                    if (is_numeric($valStock) == false) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Any column Batas Restock Ulang is not a number'],
+                        ], 422);
+                    }
+                }
+
+                $isCanBuy = $value['dapat_membeli_produk'];
+                $isDeliver = $value['dapat_dikirim'];
+                $isBuyOnline = $value['dapat_membeli_secara_online'];
+                $isBuyNoStock = $value['dapat_membeli_saat_stok_habis'];
+                $isCheckStockOnCreateReceipt = $value['pengecekan_stok_selama_ada_penambahan_atau_pembuatan_resep'];
+                $isNoAnyCharge = $value['tidak_dikenakan_biaya'];
+                $officeApproval = $value['persetujuan_office'];
+                $adminApproval = $value['persetujuan_admin'];
+                $introduction = $value['perkenalan'];
+                $description = $value['deskripsi'];
+                $productCategory = explode(';', $value['kode_kategori_produk']);
+
+                if ($isDeliver != 0 && $isDeliver != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Dapat Dikirim'],
+                    ], 422);
+                }
+
+                if ($isBuyOnline != 0 && $isBuyOnline != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Dapat Membeli Secara Online'],
+                    ], 422);
+                }
+
+                if ($isBuyNoStock != 0 && $isBuyNoStock != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Dapat Membeli Saat Stok Habis'],
+                    ], 422);
+                }
+
+                if ($isCheckStockOnCreateReceipt != 0 && $isCheckStockOnCreateReceipt != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Pengecekan stok selama ada penambahan atau pembuatan resep'],
+                    ], 422);
+                }
+
+                if ($isNoAnyCharge != 0 && $isNoAnyCharge != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Tidak Dikenakan Biaya'],
+                    ], 422);
+                }
+                if ($officeApproval != 0 && $officeApproval != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Persetujuan Office'],
+                    ], 422);
+                }
+                if ($adminApproval != 0 && $adminApproval != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Persetujuan Admin'],
+                    ], 422);
+                }
+
+                foreach ($productCategory as $valProdCat) {
+
+                    $chk = ProductCategories::where('id', '=', $valProdCat)->where('isDeleted', '=', 0)->first();
+
+                    if (!$chk) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid Kode Kategori Produk'],
+                        ], 422);
+                    }
+
+                    if (is_numeric($valProdCat) == false) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Any column Stok is not a number'],
+                        ], 422);
+                    }
+                }
+
+                //here
+                $count = 0;
+                foreach ($codeLocation as $locIns) {
+
+                    $product = ProductClinic::create([
+                        'fullName' => $value['nama'],
+                        'simpleName' => $value['nama_sederhana'],
+                        'sku' => $value['sku'],
+                        'productBrandId' => $value['kode_merk'],
+                        'productSupplierId' => $value['kode_penyedia'],
+                        'status' => $value['status'],
+                        'expiredDate' => $expiredDate,
+                        'pricingStatus' => 'Basic',
+                        'costPrice' => $value['pengeluaran'],
+                        'marketPrice' => $value['harga_pasar'],
+                        'price' => $value['harga_jual'],
+                        'isShipped' => $value['dapat_dikirim'],
+                        'weight' => $value['berat'],
+                        'length' => $value['panjang'],
+                        'width' => $value['lebar'],
+                        'height' => $value['tinggi'],
+                        'introduction' => $introduction,
+                        'description' => $description,
+
+                        'isCustomerPurchase' => $isCanBuy,
+                        'isCustomerPurchaseOnline' => $isBuyOnline,
+                        'isCustomerPurchaseOutStock' => $isBuyNoStock,
+                        'isStockLevelCheck' => $isCheckStockOnCreateReceipt,
+                        'isNonChargeable' => $isNoAnyCharge,
+                        'isOfficeApproval' => $officeApproval,
+                        'isAdminApproval' => $adminApproval,
+
+                        'userId' => $request->user()->id,
+                    ]);
+
+                    ProductClinicLocation::create([
+                        'productSellId' => $product->id,
+                        'locationId' => $locIns,
+                        'inStock' => $inStock[$count],
+                        'lowStock' => $lowStock[$count],
+                        'reStockLimit' => $reStockLimit[$count],
+                        'diffStock' => $inStock[$count] - $lowStock[$count],
+                        'userId' => $request->user()->id,
+                    ]);
+
+                    if ($productCategory) {
+
+                        foreach ($productCategory as $valCat) {
+                            ProductClinicCategory::create([
+                                'productSellId' => $product->id,
+                                'productCategoryId' => $valCat,
+                                'userId' => $request->user()->id,
+                            ]);
+                        }
+                    }
+
+                    productClinicLog($product->id, "Create New Item with Import Excel", "", $inStock[$count], $inStock[$count], $request->user()->id);
+
+                    $count += 1;
+                }
+            }
+        } else {
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => ['There is no any data to import'],
+            ], 422);
+        }
+
+        return response()->json(
+            [
+                'message' => 'Insert Data Successful!',
+            ],
+            200
         );
     }
 }

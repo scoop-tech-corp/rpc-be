@@ -3,9 +3,9 @@
 namespace App\Imports\Product;
 
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use App\Imports\Product\AddDataProductSell;
+use App\Imports\Product\AddDataProductClinic;
 
-class ImportProductSell implements WithMultipleSheets
+class ImportProductClinic implements WithMultipleSheets
 {
     protected $id;
 

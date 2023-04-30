@@ -97,6 +97,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/sell/split', [ProductSellController::class, 'Split']);
 
         Route::get('/clinic', [ProductClinicController::class, 'index']);
+
+        Route::get('/clinic/template', [ProductClinicController::class, 'downloadTemplate']);
+        Route::post('/clinic/import', [ProductClinicController::class, 'Import']);
+
         Route::get('/clinic/detail', [ProductClinicController::class, 'detail']);
         Route::post('/clinic', [ProductClinicController::class, 'Create']);
         Route::put('/clinic', [ProductClinicController::class, 'Update']);
