@@ -7,7 +7,7 @@ use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 
-class AddDataProductSell implements ToModel, WithHeadingRow, WithValidation
+class AddDataProductClinic implements ToModel, WithHeadingRow, WithValidation
 {
     use Importable;
 
