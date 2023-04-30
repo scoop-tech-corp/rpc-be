@@ -296,6 +296,25 @@ class LocationController extends Controller
                     'country.required' => 'Country on tab Address is required',
                 ];
 
+                $primaryCount = 0;
+                foreach ($request->detailAddress as $item) {
+                    if (isset($item['isPrimary']) && $item['isPrimary'] == 1) {
+                        $primaryCount++;
+                    }
+                }
+
+                if ($primaryCount == 0) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address must have at least 1 primary address',
+                    ], 422);
+                } elseif ($primaryCount > 1) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address have 2 primary address, please check again',
+                    ], 422);
+                }
+
                 foreach ($request->detailAddress as $key) {
 
                     $validateDetail = Validator::make(
@@ -689,6 +708,26 @@ class LocationController extends Controller
                     'cityCode.required' => 'City code on tab Address is required',
                     'country.required' => 'Country on tab Address is required',
                 ];
+
+                $primaryCount = 0;
+                foreach ($arrayDetailAddress as $item) {
+                    if (isset($item['isPrimary']) && $item['isPrimary'] == 1) {
+                        $primaryCount++;
+                    }
+                }
+
+                if ($primaryCount == 0) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address must have at least 1 primary address',
+                    ], 422);
+                } elseif ($primaryCount > 1) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address have 2 primary address, please check again',
+                    ], 422);
+                }
+
 
                 foreach ($arrayDetailAddress as $key) {
 
@@ -1726,8 +1765,8 @@ class LocationController extends Controller
         if ($request->productType == 'productSell') {
 
             $data = DB::table('location as l')
-                ->join('productSellLocations as psl','l.id','psl.locationId')
-                ->join('productSells as ps','ps.id','psl.productSellId')
+                ->join('productSellLocations as psl', 'l.id', 'psl.locationId')
+                ->join('productSells as ps', 'ps.id', 'psl.productSellId')
                 ->select('l.id', 'l.locationName')
                 ->where('l.isDeleted', '=', 0)
                 ->where('l.id', '<>', $request->locationId)
@@ -1735,12 +1774,11 @@ class LocationController extends Controller
                 ->orderBy('l.created_at', 'desc')
                 ->get();
             return response()->json($data, 200);
-
         } elseif ($request->productType == 'productClinic') {
 
             $data = DB::table('location as l')
-                ->join('productClinicLocations as pcl','l.id','pcl.locationId')
-                ->join('productClinics as ps','ps.id','pcl.productClinicId')
+                ->join('productClinicLocations as pcl', 'l.id', 'pcl.locationId')
+                ->join('productClinics as ps', 'ps.id', 'pcl.productClinicId')
                 ->select('l.id', 'l.locationName')
                 ->where('l.isDeleted', '=', 0)
                 ->where('l.id', '<>', $request->locationId)

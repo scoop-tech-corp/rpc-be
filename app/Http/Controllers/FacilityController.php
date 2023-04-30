@@ -7,7 +7,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Facility\FacilityUnit;
 use App\Models\Facility\Facility;
 use App\Models\Facility\FacilityImages;
-use App\Models\Location\Location;
+use App\Models\Location;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Validator;
