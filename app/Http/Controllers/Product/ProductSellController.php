@@ -1700,7 +1700,7 @@ class ProductSellController
             }
 
             if ($value['kode_merk']) {
-                $brandCode = ProductBrand::where('brandName', '=', $value['kode_merk'])->where('isDeleted', '=', 0)->first();
+                $brandCode = ProductBrand::where('id', '=', $value['kode_merk'])->where('isDeleted', '=', 0)->first();
 
                 if (!$brandCode) {
                     return response()->json([
@@ -1711,7 +1711,7 @@ class ProductSellController
             }
 
             if ($value['kode_penyedia']) {
-                $supplierCode = ProductSupplier::where('supplierName', '=', $value['kode_penyedia'])->where('isDeleted', '=', 0)->first();
+                $supplierCode = ProductSupplier::where('id', '=', $value['kode_penyedia'])->where('isDeleted', '=', 0)->first();
 
                 if (!$supplierCode) {
                     return response()->json([
