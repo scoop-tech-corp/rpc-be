@@ -65,10 +65,10 @@ class ProductClinicController
         if ($request->stock) {
 
             if ($request->stock == "highStock") {
-                $data = $data->where('pcl.diffStock', '<=', 0);
+                $data = $data->where('pcl.diffStock', '>', 0);
             } elseif ($request->stock == "lowStock") {
 
-                $data = $data->where('pcl.diffStock', '>', 0);
+                $data = $data->where('pcl.diffStock', '<=', 0);
             }
         }
 
@@ -77,6 +77,7 @@ class ProductClinicController
             $cat = DB::table('productClinicCategories as pc')
                 ->select('productClinicId')
                 ->whereIn('productCategoryId', $request->category)
+                ->where('pc.isDeleted', '=', 0)
                 ->distinct()
                 ->pluck('productClinicId');
 
