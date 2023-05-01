@@ -1897,66 +1897,68 @@ class ProductSellController
                     }
                 }
 
-                //here
-                $count = 0;
-                foreach ($codeLocation as $locIns) {
+                $count_row += 1;
+            }
 
-                    $product = ProductSell::create([
-                        'fullName' => $value['nama'],
-                        'simpleName' => $value['nama_sederhana'],
-                        'sku' => $value['sku'],
-                        'productBrandId' => $value['kode_merk'],
-                        'productSupplierId' => $value['kode_penyedia'],
-                        'status' => $value['status'],
-                        'expiredDate' => $expiredDate,
-                        'pricingStatus' => 'Basic',
-                        'costPrice' => $value['pengeluaran'],
-                        'marketPrice' => $value['harga_pasar'],
-                        'price' => $value['harga_jual'],
-                        'isShipped' => $value['dapat_dikirim'],
-                        'weight' => $value['berat'],
-                        'length' => $value['panjang'],
-                        'width' => $value['lebar'],
-                        'height' => $value['tinggi'],
-                        'introduction' => $introduction,
-                        'description' => $description,
+            //here
+            $count = 0;
+            foreach ($codeLocation as $locIns) {
 
-                        'isCustomerPurchase' => $isCanBuy,
-                        'isCustomerPurchaseOnline' => $isBuyOnline,
-                        'isCustomerPurchaseOutStock' => $isBuyNoStock,
-                        'isStockLevelCheck' => $isCheckStockOnCreateReceipt,
-                        'isNonChargeable' => $isNoAnyCharge,
-                        'isOfficeApproval' => $officeApproval,
-                        'isAdminApproval' => $adminApproval,
+                $product = ProductSell::create([
+                    'fullName' => $value['nama'],
+                    'simpleName' => $value['nama_sederhana'],
+                    'sku' => $value['sku'],
+                    'productBrandId' => $value['kode_merk'],
+                    'productSupplierId' => $value['kode_penyedia'],
+                    'status' => $value['status'],
+                    'expiredDate' => $expiredDate,
+                    'pricingStatus' => 'Basic',
+                    'costPrice' => $value['pengeluaran'],
+                    'marketPrice' => $value['harga_pasar'],
+                    'price' => $value['harga_jual'],
+                    'isShipped' => $value['dapat_dikirim'],
+                    'weight' => $value['berat'],
+                    'length' => $value['panjang'],
+                    'width' => $value['lebar'],
+                    'height' => $value['tinggi'],
+                    'introduction' => $introduction,
+                    'description' => $description,
 
-                        'userId' => $request->user()->id,
-                    ]);
+                    'isCustomerPurchase' => $isCanBuy,
+                    'isCustomerPurchaseOnline' => $isBuyOnline,
+                    'isCustomerPurchaseOutStock' => $isBuyNoStock,
+                    'isStockLevelCheck' => $isCheckStockOnCreateReceipt,
+                    'isNonChargeable' => $isNoAnyCharge,
+                    'isOfficeApproval' => $officeApproval,
+                    'isAdminApproval' => $adminApproval,
 
-                    ProductSellLocation::create([
-                        'productSellId' => $product->id,
-                        'locationId' => $locIns,
-                        'inStock' => $inStock[$count],
-                        'lowStock' => $lowStock[$count],
-                        'reStockLimit' => $reStockLimit[$count],
-                        'diffStock' => $inStock[$count] - $lowStock[$count],
-                        'userId' => $request->user()->id,
-                    ]);
+                    'userId' => $request->user()->id,
+                ]);
 
-                    if ($productCategory) {
+                ProductSellLocation::create([
+                    'productSellId' => $product->id,
+                    'locationId' => $locIns,
+                    'inStock' => $inStock[$count],
+                    'lowStock' => $lowStock[$count],
+                    'reStockLimit' => $reStockLimit[$count],
+                    'diffStock' => $inStock[$count] - $lowStock[$count],
+                    'userId' => $request->user()->id,
+                ]);
 
-                        foreach ($productCategory as $valCat) {
-                            ProductSellCategory::create([
-                                'productSellId' => $product->id,
-                                'productCategoryId' => $valCat,
-                                'userId' => $request->user()->id,
-                            ]);
-                        }
+                if ($productCategory) {
+
+                    foreach ($productCategory as $valCat) {
+                        ProductSellCategory::create([
+                            'productSellId' => $product->id,
+                            'productCategoryId' => $valCat,
+                            'userId' => $request->user()->id,
+                        ]);
                     }
-
-                    productSellLog($product->id, "Create New Item with Import Excel", "", $inStock[$count], $inStock[$count], $request->user()->id);
-
-                    $count += 1;
                 }
+
+                productSellLog($product->id, "Create New Item with Import Excel", "", $inStock[$count], $inStock[$count], $request->user()->id);
+
+                $count += 1;
             }
         } else {
             return response()->json([
