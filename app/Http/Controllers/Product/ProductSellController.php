@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Product;
 use App\Exports\Product\ProductSellReport;
 use App\Exports\Product\TemplateUploadProductSell;
 use App\Imports\Product\ImportProductSell;
-use App\Models\Location;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
 use App\Models\ProductSell;
@@ -1681,13 +1680,15 @@ class ProductSellController
         $rows = Excel::toArray(new ImportProductSell($id), $request->file('file'));
         $src = $rows[0];
 
+        $count_row = 1;
+
         if ($src) {
             foreach ($src as $value) {
 
                 if ($value['nama'] == "") {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['There is any empty cell on column Nama'],
+                        'message' => ['There is any empty cell on column Nama at row ' . $count_row],
                     ], 422);
                 }
 
@@ -1696,7 +1697,7 @@ class ProductSellController
                 if ($name) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['There is any Nama has already exist on system'],
+                        'message' => ['There is any Nama has already exist on system at row ' . $count_row],
                     ], 422);
                 }
 
@@ -1706,7 +1707,7 @@ class ProductSellController
                     if (!$brandCode) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid Kode Merk'],
+                            'message' => ['There is any invalid Kode Merk at row ' . $count_row],
                         ], 422);
                     }
                 }
@@ -1717,7 +1718,7 @@ class ProductSellController
                     if (!$supplierCode) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid Kode Penyedia'],
+                            'message' => ['There is any invalid Kode Penyedia at row ' . $count_row],
                         ], 422);
                     }
                 }
@@ -1727,39 +1728,60 @@ class ProductSellController
                     if ($value['status'] != 0 && $value['status'] != 1) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['Invalid format for column Status'],
+                            'message' => ['Invalid format for column Status at row ' . $count_row],
                         ], 422);
                     }
                 } else {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['There is any empty Status. Please check again!'],
+                        'message' => ['There is any empty Status. Please check again at row ' . $count_row],
                     ], 422);
                 }
                 $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
 
                 $codeLocation = explode(';', $value['kode_lokasi']);
+                $inStock = explode(';', $value['stok']);
+                $lowStock = explode(';', $value['stok_rendah']);
+                $reStockLimit = explode(';', $value['batas_restock_ulang']);
+
+                $a = count($codeLocation);
+                $b = count($inStock);
+                $c = count($lowStock);
+                $d = count($reStockLimit);
+
+                if (
+                    $a !== $b ||
+                    $a !== $c ||
+                    $a !== $d ||
+                    $b !== $c ||
+                    $b !== $d ||
+                    $c !== $d
+                ) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Total data on column Kode Lokasi, Stok, Stok Rendah, and Batas Restok Ulang not same at row ' . $count_row],
+                    ], 422);
+                }
 
                 if (count($codeLocation) !== count(array_unique($codeLocation))) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['There is any duplicate kode lokasi. Please check again!'],
+                        'message' => ['There is any duplicate kode lokasi. Please check again at row ' . $count_row],
                     ], 422);
                 }
 
                 foreach ($codeLocation as $valcode) {
 
-                    $chk = Location::where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
+                    $chk = DB::table('location')
+                        ->where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
 
                     if (!$chk) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid Kode Lokasi'],
+                            'message' => ['There is any invalid Kode Lokasi at row ' . $count_row],
                         ], 422);
                     }
                 }
-
-                $inStock = explode(';', $value['stok']);
 
                 foreach ($inStock as $valStock) {
 
@@ -1767,29 +1789,25 @@ class ProductSellController
                         return $valStock;
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['Any column Stok is not a number'],
+                            'message' => ['Any column Stok is not a number at row ' . $count_row],
                         ], 422);
                     }
                 }
-
-                $lowStock = explode(';', $value['stok_rendah']);
 
                 foreach ($lowStock as $valLowStock) {
                     if (is_numeric($valLowStock) == false) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['Any column Stok Rendah is not a number'],
+                            'message' => ['Any column Stok Rendah is not a number at row ' . $count_row],
                         ], 422);
                     }
                 }
-
-                $reStockLimit = explode(';', $value['batas_restock_ulang']);
 
                 foreach ($reStockLimit as $valStock) {
                     if (is_numeric($valStock) == false) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['Any column Batas Restock Ulang is not a number'],
+                            'message' => ['Any column Batas Restock Ulang is not a number at row ' . $count_row],
                         ], 422);
                     }
                 }
@@ -1809,54 +1827,54 @@ class ProductSellController
                 if ($isDeliver != 0 && $isDeliver != 1) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['Invalid format for column Dapat Dikirim'],
+                        'message' => ['Invalid format for column Dapat Dikirim at row ' . $count_row],
                     ], 422);
                 }
 
                 if ($isBuyOnline != 0 && $isBuyOnline != 1) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['Invalid format for column Dapat Membeli Secara Online'],
+                        'message' => ['Invalid format for column Dapat Membeli Secara Online at row ' . $count_row],
                     ], 422);
                 }
 
                 if ($isBuyNoStock != 0 && $isBuyNoStock != 1) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['Invalid format for column Dapat Membeli Saat Stok Habis'],
+                        'message' => ['Invalid format for column Dapat Membeli Saat Stok Habis at row ' . $count_row],
                     ], 422);
                 }
 
                 if ($isCheckStockOnCreateReceipt != 0 && $isCheckStockOnCreateReceipt != 1) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['Invalid format for column Pengecekan stok selama ada penambahan atau pembuatan resep'],
+                        'message' => ['Invalid format for column Pengecekan stok selama ada penambahan atau pembuatan resep at row ' . $count_row],
                     ], 422);
                 }
 
                 if ($isNoAnyCharge != 0 && $isNoAnyCharge != 1) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['Invalid format for column Tidak Dikenakan Biaya'],
+                        'message' => ['Invalid format for column Tidak Dikenakan Biaya at row ' . $count_row],
                     ], 422);
                 }
                 if ($officeApproval != 0 && $officeApproval != 1) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['Invalid format for column Persetujuan Office'],
+                        'message' => ['Invalid format for column Persetujuan Office at row ' . $count_row],
                     ], 422);
                 }
                 if ($adminApproval != 0 && $adminApproval != 1) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['Invalid format for column Persetujuan Admin'],
+                        'message' => ['Invalid format for column Persetujuan Admin at row ' . $count_row],
                     ], 422);
                 }
 
                 if (count($productCategory) !== count(array_unique($productCategory))) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['There is any duplicate Kategori Produk. Please check again!'],
+                        'message' => ['There is any duplicate Kategori Produk. Please check again at row ' . $count_row],
                     ], 422);
                 }
 
@@ -1867,14 +1885,14 @@ class ProductSellController
                     if (!$chk) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid Kode Kategori Produk'],
+                            'message' => ['There is any invalid Kode Kategori Produk at row ' . $count_row],
                         ], 422);
                     }
 
                     if (is_numeric($valProdCat) == false) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['Any column Stok is not a number'],
+                            'message' => ['Any column Stok is not a number at row ' . $count_row],
                         ], 422);
                     }
                 }
