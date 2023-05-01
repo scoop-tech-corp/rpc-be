@@ -18,7 +18,7 @@ class Location extends Model
 
     protected $guarded = ['id'];
 
-    protected $timestamps = true;
+    public $timestamps = true;
 
     protected $fillable = [
         'codeLocation', 'locationName', 'status', 'description', 'isDeleted', 'created_at', 'updated_at'
