@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Product;
 use App\Exports\Product\ProductSellReport;
 use App\Exports\Product\TemplateUploadProductSell;
 use App\Imports\Product\ImportProductSell;
-use App\Models\Location\Location;
+use App\Models\Location;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
 use App\Models\ProductSell;
