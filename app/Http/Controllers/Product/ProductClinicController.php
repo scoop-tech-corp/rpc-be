@@ -34,8 +34,6 @@ class ProductClinicController
 
         $page = $request->goToPage;
 
-        $tmpRes = "";
-
         $data = DB::table('productClinics as pc')
             ->join('productClinicLocations as pcl', 'pcl.productClinicId', 'pc.id')
             ->join('location as loc', 'loc.Id', 'pcl.locationId')
