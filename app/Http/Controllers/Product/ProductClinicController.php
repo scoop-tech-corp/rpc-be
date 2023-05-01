@@ -20,6 +20,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Excel;
 use Validator;
+use App\Models\Location\Location;
+use App\Models\ProductBrand;
+use App\Models\ProductCategories;
+use App\Models\ProductSupplier;
 
 class ProductClinicController
 {
