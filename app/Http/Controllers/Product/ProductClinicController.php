@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Excel;
 use Validator;
-use App\Models\Location;
+// use App\Models\Location;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
 use App\Models\ProductSupplier;
@@ -1823,7 +1823,7 @@ class ProductClinicController
                     if (!$chk) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid Kode Lokasi'],
+                            'message' => ['Invalid data at column Kode Lokasi ' . $valcode],
                         ], 422);
                     }
                 }
