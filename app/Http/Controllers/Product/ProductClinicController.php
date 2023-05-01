@@ -961,7 +961,7 @@ class ProductClinicController
             ->where('pcr.isDeleted', '=', 0)
             ->get();
 
-            $prodClinicLog = DB::table('productClinics as ps')
+        $prodClinicLog = DB::table('productClinics as ps')
             ->join('productClinicLogs as psl', 'psl.productClinicId', 'ps.id')
             ->join('users as u', 'u.id', 'psl.userId')
             ->select(
@@ -1806,6 +1806,13 @@ class ProductClinicController
 
                 $codeLocation = explode(';', $value['kode_lokasi']);
 
+                if (count($codeLocation) !== count(array_unique($codeLocation))) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any duplicate kode lokasi. Please check again!'],
+                    ], 422);
+                }
+
                 foreach ($codeLocation as $valcode) {
 
                     $chk = Location::where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
@@ -1909,6 +1916,13 @@ class ProductClinicController
                     return response()->json([
                         'errors' => 'The given data was invalid.',
                         'message' => ['Invalid format for column Persetujuan Admin'],
+                    ], 422);
+                }
+
+                if (count($productCategory) !== count(array_unique($productCategory))) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any duplicate Kategori Produk. Please check again!'],
                     ], 422);
                 }
 
