@@ -60,6 +60,27 @@ class ProductClinicController
             $data = $data->whereIn('loc.id', $request->locationId);
         }
 
+        if ($request->stock) {
+
+            if ($request->stock == "highStock") {
+                $data = $data->where('pcl.diffStock', '<=', 0);
+            } elseif ($request->stock == "lowStock") {
+
+                $data = $data->where('pcl.diffStock', '>', 0);
+            }
+        }
+
+        if ($request->category) {
+
+            $cat = DB::table('productClinicCategories as pc')
+                ->select('productClinicId')
+                ->whereIn('productCategoryId', $request->category)
+                ->distinct()
+                ->pluck('productClinicId');
+
+            $data = $data->whereIn('pc.id', $cat);
+        }
+
         if ($request->search) {
             $res = $this->Search($request);
             if ($res) {
@@ -1946,7 +1967,7 @@ class ProductClinicController
                     ]);
 
                     ProductClinicLocation::create([
-                        'productSellId' => $product->id,
+                        'productClinicId' => $product->id,
                         'locationId' => $locIns,
                         'inStock' => $inStock[$count],
                         'lowStock' => $lowStock[$count],
@@ -1959,7 +1980,7 @@ class ProductClinicController
 
                         foreach ($productCategory as $valCat) {
                             ProductClinicCategory::create([
-                                'productSellId' => $product->id,
+                                'productClinicId' => $product->id,
                                 'productCategoryId' => $valCat,
                                 'userId' => $request->user()->id,
                             ]);
