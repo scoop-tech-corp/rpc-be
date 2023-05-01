@@ -20,7 +20,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Excel;
 use Validator;
-// use App\Models\Location;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
 use App\Models\ProductSupplier;
@@ -1818,7 +1817,8 @@ class ProductClinicController
 
                 foreach ($codeLocation as $valcode) {
 
-                    $chk = Location::where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
+                    $chk = DB::table('location')
+                        ->where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
 
                     if (!$chk) {
                         return response()->json([
