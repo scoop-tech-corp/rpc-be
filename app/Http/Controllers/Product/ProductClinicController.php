@@ -1807,6 +1807,28 @@ class ProductClinicController
                 $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
 
                 $codeLocation = explode(';', $value['kode_lokasi']);
+                $inStock = explode(';', $value['stok']);
+                $lowStock = explode(';', $value['stok_rendah']);
+                $reStockLimit = explode(';', $value['batas_restock_ulang']);
+
+                $a = count($codeLocation);
+                $b = count($inStock);
+                $c = count($lowStock);
+                $d = count($reStockLimit);
+
+                if (
+                    $a !== $b &&
+                    $a !== $c &&
+                    $a !== $d &&
+                    $b !== $c &&
+                    $b !== $d &&
+                    $c !== $d
+                ) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Total data on column Kode Lokasi, Stok, Stok Rendah, and Batas Restok Ulang not same at row!'],
+                    ], 422);
+                }
 
                 if (count($codeLocation) !== count(array_unique($codeLocation))) {
                     return response()->json([
@@ -1828,8 +1850,6 @@ class ProductClinicController
                     }
                 }
 
-                $inStock = explode(';', $value['stok']);
-
                 foreach ($inStock as $valStock) {
 
                     if (is_numeric($valStock) == false) {
@@ -1841,8 +1861,6 @@ class ProductClinicController
                     }
                 }
 
-                $lowStock = explode(';', $value['stok_rendah']);
-
                 foreach ($lowStock as $valLowStock) {
                     if (is_numeric($valLowStock) == false) {
                         return response()->json([
@@ -1851,8 +1869,6 @@ class ProductClinicController
                         ], 422);
                     }
                 }
-
-                $reStockLimit = explode(';', $value['batas_restock_ulang']);
 
                 foreach ($reStockLimit as $valStock) {
                     if (is_numeric($valStock) == false) {
