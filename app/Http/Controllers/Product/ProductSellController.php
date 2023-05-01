@@ -1733,12 +1733,19 @@ class ProductSellController
                 } else {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
-                        'message' => ['There is any empty Status please check again!'],
+                        'message' => ['There is any empty Status. Please check again!'],
                     ], 422);
                 }
                 $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
 
                 $codeLocation = explode(';', $value['kode_lokasi']);
+
+                if (count($codeLocation) !== count(array_unique($codeLocation))) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any duplicate kode lokasi. Please check again!'],
+                    ], 422);
+                }
 
                 foreach ($codeLocation as $valcode) {
 
@@ -1843,6 +1850,13 @@ class ProductSellController
                     return response()->json([
                         'errors' => 'The given data was invalid.',
                         'message' => ['Invalid format for column Persetujuan Admin'],
+                    ], 422);
+                }
+
+                if (count($productCategory) !== count(array_unique($productCategory))) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any duplicate Kategori Produk. Please check again!'],
                     ], 422);
                 }
 
