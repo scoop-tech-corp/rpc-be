@@ -65,10 +65,10 @@ class ProductSellController
         if ($request->stock) {
 
             if ($request->stock == "highStock") {
-                $data = $data->where('psl.diffStock', '<=', 0);
+                $data = $data->where('psl.diffStock', '>', 0);
             } elseif ($request->stock == "lowStock") {
 
-                $data = $data->where('psl.diffStock', '>', 0);
+                $data = $data->where('psl.diffStock', '<=', 0);
             }
         }
 
@@ -77,6 +77,7 @@ class ProductSellController
             $cat = DB::table('productSellCategories as pc')
                 ->select('productSellId')
                 ->whereIn('productCategoryId', $request->category)
+                ->where('pc.isDeleted', '=', 0)
                 ->distinct()
                 ->pluck('productSellId');
 
