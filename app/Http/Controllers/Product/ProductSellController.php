@@ -1723,8 +1723,8 @@ class ProductSellController
                         ], 422);
                     }
                 }
-
-                if ($value['status']) {
+                
+                if ($value['status'] || $value['status'] == 0) {
 
                     if ($value['status'] != 0 && $value['status'] != 1) {
                         return response()->json([
