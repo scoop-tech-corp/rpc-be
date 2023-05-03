@@ -1897,8 +1897,6 @@ class ProductClinicController
                 $isNoAnyCharge = $value['tidak_dikenakan_biaya'];
                 $officeApproval = $value['persetujuan_office'];
                 $adminApproval = $value['persetujuan_admin'];
-                $introduction = $value['perkenalan'];
-                $description = $value['deskripsi'];
                 $productCategory = explode(';', $value['kode_kategori_produk']);
 
                 if ($isDeliver != 0 && $isDeliver != 1) {
@@ -1984,6 +1982,15 @@ class ProductClinicController
                 $inStock = explode(';', $value['stok']);
                 $lowStock = explode(';', $value['stok_rendah']);
                 $reStockLimit = explode(';', $value['batas_restock_ulang']);
+                $productCategory = explode(';', $value['kode_kategori_produk']);
+                $isCanBuy = $value['dapat_membeli_produk'];
+                $isBuyOnline = $value['dapat_membeli_secara_online'];
+                $isBuyNoStock = $value['dapat_membeli_saat_stok_habis'];
+                $isCheckStockOnCreateReceipt = $value['pengecekan_stok_selama_ada_penambahan_atau_pembuatan_resep'];
+                $isNoAnyCharge = $value['tidak_dikenakan_biaya'];
+                $officeApproval = $value['persetujuan_office'];
+                $adminApproval = $value['persetujuan_admin'];
+                $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
 
                 $count = 0;
 
@@ -2006,8 +2013,8 @@ class ProductClinicController
                         'length' => $value['panjang'],
                         'width' => $value['lebar'],
                         'height' => $value['tinggi'],
-                        'introduction' => $introduction,
-                        'description' => $description,
+                        'introduction' => $value['perkenalan'],
+                        'description' => $value['deskripsi'],
 
                         'isCustomerPurchase' => $isCanBuy,
                         'isCustomerPurchaseOnline' => $isBuyOnline,
