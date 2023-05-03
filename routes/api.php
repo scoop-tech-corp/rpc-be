@@ -121,6 +121,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
         Route::delete('/inventory', [ProductInventoryController::class, 'delete']);
 
+        Route::get('/inventory/template', [ProductInventoryController::class, 'downloadTemplate']);
         //product category
         Route::get('/category', [ProductController::class, 'IndexProductCategory']);
         Route::post('/category', [ProductController::class, 'CreateProductCategory']);

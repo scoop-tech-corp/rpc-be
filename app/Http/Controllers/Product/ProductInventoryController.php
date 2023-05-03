@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Product;
 
 use App\Exports\Product\ProductInventoryApprovalReport;
+use App\Exports\Product\TemplateUploadProductInventory;
 use App\Exports\Product\ProductInventoryHistoryReport;
 use App\Exports\Product\ProductInventoryReport;
 use App\Models\ProductClinic;
@@ -1116,5 +1117,10 @@ class ProductInventoryController
             ),
             $fileName
         );
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        return (new TemplateUploadProductInventory())->download('Template Upload Produk Inventori.xlsx');
     }
 }
