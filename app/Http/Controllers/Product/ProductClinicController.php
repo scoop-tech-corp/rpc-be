@@ -1729,12 +1729,12 @@ class ProductClinicController
     {
         // return role($request->user()->id);
         // if (role($request->user()->id) == 'Office' || role($request->user()->id) == 'Administrator') {
-            return (new TemplateUploadProductClinic())->download('Template Upload Produk Klinik.xlsx');
+        return (new TemplateUploadProductClinic())->download('Template Upload Produk Klinik.xlsx');
         // } else {
-            // return response()->json([
-            //     'message' => 'The user role was invalid.',
-            //     'errors' => ['User Access not Authorize!'],
-            // ], 403);
+        // return response()->json([
+        //     'message' => 'The user role was invalid.',
+        //     'errors' => ['User Access not Authorize!'],
+        // ], 403);
         // }
     }
 
@@ -1800,7 +1800,7 @@ class ProductClinicController
                     }
                 }
 
-                if ($value['status']) {
+                if ($value['status'] || $value['status'] == 0) {
 
                     if ($value['status'] != 0 && $value['status'] != 1) {
                         return response()->json([
