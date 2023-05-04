@@ -1348,70 +1348,74 @@ class CustomerController extends Controller
 
 
                 $primaryTelephone = 0;
-                foreach ($arraytelephone as $item) {
-                    if (strtolower($item['usage']) == "utama") {
-                        $primaryTelephone++;
+
+
+                if (!empty($arrayemail)) {
+                    foreach ($arraytelephone as $item) {
+                        if (strtolower($item['usage']) == "utama") {
+                            $primaryTelephone++;
+                        }
                     }
-                }
 
-                if ($primaryTelephone == 0) {
+                    if ($primaryTelephone == 0) {
 
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' =>  'Telephone must have at least 1 primary number',
-                    ], 422);
-                } elseif ($primaryTelephone > 1) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' =>  'Telephone must have at least 1 primary number',
+                        ], 422);
+                    } elseif ($primaryTelephone > 1) {
 
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' =>  'Telephone have 2 primary number, please check again',
-                    ], 422);
-                }
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' =>  'Telephone have 2 primary number, please check again',
+                        ], 422);
+                    }
 
 
-                foreach ($arraytelephone as $key) {
+                    foreach ($arraytelephone as $key) {
 
-                    $telephoneDetail = Validator::make(
-                        $key,
-                        [
-                            'phoneNumber' => 'required',
-                            'type' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messagePhone
-                    );
+                        $telephoneDetail = Validator::make(
+                            $key,
+                            [
+                                'phoneNumber' => 'required',
+                                'type' => 'required',
+                                'usage' => 'required',
+                            ],
+                            $messagePhone
+                        );
 
-                    if ($telephoneDetail->fails()) {
+                        if ($telephoneDetail->fails()) {
 
-                        $errors = $telephoneDetail->errors()->all();
+                            $errors = $telephoneDetail->errors()->all();
 
-                        foreach ($errors as $checkisu) {
+                            foreach ($errors as $checkisu) {
 
-                            if (!(in_array($checkisu, $data_error_telephone))) {
-                                array_push($data_error_telephone, $checkisu);
+                                if (!(in_array($checkisu, $data_error_telephone))) {
+                                    array_push($data_error_telephone, $checkisu);
+                                }
+                            }
+                        }
+
+                        if (strtolower($key['type']) == "whatshapp") {
+
+                            if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
+
+                                return response()->json([
+                                    'message' => 'The given data was invalid.',
+                                    'errors' =>  'Please check your phone number, for type whatshapp must start with 62',
+                                ], 422);
                             }
                         }
                     }
 
-                    if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
+                    if ($data_error_telephone) {
 
-                            return response()->json([
-                                'message' => 'The given data was invalid.',
-                                'errors' =>  'Please check your phone number, for type whatshapp must start with 62',
-                            ], 422);
-                        }
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' =>   $data_error_telephone,
+                        ], 422);
                     }
-                }
-
-
-                if ($data_error_telephone) {
-
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' =>   $data_error_telephone,
-                    ], 422);
                 }
             }
 
@@ -1426,62 +1430,61 @@ class CustomerController extends Controller
                     'usage.required' => 'Usage on tab email is required',
                 ];
 
-
-
-
-                $primaryEmail = 0;
-                foreach ($arrayemail as $item) {
-                    if (strtolower($item['usage']) == "utama") {
-                        $primaryEmail++;
+                if (!empty($arrayemail)) {
+                    $primaryEmail = 0;
+                    foreach ($arrayemail as $item) {
+                        if (strtolower($item['usage']) == "utama") {
+                            $primaryEmail++;
+                        }
                     }
-                }
 
-                if ($primaryEmail == 0) {
+                    if ($primaryEmail == 0) {
 
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' =>  'Email must have at least 1 primary email',
-                    ], 422);
-                } elseif ($primaryEmail > 1) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' =>  'Email must have at least 1 primary email',
+                        ], 422);
+                    } elseif ($primaryEmail > 1) {
 
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' =>  'Email have 2 primary email, please check again',
-                    ], 422);
-                }
-
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' =>  'Email have 2 primary email, please check again',
+                        ], 422);
+                    }
 
 
-                foreach ($arrayemail as $key) {
 
-                    $emailDetail = Validator::make(
-                        $key,
-                        [
-                            'email' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messageEmail
-                    );
+                    foreach ($arrayemail as $key) {
+
+                        $emailDetail = Validator::make(
+                            $key,
+                            [
+                                'email' => 'required',
+                                'usage' => 'required',
+                            ],
+                            $messageEmail
+                        );
 
 
-                    if ($emailDetail->fails()) {
+                        if ($emailDetail->fails()) {
 
-                        $errors = $emailDetail->errors()->all();
+                            $errors = $emailDetail->errors()->all();
 
-                        foreach ($errors as $checkisu) {
+                            foreach ($errors as $checkisu) {
 
-                            if (!(in_array($checkisu, $data_error_email))) {
-                                array_push($data_error_email, $checkisu);
+                                if (!(in_array($checkisu, $data_error_email))) {
+                                    array_push($data_error_email, $checkisu);
+                                }
                             }
                         }
                     }
-                }
 
-                if ($data_error_email) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_email,
-                    ], 422);
+                    if ($data_error_email) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => $data_error_email,
+                        ], 422);
+                    }
                 }
             }
 
@@ -1492,75 +1495,77 @@ class CustomerController extends Controller
                 $arraymessenger = json_decode($request->messengers, true);
 
 
-                $primaryMessenger = 0;
-                foreach ($arraymessenger as $item) {
-                    if (strtolower($item['usage']) == "utama") {
-                        $primaryMessenger++;
+                if (!empty($arraymessenger)) {
+                    $primaryMessenger = 0;
+                    foreach ($arraymessenger as $item) {
+                        if (strtolower($item['usage']) == "utama") {
+                            $primaryMessenger++;
+                        }
                     }
-                }
-
-                if ($primaryMessenger == 0) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Messenger must have at least 1 primary number',
-                    ], 422);
-                } elseif ($primaryMessenger > 1) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Messenger have 2 primary number, please check again',
-                    ], 422);
-                }
 
 
-                $messageMessenger = [
-                    'messengerNumber.required' => 'messenger number on tab messenger is required',
-                    'type.required' => 'Type on tab messenger is required',
-                    'usage.required' => 'Usage on tab messenger is required',
-                ];
+                    if ($primaryMessenger == 0) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'Messenger must have at least 1 primary number',
+                        ], 422);
+                    } elseif ($primaryMessenger > 1) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'Messenger have 2 primary number, please check again',
+                        ], 422);
+                    }
 
-                foreach ($arraymessenger as $key) {
 
-                    $messengerDetail = Validator::make(
-                        $key,
-                        [
-                            'messengerNumber' => 'required',
-                            'type' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messageMessenger
-                    );
+                    $messageMessenger = [
+                        'messengerNumber.required' => 'messenger number on tab messenger is required',
+                        'type.required' => 'Type on tab messenger is required',
+                        'usage.required' => 'Usage on tab messenger is required',
+                    ];
 
-                    if ($messengerDetail->fails()) {
+                    foreach ($arraymessenger as $key) {
 
-                        $errors = $messengerDetail->errors()->all();
+                        $messengerDetail = Validator::make(
+                            $key,
+                            [
+                                'messengerNumber' => 'required',
+                                'type' => 'required',
+                                'usage' => 'required',
+                            ],
+                            $messageMessenger
+                        );
 
-                        foreach ($errors as $checkisu) {
+                        if ($messengerDetail->fails()) {
 
-                            if (!(in_array($checkisu, $data_error_messengers))) {
-                                array_push($data_error_messengers, $checkisu);
+                            $errors = $messengerDetail->errors()->all();
+
+                            foreach ($errors as $checkisu) {
+
+                                if (!(in_array($checkisu, $data_error_messengers))) {
+                                    array_push($data_error_messengers, $checkisu);
+                                }
+                            }
+                        }
+
+                        if (strtolower($key['type']) == "whatshapp") {
+
+                            if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
+                                return response()->json([
+                                    'message' => 'Inputed data is not valid',
+                                    'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                                ], 422);
                             }
                         }
                     }
 
-                    if (strtolower($key['type']) == "whatshapp") {
-
-                        if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
-                            return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
-                            ], 422);
-                        }
+                    if ($data_error_messengers) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => $data_error_messengers,
+                        ], 422);
                     }
                 }
-
-                if ($data_error_messengers) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_messengers,
-                    ], 422);
-                }
             }
-
 
 
             $flag = false;
@@ -2322,68 +2327,72 @@ class CustomerController extends Controller
 
 
                 $primaryTelephone = 0;
-                foreach ($request->telephones as $item) {
-                    if (strtolower($item['usage']) == "utama") {
-                        $primaryTelephone++;
+
+                if (!empty($request->telephones)) {
+
+                    foreach ($request->telephones as $item) {
+                        if (strtolower($item['usage']) == "utama") {
+                            $primaryTelephone++;
+                        }
                     }
-                }
 
-                if ($primaryTelephone == 0) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Telephone must have at least 1 primary number',
-                    ], 422);
-                } elseif ($primaryTelephone > 1) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Telephone have 2 primary number, please check again',
-                    ], 422);
-                }
-
-
-                foreach ($request->telephones as $key) {
+                    if ($primaryTelephone == 0) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'Telephone must have at least 1 primary number',
+                        ], 422);
+                    } elseif ($primaryTelephone > 1) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'Telephone have 2 primary number, please check again',
+                        ], 422);
+                    }
 
 
+                    foreach ($request->telephones as $key) {
 
-                    $telephoneDetail = Validator::make(
-                        $key,
-                        [
-                            'phoneNumber' => 'required',
-                            'type' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messagePhone
-                    );
 
-                    if ($telephoneDetail->fails()) {
 
-                        $errors = $telephoneDetail->errors()->all();
+                        $telephoneDetail = Validator::make(
+                            $key,
+                            [
+                                'phoneNumber' => 'required',
+                                'type' => 'required',
+                                'usage' => 'required',
+                            ],
+                            $messagePhone
+                        );
 
-                        foreach ($errors as $checkisu) {
+                        if ($telephoneDetail->fails()) {
 
-                            if (!(in_array($checkisu, $data_error_telephone))) {
-                                array_push($data_error_telephone, $checkisu);
+                            $errors = $telephoneDetail->errors()->all();
+
+                            foreach ($errors as $checkisu) {
+
+                                if (!(in_array($checkisu, $data_error_telephone))) {
+                                    array_push($data_error_telephone, $checkisu);
+                                }
+                            }
+                        }
+
+                        if (strtolower($key['type']) == "whatshapp") {
+
+                            if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
+                                return response()->json([
+                                    'message' => 'Inputed data is not valid',
+                                    'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                                ], 422);
                             }
                         }
                     }
 
-                    if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
-                            return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
-                            ], 422);
-                        }
+                    if ($data_error_telephone) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => $data_error_telephone,
+                        ], 422);
                     }
-                }
-
-
-                if ($data_error_telephone) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_telephone,
-                    ], 422);
                 }
             }
 
@@ -2401,54 +2410,57 @@ class CustomerController extends Controller
 
 
                 $primaryEmail = 0;
-                foreach ($request->emails as $item) {
-                    if (strtolower($item['usage']) == "utama") {
-                        $primaryEmail++;
+
+                if (!empty($request->emails)) {
+                    foreach ($request->emails as $item) {
+                        if (strtolower($item['usage']) == "utama") {
+                            $primaryEmail++;
+                        }
                     }
-                }
 
-                if ($primaryEmail == 0) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Email must have at least 1 primary email',
-                    ], 422);
-                } elseif ($primaryEmail > 1) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Email have 2 primary email, please check again',
-                    ], 422);
-                }
+                    if ($primaryEmail == 0) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'Email must have at least 1 primary email',
+                        ], 422);
+                    } elseif ($primaryEmail > 1) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'Email have 2 primary email, please check again',
+                        ], 422);
+                    }
 
-                foreach ($request->emails as $key) {
+                    foreach ($request->emails as $key) {
 
-                    $emailDetail = Validator::make(
-                        $key,
-                        [
-                            'email' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messageEmail
-                    );
+                        $emailDetail = Validator::make(
+                            $key,
+                            [
+                                'email' => 'required',
+                                'usage' => 'required',
+                            ],
+                            $messageEmail
+                        );
 
 
-                    if ($emailDetail->fails()) {
+                        if ($emailDetail->fails()) {
 
-                        $errors = $emailDetail->errors()->all();
+                            $errors = $emailDetail->errors()->all();
 
-                        foreach ($errors as $checkisu) {
+                            foreach ($errors as $checkisu) {
 
-                            if (!(in_array($checkisu, $data_error_email))) {
-                                array_push($data_error_email, $checkisu);
+                                if (!(in_array($checkisu, $data_error_email))) {
+                                    array_push($data_error_email, $checkisu);
+                                }
                             }
                         }
                     }
-                }
 
-                if ($data_error_email) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_email,
-                    ], 422);
+                    if ($data_error_email) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => $data_error_email,
+                        ], 422);
+                    }
                 }
             }
 
@@ -2456,73 +2468,76 @@ class CustomerController extends Controller
             if ($request->messengers) {
 
                 $primaryMessenger = 0;
-                foreach ($request->messengers as $item) {
-                    if (strtolower($item['usage']) == "utama") {
-                        $primaryMessenger++;
+
+                if (!empty($request->messengers)) {
+                    foreach ($request->messengers as $item) {
+                        if (strtolower($item['usage']) == "utama") {
+                            $primaryMessenger++;
+                        }
                     }
-                }
 
-                if ($primaryMessenger == 0) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Messenger must have at least 1 primary number',
-                    ], 422);
-                } elseif ($primaryMessenger > 1) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Messenger have 2 primary number, please check again',
-                    ], 422);
-                }
+                    if ($primaryMessenger == 0) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'Messenger must have at least 1 primary number',
+                        ], 422);
+                    } elseif ($primaryMessenger > 1) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => 'Messenger have 2 primary number, please check again',
+                        ], 422);
+                    }
 
-                $messageMessenger = [
-                    'messengerNumber.required' => 'messenger number on tab messenger is required',
-                    'type.required' => 'Type on tab messenger is required',
-                    'usage.required' => 'Usage on tab messenger is required',
-                ];
+                    $messageMessenger = [
+                        'messengerNumber.required' => 'messenger number on tab messenger is required',
+                        'type.required' => 'Type on tab messenger is required',
+                        'usage.required' => 'Usage on tab messenger is required',
+                    ];
 
-                foreach ($request->messengers as $key) {
+                    foreach ($request->messengers as $key) {
 
-                    $messengerDetail = Validator::make(
-                        $key,
-                        [
-                            'messengerNumber' => 'required',
-                            'type' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messageMessenger
-                    );
+                        $messengerDetail = Validator::make(
+                            $key,
+                            [
+                                'messengerNumber' => 'required',
+                                'type' => 'required',
+                                'usage' => 'required',
+                            ],
+                            $messageMessenger
+                        );
 
-                    if ($messengerDetail->fails()) {
+                        if ($messengerDetail->fails()) {
 
-                        $errors = $messengerDetail->errors()->all();
+                            $errors = $messengerDetail->errors()->all();
 
-                        foreach ($errors as $checkisu) {
+                            foreach ($errors as $checkisu) {
 
-                            if (!(in_array($checkisu, $data_error_messengers))) {
-                                array_push($data_error_messengers, $checkisu);
+                                if (!(in_array($checkisu, $data_error_messengers))) {
+                                    array_push($data_error_messengers, $checkisu);
+                                }
+                            }
+                        }
+
+                        if (strtolower($key['type']) == "whatshapp") {
+
+                            if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
+
+                                return response()->json([
+                                    'message' => 'Inputed data is not valid',
+                                    'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                                ], 422);
                             }
                         }
                     }
 
-                    if (strtolower($key['type']) == "whatshapp") {
 
-                        if (!(substr($key['messageMessenger'], 0, 2) === "62")) {
 
-                            return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
-                            ], 422);
-                        }
+                    if ($data_error_messengers) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => $data_error_messengers,
+                        ], 422);
                     }
-                }
-
-
-
-                if ($data_error_messengers) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_messengers,
-                    ], 422);
                 }
             }
 
