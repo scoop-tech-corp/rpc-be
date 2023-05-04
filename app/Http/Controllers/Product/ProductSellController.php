@@ -148,40 +148,40 @@ class ProductSellController
         }
         //------------------------
 
-        $data = DB::table('productSells as ps')
-            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
-            ->select(
-                DB::raw("IFNULL(psup.supplierName,'') as supplierName")
-            )
-            ->where('ps.isDeleted', '=', 0);
+        // $data = DB::table('productSells as ps')
+        //     ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
+        //     ->select(
+        //         DB::raw("IFNULL(psup.supplierName,'') as supplierName")
+        //     )
+        //     ->where('ps.isDeleted', '=', 0);
 
-        if ($request->search) {
-            $data = $data->where('psup.supplierName', 'like', '%' . $request->search . '%');
-        }
+        // if ($request->search) {
+        //     $data = $data->where('psup.supplierName', 'like', '%' . $request->search . '%');
+        // }
 
-        $data = $data->get();
+        // $data = $data->get();
 
-        if (count($data)) {
-            $temp_column[] = 'psup.supplierName';
-        }
-        //------------------------
+        // if (count($data)) {
+        //     $temp_column[] = 'psup.supplierName';
+        // }
+        // //------------------------
 
-        $data = DB::table('productSells as ps')
-            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
-            ->select(
-                DB::raw("IFNULL(pb.brandName,'') as brandName")
-            )
-            ->where('ps.isDeleted', '=', 0);
+        // $data = DB::table('productSells as ps')
+        //     ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
+        //     ->select(
+        //         DB::raw("IFNULL(pb.brandName,'') as brandName")
+        //     )
+        //     ->where('ps.isDeleted', '=', 0);
 
-        if ($request->search) {
-            $data = $data->where('pb.brandName', 'like', '%' . $request->search . '%');
-        }
+        // if ($request->search) {
+        //     $data = $data->where('pb.brandName', 'like', '%' . $request->search . '%');
+        // }
 
-        $data = $data->get();
+        // $data = $data->get();
 
-        if (count($data)) {
-            $temp_column[] = 'pb.brandName';
-        }
+        // if (count($data)) {
+        //     $temp_column[] = 'pb.brandName';
+        // }
 
         return $temp_column;
     }
