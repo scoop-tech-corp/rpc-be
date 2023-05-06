@@ -29,7 +29,7 @@
             <td style="text-align: left; border: 1px solid black;">Jual;Jual;Klinik</td>
             <td style="text-align: left; border: 1px solid black;">1;2;3</td>
             <td style="text-align: left; border: 1px solid black;">1;2;3</td>
-            <td style="text-align: left; border: 1px solid black;">2023/04/28;2023/08/06;2023/12/20</td>
+            <td style="text-align: left; border: 1px solid black;">2023/10/24;2023/08/06;2023/12/06</td>
             <td style="text-align: left; border: 1px solid black;">barang bagus;barang masih bisa dipakai;barang bisa dipakai, tapi beberapa lama nanti perlu diganti</td>
             <td style="text-align: left; border: 1px solid black;">5;6;7</td>
         </tr>

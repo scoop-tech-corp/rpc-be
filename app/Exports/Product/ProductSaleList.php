@@ -17,7 +17,14 @@ class ProductSaleList implements FromCollection, ShouldAutoSize, WithHeadings, W
             ->join('productBrands as pb', 'pb.id', 'ps.productBrandId')
             ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
             ->join('location as l', 'l.id', 'psl.locationId')
-            ->select('ps.id', 'ps.fullName', 'l.locationName', 'pb.brandName')
+            ->select(
+                'ps.id',
+                'ps.fullName',
+                'l.locationName',
+                'pb.brandName',
+                DB::RAW('(CASE WHEN ps.isAdminApproval = 0 THEN "Tidak" WHEN ps.isAdminApproval = 1 THEN "Ya" END) as isAdminApproval'),
+                DB::RAW('(CASE WHEN ps.isOfficeApproval = 0 THEN "Tidak" WHEN ps.isOfficeApproval = 1 THEN "Ya" END) as isOfficeApproval')
+            )
             ->where('ps.isDeleted', '=', 0)
             ->orderBy('ps.id', 'desc')
             ->get();
@@ -28,7 +35,7 @@ class ProductSaleList implements FromCollection, ShouldAutoSize, WithHeadings, W
     public function headings(): array
     {
         return [
-            ['Kode Produk', 'Nama Produk','Nama Lokasi', 'Nama Merk'],
+            ['Kode Produk', 'Nama Produk', 'Lokasi', 'Merk', 'Persetujuan Admin', 'Persetujuan Office'],
         ];
     }
 
@@ -44,6 +51,8 @@ class ProductSaleList implements FromCollection, ShouldAutoSize, WithHeadings, W
             $list->fullName,
             $list->locationName,
             $list->brandName,
+            $list->isAdminApproval,
+            $list->isOfficeApproval,
         ];
     }
 }
