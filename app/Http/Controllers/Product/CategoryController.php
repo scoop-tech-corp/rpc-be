@@ -320,12 +320,6 @@ class CategoryController extends Controller
 
         if ($checkIfValueExits === null) {
 
-            ProductCategories::create([
-                'categoryName' => $request->categoryName,
-                'expiredDay' => $request->expiredDay,
-                'userId' => $request->user()->id,
-            ]);
-
             ProductCategories::where('id', '=', $request->id)
                 ->update(
                     [
