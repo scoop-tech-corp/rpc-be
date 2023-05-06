@@ -13,5 +13,5 @@ class ProductCategories extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['categoryName', 'userId', 'userUpdateId'];
+    protected $fillable = ['categoryName', 'expiredDay', 'userId', 'userUpdateId'];
 }

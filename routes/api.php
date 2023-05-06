@@ -64,7 +64,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         //data static
         Route::get('/datastatic', [DataStaticController::class, 'datastatic']);
         Route::delete('/datastatic', [DataStaticController::class, 'datastaticlocation']);
-        
+
         //product
         Route::get('/product/transfer', [LocationController::class, 'locationTransferProduct']);
     });
@@ -88,7 +88,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/sell/template', [ProductSellController::class, 'downloadTemplate']);
         Route::post('/sell/import', [ProductSellController::class, 'Import']);
-        
+
         Route::get('/sell/detail', [ProductSellController::class, 'Detail']);
         Route::post('/sell', [ProductSellController::class, 'Create']);
         Route::put('/sell', [ProductSellController::class, 'Update']);
@@ -123,9 +123,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/inventory', [ProductInventoryController::class, 'delete']);
 
         Route::get('/inventory/template', [ProductInventoryController::class, 'downloadTemplate']);
+        Route::post('/inventory/import', [ProductInventoryController::class, 'Import']);
+
         //product category
-        Route::get('/category/list', [CategoryController::class, 'indexList']);
         Route::get('/category', [CategoryController::class, 'index']);
+        Route::put('/category', [CategoryController::class, 'update']);
+        Route::delete('/category', [CategoryController::class, 'delete']);
+        Route::get('/category/detail/sell', [CategoryController::class, 'detailSell']);
+        Route::get('/category/detail/clinic', [CategoryController::class, 'detailClinic']);
+        Route::get('/category/export', [CategoryController::class, 'export']);
         Route::post('/category', [CategoryController::class, 'create']);
 
         Route::get('/sell/dropdown', [ProductController::class, 'IndexProductSell']);
@@ -133,7 +139,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::post('/usage', [ProductController::class, 'CreateUsage']);
         Route::get('/usage', [ProductController::class, 'IndexUsage']);
-        
+
         Route::post('/adjust', [ProductController::class, 'adjust']);
 
         Route::get('/sell/dropdown/split', [ProductController::class, 'IndexProductSellSplit']);
@@ -193,7 +199,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/source', [CustomerController::class, 'getSourceCustomer']);
 
         Route::put('/pet', [CustomerController::class, 'updatePetAge']);
-
     });
 
 

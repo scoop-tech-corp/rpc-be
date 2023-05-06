@@ -152,58 +152,6 @@ class ProductController
         }
     }
 
-    public function CreateProductCategory(Request $request)
-    {
-
-        $validate = Validator::make($request->all(), [
-            'categoryName' => 'required',
-        ]);
-
-        if ($validate->fails()) {
-            $errors = $validate->errors()->all();
-
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
-        }
-
-        $checkIfValueExits = DB::table('productCategories')
-            ->where('CategoryName', '=', $request->categoryName)
-            ->first();
-
-        if ($checkIfValueExits === null) {
-
-            ProductCategories::create([
-                'categoryName' => $request->categoryName,
-                'userId' => $request->user()->id,
-            ]);
-
-            return response()->json(
-                [
-                    'message' => 'Insert Data Successful!',
-                ],
-                200
-            );
-        } else {
-
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Category Name already exists!'],
-            ], 422);
-        }
-    }
-
-    public function IndexProductCategory(Request $request)
-    {
-        $Data = DB::table('productCategories')
-            ->select('id', 'categoryName')
-            ->where('isDeleted', '=', 0)
-            ->get();
-
-        return response()->json($Data, 200);
-    }
-
     public function IndexProductSell(Request $request)
     {
         if ($request->locationId) {
