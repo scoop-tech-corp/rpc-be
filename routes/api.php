@@ -18,6 +18,7 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\VerifyUserandPasswordController;
 use App\Http\Controllers\Staff\StaffLeaveController;
+use App\Http\Controllers\Product\CategoryController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -123,8 +124,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/inventory/template', [ProductInventoryController::class, 'downloadTemplate']);
         //product category
-        Route::get('/category', [ProductController::class, 'IndexProductCategory']);
-        Route::post('/category', [ProductController::class, 'CreateProductCategory']);
+        Route::get('/category/list', [CategoryController::class, 'indexList']);
+        Route::get('/category', [CategoryController::class, 'index']);
+        Route::post('/category', [CategoryController::class, 'create']);
 
         Route::get('/sell/dropdown', [ProductController::class, 'IndexProductSell']);
         Route::get('/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);

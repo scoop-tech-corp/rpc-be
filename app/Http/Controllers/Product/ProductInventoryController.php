@@ -6,6 +6,7 @@ use App\Exports\Product\ProductInventoryApprovalReport;
 use App\Exports\Product\TemplateUploadProductInventory;
 use App\Exports\Product\ProductInventoryHistoryReport;
 use App\Exports\Product\ProductInventoryReport;
+use App\Imports\Product\ImportProductInventory;
 use App\Models\ProductClinic;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductInventory;
@@ -13,12 +14,14 @@ use App\Models\ProductInventoryList;
 use App\Models\ProductInventoryListImages;
 use App\Models\ProductSell;
 use App\Models\ProductSellLocation;
+use App\Models\usages;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 use Validator;
 use Illuminate\Support\Carbon;
 use Excel;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class ProductInventoryController
 {
@@ -1122,5 +1125,222 @@ class ProductInventoryController
     public function downloadTemplate(Request $request)
     {
         return (new TemplateUploadProductInventory())->download('Template Upload Produk Inventori.xlsx');
+    }
+
+    public function Import(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => $errors,
+            ], 422);
+        }
+
+        $id = $request->user()->id;
+
+        $rows = Excel::toArray(new ImportProductInventory($id), $request->file('file'));
+        $src = $rows[0];
+
+        $count_row = 1;
+
+        // return $src;
+        $err = '';
+
+        if ($src) {
+            foreach ($src as $value) {
+
+                if ($value['nama'] == '') {
+                    $err = 'There is any empty cell on column Nama at row ' . $count_row;
+                    break;
+                }
+
+                if ($value['kode_lokasi'] == '') {
+                    $err = 'There is any empty cell on column Kode Lokasi at row ' . $count_row;
+                    break;
+                }
+
+                $loc = DB::table('location as l')
+                    ->where('l.id', '=', $value['kode_lokasi'])
+                    ->where('l.isDeleted', '=', 0)
+                    ->first();
+
+                if (!$loc) {
+                    $err = 'Invalid Kode Lokasi at row ' . $count_row;
+                    break;
+                }
+
+                $productType = explode(';', $value['tipe_produk']);
+                $productCode = explode(';', $value['kode_produk']);
+                $usageCode = explode(';', $value['kode_penggunaan']);
+                $dateCondition = explode(';', $value['tanggal_kondisi']);
+                $itemCondition = explode(';', $value['kondisi_barang']);
+                $qty = explode(';', $value['jumlah']);
+
+                $a = count($productType);
+                $b = count($productCode);
+                $c = count($usageCode);
+                $d = count($dateCondition);
+                $e = count($itemCondition);
+                $f = count($qty);
+
+                if (
+                    $a !== $b ||
+                    $a !== $c ||
+                    $a !== $d ||
+                    $b !== $e ||
+                    $b !== $f
+                ) {
+                    $err = 'Total data on column Tipe Produk, Kode Produk, Kode Penggunaan, Tanggal Kondisi, Kondisi Barang, and Jumlah are not same at row ' . $count_row;
+                    break;
+                }
+
+                if ($value['tipe_produk'] == '') {
+                    $err = 'There is any empty cell on column Tipe Produk at row ' . $count_row;
+                    break;
+                }
+
+                foreach ($productType as $valueT) {
+                    if ($valueT != 'Jual' && $valueT != 'Klinik') {
+                        $err = 'Invalid Type Product format at row ' . $count_row;
+                        break;
+                    }
+                }
+
+                $cn = 1;
+                foreach ($productCode as $valuePC) {
+
+                    if ($valueT[$cn] == 'Jual') {
+
+                        $check = ProductSell::find($valuePC);
+                        if (!$check) {
+                            $err = 'There is any Invalid data at column Kode Produk Jual at row ' . $count_row;
+                            break;
+                        }
+                        $cn += 1;
+                    } elseif ($valueT[$cn] == 'Klinik') {
+                        $check = ProductClinic::find($valuePC);
+                        if (!$check) {
+                            $err = 'There is any Invalid data at column Kode Produk Klinik at row ' . $count_row;
+                            break;
+                        }
+                        $cn += 1;
+                    }
+                }
+
+                foreach ($usageCode as $valueU) {
+                    $chk = usages::find($valueU);
+
+                    if (!$chk) {
+                        $err = 'There is any Invalid data at column Kode Penggunaan at row ' . $count_row;
+                        break;
+                    }
+                }
+                // $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
+
+                $count_row += 1;
+            }
+
+            if ($err != '') {
+                return response()->json([
+                    'errors' => 'The given data was invalid.',
+                    'message' => [$err],
+                ], 422);
+            }
+
+            //INSERT DATA
+            foreach ($src as $value) {
+
+                $productType = explode(';', $value['tipe_produk']);
+                $productCode = explode(';', $value['kode_produk']);
+                $usageCode = explode(';', $value['kode_penggunaan']);
+                $datesCondition = explode(';', $value['tanggal_kondisi']);
+                $itemCondition = explode(';', $value['kondisi_barang']);
+                $qty = explode(';', $value['jumlah']);
+
+                $approvalAdmin = 0;
+                $approvalOffice = 0;
+
+                $cn = 0;
+                foreach ($productType as $valueType) {
+
+                    if ($valueType == 'Jual') {
+
+                        $findProduct = ProductSell::find($productCode[$cn]);
+
+                        if ($findProduct->isAdminApproval == 1) {
+                            $approvalAdmin = 1;
+                        }
+
+                        if ($findProduct->isOfficeApproval == 1) {
+                            $approvalOffice = 1;
+                        }
+                    } elseif ($valueType == 'Klinik') {
+
+                        $findProduct = ProductClinic::find($productCode[$cn]);
+
+                        if ($findProduct->isAdminApproval == 1) {
+                            $approvalAdmin = 1;
+                        }
+
+                        if ($findProduct->isOfficeApproval == 1) {
+                            $approvalOffice = 1;
+                        }
+                    }
+                    $cn += 1;
+                }
+
+                $inv = ProductInventory::create([
+                    'requirementName' => $value['nama'],
+                    'locationId' => $value['kode_lokasi'],
+                    'totalItem' => count($productType),
+                    'isApprovalAdmin' => $approvalAdmin,
+                    'isApprovalOffice' => $approvalOffice,
+                    'userId' => $request->user()->id,
+                ]);
+
+                $cnLi = 0;
+
+                foreach ($productType as $valueType2) {
+                    $type = '';
+                    if ($valueType2 == 'Jual') {
+                        $type = 'productSell';
+                    } elseif ($valueType2 == 'Klinik') {
+                        $type = 'productClinic';
+                    }
+
+                    ProductInventoryList::create([
+                        'productInventoryId' => $inv->id,
+                        'productType' => $type,
+                        'productId' => $productCode[$cnLi],
+                        'usageId' => $usageCode[$cnLi],
+                        'quantity' => $qty[$cnLi],
+                        'dateCondition' => $datesCondition[$cnLi],
+                        'itemCondition' => $itemCondition[$cnLi],
+                        'isAnyImage' => 0,
+                        'userId' => $request->user()->id,
+                    ]);
+
+                    $cnLi += 1;
+                }
+            }
+        } else {
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => ['There is no any data to import'],
+            ], 422);
+        }
+
+        return response()->json(
+            [
+                'message' => 'Insert Data Successful!',
+            ],
+            200
+        );
     }
 }
