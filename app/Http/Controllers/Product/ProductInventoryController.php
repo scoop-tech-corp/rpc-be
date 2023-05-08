@@ -105,8 +105,26 @@ class ProductInventoryController
 
         if (count($data)) {
             $temp_column[] = 'p.requirementName';
-            return $temp_column;
         }
+
+        $data = DB::table('productInventories as p')
+            ->join('users as u', 'p.userId', 'u.id')
+            ->select(
+                'u.firstName as createdBy'
+            )
+            ->where('p.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'u.firstName';
+        }
+
+        return $temp_column;
     }
 
     public function indexHistory(Request $request)
