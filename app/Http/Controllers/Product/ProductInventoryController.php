@@ -71,7 +71,7 @@ class ProductInventoryController
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('p.id', 'desc');
+        $data = $data->orderBy('p.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -192,7 +192,7 @@ class ProductInventoryController
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('p.id', 'desc');
+        $data = $data->orderBy('p.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -353,7 +353,7 @@ class ProductInventoryController
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('p.id', 'desc');
+        $data = $data->orderBy('p.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
