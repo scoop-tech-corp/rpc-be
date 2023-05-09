@@ -247,6 +247,11 @@ class ProductClinicController
 
         if ($request->categories) {
             $ResultCategories = json_decode($request->categories, true);
+        } else {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Category Product must be selected'],
+            ], 422);
         }
 
         $ResultLocations = json_decode($request->locations, true);
@@ -529,6 +534,26 @@ class ProductClinicController
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => ['Quantity can not be empty!'],
+                ], 422);
+            }
+        }
+
+        //validation category
+        foreach ($ResultCategories as  $validCat) {
+            $dat = ProductCategories::find($validCat);
+            $diff = 0;
+            $date = $request->expiredDate;
+
+            if ($request->expiredDate > Carbon::now()) {
+                $diff = now()->diffInDays(Carbon::parse($date));
+            } else {
+                $diff = now()->diffInDays(Carbon::parse($date)) * -1;
+            }
+
+            if ($dat[0]->expiredDay > $diff) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Expired Days should more than expired date inserted! At Category ' . $dat[0]->categoryName],
                 ], 422);
             }
         }
@@ -1043,6 +1068,11 @@ class ProductClinicController
 
         if ($request->categories) {
             $ResultCategories = $request->categories;
+        } else {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Category Product must be selected'],
+            ], 422);
         }
 
         $ResultReminders = $request->reminders;
@@ -1191,6 +1221,26 @@ class ProductClinicController
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => ['Quantity can not be empty!'],
+                ], 422);
+            }
+        }
+
+        //validation category
+        foreach ($ResultCategories as  $validCat) {
+            $dat = ProductCategories::find($validCat);
+            $diff = 0;
+            $date = $request->expiredDate;
+
+            if ($request->expiredDate > Carbon::now()) {
+                $diff = now()->diffInDays(Carbon::parse($date));
+            } else {
+                $diff = now()->diffInDays(Carbon::parse($date)) * -1;
+            }
+
+            if ($dat[0]->expiredDay > $diff) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Expired Days should more than expired date inserted! At Category ' . $dat[0]->categoryName],
                 ], 422);
             }
         }
