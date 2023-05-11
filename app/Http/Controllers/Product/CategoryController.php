@@ -205,7 +205,7 @@ class CategoryController extends Controller
         }
 
         if ($request->search) {
-            $data = $data->where('ps.fullName', '=', $request->search);
+            $data = $data->where('ps.fullName', 'like', '%' . $request->search . '%');
         }
 
         if ($request->orderValue) {
@@ -258,7 +258,7 @@ class CategoryController extends Controller
         }
 
         if ($request->search) {
-            $data = $data->where('ps.fullName', '=', $request->search);
+            $data = $data->where('ps.fullName', 'like', '%' . $request->search . '%');
         }
 
         if ($request->orderValue) {
