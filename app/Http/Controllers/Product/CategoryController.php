@@ -71,7 +71,7 @@ class CategoryController extends Controller
                 'pc.expiredDay as expiredDay',
                 DB::raw("(select count(*) from productSellCategories where productCategoryId=pc.id) + (select count(*) from productClinicCategories where productCategoryId=pc.id) as totalProduct"),
                 'u.firstName as createdBy',
-                DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
+                DB::raw("DATE_FORMAT(pc.updated_at, '%d/%m/%Y') as createdAt")
             )
             ->where('pc.isDeleted', '=', 0);
 
