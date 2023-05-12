@@ -94,10 +94,14 @@ class CategoryController extends Controller
         }
 
         if ($request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+            if ($request->orderColumn == 'createdAt') {
+                $data = $data->orderBy('pc.updated_at', $request->orderValue);
+            } else {
+                $data = $data->orderBy($request->orderColumn, $request->orderValue);
+            }
+        } else {
+            $data = $data->orderBy('pc.updated_at', 'desc');
         }
-
-        $data = $data->orderBy('pc.updated_at', 'desc');
 
         if ($itemPerPage) {
 
