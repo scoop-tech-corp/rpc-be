@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Events\MessageCreated;
 use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Support\Facades\Event;
 use App\Models\PushNotifications\PushNotifications;
