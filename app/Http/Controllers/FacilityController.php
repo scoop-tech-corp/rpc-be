@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
+use Illuminate\Support\Facades\Event;
+use App\Models\PushNotifications\PushNotifications;
 use App\Exports\Facility\exportFacility;
+use App\Events\MessageCreated;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Facility\FacilityUnit;
 use App\Models\Facility\Facility;
@@ -13,6 +17,8 @@ use Illuminate\Http\Request;
 use Validator;
 use File;
 use DB;
+
+
 
 class FacilityController extends Controller
 {
@@ -363,51 +369,73 @@ class FacilityController extends Controller
 
         try {
 
-            $data_item = [];
 
-            foreach ($request->locationId as $val) {
 
-                $checkIfDataExits = Facility::where([
-                    ['locationId', '=', $val],
-                    ['isDeleted', '=', '0']
-                ])->first();
+            $message = 'cuman testing data saja';
+            $type = 'error';
+            // $val = PushNotifications::insert([
+            //     'usersId' => $request->user()->id,
+            //     'menuName' => 'facility',
+            //     'message' => $message,
+            //     'type' => $type
+            // ]);
 
-                if (!$checkIfDataExits) {
-                    array_push($data_item, 'locationId : ' . $val . ' not found, please try different locationId');
-                }
-            }
 
-            if ($data_item) {
-                return response()->json([
-                    'message' => 'Inputed data is not valid',
-                    'errors' => $data_item,
-                ], 422);
-            }
 
-            foreach ($request->locationId as $val) {
+            Event::dispatch(new MessageCreated($message, $type));
 
-                Facility::where([
-                    ['locationId', '=', $val],
-                    ['isDeleted', '=', '0']
-                ])->update(['isDeleted' => 1, 'updated_at' => now()]);
-
-                FacilityUnit::where([
-                    ['locationId', '=', $val],
-                    ['isDeleted', '=', '0']
-                ])->update(['isDeleted' => 1, 'updated_at' => now()]);
-
-                FacilityImages::where([
-                    ['locationId', '=', $val],
-                    ['isDeleted', '=', '0']
-                ])->update(['isDeleted' => 1, 'updated_at' => now()]);
-
-                DB::commit();
-            }
+            DB::commit();
 
             return response()->json([
                 'result' => 'success',
                 'message' => 'Successfully deleted facility',
             ]);
+
+            // $data_item = [];
+
+            // foreach ($request->locationId as $val) {
+
+            //     $checkIfDataExits = Facility::where([
+            //         ['locationId', '=', $val],
+            //         ['isDeleted', '=', '0']
+            //     ])->first();
+
+            //     if (!$checkIfDataExits) {
+            //         array_push($data_item, 'locationId : ' . $val . ' not found, please try different locationId');
+            //     }
+            // }
+
+            // if ($data_item) {
+            //     return response()->json([
+            //         'message' => 'Inputed data is not valid',
+            //         'errors' => $data_item,
+            //     ], 422);
+            // }
+
+            // foreach ($request->locationId as $val) {
+
+            //     Facility::where([
+            //         ['locationId', '=', $val],
+            //         ['isDeleted', '=', '0']
+            //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+
+            //     FacilityUnit::where([
+            //         ['locationId', '=', $val],
+            //         ['isDeleted', '=', '0']
+            //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+
+            //     FacilityImages::where([
+            //         ['locationId', '=', $val],
+            //         ['isDeleted', '=', '0']
+            //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+
+            //     DB::commit();
+            // }
+
+            // return response()->json([
+            //     'result' => 'success',
+            //     'message' => 'Successfully deleted facility',
+            // ]);
         } catch (Exception $e) {
 
             DB::rollback();
@@ -792,7 +820,7 @@ class FacilityController extends Controller
 
             foreach ($json_array as $val) {
 
-                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) { 
+                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) {
 
                     $name = $files[0][$index]->hashName();
 
@@ -812,7 +840,7 @@ class FacilityController extends Controller
                     $facilityimages->save();
 
                     $index = $index + 1;
-                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) { 
+                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) {
 
                     $find_image = FacilityImages::select(
                         'facility_images.imageName',
@@ -830,7 +858,7 @@ class FacilityController extends Controller
                             FacilityImages::where([['id', '=', $val['id']]])->delete();
                         }
                     }
-                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) { 
+                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) {
 
                     $find_image = FacilityImages::select(
                         'facility_images.imageName',
