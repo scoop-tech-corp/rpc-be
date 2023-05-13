@@ -343,108 +343,110 @@ class FacilityController extends Controller
     {
 
 
-        if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
-        }
+        // if (!adminAccess($request->user()->id)) {
+        //     return response()->json([
+        //         'message' => 'The user role was invalid.',
+        //         'errors' => ['User Access not Authorize!'],
+        //     ], 403);
+        // }
 
 
-        DB::beginTransaction();
+        // DB::beginTransaction();
 
-        $validate = Validator::make($request->all(), [
-            'locationId' => 'required',
-        ]);
+        // $validate = Validator::make($request->all(), [
+        //     'locationId' => 'required',
+        // ]);
 
-        if ($validate->fails()) {
+        // if ($validate->fails()) {
 
-            $errors = $validate->errors()->all();
+        //     $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
-        }
+        //     return response()->json([
+        //         'message' => 'The given data was invalid.',
+        //         'errors' => $errors,
+        //     ], 422);
+        // }
 
-        try {
-
-
-
-            $message = 'cuman testing data saja';
-            $type = 'error';
-            // $val = PushNotifications::insert([
-            //     'usersId' => $request->user()->id,
-            //     'menuName' => 'facility',
-            //     'message' => $message,
-            //     'type' => $type
-            // ]);
+        // try {
 
 
-            info("masuk sini");
-            Event::dispatch(new MessageCreated($message, $type));
 
-            //  DB::commit();
-            info("done masuk sini");
-            return response()->json([
-                'result' => 'success',
-                'message' => 'Successfully deleted facility',
-            ]);
+        //     $message = 'cuman testing data saja';
+        //     $type = 'error';
+        //     // $val = PushNotifications::insert([
+        //     //     'usersId' => $request->user()->id,
+        //     //     'menuName' => 'facility',
+        //     //     'message' => $message,
+        //     //     'type' => $type
+        //     // ]);
 
-            // $data_item = [];
 
-            // foreach ($request->locationId as $val) {
+        info("masuk sini");
+        //     Event::dispatch(new MessageCreated($message, $type));
 
-            //     $checkIfDataExits = Facility::where([
-            //         ['locationId', '=', $val],
-            //         ['isDeleted', '=', '0']
-            //     ])->first();
+        //     //  DB::commit();
+        //     info("done masuk sini");
+        //     return response()->json([
+        //         'result' => 'success',
+        //         'message' => 'Successfully deleted facility',
+        //     ]);
 
-            //     if (!$checkIfDataExits) {
-            //         array_push($data_item, 'locationId : ' . $val . ' not found, please try different locationId');
-            //     }
-            // }
+        //     // $data_item = [];
 
-            // if ($data_item) {
-            //     return response()->json([
-            //         'message' => 'Inputed data is not valid',
-            //         'errors' => $data_item,
-            //     ], 422);
-            // }
+        //     // foreach ($request->locationId as $val) {
 
-            // foreach ($request->locationId as $val) {
+        //     //     $checkIfDataExits = Facility::where([
+        //     //         ['locationId', '=', $val],
+        //     //         ['isDeleted', '=', '0']
+        //     //     ])->first();
 
-            //     Facility::where([
-            //         ['locationId', '=', $val],
-            //         ['isDeleted', '=', '0']
-            //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+        //     //     if (!$checkIfDataExits) {
+        //     //         array_push($data_item, 'locationId : ' . $val . ' not found, please try different locationId');
+        //     //     }
+        //     // }
 
-            //     FacilityUnit::where([
-            //         ['locationId', '=', $val],
-            //         ['isDeleted', '=', '0']
-            //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+        //     // if ($data_item) {
+        //     //     return response()->json([
+        //     //         'message' => 'Inputed data is not valid',
+        //     //         'errors' => $data_item,
+        //     //     ], 422);
+        //     // }
 
-            //     FacilityImages::where([
-            //         ['locationId', '=', $val],
-            //         ['isDeleted', '=', '0']
-            //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+        //     // foreach ($request->locationId as $val) {
 
-            //     DB::commit();
-            // }
+        //     //     Facility::where([
+        //     //         ['locationId', '=', $val],
+        //     //         ['isDeleted', '=', '0']
+        //     //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
 
-            // return response()->json([
-            //     'result' => 'success',
-            //     'message' => 'Successfully deleted facility',
-            // ]);
-        } catch (Exception $e) {
+        //     //     FacilityUnit::where([
+        //     //         ['locationId', '=', $val],
+        //     //         ['isDeleted', '=', '0']
+        //     //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
 
-            DB::rollback();
+        //     //     FacilityImages::where([
+        //     //         ['locationId', '=', $val],
+        //     //         ['isDeleted', '=', '0']
+        //     //     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
 
-            return response()->json([
-                'result' => 'failed',
-                'message' => $e,
-            ]);
-        }
+        //     //     DB::commit();
+        //     // }
+
+        //     // return response()->json([
+        //     //     'result' => 'success',
+        //     //     'message' => 'Successfully deleted facility',
+        //     // ]);
+
+
+        // } catch (Exception $e) {
+
+        //     DB::rollback();
+
+        //     return response()->json([
+        //         'result' => 'failed',
+        //         'message' => $e,
+        //     ]);
+        // }
     }
 
     public function facilityDetail(Request $request)
