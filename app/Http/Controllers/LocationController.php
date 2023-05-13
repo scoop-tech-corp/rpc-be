@@ -56,7 +56,7 @@ class LocationController extends Controller
             $type = 'error';
             info("masuk sini");
             Event::dispatch(new MessageCreated($message, $type));
-
+            info("done masuk sini");
             DB::commit();
 
 
