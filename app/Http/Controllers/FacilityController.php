@@ -381,11 +381,11 @@ class FacilityController extends Controller
             // ]);
 
 
-
+            info("masuk sini");
             Event::dispatch(new MessageCreated($message, $type));
 
-            DB::commit();
-
+            //  DB::commit();
+            info("done masuk sini");
             return response()->json([
                 'result' => 'success',
                 'message' => 'Successfully deleted facility',
