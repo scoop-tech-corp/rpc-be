@@ -281,8 +281,9 @@ class ProductController
         $validate = Validator::make($request->all(), [
             'productId' => 'required|integer',
             'productType' => 'required|string|in:productSell,productClinic',
-            'adjustment' => 'required|string|in:increase,decrease',
+            // 'adjustment' => 'required|string|in:increase,decrease',
             'totalAdjustment' => 'required|integer|min:1',
+            'different' => 'required|integer',
             'remark' => 'required|string',
         ]);
 
@@ -306,16 +307,16 @@ class ProductController
                 ], 422);
             }
 
-            $num = 0;
-            $transaction = "";
+            // $num = 0;
 
-            if ($request->adjustment == 'increase') {
-                $num = $request->totalAdjustment;
-                $transaction = 'Stock Adjustment Increase';
-            } elseif ($request->adjustment == 'decrease') {
-                $num = $request->totalAdjustment * -1;
-                $transaction = 'Stock Adjustment Decrease';
-            }
+
+            // if ($request->adjustment == 'increase') {
+            //     $num = $request->totalAdjustment;
+            //     $transaction = 'Stock Adjustment Increase';
+            // } elseif ($request->adjustment == 'decrease') {
+            //     $num = $request->totalAdjustment * -1;
+            //     $transaction = 'Stock Adjustment Decrease';
+            // }
 
             $prodStock = ProductSellLocation::where('productSellId', '=', $request->productId)->first();
 
@@ -329,8 +330,8 @@ class ProductController
             ProductAdjustment::create([
                 'productId' => $request->productId,
                 'productType' => $request->productType,
-                'adjustment' => $request->adjustment,
-                'totalAdjustment' => $num,
+                'adjustment' => "",
+                'totalAdjustment' => $request->totalAdjustment,
                 'remark' => $request->remark,
                 'userId' => $request->user()->id,
             ]);
@@ -338,8 +339,8 @@ class ProductController
             $inStock = $prodStock->inStock;
             $lowStock = $prodStock->lowStock;
 
-            $prodStock->inStock = $inStock + ($num);
-            $prodStock->diffStock = ($inStock + ($num)) - $lowStock;
+            $prodStock->inStock = $request->totalAdjustment;
+            $prodStock->diffStock = $request->totalAdjustment - $lowStock;
             $prodStock->userId = $request->user()->id;
             $prodStock->updated_at = Carbon::now();
             $prodStock->save();
@@ -347,7 +348,16 @@ class ProductController
             $prod->updated_at = Carbon::now();
             $prod->save();
 
-            ProductSellLog($request->productId, $transaction, $request->remark, $request->totalAdjustment, $inStock + ($num), $request->user()->id);
+            $transaction = "";
+
+            if($request->different > 0){
+                $transaction = "Stock Adjustment Decrease";
+            }
+            else if ($request->different < 0) {
+                $transaction = "Stock Adjustment Increase";
+            }
+
+            ProductSellLog($request->productId, $transaction, $request->remark, $request->totalAdjustment, $request->totalAdjustment, $request->user()->id);
         } elseif ($request->productType == 'productClinic') {
 
             $prod = ProductClinic::find($request->productId);
