@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\MessageCreated;
 use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Support\Facades\Event;
-use App\Models\PushNotifications\PushNotifications;
+use App\Models\PushNotification\PushNotification;
 use App\Exports\exportValue;
 use App\Imports\UsersImport;
 use Illuminate\Http\Request;
@@ -54,12 +54,16 @@ class LocationController extends Controller
 
             $message = 'cuman testing data saja';
             $type = 'error';
-            info("masuk sini");
             Event::dispatch(new MessageCreated($message, $type));
-            info("done masuk sini");
+
+            $pushNotification = new PushNotification();
+            $pushNotification->usersId =  $request->user()->id;
+            $pushNotification->menuName = 'facility';
+            $pushNotification->message = $message;
+            $pushNotification->type = $type;
+            $pushNotification->save();
+
             DB::commit();
-
-
 
             //     $data_item = [];
             //     foreach ($request->codeLocation as $val) {
