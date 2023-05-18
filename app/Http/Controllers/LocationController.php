@@ -63,6 +63,7 @@ class LocationController extends Controller
             $pushNotification->type = $type;
             $pushNotification->save();
 
+            DB::commit();
 
                 // $data_item = [];
                 // foreach ($request->codeLocation as $val) {
