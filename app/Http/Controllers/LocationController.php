@@ -56,82 +56,81 @@ class LocationController extends Controller
             $type = 'error';
             Event::dispatch(new MessageCreated($message, $type));
 
-            // $pushNotification = new PushNotification();
-            // $pushNotification->usersId =  $request->user()->id;
-            // $pushNotification->menuName = 'facility';
-            // $pushNotification->message = $message;
-            // $pushNotification->type = $type;
-            // $pushNotification->save();
-
-            // DB::commit();
-
-                $data_item = [];
-                foreach ($request->codeLocation as $val) {
-
-                    $checkIfDataExits = DB::table('location')
-                        ->where([
-                            ['codeLocation', '=', $val],
-                            ['isDeleted', '=', '0']
-                        ])
-                        ->first();
-
-                    if (!$checkIfDataExits) {
-                        array_push($data_item, 'code location : ' . $val . ' not found, please try different code location');
-                    }
-                }
-
-                if ($data_item) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_item,
-                    ], 422);
-                }
-
-                foreach ($request->codeLocation as $val) {
-
-                    DB::table('location')
-                        ->where('codeLocation', '=', $val)
-                        ->update(['isDeleted' => 1]);
-
-                    DB::table('location_detail_address')
-                        ->where('codeLocation', '=', $val)
-                        ->update(['isDeleted' => 1]);
-
-                    DB::table('location_images')
-                        ->where('codeLocation', '=', $val)
-                        ->update(['isDeleted' => 1]);
-
-                    DB::table('location_email')
-                        ->where('codeLocation', '=', $val)
-                        ->update(['isDeleted' => 1]);
-
-                    DB::table('location_messenger')
-                        ->where('codeLocation', '=', $val)
-                        ->update(['isDeleted' => 1]);
-
-                    DB::table('location_telephone')
-                        ->where('codeLocation', '=', $val)
-                        ->update(['isDeleted' => 1]);
+            $pushNotification = new PushNotification();
+            $pushNotification->usersId =  $request->user()->id;
+            $pushNotification->menuName = 'facility';
+            $pushNotification->message = $message;
+            $pushNotification->type = $type;
+            $pushNotification->save();
 
 
+                // $data_item = [];
+                // foreach ($request->codeLocation as $val) {
 
-                    $checkImages = DB::table('location_images')
-                        ->where([
-                            ['codeLocation', '=', $val]
-                        ])
-                        ->first();
+                //     $checkIfDataExits = DB::table('location')
+                //         ->where([
+                //             ['codeLocation', '=', $val],
+                //             ['isDeleted', '=', '0']
+                //         ])
+                //         ->first();
 
-                    if ($checkImages != null) {
-                        File::delete(public_path() . $checkImages->imagePath);
-                    }
+                //     if (!$checkIfDataExits) {
+                //         array_push($data_item, 'code location : ' . $val . ' not found, please try different code location');
+                //     }
+                // }
 
-                    DB::commit();
-                }
+                // if ($data_item) {
+                //     return response()->json([
+                //         'message' => 'Inputed data is not valid',
+                //         'errors' => $data_item,
+                //     ], 422);
+                // }
 
-                return response()->json([
-                    'result' => 'success',
-                    'message' => 'Successfully deleted location',
-                ]);
+                // foreach ($request->codeLocation as $val) {
+
+                //     DB::table('location')
+                //         ->where('codeLocation', '=', $val)
+                //         ->update(['isDeleted' => 1]);
+
+                //     DB::table('location_detail_address')
+                //         ->where('codeLocation', '=', $val)
+                //         ->update(['isDeleted' => 1]);
+
+                //     DB::table('location_images')
+                //         ->where('codeLocation', '=', $val)
+                //         ->update(['isDeleted' => 1]);
+
+                //     DB::table('location_email')
+                //         ->where('codeLocation', '=', $val)
+                //         ->update(['isDeleted' => 1]);
+
+                //     DB::table('location_messenger')
+                //         ->where('codeLocation', '=', $val)
+                //         ->update(['isDeleted' => 1]);
+
+                //     DB::table('location_telephone')
+                //         ->where('codeLocation', '=', $val)
+                //         ->update(['isDeleted' => 1]);
+
+
+
+                //     $checkImages = DB::table('location_images')
+                //         ->where([
+                //             ['codeLocation', '=', $val]
+                //         ])
+                //         ->first();
+
+                //     if ($checkImages != null) {
+                //         File::delete(public_path() . $checkImages->imagePath);
+                //     }
+
+                //     DB::commit();
+                // }
+
+                // return response()->json([
+                //     'result' => 'success',
+                //     'message' => 'Successfully deleted location',
+                // ]);
 
         } catch (Exception $e) {
 
