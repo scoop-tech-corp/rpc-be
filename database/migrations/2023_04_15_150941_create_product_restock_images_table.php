@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('productRestockImages', function (Blueprint $table) {
             $table->id();
 
-            $table->integer('productRestockId');
+            $table->integer('productRestockDetailId');
             $table->string('labelName');
             $table->string('realImageName');
             $table->string('imagePath');
