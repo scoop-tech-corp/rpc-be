@@ -16,8 +16,13 @@ return new class extends Migration
         Schema::create('productRestocks', function (Blueprint $table) {
             $table->id();
 
-            $table->string('purchaseRequestNumber')->nullable();
-            $table->string('purchaseOrderNumber')->nullable();
+            $table->string('numberId');
+            $table->string('locationId');
+            $table->integer('variantProduct');
+            $table->integer('totalProduct');
+            $table->string('supplierName');
+            // $table->string('purchaseRequestNumber')->nullable();
+            // $table->string('purchaseOrderNumber')->nullable();
 
             $table->string('status')->nullable();
 

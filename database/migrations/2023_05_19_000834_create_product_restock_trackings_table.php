@@ -13,22 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('productRestockDetails', function (Blueprint $table) {
+        Schema::create('productRestockTrackings', function (Blueprint $table) {
             $table->id();
 
-            $table->string('purchaseRequestNumber')->nullable();
-            $table->string('purchaseOrderNumber')->nullable();
-
             $table->integer('productRestockId');
-            $table->integer('productId');
-            $table->string('productType');
-            $table->integer('supplierId');
-            $table->date('requireDate');
-            $table->integer('currentStock');
-            $table->integer('reStockQuantity');
-            $table->decimal('costPerItem', $precision = 18, $scale = 2);
-            $table->decimal('total', $precision = 18, $scale = 2);
-            $table->string('remark');
+            $table->string('progress');
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');
@@ -46,6 +35,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('productRestockDetails');
+        Schema::dropIfExists('productRestockTrackings');
     }
 };

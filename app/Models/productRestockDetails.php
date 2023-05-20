@@ -13,6 +13,8 @@ class productRestockDetails extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['productRestockId','productId','productType','supplierId','requireDate',
-    'reStockQuantity','costPerItem','remark','userId', 'userUpdateId'];
+    protected $fillable = [
+        'purchaseRequestNumber', 'purchaseOrderNumber', '', 'productRestockId', 'productId', 'productType', 'supplierId', 'requireDate',
+        'currentStock', 'reStockQuantity', 'costPerItem', 'total', 'remark', 'userId', 'userUpdateId'
+    ];
 }
