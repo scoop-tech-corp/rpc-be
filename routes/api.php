@@ -159,9 +159,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/restock', [RestockController::class, 'create']);
         Route::post('/restock/multiple', [RestockController::class, 'createMultiple']);
         Route::get('/restock/export', [RestockController::class, 'export']);
+        Route::get('/restock/export/pdf', [RestockController::class, 'exportPDF']);
 
         Route::post('/restock/tracking', [RestockController::class, 'createTracking']);
         Route::get('/restock/detail', [RestockController::class, 'detail']);
+        Route::get('/restock/detail/history', [RestockController::class, 'detailHistory']);
+        Route::get('/restock/detail/supplier', [RestockController::class, 'listSupplier']);
 
         //product bundle
         Route::get('/bundle', [BundleController::class, 'index']);

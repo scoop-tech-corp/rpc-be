@@ -17,6 +17,7 @@ use Validator;
 use Carbon\Carbon;
 use DB;
 use Excel;
+use PDF;
 
 class RestockController extends Controller
 {
@@ -441,6 +442,13 @@ class RestockController extends Controller
             'userId' => $request->user()->id,
         ]);
 
+        if ($number == 'draft') {
+            productRestockLog($prodRestock->id, "Created", "Draft", $request->user()->id);
+        } else {
+            productRestockLog($prodRestock->id, "Created", "Waiting for Approval", $request->user()->id);
+        }
+
+
         $findData = productRestocks::whereDate('created_at', Carbon::today())->count();
 
         $number = "";
@@ -469,6 +477,10 @@ class RestockController extends Controller
                 'requireDate' => $val['requireDate'],
                 'currentStock' => $val['currentStock'],
                 'reStockQuantity' => $val['restockQuantity'],
+                'rejected' => '0',
+                'canceled' => '0',
+                'accepted' => '0',
+                'received' => '0',
                 'costPerItem' => $val['costPerItem'],
                 'total' => $val['total'],
                 'remark' => $val['remark'],
@@ -568,7 +580,197 @@ class RestockController extends Controller
 
     public function detail(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
 
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $restock = DB::table('productRestocks as pres')
+            ->join('location as loc', 'loc.Id', 'pres.locationId')
+            ->join('users as u', 'pres.userId', 'u.id')
+            ->select(
+                'loc.locationName',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(pres.created_at, '%W, %d %M %Y') as createdAt")
+            )
+            ->where('pres.id', '=', $request->id)
+            ->first();
+
+        $tracking = DB::table('productRestockTrackings as pt')
+            ->join('users as u', 'pt.userId', 'u.id')
+            ->select(
+                'pt.progress',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('pt.productRestockId', '=', $request->id)
+            ->get();
+        $restock->tracking = $tracking;
+
+        $suppList = DB::table('productRestockDetails as prd')
+            ->select('ps.id')
+            ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+            ->where('prd.productRestockId', '=', $request->id)
+            ->groupby('ps.id')
+            ->orderBy('ps.updated_at', 'desc')
+            ->distinct()
+            ->pluck('ps.id');
+
+        foreach ($suppList as $value) {
+
+            $prodSingle = DB::table('productRestockDetails as prd')
+                ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+                ->where('prd.productRestockId', '=', $request->id)
+                ->where('prd.supplierId', '=', $value)
+                ->first();
+
+            $prodList = DB::table('productRestockDetails as prd')
+                ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+                ->where('prd.productRestockId', '=', $request->id)
+                ->where('prd.supplierId', '=', $value)
+                ->get();
+
+            $cntProdList = DB::table('productRestockDetails as prd')
+                ->where('prd.productRestockId', '=', $request->id)
+                ->where('prd.supplierId', '=', $value)
+                ->count();
+
+            foreach ($prodList as $list) {
+                if ($list->productType == 'productSell') {
+                    $prd = DB::table('productSells as ps')
+                        ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                        ->select('ps.fullName', 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received')
+                        ->where('ps.id', '=', $list->productId)
+                        ->where('prd.productType', '=', 'productSell')
+                        ->first();
+                } elseif ($list->productType == 'productClinic') {
+                    $prd = DB::table('productCLinics as pc')
+                        ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
+                        ->select('pc.fullName', 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received')
+                        ->where('pc.id', '=', $list->productId)
+                        ->where('prd.productType', '=', 'productClinic')
+                        ->first();
+                }
+
+                $data[] = array(
+                    'fullName' => $prd->fullName,
+                    'reStockQuantity' => $prd->reStockQuantity,
+                    'rejected' => $prd->rejected,
+                    'canceled' => $prd->canceled,
+                    'accepted' => $prd->accepted,
+                    'received' => $prd->received
+                );
+            }
+
+            $dataSup[] = array(
+                'supplierName' => $prodSingle->supplierName,
+                'quantity' => $cntProdList,
+                'purchaseOrderNumber' => $prodSingle->purchaseOrderNumber,
+                'detail' => $data
+            );
+
+            $data = [];
+        }
+
+        $restock->dataSupplier = $dataSup;
+
+        return response()->json($restock, 200);
+    }
+
+    public function detailHistory(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        $data = DB::table('productRestockLogs as prl')
+            ->join('users as u', 'prl.userId', 'u.id')
+            ->select(
+                DB::raw("DATE_FORMAT(prl.created_at, '%W, %d %M %Y') as date"),
+                DB::raw("DATE_FORMAT(prl.created_at, '%H:%i') as time"),
+                'u.firstName as createdBy',
+                'prl.details',
+                'prl.event'
+            )
+            ->where('prl.productRestockId', '=', $request->id);
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('prl.updated_at', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+        return response()->json([
+            'totalPagination' => ceil($totalPaging),
+            'data' => $data
+        ], 200);
+    }
+
+    public function listSupplier(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $data = DB::table('productRestockDetails as prd')
+            ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+            ->select('ps.id', 'ps.supplierName')
+            ->where('prd.productRestockId', '=', $request->id)
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function exportPDF(Request $request)
+    {
+        $location = productRestocks::all();
+
+        $data = [
+            'location' => $location
+        ];
+
+        $pdf = PDF::loadview('index', $data);
+        return $pdf->download('restok produk.pdf');
     }
 
     public function update(Request $request)

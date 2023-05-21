@@ -15,6 +15,8 @@ class productRestockDetails extends Model
 
     protected $fillable = [
         'purchaseRequestNumber', 'purchaseOrderNumber', '', 'productRestockId', 'productId', 'productType', 'supplierId', 'requireDate',
-        'currentStock', 'reStockQuantity', 'costPerItem', 'total', 'remark', 'userId', 'userUpdateId'
+        'currentStock',
+        'reStockQuantity', 'rejected', 'canceled', 'accepted', 'received',
+        'costPerItem', 'total', 'remark', 'userId', 'userUpdateId'
     ];
 }
