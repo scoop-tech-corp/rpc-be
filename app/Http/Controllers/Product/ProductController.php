@@ -158,7 +158,13 @@ class ProductController
 
             $data = DB::table('productSells as ps')
                 ->join('productSellLocations as pl', 'ps.id', 'pl.productSellId')
-                ->select('ps.id', 'ps.fullName')
+                ->select(
+                    'ps.id',
+                    'ps.fullName',
+                    DB::raw("TRIM(ps.price)+0 as price"),
+                    'pl.inStock',
+                    DB::raw('(CASE WHEN pl.inStock = 0 THEN "NO STOCK" WHEN pl.inStock <= pl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status'),
+                )
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.status', '=', 1)
                 ->where('pl.locationId', '=', $request->locationId);
@@ -186,7 +192,13 @@ class ProductController
 
             $data = DB::table('productClinics as p')
                 ->join('productClinicLocations as pl', 'p.id', 'pl.productClinicId')
-                ->select('p.id', 'p.fullName', DB::raw("TRIM(p.price)+0 as price"))
+                ->select(
+                    'p.id',
+                    'p.fullName',
+                    DB::raw("TRIM(p.price)+0 as price"),
+                    'pl.inStock',
+                    DB::raw('(CASE WHEN pl.inStock = 0 THEN "NO STOCK" WHEN pl.inStock <= pl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status'),
+                )
                 ->where('p.isDeleted', '=', 0)
                 ->where('p.status', '=', 1)
                 ->where('pl.locationId', '=', $request->locationId);
@@ -350,10 +362,9 @@ class ProductController
 
             $transaction = "";
 
-            if($request->different > 0){
+            if ($request->different > 0) {
                 $transaction = "Stock Adjustment Decrease";
-            }
-            else if ($request->different < 0) {
+            } else if ($request->different < 0) {
                 $transaction = "Stock Adjustment Increase";
             }
 
