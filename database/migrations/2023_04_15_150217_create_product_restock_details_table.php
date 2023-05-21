@@ -26,6 +26,10 @@ return new class extends Migration
             $table->date('requireDate');
             $table->integer('currentStock');
             $table->integer('reStockQuantity');
+            $table->integer('rejected');
+            $table->integer('canceled');
+            $table->integer('accepted');
+            $table->integer('received');
             $table->decimal('costPerItem', $precision = 18, $scale = 2);
             $table->decimal('total', $precision = 18, $scale = 2);
             $table->string('remark');

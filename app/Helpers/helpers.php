@@ -6,8 +6,8 @@
  * @return response()
  */
 
-use App\Models\ProductClinic;
 use App\Models\ProductClinicLog;
+use App\Models\productRestockLog;
 use App\Models\ProductSellLog;
 
 if (!function_exists('adminAccess')) {
@@ -166,6 +166,18 @@ if (!function_exists('productClinicLog')) {
             'remark' => $remark,
             'quantity' => $quantity,
             'balance' => $balance,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('productRestockLog')) {
+    function productRestockLog($productRestockId, $event, $detail, $userId)
+    {
+        productRestockLog::create([
+            'productRestockId' => $productRestockId,
+            'event' => $event,
+            'details' => $detail,
             'userId' => $userId,
         ]);
     }
