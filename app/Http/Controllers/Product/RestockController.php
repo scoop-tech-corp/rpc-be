@@ -300,6 +300,7 @@ class RestockController extends Controller
         }
 
         $datas = json_decode($request->productList, true);
+
         $variantProduct = 0;
         $totalProduct = 0;
         $totalImages = 0;
