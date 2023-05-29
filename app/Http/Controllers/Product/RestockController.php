@@ -18,6 +18,8 @@ use Carbon\Carbon;
 use DB;
 use Excel;
 use PDF;
+use File;
+use Illuminate\Support\Str;
 
 class RestockController extends Controller
 {
@@ -393,43 +395,6 @@ class RestockController extends Controller
         }
 
         //insert data
-        $files[] = $request->file('images');
-        $ResImageDatas = json_decode($request->imagesName, true);
-        $res_data = [];
-        $countresData = 0;
-        $count = 0;
-
-        if ($request->hasfile('images')) {
-
-            foreach ($files as $file) {
-
-                foreach ($file as $fil) {
-                    $name = $fil->hashName();
-
-                    $fil->move(public_path() . '/ProductRestockImages/', $name);
-
-                    $fileName = "/ProductRestockImages/" . $name;
-
-                    $file = new productRestockImages();
-                    $file->productRestockDetailId = 0;
-                    $file->labelName = $ResImageDatas[$count]['name'];
-                    $file->realImageName = $fil->getClientOriginalName();
-                    $file->imagePath = $fileName;
-                    $file->userId = $request->user()->id;
-
-                    array_push($res_data, $file);
-                    $count += 1;
-                }
-            }
-        }
-
-        if ($totalImages != count($ResImageDatas) && $totalImages != count($res_data)) {
-
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Any issue on insert image, please refresh your page!'],
-            ], 422);
-        }
 
         $prodRestock = productRestocks::create([
             'numberId' => $number,
@@ -487,15 +452,19 @@ class RestockController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
-            for ($i = 0; $i < $value['totalImage']; $i++) {
+            foreach ($val['images'] as $valueImg) {
+                $image = str_replace('data:image/', '', $valueImg['imagePath']);
+                $image = explode(';base64,', $image);
+                $imageName = Str::random(40) . '.' . $image[0];
+                File::put(public_path('ProductRestockImages') . '/' . $imageName, base64_decode($image[1]));
+
                 productRestockImages::create([
                     'productRestockDetailId' => $prodDetail->id,
-                    'labelName' => $res_data[$countresData]['labelName'],
-                    'realImageName' => $res_data[$countresData]['realImageName'],
-                    'imagePath' => $res_data[$countresData]['imagePath'],
+                    'labelName' => $valueImg['label'],
+                    'realImageName' => $valueImg['originalName'],
+                    'imagePath' => '/ProductRestockImages' . '/' . $imageName,
                     'userId' => $request->user()->id,
                 ]);
-                $countresData += 1;
             }
         }
 
@@ -754,7 +723,9 @@ class RestockController extends Controller
 
         $data = DB::table('productRestockDetails as prd')
             ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
-            ->select('ps.id', 'ps.supplierName')
+            ->select('prd.supplierId as id', 'ps.supplierName')
+            ->groupBy('prd.supplierId')
+            ->groupBy('ps.supplierName')
             ->where('prd.productRestockId', '=', $request->id)
             ->get();
 
@@ -763,14 +734,139 @@ class RestockController extends Controller
 
     public function exportPDF(Request $request)
     {
-        $location = productRestocks::all();
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'isExportAll' => 'required|boolean',
+        ]);
 
-        $data = [
-            'location' => $location
-        ];
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
 
-        $pdf = PDF::loadview('index', $data);
-        return $pdf->download('restok produk.pdf');
+        $time = Carbon::now()->format('YmdHisu');
+
+        $path = public_path() . '/ProductRestock/' . $time;
+
+        File::makeDirectory($path);
+
+        foreach ($request->supplierId as $valSup) {
+            $supp = DB::table('productRestockDetails as prd')
+                ->where('prd.productRestockId', '=', $request->id)
+                ->where('prd.supplierId', '=', $valSup)
+                ->get();
+
+            foreach ($supp as $value) {
+
+                if ($value->productType == 'productSell') {
+                    $prd = DB::table('productSells as ps')
+                        ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                        ->select(
+                            'prd.purchaseRequestNumber',
+                            'prd.purchaseOrderNumber',
+                            'ps.fullName',
+                            'prd.reStockQuantity as quantity',
+                            'prd.costPerItem',
+                            'prd.total'
+                        )
+                        ->where('ps.id', '=', $value->productId)
+                        ->where('prd.productType', '=', 'productSell')
+                        ->first();
+                } elseif ($value->productType == 'productClinic') {
+                    $prd = DB::table('productCLinics as pc')
+                        ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
+                        ->select(
+                            'prd.purchaseRequestNumber',
+                            'prd.purchaseOrderNumber',
+                            'pc.fullName',
+                            'prd.reStockQuantity as quantity',
+                            'prd.costPerItem',
+                            'prd.total'
+                        )
+                        ->where('pc.id', '=', $value->productId)
+                        ->where('prd.productType', '=', 'productClinic')
+                        ->first();
+                }
+
+                $data[] = array(
+                    'purchaseRequestNumber' => $prd->purchaseRequestNumber,
+                    'purchaseOrderNumber' => $prd->purchaseOrderNumber,
+                    'fullName' => $prd->fullName,
+                    'quantity' => $prd->quantity,
+                    'costPerItem' => $prd->costPerItem,
+                    'total' => $prd->total,
+                );
+            }
+
+            $dataSupplier = DB::table('productSuppliers as ps')
+                ->leftjoin('provinsi as p', 'p.id', 'ps.province')
+                ->leftjoin('kabupaten as k', 'p.id', 'k.kodeProvinsi')
+                ->select(
+                    'ps.supplierName',
+                    'ps.pic',
+                    'ps.address',
+                    'p.namaProvinsi as provinsi',
+                    'k.namaKabupaten as kota',
+                    'ps.postalCode',
+                    'ps.telephone',
+                    'ps.fax',
+                    'ps.picTelephone'
+                )
+                ->where('ps.id', '=', $valSup)
+                ->first();
+
+            $dataMaster = DB::table('productRestocks as pr')
+                ->join('location as loc', 'loc.Id', 'pr.locationId')
+                ->join('users as u', 'pr.userId', 'u.id')
+                ->join('usersTelephones as ut', 'ut.usersId', 'u.id')
+                ->join('usersRoles as ur', 'ur.id', 'u.jobTitleId')
+                ->select(
+                    'loc.locationName',
+                    'u.firstName as createdBy',
+                    DB::raw("DATE_FORMAT(pr.created_at, '%d/%m/%Y') as createdAt"),
+                    'ut.phoneNumber',
+                    'ur.roleName'
+                )
+                ->where('pr.id', '=', $request->id)
+                ->where('ut.usage', '=', 'Utama')
+                ->first();
+
+            $sourceData = [
+                'dataMaster' => $dataMaster,
+                'data' => $data,
+                'dataSupplier' => $dataSupplier
+            ];
+
+            $pdf = PDF::loadview('restock-pr-template', $sourceData);
+            $pdf->save($path . '/' . 'Restock PR Produk Supplier ' . $dataSupplier->supplierName . '.pdf');
+        }
+
+        $zip_file = 'Restock Product.zip';
+        $zip = new \ZipArchive();
+        $zip->open($zip_file, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path));
+
+        foreach ($files as $name => $file) {
+            // We're skipping all subfolders
+            if (!$file->isDir()) {
+                $filePath     = $file->getRealPath();
+
+                // extracting filename with substr/strlen
+                $relativePath = 'Restock Product/' . substr($filePath, strlen($path) + 1);
+
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
+        $zip->close();
+
+        File::deleteDirectory($path);
+
+        return response()->download($zip_file);
+        // return Zip::create('asd.zip', File::files(public_path('ProductRestock')));
     }
 
     public function update(Request $request)
