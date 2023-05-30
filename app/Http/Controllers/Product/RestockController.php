@@ -307,6 +307,7 @@ class RestockController extends Controller
         $suppName = "";
 
         //validasi data
+
         $validate = Validator::make(
             $datas,
             [
