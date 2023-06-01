@@ -5,6 +5,11 @@
  *
  * @return response()
  */
+
+use App\Models\ProductClinicLog;
+use App\Models\productRestockLog;
+use App\Models\ProductSellLog;
+
 if (!function_exists('adminAccess')) {
     function adminAccess($id)
     {
@@ -105,18 +110,78 @@ if (!function_exists('role')) {
     }
 }
 
-if(!function_exists('convertTrueFalse')){
+
+
+if (!function_exists('roleStaffLeave')) {
+    function roleStaffLeave($id)
+    {
+        $user = DB::table('users as u')
+            ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
+            ->select('u.id', 'ur.roleName')
+            ->where('u.id', '=', $id)
+            ->first();
+
+
+        if ($user->roleName == "Administrator" || $user->roleName == "Office") {
+            return 1;
+        } else {
+
+            return 2;
+        }
+    }
+}
+
+
+if (!function_exists('convertTrueFalse')) {
     function convertTrueFalse($value)
     {
-        if($value == 'true' || $value =='TRUE'){
+        if ($value == 'true' || $value == 'TRUE') {
             return 1;
-        }
-        elseif ($value == 'false'|| $value == 'FALSE') {
+        } elseif ($value == 'false' || $value == 'FALSE') {
             return 0;
         }
     }
 }
 
+if (!function_exists('productSellLog')) {
+    function productSellLog($productId, $transaction, $remark, $quantity, $balance, $userId)
+    {
+        ProductSellLog::create([
+            'productSellId' => $productId,
+            'transaction' => $transaction,
+            'remark' => $remark,
+            'quantity' => $quantity,
+            'balance' => $balance,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('productClinicLog')) {
+    function productClinicLog($productId, $transaction, $remark, $quantity, $balance, $userId)
+    {
+        ProductClinicLog::create([
+            'productClinicId' => $productId,
+            'transaction' => $transaction,
+            'remark' => $remark,
+            'quantity' => $quantity,
+            'balance' => $balance,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('productRestockLog')) {
+    function productRestockLog($productRestockId, $event, $detail, $userId)
+    {
+        productRestockLog::create([
+            'productRestockId' => $productRestockId,
+            'event' => $event,
+            'details' => $detail,
+            'userId' => $userId,
+        ]);
+    }
+}
 //add by danny wahyudi
 // if (!function_exists('securityGroupAdmin')) {
 //     function securityGroupAdmin($id)

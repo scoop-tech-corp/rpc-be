@@ -21,6 +21,7 @@ return new class extends Migration
             $table->integer('inStock');
             $table->integer('lowStock');
             $table->integer('reStockLimit');
+            $table->integer('diffStock');
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');

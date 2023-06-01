@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Exports\Product\ProductSellReport;
+use App\Exports\Product\TemplateUploadProductSell;
+use App\Imports\Product\ImportProductSell;
+use App\Models\ProductBrand;
+use App\Models\ProductCategories;
 use App\Models\ProductSell;
 use App\Models\ProductSellCategory;
 use App\Models\ProductSellCustomerGroup;
@@ -10,11 +15,14 @@ use App\Models\ProductSellLocation;
 use App\Models\ProductSellPriceLocation;
 use App\Models\ProductSellQuantity;
 use App\Models\ProductSellReminder;
+use App\Models\ProductSupplier;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Excel;
 use Validator;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class ProductSellController
 {
@@ -35,6 +43,7 @@ class ProductSellController
                 'ps.id as id',
                 'ps.fullName as fullName',
                 DB::raw("IFNULL(ps.sku,'') as sku"),
+                'loc.id as locationId',
                 'loc.locationName as locationName',
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName"),
                 DB::raw("IFNULL(pb.brandName,'') as brandName"),
@@ -48,10 +57,42 @@ class ProductSellController
             )
             ->where('ps.isDeleted', '=', 0);
 
+        if ($request->locationId) {
+
+            $data = $data->whereIn('loc.id', $request->locationId);
+        }
+
+        if ($request->stock) {
+
+            if ($request->stock == "highStock") {
+                $data = $data->where('psl.diffStock', '>', 0);
+            } elseif ($request->stock == "lowStock") {
+
+                $data = $data->where('psl.diffStock', '<=', 0);
+            }
+        }
+
+        if ($request->category) {
+
+            $cat = DB::table('productSellCategories as pc')
+                ->select('productSellId')
+                ->whereIn('productCategoryId', $request->category)
+                ->where('pc.isDeleted', '=', 0)
+                ->distinct()
+                ->pluck('productSellId');
+
+            $data = $data->whereIn('ps.id', $cat);
+        }
+
         if ($request->search) {
             $res = $this->Search($request);
             if ($res) {
-                $data = $data->where($res, 'like', '%' . $request->search . '%');
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
             } else {
                 $data = [];
                 return response()->json([
@@ -65,7 +106,7 @@ class ProductSellController
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('ps.id', 'desc');
+        $data = $data->orderBy('ps.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -88,7 +129,7 @@ class ProductSellController
 
     private function Search($request)
     {
-        $temp_column = '';
+        $temp_column = null;
 
         $data = DB::table('productSells as ps')
             ->select(
@@ -103,64 +144,97 @@ class ProductSellController
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'ps.fullName';
-            return $temp_column;
+            $temp_column[] = 'ps.fullName';
         }
         //------------------------
 
-        $data = DB::table('productSells as ps')
-            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
-            ->select(
-                DB::raw("IFNULL(psup.supplierName,'') as supplierName")
-            )
-            ->where('ps.isDeleted', '=', 0);
+        // $data = DB::table('productSells as ps')
+        //     ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
+        //     ->select(
+        //         DB::raw("IFNULL(psup.supplierName,'') as supplierName")
+        //     )
+        //     ->where('ps.isDeleted', '=', 0);
 
-        if ($request->search) {
-            $data = $data->where('psup.supplierName', 'like', '%' . $request->search . '%');
-        }
+        // if ($request->search) {
+        //     $data = $data->where('psup.supplierName', 'like', '%' . $request->search . '%');
+        // }
 
-        $data = $data->get();
+        // $data = $data->get();
 
-        if (count($data)) {
-            $temp_column = 'psup.supplierName';
-            return $temp_column;
-        }
-        //------------------------
+        // if (count($data)) {
+        //     $temp_column[] = 'psup.supplierName';
+        // }
+        // //------------------------
 
-        $data = DB::table('productSells as ps')
-            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
-            ->select(
-                DB::raw("IFNULL(pb.brandName,'') as brandName")
-            )
-            ->where('ps.isDeleted', '=', 0);
+        // $data = DB::table('productSells as ps')
+        //     ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
+        //     ->select(
+        //         DB::raw("IFNULL(pb.brandName,'') as brandName")
+        //     )
+        //     ->where('ps.isDeleted', '=', 0);
 
-        if ($request->search) {
-            $data = $data->where('pb.brandName', 'like', '%' . $request->search . '%');
-        }
+        // if ($request->search) {
+        //     $data = $data->where('pb.brandName', 'like', '%' . $request->search . '%');
+        // }
 
-        $data = $data->get();
+        // $data = $data->get();
 
-        if (count($data)) {
-            $temp_column = 'pb.brandName';
-            return $temp_column;
-        }
+        // if (count($data)) {
+        //     $temp_column[] = 'pb.brandName';
+        // }
+
+        return $temp_column;
     }
+
+    // private function searchLog($request)
+    // {
+    //     $temp_column = null;
+
+    //     $data = DB::table('productSellLogs as psl')
+    //         ->select(
+    //             'psl.transaction'
+    //         );
+
+    //     if ($request->search) {
+    //         $data = $data->where('psl.transaction', 'like', '%' . $request->search . '%');
+    //     }
+
+    //     $data = $data->get();
+
+    //     if (count($data)) {
+    //         $temp_column[] = 'transaction';
+    //     }
+
+    //     //
+
+    //     $data = DB::table('productSellLogs as psl')
+    //         ->select(
+    //             'psl.remark'
+    //         );
+
+    //     if ($request->search) {
+    //         $data = $data->where('psl.remark', 'like', '%' . $request->search . '%');
+    //     }
+
+    //     $data = $data->get();
+
+    //     if (count($data)) {
+    //         $temp_column[] = 'remark';
+    //     }
+
+    //     return $temp_column;
+    // }
 
     public function Detail(Request $request)
     {
-        $ProdSell = DB::table('productSells as ps')
-            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
+        $prodSell = DB::table('productSells as ps')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.id')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.Id')
             ->select(
                 'ps.id',
                 'ps.fullName',
                 DB::raw("IFNULL(ps.simpleName,'') as simpleName"),
-                DB::raw("IFNULL(ps.sku,'') as sku"),
-                'ps.productBrandId',
-                'pb.brandName as brandName',
-                'ps.productSupplierId',
-                'psup.supplierName as supplierName',
-                'ps.status',
+
                 'ps.pricingStatus',
                 DB::raw("TRIM(ps.costPrice)+0 as costPrice"),
                 DB::raw("TRIM(ps.marketPrice)+0 as marketPrice"),
@@ -177,42 +251,95 @@ class ProductSellController
             ->where('ps.id', '=', $request->id)
             ->first();
 
+        $prodSellDetails = DB::table('productSells as ps')
+            ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.id')
+            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
+            ->select(
+                'ps.status',
+                'ps.productSupplierId',
+                'psup.supplierName as supplierName',
+                DB::raw("IFNULL(ps.sku,'') as sku"),
+                'ps.productBrandId',
+                'pb.brandName as brandName',
+            )
+            ->where('ps.id', '=', $request->id)
+            ->first();
+
+        $categories = DB::table('productCategories as pcat')
+            ->join('productSellCategories as psc', 'psc.productCategoryId', 'pcat.id')
+            ->join('productSells as pc', 'psc.productSellId', 'pc.id')
+            ->select('pcat.id', 'pcat.categoryName')
+            ->where('pc.id', '=', $request->id)
+            ->where('psc.isDeleted', '=', 0)
+            ->get();
+
+        $prodSellDetails->categories = $categories;
+
+        $prodSell->details = $prodSellDetails;
+
+        $prodSellSetting = DB::table('productSells as ps')
+            ->select(
+                'ps.isCustomerPurchase as isCustomerPurchase',
+                'ps.isCustomerPurchaseOnline as isCustomerPurchaseOnline',
+                'ps.isCustomerPurchaseOutStock as isCustomerPurchaseOutStock',
+                'ps.isStockLevelCheck as isStockLevelCheck',
+                'ps.isNonChargeable as isNonChargeable',
+                'ps.isOfficeApproval as isOfficeApproval',
+                'ps.isAdminApproval as isAdminApproval',
+            )
+            ->where('ps.id', '=', $request->id)
+            ->first();
+
+        $prodSell->setting = $prodSellSetting;
+
         $location =  DB::table('productSellLocations as psl')
             ->join('location as l', 'l.Id', 'psl.locationId')
-            ->select('psl.Id', 'l.locationName', 'psl.inStock', 'psl.lowStock')
+            ->select(
+                'psl.id',
+                'l.id as locationId',
+                'l.locationName',
+                'psl.inStock',
+                'psl.lowStock',
+                'psl.reStockLimit',
+                DB::raw('(CASE WHEN psl.inStock = 0 THEN "NO STOCK" WHEN psl.inStock <= psl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
+            )
             ->where('psl.productSellId', '=', $request->id)
             ->first();
 
-        $ProdSell->location = $location;
+        $prodSell->location = $location;
 
-        if ($ProdSell->pricingStatus == "CustomerGroups") {
+        if ($prodSell->pricingStatus == "CustomerGroups") {
 
             $CustomerGroups = DB::table('productSellCustomerGroups as psc')
                 ->join('productSells as ps', 'psc.productSellId', 'ps.id')
                 ->join('customerGroups as cg', 'psc.customerGroupId', 'cg.id')
                 ->select(
                     'psc.id as id',
+                    'psc.customerGroupId',
                     'cg.customerGroup',
                     DB::raw("TRIM(psc.price)+0 as price")
                 )
                 ->where('psc.productSellId', '=', $request->id)
+                ->where('psc.isDeleted', '=', 0)
                 ->get();
 
-            $ProdSell->customerGroups = $CustomerGroups;
-        } elseif ($ProdSell->pricingStatus == "PriceLocations") {
+            $prodSell->customerGroups = $CustomerGroups;
+        } elseif ($prodSell->pricingStatus == "PriceLocations") {
             $PriceLocations = DB::table('productSellPriceLocations as psp')
                 ->join('productSells as ps', 'psp.productSellId', 'ps.id')
                 ->join('location as l', 'psp.locationId', 'l.id')
                 ->select(
                     'psp.id as id',
                     'l.locationName',
-                    DB::raw("TRIM(psp.price)+0 as Price")
+                    'l.id as locationId',
+                    DB::raw("TRIM(psp.price)+0 as price")
                 )
                 ->where('psp.productSellId', '=', $request->id)
+                ->where('psp.isDeleted', '=', 0)
                 ->get();
 
-            $ProdSell->priceLocations = $PriceLocations;
-        } else if ($ProdSell->pricingStatus == "Quantities") {
+            $prodSell->priceLocations = $PriceLocations;
+        } else if ($prodSell->pricingStatus == "Quantities") {
 
             $Quantities = DB::table('productSellQuantities as psq')
                 ->join('productSells as ps', 'psq.productSellId', 'ps.id')
@@ -220,25 +347,16 @@ class ProductSellController
                     'psq.id as id',
                     'psq.fromQty',
                     'psq.toQty',
-                    DB::raw("TRIM(psq.Price)+0 as Price")
+                    DB::raw("TRIM(psq.Price)+0 as price")
                 )
                 ->where('psq.ProductSellId', '=', $request->id)
+                ->where('psq.isDeleted', '=', 0)
                 ->get();
 
-            $ProdSell->quantities = $Quantities;
+            $prodSell->quantities = $Quantities;
         }
 
-        $ProdSell->categories = DB::table('productSellCategories as psc')
-            ->join('productSells as ps', 'psc.productSellId', 'ps.id')
-            ->join('productCategories as pc', 'psc.productCategoryId', 'pc.id')
-            ->select(
-                'psc.id as id',
-                'pc.categoryName'
-            )
-            ->where('psc.ProductSellId', '=', $request->id)
-            ->get();
-
-        $ProdSell->images = DB::table('productSellImages as psi')
+        $prodSell->images = DB::table('productSellImages as psi')
             ->join('productSells as ps', 'psi.productSellId', 'ps.id')
             ->select(
                 'psi.id as id',
@@ -247,9 +365,39 @@ class ProductSellController
                 'psi.imagePath'
             )
             ->where('psi.productSellId', '=', $request->id)
+            ->where('psi.isDeleted', '=', 0)
             ->get();
 
-        return response()->json($ProdSell, 200);
+        $prodSell->reminders = DB::table('productSellReminders as psr')
+            ->join('productSells as pc', 'psr.productSellId', 'pc.id')
+            ->select(
+                'psr.id',
+                'psr.unit',
+                'psr.timing',
+                'psr.status',
+            )
+            ->where('psr.productSellId', '=', $request->id)
+            ->where('psr.isDeleted', '=', 0)
+            ->get();
+
+        $prodSellLog = DB::table('productSells as ps')
+            ->join('productSellLogs as psl', 'psl.productSellId', 'ps.id')
+            ->join('users as u', 'u.id', 'psl.userId')
+            ->select(
+                'psl.id',
+                'psl.transaction',
+                'psl.remark',
+                'psl.quantity',
+                'psl.balance',
+                DB::raw("CONCAT(u.firstName,' ',u.middleName,CASE WHEN u.middleName = '' THEN '' ELSE ' ' END,u.lastName) as fullName"),
+                DB::raw("DATE_FORMAT(psl.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('ps.id', '=', $request->id)
+            ->get();
+
+        $prodSell->log = $prodSellLog;
+
+        return response()->json($prodSell, 200);
     }
 
     public function Create(Request $request)
@@ -282,7 +430,6 @@ class ProductSellController
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => $errors,
@@ -304,6 +451,11 @@ class ProductSellController
 
         if ($request->categories) {
             $ResultCategories = json_decode($request->categories, true);
+        } else {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Category Product must be selected'],
+            ], 422);
         }
 
         $ResultLocations = json_decode($request->locations, true);
@@ -311,25 +463,30 @@ class ProductSellController
         $validateLocation = Validator::make(
             $ResultLocations,
             [
-                '*.locationId' => 'required|integer',
+                '*.locationId' => 'required|integer|distinct',
                 '*.inStock' => 'required|integer',
                 '*.lowStock' => 'required|integer',
                 '*.reStockLimit' => 'required|integer',
             ],
             [
-                '*.locationId.integer' => 'Location Id Should be Integer!',
-                '*.inStock.integer' => 'In Stock Should be Integer',
-                '*.lowStock.integer' => 'Low Stock Should be Integer',
-                '*.reStockLimit.integer' => 'Restock Limit Should be Integer'
+                '*.locationId.required' => 'Location Id Should be Required!',
+                '*.locationId.integer' => 'Location Id Should be Filled!',
+                '*.locationId.distinct' => 'Cannot add duplicate Location!',
+                '*.inStock.required' => 'In Stock Should be Required!',
+                '*.inStock.integer' => 'In Stock Should be Filled!',
+                '*.lowStock.required' => 'Low Stock Should be Required!',
+                '*.lowStock.integer' => 'Low Stock Should be Filled!',
+                '*.reStockLimit.required' => 'Restock Limit Should be Required!',
+                '*.reStockLimit.integer' => 'Restock Limit Should be Filled!',
             ]
         );
 
         if ($validateLocation->fails()) {
-            $errors = $validateLocation->errors()->all();
+            $errors = $validateLocation->errors()->first();
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'errors' => [$errors],
             ], 422);
         }
 
@@ -349,6 +506,17 @@ class ProductSellController
                     'errors' => ['Product ' . $CheckDataBranch->fullName . ' Already Exist on Location ' . $CheckDataBranch->locationName . '!'],
                 ], 422);
             }
+
+            $checkLocation = DB::table('location as loc')
+                ->where('loc.id', '=', $Res['locationId'])
+                ->first();
+
+            if (!$checkLocation) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any location on system that is no recorded'],
+                ], 422);
+            }
         }
 
         $ResultReminders = json_decode($request->reminders, true);
@@ -364,17 +532,20 @@ class ProductSellController
                 ],
                 [
                     '*.unit.integer' => 'Unit Should be Integer!',
-                    '*.timing.string' => 'Timing Should be String',
-                    '*.status.string' => 'Status Should be String'
+                    '*.unit.required' => 'Unit Should be Required!',
+                    '*.timing.string' => 'Timing Should be String!',
+                    '*.timing.required' => 'Timing Should be Required!',
+                    '*.status.string' => 'Status Should be String!',
+                    '*.status.required' => 'Status Should be Required!',
                 ]
             );
 
             if ($validateReminders->fails()) {
-                $errors = $validateReminders->errors()->all();
+                $errors = $validateReminders->errors()->first();
 
                 return response()->json([
                     'message' => 'The given data was invalid.',
-                    'errors' => $errors,
+                    'errors' => [$errors],
                 ], 422);
             }
         }
@@ -386,25 +557,39 @@ class ProductSellController
             if ($request->customerGroups) {
                 $ResultCustomerGroups = json_decode($request->customerGroups, true);
 
+                $count = 0;
+                while ($count < count($ResultCustomerGroups)) {
+
+                    if ($ResultCustomerGroups[$count]['status'] == 'del') {
+                        array_splice($ResultCustomerGroups, $count, 1);
+                    } else {
+                        $count++;
+                    }
+                }
+
                 $validateCustomer = Validator::make(
                     $ResultCustomerGroups,
                     [
 
-                        '*.customerGroupId' => 'required|integer',
+                        '*.customerGroupId' => 'required|integer|distinct',
                         '*.price' => 'required|numeric',
                     ],
                     [
+                        '*.customerGroupId.required' => 'Customer Group Id Should be Required!',
                         '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!'
+                        '*.customerGroupId.distinct' => 'Cannot add duplicate Customer Group!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+                        '*.price.required' => 'Price Should be Required!',
+
                     ]
                 );
 
                 if ($validateCustomer->fails()) {
-                    $errors = $validateCustomer->errors()->all();
+                    $errors = $validateCustomer->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -419,26 +604,38 @@ class ProductSellController
 
                 $ResultPriceLocations = json_decode($request->priceLocations, true);
 
+                $count = 0;
+                while ($count < count($ResultPriceLocations)) {
+
+                    if ($ResultPriceLocations[$count]['status'] == 'del') {
+                        array_splice($ResultPriceLocations, $count, 1);
+                    } else {
+                        $count++;
+                    }
+                }
 
                 $validatePriceLocations = Validator::make(
                     $ResultPriceLocations,
                     [
-
-                        'priceLocations.*.locationId' => 'required|integer',
-                        'priceLocations.*.price' => 'required|numeric',
+                        '*.locationId' => 'required|integer|distinct',
+                        '*.price' => 'required|numeric',
                     ],
                     [
                         '*.locationId.integer' => 'Location Id Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!'
+                        '*.locationId.required' => 'Location Should be Required!',
+                        '*.locationId.distinct' => 'Cannot add duplicate Location!',
+                        '*.price.required' => 'Price Should be Required!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
+
                     ]
                 );
 
                 if ($validatePriceLocations->fails()) {
-                    $errors = $validatePriceLocations->errors()->all();
+                    $errors = $validatePriceLocations->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -452,27 +649,39 @@ class ProductSellController
             if ($request->quantities) {
                 $ResultQuantities = json_decode($request->quantities, true);
 
+                $count = 0;
+                while ($count < count($ResultQuantities)) {
+
+                    if ($ResultQuantities[$count]['status'] == 'del') {
+                        array_splice($ResultQuantities, $count, 1);
+                    } else {
+                        $count++;
+                    }
+                }
+
                 $validateQuantity = Validator::make(
                     $ResultQuantities,
                     [
-
-                        'quantities.*.fromQty' => 'required|integer',
-                        'quantities.*.toQty' => 'required|integer',
-                        'quantities.*.price' => 'required|numeric',
+                        '*.fromQty' => 'required|integer',
+                        '*.toQty' => 'required|integer',
+                        '*.price' => 'required|numeric',
                     ],
                     [
+                        '*.fromQty.required' => 'From Quantity Should be Required!',
                         '*.fromQty.integer' => 'From Quantity Should be Integer!',
+                        '*.toQty.required' => 'To Quantity Should be Required!',
                         '*.toQty.integer' => 'To Quantity Should be Integer!',
-                        '*.price.numeric' => 'Price Should be Numeric!'
+                        '*.price.required' => 'Price Should be Required!',
+                        '*.price.numeric' => 'Price Should be Numeric!',
                     ]
                 );
 
                 if ($validateQuantity->fails()) {
-                    $errors = $validateQuantity->errors()->all();
+                    $errors = $validateQuantity->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -482,10 +691,26 @@ class ProductSellController
                 ], 422);
             }
         }
-        // info(count($request->file('images')));
-        // return count($ResultImageDatas);
 
+        //validation category
+        foreach ($ResultCategories as  $validCat) {
+            $dat = ProductCategories::find($validCat);
+            $diff = 0;
+            $date = $request->expiredDate;
 
+            if ($request->expiredDate > Carbon::now()) {
+                $diff = now()->diffInDays(Carbon::parse($date));
+            } else {
+                $diff = now()->diffInDays(Carbon::parse($date)) * -1;
+            }
+
+            if ($dat[0]->expiredDay > $diff) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Expired Days should more than expired date inserted! At Category ' . $dat[0]->categoryName],
+                ], 422);
+            }
+        }
 
         //INSERT DATA
         $flag = false;
@@ -553,6 +778,7 @@ class ProductSellController
                     'inStock' => $value['inStock'],
                     'lowStock' => $value['lowStock'],
                     'reStockLimit' => $value['reStockLimit'],
+                    'diffStock' => $value['inStock'] - $value['lowStock'],
                     'userId' => $request->user()->id,
                 ]);
 
@@ -561,7 +787,7 @@ class ProductSellController
                     foreach ($ResultCategories as $valCat) {
                         ProductSellCategory::create([
                             'productSellId' => $product->id,
-                            'productCategoryId' => $valCat,
+                            'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
                         ]);
                     }
@@ -569,7 +795,7 @@ class ProductSellController
 
                 $count = 0;
 
-                $ResImageDatas = json_decode($request->imageDatas, true);
+                $ResImageDatas = json_decode($request->imagesName, true);
 
                 if ($flag == false) {
 
@@ -587,7 +813,7 @@ class ProductSellController
 
                                 $file = new ProductSellImages();
                                 $file->productSellId = $product->id;
-                                $file->labelName = $ResImageDatas[$count];
+                                $file->labelName = $ResImageDatas[$count]['name'];
                                 $file->realImageName = $fil->getClientOriginalName();
                                 $file->imagePath = $fileName;
                                 $file->userId = $request->user()->id;
@@ -656,6 +882,8 @@ class ProductSellController
                         ]);
                     }
                 }
+
+                productSellLog($product->id, "Create new Item", "", $value['inStock'], $value['inStock'], $request->user()->id);
             }
             DB::commit();
 
@@ -669,91 +897,90 @@ class ProductSellController
             DB::rollback();
 
             return response()->json([
-                'message' => 'Insert Failed',
-                'errors' => $th,
+                'message' => $th->getMessage(),
+                'errors' => ['Insert Failed!'],
             ], 422);
         }
     }
 
     private function ValidationImage($request)
     {
-        $flag = false;
+        try {
 
-        if ($request->file('images')) {
 
-            $flag = true;
+            $flag = false;
 
-            $data_item = [];
+            if ($request->file('images')) {
 
-            $files[] = $request->file('images');
+                $flag = true;
 
-            foreach ($files as $file) {
+                $data_item = [];
 
-                foreach ($file as $fil) {
+                $files[] = $request->file('images');
 
-                    $file_size = $fil->getSize();
+                foreach ($files as $file) {
 
-                    $file_size = $file_size / 1024;
+                    foreach ($file as $fil) {
 
-                    $oldname = $fil->getClientOriginalName();
+                        $file_size = $fil->getSize();
 
-                    if ($file_size >= 5000) {
+                        $file_size = $file_size / 1024;
 
-                        array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
-                    }
-                }
-            }
+                        $oldname = $fil->getClientOriginalName();
 
-            if ($data_item) {
+                        if ($file_size >= 5000) {
 
-                return response()->json([
-                    'message' => 'Foto yang dimasukkan tidak valid!',
-                    'errors' => $data_item,
-                ], 422);
-            }
-        }
-
-        if ($flag == true) {
-            if ($request->imageDatas) {
-                $ResultImageDatas = json_decode($request->imageDatas, true);
-
-                if (count($ResultImageDatas) != count($request->file('images'))) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Label Image and total image should same!'],
-                    ], 422);
-                } else {
-                    foreach ($ResultImageDatas as $value) {
-                        if ($value == "") {
-
-                            return response()->json([
-                                'message' => 'The given data was invalid.',
-                                'errors' => ['Label Image can not be empty!'],
-                            ], 422);
+                            array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
                         }
                     }
                 }
-            } else {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Image label cannot be empty!!'],
-                ], 422);
+
+                if ($data_item) {
+
+                    return response()->json([
+                        'message' => 'Foto yang dimasukkan tidak valid!',
+                        'errors' => [$data_item],
+                    ], 422);
+                }
             }
+
+            if ($flag == true) {
+                if ($request->imagesName) {
+                    $ResultImageDatas = json_decode($request->imagesName, true);
+
+                    if (count($ResultImageDatas) != count($request->file('images'))) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Label Image and total image should same!'],
+                        ], 422);
+                    }
+                } else {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Image label cannot be empty!'],
+                    ], 422);
+                }
+            }
+        } catch (Exception $th) {
+            DB::rollback();
+
+            return response()->json([
+                'message' => $th->getMessage(),
+                'errors' => ['Insert Failed!'],
+            ], 422);
         }
     }
 
     public function Update(Request $request)
     {
-
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
-            'fullName' => 'required|string|max:30',
             'simpleName' => 'nullable|string',
+            'fullName' => 'nullable|string|max:30',
             'productBrandId' => 'nullable|integer',
             'productSupplierId' => 'nullable|integer',
             'sku' => 'nullable|string',
             'status' => 'required|bool',
-            'expiredDate' => 'nullable|date',
             'pricingStatus' => 'required|string',
 
             'costPrice' => 'required|numeric',
@@ -766,6 +993,14 @@ class ProductSellController
             'height' => 'nullable|numeric',
             'introduction' => 'nullable|string',
             'description' => 'nullable|string',
+
+            'isCustomerPurchase' => 'required|bool',
+            'isCustomerPurchaseOnline' => 'required|bool',
+            'isCustomerPurchaseOutStock' => 'required|bool',
+            'isStockLevelCheck' => 'required|bool',
+            'isNonChargeable' => 'required|bool',
+            'isOfficeApproval' => 'required|bool',
+            'isAdminApproval' => 'required|bool'
         ]);
 
         if ($validate->fails()) {
@@ -786,21 +1021,40 @@ class ProductSellController
             ], 422);
         }
 
+        $ResultCategories = null;
+        $ResultPriceLocations = null;
+        $ResultQuantities = null;
+        $ResultCustomerGroups = null;
+        $ResultReminders = null;
+
+        if ($request->categories) {
+            $ResultCategories = $request->categories;
+        } else {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Category Product must be selected'],
+            ], 422);
+        }
+
+        $ResultReminders = $request->reminders;
+
+        $ResultQuantities = $request->quantities;
+
         $validateLocation = Validator::make(
             $request->locations,
             [
-                '*.id' => 'nullable|integer',
-                '*.locationId' => 'required|integer',
-                '*.inStock' => 'required|integer',
-                '*.lowStock' => 'required|integer',
-                '*.status' => 'required|string',
+                'id' => 'required|integer',
+                'locationId' => 'required|integer',
+                'inStock' => 'required|integer',
+                'lowStock' => 'required|integer',
+                'reStockLimit' => 'required|integer',
             ],
             [
-                '*.id.integer' => 'Id Should be Integer!',
-                '*.locationId.integer' => 'Location Id Should be Integer!',
-                '*.inStock.integer' => 'In Stock Should be Integer',
-                '*.lowStock.integer' => 'Low Stock Should be Integer',
-                '*.status.string' => 'Status Should be String'
+                'id.integer' => 'Id Should be Integer!',
+                'locationId.integer' => 'Location Id Should be Integer!',
+                'inStock.integer' => 'In Stock Should be Integer',
+                'lowStock.integer' => 'Low Stock Should be Integer',
+                'reStockLimit.integer' => 'Re Stock Limit Should be Integer',
             ]
         );
 
@@ -809,91 +1063,39 @@ class ProductSellController
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'errors' => [$errors],
             ], 422);
-        }
-
-
-
-        foreach ($request->locations as $Res) {
-
-            if ($Res['status'] == "new") {
-                $CheckDataBranch = DB::table('productSells as ps')
-                    ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
-                    ->join('location as loc', 'psl.locationId', 'loc.id')
-                    ->select('ps.fullName as fullName', 'loc.locationName')
-                    ->where('ps.fullName', '=', $request->fullName)
-                    ->where('psl.locationId', '=', $Res['locationId'])
-                    ->first();
-
-                if ($CheckDataBranch) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Product ' . $CheckDataBranch->fullName . ' Already Exist on Location ' . $CheckDataBranch->locationName . '!'],
-                    ], 422);
-                }
-            }
-        }
-
-        if ($request->hasfile('images')) {
-
-            $data_item = [];
-
-            $files[] = $request->file('images');
-
-            foreach ($files as $file) {
-
-                foreach ($file as $fil) {
-
-                    $file_size = $fil->getSize();
-
-                    $file_size = $file_size / 1024;
-
-                    $oldname = $fil->getClientOriginalName();
-
-                    if ($file_size >= 5000) {
-
-                        array_push($data_item, 'Foto ' . $oldname . ' lebih dari 5mb! Harap upload gambar dengan ukuran lebih kecil!');
-                    }
-                }
-            }
-
-            if ($data_item) {
-
-                return response()->json([
-                    'message' => 'Foto yang dimasukkan tidak valid!',
-                    'errors' => $data_item,
-                ], 422);
-            }
         }
 
         if ($request->pricingStatus == "CustomerGroups") {
 
             if ($request->customerGroups) {
-                //$ResultCustomerGroups = json_decode($request->customerGroups, true);
+                $ResultCustomerGroups = $request->customerGroups;
 
                 $validateCustomer = Validator::make(
                     $request->customerGroups,
                     [
                         '*.id' => 'nullable|integer',
-                        '*.customerGroupId' => 'required|integer',
+                        '*.customerGroupId' => 'required|integer|distinct',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.customerGroupId.required' => 'Customer Group is Required!',
                         '*.customerGroupId.integer' => 'Customer Group Id Should be Integer!',
+                        '*.customerGroupId.distinct' => 'Cannot add duplicate Customer Group!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
 
                 if ($validateCustomer->fails()) {
-                    $errors = $validateCustomer->errors()->all();
-
+                    $errors = $validateCustomer->errors()->first();
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -905,30 +1107,33 @@ class ProductSellController
         } else if ($request->pricingStatus == "PriceLocations") {
 
             if ($request->priceLocations) {
-                //$ResultPriceLocations = json_decode($request->priceLocations, true);
+                $ResultPriceLocations = $request->priceLocations;
 
                 $validatePriceLocations = Validator::make(
-                    $request->priceLocations,
+                    $ResultPriceLocations,
                     [
                         '*.id' => 'nullable|integer',
-                        '*.locationId' => 'required|integer',
+                        '*.locationId' => 'required|integer|distinct',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.locationId.required' => 'Location is Required!',
                         '*.locationId.integer' => 'Location Id Should be Integer!',
+                        '*.locationId.distinct' => 'Cannot add duplicate Location!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
                         '*.status.string' => 'Status Should be String!'
                     ]
                 );
 
                 if ($validatePriceLocations->fails()) {
-                    $errors = $validatePriceLocations->errors()->all();
+                    $errors = $validatePriceLocations->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -940,7 +1145,6 @@ class ProductSellController
         } else if ($request->pricingStatus == "Quantities") {
 
             if ($request->quantities) {
-                // $ResultQuantities = json_decode($request->quantities, true);
 
                 $validateQuantity = Validator::make(
                     $request->quantities,
@@ -949,23 +1153,26 @@ class ProductSellController
                         '*.fromQty' => 'required|integer',
                         '*.toQty' => 'required|integer',
                         '*.price' => 'required|numeric',
-                        '*.status' => 'required|string',
+                        '*.status' => 'nullable|string',
                     ],
                     [
                         '*.id.integer' => 'Id Should be Integer!',
+                        '*.fromQty.required' => 'From Quantity is Required!',
                         '*.fromQty.integer' => 'From Quantity Should be Integer!',
+                        '*.toQty.required' => 'To Quantity is Required!',
                         '*.toQty.integer' => 'To Quantity Should be Integer!',
+                        '*.price.required' => 'Price is Required!',
                         '*.price.numeric' => 'Price Should be Numeric!',
-                        '*.status.string' => 'Status Should be String!'
+                        '*.status.string' => 'Status Should be String!',
                     ]
                 );
 
                 if ($validateQuantity->fails()) {
-                    $errors = $validateQuantity->errors()->all();
+                    $errors = $validateQuantity->errors()->first();
 
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => $errors,
+                        'errors' => [$errors],
                     ], 422);
                 }
             } else {
@@ -976,37 +1183,340 @@ class ProductSellController
             }
         }
 
-        //UPDATE DATA   
+        //validation category
+        foreach ($ResultCategories as  $validCat) {
+            $dat = ProductCategories::find($validCat);
+            $diff = 0;
+            $date = $request->expiredDate;
 
-        foreach ($request->locations as $resLoc) {
+            if ($request->expiredDate > Carbon::now()) {
+                $diff = now()->diffInDays(Carbon::parse($date));
+            } else {
+                $diff = now()->diffInDays(Carbon::parse($date)) * -1;
+            }
 
-            if ($resLoc['status'] == "new") {
-                ProductSellLocation::create([
-                    'productSellId' => $request->id,
-                    'locationId' => $resLoc['locationId'],
-                    'inStock' => $resLoc['inStock'],
-                    'lowStock' => $resLoc['lowStock'],
-                    'userId' => $request->user()->id,
-                ]);
-            } elseif ($resLoc['status'] == "delete") {
-                ProductSellLocation::create([
-                    'productSellId' => $request->id,
-                    'locationId' => $resLoc['locationId'],
-                    'inStock' => $resLoc['inStock'],
-                    'lowStock' => $resLoc['lowStock'],
-                    'userId' => $request->user()->id,
-                ]);
-            } elseif ($resLoc['status'] == "update") {
-                ProductSellLocation::create([
-                    'productSellId' => $request->id,
-                    'locationId' => $resLoc['locationId'],
-                    'inStock' => $resLoc['inStock'],
-                    'lowStock' => $resLoc['lowStock'],
-                    'userId' => $request->user()->id,
-                ]);
+            if ($dat[0]->expiredDay > $diff) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Expired Days should more than expired date inserted! At Category ' . $dat[0]->categoryName],
+                ], 422);
             }
         }
 
+        //UPDATE DATA
+
+        $location = $request->locations;
+
+        ProductSellLocation::updateOrCreate(
+            ['id' => $location['id']],
+            [
+                'productSellId' => $request->id,
+                'locationId' => $location['locationId'],
+                'inStock' => $location['inStock'],
+                'lowStock' => $location['lowStock'],
+                'reStockLimit' => $location['reStockLimit'],
+                'diffStock' => $location['inStock'] - $location['lowStock'],
+                'userId' => $request->user()->id,
+            ]
+        );
+
+        // try {
+
+        $weight = 0;
+        if (!is_null($request->weight)) {
+            $weight = $request->weight;
+        }
+
+        $length = 0;
+        if (!is_null($request->length)) {
+            $length = $request->length;
+        }
+
+        $width = 0;
+        if (!is_null($request->width)) {
+            $width = $request->width;
+        }
+
+        $height = 0;
+        if (!is_null($request->height)) {
+            $height = $request->height;
+        }
+
+        $product = ProductSell::updateOrCreate(
+            ['id' => $request->id],
+            [
+                'simpleName' => $request->simpleName,
+                'fullName' => $request->fullName,
+                'sku' => $request->sku,
+                'productBrandId' => $request->productBrandId,
+                'productSupplierId' => $request->productSupplierId,
+                'status' => $request->status,
+                'pricingStatus' => $request->pricingStatus,
+                'costPrice' => $request->costPrice,
+                'marketPrice' => $request->marketPrice,
+                'price' => $request->price,
+                'isShipped' => $request->isShipped,
+                'weight' => $weight,
+                'length' => $length,
+                'width' => $width,
+                'height' => $height,
+                'introduction' => $request->introduction,
+                'description' => $request->description,
+
+                'isCustomerPurchase' => $request->isCustomerPurchase,
+                'isCustomerPurchaseOnline' => $request->isCustomerPurchaseOnline,
+                'isCustomerPurchaseOutStock' => $request->isCustomerPurchaseOutStock,
+                'isStockLevelCheck' => $request->isStockLevelCheck,
+                'isNonChargeable' => $request->isNonChargeable,
+                'isOfficeApproval' => $request->isOfficeApproval,
+                'isAdminApproval' => $request->isAdminApproval,
+
+                'updated_at' => Carbon::now(),
+
+                'userId' => $request->user()->id,
+            ]
+        );
+
+        ProductSellCategory::where('ProductSellId', '=', $request->id)
+            ->where('isDeleted', '=', 0)
+            ->update(
+                [
+                    'deletedBy' => $request->user()->id,
+                    'isDeleted' => 1,
+                    'deletedAt' => Carbon::now()
+                ]
+            );
+
+        if ($ResultCategories) {
+
+            foreach ($ResultCategories as $valCat) {
+                ProductSellCategory::create(
+                    [
+                        'productSellId' => $request->id,
+                        'productCategoryId' => $valCat['id'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
+
+        foreach ($ResultReminders as $RemVal) {
+
+            if ($RemVal['statusData'] == 'del') {
+
+                ProductSellReminder::where('id', '=', $RemVal['id'])
+                    ->where('isDeleted', '=', 0)
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } else {
+
+                ProductSellReminder::updateOrCreate(
+                    ['id' => $RemVal['id']],
+                    [
+                        'productSellId' => $product->id,
+                        'unit' => $RemVal['unit'],
+                        'timing' => $RemVal['timing'],
+                        'status' => $RemVal['status'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
+
+        if ($request->pricingStatus == "CustomerGroups") {
+
+            foreach ($ResultCustomerGroups as $CustVal) {
+
+                if ($CustVal['status'] == 'del') {
+
+                    ProductSellCustomerGroup::where('id', '=', $CustVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } else {
+
+                    ProductSellCustomerGroup::updateOrCreate(
+                        ['id' => $CustVal['id']],
+                        [
+                            'productSellId' => $product->id,
+                            'customerGroupId' => $CustVal['customerGroupId'],
+                            'price' => $CustVal['price'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                }
+            }
+        } else if ($request->pricingStatus == "PriceLocations") {
+
+            foreach ($ResultPriceLocations as $PriceVal) {
+
+                if ($PriceVal['status'] == 'del') {
+
+                    ProductSellPriceLocation::where('id', '=', $PriceVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } else {
+
+                    ProductSellPriceLocation::updateOrCreate(
+                        ['id' => $PriceVal['id']],
+                        [
+                            'productSellId' => $product->id,
+                            'locationId' => $PriceVal['locationId'],
+                            'price' => $PriceVal['price'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                }
+            }
+        } else if ($request->pricingStatus == "Quantities") {
+
+            foreach ($ResultQuantities as $QtyVal) {
+
+                if ($QtyVal['status'] == 'del') {
+                    ProductSellQuantity::where('id', '=', $QtyVal['id'])
+                        ->where('isDeleted', '=', 0)
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } else {
+                    ProductSellQuantity::updateOrCreate(
+                        ['id' => $QtyVal['id']],
+                        [
+                            'productSellId' => $product->id,
+                            'fromQty' => $QtyVal['fromQty'],
+                            'toQty' => $QtyVal['toQty'],
+                            'price' => $QtyVal['price'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                }
+            }
+        }
+        // }
+        DB::commit();
+
+        return response()->json(
+            [
+                'message' => 'Update Data Successful!',
+            ],
+            200
+        );
+        // } catch (Exception $th) {
+        //     DB::rollback();
+
+        //     return response()->json([
+        //         'message' => 'Insert Failed',
+        //         'errors' => $th,
+        //     ], 422);
+        // }
+    }
+
+    public function updateImages(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all();
+
+            return response()->json([
+                'message' => 'Produk tidak valid!',
+                'errors' => [$errors],
+            ], 422);
+        }
+
+        $product = ProductSell::find($request->id);
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Data not found!'],
+            ], 422);
+        }
+
+        $count = 0;
+
+        $files[] = $request->file('images');
+        $tmpImages = [];
+
+        if ($request->hasfile('images')) {
+            foreach ($files as $file) {
+
+                foreach ($file as $fil) {
+
+                    $name = $fil->hashName();
+
+                    $fil->move(public_path() . '/ProductSellImages/', $name);
+
+                    $fileName = "/ProductSellImages/" . $name;
+
+                    $file = new ProductSellImages();
+                    $file->productSellId = 1;
+                    $file->labelName = "";
+                    $file->realImageName = $fil->getClientOriginalName();
+                    $file->imagePath = $fileName;
+                    $file->userId = $request->user()->id;
+
+                    array_push($tmpImages, $file);
+                }
+            }
+        }
+
+        $imagesName = json_decode($request->imagesName, true);
+
+        foreach ($imagesName as $value) {
+
+            if ($value['status'] == '' && $value['id'] == 0) {
+
+                ProductSellImages::create([
+                    'productSellId' => $request->id,
+                    'labelName' => $value['name'],
+                    'realImageName' => $tmpImages[$count]['realImageName'],
+                    'imagePath' => $tmpImages[$count]['imagePath'],
+                    'userId' => $request->user()->id,
+                ]);
+
+                $count += 1;
+            } else if ($value['status'] == 'del' && $value['id'] != 0) {
+
+                $ProdSell = ProductSellImages::find($value['id']);
+                $ProdSell->DeletedBy = $request->user()->id;
+                $ProdSell->isDeleted = true;
+                $ProdSell->DeletedAt = Carbon::now();
+                $ProdSell->save();
+            } else if ($value['id'] != 0) {
+
+                ProductSellImages::updateorCreate(
+                    ['id' => $value['id']],
+                    [
+                        'productSellId' => $request->id,
+                        'labelName' => $value['name'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
 
         return response()->json(
             [
@@ -1143,6 +1653,630 @@ class ProductSellController
 
         return response()->json([
             'message' => 'Delete Data Successful',
+        ], 200);
+    }
+
+    public function Export(Request $request)
+    {
+        $tmp = "";
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-y');
+
+        $locations = $request->locationId;
+
+        if (!$locations[0] == null) {
+
+            $location = DB::table('location')
+                ->select('locationName')
+                ->whereIn('id', $request->locationId)
+                ->get();
+
+            if ($location) {
+
+                foreach ($location as $key) {
+                    $tmp = $tmp . (string) $key->locationName . ",";
+                }
+            }
+            $tmp = rtrim($tmp, ", ");
+        }
+
+        $lowStockLabel = "";
+
+        if ($request->isExportLimit == 1) {
+            $lowStockLabel = "Low Stock";
+        }
+
+        if ($tmp == "") {
+            $fileName = "Rekap Produk Jual " . $lowStockLabel . " " . $date . ".xlsx";
+        } else {
+            $fileName = "Rekap Produk Jual " . $lowStockLabel . " " . $tmp . " " . $date . ".xlsx";
+        }
+
+        return Excel::download(
+            new ProductSellReport(
+                $request->orderValue,
+                $request->orderColumn,
+                $request->search,
+                $request->locationId,
+                $request->isExportAll,
+                $request->isExportLimit,
+                $request->user()->role
+            ),
+            $fileName
+        );
+    }
+
+    public function downloadTemplate(Request $request)
+    {
+        return (new TemplateUploadProductSell())->download('Template Upload Produk Jual.xlsx');
+    }
+
+    public function Import(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => $errors,
+            ], 422);
+        }
+
+        $id = $request->user()->id;
+
+        $rows = Excel::toArray(new ImportProductSell($id), $request->file('file'));
+        $src = $rows[0];
+
+        $count_row = 1;
+
+        if ($src) {
+            foreach ($src as $value) {
+
+                if ($value['nama'] == "") {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any empty cell on column Nama at row ' . $count_row],
+                    ], 422);
+                }
+
+                $name = ProductSell::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
+
+                if ($name) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any Nama has already exist on system at row ' . $count_row],
+                    ], 422);
+                }
+
+                if ($value['kode_merk']) {
+                    $brandCode = ProductBrand::where('id', '=', $value['kode_merk'])->where('isDeleted', '=', 0)->first();
+
+                    if (!$brandCode) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid Kode Merk at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                if ($value['kode_penyedia']) {
+                    $supplierCode = ProductSupplier::where('id', '=', $value['kode_penyedia'])->where('isDeleted', '=', 0)->first();
+
+                    if (!$supplierCode) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid Kode Penyedia at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                if ($value['status'] || $value['status'] == 0) {
+
+                    if ($value['status'] != 0 && $value['status'] != 1) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Invalid format for column Status at row ' . $count_row],
+                        ], 422);
+                    }
+                } else {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any empty Status. Please check again at row ' . $count_row],
+                    ], 422);
+                }
+                $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
+
+                $codeLocation = explode(';', $value['kode_lokasi']);
+                $inStock = explode(';', $value['stok']);
+                $lowStock = explode(';', $value['stok_rendah']);
+                $reStockLimit = explode(';', $value['batas_restock_ulang']);
+
+                $a = count($codeLocation);
+                $b = count($inStock);
+                $c = count($lowStock);
+                $d = count($reStockLimit);
+
+                if (
+                    $a !== $b ||
+                    $a !== $c ||
+                    $a !== $d ||
+                    $b !== $c ||
+                    $b !== $d ||
+                    $c !== $d
+                ) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Total data on column Kode Lokasi, Stok, Stok Rendah, and Batas Restok Ulang not same at row ' . $count_row],
+                    ], 422);
+                }
+
+                if (count($codeLocation) !== count(array_unique($codeLocation))) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any duplicate kode lokasi. Please check again at row ' . $count_row],
+                    ], 422);
+                }
+
+                foreach ($codeLocation as $valcode) {
+
+                    $chk = DB::table('location')
+                        ->where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
+
+                    if (!$chk) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid Kode Lokasi at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                foreach ($inStock as $valStock) {
+
+                    if (is_numeric($valStock) == false) {
+                        return $valStock;
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Any column Stok is not a number at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                foreach ($lowStock as $valLowStock) {
+                    if (is_numeric($valLowStock) == false) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Any column Stok Rendah is not a number at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                foreach ($reStockLimit as $valStock) {
+                    if (is_numeric($valStock) == false) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Any column Batas Restock Ulang is not a number at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                $isCanBuy = $value['dapat_membeli_produk'];
+                $isDeliver = $value['dapat_dikirim'];
+                $isBuyOnline = $value['dapat_membeli_secara_online'];
+                $isBuyNoStock = $value['dapat_membeli_saat_stok_habis'];
+                $isCheckStockOnCreateReceipt = $value['pengecekan_stok_selama_ada_penambahan_atau_pembuatan_resep'];
+                $isNoAnyCharge = $value['tidak_dikenakan_biaya'];
+                $officeApproval = $value['persetujuan_office'];
+                $adminApproval = $value['persetujuan_admin'];
+                $productCategory = explode(';', $value['kode_kategori_produk']);
+
+                if ($isDeliver != 0 && $isDeliver != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Dapat Dikirim at row ' . $count_row],
+                    ], 422);
+                }
+
+                if ($isBuyOnline != 0 && $isBuyOnline != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Dapat Membeli Secara Online at row ' . $count_row],
+                    ], 422);
+                }
+
+                if ($isBuyNoStock != 0 && $isBuyNoStock != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Dapat Membeli Saat Stok Habis at row ' . $count_row],
+                    ], 422);
+                }
+
+                if ($isCheckStockOnCreateReceipt != 0 && $isCheckStockOnCreateReceipt != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Pengecekan stok selama ada penambahan atau pembuatan resep at row ' . $count_row],
+                    ], 422);
+                }
+
+                if ($isNoAnyCharge != 0 && $isNoAnyCharge != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Tidak Dikenakan Biaya at row ' . $count_row],
+                    ], 422);
+                }
+                if ($officeApproval != 0 && $officeApproval != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Persetujuan Office at row ' . $count_row],
+                    ], 422);
+                }
+                if ($adminApproval != 0 && $adminApproval != 1) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['Invalid format for column Persetujuan Admin at row ' . $count_row],
+                    ], 422);
+                }
+
+                if (count($productCategory) !== count(array_unique($productCategory))) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any duplicate Kategori Produk. Please check again at row ' . $count_row],
+                    ], 422);
+                }
+
+                foreach ($productCategory as $valProdCat) {
+
+                    $chk = ProductCategories::where('id', '=', $valProdCat)->where('isDeleted', '=', 0)->first();
+
+                    if (!$chk) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid Kode Kategori Produk at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if (is_numeric($valProdCat) == false) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['Any column Stok is not a number at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                $count_row += 1;
+            }
+
+            //here
+            foreach ($src as $value) {
+
+                $codeLocation = explode(';', $value['kode_lokasi']);
+                $inStock = explode(';', $value['stok']);
+                $lowStock = explode(';', $value['stok_rendah']);
+                $reStockLimit = explode(';', $value['batas_restock_ulang']);
+                $productCategory = explode(';', $value['kode_kategori_produk']);
+                $isCanBuy = $value['dapat_membeli_produk'];
+                $isBuyOnline = $value['dapat_membeli_secara_online'];
+                $isBuyNoStock = $value['dapat_membeli_saat_stok_habis'];
+                $isCheckStockOnCreateReceipt = $value['pengecekan_stok_selama_ada_penambahan_atau_pembuatan_resep'];
+                $isNoAnyCharge = $value['tidak_dikenakan_biaya'];
+                $officeApproval = $value['persetujuan_office'];
+                $adminApproval = $value['persetujuan_admin'];
+                $expiredDate = Carbon::instance(Date::excelToDateTimeObject((int) $value['tanggal_kedaluwarsa']));
+
+                $count = 0;
+                foreach ($codeLocation as $locIns) {
+
+                    $product = ProductSell::create([
+                        'fullName' => $value['nama'],
+                        'simpleName' => $value['nama_sederhana'],
+                        'sku' => $value['sku'],
+                        'productBrandId' => $value['kode_merk'],
+                        'productSupplierId' => $value['kode_penyedia'],
+                        'status' => $value['status'],
+                        'expiredDate' => $expiredDate,
+                        'pricingStatus' => 'Basic',
+                        'costPrice' => $value['pengeluaran'],
+                        'marketPrice' => $value['harga_pasar'],
+                        'price' => $value['harga_jual'],
+                        'isShipped' => $value['dapat_dikirim'],
+                        'weight' => $value['berat'],
+                        'length' => $value['panjang'],
+                        'width' => $value['lebar'],
+                        'height' => $value['tinggi'],
+                        'introduction' => $value['perkenalan'],
+                        'description' => $value['deskripsi'],
+
+                        'isCustomerPurchase' => $isCanBuy,
+                        'isCustomerPurchaseOnline' => $isBuyOnline,
+                        'isCustomerPurchaseOutStock' => $isBuyNoStock,
+                        'isStockLevelCheck' => $isCheckStockOnCreateReceipt,
+                        'isNonChargeable' => $isNoAnyCharge,
+                        'isOfficeApproval' => $officeApproval,
+                        'isAdminApproval' => $adminApproval,
+
+                        'userId' => $request->user()->id,
+                    ]);
+
+                    ProductSellLocation::create([
+                        'productSellId' => $product->id,
+                        'locationId' => $locIns,
+                        'inStock' => $inStock[$count],
+                        'lowStock' => $lowStock[$count],
+                        'reStockLimit' => $reStockLimit[$count],
+                        'diffStock' => $inStock[$count] - $lowStock[$count],
+                        'userId' => $request->user()->id,
+                    ]);
+
+                    if ($productCategory) {
+
+                        foreach ($productCategory as $valCat) {
+                            ProductSellCategory::create([
+                                'productSellId' => $product->id,
+                                'productCategoryId' => $valCat,
+                                'userId' => $request->user()->id,
+                            ]);
+                        }
+                    }
+
+                    productSellLog($product->id, "Create New Item with Import Excel", "", $inStock[$count], $inStock[$count], $request->user()->id);
+
+                    $count += 1;
+                }
+            }
+        } else {
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => ['There is no any data to import'],
+            ], 422);
+        }
+
+        return response()->json(
+            [
+                'message' => 'Insert Data Successful!',
+            ],
+            200
+        );
+    }
+
+    public function Split(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'fullName' => 'nullable|string',
+            'qtyReduction' => 'required|integer',
+            'qtyIncrease' => 'required|integer',
+            'productSellId' => 'nullable|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        if ($request->fullName == "" && !$request->productSellId) {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Please input product name or choose product!'],
+            ], 422);
+        }
+
+        $product = ProductSell::find($request->id);
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['There is no any data found!'],
+            ], 422);
+        }
+
+        if ($request->fullName != "") {
+
+            $currentBranch = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('psl.locationId')
+                ->where('ps.id', '=', $request->id)
+                ->first();
+
+            $findDuplicate = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('psl.locationId')
+                ->where('ps.fullName', '=', $request->fullName)
+                ->where('psl.locationId', '=', $currentBranch->locationId)
+                ->where('ps.isDeleted', '=', 0)
+                ->first();
+
+            if ($findDuplicate) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Name ' . $request->fullName . ' in this branch has already exist!'],
+                ], 422);
+            }
+        }
+
+        if ($request->productSellId) {
+
+            $prodDest = ProductSell::find($request->productSellId);
+
+            if (!$prodDest) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is no any data found!'],
+                ], 422);
+            }
+        }
+
+        if ($request->fullName != "") {
+
+            $newProduct = $product->replicate();
+            $newProduct->fullName = $request->fullName;
+            $newProduct->created_at = Carbon::now();
+            $newProduct->updated_at = Carbon::now();
+            $newProduct->userId = $request->user()->id;
+            $newProduct->save();
+
+            $categories = ProductSellCategory::where('productSellId', '=', $request->id)->get();
+
+            foreach ($categories as $res) {
+
+                $category = ProductSellCategory::find($res['id']);
+
+                if ($category) {
+                    $newCategory = $category->replicate();
+                    $newCategory->productSellId = $newProduct->id;
+                    $newCategory->created_at = Carbon::now();
+                    $newCategory->updated_at = Carbon::now();
+                    $newCategory->userId = $request->user()->id;
+                    $newCategory->save();
+                }
+            }
+
+            $prodSellLoc = ProductSellLocation::find($request->id);
+
+            $newProdSellLoc = $prodSellLoc->replicate();
+            $newProdSellLoc->productSellId = $newProduct->id;
+            $newProdSellLoc->inStock = $request->qtyIncrease;
+            $newProdSellLoc->diffStock = $request->qtyIncrease - $prodSellLoc->lowStock;
+            $newProdSellLoc->userId = $request->user()->id;
+            $newProdSellLoc->created_at = Carbon::now();
+            $newProdSellLoc->updated_at = Carbon::now();
+            $newProdSellLoc->save();
+
+            productSellLog($newProduct->id, "Create New Item", "", $request->qtyIncrease, $request->qtyIncrease, $request->user()->id);
+
+            if ($product->pricingStatus == "CustomerGroups") {
+
+                $productCustomerGroups = ProductSellCustomerGroup::where('productSellId', '=', $request->id)->get();
+
+                foreach ($productCustomerGroups as $res) {
+
+                    $prod = ProductSellCustomerGroup::find($res['id']);
+
+                    if ($prod) {
+                        $newProductSell = $prod->replicate();
+                        $newProductSell->productSellId = $newProduct->id;
+                        $newProductSell->created_at = Carbon::now();
+                        $newProductSell->updated_at = Carbon::now();
+                        $newProductSell->userId = $request->user()->id;
+                        $newProductSell->save();
+                    }
+                }
+            }
+
+            if ($product->pricingStatus == "PriceLocations") {
+
+                $prodSellPriceLoc = ProductSellPriceLocation::where('productSellId', '=', $request->id)->get();
+
+                foreach ($prodSellPriceLoc as $res) {
+
+                    $prodSellLoc = ProductSellPriceLocation::find($res['id']);
+
+                    if ($prodSellLoc) {
+                        $newProductSellLoc = $prodSellLoc->replicate();
+                        $newProductSellLoc->productSellId = $newProduct->id;
+                        $newProductSellLoc->created_at = Carbon::now();
+                        $newProductSellLoc->updated_at = Carbon::now();
+                        $newProductSellLoc->userId = $request->user()->id;
+                        $newProductSellLoc->save();
+                    }
+                }
+            }
+
+            if ($product->pricingStatus == "Quantities") {
+
+                $prodQty = ProductSellQuantity::where('productSellId', '=', $request->id)->get();
+
+                foreach ($prodQty as $res) {
+
+                    $prodSellQty = ProductSellQuantity::find($res['id']);
+
+                    if ($prodSellQty) {
+                        $newProductSellQty = $prodSellQty->replicate();
+                        $newProductSellQty->productSellId = $newProduct->id;
+                        $newProductSellQty->created_at = Carbon::now();
+                        $newProductSellQty->updated_at = Carbon::now();
+                        $newProductSellQty->userId = $request->user()->id;
+                        $newProductSellQty->save();
+                    }
+                }
+            }
+
+            $prodReminder = ProductSellReminder::where('productSellId', '=', $request->id)->get();
+
+            foreach ($prodReminder as $res) {
+
+                $prodSellReminder = ProductSellReminder::find($res['id']);
+
+                if ($prodSellReminder) {
+                    $newProductSellReminder = $prodSellReminder->replicate();
+                    $newProductSellReminder->productSellId = $newProduct->id;
+                    $newProductSellReminder->created_at = Carbon::now();
+                    $newProductSellReminder->updated_at = Carbon::now();
+                    $newProductSellReminder->userId = $request->user()->id;
+                    $newProductSellReminder->save();
+                }
+            }
+
+            $oldProdLoc = ProductSellLocation::where('productSellId', '=', $request->id)->first();
+
+            $instock = $oldProdLoc->inStock;
+            $lowstock = $oldProdLoc->lowStock;
+
+            $oldProdLoc->inStock = $instock - $request->qtyReduction;
+            $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
+            $oldProdLoc->updated_at = Carbon::now();
+            $oldProdLoc->save();
+
+            $product->updated_at = Carbon::now();
+            $product->save();
+            ProductSellLog($request->id, 'Split Product', 'Product Decrease', $request->qtyReduction, $instock - $request->qtyReduction, $request->user()->id);
+        } elseif ($request->productSellId) {
+
+
+            $oldProdLoc = ProductSellLocation::where('productSellId', '=', $request->id)->first();
+
+            $instock = $oldProdLoc->inStock;
+            $lowstock = $oldProdLoc->lowStock;
+
+            $oldProdLoc->inStock = $instock - $request->qtyReduction;
+            $oldProdLoc->diffStock = ($instock - $request->qtyReduction) - $lowstock;
+            $oldProdLoc->updated_at = Carbon::now();
+            $oldProdLoc->save();
+
+            ProductSellLog($request->id, 'Split Product', 'Product Decrease', $request->qtyReduction, $instock - $request->qtyReduction, $request->user()->id);
+
+
+            $prodSellLoc = ProductSellLocation::where('productSellId', '=', $request->productSellId)->first();
+
+            $instock = $prodSellLoc->inStock;
+            $lowstock = $prodSellLoc->lowStock;
+
+            $prodSellLoc->inStock = $instock + $request->qtyIncrease;
+            $prodSellLoc->diffStock = ($instock + $request->qtyIncrease) - $lowstock;
+            $prodSellLoc->userId = $request->user()->id;
+            $prodSellLoc->updated_at = Carbon::now();
+            $prodSellLoc->save();
+
+            $prod = ProductSell::find($request->productSellId);
+            $prod->updated_at = Carbon::now();
+            $prod->save();
+
+            $Oldprod = ProductSell::find($request->id);
+            $Oldprod->updated_at = Carbon::now();
+            $Oldprod->save();
+
+            ProductSellLog($request->productSellId, 'Split Product', 'Product Increase', $request->qtyIncrease, $instock - $request->qtyIncrease, $request->user()->id);
+        }
+
+        return response()->json([
+            'message' => 'Split Data Successful',
         ], 200);
     }
 }

@@ -11,142 +11,252 @@ use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Product\ProductSellController;
+use App\Http\Controllers\Product\TransferProductController;
+use App\Http\Controllers\Product\RestockController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\VerifyUserandPasswordController;
-
+use App\Http\Controllers\Staff\StaffLeaveController;
+use App\Http\Controllers\Product\CategoryController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
 
+    //location
+
+
     Route::post('logout', [ApiController::class, 'logout']);
-    Route::get('locationImages', [LocationController::class, 'searchImageLocation']);
-    Route::post('location', [LocationController::class, 'insertLocation']);
-    Route::get('location', [LocationController::class, 'getLocationHeader']);
-    Route::get('detaillocation', [LocationController::class, 'getLocationDetail']);
-    Route::get('datastaticlocation', [LocationController::class, 'getDataStaticLocation']);
-    Route::get('provinsilocation', [LocationController::class, 'getProvinsiLocation']);
-    Route::get('kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
-    Route::get('exportlocation', [LocationController::class, 'exportLocation']);
-    Route::delete('location', [LocationController::class, "deleteLocation"]);
 
-    Route::get('location/list', [LocationController::class, 'locationList']);
 
-    Route::put('location', [LocationController::class, 'updateLocation']);
-    Route::put('facility', [FacilityController::class, 'updateFacility']);
+    Route::group(['prefix' => 'location'], function () {
 
-    Route::post('imagelocation', [LocationController::class, 'uploadImageLocation']);
-    Route::post('imagefacility', [FacilityController::class, 'uploadImageFacility']);
+        //location
+        Route::get('/locationpdf', [LocationController::class, 'cetak_pdf']);
+        Route::get('/locationImages', [LocationController::class, 'searchImageLocation']);
+        Route::post('/', [LocationController::class, 'insertLocation']);
+        Route::get('/', [LocationController::class, 'getLocationHeader']);
+        Route::get('/detaillocation', [LocationController::class, 'getLocationDetail']);
+        Route::get('/datastaticlocation', [LocationController::class, 'getDataStaticLocation']);
+        Route::get('/provinsilocation', [LocationController::class, 'getProvinsiLocation']);
+        Route::get('/kabupatenkotalocation', [LocationController::class, 'getKabupatenLocation']);
+        Route::get('/exportlocation', [LocationController::class, 'exportLocation']);
+        Route::delete('/', [LocationController::class, "deleteLocation"]);
+        Route::get('/list', [LocationController::class, 'locationList']);
+        Route::put('/', [LocationController::class, 'updateLocation']);
+        Route::post('/uploadexceltest', [LocationController::class, 'uploadexceltest']);
+        Route::post('/datastatic', [LocationController::class, 'insertdatastatic']);
+        Route::post('/imagelocation', [LocationController::class, 'uploadImageLocation']);
 
-    Route::post('upload', [ImportRegionController::class, 'uploadRegion']);
-    Route::get('datastatic', [DataStaticController::class, 'datastatic']);
-    Route::post('datastatic', [LocationController::class, 'insertdatastatic']);
-    Route::delete('datastatic', [DataStaticController::class, 'datastaticlocation']);
-    Route::post('uploadexceltest', [LocationController::class, 'uploadexceltest']);
-    Route::get('facility', [FacilityController::class, 'facilityMenuHeader']);
-    Route::get('facilityexport', [FacilityController::class, 'facilityExport']);
-    Route::get('facilitylocation', [FacilityController::class, 'facilityLocation']);
-    Route::get('facilitydetail', [FacilityController::class, 'facilityDetail']);
-    Route::post('facility', [FacilityController::class, 'createFacility']);
-    Route::delete('facility', [FacilityController::class, 'deleteFacility']);
-    Route::get('facilityimages', [FacilityController::class, 'searchImageFacility']);
+        //facility
+        Route::get('/facility', [FacilityController::class, 'facilityMenuHeader']);
+        Route::put('/facility', [FacilityController::class, 'updateFacility']);
+        Route::post('/facility', [FacilityController::class, 'createFacility']);
+        Route::delete('/facility', [FacilityController::class, 'deleteFacility']);
+        Route::get('/facility/facilityexport', [FacilityController::class, 'facilityExport']);
+        Route::get('/facility/facilitylocation', [FacilityController::class, 'facilityLocation']);
+        Route::get('/facility/facilitydetail', [FacilityController::class, 'facilityDetail']);
+        Route::get('/facility/facilityimages', [FacilityController::class, 'searchImageFacility']);
+        Route::post('/facility/imagefacility', [FacilityController::class, 'uploadImageFacility']);
+
+        //data static
+        Route::get('/datastatic', [DataStaticController::class, 'datastatic']);
+        Route::delete('/datastatic', [DataStaticController::class, 'datastaticlocation']);
+
+        //product
+        Route::get('/product/transfer', [LocationController::class, 'locationTransferProduct']);
+    });
+
+
+
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
-    Route::get('products', [ProductController::class, 'index']);
-    Route::get('products/{id}', [ProductController::class, 'show']);
-    Route::post('create', [ProductController::class, 'store']);
-    Route::put('update/{product}', [ProductController::class, 'update']);
-    Route::delete('delete/{product}', [ProductController::class, 'destroy']);
-
-    Route::post('product/supplier', [ProductController::class, 'addProductSupplier']);
-    Route::get('product/supplier', [ProductController::class, 'IndexProductSupplier']);
-
-    Route::post('product/brand', [ProductController::class, 'addProductBrand']);
-    Route::get('product/brand', [ProductController::class, 'IndexProductBrand']);
-
-    Route::post('productstatus', [ProductController::class, 'addProductStatus']);
-    Route::post('product', [ProductController::class, 'createNewProduct']);
-    Route::delete('product', [ProductController::class, 'deleteProduct']);
-    Route::get('product', [ProductController::class, 'indexProduct']);
-    Route::get('productdetail', [ProductController::class, 'getProductDetail']);
 
     //MODULE PRODUCT
     //list produk
-    Route::get('product/sell', [ProductSellController::class, 'Index']);
-    Route::get('product/sell/detail', [ProductSellController::class, 'Detail']);
-    Route::post('product/sell', [ProductSellController::class, 'Create']);
-    Route::put('product/sell', [ProductSellController::class, 'Update']);
-    Route::delete('product/sell', [ProductSellController::class, 'Delete']);
+    Route::group(['prefix' => 'product'], function () {
 
-    Route::get('product/clinic', [ProductClinicController::class, 'index']);
-    Route::get('product/clinic/detail', [ProductClinicController::class, 'detail']);
-    Route::post('product/clinic', [ProductClinicController::class, 'Create']);
-    Route::put('product/clinic', [ProductClinicController::class, 'Update']);
-    Route::delete('product/clinic', [ProductClinicController::class, 'Delete']);
+        Route::post('/supplier', [ProductController::class, 'addProductSupplier']);
+        Route::get('/supplier', [ProductController::class, 'IndexProductSupplier']);
 
-    Route::get('product/inventory', [ProductInventoryController::class, 'index']);
-    Route::get('product/inventory/history', [ProductInventoryController::class, 'indexHistory']);
-    Route::get('product/inventory/approval', [ProductInventoryController::class, 'indexApproval']);
-    
-    Route::get('product/inventory/detail', [ProductInventoryController::class, 'detail']);
+        Route::post('/brand', [ProductController::class, 'addProductBrand']);
+        Route::get('/brand', [ProductController::class, 'IndexProductBrand']);
 
-    Route::post('product/inventory', [ProductInventoryController::class, 'create']);
+        Route::get('/sell', [ProductSellController::class, 'Index']);
 
-    Route::put('product/inventory', [ProductInventoryController::class, 'update']);
-    Route::put('product/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
-    
-    Route::delete('product/inventory', [ProductInventoryController::class, 'delete']);
+        Route::get('/sell/template', [ProductSellController::class, 'downloadTemplate']);
+        Route::post('/sell/import', [ProductSellController::class, 'Import']);
 
-    //product category
-    Route::get('product/category', [ProductController::class, 'IndexProductCategory']);
-    Route::post('product/category', [ProductController::class, 'CreateProductCategory']);
+        Route::get('/sell/detail', [ProductSellController::class, 'Detail']);
+        Route::post('/sell', [ProductSellController::class, 'Create']);
+        Route::put('/sell', [ProductSellController::class, 'Update']);
+        Route::post('/sell/image', [ProductSellController::class, 'updateImages']);
+        Route::delete('/sell', [ProductSellController::class, 'Delete']);
+        Route::get('/sell/export', [ProductSellController::class, 'Export']);
+        Route::post('/sell/split', [ProductSellController::class, 'Split']);
 
-    Route::get('product/sell/dropdown', [ProductController::class, 'IndexProductSell']);
-    Route::get('product/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
+        Route::get('/clinic', [ProductClinicController::class, 'index']);
 
-    Route::post('product/usage', [ProductController::class, 'CreateUsage']);
-    Route::get('product/usage', [ProductController::class, 'IndexUsage']);
+        Route::get('/clinic/template', [ProductClinicController::class, 'downloadTemplate']);
+        Route::post('/clinic/import', [ProductClinicController::class, 'Import']);
 
-    //product bundle
-    Route::get('product/bundle', [BundleController::class, 'index']);
-    Route::get('product/bundle/detail', [BundleController::class, 'detail']);
-    Route::post('product/bundle', [BundleController::class, 'create']);
-    Route::put('product/bundle', [BundleController::class, 'update']);
-    Route::put('product/bundle/status', [BundleController::class, 'changeStatus']);
-    Route::delete('product/bundle', [BundleController::class, 'delete']);
+        Route::get('/clinic/detail', [ProductClinicController::class, 'detail']);
+        Route::post('/clinic', [ProductClinicController::class, 'Create']);
+        Route::put('/clinic', [ProductClinicController::class, 'Update']);
+        Route::post('/clinic/image', [ProductClinicController::class, 'updateImages']);
+        Route::delete('/clinic', [ProductClinicController::class, 'Delete']);
+        Route::get('/clinic/export', [ProductClinicController::class, 'Export']);
+
+        Route::get('/inventory', [ProductInventoryController::class, 'index']);
+        Route::get('/inventory/export', [ProductInventoryController::class, 'exportInventory']);
+        Route::get('/inventory/history', [ProductInventoryController::class, 'indexHistory']);
+        Route::get('/inventory/history/export', [ProductInventoryController::class, 'exportHistory']);
+        Route::get('/inventory/approval', [ProductInventoryController::class, 'indexApproval']);
+        Route::get('/inventory/approval/export', [ProductInventoryController::class, 'exportApproval']);
+
+        Route::get('/inventory/detail', [ProductInventoryController::class, 'detail']);
+        Route::post('/inventory', [ProductInventoryController::class, 'create']);
+        Route::put('/inventory', [ProductInventoryController::class, 'update']);
+        Route::put('/inventory/approval', [ProductInventoryController::class, 'updateApproval']);
+        Route::delete('/inventory', [ProductInventoryController::class, 'delete']);
+
+        Route::get('/inventory/template', [ProductInventoryController::class, 'downloadTemplate']);
+        Route::post('/inventory/import', [ProductInventoryController::class, 'Import']);
+
+        //product category
+        Route::get('/category', [CategoryController::class, 'index']);
+        Route::put('/category', [CategoryController::class, 'update']);
+        Route::delete('/category', [CategoryController::class, 'delete']);
+        Route::get('/category/detail/sell', [CategoryController::class, 'detailSell']);
+        Route::get('/category/detail/clinic', [CategoryController::class, 'detailClinic']);
+        Route::get('/category/export', [CategoryController::class, 'export']);
+        Route::post('/category', [CategoryController::class, 'create']);
+
+        Route::get('/sell/dropdown', [ProductController::class, 'IndexProductSell']);
+        Route::get('/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
+
+        Route::post('/usage', [ProductController::class, 'CreateUsage']);
+        Route::get('/usage', [ProductController::class, 'IndexUsage']);
+
+        Route::post('/adjust', [ProductController::class, 'adjust']);
+
+        Route::get('/sell/dropdown/split', [ProductController::class, 'IndexProductSellSplit']);
+
+        Route::get('/log', [ProductController::class, 'indexLog']);
+        Route::get('/transaction', [ProductController::class, 'transaction']);
+
+        Route::get('/transfernumber', [TransferProductController::class, 'transferProductNumber']);
+        Route::post('/transfer', [TransferProductController::class, 'create']);
+        Route::get('/transfer', [TransferProductController::class, 'index']);
+        Route::put('/transfer/approval', [TransferProductController::class, 'approval']);
+        Route::post('/transfer/receive', [TransferProductController::class, 'receive']);
+        Route::get('/transfer/detail', [TransferProductController::class, 'detail']);
+        Route::get('/transfer/export', [TransferProductController::class, 'export']);
+
+        Route::get('/restock', [RestockController::class, 'index']);
+        Route::post('/restock', [RestockController::class, 'create']);
+        Route::post('/restock/multiple', [RestockController::class, 'createMultiple']);
+        Route::get('/restock/export', [RestockController::class, 'export']);
+        Route::get('/restock/export/pdf', [RestockController::class, 'exportPDF']);
+
+        Route::post('/restock/tracking', [RestockController::class, 'createTracking']);
+        Route::get('/restock/detail', [RestockController::class, 'detail']);
+        Route::get('/restock/detail/history', [RestockController::class, 'detailHistory']);
+        Route::get('/restock/detail/supplier', [RestockController::class, 'listSupplier']);
+
+        //product bundle
+        Route::get('/bundle', [BundleController::class, 'index']);
+        Route::get('/bundle/detail', [BundleController::class, 'detail']);
+        Route::post('/bundle', [BundleController::class, 'create']);
+        Route::put('/bundle', [BundleController::class, 'update']);
+        Route::put('/bundle/status', [BundleController::class, 'changeStatus']);
+        Route::delete('/bundle', [BundleController::class, 'delete']);
+    });
 
     //MODULE CUSTOMER
     //customer group
-    Route::get('customer/group', [CustomerController::class, 'Index']);
-    Route::post('customer/group', [CustomerController::class, 'Create']);
+
+    Route::group(['prefix' => 'customer'], function () {
+
+        Route::post('/', [CustomerController::class, 'createCustomer']);
+        Route::put('/', [CustomerController::class, 'updateCustomer']); // add
+        Route::get('/', [CustomerController::class, 'indexCustomer']); // add
+        Route::delete('/', [CustomerController::class, 'deleteCustomer']); // add
+        Route::get('/detail', [CustomerController::class, 'getDetailCustomer']); // add
+        Route::post('/images', [CustomerController::class, 'uploadImageCustomer']); // add
+        Route::get('/export', [CustomerController::class, 'exportCustomer']); //add
+
+        Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
+        Route::post('/group', [CustomerController::class, 'createCustomerGroup']);
+
+        Route::get('/reference', [CustomerController::class, 'getReferenceCustomer']);
+        Route::post('/reference', [CustomerController::class, 'insertReferenceCustomer']);
+
+        Route::get('/title', [CustomerController::class, 'getTitleCustomer']); // title : tuan nyonya
+        Route::post('/title', [CustomerController::class, 'insertTitleCustomer']); // title : tuan nyonya
+
+        Route::get('/occupation', [CustomerController::class, 'getCustomerOccupation']); // kerja : programmer, wirausaha
+        Route::post('/occupation', [CustomerController::class, 'insertCustomerOccupation']); // kerja : programmer, wirausaha
+
+        Route::get('/pet', [CustomerController::class, 'getPetCategory']); // binatang : anjing, kucing, ular, serangga, burung
+        Route::post('/pet', [CustomerController::class, 'insertPetCategory']); // binatang : anjing, kucing, ular, serangga, burung
+
+
+        Route::post('/source', [CustomerController::class, 'insertSourceCustomer']);
+        Route::get('/source', [CustomerController::class, 'getSourceCustomer']);
+
+        Route::put('/pet', [CustomerController::class, 'updatePetAge']);
+    });
+
 
     //STAFF
-    Route::post('staff', [StaffController::class, 'insertStaff']);
-    Route::delete('staff', [StaffController::class, 'deleteStaff']);
-    Route::get('rolestaff', [StaffController::class, 'getRoleStaff']);
-    Route::get('locationstaff', [StaffController::class, 'getLocationStaff']);
-    Route::get('typeid', [StaffController::class, 'getTypeId']);
-    Route::get('payperiod', [StaffController::class, 'getPayPeriod']);
-    Route::get('jobtitle', [StaffController::class, 'getJobTitle']);
-    Route::post('typeid', [StaffController::class, 'insertTypeId']);
-    Route::post('payperiod', [StaffController::class, 'insertPayPeriod']);
-    Route::post('jobtitle', [StaffController::class, 'insertJobTitle']);
-    Route::post('imageStaff', [StaffController::class, 'uploadImageStaff']);
-    Route::delete('imageStaff', [StaffController::class, 'deleteImageStaff']);
-    Route::get('staffdetail', [StaffController::class, 'getDetailStaff']);
-    Route::put('staff', [StaffController::class, 'updateStaff']);
-    Route::get('staff', [StaffController::class, 'index']);
-    Route::get('exportstaff', [StaffController::class, 'exportStaff']);
-    Route::post('sendEmail', [StaffController::class, 'sendEmailVerification']);
-    Route::put('statusStaff', [StaffController::class, 'updateStatusUsers']);
+    Route::group(['prefix' => 'staff'], function () {
+
+        Route::get('/rolesid', [StaffController::class, 'getRoleName']);
+        Route::post('/', [StaffController::class, 'insertStaff']);
+        Route::delete('/', [StaffController::class, 'deleteStaff']);
+        Route::get('/rolestaff', [StaffController::class, 'getRoleStaff']);
+        Route::get('/typeid', [StaffController::class, 'getTypeId']);
+        Route::get('/payperiod', [StaffController::class, 'getPayPeriod']);
+        Route::get('/jobtitle', [StaffController::class, 'getJobTitle']);
+        Route::post('/typeid', [StaffController::class, 'insertTypeId']);
+        Route::post('/payperiod', [StaffController::class, 'insertPayPeriod']);
+        Route::post('/jobtitle', [StaffController::class, 'insertJobTitle']);
+        Route::post('/imageStaff', [StaffController::class, 'uploadImageStaff']);
+        Route::get('/staffdetail', [StaffController::class, 'getDetailStaff']);
+        Route::put('/', [StaffController::class, 'updateStaff']);
+        Route::get('/', [StaffController::class, 'index']);
+        Route::get('/list', [StaffController::class, 'listStaff']);
+        Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
+        Route::post('/sendEmail', [StaffController::class, 'sendEmailVerification']);
+        Route::put('/statusStaff', [StaffController::class, 'updateStatusUsers']);
+        Route::post('/holidaysdate', [StaffController::class, 'getAllHolidaysDate']);
+
+        Route::get('/leave/workingdate', [StaffLeaveController::class, 'getWorkingDays']);
+        Route::get('/leave/leavetype', [StaffLeaveController::class, 'getLeaveRequest']);
+        Route::post('/leave', [StaffLeaveController::class, 'insertLeaveStaff']);
+        Route::post('/leave/statusleave', [StaffLeaveController::class, 'setStatusLeaveRequest']);
+        Route::post('/leave/adjustleave', [StaffLeaveController::class, 'adjustLeaveRequest']);
+        Route::put('/leave/adjustbalance', [StaffLeaveController::class, 'adjustBalance']);
+        Route::get('/leave', [StaffLeaveController::class, 'getIndexRequestLeave']);
+        Route::get('/leave/balancetype', [StaffLeaveController::class, 'getDropdownBalanceType']);
+        Route::get('/leave/leavebalance', [StaffLeaveController::class, 'getIndexStaffBalance']);
+        Route::get('/leave/exportleave', [StaffLeaveController::class, 'exportLeaveRequest']);
+        Route::get('/leave/exportbalance', [StaffLeaveController::class, 'exportBalance']);
+        Route::get('/leave/allactive', [StaffLeaveController::class, 'getAllStaffActive']);
+        Route::get('/leave/staffid', [StaffLeaveController::class, 'getUsersId']);
+        Route::put('/leave/approveall', [StaffLeaveController::class, 'approveAll']);
+        Route::put('/leave/rejectall', [StaffLeaveController::class, 'rejectAll']);
+
+        Route::get('/product/transfer', [StaffController::class, 'staffListTransferProduct']);
+    });
 
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
     Route::get('provinsi', [GlobalVariableController::class, 'getProvinsi']);
-    Route::get('datastatic', [GlobalVariableController::class, 'getDataStatic']);
+    Route::get('datastaticglobal', [GlobalVariableController::class, 'getDataStatic']);
     Route::post('datastaticglobal', [GlobalVariableController::class, 'insertDataStatic']);
     Route::post('uploadregion', [GlobalVariableController::class, 'uploadRegion']);
 });

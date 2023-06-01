@@ -19,17 +19,9 @@ return new class extends Migration
             $table->string('requirementName');
             $table->integer('locationId');
             $table->integer('totalItem');
-            $table->integer('isApprovedOffice')->default(0);
-            $table->integer('isApprovedAdmin')->default(0);
-
-            $table->integer('userApproveOfficeId')->nullable();
-            $table->integer('userApproveAdminId')->nullable();
-
-            $table->timestamp('userApproveOfficeAt', 0)->nullable();
-            $table->timestamp('userApproveAdminAt', 0)->nullable();
-
-            $table->string('reasonOffice')->nullable();
-            $table->string('reasonAdmin')->nullable();
+            
+            $table->boolean('isApprovalAdmin');
+            $table->boolean('isApprovalOffice');
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');

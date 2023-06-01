@@ -15,9 +15,6 @@ class UsersImport implements ToModel
     public function model(array $row)
     {
 
-        // echo ("hello");
-        // echo ($row[0]);
-
         return new exceltesting([
             "a" =>  $row[0],
             "b" =>  $row[1],

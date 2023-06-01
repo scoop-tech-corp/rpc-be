@@ -2,12 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use  Database\Seeders\Facility\FacilitySeeder;
 use DB;
 use Illuminate\Http\Request;
 use App\Imports\RegionImport;
 use App\Imports\KabupatenImport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Database\Seeder;
+use File;
+use Artisan;
 
+
+//D:\PROJECT\LARAVEL\pos-rpc\database\seeders\Facility\FacilitySeeder.php
 class GlobalVariableController extends Controller
 {
     public function getDataStatic(Request $request)
@@ -54,6 +60,46 @@ class GlobalVariableController extends Controller
             ]);
         }
     }
+
+    public function insertAllSeeder(Request $request)
+    {
+
+        try {
+
+            // Artisan::call('db:seed', ['--class' => 'FacilitySeeder']);
+            // Artisan::call('db:seed', ['--class' => 'LocationSeeder']);
+            // Artisan::call('db:seed', ['--class' => 'userRoleSeeder']);
+            // Artisan::call('db:seed', ['--class' => 'userSeeder']);
+
+            // $icons = database_path('seeders\FileMapping');
+            // $files = File::allFiles($icons);
+
+            // foreach ($files as $file) {
+
+            //     if (str_contains($file, "Kabupaten")) {
+
+            //         Excel::import(new KabupatenImport, $file);
+
+            //     } else {
+
+            //         Excel::import(new RegionImport, $file);
+            //     }
+            // }
+
+            return response()->json([
+                'result' => 'success',
+                'message' => 'success upload seeder ',
+            ]);
+        } catch (Exception $e) {
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' => $e,
+            ]);
+        }
+    }
+
+
 
     public function getProvinsi(Request $request)
     {

@@ -38,11 +38,11 @@ class BundleController
 
         if ($request->search) {
             $res = $this->Search($request);
-            if (!is_null($res[0])) {
+            if ($res) {
                 $data = $data->where($res[0], 'like', '%' . $request->search . '%');
 
                 for ($i = 1; $i < count($res); $i++) {
-                    $data = $data->orWhere($res[$i], 'like', '%' . $request->keyword . '%');
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
                 }
             } else {
                 $data = [];
@@ -57,7 +57,7 @@ class BundleController
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('pb.id', 'desc');
+        $data = $data->orderBy('pb.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -80,7 +80,8 @@ class BundleController
 
     private function Search($request)
     {
-        $temp_column[] = null;
+
+        $temp_column = null;
 
         $data = DB::table('productBundles as pb')
             ->select(
@@ -166,13 +167,32 @@ class BundleController
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errorDetail,
+                'errors' => [$errorDetail],
             ], 422);
         }
 
-        if ($request->products) {
+        //validate existing data
+        $bundle = ProductBundle::where('locationId', '=', $request->locationId)
+            ->where('name', '=', $request->name)
+            ->where('isDeleted', '=', 0)
+            ->first();
 
+        if ($bundle) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Bundle Name in this branch has already exists!'],
+            ], 422);
+        }
+
+        $products = json_decode($request->products, true);
+
+        if (count($products) > 0) {
             $products = json_decode($request->products, true);
+        } else {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Product List cannot be empty!'],
+            ], 422);
         }
 
         DB::beginTransaction();
@@ -287,59 +307,73 @@ class BundleController
 
         if ($status == 'create') {
 
-            if ($request->products) {
+            $products = json_decode($request->products, true);
 
-                $products = json_decode($request->products, true);
-            }
+            if (count($products) > 0) {
+                // foreach ($products as $res) {
+                $validateDetail = Validator::make(
+                    $products,
+                    [
+                        '*.productId' => 'required|integer',
+                        '*.quantity' => 'required|integer|min:1',
+                        '*.total' => 'required|numeric',
 
-            $validateDetail = Validator::make(
-                $products,
-                [
-                    '*.productId' => 'required|integer',
-                    '*.quantity' => 'required|integer',
-                    '*.total' => 'required|numeric',
+                    ],
+                    [
+                        '*.productId.integer' => 'Product Id Should be Filled',
+                        '*.quantity.integer' => 'Quantity Should be Filled',
+                        '*.total.numeric' => 'Total Should be Filled',
 
-                ],
-                [
-                    '*.productId.integer' => 'Product Id Should be Integer',
-                    '*.quantity.integer' => 'Quantity Should be Integer',
-                    '*.total.numeric' => 'Total Should be Decimal',
-                ]
-            );
+                        '*.productId.required' => 'Product Id Should be Required',
+                        '*.quantity.required' => 'Quantity Should be Required',
+                        '*.quantity.integer' => 'Quantity Should be Filled',
+                        '*.total.required' => 'Total Should be Required',
 
-            if ($validateDetail->fails()) {
-                $errors = $validateDetail->errors()->all();
+                        '*.quantity.min' => 'Quantity must be at least 1',
+                    ]
+                );
 
-                return $errors;
+                if ($validateDetail->fails()) {
+                    $errors = $validateDetail->errors()->first();
+                    return $errors;
+                    // }
+                }
             }
 
             return '';
         } elseif ($status == 'update') {
 
-            if ($request->products) {
+            $products = $request->products;
 
-                $products = $request->products;
-            }
+            if (count($products) > 0) {
 
-            $validateDetail = Validator::make(
-                $products,
-                [
-                    '*.productId' => 'required|integer',
-                    '*.quantity' => 'required|integer',
-                    '*.total' => 'required|numeric',
+                // foreach ($products as $res) {
+                $validateDetail = Validator::make(
+                    $products,
+                    [
+                        '*.productId' => 'required|integer',
+                        '*.quantity' => 'required|integer|min:1',
+                        '*.total' => 'required|numeric',
 
-                ],
-                [
-                    '*.productId.integer' => 'Product Id Should be Integer',
-                    '*.quantity.integer' => 'Quantity Should be Integer',
-                    '*.total.numeric' => 'Total Should be Decimal',
-                ]
-            );
+                    ],
+                    [
+                        '*.productId.integer' => 'Product Id Should be Integer',
+                        '*.quantity.integer' => 'Quantity Should be Integer',
+                        '*.total.numeric' => 'Total Should be Decimal',
 
-            if ($validateDetail->fails()) {
-                $errors = $validateDetail->errors()->all();
+                        '*.productId.required' => 'Product Id Should be Required',
+                        '*.quantity.required' => 'Quantity Should be Required',
+                        '*.total.required' => 'Total Should be Required',
 
-                return $errors;
+                        '*.quantity.min' => 'Quantity must be at least 1',
+                    ]
+                );
+
+                if ($validateDetail->fails()) {
+                    $errors = $validateDetail->errors()->first();
+                    return $errors;
+                }
+                // }
             }
 
             return '';
@@ -375,6 +409,7 @@ class BundleController
                 DB::raw("DATE_FORMAT(pb.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pb.id', '=', $request->id)
+            ->where('pb.isDeleted', '=', 0)
             ->first();
 
         $prodDetail = DB::table('productBundleDetails as pbd')
@@ -392,6 +427,7 @@ class BundleController
                 DB::raw("DATE_FORMAT(pbd.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pbd.productBundleId', '=', $request->id)
+            ->where('pbd.isDeleted', '=', 0)
             ->get();
 
         $history = DB::table('productBundleLogs as pbl')
@@ -446,18 +482,35 @@ class BundleController
             ], 422);
         }
 
-        $errorDetail = $this->ValidateDetail($request, 'update');
+        if ($prodBundle->name != $request->name || $prodBundle->locationId != $request->locationId) {
+            $bundle = ProductBundle::where('locationId', '=', $request->locationId)
+                ->where('name', '=', $request->name)
+                ->where('isDeleted', '=', 0)
+                ->first();
+
+            if ($bundle) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Bundle Name in this branch has already exists!'],
+                ], 422);
+            }
+        }
+
+        $errorDetail = "";
+
+        if ($request->products) {
+            $errorDetail = $this->ValidateDetail($request, 'update');
+        }
 
         if ($errorDetail != '') {
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errorDetail,
+                'errors' => [$errorDetail],
             ], 422);
         }
 
         if ($request->products) {
-
             $products = $request->products;
         }
 
@@ -470,42 +523,45 @@ class BundleController
         $prodBundle->updated_at = \Carbon\Carbon::now();
         $prodBundle->save();
 
-        foreach ($products as $value) {
+        if ($request->products) {
 
-            if ($value['status'] == 'new') {
+            foreach ($products as $value) {
 
-                ProductBundleDetail::create([
-                    'productBundleId' => $prodBundle->id,
-                    'productId' => $value['productId'],
-                    'quantity' => $value['quantity'],
-                    'total' => $value['total'],
-                    'userId' => $request->user()->id,
-                ]);
-            } elseif ($value['status'] == 'delete') {
+                if ($value['status'] == 'new') {
 
-                ProductBundleDetail::where('id', '=', $value['id'])
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
-                            'isDeleted' => 1,
-                            'deletedAt' => Carbon::now()
-                        ]
-                    );
-            } elseif ($value['status'] == 'update') {
+                    ProductBundleDetail::create([
+                        'productBundleId' => $prodBundle->id,
+                        'productId' => $value['productId'],
+                        'quantity' => $value['quantity'],
+                        'total' => $value['total'],
+                        'userId' => $request->user()->id,
+                    ]);
+                } elseif ($value['status'] == 'delete') {
 
-                $p = ProductBundleDetail::find($value['id']);
+                    ProductBundleDetail::where('id', '=', $value['id'])
+                        ->update(
+                            [
+                                'deletedBy' => $request->user()->id,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]
+                        );
+                } elseif ($value['status'] == 'update') {
 
-                $p->productId = $value['productId'];
-                $p->quantity = $value['quantity'];
-                $p->total = $value['total'];
-                $p->userUpdateId = $request->user()->id;
-                $p->updated_at = \Carbon\Carbon::now();
-                $p->save();
+                    $p = ProductBundleDetail::find($value['id']);
+
+                    $p->productId = $value['productId'];
+                    $p->quantity = $value['quantity'];
+                    $p->total = $value['total'];
+                    $p->userUpdateId = $request->user()->id;
+                    $p->updated_at = \Carbon\Carbon::now();
+                    $p->save();
+                }
+
+                $pClinic = ProductClinic::find($value['productId']);
+
+                $this->AddLog($request, $request->id, 'Updated', $value['status'], $pClinic->fullName);
             }
-
-            $pClinic = ProductClinic::find($value['productId']);
-
-            $this->AddLog($request, $request->id, 'Updated', $value['status'], $pClinic->fullName);
         }
 
         return response()->json([
