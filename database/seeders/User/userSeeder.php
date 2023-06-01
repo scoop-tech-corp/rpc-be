@@ -152,6 +152,82 @@ class userSeeder extends Seeder
                 'registrationNo' => '11111127828',  'designation' => '242351234', 'createdBy' => 'danny', 'email' => 'mrkrab@gmail.com',
             ],
 
+
+            //11
+            [
+                'firstName' => 'Jayeng',
+                'middleName' => '',
+                'lastName' => 'Wibowo',
+                'nickName' => 'Wibowo',
+                'gender' => 'male',
+                'status' => 1,
+                'locationId' => 11,
+                'jobTitleId' => 1,
+                'startDate' => '2022-12-01',
+                'endDate' => '2023-11-02',
+                'annualSickAllowance' => 12,
+                'annualSickAllowanceRemaining' => 12,
+                'annualLeaveAllowance' => 12,
+                'annualLeaveAllowanceRemaining' => 12,
+                'payPeriodId' =>  2,
+                'payAmount' =>  '10000000',
+                'typeId' => 3,
+                'identificationNumber' => 1501145032245,
+                'additionalInfo' => 'additional information for inputted database',
+                'generalCustomerCanSchedule' => 1,
+                'generalCustomerReceiveDailyEmail' => 1,
+                'generalAllowMemberToLogUsingEmail' => 1,
+                'reminderEmail' => 1,
+                'reminderWhatsapp' => 1,
+                'roleId' => 1,
+                'isDeleted' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'password' => bcrypt("P@ssw0rd2023"),
+                'registrationNo' => '1501145032245',
+                'designation' => '1501145032245',
+                'createdBy' => 'admin',
+                'email' => 'dharma@gmail.com',
+            ],
+
+            //12
+            [
+                'firstName' => 'Qori',
+                'middleName' => '',
+                'lastName' => 'Pratiwi',
+                'nickName' => 'Qori',
+                'gender' => 'female',
+                'status' => 1,
+                'locationId' => 11,
+                'jobTitleId' => 1,
+                'startDate' => '2022-12-01',
+                'endDate' => '2023-11-02',
+                'annualSickAllowance' => 12,
+                'annualSickAllowanceRemaining' => 12,
+                'annualLeaveAllowance' => 12,
+                'annualLeaveAllowanceRemaining' => 12,
+                'payPeriodId' =>  2,
+                'payAmount' =>  '10000000',
+                'typeId' => 3,
+                'identificationNumber' => 1501146783,
+                'additionalInfo' => 'additional information for inputted database',
+                'generalCustomerCanSchedule' => 1,
+                'generalCustomerReceiveDailyEmail' => 1,
+                'generalAllowMemberToLogUsingEmail' => 1,
+                'reminderEmail' => 1,
+                'reminderWhatsapp' => 1,
+                'roleId' => 1,
+                'isDeleted' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'password' => bcrypt("P@ssw0rd2023"),
+                'registrationNo' => '1501146783',
+                'designation' => '1501146783',
+                'createdBy' => 'admin',
+                'email' => 'radhiyan@gmail.com',
+            ],
+
+
         ];
 
 
@@ -161,6 +237,15 @@ class userSeeder extends Seeder
 
             //2
             ['usersId' => 2, "phoneNumber" => '085264992941', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
+
+            //11
+            ['usersId' => 11, "phoneNumber" => '087888821649', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
+
+
+            //12
+            ['usersId' => 12, "phoneNumber" => '087888821625', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
+
+
         ];
 
         $usersEmails = [
@@ -175,8 +260,15 @@ class userSeeder extends Seeder
 
             //4
             ['usersId' => 4, "email" => 'doctor@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
             //5
             ['usersId' => 5, "email" => 'staff@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
+            //11
+            ['usersId' => 11, "email" => 'dharma@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
+            //12
+            ['usersId' => 12, "email" => 'radhiyan@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
 
         ];
 
@@ -186,6 +278,15 @@ class userSeeder extends Seeder
 
             //2
             ["usersId" => 2, "messengerNumber" => '081501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
+
+
+            //11
+            ["usersId" => 11, "messengerNumber" => '081501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
+
+            //12
+            ["usersId" => 12, "messengerNumber" => '081501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
+
+
         ];
 
 
@@ -203,7 +304,7 @@ class userSeeder extends Seeder
         ];
 
 
-        for ($j = 3; $j <= 10; $j++) {
+        for ($j = 3; $j <= 12; $j++) {
 
             $phoneNumber = $faker->regexify('/^\+628\d{9,10}$/');
 
@@ -247,7 +348,5 @@ class userSeeder extends Seeder
         DB::table('jobTitle')->insert($jobTitle);
         DB::table('payPeriod')->insert($payPeriod);
         DB::table('typeId')->insert($typeId);
-
-
     }
 }

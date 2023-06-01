@@ -113,7 +113,7 @@ class ApiController extends Controller
 
                 $userId = $checkIfValueExits->usersId;
                 $emailaddress = $checkIfValueExits->email;
-               info($userId);
+
                 $users = DB::table('users')
                     ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
                     ->leftjoin('usersRoles', 'usersRoles.id', '=', 'users.roleId')
