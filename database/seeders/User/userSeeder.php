@@ -66,7 +66,7 @@ class userSeeder extends Seeder
 
             //3
             [
-                'firstName' => 'Johnson', 'middleName' => 'Mega', 'lastName' => 'Yolo', 'nickName' => 'Supreme', 'gender' => 'male', 'status' => 0, 'locationId' => 13,
+                'firstName' => 'Robbie', 'middleName' => 'Ponce', 'lastName' => '', 'nickName' => 'Ponce', 'gender' => 'male', 'status' => 0, 'locationId' => 13,
                 'jobTitleId' => 3, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '30000000',
                 'typeId' => 1, 'identificationNumber' => 15013534555, 'additionalInfo' => 'Your additional information RPC petshop care',
@@ -77,7 +77,7 @@ class userSeeder extends Seeder
 
             //4
             [
-                'firstName' => 'Alucard', 'middleName' => '', 'lastName' => '', 'nickName' => 'Alucard van helsing', 'gender' => 'male', 'status' => 1, 'locationId' => 14,
+                'firstName' => 'Rose', 'middleName' => '', 'lastName' => '', 'nickName' => 'Rose', 'gender' => 'female', 'status' => 1, 'locationId' => 14,
                 'jobTitleId' => 4, 'startDate' => '2022-08-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 1, 'identificationNumber' => 1234567890, 'additionalInfo' => 'Nothing last forever we can change the future',
@@ -88,7 +88,7 @@ class userSeeder extends Seeder
 
             //5
             [
-                'firstName' => 'clint', 'middleName' => 'east', 'lastName' => 'wood', 'nickName' => 'clint', 'gender' => 'male', 'status' => 0, 'locationId' => 15,
+                'firstName' => 'Jasper', 'middleName' => '', 'lastName' => 'Saunders', 'nickName' => 'Jasper', 'gender' => 'female', 'status' => 0, 'locationId' => 15,
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '20000000',
                 'typeId' => 3, 'identificationNumber' => 298765345678, 'additionalInfo' => 'Your additional information RPC petshop care',
@@ -99,7 +99,7 @@ class userSeeder extends Seeder
 
             //6
             [
-                'firstName' => 'squidward', 'middleName' => 'testing', 'lastName' => 'tenpoles', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1, 'locationId' => 16,
+                'firstName' => 'Malika', 'middleName' => '', 'lastName' => 'Oktaviani', 'nickName' => 'Malika', 'gender' => 'female', 'status' => 1, 'locationId' => 16,
                 'jobTitleId' => 3, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 627254893472, 'additionalInfo' => 'Klarinet is my way',
@@ -110,7 +110,7 @@ class userSeeder extends Seeder
 
             //7
             [
-                'firstName' => 'spongebob', 'middleName' => '', 'lastName' => 'squarepants', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1, 'locationId' => 17,
+                'firstName' => 'Sabrina', 'middleName' => '', 'lastName' => 'Palastri', 'nickName' => 'Sabrina', 'gender' => 'female', 'status' => 1, 'locationId' => 17,
                 'jobTitleId' => 1, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 15013534555, 'additionalInfo' => 'i love krabby patty',
@@ -121,7 +121,7 @@ class userSeeder extends Seeder
 
             //8
             [
-                'firstName' => 'Smithy', 'middleName' => 'webermen', 'lastName' => 'jensen', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 0, 'locationId' => 18,
+                'firstName' => 'Luhung', 'middleName' => '', 'lastName' => 'Samosir', 'nickName' => 'Luhung', 'gender' => 'male', 'status' => 0, 'locationId' => 18,
                 'jobTitleId' => 1, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 1111111111, 'additionalInfo' => 'Im number one',
@@ -132,7 +132,7 @@ class userSeeder extends Seeder
 
             //9
             [
-                'firstName' => 'Patrik', 'middleName' => '', 'lastName' => 'Star', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1, 'locationId' => 19,
+                'firstName' => 'Lili', 'middleName' => '', 'lastName' => 'Yolanda ', 'nickName' => 'Yolanda', 'gender' => 'female', 'status' => 1, 'locationId' => 19,
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 24729258888, 'additionalInfo' => 'Patrik si bintang laut',
@@ -143,7 +143,7 @@ class userSeeder extends Seeder
 
             //10
             [
-                'firstName' => 'Krab', 'middleName' => '', 'lastName' => 'Eugene', 'nickName' => 'Mr Krab', 'gender' => 'male', 'status' => 0, 'locationId' => 20,
+                'firstName' => 'Rahmi', 'middleName' => '', 'lastName' => 'Yuniar', 'nickName' => 'Rahmi', 'gender' => 'female', 'status' => 0, 'locationId' => 20,
                 'jobTitleId' => 4, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '9999999999',
                 'typeId' => 2, 'identificationNumber' => 111512312342, 'additionalInfo' => 'uang uang uang uang uang',
