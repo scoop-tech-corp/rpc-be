@@ -12,11 +12,11 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class ApiController extends Controller
 {
-   
+
 
     public function register(Request $request)
     {
-        
+
         $data = $request->only('name', 'email', 'password', 'role');
         $validator = Validator::make($data, [
             'name' => 'required|string',
@@ -46,7 +46,7 @@ class ApiController extends Controller
         ], Response::HTTP_OK);
     }
 
-   
+
 
     public function login(Request $request)
     {
@@ -92,7 +92,6 @@ class ApiController extends Controller
                     'success' => false,
                     'message' => 'Email address is not verified, Please check your email to verify your account and set the password',
                 ], 400);
-
             } else {
 
                 try {
@@ -104,7 +103,6 @@ class ApiController extends Controller
                             'message' => "Password unmatch, please check again",
                         ], 400);
                     }
-
                 } catch (JWTException $e) {
 
                     return response()->json([
@@ -115,7 +113,7 @@ class ApiController extends Controller
 
                 $userId = $checkIfValueExits->usersId;
                 $emailaddress = $checkIfValueExits->email;
-
+               info($userId);
                 $users = DB::table('users')
                     ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
                     ->leftjoin('usersRoles', 'usersRoles.id', '=', 'users.roleId')
@@ -173,13 +171,13 @@ class ApiController extends Controller
             return response()->json([
                 'result' => 'Failed',
                 'message' => 'Email login not found, please try different email',
-            ],422);
+            ], 422);
         }
     }
 
     public function logout(Request $request)
     {
-        
+
         $validator = Validator::make($request->only('token'), [
             'token' => 'required',
         ]);
