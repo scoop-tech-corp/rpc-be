@@ -9,6 +9,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Product\BundleController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Product\ProductController;
+use App\Http\Controllers\Product\SupplierController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Product\ProductSellController;
 use App\Http\Controllers\Product\TransferProductController;
@@ -78,8 +79,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //list produk
     Route::group(['prefix' => 'product'], function () {
 
-        Route::post('/supplier', [ProductController::class, 'addProductSupplier']);
-        Route::get('/supplier', [ProductController::class, 'IndexProductSupplier']);
+        Route::post('/supplier', [SupplierController::class, 'create']);
+
+        Route::get('/supplier', [SupplierController::class, 'index']);
+        Route::get('/supplier/detail', [SupplierController::class, 'detail']);
+
+        Route::post('/supplier/usage', [SupplierController::class, 'createSupplierUsage']);
+        Route::post('/supplier/phone', [SupplierController::class, 'createSupplierTypePhone']);
+        Route::post('/supplier/messenger', [SupplierController::class, 'createSupplierTypeMessenger']);
+
+        Route::get('/supplier/usage', [SupplierController::class, 'listSupplierUsage']);
+        Route::get('/supplier/phone', [SupplierController::class, 'listSupplierTypePhone']);
+        Route::get('/supplier/messenger', [SupplierController::class, 'listSupplierTypeMessenger']);
 
         Route::post('/brand', [ProductController::class, 'addProductBrand']);
         Route::get('/brand', [ProductController::class, 'IndexProductBrand']);

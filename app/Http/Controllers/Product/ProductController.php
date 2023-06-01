@@ -9,7 +9,6 @@ use App\Models\ProductSellLocation;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductSell;
 use App\Models\ProductClinic;
-use App\Models\ProductSupplier;
 use App\Models\usages;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,16 +17,6 @@ use Illuminate\Support\Carbon;
 
 class ProductController
 {
-    public function IndexProductSupplier(Request $request)
-    {
-        $Data = DB::table('productSuppliers')
-            ->select('id', 'supplierName')
-            ->where('isDeleted', '=', 0)
-            ->get();
-
-        return response()->json($Data, 200);
-    }
-
     public function IndexProductBrand(Request $request)
     {
         $Data = DB::table('productBrands')
@@ -36,66 +25,6 @@ class ProductController
             ->get();
 
         return response()->json($Data, 200);
-    }
-
-    public function addProductSupplier(Request $request)
-    {
-        try {
-
-            $validate = Validator::make($request->all(), [
-                'supplierName' => 'required',
-            ]);
-
-            if ($validate->fails()) {
-                $errors = $validate->errors()->all();
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
-            }
-
-            $checkIfValueExits = DB::table('productSuppliers')
-                ->where('supplierName', '=', $request->supplierName)
-                ->first();
-
-            if ($checkIfValueExits === null) {
-
-                // DB::beginTransaction();
-
-                // DB::table('product_supplier')->insert([
-                //     'supplierName' => $request->supplierName,
-                //     'isDeleted' => 0,
-                // ]);
-
-                // DB::commit();
-                ProductSupplier::create([
-                    'supplierName' => $request->supplierName,
-                    'userId' => $request->user()->id,
-                ]);
-
-                return response()->json(
-                    [
-                        'message' => 'Insert Data Successful!',
-                    ],
-                    200
-                );
-            } else {
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Supplier name already exists, please try different name!'],
-                ], 422);
-            }
-        } catch (Exception $e) {
-
-            return response()->json(
-                [
-                    'message' => $e,
-                ],
-                500
-            );
-        }
     }
 
     public function addProductBrand(Request $request)
