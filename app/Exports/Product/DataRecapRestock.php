@@ -63,7 +63,7 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
         // if (!$locations[0] == null) {
         if ($locations) {
 
-            $data = $data->whereIn('loc.id', $this->locationId);
+            $data = $data->whereIn('pr.locationId', $this->locationId);
         }
 
         $suppliers = $this->supplierId;
@@ -77,7 +77,7 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
                 ->distinct()
                 ->pluck('pr.productRestockId');
 
-            $data = $data->whereIn('pr.id', $detail);
+            $data = $data->whereIn('pr.supplierId', $detail);
         }
 
         if ($this->orderValue) {
