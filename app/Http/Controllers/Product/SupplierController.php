@@ -24,7 +24,7 @@ class SupplierController extends Controller
         $page = $request->goToPage;
 
         $data = DB::table('productSuppliers')
-            ->select('id', 'supplierName', 'pic', 'address', 'telephone')
+            ->select('id', 'supplierName')
             ->where('isDeleted', '=', 0);
 
         if ($request->search) {
@@ -326,13 +326,73 @@ class SupplierController extends Controller
                 DB::raw("DATE_FORMAT(pss.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('pss.id', '=', $request->id)
+            ->where('pss.isDeleted', '=', 0)
             ->first();
 
-            $dataAddress = DB::table('productSupplierAddresses as psa')
-            ->where('psa.productSupplierId','=',$request->id)
+        $dataAddress = DB::table('productSupplierAddresses as psa')
+            ->select(
+                'psa.id',
+                'psa.streetAddress',
+                'psa.additionalInfo',
+                'psa.country',
+                'psa.province',
+                'psa.city',
+                'psa.postalCode',
+                'psa.isPrimary'
+            )
+            ->where('psa.productSupplierId', '=', $request->id)
+            ->where('psa.isDeleted', '=', 0)
             ->get();
 
-            $data->addresses = $dataAddress;
+        $data->addresses = $dataAddress;
+
+        $dataPhones = DB::table('productSupplierPhones as psp')
+            ->join('productSupplierUsages as psu', 'psp.usageId', 'psu.id')
+            ->join('productSupplierTypePhones as pst', 'psp.typePhoneId', 'pst.id')
+            ->select(
+                'psp.id',
+                'psp.usageId',
+                'psu.usageName',
+                'psp.number',
+                'psp.typePhoneId',
+                'pst.typeName',
+            )
+            ->where('psp.productSupplierId', '=', $request->id)
+            ->where('psp.isDeleted', '=', 0)
+            ->get();
+
+        $data->phones = $dataPhones;
+
+        $dataEmails = DB::table('productSupplierEmails as psp')
+            ->join('productSupplierUsages as psu', 'psp.usageId', 'psu.id')
+            ->select(
+                'psp.id',
+                'psp.usageId',
+                'psp.address',
+                'psu.usageName as usage',
+            )
+            ->where('psp.productSupplierId', '=', $request->id)
+            ->where('psp.isDeleted', '=', 0)
+            ->get();
+
+        $data->emails = $dataEmails;
+
+        $dataMessengers = DB::table('productSupplierMessengers as psp')
+            ->join('productSupplierUsages as psu', 'psp.usageId', 'psu.id')
+            ->join('productSupplierTypeMessengers as pst', 'psp.typeId', 'pst.id')
+            ->select(
+                'psp.id',
+                'psp.usageId',
+                'psu.usageName as usage',
+                'psp.usageName',
+                'psp.typeId',
+                'pst.typeName',
+            )
+            ->where('psp.productSupplierId', '=', $request->id)
+            ->where('psp.isDeleted', '=', 0)
+            ->get();
+
+        $data->messengers = $dataMessengers;
 
         return response()->json($data, 200);
     }
@@ -355,8 +415,6 @@ class SupplierController extends Controller
                 'errors' => $errors,
             ], 422);
         }
-
-
     }
 
     public function createSupplierUsage(Request $request)
