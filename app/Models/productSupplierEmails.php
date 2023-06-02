@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ProductSupplier extends Model
+class productSupplierEmails extends Model
 {
-    protected $table = "productSuppliers";
+    protected $table = "productSupplierEmails";
 
     protected $dates = ['created_at', 'deletedAt'];
 
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'supplierName', 'pic', 'userId', 'userUpdateId'
+        'productSupplierId', 'usageId', 'address', 'userId', 'userUpdateId'
     ];
 }
