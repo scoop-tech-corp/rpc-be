@@ -113,7 +113,7 @@ class RestockController extends Controller
             ->select(
                 'pr.numberId'
             )
-            ->where('ps.isDeleted', '=', 0);
+            ->where('pr.isDeleted', '=', 0);
 
         if ($request->search) {
             $data = $data->where('pr.numberId', 'like', '%' . $request->search . '%');
