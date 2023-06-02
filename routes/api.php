@@ -80,6 +80,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::group(['prefix' => 'product'], function () {
 
         Route::post('/supplier', [SupplierController::class, 'create']);
+        Route::delete('/supplier', [SupplierController::class, 'delete']);
+        Route::put('/supplier', [SupplierController::class, 'update']);
 
         Route::get('/supplier', [SupplierController::class, 'index']);
         Route::get('/supplier/detail', [SupplierController::class, 'detail']);
