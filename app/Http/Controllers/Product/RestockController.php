@@ -617,14 +617,14 @@ class RestockController extends Controller
                 if ($list->productType == 'productSell') {
                     $prd = DB::table('productSells as ps')
                         ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                        ->select('ps.fullName', 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received')
+                        ->select('ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received')
                         ->where('ps.id', '=', $list->productId)
                         ->where('prd.productType', '=', 'productSell')
                         ->first();
                 } elseif ($list->productType == 'productClinic') {
                     $prd = DB::table('productCLinics as pc')
                         ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
-                        ->select('pc.fullName', 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received')
+                        ->select('pc.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received')
                         ->where('pc.id', '=', $list->productId)
                         ->where('prd.productType', '=', 'productClinic')
                         ->first();
@@ -632,7 +632,8 @@ class RestockController extends Controller
 
                 $data[] = array(
                     'fullName' => $prd->fullName,
-                    'reStockQuantity' => $prd->reStockQuantity,
+                    'unitCost' => $prd->costPerItem,
+                    'orderQuantity' => $prd->reStockQuantity,
                     'rejected' => $prd->rejected,
                     'canceled' => $prd->canceled,
                     'accepted' => $prd->accepted,

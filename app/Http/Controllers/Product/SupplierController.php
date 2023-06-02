@@ -14,6 +14,7 @@ use App\Models\productSupplierUsage;
 use Illuminate\Http\Request;
 use DB;
 use Validator;
+use Illuminate\Support\Carbon;
 
 class SupplierController extends Controller
 {
@@ -330,13 +331,18 @@ class SupplierController extends Controller
             ->first();
 
         $dataAddress = DB::table('productSupplierAddresses as psa')
+            ->join('provinsi as p', 'p.id', 'psa.province')
+            ->join('kabupaten as k', 'k.id', 'psa.city')
             ->select(
                 'psa.id',
+                'psa.productSupplierId',
                 'psa.streetAddress',
                 'psa.additionalInfo',
                 'psa.country',
                 'psa.province',
+                'p.namaProvinsi as provinceName',
                 'psa.city',
+                'k.namaKabupaten as cityName',
                 'psa.postalCode',
                 'psa.isPrimary'
             )
@@ -351,6 +357,7 @@ class SupplierController extends Controller
             ->join('productSupplierTypePhones as pst', 'psp.typePhoneId', 'pst.id')
             ->select(
                 'psp.id',
+                'psp.productSupplierId',
                 'psp.usageId',
                 'psu.usageName',
                 'psp.number',
@@ -367,6 +374,7 @@ class SupplierController extends Controller
             ->join('productSupplierUsages as psu', 'psp.usageId', 'psu.id')
             ->select(
                 'psp.id',
+                'psp.productSupplierId',
                 'psp.usageId',
                 'psp.address',
                 'psu.usageName as usage',
@@ -382,6 +390,7 @@ class SupplierController extends Controller
             ->join('productSupplierTypeMessengers as pst', 'psp.typeId', 'pst.id')
             ->select(
                 'psp.id',
+                'psp.productSupplierId',
                 'psp.usageId',
                 'psu.usageName as usage',
                 'psp.usageName',
@@ -399,12 +408,8 @@ class SupplierController extends Controller
 
     public function update(Request $request)
     {
-    }
-
-    public function delete(Request $request)
-    {
         $validate = Validator::make($request->all(), [
-            'id' => 'required|integer',
+            'supplierName' => 'required',
         ]);
 
         if ($validate->fails()) {
@@ -415,6 +420,271 @@ class SupplierController extends Controller
                 'errors' => $errors,
             ], 422);
         }
+
+        $checkIfValueExits = DB::table('productSuppliers')
+            ->where('supplierName', '=', $request->supplierName)
+            ->where('id', '!=', $request->id)
+            ->first();
+
+        if ($checkIfValueExits != null) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Supplier name already exists, please try different name!'],
+            ], 422);
+        }
+
+        if ($request->addresses) {
+
+            $resAddress = $request->addresses;
+
+            $validate = Validator::make(
+                $resAddress,
+                [
+                    '*.streetAddress' => 'required|string',
+                    '*.additionalInfo' => 'nullable',
+                    '*.country' => 'required|string',
+                    '*.province' => 'required|integer',
+                    '*.city' => 'required|integer',
+                    '*.isPrimary' => 'required|bool',
+                ],
+                [
+                    '*.streetAddress.required' => 'Street Address Should be Required!',
+                    '*.streetAddress.string' => 'Street Address Should be Filled!',
+                    '*.country.required' => 'Country Should be Required!',
+                    '*.country.string' => 'Country Should be Filled!',
+                    '*.province.required' => 'Province Should be Required!',
+                    '*.province.integer' => 'Province Should be Filled!',
+                    '*.city.required' => 'City Should be Required!',
+                    '*.city.integer' => 'City Should be Filled!',
+                    '*.isPrimary.required' => 'Is Primary Should be Required!',
+                    '*.isPrimary.bool' => 'Is Primary Should be Filled!',
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+        }
+
+        if ($request->phones) {
+            $resPhones = $request->phones;
+
+            $validate = Validator::make(
+                $resPhones,
+                [
+                    '*.usageId' => 'required|integer',
+                    '*.number' => 'required|integer',
+                    '*.typePhoneId' => 'required|integer',
+                ],
+                [
+                    '*.usageId.required' => 'Usage Should be Required!',
+                    '*.usageId.integer' => 'Usage Should be Filled!',
+                    '*.number.required' => 'Number Should be Required!',
+                    '*.number.integer' => 'Number Should be Filled!',
+                    '*.typePhoneId.required' => 'Type Phone Should be Required!',
+                    '*.typePhoneId.integer' => 'Type Phone Should be Filled!',
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+        }
+
+        if ($request->emails) {
+            $resEmails = $request->emails;
+
+            $validate = Validator::make(
+                $resEmails,
+                [
+                    '*.usageId' => 'required|integer',
+                    '*.address' => 'required|string',
+                ],
+                [
+                    '*.usageId.required' => 'Usage Should be Required!',
+                    '*.usageId.integer' => 'Usage Should be Filled!',
+                    '*.address.required' => 'Email Address Should be Required!',
+                    '*.address.string' => 'Email Address Should be Filled!',
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+        }
+
+        if ($request->messengers) {
+            $resMessenger = $request->messengers;
+
+            $validate = Validator::make(
+                $resMessenger,
+                [
+                    '*.usageId' => 'required|integer',
+                    '*.usageName' => 'required|string',
+                    '*.typeId' => 'required|integer',
+                ],
+                [
+                    '*.usageId.required' => 'Usage Should be Required!',
+                    '*.usageId.integer' => 'Usage Should be Filled!',
+                    '*.usageName.required' => 'Usage Name Should be Required!',
+                    '*.usageName.string' => 'Usage Name Should be Filled!',
+                    '*.typeId.required' => 'Type Id Should be Required!',
+                    '*.typeId.integer' => 'Type Id Should be Filled!',
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+        }
+
+        ProductSupplier::updateOrCreate(
+            ['id' => $request->id],
+            [
+                'supplierName' => $request->supplierName,
+                'pic' => $request->pic,
+                'userId' => $request->user()->id,
+            ]
+        );
+
+        if ($request->addresses) {
+
+            $resAddress = $request->addresses;
+
+            foreach ($resAddress as $valAdd) {
+                productSupplierAddresses::updateOrCreate(
+                    ['id' => $valAdd['id']],
+                    [
+                        'productSupplierId' => $valAdd['productSupplierId'],
+                        'streetAddress' => $valAdd['streetAddress'],
+                        'additionalInfo' => $valAdd['additionalInfo'],
+                        'country' => $valAdd['country'],
+                        'province' => $valAdd['province'],
+                        'city' => $valAdd['city'],
+                        'postalCode' => $valAdd['postalCode'],
+                        'isPrimary' => $valAdd['isPrimary'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
+
+        if ($request->phones) {
+            $resPhones = $request->phones;
+
+            foreach ($resPhones as $valPhone) {
+                productSupplierPhones::updateOrCreate(
+                    ['id' => $valPhone['id']],
+                    [
+                        'productSupplierId' => $valPhone['productSupplierId'],
+                        'usageId' => $valPhone['usageId'],
+                        'number' => $valPhone['number'],
+                        'typePhoneId' => $valPhone['typePhoneId'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
+
+        if ($request->emails) {
+            $resEmails = $request->emails;
+
+            foreach ($resEmails as $valEmail) {
+                productSupplierEmails::updateOrCreate(
+                    ['id' => $valEmail['id']],
+                    [
+                        'productSupplierId' => $valEmail['productSupplierId'],
+                        'usageId' => $valEmail['usageId'],
+                        'address' => $valEmail['address'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
+
+        if ($request->messengers) {
+            $resMsg = $request->messengers;
+
+            foreach ($resMsg as $valMsg) {
+                productSupplierMessengers::updateOrCreate(
+                    ['id' => $valMsg['id']],
+                    [
+                        'productSupplierId' => $valMsg['productSupplierId'],
+                        'usageId' => $valMsg['usageId'],
+                        'usageName' => $valMsg['usageName'],
+                        'typeId' => $valMsg['typeId'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+        }
+
+        return response()->json(
+            [
+                'message' => 'Update Data Successful!',
+            ],
+            200
+        );
+    }
+
+    public function delete(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            '.*id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        foreach ($request->id as $va) {
+            $res = ProductSupplier::find($va);
+
+            if (!$res) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any Data not found!'],
+                ], 422);
+            }
+        }
+
+        foreach ($request->id as $va) {
+            $res = ProductSupplier::find($va);
+
+            $res->DeletedBy = $request->user()->id;
+            $res->isDeleted = true;
+            $res->DeletedAt = Carbon::now();
+            $res->save();
+        }
+
+        return response()->json([
+            'message' => 'Delete Data Successful',
+        ], 200);
     }
 
     public function createSupplierUsage(Request $request)
