@@ -182,7 +182,7 @@
                         <label>Alamat:</label>
                     </td>
                     <td style="width:50%">
-                        <label>{{$dataSupplier->address}}</label>
+                        <label>{{$dataSupplier->streetAddress}}</label>
                     </td>
                 </tr>
                 <tr>
@@ -214,7 +214,12 @@
                         <label>No. Telp:</label>
                     </td>
                     <td style="width:50%">
-                        <label>{{$dataSupplier->telephone}}</label>
+                        @if(is_null($dataWhatsApp))
+                        <label>-</label>
+                        @else
+                        <label>{{$dataWhatsApp->number}}</label>
+                        @endif
+
                     </td>
                 </tr>
                 <tr>
@@ -222,7 +227,11 @@
                         <label>Fax:</label>
                     </td>
                     <td style="width:50%">
-                        <label>{{$dataSupplier->fax}}</label>
+                        @if(is_null($dataFax))
+                        <label>-</label>
+                        @else
+                        <label>{{$dataFax->number}}</label>
+                        @endif
                     </td>
                 </tr>
                 <tr>
@@ -230,7 +239,11 @@
                         <label>No. Telp PIC:</label>
                     </td>
                     <td style="width:50%">
-                        <label>{{$dataSupplier->picTelephone}}</label>
+                        @if(is_null($dataPic))
+                        <label>-</label>
+                        @else
+                        <label>{{$dataPic->number}}</label>
+                        @endif
                     </td>
                 </tr>
 

@@ -805,21 +805,61 @@ class RestockController extends Controller
             }
 
             $dataSupplier = DB::table('productSuppliers as ps')
-                ->leftjoin('provinsi as p', 'p.id', 'ps.province')
-                ->leftjoin('kabupaten as k', 'p.id', 'k.kodeProvinsi')
+                ->join('productSupplierAddresses as psa', 'psa.productSupplierId', 'ps.id')
+                ->join('provinsi as p', 'p.id', 'psa.province')
+                ->join('kabupaten as k', 'k.id', 'psa.city')
+                ->join('productSupplierPhones as psp', 'ps.id', 'psp.productSupplierId')
                 ->select(
+                    'ps.id',
                     'ps.supplierName',
-                    'ps.pic',
-                    'ps.address',
+                    DB::raw("IFNULL(ps.pic,'-') as pic"),
+                    'psa.streetAddress',
                     'p.namaProvinsi as provinsi',
                     'k.namaKabupaten as kota',
-                    'ps.postalCode',
-                    'ps.telephone',
-                    'ps.fax',
-                    'ps.picTelephone'
+                    'psa.postalCode',
+                    'psp.number',
                 )
                 ->where('ps.id', '=', $valSup)
                 ->first();
+
+            $dataWhatsApp = DB::table('productSupplierTypePhones')
+                ->where('typeName', 'like', '%whatsapp%')
+                ->first();
+
+            $dataFax = DB::table('productSupplierTypePhones')
+                ->where('typeName', 'like', '%fax%')
+                ->first();
+
+            $dataPic = DB::table('productSupplierTypePhones')
+                ->where('typeName', 'like', '%pic%')
+                ->first();
+
+            $suppWa = null;
+
+            if ($dataWhatsApp) {
+                $suppWa = DB::table('productSupplierPhones as psp')
+                    ->where('psp.productSupplierId', '=', $dataSupplier->id)
+                    ->where('psp.typePhoneId', '=', $dataWhatsApp->id)
+                    ->first();
+            }
+
+            $suppFax = null;
+
+            if ($dataFax) {
+                $suppFax = DB::table('productSupplierPhones as psp')
+                    ->where('psp.productSupplierId', '=', $dataSupplier->id)
+                    ->where('psp.typePhoneId', '=', $dataFax->id)
+                    ->first();
+            }
+
+            $suppPic = null;
+
+            if ($dataPic) {
+                $suppPic = DB::table('productSupplierPhones as psp')
+                    ->where('psp.productSupplierId', '=', $dataSupplier->id)
+                    ->where('psp.typePhoneId', '=', $dataPic->id)
+                    ->first();
+            }
 
             $dataMaster = DB::table('productRestocks as pr')
                 ->join('location as loc', 'loc.Id', 'pr.locationId')
@@ -834,13 +874,16 @@ class RestockController extends Controller
                     'ur.roleName'
                 )
                 ->where('pr.id', '=', $request->id)
-                ->where('ut.usage', '=', 'Utama')
+                ->where('ut.usage', 'like', '%utama%')
                 ->first();
 
             $sourceData = [
                 'dataMaster' => $dataMaster,
                 'data' => $data,
-                'dataSupplier' => $dataSupplier
+                'dataSupplier' => $dataSupplier,
+                'dataWhatsApp' => $suppWa,
+                'dataFax' => $suppFax,
+                'dataPic' => $suppPic,
             ];
 
             $pdf = PDF::loadview('restock-pr-template', $sourceData);
@@ -869,7 +912,6 @@ class RestockController extends Controller
         File::deleteDirectory($path);
 
         return response()->download($zip_file);
-        // return Zip::create('asd.zip', File::files(public_path('ProductRestock')));
     }
 
     public function update(Request $request)
