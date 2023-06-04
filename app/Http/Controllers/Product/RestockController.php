@@ -53,14 +53,14 @@ class RestockController extends Controller
 
         if ($request->supplierId) {
 
-            $detail = DB::table('productRestockDetails as pr')
-                ->select('pr.productRestockId')
-                ->whereIn('pr.supplierId', $request->supplierId)
-                ->where('pr.isDeleted', '=', 0)
-                ->distinct()
-                ->pluck('pr.productRestockId');
+            // $detail = DB::table('productRestockDetails as pr')
+            //     ->select('pr.productRestockId')
+            //     ->whereIn('pr.supplierId', $request->supplierId)
+            //     ->where('pr.isDeleted', '=', 0)
+            //     ->distinct()
+            //     ->pluck('pr.productRestockId');
 
-            $data = $data->whereIn('prd.supplierId', $detail);
+            $data = $data->whereIn('prd.supplierId', $request->supplierId);
         }
 
         if ($request->search) {
