@@ -36,6 +36,7 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
     public function collection()
     {
         $data = DB::table('productRestocks as pr')
+            ->join('productRestockDetails as prd', 'prd.productRestockId', 'pr.id')
             ->join('location as loc', 'loc.Id', 'pr.locationId')
             ->join('users as u', 'pr.userId', 'u.id')
             ->select(
@@ -77,7 +78,7 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
                 ->distinct()
                 ->pluck('pr.productRestockId');
 
-            $data = $data->whereIn('pr.supplierId', $detail);
+            $data = $data->whereIn('prd.supplierId', $detail);
         }
 
         if ($this->orderValue) {
