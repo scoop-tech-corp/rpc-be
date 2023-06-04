@@ -30,6 +30,7 @@ class RestockController extends Controller
         $page = $request->goToPage;
 
         $data = DB::table('productRestocks as pr')
+            ->join('productRestockDetails as prd', 'prd.productRestockId', 'pr.id')
             ->join('location as loc', 'loc.Id', 'pr.locationId')
             ->join('users as u', 'pr.userId', 'u.id')
             ->select(
@@ -59,7 +60,7 @@ class RestockController extends Controller
                 ->distinct()
                 ->pluck('pr.productRestockId');
 
-            $data = $data->whereIn('pr.id', $detail);
+            $data = $data->whereIn('prd.supplierId', $detail);
         }
 
         if ($request->search) {
