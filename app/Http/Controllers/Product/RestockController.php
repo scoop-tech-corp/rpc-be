@@ -60,6 +60,7 @@ class RestockController extends Controller
             //     ->distinct()
             //     ->pluck('pr.productRestockId');
 
+
             $data = $data->whereIn('prd.supplierId', $request->supplierId);
         }
 
