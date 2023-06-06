@@ -71,14 +71,14 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
         // if (!$suppliers[0] == null) {
         if ($suppliers) {
 
-            $detail = DB::table('productRestockDetails as pr')
-                ->select('pr.productRestockId')
-                ->whereIn('pr.supplierId', $this->supplierId)
-                ->where('pr.isDeleted', '=', 0)
-                ->distinct()
-                ->pluck('pr.productRestockId');
+            // $detail = DB::table('productRestockDetails as pr')
+            //     ->select('pr.productRestockId')
+            //     ->whereIn('pr.supplierId', $this->supplierId)
+            //     ->where('pr.isDeleted', '=', 0)
+            //     ->distinct()
+            //     ->pluck('pr.productRestockId');
 
-            $data = $data->whereIn('prd.supplierId', $detail);
+            $data = $data->whereIn('prd.supplierId', $suppliers);
         }
 
         if ($this->orderValue) {
