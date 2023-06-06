@@ -805,7 +805,22 @@ class RestockController extends Controller
 
         File::makeDirectory($path);
 
-        foreach ($request->supplierId as $valSup) {
+        $supplierIdList = [];
+
+        if ($request->isExportAll == true) {
+
+            $dataSupp = DB::table('productRestockDetails as prd')
+                ->select('prd.supplierId')
+                ->where('prd.productRestockId', '=', $request->id)
+                ->distinct()
+                ->pluck('prd.supplierId');
+
+            $supplierIdList = $dataSupp;
+        } else {
+            $supplierIdList = $request->supplierId;
+        }
+
+        foreach ($supplierIdList as $valSup) {
             $supp = DB::table('productRestockDetails as prd')
                 ->where('prd.productRestockId', '=', $request->id)
                 ->where('prd.supplierId', '=', $valSup)
