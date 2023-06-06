@@ -997,6 +997,8 @@ class RestockController extends Controller
             ], 422);
         }
 
+        $tmp_num = '';
+
         foreach ($request->id as $va) {
             $res = productRestocks::find($va);
 
@@ -1007,11 +1009,8 @@ class RestockController extends Controller
                 ], 422);
             }
 
-            $tmp_num = '';
-
             if ($res->status != 0) {
-
-                $tmp_num = $tmp_num . $res->numberId . ', ';
+                $tmp_num = $tmp_num . (string) $res->numberId . ', ';
             }
         }
 
