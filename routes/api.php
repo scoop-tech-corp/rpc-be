@@ -170,6 +170,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/restock', [RestockController::class, 'index']);
         Route::post('/restock', [RestockController::class, 'create']);
+        Route::put('/restock', [RestockController::class, 'update']);
+        Route::delete('/restock', [RestockController::class, 'delete']);
+
         Route::post('/restock/multiple', [RestockController::class, 'createMultiple']);
         Route::get('/restock/export', [RestockController::class, 'export']);
         Route::get('/restock/export/pdf', [RestockController::class, 'exportPDF']);
