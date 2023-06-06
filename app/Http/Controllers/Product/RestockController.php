@@ -12,6 +12,7 @@ use App\Models\productRestocks;
 use App\Models\productRestockTracking;
 use App\Models\ProductSell;
 use App\Models\ProductSellLocation;
+use App\Models\ProductSupplier;
 use Illuminate\Http\Request;
 use Validator;
 use Carbon\Carbon;
@@ -52,15 +53,6 @@ class RestockController extends Controller
         }
 
         if ($request->supplierId) {
-
-            // $detail = DB::table('productRestockDetails as pr')
-            //     ->select('pr.productRestockId')
-            //     ->whereIn('pr.supplierId', $request->supplierId)
-            //     ->where('pr.isDeleted', '=', 0)
-            //     ->distinct()
-            //     ->pluck('pr.productRestockId');
-
-
             $data = $data->whereIn('prd.supplierId', $request->supplierId);
         }
 
@@ -153,10 +145,13 @@ class RestockController extends Controller
 
         $prodType = "";
         $checkAdminApproval = false;
+        $locationId = 0;
+        $suppName = '';
+        $currentStock = 0;
 
         if ($request->productType == 'productSell') {
 
-            $prodType = "Product Sell";
+            $prodType = "productSell";
 
             $prod = ProductSell::find($request->productId);
 
@@ -167,9 +162,16 @@ class RestockController extends Controller
                 ], 422);
             }
 
+            $supp = ProductSupplier::find($prod->productSupplierId);
+
+            $suppName = $supp->supplierName;
+
             $stockProd = ProductSellLocation::where('productSellId', '=', $request->productId)->first();
+
+            $locationId = $stockProd->locationId;
+            $currentStock = $stockProd->inStock;
         } else {
-            $prodType = "Product Clinic";
+            $prodType = "productClinic";
 
             $prod = ProductClinic::find($request->productId);
 
@@ -180,7 +182,14 @@ class RestockController extends Controller
                 ], 422);
             }
 
+            $supp = ProductSupplier::find($prod->productSupplierId);
+
+            $suppName = $supp->supplierName;
+
             $stockProd = ProductClinicLocation::where('productClinicId', '=', $request->productId)->first();
+
+            $locationId = $stockProd->locationId;
+            $currentStock = $stockProd->inStock;
         }
 
         if ($stockProd->reStockLimit < $request->reStockQuantity) {
@@ -206,8 +215,22 @@ class RestockController extends Controller
             $checkAdminApproval = true;
         }
 
+        $cntNum = DB::table('productRestocks')
+            ->where('status', '!=', 0)
+            ->count();
+
+        if ($cntNum == 0) {
+            $numberId = '#' . str_pad(1, 8, 0, STR_PAD_LEFT);
+        } else {
+            $numberId = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
+        }
+
         $prodRstk = productRestocks::create([
-            'purchaseRequestNumber' => $number,
+            'numberId' => $numberId,
+            'locationId' => $locationId,
+            'variantProduct' => 1,
+            'totalProduct' => $request->reStockQuantity,
+            'supplierName' => $suppName,
             'status' => 0,
             'isAdminApproval' => $checkAdminApproval,
             'userId' => $request->user()->id,
@@ -216,12 +239,20 @@ class RestockController extends Controller
 
         productRestockDetails::create([
 
+            'purchaseRequestNumber' => '',
+            'purchaseOrderNumber' => '',
             'productRestockId' => $prodRstk->id,
             'productId' => $request->productId,
             'productType' => $prodType,
             'supplierId' => $request->supplierId,
             'requireDate' => $request->requireDate,
+            'currentStock' => $currentStock,
             'reStockQuantity' => $request->reStockQuantity,
+            'rejected' => '0',
+            'canceled' => '0',
+            'accepted' => '0',
+            'received' => '0',
+            'total' => $request->total,
             'costPerItem' => $request->costPerItem,
             'remark' => $request->remark,
             'userId' => $request->user()->id,
@@ -565,6 +596,15 @@ class RestockController extends Controller
             ], 422);
         }
 
+        $chk = productRestocks::find($request->id);
+
+        if (!$chk) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['There is any Data not found!'],
+            ], 422);
+        }
+
         $restock = DB::table('productRestocks as pres')
             ->join('location as loc', 'loc.Id', 'pres.locationId')
             ->join('users as u', 'pres.userId', 'u.id')
@@ -585,6 +625,7 @@ class RestockController extends Controller
             )
             ->where('pt.productRestockId', '=', $request->id)
             ->get();
+
         $restock->tracking = $tracking;
 
         $suppList = DB::table('productRestockDetails as prd')
@@ -619,18 +660,23 @@ class RestockController extends Controller
                 if ($list->productType == 'productSell') {
                     $prd = DB::table('productSells as ps')
                         ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                        ->select('ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received')
+                        ->select('ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
                         ->where('ps.id', '=', $list->productId)
                         ->where('prd.productType', '=', 'productSell')
                         ->first();
                 } elseif ($list->productType == 'productClinic') {
-                    $prd = DB::table('productCLinics as pc')
+                    $prd = DB::table('productClinics as pc')
                         ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
-                        ->select('pc.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received')
+                        ->select('pc.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
                         ->where('pc.id', '=', $list->productId)
                         ->where('prd.productType', '=', 'productClinic')
                         ->first();
                 }
+
+                $image = DB::table('productRestockImages as pri')
+                    ->select('pri.id', 'pri.labelName', 'pri.realImageName', 'pri.imagePath')
+                    ->where('pri.productRestockDetailId', '=', $prd->id)
+                    ->get();
 
                 $data[] = array(
                     'fullName' => $prd->fullName,
@@ -639,7 +685,8 @@ class RestockController extends Controller
                     'rejected' => $prd->rejected,
                     'canceled' => $prd->canceled,
                     'accepted' => $prd->accepted,
-                    'received' => $prd->received
+                    'received' => $prd->received,
+                    'images' => $image
                 );
             }
 
@@ -781,7 +828,7 @@ class RestockController extends Controller
                         ->where('prd.productType', '=', 'productSell')
                         ->first();
                 } elseif ($value->productType == 'productClinic') {
-                    $prd = DB::table('productCLinics as pc')
+                    $prd = DB::table('productClinics as pc')
                         ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
                         ->select(
                             'prd.purchaseRequestNumber',
@@ -922,5 +969,70 @@ class RestockController extends Controller
 
     public function delete(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            '.*id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        foreach ($request->id as $va) {
+            $res = productRestocks::find($va);
+
+            if (!$res) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any Data not found!'],
+                ], 422);
+            }
+
+            $tmp_num = '';
+
+            if ($res->status != 0) {
+
+                $tmp_num = $tmp_num . $res->numberId . ', ';
+            }
+        }
+
+        if ($tmp_num != '') {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Restock with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited!'],
+            ], 422);
+        }
+
+        foreach ($request->id as $va) {
+            $res = productRestocks::find($va);
+
+            $res->DeletedBy = $request->user()->id;
+            $res->isDeleted = true;
+            $res->DeletedAt = Carbon::now();
+            $res->save();
+        }
+
+        return response()->json([
+            'message' => 'Delete Data Successful',
+        ], 200);
+    }
+
+    public function approval(Request $request)
+    {
+        # code...
+    }
+
+    public function sentSupplier(Request $request)
+    {
+        # code...
+    }
+
+    public function confirmReceive(Request $request)
+    {
+        # code...
     }
 }
