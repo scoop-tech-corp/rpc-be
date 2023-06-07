@@ -171,7 +171,7 @@ class SecurityGroup extends Controller
 
             $data = User::from('users as a')
                 ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
-                ->leftjoin('jobtitle as c', 'c.id', '=', 'a.jobTitleId')
+                ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
                 ->select(
                     'a.id as usersId',
                     DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
