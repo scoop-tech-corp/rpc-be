@@ -20,6 +20,8 @@ use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\VerifyUserandPasswordController;
 use App\Http\Controllers\Staff\StaffLeaveController;
 use App\Http\Controllers\Product\CategoryController;
+use App\Http\Controllers\Staff\SecurityGroup;
+use App\Http\Controllers\Staff\SecurityGroupController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -268,6 +270,17 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/product/transfer', [StaffController::class, 'staffListTransferProduct']);
     });
+
+
+    //Security Group
+    Route::group(['prefix' => 'securitygroup'], function () {
+
+        Route::get('/', [SecurityGroup::class, 'index']);
+        Route::post('/', [SecurityGroup::class, 'insertSecurityGroup']);
+        Route::delete('/', [SecurityGroup::class, 'deleteSecurityGroup']);
+        Route::get('/detail', [SecurityGroup::class, 'detailSecurityGroup']);
+    });
+
 
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
