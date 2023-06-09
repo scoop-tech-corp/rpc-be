@@ -542,7 +542,7 @@ class RestockController extends Controller
 
     public function export(Request $request)
     {
-        $tmp = "";
+        $tmpLoc = "";
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
 
@@ -558,16 +558,16 @@ class RestockController extends Controller
             if ($location) {
 
                 foreach ($location as $key) {
-                    $tmp = $tmp . (string) $key->locationName . ",";
+                    $tmpLoc = $tmpLoc . (string) $key->locationName . ",";
                 }
             }
-            $tmp = rtrim($tmp, ", ");
+            $tmpLoc = rtrim($tmpLoc, ",");
         }
 
-        if ($tmp == "") {
+        if ($tmpLoc == "") {
             $fileName = "Rekap Restock Produk " . $date . ".xlsx";
         } else {
-            $fileName = "Rekap Restock Produk " . $tmp . " " . $date . ".xlsx";
+            $fileName = "Rekap Restock Produk " . $tmpLoc . " " . $date . ".xlsx";
         }
 
         return Excel::download(
@@ -629,7 +629,7 @@ class RestockController extends Controller
 
             $prd = DB::table('productRestocks as pr')
                 ->join('location as loc', 'loc.Id', 'pr.locationId')
-                ->select('pr.id', 'pr.locationId','loc.locationName')
+                ->select('pr.id', 'pr.locationId', 'loc.locationName')
                 ->where('pr.id', '=', $request->id)
                 ->first();
 
@@ -653,7 +653,7 @@ class RestockController extends Controller
                 ->where('pr.productRestockId', '=', $request->id)
                 ->get();
 
-                $prd->detail = $chk;
+            $prd->detail = $chk;
 
             return response()->json($prd, 200);
         } else {
