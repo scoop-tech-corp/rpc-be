@@ -563,7 +563,8 @@ class SupplierController extends Controller
             [
                 'supplierName' => $request->supplierName,
                 'pic' => $request->pic,
-                'userId' => $request->user()->id,
+                'updated_at' => Carbon::now(),
+                'userUpdateId' => $request->user()->id,
             ]
         );
 
@@ -583,7 +584,8 @@ class SupplierController extends Controller
                         'city' => $valAdd['city'],
                         'postalCode' => $valAdd['postalCode'],
                         'isPrimary' => $valAdd['isPrimary'],
-                        'userId' => $request->user()->id,
+                        'updated_at' => Carbon::now(),
+                        'userUpdateId' => $request->user()->id,
                     ]
                 );
             }
@@ -600,7 +602,8 @@ class SupplierController extends Controller
                         'usageId' => $valPhone['usageId'],
                         'number' => $valPhone['number'],
                         'typePhoneId' => $valPhone['typePhoneId'],
-                        'userId' => $request->user()->id,
+                        'updated_at' => Carbon::now(),
+                        'userUpdateId' => $request->user()->id,
                     ]
                 );
             }
@@ -616,7 +619,8 @@ class SupplierController extends Controller
                         'productSupplierId' => $valEmail['productSupplierId'],
                         'usageId' => $valEmail['usageId'],
                         'address' => $valEmail['address'],
-                        'userId' => $request->user()->id,
+                        'updated_at' => Carbon::now(),
+                        'userUpdateId' => $request->user()->id,
                     ]
                 );
             }
@@ -633,7 +637,8 @@ class SupplierController extends Controller
                         'usageId' => $valMsg['usageId'],
                         'usageName' => $valMsg['usageName'],
                         'typeId' => $valMsg['typeId'],
-                        'userId' => $request->user()->id,
+                        'updated_at' => Carbon::now(),
+                        'userUpdateId' => $request->user()->id,
                     ]
                 );
             }

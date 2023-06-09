@@ -396,6 +396,35 @@ class RestockController extends Controller
 
         foreach ($datas as $value) {
 
+            if ($value['productType'] === 'productSell') {
+
+                $findProd = ProductSell::find($value['productId']);
+
+                $find = ProductSellLocation::where('productSellId', '=', $value['productId'])->first();
+
+                if ($find) {
+                    if ($value['restockQuantity'] < $find->reStockLimit) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+                        ], 422);
+                    }
+                }
+            } elseif ($value['productType'] === 'productClinic') {
+                $findProd = ProductClinic::find($value['productId']);
+
+                $find = ProductClinicLocation::where('productClinicId', '=', $value['productId'])->first();
+
+                if ($find) {
+                    if ($value['restockQuantity'] > $find->reStockLimit) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+                        ], 422);
+                    }
+                }
+            }
+
             $totalProduct += $value['restockQuantity'];
             $variantProduct++;
             $totalImages += $value['totalImage'];
@@ -596,113 +625,147 @@ class RestockController extends Controller
             ], 422);
         }
 
-        $chk = productRestocks::find($request->id);
+        if ($request->type == 'edit') {
 
-        if (!$chk) {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['There is any Data not found!'],
-            ], 422);
-        }
-
-        $restock = DB::table('productRestocks as pres')
-            ->join('location as loc', 'loc.Id', 'pres.locationId')
-            ->join('users as u', 'pres.userId', 'u.id')
-            ->select(
-                'loc.locationName',
-                'u.firstName as createdBy',
-                DB::raw("DATE_FORMAT(pres.created_at, '%W, %d %M %Y') as createdAt")
-            )
-            ->where('pres.id', '=', $request->id)
-            ->first();
-
-        $tracking = DB::table('productRestockTrackings as pt')
-            ->join('users as u', 'pt.userId', 'u.id')
-            ->select(
-                'pt.progress',
-                'u.firstName as createdBy',
-                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
-            )
-            ->where('pt.productRestockId', '=', $request->id)
-            ->get();
-
-        $restock->tracking = $tracking;
-
-        $suppList = DB::table('productRestockDetails as prd')
-            ->select('ps.id')
-            ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
-            ->where('prd.productRestockId', '=', $request->id)
-            ->groupby('ps.id')
-            ->orderBy('ps.updated_at', 'desc')
-            ->distinct()
-            ->pluck('ps.id');
-
-        foreach ($suppList as $value) {
-
-            $prodSingle = DB::table('productRestockDetails as prd')
-                ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
-                ->where('prd.productRestockId', '=', $request->id)
-                ->where('prd.supplierId', '=', $value)
+            $prd = DB::table('productRestocks as pr')
+                ->join('location as loc', 'loc.Id', 'pr.locationId')
+                ->select('pr.id', 'pr.locationId','loc.locationName')
+                ->where('pr.id', '=', $request->id)
                 ->first();
 
-            $prodList = DB::table('productRestockDetails as prd')
-                ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
-                ->where('prd.productRestockId', '=', $request->id)
-                ->where('prd.supplierId', '=', $value)
+            $chk = DB::table('productRestockDetails as pr')
+                ->join('productSuppliers as sup', 'sup.Id', 'pr.supplierId')
+                ->select(
+                    'pr.id',
+                    'pr.productId',
+                    'pr.productType',
+                    DB::raw('CASE WHEN pr.productType = "productSell" THEN (select fullName from productSells where id=pr.productId)
+                    WHEN pr.productType = "productClinic" THEN (select fullName from productClinics where id=pr.productId) END as productName'),
+                    'pr.supplierId',
+                    'sup.supplierName',
+                    'pr.requireDate',
+                    'pr.currentStock',
+                    DB::raw("TRIM(pr.reStockQuantity)+0 as reStockQuantity"),
+                    DB::raw("TRIM(pr.costPerItem)+0 as costPerItem"),
+                    DB::raw("TRIM(pr.total)+0 as total"),
+                    'pr.remark'
+                )
+                ->where('pr.productRestockId', '=', $request->id)
                 ->get();
 
-            $cntProdList = DB::table('productRestockDetails as prd')
-                ->where('prd.productRestockId', '=', $request->id)
-                ->where('prd.supplierId', '=', $value)
-                ->count();
+                $prd->detail = $chk;
 
-            foreach ($prodList as $list) {
-                if ($list->productType == 'productSell') {
-                    $prd = DB::table('productSells as ps')
-                        ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                        ->select('ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
-                        ->where('ps.id', '=', $list->productId)
-                        ->where('prd.productType', '=', 'productSell')
-                        ->first();
-                } elseif ($list->productType == 'productClinic') {
-                    $prd = DB::table('productClinics as pc')
-                        ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
-                        ->select('pc.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
-                        ->where('pc.id', '=', $list->productId)
-                        ->where('prd.productType', '=', 'productClinic')
-                        ->first();
-                }
+            return response()->json($prd, 200);
+        } else {
+            $chk = productRestocks::find($request->id);
 
-                $image = DB::table('productRestockImages as pri')
-                    ->select('pri.id', 'pri.labelName', 'pri.realImageName', 'pri.imagePath')
-                    ->where('pri.productRestockDetailId', '=', $prd->id)
-                    ->get();
-
-                $data[] = array(
-                    'fullName' => $prd->fullName,
-                    'unitCost' => $prd->costPerItem,
-                    'orderQuantity' => $prd->reStockQuantity,
-                    'rejected' => $prd->rejected,
-                    'canceled' => $prd->canceled,
-                    'accepted' => $prd->accepted,
-                    'received' => $prd->received,
-                    'images' => $image
-                );
+            if (!$chk) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any Data not found!'],
+                ], 422);
             }
 
-            $dataSup[] = array(
-                'supplierName' => $prodSingle->supplierName,
-                'quantity' => $cntProdList,
-                'purchaseOrderNumber' => $prodSingle->purchaseOrderNumber,
-                'detail' => $data
-            );
+            $restock = DB::table('productRestocks as pres')
+                ->join('location as loc', 'loc.Id', 'pres.locationId')
+                ->join('users as u', 'pres.userId', 'u.id')
+                ->select(
+                    'loc.locationName',
+                    'u.firstName as createdBy',
+                    DB::raw("DATE_FORMAT(pres.created_at, '%W, %d %M %Y') as createdAt")
+                )
+                ->where('pres.id', '=', $request->id)
+                ->first();
 
-            $data = [];
+            $tracking = DB::table('productRestockTrackings as pt')
+                ->join('users as u', 'pt.userId', 'u.id')
+                ->select(
+                    'pt.progress',
+                    'u.firstName as createdBy',
+                    DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+                )
+                ->where('pt.productRestockId', '=', $request->id)
+                ->get();
+
+            $restock->tracking = $tracking;
+
+            $suppList = DB::table('productRestockDetails as prd')
+                ->select('ps.id')
+                ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+                ->where('prd.productRestockId', '=', $request->id)
+                ->groupby('ps.id')
+                ->orderBy('ps.updated_at', 'desc')
+                ->distinct()
+                ->pluck('ps.id');
+
+            foreach ($suppList as $value) {
+
+                $prodSingle = DB::table('productRestockDetails as prd')
+                    ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+                    ->where('prd.productRestockId', '=', $request->id)
+                    ->where('prd.supplierId', '=', $value)
+                    ->first();
+
+                $prodList = DB::table('productRestockDetails as prd')
+                    ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+                    ->where('prd.productRestockId', '=', $request->id)
+                    ->where('prd.supplierId', '=', $value)
+                    ->get();
+
+                $cntProdList = DB::table('productRestockDetails as prd')
+                    ->where('prd.productRestockId', '=', $request->id)
+                    ->where('prd.supplierId', '=', $value)
+                    ->count();
+
+                foreach ($prodList as $list) {
+                    if ($list->productType == 'productSell') {
+                        $prd = DB::table('productSells as ps')
+                            ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                            ->select('prd.id', 'ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
+                            ->where('ps.id', '=', $list->productId)
+                            ->where('prd.productType', '=', 'productSell')
+                            ->first();
+                    } elseif ($list->productType == 'productClinic') {
+                        $prd = DB::table('productClinics as pc')
+                            ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
+                            ->select('prd.id', 'pc.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
+                            ->where('pc.id', '=', $list->productId)
+                            ->where('prd.productType', '=', 'productClinic')
+                            ->first();
+                    }
+
+                    $image = DB::table('productRestockImages as pri')
+                        ->select('pri.id', 'pri.labelName', 'pri.realImageName', 'pri.imagePath')
+                        ->where('pri.productRestockDetailId', '=', $prd->id)
+                        ->get();
+
+                    $data[] = array(
+                        'id' => $prd->id,
+                        'fullName' => $prd->fullName,
+                        'unitCost' => $prd->costPerItem,
+                        'orderQuantity' => $prd->reStockQuantity,
+                        'rejected' => $prd->rejected,
+                        'canceled' => $prd->canceled,
+                        'accepted' => $prd->accepted,
+                        'received' => $prd->received,
+                        'images' => $image
+                    );
+                }
+
+                $dataSup[] = array(
+                    'supplierName' => $prodSingle->supplierName,
+                    'quantity' => $cntProdList,
+                    'purchaseOrderNumber' => $prodSingle->purchaseOrderNumber,
+                    'detail' => $data
+                );
+
+                $data = [];
+            }
+
+            $restock->dataSupplier = $dataSup;
+
+            return response()->json($restock, 200);
         }
-
-        $restock->dataSupplier = $dataSup;
-
-        return response()->json($restock, 200);
     }
 
     public function detailHistory(Request $request)
@@ -980,6 +1043,254 @@ class RestockController extends Controller
 
     public function update(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'status' => 'required|in:draft,final',
+            'locationId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $datas = $request->productList;
+
+        $variantProduct = 0;
+        $totalProduct = 0;
+        $totalImages = 0;
+        $suppName = "";
+
+        //validasi data
+
+        $validate = Validator::make(
+            $datas,
+            [
+                '*.id' => 'required|integer',
+                '*.productType' => 'required|string|in:productSell,productClinic',
+                '*.productId' => 'required|integer',
+                '*.supplierId' => 'required|integer',
+                '*.requireDate' => 'required|date',
+                '*.currentStock' => 'required|integer',
+                '*.restockQuantity' => 'required|integer',
+                '*.costPerItem' => 'required|numeric',
+                '*.total' => 'required|numeric',
+                '*.remark' => 'nullable|string',
+            ],
+            [
+                '*.id.required' => 'Id Should be Required!',
+                '*.id.integer' => 'Id Should be Filled!',
+
+                '*.productType.required' => 'Product Type Should be Required!',
+                '*.productType.string' => 'Product Type Should be Filled!',
+
+                '*.productId.required' => 'Product Id Should be Required!',
+                '*.productId.integer' => 'Product Id Should be Filled!',
+
+                '*.supplierId.required' => 'Supplier Id Should be Required!',
+                '*.supplierId.integer' => 'Supplier Id Should be Filled!',
+
+                '*.requireDate.required' => 'Require Date Should be Required!',
+                '*.requireDate.date' => 'Require Date Should be Date!',
+
+                '*.currentStock.required' => 'Current Stock Should be Required!',
+                '*.currentStock.integer' => 'Current Stock Should be Filled!',
+
+                '*.restockQuantity.required' => 'Restock Quantity Should be Required!',
+                '*.restockQuantity.integer' => 'Restock Quantity Should be Filled!',
+
+                '*.costPerItem.required' => 'Cost per Item Should be Required!',
+                '*.costPerItem.integer' => 'Cost per Item Should be Filled!',
+
+                '*.total.required' => 'Total Should be Required!',
+                '*.total.integer' => 'Total Should be Filled!',
+            ]
+        );
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->first();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
+            ], 422);
+        }
+
+        foreach ($datas as $value) {
+
+            if ($value['productType'] === 'productSell') {
+
+                $findProd = ProductSell::find($value['productId']);
+
+                $find = ProductSellLocation::where('productSellId', '=', $value['productId'])->first();
+
+                if ($find) {
+                    if ($value['restockQuantity'] > $find->reStockLimit) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+                        ], 422);
+                    }
+                }
+            } elseif ($value['productType'] === 'productClinic') {
+                $findProd = ProductClinic::find($value['productId']);
+
+                $find = ProductClinicLocation::where('productClinicId', '=', $value['productId'])->first();
+
+                if ($find) {
+                    if ($value['restockQuantity'] < $find->reStockLimit) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+                        ], 422);
+                    }
+                }
+            }
+
+            $totalProduct += $value['restockQuantity'];
+            $variantProduct++;
+
+            $supp = DB::table('productSuppliers as ps')
+                ->where('ps.id', '=', $value['supplierId'])
+                ->first();
+
+            $suppName = $suppName . $supp->supplierName . ', ';
+        }
+
+        $suppName = rtrim($suppName, ", ");
+
+        $statusdata = '';
+        $number = '';
+
+        if ($request->status == 'draft') {
+            $statusdata = '0';
+            $number = 'draft';
+        } elseif ($request->status == 'final') {
+            $statusdata = '1';
+
+            $cntNum = DB::table('productRestocks')
+                ->where('status', '!=', 0)
+                ->count();
+
+            if ($cntNum == 0) {
+                $number = '#' . str_pad(1, 8, 0, STR_PAD_LEFT);
+            } else {
+                $number = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
+            }
+        }
+
+        //update data
+
+        productRestocks::updateOrCreate(
+            ['id' => $request->id],
+            [
+                'variantProduct' => $variantProduct,
+                'totalProduct' => $totalProduct,
+                'supplierName' => $suppName,
+                'status' => $statusdata,
+                'isAdminApproval' => 0,
+                'updated_at' => Carbon::now(),
+                'userUpdateId' => $request->user()->id,
+            ]
+        );
+
+        if ($number == 'draft') {
+            productRestockLog($request->id, "Updated", "Draft", $request->user()->id);
+        } else {
+            productRestockLog($request->id, "Updated", "Waiting for Approval", $request->user()->id);
+        }
+
+
+        $findData = productRestocks::whereDate('created_at', Carbon::today())->count();
+
+        $number = "";
+        $prNumber = "";
+
+        foreach ($datas as $val) {
+
+            if ($request->status == 'final') {
+
+                if ($findData == 0) {
+                    $number = Carbon::today();
+                    $number = 'RPC-PR-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+                } else {
+                    $number = Carbon::today();
+                    $number = 'RPC-PR-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+                }
+            }
+
+            if ($val['status'] === 'del') {
+                $res = productRestockDetails::find($val['id']);
+
+                $res->DeletedBy = $request->user()->id;
+                $res->isDeleted = true;
+                $res->DeletedAt = Carbon::now();
+                $res->save();
+            } else {
+                productRestockDetails::updateOrCreate(
+                    ['id' => $val['id']],
+                    [
+                        'purchaseRequestNumber' => $prNumber,
+                        'purchaseOrderNumber' => '',
+                        'productRestockId' => $request->id,
+                        'productId' => $val['productId'],
+                        'productType' => $val['productType'],
+                        'supplierId' => $val['supplierId'],
+                        'requireDate' => $val['requireDate'],
+                        'currentStock' => $val['currentStock'],
+                        'reStockQuantity' => $val['restockQuantity'],
+                        'rejected' => '0',
+                        'canceled' => '0',
+                        'accepted' => '0',
+                        'received' => '0',
+                        'costPerItem' => $val['costPerItem'],
+                        'total' => $val['total'],
+                        'remark' => $val['remark'],
+                        'updated_at' => Carbon::now(),
+                        'userUpdateId' => $request->user()->id,
+                    ]
+                );
+            }
+
+            foreach ($val['images'] as $valueImg) {
+
+                if ($valueImg['status'] == 'del') {
+                    $res = productRestockImages::find($valueImg['id']);
+
+                    $res->DeletedBy = $request->user()->id;
+                    $res->isDeleted = true;
+                    $res->DeletedAt = Carbon::now();
+                    $res->save();
+                } else {
+                    $image = str_replace('data:image/', '', $valueImg['imagePath']);
+                    $image = explode(';base64,', $image);
+                    $imageName = Str::random(40) . '.' . $image[0];
+                    File::put(public_path('ProductRestockImages') . '/' . $imageName, base64_decode($image[1]));
+
+                    productRestockImages::updateOrCreate(
+                        ['id' => $valueImg['id']],
+                        [
+                            'productRestockDetailId' => $val['id'],
+                            'labelName' => $valueImg['label'],
+                            'realImageName' => $valueImg['originalName'],
+                            'imagePath' => '/ProductRestockImages' . '/' . $imageName,
+                            'updated_at' => Carbon::now(),
+                            'userUpdateId' => $request->user()->id,
+                        ]
+                    );
+                }
+            }
+        }
+
+        return response()->json(
+            [
+                'message' => 'Update Data Successful!',
+            ],
+            200
+        );
     }
 
     public function delete(Request $request)
