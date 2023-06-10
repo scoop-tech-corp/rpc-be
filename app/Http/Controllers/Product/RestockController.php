@@ -403,7 +403,7 @@ class RestockController extends Controller
                 $find = ProductSellLocation::where('productSellId', '=', $value['productId'])->first();
 
                 if ($find) {
-                    if ($value['restockQuantity'] < $find->reStockLimit) {
+                    if ($value['restockQuantity'] > $find->reStockLimit) {
                         return response()->json([
                             'message' => 'The given data was invalid.',
                             'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
@@ -486,13 +486,12 @@ class RestockController extends Controller
         foreach ($datas as $val) {
 
             if ($request->status == 'final') {
-
                 if ($findData == 0) {
                     $number = Carbon::today();
-                    $number = 'RPC-PR-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+                    $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
                 } else {
                     $number = Carbon::today();
-                    $number = 'RPC-PR-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+                    $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
                 }
             }
 
@@ -755,7 +754,7 @@ class RestockController extends Controller
                 $dataSup[] = array(
                     'supplierName' => $prodSingle->supplierName,
                     'quantity' => $cntProdList,
-                    'purchaseOrderNumber' => $prodSingle->purchaseOrderNumber,
+                    'purchaseRequestNumber' => $prodSingle->purchaseRequestNumber,
                     'detail' => $data
                 );
 
@@ -1150,14 +1149,16 @@ class RestockController extends Controller
                 }
             }
 
-            $totalProduct += $value['restockQuantity'];
-            $variantProduct++;
+            if ($value['status'] != "del") {
+                $totalProduct += $value['restockQuantity'];
+                $variantProduct++;
 
-            $supp = DB::table('productSuppliers as ps')
-                ->where('ps.id', '=', $value['supplierId'])
-                ->first();
+                $supp = DB::table('productSuppliers as ps')
+                    ->where('ps.id', '=', $value['supplierId'])
+                    ->first();
 
-            $suppName = $suppName . $supp->supplierName . ', ';
+                $suppName = $suppName . $supp->supplierName . ', ';
+            }
         }
 
         $suppName = rtrim($suppName, ", ");
@@ -1187,6 +1188,8 @@ class RestockController extends Controller
         productRestocks::updateOrCreate(
             ['id' => $request->id],
             [
+                'numberId' => $number,
+                'locationId' => $request->locationId,
                 'variantProduct' => $variantProduct,
                 'totalProduct' => $totalProduct,
                 'supplierName' => $suppName,
@@ -1215,10 +1218,10 @@ class RestockController extends Controller
 
                 if ($findData == 0) {
                     $number = Carbon::today();
-                    $number = 'RPC-PR-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+                    $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
                 } else {
                     $number = Carbon::today();
-                    $number = 'RPC-PR-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+                    $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
                 }
             }
 
@@ -1348,12 +1351,12 @@ class RestockController extends Controller
 
     public function approval(Request $request)
     {
-        # code...
+        //bisa ada kemungkinan diterima bisa juga di tolak
     }
 
     public function sentSupplier(Request $request)
     {
-        # code...
+
     }
 
     public function confirmReceive(Request $request)
