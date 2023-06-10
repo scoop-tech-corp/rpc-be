@@ -263,8 +263,7 @@ class SecurityGroupController extends Controller
                 $checkIfDataExits = DB::table('users')
                     ->where([
                         ['id', '=', $val],
-                        ['isDeleted', '=', '0'],
-                        ['roleId', '=', $request->id]
+                        ['isDeleted', '=', '0']
                     ])
                     ->first();
 
