@@ -267,7 +267,7 @@ class SecurityGroupController extends Controller
                     ])
                     ->first();
 
-                if (!$checkIfDataExits) {
+                if ($checkIfDataExits === null) {
                     array_push($data_item, 'user id: ' . $val . ' not found, please try different id');
                 }
             }
