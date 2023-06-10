@@ -10,7 +10,7 @@ use Carbon\Carbon;
 use Validator;
 use DB;
 
-class SecurityGroup extends Controller
+class SecurityGroupController extends Controller
 {
     public function index(Request $request)
     {
@@ -33,17 +33,17 @@ class SecurityGroup extends Controller
                 }
             )
             ->select(
-                'a.id as securityGroupId',
+                'a.id',
                 'a.roleName',
-                DB::raw("IFNULL (count(b.roleId),0) as totalUser"),
-                DB::raw("CASE WHEN a.IsActive = 1 THEN 'Aktif' else 'Tidak Aktif' END as status"),
+                DB::raw("Convert(IFNULL(count(b.roleId),0),integer) as totalUser"),
+                DB::raw("CASE WHEN a.IsActive = 1 THEN true else false END as status"),
                 'a.updated_at as updatedAt'
             )->groupBy('b.roleId', 'a.id', 'a.roleName', 'a.IsActive', 'a.updated_at');
 
 
         $data = DB::table($data)
             ->select(
-                'securityGroupId',
+                'id',
                 'roleName',
                 'totalUser',
                 'status',
@@ -56,12 +56,10 @@ class SecurityGroup extends Controller
 
         $checkOrder = null;
 
-
-
         if ($request->orderColumn && $defaultOrderBy) {
 
             $listOrder = array(
-                'securityGroupId',
+                'id',
                 'roleName',
                 'totalUser',
                 'status',
@@ -91,23 +89,23 @@ class SecurityGroup extends Controller
 
             $data = DB::table($data)
                 ->select(
-                    'securityGroupId',
+                    'id',
                     'roleName',
                     'totalUser',
                     'status',
                 )
                 ->orderBy($request->orderColumn, $defaultOrderBy)
-                ->orderBy('updatedAt', 'desc');
+                ->orderBy('id', 'asc');
         } else {
 
             $data = DB::table($data)
                 ->select(
-                    'securityGroupId',
+                    'id',
                     'roleName',
                     'totalUser',
                     'status',
                 )
-                ->orderBy('updatedAt', 'desc');
+                ->orderBy('id', 'asc');
         }
 
 
@@ -136,12 +134,41 @@ class SecurityGroup extends Controller
     }
 
 
+    public function dropdownUsersSecurityGroup(Request $request)
+    {
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
+        $data = User::from('users as a')
+            ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
+            ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
+            ->select(
+                'a.id as usersId',
+                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                'c.jobName as jobName',
+                'b.locationName as locationName',
+            )->where([
+                ['a.roleId', '=', '8'],
+                ['a.isDeleted', '=', '0'],
+                ['b.isDeleted', '=', '0'],
+                ['c.isActive', '=', '1'],
+            ])
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+
 
     public function detailSecurityGroup(Request $request)
     {
 
         $validate = Validator::make($request->all(), [
-            'securityGroupId' => 'required',
+            'id' => 'required',
         ]);
 
         if ($validate->fails()) {
@@ -150,14 +177,14 @@ class SecurityGroup extends Controller
 
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'errors' => [$errors],
             ], 422);
         }
 
-        $securityGroupId = $request->input('securityGroupId');
+        $id = $request->id;
 
         $checkIfValueExits = SecurityGroups::where([
-            ['id', '=', $securityGroupId],
+            ['id', '=', $id],
         ])->first();
 
 
@@ -178,7 +205,7 @@ class SecurityGroup extends Controller
                     'c.jobName as jobName',
                     'b.locationName as locationName',
                 )->where([
-                    ['a.roleId', '=', $securityGroupId],
+                    ['a.roleId', '=', $id],
                     ['a.isDeleted', '=', '0'],
                     ['b.isDeleted', '=', '0'],
                     ['c.isActive', '=', '1'],
@@ -203,7 +230,8 @@ class SecurityGroup extends Controller
         DB::beginTransaction();
 
         $validate = Validator::make($request->all(), [
-            'roleName' => 'required',
+            'id' => 'required',
+            'usersId' => 'required',
         ]);
 
         if ($validate->fails()) {
@@ -218,23 +246,69 @@ class SecurityGroup extends Controller
 
         try {
 
-            $checkIfDataExits = SecurityGroups::where([
-                ['roleName', '=', $request->roleName],
+            $checkRoleId = SecurityGroups::where([
+                ['id', '=', $request->id],
             ])->first();
 
-            if ($checkIfDataExits) {
+            if ($checkRoleId === null) {
                 return response()->json([
                     'message' => 'Inputed data is not valid',
-                    'errors' => 'Role name : ' .  $request->roleName . ' already exists in user roles, please try different role name',
+                    'errors' => ['Role id : ' . $request->id . ' is not exists, please try different id'],
                 ], 422);
             }
 
-            $securityGroup = new SecurityGroups();
-            $securityGroup->roleName = $request->roleName;
-            $securityGroup->isActive = 1;
-            $securityGroup->save();
+            $data_item = [];
+            foreach ($request->usersId as $val) {
 
-            DB::commit();
+                $checkIfDataExits = DB::table('users')
+                    ->where([
+                        ['id', '=', $val],
+                        ['isDeleted', '=', '0'],
+                        ['roleId', '=', $request->id]
+                    ])
+                    ->first();
+
+                if (!$checkIfDataExits) {
+                    array_push($data_item, 'user id: ' . $val . ' not found, please try different id');
+                }
+            }
+
+            if ($data_item) {
+                return response()->json([
+                    'message' => 'Inputed data is not valid',
+                    'errors' => $data_item,
+                ], 422);
+            }
+
+
+            foreach ($request->usersId as $val) {
+
+                DB::table('users')
+                    ->where('id', '=', $val,)
+                    ->update(['roleId' => $request->id,]);
+
+                DB::commit();
+            }
+
+
+
+            // $checkIfDataExits = SecurityGroups::where([
+            //     ['roleName', '=', $request->roleName],
+            // ])->first();
+
+            // if ($checkIfDataExits) {
+            //     return response()->json([
+            //         'message' => 'Inputed data is not valid',
+            //         'errors' => ['Role name : ' .  $request->roleName . ' already exists in user roles, please try different role name'],
+            //     ], 422);
+            // }
+
+            // $securityGroup = new SecurityGroups();
+            // $securityGroup->roleName = $request->roleName;
+            // $securityGroup->isActive = 1;
+            // $securityGroup->save();
+
+            // DB::commit();
 
             return response()->json([
                 'result' => 'success',
@@ -252,7 +326,85 @@ class SecurityGroup extends Controller
     }
 
 
+    public function updateSecurityGroup(Request $request)
+    {
 
+        if (!adminAccess($request->user()->id)) {
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
+        }
+
+        DB::beginTransaction();
+
+        $validate = Validator::make($request->all(), [
+            'id' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        try {
+
+            if ($request->id == 1) {
+                return response()->json([
+                    'message' => 'Inputed data is not valid',
+                    'errors' => ['Restricted to update Administrator, please user different id !!'],
+                ], 422);
+            }
+
+
+            $checkIfDataExits = SecurityGroups::where([
+                ['id', '=', $request->id],
+            ])->first();
+
+            if (!$checkIfDataExits) {
+                return response()->json([
+                    'message' => 'Inputed data is not valid',
+                    'errors' => ['Security group with Id : ' .  $request->id . ' not found, please try different role id'],
+                ], 422);
+            }
+
+
+
+            if ($checkIfDataExits->isActive == 0) {
+
+                SecurityGroups::where('id', '=', $request->id)
+                    ->update([
+                        'isActive' => 1
+                    ]);
+            } else {
+
+                SecurityGroups::where('id', '=', $request->id)
+                    ->update([
+                        'isActive' => 0
+                    ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'success',
+                'message' => ['Successfully update Security Groups'],
+            ]);
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ]);
+        }
+    }
 
     public function deleteSecurityGroup(Request $request)
     {
@@ -267,7 +419,7 @@ class SecurityGroup extends Controller
         DB::beginTransaction();
 
         $validate = Validator::make($request->all(), [
-            'securityGroupId' => 'required',
+            'id' => 'required',
         ]);
 
         if ($validate->fails()) {
@@ -284,22 +436,21 @@ class SecurityGroup extends Controller
 
             $data_item = [];
 
-            if ($request->securityGroupId == 1) {
+            if ($request->id == 1) {
 
                 return response()->json([
                     'message' => 'Inputed data is not valid',
-                    'errors' => 'Restricted to delete id, please check your security group id',
+                    'errors' => ['Restricted to delete Administrator, please user different id !!'],
                 ], 422);
             } else {
 
 
                 $checkIfDataExits = SecurityGroups::where([
-                    ['id', '=', $request->securityGroupId],
-                    ['isActive', '=', '1']
+                    ['id', '=', $request->id]
                 ])->first();
 
-                if (!$checkIfDataExits) {
-                    array_push($data_item, 'Security group id : ' . $request->securityGroupId . ' not found, please try different security group');
+                if ($checkIfDataExits === null) {
+                    array_push($data_item, 'Security group Id : ' . $request->id . ' not found, please try different security group');
                 }
 
                 if ($data_item) {
@@ -312,7 +463,7 @@ class SecurityGroup extends Controller
 
 
             SecurityGroups::where([
-                ['id', '=', $request->securityGroupId],
+                ['id', '=', $request->id],
                 ['isActive', '=', '1']
             ])->update(['isActive' => 0, 'updated_at' => now()]);
 
@@ -320,7 +471,7 @@ class SecurityGroup extends Controller
 
             return response()->json([
                 'result' => 'success',
-                'message' => 'Successfully deleted Security Groups',
+                'message' => ['Successfully deleted Security Groups'],
             ]);
         } catch (Exception $e) {
 

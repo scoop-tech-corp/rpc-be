@@ -81,6 +81,7 @@ class userRoleSeeder extends Seeder
             ['roleName' => 'Intership', 'isActive' => 1, 'created_at' => now(), 'updated_at' => now(), ],
             ['roleName' => 'Office', 'isActive' => 1, 'created_at' => now(), 'updated_at' => now(), ],
             ['roleName' => 'Doctor', 'isActive' => 1, 'created_at' => now(), 'updated_at' => now(), ], // ADD BY DANNY WAHYUDI 13-03-2023
+            ['roleName' => 'Not Set', 'isActive' => 1, 'created_at' => now(), 'updated_at' => now(), ], // ADD BY DANNY WAHYUDI 10-06-2023
         ];
         DB::table('usersRoles')->insert($userRole);
 

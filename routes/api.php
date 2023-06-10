@@ -20,7 +20,6 @@ use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\VerifyUserandPasswordController;
 use App\Http\Controllers\Staff\StaffLeaveController;
 use App\Http\Controllers\Product\CategoryController;
-use App\Http\Controllers\Staff\SecurityGroup;
 use App\Http\Controllers\Staff\SecurityGroupController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -275,10 +274,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //Security Group
     Route::group(['prefix' => 'securitygroup'], function () {
 
-        Route::get('/', [SecurityGroup::class, 'index']);
-        Route::post('/', [SecurityGroup::class, 'insertSecurityGroup']);
-        Route::delete('/', [SecurityGroup::class, 'deleteSecurityGroup']);
-        Route::get('/detail', [SecurityGroup::class, 'detailSecurityGroup']);
+        Route::get('/', [SecurityGroupController::class, 'index']);
+        Route::post('/', [SecurityGroupController::class, 'insertSecurityGroup']);
+        Route::delete('/', [SecurityGroupController::class, 'deleteSecurityGroup']);
+        Route::get('/detail', [SecurityGroupController::class, 'detailSecurityGroup']);
+        Route::get('/users', [SecurityGroupController::class, 'dropdownUsersSecurityGroup']);
+        Route::put('/', [SecurityGroupController::class, 'updateSecurityGroup']);
     });
 
 
