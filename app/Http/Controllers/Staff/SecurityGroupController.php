@@ -35,8 +35,8 @@ class SecurityGroupController extends Controller
             ->select(
                 'a.id',
                 'a.roleName',
-                DB::raw("Convert(IFNULL(count(b.roleId),0),integer) as totalUser"),
-                DB::raw("CASE WHEN a.IsActive = 1 THEN true else false END as status"),
+                DB::raw("CAST(IFNULL(count(b.roleId),0) AS INT) as totalUser"),
+                DB::raw("CASE WHEN a.IsActive = 1 THEN 1 else 0 END as status"),
                 'a.updated_at as updatedAt'
             )->groupBy('b.roleId', 'a.id', 'a.roleName', 'a.IsActive', 'a.updated_at');
 
