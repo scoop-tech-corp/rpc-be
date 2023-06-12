@@ -652,7 +652,31 @@ class RestockController extends Controller
                 ->where('pr.productRestockId', '=', $request->id)
                 ->get();
 
-            $prd->detail = $chk;
+            foreach ($chk as $val) {
+
+                $image = DB::table('productRestockImages as pri')
+                    ->select('pri.id', 'pri.labelName', 'pri.realImageName', 'pri.imagePath')
+                    ->where('pri.productRestockDetailId', '=', $val->id)
+                    ->get();
+
+                $data[] = array(
+                    'id' => $val->id,
+                    'productId' => $val->productId,
+                    'productType' => $val->productType,
+                    'productName' => $val->productName,
+                    'supplierId' => $val->supplierId,
+                    'supplierName' => $val->supplierName,
+                    'requireDate' => $val->requireDate,
+                    'currentStock' => $val->currentStock,
+                    'reStockQuantity' => $val->reStockQuantity,
+                    'costPerItem' => $val->costPerItem,
+                    'total' => $val->total,
+                    'remark' => $val->remark,
+                    'images' => $image
+                );
+            }
+
+            $prd->detail = $data;
 
             return response()->json($prd, 200);
         } else {
@@ -1352,11 +1376,11 @@ class RestockController extends Controller
     public function approval(Request $request)
     {
         //bisa ada kemungkinan diterima bisa juga di tolak
+
     }
 
     public function sentSupplier(Request $request)
     {
-
     }
 
     public function confirmReceive(Request $request)
