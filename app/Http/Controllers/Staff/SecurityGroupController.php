@@ -152,11 +152,11 @@ class SecurityGroupController extends Controller
                 'c.jobName as jobName',
                 'b.locationName as locationName',
             )->where([
-                ['a.roleId', '=', '8'],
                 ['a.isDeleted', '=', '0'],
                 ['b.isDeleted', '=', '0'],
                 ['c.isActive', '=', '1'],
             ])
+            ->whereNull('a.roleId')
             ->get();
 
         return response()->json($data, 200);
@@ -196,6 +196,10 @@ class SecurityGroupController extends Controller
             ]);
         } else {
 
+            $param = SecurityGroups::select('id', 'roleName', 'isActive as status')
+                ->where('id', '=', $id)
+                ->first();
+
             $data = User::from('users as a')
                 ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
                 ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
@@ -212,7 +216,10 @@ class SecurityGroupController extends Controller
                 ])
                 ->get();
 
-            return response()->json($data, 200);
+
+            $param->users = $data;
+
+            return response()->json($param, 200);
         }
     }
 
@@ -230,8 +237,8 @@ class SecurityGroupController extends Controller
         DB::beginTransaction();
 
         $validate = Validator::make($request->all(), [
-            'id' => 'required',
-            'usersId' => 'required',
+            'role' => 'required',
+            'status' => 'required',
         ]);
 
         if ($validate->fails()) {
@@ -246,68 +253,57 @@ class SecurityGroupController extends Controller
 
         try {
 
-            $checkRoleId = SecurityGroups::where([
-                ['id', '=', $request->id],
+            $checkIfRoleExists = SecurityGroups::where([
+                ['roleName', '=', $request->role],
             ])->first();
 
-            if ($checkRoleId === null) {
+            if ($checkIfRoleExists) {
                 return response()->json([
                     'message' => 'Inputed data is not valid',
-                    'errors' => ['Role id : ' . $request->id . ' is not exists, please try different id'],
+                    'errors' => ['Role name : ' . $request->role . ' is already exists, please try different role name'],
                 ], 422);
-            }
+            } else {
 
-            $data_item = [];
-            foreach ($request->usersId as $val) {
+                $data_item = [];
+                foreach ($request->usersId as $val) {
 
-                $checkIfDataExits = DB::table('users')
-                    ->where([
-                        ['id', '=', $val],
-                        ['isDeleted', '=', '0']
-                    ])
-                    ->first();
+                    $checkIfDataExits = DB::table('users')
+                        ->where([
+                            ['id', '=', $val],
+                            ['isDeleted', '=', '0']
+                        ])
+                        ->first();
 
-                if ($checkIfDataExits === null) {
-                    array_push($data_item, 'user id: ' . $val . ' not found, please try different id');
+                    if ($checkIfDataExits === null) {
+                        array_push($data_item, 'user id: ' . $val . ' not found, please try different id');
+                    }
+                }
+
+                if ($data_item) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_item,
+                    ], 422);
+                }
+
+                $securityGroups = new SecurityGroups();
+                $securityGroups->roleName =  $request->role;
+                $securityGroups->isActive = $request->status;
+                $securityGroups->save();
+
+
+                if ($request->status == 1) {
+
+                    foreach ($request->usersId as $val) {
+
+                        DB::table('users')
+                            ->where('id', '=', $val)
+                            ->update(['roleId' => $securityGroups->id]);
+                    }
                 }
             }
 
-            if ($data_item) {
-                return response()->json([
-                    'message' => 'Inputed data is not valid',
-                    'errors' => $data_item,
-                ], 422);
-            }
-
-
-            foreach ($request->usersId as $val) {
-
-                DB::table('users')
-                    ->where('id', '=', $val,)
-                    ->update(['roleId' => $request->id,]);
-
-                DB::commit();
-            }
-
-
-
-            // $checkIfDataExits = SecurityGroups::where([
-            //     ['roleName', '=', $request->roleName],
-            // ])->first();
-
-            // if ($checkIfDataExits) {
-            //     return response()->json([
-            //         'message' => 'Inputed data is not valid',
-            //         'errors' => ['Role name : ' .  $request->roleName . ' already exists in user roles, please try different role name'],
-            //     ], 422);
-            // }
-
-            // $securityGroup = new SecurityGroups();
-            // $securityGroup->roleName = $request->roleName;
-            // $securityGroup->isActive = 1;
-            // $securityGroup->save();
-
-            // DB::commit();
+            DB::commit();
 
             return response()->json([
                 'result' => 'success',
@@ -339,6 +335,7 @@ class SecurityGroupController extends Controller
 
         $validate = Validator::make($request->all(), [
             'id' => 'required',
+            'status' => 'required',
         ]);
 
         if ($validate->fails()) {
@@ -358,34 +355,82 @@ class SecurityGroupController extends Controller
                     'message' => 'Inputed data is not valid',
                     'errors' => ['Restricted to update Administrator, please user different id !!'],
                 ], 422);
-            }
-
-
-            $checkIfDataExits = SecurityGroups::where([
-                ['id', '=', $request->id],
-            ])->first();
-
-            if (!$checkIfDataExits) {
-                return response()->json([
-                    'message' => 'Inputed data is not valid',
-                    'errors' => ['Security group with Id : ' .  $request->id . ' not found, please try different role id'],
-                ], 422);
-            }
-
-
-
-            if ($checkIfDataExits->isActive == 0) {
-
-                SecurityGroups::where('id', '=', $request->id)
-                    ->update([
-                        'isActive' => 1
-                    ]);
             } else {
 
+                if (($request->status != 1 && $request->status != 0)) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => ['Status role id must active = 1, or non active = 0'],
+                    ], 422);
+                }
+
+
+                $checkIfRoleExists = SecurityGroups::where([
+                    ['id', '=', $request->id],
+                ])->first();
+
+                if ($checkIfRoleExists === null) {
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => ['Role id : ' . $request->id . ' is not exists, please try different role id'],
+                    ], 422);
+                }
+
+
                 SecurityGroups::where('id', '=', $request->id)
                     ->update([
-                        'isActive' => 0
+                        'isActive' => $request->status
                     ]);
+
+
+                $data_item = [];
+
+                foreach ($request->users as $val) {
+
+                    $checkIfDataExits = DB::table('users')
+                        ->where([
+                            ['id', '=', $val['userId']],
+                            ['isDeleted', '=', '0']
+                        ])
+                        ->first();
+
+                    if ($checkIfDataExits === null) {
+                        array_push($data_item, 'user id: ' . $val['userId'] . ' not found, please try different id');
+                    }
+
+
+                    if ($data_item) {
+                        return response()->json([
+                            'message' => 'Inputed data is not valid',
+                            'errors' => $data_item,
+                        ], 422);
+                    }
+                }
+
+
+
+                foreach ($request->users as $val) {
+
+                    if ($val['status'] == "del") { // set user to role id become non active
+                        DB::table('users')
+                            ->where('id', '=', $val['userId'])
+                            ->update(['roleId' => ""]);
+                    } else {
+
+
+                        if ($request->status == 1) {
+                            DB::table('users')
+                                ->where('id', '=', $val['userId'])
+                                ->update(['roleId' => $request->status]);
+
+                        } else {
+
+                            DB::table('users')
+                                ->where('id', '=', $val['userId'])
+                                ->update(['roleId' => ""]);
+                        }
+                    }
+                }
             }
 
             DB::commit();

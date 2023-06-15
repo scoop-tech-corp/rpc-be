@@ -2825,193 +2825,227 @@ class CustomerController extends Controller
 
     public function getDetailCustomer(Request $request)
     {
+
+
+        $validate = Validator::make($request->all(), [
+            'customerId' => 'required'
+        ]);
+
+        if ($validate->fails()) {
+
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
+            ], 422);
+        }
+
         $request->validate(['customerId' => 'required|max:10000']);
         $customerId = $request->input('customerId');
 
-        $checkIfValueExits = Customer::where([
-            ['id', '=', $request->input('customerId')],
-            ['isDeleted', '=', '0']
-        ])
-            ->first();
 
-        if ($checkIfValueExits === null) {
+        if ($request->input('type') != "" &&  $request->input('type') != "edit") {
 
             return response()->json([
-                'message' => 'Failed',
-                'errors' => "Data not exists, please try another customer id",
-            ]);
-        } else {
+                'message' => 'Inputed data is not valid',
+                'errors' => ['Type must "" or "edit" '],
+            ], 422);
+        }
 
 
-            $param_customer = DB::table('customer')
-                ->select(
-                    'id as customerId',
-                    'firstName',
-                    'middleName',
-                    'lastName',
-                    'nickName',
-                    'gender',
-                    'titleCustomerId',
-                    'customerGroupId',
-                    'locationId',
-                    'notes',
-                    DB::raw("DATE_FORMAT(joinDate, '%Y-%m-%d') as joinDate"),
-                    'typeId',
-                    'numberId',
-                    'occupationId',
-                    DB::raw("DATE_FORMAT(birthDate, '%Y-%m-%d') as birthDate"),
-                    'referenceCustomerId',
-                    'isReminderBooking',
-                    'isReminderPayment'
-                )
-                ->where('id', '=', $customerId)
-                ->first();
-
-            $customerPets = DB::table('customerPets')
-                ->select(
-                    'id',
-                    'petName',
-                    'petCategoryId',
-                    'races',
-                    'condition',
-                    'color',
-                    'petMonth',
-                    'petYear',
-                    DB::raw("DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth"),
-                    'petGender',
-                    'isSteril',
-                    DB::raw("'' as command")
-                )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->customerPets = $customerPets;
 
 
-            $reminderBooking = CustomerReminder::select(
-                'id',
-                'sourceId',
-                'unit',
-                'timing',
-                'status'
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['type', '=', 'B'],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
 
-            $param_customer->reminderBooking = $reminderBooking;
-
-
-            $reminderPayment = CustomerReminder::select(
-                'sourceId',
-                'unit',
-                'timing',
-                'status'
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['type', '=', 'P'],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->reminderPayment = $reminderPayment;
-
-            $reminderLatePayment = CustomerReminder::select(
-                'sourceId',
-                'unit',
-                'timing',
-                'status'
-            )->where([
-                ['customerId', '=', $customerId],
-                ['type', '=', 'LP'],
+        if ($request->input('type') == "") {
+            $checkIfValueExits = Customer::where([
+                ['id', '=', $request->input('customerId')],
                 ['isDeleted', '=', '0']
             ])
-                ->get();
+                ->first();
 
-            $param_customer->reminderLatePayment = $reminderLatePayment;
+            if ($checkIfValueExits === null) {
 
-            $detailAddresses = CustomerAddresses::select(
-                'addressName as addressName',
-                'additionalInfo as additionalInfo',
-                'provinceCode as provinceCode',
-                'cityCode as cityCode',
-                'postalCode as postalCode',
-                'country as country',
-                'isPrimary as isPrimary',
-            )
-                ->where([
+                return response()->json([
+                    'message' => 'Failed',
+                    'errors' => "Data not exists, please try another customer id",
+                ]);
+            } else {
+
+
+                $param_customer = DB::table('customer')
+                    ->select(
+                        'id as customerId',
+                        'firstName',
+                        'middleName',
+                        'lastName',
+                        'nickName',
+                        'gender',
+                        'titleCustomerId',
+                        'customerGroupId',
+                        'locationId',
+                        'notes',
+                        DB::raw("DATE_FORMAT(joinDate, '%Y-%m-%d') as joinDate"),
+                        'typeId',
+                        'numberId',
+                        'occupationId',
+                        DB::raw("DATE_FORMAT(birthDate, '%Y-%m-%d') as birthDate"),
+                        'referenceCustomerId',
+                        'isReminderBooking',
+                        'isReminderPayment'
+                    )
+                    ->where('id', '=', $customerId)
+                    ->first();
+
+                $customerPets = DB::table('customerPets')
+                    ->select(
+                        'id',
+                        'petName',
+                        'petCategoryId',
+                        'races',
+                        'condition',
+                        'color',
+                        'petMonth',
+                        'petYear',
+                        DB::raw("DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth"),
+                        'petGender',
+                        'isSteril',
+                        DB::raw("'' as command")
+                    )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->customerPets = $customerPets;
+
+
+                $reminderBooking = CustomerReminder::select(
+                    'id',
+                    'sourceId',
+                    'unit',
+                    'timing',
+                    'status'
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['type', '=', 'B'],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->reminderBooking = $reminderBooking;
+
+
+                $reminderPayment = CustomerReminder::select(
+                    'sourceId',
+                    'unit',
+                    'timing',
+                    'status'
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['type', '=', 'P'],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->reminderPayment = $reminderPayment;
+
+                $reminderLatePayment = CustomerReminder::select(
+                    'sourceId',
+                    'unit',
+                    'timing',
+                    'status'
+                )->where([
                     ['customerId', '=', $customerId],
+                    ['type', '=', 'LP'],
                     ['isDeleted', '=', '0']
                 ])
-                ->get();
+                    ->get();
 
-            $param_customer->detailAddresses = $detailAddresses;
+                $param_customer->reminderLatePayment = $reminderLatePayment;
 
+                $detailAddresses = CustomerAddresses::select(
+                    'addressName as addressName',
+                    'additionalInfo as additionalInfo',
+                    'provinceCode as provinceCode',
+                    'cityCode as cityCode',
+                    'postalCode as postalCode',
+                    'country as country',
+                    'isPrimary as isPrimary',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
 
-            $telephones = CustomerTelephones::select(
-                'phoneNumber as phoneNumber',
-                'type as type',
-                'usage as usage',
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->telephones = $telephones;
-
-
-            $emails = CustomerEmails::select(
-                'email as email',
-                'usage as usage',
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->emails = $emails;
+                $param_customer->detailAddresses = $detailAddresses;
 
 
-            $messengers = CustomerMessengers::select(
-                'messengerNumber as messengerNumber',
-                'type as type',
-                'usage as usage',
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
+                $telephones = CustomerTelephones::select(
+                    'phoneNumber as phoneNumber',
+                    'type as type',
+                    'usage as usage',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
 
-            $param_customer->messengers = $messengers;
-
-
-
-            $customeImages = CustomerImages::select(
-                'id as id',
-                'labelName as labelName',
-                'imagePath as imagePath',
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->images = $customeImages;
+                $param_customer->telephones = $telephones;
 
 
-            return response()->json($param_customer, 200);
+                $emails = CustomerEmails::select(
+                    'email as email',
+                    'usage as usage',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->emails = $emails;
+
+
+                $messengers = CustomerMessengers::select(
+                    'messengerNumber as messengerNumber',
+                    'type as type',
+                    'usage as usage',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->messengers = $messengers;
+
+
+
+                $customeImages = CustomerImages::select(
+                    'id as id',
+                    'labelName as labelName',
+                    'imagePath as imagePath',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->images = $customeImages;
+
+
+                return response()->json($param_customer, 200);
+            }
+
+        }else{ // untuk view edit disini
+
         }
     }
 
