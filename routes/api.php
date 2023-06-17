@@ -183,6 +183,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/restock/detail/history', [RestockController::class, 'detailHistory']);
         Route::get('/restock/detail/supplier', [RestockController::class, 'listSupplier']);
 
+        Route::post('/restock/approval', [RestockController::class, 'approval']);
+
         //product bundle
         Route::get('/bundle', [BundleController::class, 'index']);
         Route::get('/bundle/detail', [BundleController::class, 'detail']);
