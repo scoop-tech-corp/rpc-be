@@ -1281,12 +1281,14 @@ class RestockController extends Controller
             }
 
             if ($val['status'] === 'del') {
-                $res = productRestockDetails::find($val['id']);
+                if ($val['id']) {
+                    $res = productRestockDetails::find($val['id']);
 
-                $res->DeletedBy = $request->user()->id;
-                $res->isDeleted = true;
-                $res->DeletedAt = Carbon::now();
-                $res->save();
+                    $res->DeletedBy = $request->user()->id;
+                    $res->isDeleted = true;
+                    $res->DeletedAt = Carbon::now();
+                    $res->save();
+                }
             } else {
 
                 $prod = productRestockDetails::find($val['id']);
