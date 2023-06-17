@@ -480,23 +480,36 @@ class RestockController extends Controller
             productRestockLog($prodRestock->id, "Created", "Waiting for Approval", $request->user()->id);
         }
 
-
-        $findData = productRestockDetails::whereDate('updated_at', Carbon::today())
-            ->where('purchaseRequestNumber', '!=', '')
-            ->count();
-
         $number = "";
         $prNumber = "";
 
         foreach ($datas as $val) {
 
             if ($request->status == 'final') {
-                if ($findData == 0) {
-                    $number = Carbon::today();
+
+                $findDataPr = DB::table('productRestockDetails')
+                    ->select('purchaseRequestNumber')
+                    ->whereDate('updated_at', Carbon::today())
+                    ->where('purchaseRequestNumber', '!=', '')
+                    ->groupby('purchaseRequestNumber')
+                    ->get();
+
+                $findDataSup = productRestockDetails::where('productRestockId', '=', $prodRestock->id)
+                    ->where('supplierId', '=', $val['supplierId'])
+                    ->first();
+
+                $number = Carbon::today();
+
+                if (count($findDataPr) == 0) {
                     $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
                 } else {
-                    $number = Carbon::today();
-                    $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+
+                    if ($findDataSup) {
+
+                        $prNumber = $findDataSup->purchaseRequestNumber;
+                    } else {
+                        $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad(count($findDataPr) + 1, 5, 0, STR_PAD_LEFT);
+                    }
                 }
             }
 
@@ -1235,11 +1248,6 @@ class RestockController extends Controller
             productRestockLog($request->id, "Updated", "Waiting for Approval", $request->user()->id);
         }
 
-
-        $findData = productRestocks::whereDate('updated_at', Carbon::today())
-            ->where('purchaseRequestNumber', '!=', '')
-            ->count();
-
         $number = "";
         $prNumber = "";
 
@@ -1247,12 +1255,29 @@ class RestockController extends Controller
 
             if ($request->status == 'final') {
 
-                if ($findData == 0) {
-                    $number = Carbon::today();
+                $findDataPr = DB::table('productRestockDetails')
+                    ->select('purchaseRequestNumber')
+                    ->whereDate('updated_at', Carbon::today())
+                    ->where('purchaseRequestNumber', '!=', '')
+                    ->groupby('purchaseRequestNumber')
+                    ->get();
+
+                $findDataSup = productRestockDetails::where('productRestockId', '=', $request->id)
+                    ->where('supplierId', '=', $val['supplierId'])
+                    ->first();
+
+                $number = Carbon::today();
+
+                if (count($findDataPr) == 0) {
                     $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
                 } else {
-                    $number = Carbon::today();
-                    $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+
+                    if ($findDataSup) {
+
+                        $prNumber = $findDataSup->purchaseRequestNumber;
+                    } else {
+                        $prNumber = 'RPC-PR-' . $number->format('Ymd') . str_pad(count($findDataPr) + 1, 5, 0, STR_PAD_LEFT);
+                    }
                 }
             }
 
