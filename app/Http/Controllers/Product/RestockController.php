@@ -1181,7 +1181,7 @@ class RestockController extends Controller
                 $find = ProductClinicLocation::where('productClinicId', '=', $value['productId'])->first();
 
                 if ($find) {
-                    if ($value['restockQuantity'] < $find->reStockLimit) {
+                    if ($value['restockQuantity'] > $find->reStockLimit) {
                         return response()->json([
                             'message' => 'The given data was invalid.',
                             'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
