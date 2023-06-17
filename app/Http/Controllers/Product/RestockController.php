@@ -1263,6 +1263,7 @@ class RestockController extends Controller
 
                 $findDataSup = productRestockDetails::where('productRestockId', '=', $request->id)
                     ->where('supplierId', '=', $val['supplierId'])
+                    ->where('purchaseRequestNumber', '!=', '')
                     ->first();
 
                 $number = Carbon::today();
