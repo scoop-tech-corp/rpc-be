@@ -199,7 +199,9 @@ class RestockController extends Controller
             ], 422);
         }
 
-        $findData = productRestocks::whereDate('created_at', Carbon::today())->count();
+        $findData = productRestockDetails::whereDate('updated_at', Carbon::today())
+            ->where('purchaseRequestNumber', '!=', '')
+            ->count();
 
         $number = "";
 
@@ -338,6 +340,7 @@ class RestockController extends Controller
         $totalProduct = 0;
         $totalImages = 0;
         $suppName = "";
+        $checkAdminApproval = false;
 
         //validasi data
 
@@ -478,7 +481,9 @@ class RestockController extends Controller
         }
 
 
-        $findData = productRestocks::whereDate('created_at', Carbon::today())->count();
+        $findData = productRestockDetails::whereDate('updated_at', Carbon::today())
+            ->where('purchaseRequestNumber', '!=', '')
+            ->count();
 
         $number = "";
         $prNumber = "";
@@ -1231,7 +1236,9 @@ class RestockController extends Controller
         }
 
 
-        $findData = productRestocks::whereDate('created_at', Carbon::today())->count();
+        $findData = productRestocks::whereDate('updated_at', Carbon::today())
+            ->where('purchaseRequestNumber', '!=', '')
+            ->count();
 
         $number = "";
         $prNumber = "";
@@ -1282,34 +1289,34 @@ class RestockController extends Controller
                 );
             }
 
-            foreach ($val['images'] as $valueImg) {
+            // foreach ($val['images'] as $valueImg) {
 
-                if ($valueImg['status'] == 'del') {
-                    $res = productRestockImages::find($valueImg['id']);
+            //     if ($valueImg['status'] == 'del') {
+            //         $res = productRestockImages::find($valueImg['id']);
 
-                    $res->DeletedBy = $request->user()->id;
-                    $res->isDeleted = true;
-                    $res->DeletedAt = Carbon::now();
-                    $res->save();
-                } else {
-                    $image = str_replace('data:image/', '', $valueImg['imagePath']);
-                    $image = explode(';base64,', $image);
-                    $imageName = Str::random(40) . '.' . $image[0];
-                    File::put(public_path('ProductRestockImages') . '/' . $imageName, base64_decode($image[1]));
+            //         $res->DeletedBy = $request->user()->id;
+            //         $res->isDeleted = true;
+            //         $res->DeletedAt = Carbon::now();
+            //         $res->save();
+            //     } else {
+            //         $image = str_replace('data:image/', '', $valueImg['imagePath']);
+            //         $image = explode(';base64,', $image);
+            //         $imageName = Str::random(40) . '.' . $image[0];
+            //         File::put(public_path('ProductRestockImages') . '/' . $imageName, base64_decode($image[1]));
 
-                    productRestockImages::updateOrCreate(
-                        ['id' => $valueImg['id']],
-                        [
-                            'productRestockDetailId' => $val['id'],
-                            'labelName' => $valueImg['label'],
-                            'realImageName' => $valueImg['originalName'],
-                            'imagePath' => '/ProductRestockImages' . '/' . $imageName,
-                            'updated_at' => Carbon::now(),
-                            'userUpdateId' => $request->user()->id,
-                        ]
-                    );
-                }
-            }
+            //         productRestockImages::updateOrCreate(
+            //             ['id' => $valueImg['id']],
+            //             [
+            //                 'productRestockDetailId' => $val['id'],
+            //                 'labelName' => $valueImg['label'],
+            //                 'realImageName' => $valueImg['originalName'],
+            //                 'imagePath' => '/ProductRestockImages' . '/' . $imageName,
+            //                 'updated_at' => Carbon::now(),
+            //                 'userUpdateId' => $request->user()->id,
+            //             ]
+            //         );
+            //     }
+            // }
         }
 
         return response()->json(
@@ -1376,7 +1383,88 @@ class RestockController extends Controller
     public function approval(Request $request)
     {
         //bisa ada kemungkinan diterima bisa juga di tolak
+        $validate = Validator::make($request->all(), [
+            'productRestockId' => 'required|integer',
+        ]);
 
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $find = productRestocks::find($request->productRestockId);
+
+        if (!$find) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['There is any Data Restock not found!'],
+            ], 422);
+        }
+
+        $datas = json_decode($request->productRestocks, true);
+
+        foreach ($datas as $value) {
+            $findRestock = productRestockDetails::find($value['productRestockDetailId']);
+
+            if (!$findRestock) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Data Restock Detail not found!'],
+                ], 422);
+            }
+
+            if ($findRestock->purchaseRequestNumber == null) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Product do not have Purchase Request Number!'],
+                ], 422);
+            }
+
+            if ($findRestock->reStockQuantity != $value['reStockQuantity']) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Restock Quantity not same with system!'],
+                ], 422);
+            }
+
+            $totalApproval = $value['accepted'] + $value['rejected'];
+
+            if ($totalApproval != $value['reStockQuantity']) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Total data approval are not same with total Restock!'],
+                ], 422);
+            }
+
+            $findData = productRestockDetails::whereDate('updated_at', Carbon::today())
+                ->where('purchaseOrderNumber', '!=', '')
+                ->count();
+
+            if ($findData == 0) {
+                $number = Carbon::today();
+                $number = 'RPC-PO-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+            } else {
+                $number = Carbon::today();
+                $number = 'RPC-PO-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+            }
+
+            $findRestock->purchaseOrderNumber = $number;
+            $findRestock->rejected = $value['rejected'];
+            $findRestock->accepted = $value['accepted'];
+            $findRestock->updated_at = Carbon::now();
+            $findRestock->save();
+        }
+
+        $prodRestock = productRestocks::find($request->productRestockId);
+        $prodRestock->status = 3;
+
+
+        return response()->json([
+            'message' => 'Update Data Successful',
+        ], 200);
     }
 
     public function sentSupplier(Request $request)
