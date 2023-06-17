@@ -1286,6 +1286,15 @@ class RestockController extends Controller
                 $res->DeletedAt = Carbon::now();
                 $res->save();
             } else {
+
+                $prod = productRestockDetails::find($val['id']);
+                $userId = '';
+                if ($prod) {
+                    $userId = $prod->userId;
+                } else {
+                    $userId = $request->user()->id;
+                }
+
                 productRestockDetails::updateOrCreate(
                     ['id' => $val['id']],
                     [
@@ -1306,6 +1315,7 @@ class RestockController extends Controller
                         'total' => $val['total'],
                         'remark' => $val['remark'],
                         'updated_at' => Carbon::now(),
+                        'userId' => $userId,
                         'userUpdateId' => $request->user()->id,
                     ]
                 );
