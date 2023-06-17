@@ -533,19 +533,22 @@ class RestockController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
-            foreach ($val['images'] as $valueImg) {
-                $image = str_replace('data:image/', '', $valueImg['imagePath']);
-                $image = explode(';base64,', $image);
-                $imageName = Str::random(40) . '.' . $image[0];
-                File::put(public_path('ProductRestockImages') . '/' . $imageName, base64_decode($image[1]));
+            if ($val['images']) {
 
-                productRestockImages::create([
-                    'productRestockDetailId' => $prodDetail->id,
-                    'labelName' => $valueImg['label'],
-                    'realImageName' => $valueImg['originalName'],
-                    'imagePath' => '/ProductRestockImages' . '/' . $imageName,
-                    'userId' => $request->user()->id,
-                ]);
+                foreach ($val['images'] as $valueImg) {
+                    $image = str_replace('data:image/', '', $valueImg['imagePath']);
+                    $image = explode(';base64,', $image);
+                    $imageName = Str::random(40) . '.' . $image[0];
+                    File::put(public_path('ProductRestockImages') . '/' . $imageName, base64_decode($image[1]));
+
+                    productRestockImages::create([
+                        'productRestockDetailId' => $prodDetail->id,
+                        'labelName' => $valueImg['label'],
+                        'realImageName' => $valueImg['originalName'],
+                        'imagePath' => '/ProductRestockImages' . '/' . $imageName,
+                        'userId' => $request->user()->id,
+                    ]);
+                }
             }
         }
 
