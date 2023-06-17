@@ -533,9 +533,8 @@ class RestockController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
-            if ($val['images']) {
-
-                foreach ($val['images'] as $valueImg) {
+            foreach ($val['images'] as $valueImg) {
+                if ($valueImg['imagePath'] != '') {
                     $image = str_replace('data:image/', '', $valueImg['imagePath']);
                     $image = explode(';base64,', $image);
                     $imageName = Str::random(40) . '.' . $image[0];
