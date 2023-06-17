@@ -1110,7 +1110,7 @@ class RestockController extends Controller
         $validate = Validator::make(
             $datas,
             [
-                '*.id' => 'required|integer',
+                '*.id' => 'nullable',
                 '*.productType' => 'required|string|in:productSell,productClinic',
                 '*.productId' => 'required|integer',
                 '*.supplierId' => 'required|integer',
@@ -1122,9 +1122,6 @@ class RestockController extends Controller
                 '*.remark' => 'nullable|string',
             ],
             [
-                '*.id.required' => 'Id Should be Required!',
-                '*.id.integer' => 'Id Should be Filled!',
-
                 '*.productType.required' => 'Product Type Should be Required!',
                 '*.productType.string' => 'Product Type Should be Filled!',
 
