@@ -713,6 +713,7 @@ class RestockController extends Controller
                 ->join('location as loc', 'loc.Id', 'pres.locationId')
                 ->join('users as u', 'pres.userId', 'u.id')
                 ->select(
+                    'pres.id',
                     'loc.locationName',
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(pres.created_at, '%W, %d %M %Y') as createdAt")
