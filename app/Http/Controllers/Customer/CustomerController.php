@@ -54,7 +54,7 @@ class CustomerController extends Controller
                 ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
                 ->select(
                     'a.id as id',
-                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                    DB::raw("CONCAT(IFNULL(a.firstName,'') , case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.middleName is null then '' else ' ' end, IFNULL(a.lastName,'') ) as customerName"),
                     DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                     'd.locationName as location',
                     'a.locationId as locationId',
