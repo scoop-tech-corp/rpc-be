@@ -20,22 +20,69 @@ class SupplierController extends Controller
 {
     public function index(Request $request)
     {
+        $idWa = productSupplierTypePhone::where('typeName', 'like', '%whatsapp%')->first();
+
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
 
-        $data = DB::table('productSuppliers')
-            ->select('id', 'supplierName')
-            ->where('isDeleted', '=', 0);
+        $data = DB::table('productSuppliers as ps')
+            ->join('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
+            // ->join('productSupplierPhones as psp', 'ps.id', 'psp.productSupplierId')
+            ->select(
+                'ps.id',
+                'ps.supplierName',
+                'psa.streetAddress',
+
+                DB::raw('CASE WHEN (select count(*) from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ') > 0
+                THEN (select number from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ' limit 1)
+                WHEN (select count(*) from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ') = 0
+                THEN (select number from productSupplierPhones where productSupplierId=ps.id limit 1) END as phoneNumber'),
+
+                DB::raw('CASE WHEN (select count(*) from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ') > 0
+                THEN 1
+                WHEN (select count(*) from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ') = 0
+                THEN 0 END as isWhatsAppActive')
+            )
+            ->distinct()
+            ->where('psa.isPrimary', '=', 1)
+            ->where('ps.isDeleted', '=', 0);
 
         if ($request->search) {
-            $res = $this->search($request);
+            $res = $this->search($request, $idWa->id);
             if ($res) {
-                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+                info($res[0]);
+                if ($res[0] == 'psp.number') {
+                    $id = DB::table('productSupplierPhones as psp')
+                        ->select('psp.productSupplierId')
+                        ->where('psp.number', 'like', '%' . $request->search . '%')
+                        ->where('psp.isDeleted', '=', 0)
+                        ->groupby('psp.productSupplierId')
+                        ->distinct()
+                        ->pluck('psp.productSupplierId');
+
+                    $data = $data->whereIn('ps.id', $id);
+                } else {
+                    $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+                }
 
                 for ($i = 1; $i < count($res); $i++) {
+                    info($res[$i]);
+                    if ($res[$i] === 'psp.number') {
+                        $id = DB::table('productSupplierPhones as psp')
+                            ->select('psp.productSupplierId')
+                            ->where('psp.number', 'like', '%' . $request->search . '%')
+                            ->where('psp.isDeleted', '=', 0)
+                            ->groupby('psp.productSupplierId')
+                            ->distinct()
+                            ->pluck('psp.productSupplierId');
 
-                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                        info($id);
+
+                        $data = $data->orWherein('ps.id', $id);
+                    } else {
+                        $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                    }
                 }
             } else {
                 $data = [];
@@ -46,11 +93,13 @@ class SupplierController extends Controller
             }
         }
 
+        // return $data = $data->toSql();
+
         if ($request->orderValue) {
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('updated_at', 'desc');
+        $data = $data->orderBy('ps.updated_at', 'desc');
 
         if ($request->goToPage == 0 && $request->rowPerPage == 0) {
             $data = $data->get();
@@ -76,6 +125,66 @@ class SupplierController extends Controller
         ], 200);
     }
 
+    private function search($request, $idWa)
+    {
+        $temp_column = null;
+
+        $data = DB::table('productSuppliers as ps')
+            ->select(
+                'ps.supplierName'
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('ps.supplierName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'ps.supplierName';
+        }
+
+        $data = DB::table('productSuppliers as ps')
+            ->join('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
+            ->select(
+                'psa.streetAddress'
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('psa.streetAddress', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'psa.streetAddress';
+        }
+
+        ///////////////////////
+
+        $data = DB::table('productSuppliers as ps')
+            ->join('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
+            ->join('productSupplierPhones as psp', 'ps.id', 'psp.productSupplierId')
+            ->select(
+                'psp.number'
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('psp.number', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'psp.number';
+        }
+
+        return $temp_column;
+    }
+
     public function create(Request $request)
     {
 
@@ -94,6 +203,7 @@ class SupplierController extends Controller
 
         $checkIfValueExits = DB::table('productSuppliers')
             ->where('supplierName', '=', $request->supplierName)
+            ->where('isDeleted', '=', 0)
             ->first();
 
         if ($checkIfValueExits != null) {
@@ -142,20 +252,20 @@ class SupplierController extends Controller
         }
 
         if ($request->phones) {
-            $resPhones = json_decode($request->phones, true);
 
+            $resPhones = json_decode($request->phones, true);
             $validate = Validator::make(
                 $resPhones,
                 [
                     '*.usageId' => 'required|integer',
-                    '*.number' => 'required|integer',
+                    '*.number' => 'required|string',
                     '*.typePhoneId' => 'required|integer',
                 ],
                 [
                     '*.usageId.required' => 'Usage Should be Required!',
                     '*.usageId.integer' => 'Usage Should be Filled!',
                     '*.number.required' => 'Number Should be Required!',
-                    '*.number.integer' => 'Number Should be Filled!',
+                    '*.number.string' => 'Number Should be Filled!',
                     '*.typePhoneId.required' => 'Type Phone Should be Required!',
                     '*.typePhoneId.integer' => 'Type Phone Should be Filled!',
                 ]
@@ -573,21 +683,32 @@ class SupplierController extends Controller
             $resAddress = $request->addresses;
 
             foreach ($resAddress as $valAdd) {
-                productSupplierAddresses::updateOrCreate(
-                    ['id' => $valAdd['id']],
-                    [
-                        'productSupplierId' => $valAdd['productSupplierId'],
-                        'streetAddress' => $valAdd['streetAddress'],
-                        'additionalInfo' => $valAdd['additionalInfo'],
-                        'country' => $valAdd['country'],
-                        'province' => $valAdd['province'],
-                        'city' => $valAdd['city'],
-                        'postalCode' => $valAdd['postalCode'],
-                        'isPrimary' => $valAdd['isPrimary'],
-                        'updated_at' => Carbon::now(),
-                        'userUpdateId' => $request->user()->id,
-                    ]
-                );
+
+                if ($valAdd['status'] == 'del') {
+
+                    $res = productSupplierAddresses::find($valAdd['id']);
+
+                    $res->DeletedBy = $request->user()->id;
+                    $res->isDeleted = true;
+                    $res->DeletedAt = Carbon::now();
+                    $res->save();
+                } else {
+                    productSupplierAddresses::updateOrCreate(
+                        ['id' => $valAdd['id']],
+                        [
+                            'productSupplierId' => $valAdd['productSupplierId'],
+                            'streetAddress' => $valAdd['streetAddress'],
+                            'additionalInfo' => $valAdd['additionalInfo'],
+                            'country' => $valAdd['country'],
+                            'province' => $valAdd['province'],
+                            'city' => $valAdd['city'],
+                            'postalCode' => $valAdd['postalCode'],
+                            'isPrimary' => $valAdd['isPrimary'],
+                            'updated_at' => Carbon::now(),
+                            'userUpdateId' => $request->user()->id,
+                        ]
+                    );
+                }
             }
         }
 
@@ -595,17 +716,28 @@ class SupplierController extends Controller
             $resPhones = $request->phones;
 
             foreach ($resPhones as $valPhone) {
-                productSupplierPhones::updateOrCreate(
-                    ['id' => $valPhone['id']],
-                    [
-                        'productSupplierId' => $valPhone['productSupplierId'],
-                        'usageId' => $valPhone['usageId'],
-                        'number' => $valPhone['number'],
-                        'typePhoneId' => $valPhone['typePhoneId'],
-                        'updated_at' => Carbon::now(),
-                        'userUpdateId' => $request->user()->id,
-                    ]
-                );
+
+                if ($valPhone['status'] == 'del') {
+
+                    $res = productSupplierPhones::find($valPhone['id']);
+
+                    $res->DeletedBy = $request->user()->id;
+                    $res->isDeleted = true;
+                    $res->DeletedAt = Carbon::now();
+                    $res->save();
+                } else {
+                    productSupplierPhones::updateOrCreate(
+                        ['id' => $valPhone['id']],
+                        [
+                            'productSupplierId' => $valPhone['productSupplierId'],
+                            'usageId' => $valPhone['usageId'],
+                            'number' => $valPhone['number'],
+                            'typePhoneId' => $valPhone['typePhoneId'],
+                            'updated_at' => Carbon::now(),
+                            'userUpdateId' => $request->user()->id,
+                        ]
+                    );
+                }
             }
         }
 
@@ -613,16 +745,28 @@ class SupplierController extends Controller
             $resEmails = $request->emails;
 
             foreach ($resEmails as $valEmail) {
-                productSupplierEmails::updateOrCreate(
-                    ['id' => $valEmail['id']],
-                    [
-                        'productSupplierId' => $valEmail['productSupplierId'],
-                        'usageId' => $valEmail['usageId'],
-                        'address' => $valEmail['address'],
-                        'updated_at' => Carbon::now(),
-                        'userUpdateId' => $request->user()->id,
-                    ]
-                );
+
+                if ($valEmail['status'] == 'del') {
+
+                    $res = productSupplierEmails::find($valEmail['id']);
+
+                    $res->DeletedBy = $request->user()->id;
+                    $res->isDeleted = true;
+                    $res->DeletedAt = Carbon::now();
+                    $res->save();
+                } else {
+
+                    productSupplierEmails::updateOrCreate(
+                        ['id' => $valEmail['id']],
+                        [
+                            'productSupplierId' => $valEmail['productSupplierId'],
+                            'usageId' => $valEmail['usageId'],
+                            'address' => $valEmail['address'],
+                            'updated_at' => Carbon::now(),
+                            'userUpdateId' => $request->user()->id,
+                        ]
+                    );
+                }
             }
         }
 
@@ -630,17 +774,29 @@ class SupplierController extends Controller
             $resMsg = $request->messengers;
 
             foreach ($resMsg as $valMsg) {
-                productSupplierMessengers::updateOrCreate(
-                    ['id' => $valMsg['id']],
-                    [
-                        'productSupplierId' => $valMsg['productSupplierId'],
-                        'usageId' => $valMsg['usageId'],
-                        'usageName' => $valMsg['usageName'],
-                        'typeId' => $valMsg['typeId'],
-                        'updated_at' => Carbon::now(),
-                        'userUpdateId' => $request->user()->id,
-                    ]
-                );
+
+                if ($valMsg['status'] == 'del') {
+
+                    $res = productSupplierMessengers::find($valMsg['id']);
+
+                    $res->DeletedBy = $request->user()->id;
+                    $res->isDeleted = true;
+                    $res->DeletedAt = Carbon::now();
+                    $res->save();
+                } else {
+
+                    productSupplierMessengers::updateOrCreate(
+                        ['id' => $valMsg['id']],
+                        [
+                            'productSupplierId' => $valMsg['productSupplierId'],
+                            'usageId' => $valMsg['usageId'],
+                            'usageName' => $valMsg['usageName'],
+                            'typeId' => $valMsg['typeId'],
+                            'updated_at' => Carbon::now(),
+                            'userUpdateId' => $request->user()->id,
+                        ]
+                    );
+                }
             }
         }
 

@@ -18,7 +18,7 @@ return new class extends Migration
 
             $table->integer('productSupplierId');
             $table->integer('usageId');
-            $table->integer('number');
+            $table->string('number', 25);
             $table->integer('typePhoneId');
 
             $table->boolean('isDeleted')->nullable()->default(false);
