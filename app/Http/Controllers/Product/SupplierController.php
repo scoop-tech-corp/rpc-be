@@ -28,11 +28,10 @@ class SupplierController extends Controller
 
         $data = DB::table('productSuppliers as ps')
             ->leftJoin('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
-            // ->join('productSupplierPhones as psp', 'ps.id', 'psp.productSupplierId')
             ->select(
                 'ps.id',
                 'ps.supplierName',
-                'psa.streetAddress',
+                DB::raw("IFNULL(psa.streetAddress,'') as streetAddress"),
 
                 DB::raw('CASE WHEN (select count(*) from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ') > 0
                 THEN (select number from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ' limit 1)
@@ -45,7 +44,7 @@ class SupplierController extends Controller
                 THEN 0 END as isWhatsAppActive')
             )
             ->distinct()
-            ->where('psa.isPrimary', '=', 1)
+            // ->where('psa.isPrimary', '=', 1)
             ->where('ps.isDeleted', '=', 0);
 
         if ($request->search) {
@@ -263,11 +262,11 @@ class SupplierController extends Controller
                 ],
                 [
                     '*.usageId.required' => 'Usage Should be Required!',
-                    '*.usageId.integer' => 'Usage Should be Filled!',
+                    '*.usageId.integer' => 'Usage Should be Integer!',
                     '*.number.required' => 'Number Should be Required!',
-                    '*.number.string' => 'Number Should be Filled!',
+                    '*.number.string' => 'Number Should be String!',
                     '*.typePhoneId.required' => 'Type Phone Should be Required!',
-                    '*.typePhoneId.integer' => 'Type Phone Should be Filled!',
+                    '*.typePhoneId.integer' => 'Type Phone Should be Integer!',
                 ]
             );
 
@@ -593,11 +592,11 @@ class SupplierController extends Controller
                 ],
                 [
                     '*.usageId.required' => 'Usage Should be Required!',
-                    '*.usageId.integer' => 'Usage Should be Filled!',
+                    '*.usageId.integer' => 'Usage Should be Integer!',
                     '*.number.required' => 'Number Should be Required!',
-                    '*.number.integer' => 'Number Should be Filled!',
+                    '*.number.string' => 'Number Should be String!',
                     '*.typePhoneId.required' => 'Type Phone Should be Required!',
-                    '*.typePhoneId.integer' => 'Type Phone Should be Filled!',
+                    '*.typePhoneId.integer' => 'Type Phone Should be Integer!',
                 ]
             );
 
