@@ -27,7 +27,7 @@ class SupplierController extends Controller
         $page = $request->goToPage;
 
         $data = DB::table('productSuppliers as ps')
-            ->join('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
+            ->leftJoin('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
             // ->join('productSupplierPhones as psp', 'ps.id', 'psp.productSupplierId')
             ->select(
                 'ps.id',
