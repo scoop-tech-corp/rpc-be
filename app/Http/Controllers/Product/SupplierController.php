@@ -441,8 +441,8 @@ class SupplierController extends Controller
             ->first();
 
         $dataAddress = DB::table('productSupplierAddresses as psa')
-            ->join('provinsi as p', 'p.id', 'psa.province')
-            ->join('kabupaten as k', 'k.id', 'psa.city')
+            ->join('provinsi as p', 'p.kodeProvinsi', 'psa.province')
+            ->join('kabupaten as k', 'k.kodeKabupaten', 'psa.city')
             ->select(
                 'psa.id',
                 'psa.productSupplierId',
