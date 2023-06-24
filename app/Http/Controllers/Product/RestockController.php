@@ -996,6 +996,16 @@ class RestockController extends Controller
                 ->where('ps.id', '=', $valSup)
                 ->first();
 
+            if (!$dataSupplier) {
+
+                $dat = ProductSupplier::find($valSup);
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Please Input Address and Phone Number for supplier ' . $dat->supplierName],
+                ], 422);
+            }
+
             $dataWhatsApp = DB::table('productSupplierTypePhones')
                 ->where('typeName', 'like', '%whatsapp%')
                 ->first();
