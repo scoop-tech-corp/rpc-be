@@ -94,6 +94,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/supplier/usage', [SupplierController::class, 'listSupplierUsage']);
         Route::get('/supplier/phone', [SupplierController::class, 'listSupplierTypePhone']);
         Route::get('/supplier/messenger', [SupplierController::class, 'listSupplierTypeMessenger']);
+        Route::get('/supplier/export', [SupplierController::class, 'export']);
 
         Route::post('/brand', [ProductController::class, 'addProductBrand']);
         Route::get('/brand', [ProductController::class, 'IndexProductBrand']);
