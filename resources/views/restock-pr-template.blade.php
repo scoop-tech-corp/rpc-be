@@ -191,10 +191,7 @@
                     </td>
 
                     @php
-                    $provinsi = '-';
-                        @if (!is_null($dataSupplier->provinsi))
-                            $provinsi = $dataSupplier->provinsi;
-                        @endif
+                    $provinsi = $dataSupplier->provinsi;
                     @endphp
 
                     <td style="width:50%">
@@ -207,10 +204,7 @@
                     </td>
 
                     @php
-                    $kota = '-';
-                        @if (!is_null($dataSupplier->kota))
-                            $kota = $dataSupplier->kota;
-                        @endif
+                    $kota = $dataSupplier->kota;
                     @endphp
 
 
@@ -224,10 +218,7 @@
                     </td>
 
                     @php
-                    $postalCode = '-';
-                        @if (!is_null($dataSupplier->postalCode))
-                            $postalCode = $dataSupplier->postalCode;
-                        @endif
+                    $postalCode = $dataSupplier->postalCode;
                     @endphp
 
                     <td style="width:50%">
