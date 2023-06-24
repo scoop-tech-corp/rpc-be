@@ -725,7 +725,7 @@ class SupplierController extends Controller
                     productSupplierPhones::updateOrCreate(
                         ['id' => $valPhone['id']],
                         [
-                            'productSupplierId' => $valPhone['productSupplierId'],
+                            'productSupplierId' => $request->id,
                             'usageId' => $valPhone['usageId'],
                             'number' => $valPhone['number'],
                             'typePhoneId' => $valPhone['typePhoneId'],
@@ -756,7 +756,7 @@ class SupplierController extends Controller
                     productSupplierEmails::updateOrCreate(
                         ['id' => $valEmail['id']],
                         [
-                            'productSupplierId' => $valEmail['productSupplierId'],
+                            'productSupplierId' => $request->id,
                             'usageId' => $valEmail['usageId'],
                             'address' => $valEmail['address'],
                             'updated_at' => Carbon::now(),
@@ -786,7 +786,7 @@ class SupplierController extends Controller
                     productSupplierMessengers::updateOrCreate(
                         ['id' => $valMsg['id']],
                         [
-                            'productSupplierId' => $valMsg['productSupplierId'],
+                            'productSupplierId' => $request->id,
                             'usageId' => $valMsg['usageId'],
                             'usageName' => $valMsg['usageName'],
                             'typeId' => $valMsg['typeId'],
