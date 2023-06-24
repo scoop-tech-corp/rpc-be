@@ -979,19 +979,19 @@ class RestockController extends Controller
             }
 
             $dataSupplier = DB::table('productSuppliers as ps')
-                ->join('productSupplierAddresses as psa', 'psa.productSupplierId', 'ps.id')
+                ->Leftjoin('productSupplierAddresses as psa', 'psa.productSupplierId', 'ps.id')
                 ->join('provinsi as p', 'p.kodeProvinsi', 'psa.province')
                 ->join('kabupaten as k', 'k.kodeKabupaten', 'psa.city')
-                ->join('productSupplierPhones as psp', 'ps.id', 'psp.productSupplierId')
+                ->Leftjoin('productSupplierPhones as psp', 'ps.id', 'psp.productSupplierId')
                 ->select(
                     'ps.id',
                     'ps.supplierName',
                     DB::raw("IFNULL(ps.pic,'-') as pic"),
-                    'psa.streetAddress',
-                    'p.namaProvinsi as provinsi',
-                    'k.namaKabupaten as kota',
-                    'psa.postalCode',
-                    'psp.number',
+                    DB::raw("IFNULL(psa.streetAddress,'-') as streetAddress"),
+                    DB::raw("IFNULL(p.namaProvinsi,'-') as namaProvinsi"),
+                    DB::raw("IFNULL(k.namaKabupaten,'-') as namaKabupaten"),
+                    DB::raw("IFNULL(psa.postalCode,'-') as postalCode"),
+                    DB::raw("IFNULL(psp.number,'-') as number"),
                 )
                 ->where('ps.id', '=', $valSup)
                 ->first();
@@ -1010,7 +1010,7 @@ class RestockController extends Controller
 
             $suppWa = null;
 
-            if ($dataWhatsApp && $dataSupplier) {
+            if ($dataWhatsApp) {
                 $suppWa = DB::table('productSupplierPhones as psp')
                     ->where('psp.productSupplierId', '=', $dataSupplier->id)
                     ->where('psp.typePhoneId', '=', $dataWhatsApp->id)
@@ -1019,7 +1019,7 @@ class RestockController extends Controller
 
             $suppFax = null;
 
-            if ($dataFax && $dataSupplier) {
+            if ($dataFax) {
                 $suppFax = DB::table('productSupplierPhones as psp')
                     ->where('psp.productSupplierId', '=', $dataSupplier->id)
                     ->where('psp.typePhoneId', '=', $dataFax->id)
@@ -1028,7 +1028,7 @@ class RestockController extends Controller
 
             $suppPic = null;
 
-            if ($dataPic && $dataSupplier) {
+            if ($dataPic) {
                 $suppPic = DB::table('productSupplierPhones as psp')
                     ->where('psp.productSupplierId', '=', $dataSupplier->id)
                     ->where('psp.typePhoneId', '=', $dataPic->id)
