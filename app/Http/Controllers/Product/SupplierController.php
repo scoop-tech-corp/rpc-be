@@ -669,6 +669,7 @@ class SupplierController extends Controller
                 'pic' => $request->pic,
                 'updated_at' => Carbon::now(),
                 'userUpdateId' => $request->user()->id,
+                'userId' => $request->user()->id,
             ]
         );
 
@@ -700,6 +701,7 @@ class SupplierController extends Controller
                             'isPrimary' => $valAdd['isPrimary'],
                             'updated_at' => Carbon::now(),
                             'userUpdateId' => $request->user()->id,
+                            'userId' => $request->user()->id,
                         ]
                     );
                 }
@@ -729,6 +731,7 @@ class SupplierController extends Controller
                             'typePhoneId' => $valPhone['typePhoneId'],
                             'updated_at' => Carbon::now(),
                             'userUpdateId' => $request->user()->id,
+                            'userId' => $request->user()->id,
                         ]
                     );
                 }
@@ -758,6 +761,7 @@ class SupplierController extends Controller
                             'address' => $valEmail['address'],
                             'updated_at' => Carbon::now(),
                             'userUpdateId' => $request->user()->id,
+                            'userId' => $request->user()->id,
                         ]
                     );
                 }
@@ -788,6 +792,7 @@ class SupplierController extends Controller
                             'typeId' => $valMsg['typeId'],
                             'updated_at' => Carbon::now(),
                             'userUpdateId' => $request->user()->id,
+                            'userId' => $request->user()->id,
                         ]
                     );
                 }
