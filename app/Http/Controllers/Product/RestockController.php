@@ -30,9 +30,11 @@ class RestockController extends Controller
 
         $page = $request->goToPage;
 
-        $data = DB::table('productRestocks as pr')
-            ->join('productRestockDetails as prd', 'prd.productRestockId', 'pr.id')
-            ->join('location as loc', 'loc.Id', 'pr.locationId')
+        $data = DB::table('productRestocks as pr');
+        if ($request->supplierId) {
+            $data = $data->join('productRestockDetails as prd', 'prd.productRestockId', 'pr.id');
+        }
+        $data = $data->join('location as loc', 'loc.Id', 'pr.locationId')
             ->join('users as u', 'pr.userId', 'u.id')
             ->select(
                 'pr.id',
