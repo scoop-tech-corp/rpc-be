@@ -1010,7 +1010,7 @@ class RestockController extends Controller
 
             $suppWa = null;
 
-            if ($dataWhatsApp) {
+            if ($dataWhatsApp && $dataSupplier) {
                 $suppWa = DB::table('productSupplierPhones as psp')
                     ->where('psp.productSupplierId', '=', $dataSupplier->id)
                     ->where('psp.typePhoneId', '=', $dataWhatsApp->id)
@@ -1019,7 +1019,7 @@ class RestockController extends Controller
 
             $suppFax = null;
 
-            if ($dataFax) {
+            if ($dataFax && $dataSupplier) {
                 $suppFax = DB::table('productSupplierPhones as psp')
                     ->where('psp.productSupplierId', '=', $dataSupplier->id)
                     ->where('psp.typePhoneId', '=', $dataFax->id)
@@ -1028,7 +1028,7 @@ class RestockController extends Controller
 
             $suppPic = null;
 
-            if ($dataPic) {
+            if ($dataPic && $dataSupplier) {
                 $suppPic = DB::table('productSupplierPhones as psp')
                     ->where('psp.productSupplierId', '=', $dataSupplier->id)
                     ->where('psp.typePhoneId', '=', $dataPic->id)
