@@ -30,6 +30,7 @@ class SupplierController extends Controller
             ->leftJoin('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
             ->select(
                 'ps.id',
+                'ps.pic',
                 'ps.supplierName',
                 DB::raw("IFNULL(psa.streetAddress,'') as streetAddress"),
 
@@ -50,7 +51,6 @@ class SupplierController extends Controller
         if ($request->search) {
             $res = $this->search($request, $idWa->id);
             if ($res) {
-                info($res[0]);
                 if ($res[0] == 'psp.number') {
                     $id = DB::table('productSupplierPhones as psp')
                         ->select('psp.productSupplierId')
@@ -66,7 +66,6 @@ class SupplierController extends Controller
                 }
 
                 for ($i = 1; $i < count($res); $i++) {
-                    info($res[$i]);
                     if ($res[$i] === 'psp.number') {
                         $id = DB::table('productSupplierPhones as psp')
                             ->select('psp.productSupplierId')
@@ -75,8 +74,6 @@ class SupplierController extends Controller
                             ->groupby('psp.productSupplierId')
                             ->distinct()
                             ->pluck('psp.productSupplierId');
-
-                        info($id);
 
                         $data = $data->orWherein('ps.id', $id);
                     } else {
@@ -91,8 +88,6 @@ class SupplierController extends Controller
                 ], 200);
             }
         }
-
-        // return $data = $data->toSql();
 
         if ($request->orderValue) {
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
