@@ -691,7 +691,7 @@ class SupplierController extends Controller
                     productSupplierAddresses::updateOrCreate(
                         ['id' => $valAdd['id']],
                         [
-                            'productSupplierId' => $valAdd['productSupplierId'],
+                            'productSupplierId' => $request->id,
                             'streetAddress' => $valAdd['streetAddress'],
                             'additionalInfo' => $valAdd['additionalInfo'],
                             'country' => $valAdd['country'],
