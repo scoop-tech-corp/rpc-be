@@ -189,22 +189,47 @@
                     <td>
                         <label>Provinsi:</label>
                     </td>
+
+                    @php
+                    $provinsi = '-';
+                        @if (!is_null($dataSupplier->provinsi))
+                            $provinsi = $dataSupplier->provinsi;
+                        @endif
+                    @endphp
+
                     <td style="width:50%">
-                        <label>{{$dataSupplier->provinsi}}</label>
+                        <label>{{$provinsi}}</label>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <label>Kota:</label>
                     </td>
+
+                    @php
+                    $kota = '-';
+                        @if (!is_null($dataSupplier->kota))
+                            $kota = $dataSupplier->kota;
+                        @endif
+                    @endphp
+
+
                     <td style="width:50%">
-                        <label>{{$dataSupplier->kota}}</label>
+                        <label>{{$kota}}</label>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <label>Kode POS:</label>
                     </td>
+
+                    @php
+                    $postalCode = '-';
+                        @if (!is_null($dataSupplier->postalCode))
+                            $postalCode = $dataSupplier->postalCode;
+                        @endif
+                    @endphp
+
                     <td style="width:50%">
                         <label>{{$dataSupplier->postalCode}}</label>
                     </td>

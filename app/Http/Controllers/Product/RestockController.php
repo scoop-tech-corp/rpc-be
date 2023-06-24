@@ -980,8 +980,8 @@ class RestockController extends Controller
 
             $dataSupplier = DB::table('productSuppliers as ps')
                 ->Leftjoin('productSupplierAddresses as psa', 'psa.productSupplierId', 'ps.id')
-                ->join('provinsi as p', 'p.kodeProvinsi', 'psa.province')
-                ->join('kabupaten as k', 'k.kodeKabupaten', 'psa.city')
+                ->Leftjoin('provinsi as p', 'p.kodeProvinsi', 'psa.province')
+                ->Leftjoin('kabupaten as k', 'k.kodeKabupaten', 'psa.city')
                 ->Leftjoin('productSupplierPhones as psp', 'ps.id', 'psp.productSupplierId')
                 ->select(
                     'ps.id',
