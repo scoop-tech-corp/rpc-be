@@ -191,7 +191,7 @@
                     </td>
 
                     @php
-                    $provinsi = $dataSupplier->provinsi;
+                    $provinsi = $dataSupplier->namaProvinsi;
                     @endphp
 
                     <td style="width:50%">
@@ -204,7 +204,7 @@
                     </td>
 
                     @php
-                    $kota = $dataSupplier->kota;
+                    $kota = $dataSupplier->namaKabupaten;
                     @endphp
 
 
