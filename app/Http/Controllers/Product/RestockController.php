@@ -49,6 +49,14 @@ class RestockController extends Controller
             )
             ->where('pr.isDeleted', '=', 0);
 
+        if ($request->type == 'approval') {
+            $data = $data->where('pr.status', '=', 1);
+        }
+
+        if ($request->type == 'history') {
+            $data = $data->whereIn('pr.status', array(2, 3, 4, 5));
+        }
+
         if ($request->locationId) {
 
             $data = $data->whereIn('loc.id', $request->locationId);
@@ -235,10 +243,10 @@ class RestockController extends Controller
             'variantProduct' => 1,
             'totalProduct' => $request->reStockQuantity,
             'supplierName' => $suppName,
-            'status' => 0,
-            'isAdminApproval' => $checkAdminApproval,
+            'status' => 1,
             'userId' => $request->user()->id,
             //status 0 = waiting for approval, status 1 = approved, status 2 = reject, status 3 = product has arrive
+            //0 = draft, 1 = waiting for approval, 2 = reject, 3 = approved, 4 = submit to supplier, 5 = product received
         ]);
 
         productRestockDetails::create([
@@ -259,6 +267,7 @@ class RestockController extends Controller
             'total' => $request->total,
             'costPerItem' => $request->costPerItem,
             'remark' => $request->remark,
+            'isAdminApproval' => $checkAdminApproval,
             'userId' => $request->user()->id,
         ]);
 
@@ -343,6 +352,7 @@ class RestockController extends Controller
         $totalImages = 0;
         $suppName = "";
         $checkAdminApproval = false;
+        $diffStock = 0;
 
         //validasi data
 
@@ -515,6 +525,20 @@ class RestockController extends Controller
                 }
             }
 
+            if ($val['productType'] === 'productSell') {
+
+                $find = ProductSellLocation::where('productSellId', '=', $val['productId'])->first();
+                $diffStock = $find->diffStock;
+            } elseif ($val['productType'] === 'productClinic') {
+
+                $find = ProductClinicLocation::where('productClinicId', '=', $val['productId'])->first();
+                $diffStock = $find->diffStock;
+            }
+
+            if ($diffStock > 0) {
+                $checkAdminApproval = true;
+            }
+
             $prodDetail = productRestockDetails::create([
                 'purchaseRequestNumber' => $prNumber,
                 'purchaseOrderNumber' => '',
@@ -532,6 +556,7 @@ class RestockController extends Controller
                 'costPerItem' => $val['costPerItem'],
                 'total' => $val['total'],
                 'remark' => $val['remark'],
+                'isAdminApproval' => $checkAdminApproval,
                 'userId' => $request->user()->id,
             ]);
 

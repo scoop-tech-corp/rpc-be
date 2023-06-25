@@ -15,8 +15,6 @@ class productRestocks extends Model
 
     protected $fillable = [
         'numberId', 'supplierName', 'locationId', 'variantProduct', 'totalProduct', 'status',
-        'userIdOffice', 'isApprovedOffice', 'reasonOffice', 'officeApprovedAt',
-        'isAdminApproval', 'userIdAdmin', 'isApprovedAdmin', 'reasonAdmin', 'adminApprovedAt',
         'userId', 'userUpdateId'
     ];
 }

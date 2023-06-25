@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Exports\Product\SupplierReport;
 use App\Http\Controllers\Controller;
 use App\Models\ProductSupplier;
 use App\Models\productSupplierAddresses;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use DB;
 use Validator;
 use Illuminate\Support\Carbon;
+use Excel;
 
 class SupplierController extends Controller
 {
@@ -27,6 +29,7 @@ class SupplierController extends Controller
         $page = $request->goToPage;
 
         $data = DB::table('productSuppliers as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
             ->leftJoin('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
             ->select(
                 'ps.id',
@@ -42,7 +45,9 @@ class SupplierController extends Controller
                 DB::raw('CASE WHEN (select count(*) from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ') > 0
                 THEN 1
                 WHEN (select count(*) from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ') = 0
-                THEN 0 END as isWhatsAppActive')
+                THEN 0 END as isWhatsAppActive'),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
             ->distinct()
             // ->where('psa.isPrimary', '=', 1)
@@ -1000,5 +1005,21 @@ class SupplierController extends Controller
             ->get();
 
         return response()->json($data, 200);
+    }
+
+    public function export(Request $request)
+    {
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-y');
+
+        $fileName = "Rekap Supplier Produk " . $date . ".xlsx";
+
+        return Excel::download(
+            new SupplierReport(
+                $request->orderValue,
+                $request->orderColumn,
+            ),
+            $fileName
+        );
     }
 }
