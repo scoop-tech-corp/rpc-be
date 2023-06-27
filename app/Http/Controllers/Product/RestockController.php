@@ -103,10 +103,7 @@ class RestockController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     private function search($request)
@@ -322,12 +319,7 @@ class RestockController extends Controller
             }
         }
 
-        return response()->json(
-            [
-                'message' => 'Add Data Successful!',
-            ],
-            200
-        );
+        return responseCreate();
     }
 
     public function createMultiple(Request $request)
@@ -482,7 +474,6 @@ class RestockController extends Controller
             'totalProduct' => $totalProduct,
             'supplierName' => $suppName,
             'status' => $statusdata,
-            'isAdminApproval' => 0,
             'userId' => $request->user()->id,
         ]);
 
@@ -578,12 +569,7 @@ class RestockController extends Controller
             }
         }
 
-        return response()->json(
-            [
-                'message' => 'Add Data Successful!',
-            ],
-            200
-        );
+        return responseCreate();
     }
 
     public function export(Request $request)
@@ -649,12 +635,7 @@ class RestockController extends Controller
             'userId' => $request->user()->id,
         ]);
 
-        return response()->json(
-            [
-                'message' => 'Insert Data Successful!',
-            ],
-            200
-        );
+        return responseCreate();
     }
 
     public function detail(Request $request)
@@ -836,7 +817,8 @@ class RestockController extends Controller
 
             $restock->dataSupplier = $dataSup;
 
-            return response()->json($restock, 200);
+            // return response()->json($restock, 200);
+            return responseList($restock);
         }
     }
 
@@ -888,10 +870,7 @@ class RestockController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     public function listSupplier(Request $request)
@@ -1385,27 +1364,29 @@ class RestockController extends Controller
             // }
         }
 
-        return response()->json(
-            [
-                'message' => 'Update Data Successful!',
-            ],
-            200
-        );
+        return responseUpdate();
     }
 
     public function delete(Request $request)
     {
-        $validate = Validator::make($request->all(), [
-            '.*id' => 'required|integer',
-        ]);
+        if (!adminAccess($request->user()->id)) {
+            return responseInvalid(['Only admin can delete Restock Product']);
+        }
+        $validate = Validator::make(
+            $request->all(),
+            [
+                'id.*' => 'required|integer',
+            ],
+            [
+                'id.*.required' => 'Product Type Should be Required!',
+                'id.*.integer' => 'Product Type Should be Integer!',
+            ]
+        );
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $tmp_num = '';
@@ -1426,10 +1407,7 @@ class RestockController extends Controller
         }
 
         if ($tmp_num != '') {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Restock with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited!'],
-            ], 422);
+            return responseInvalid(['Restock with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited!']);
         }
 
         foreach ($request->id as $va) {
@@ -1441,9 +1419,7 @@ class RestockController extends Controller
             $res->save();
         }
 
-        return response()->json([
-            'message' => 'Delete Data Successful',
-        ], 200);
+        return responseDelete();
     }
 
     public function approval(Request $request)
@@ -1461,6 +1437,12 @@ class RestockController extends Controller
             ], 422);
         }
 
+        $isAdmin = false;
+
+        if (adminAccess($request->user()->id)) {
+            $isAdmin = true;
+        }
+
         $find = productRestocks::find($request->productRestockId);
 
         if (!$find) {
@@ -1470,67 +1452,278 @@ class RestockController extends Controller
             ], 422);
         }
 
-        $datas = json_decode($request->productRestocks, true);
+        if ($request->isAcceptedAll == '1') {
 
-        foreach ($datas as $value) {
-            $findRestock = productRestockDetails::find($value['productRestockDetailId']);
+            $detail = productRestockDetails::where('productRestockId', '=', $request->productRestockId)->get();
 
-            if (!$findRestock) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Data Restock Detail not found!'],
-                ], 422);
+            foreach ($detail as $value) {
+
+                $detail2 = productRestockDetails::find($value['id']);
+
+                if ($isAdmin) {
+                    $detail2->isApprovedAdmin = 1;
+                    $detail2->userIdAdmin = $request->user()->id;
+                    $detail2->adminApprovedAt = Carbon::now();
+                } else {
+                    $detail2->isApprovedOffice = 1;
+                    $detail2->userIdOffice = $request->user()->id;
+                    $detail2->officeApprovedAt = Carbon::now();
+                }
+
+                $detail2->accepted = $detail2->reStockQuantity;
+                $detail2->updated_at = Carbon::now();
+                $detail2->save();
             }
 
-            if ($findRestock->purchaseRequestNumber == null) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Product do not have Purchase Request Number!'],
-                ], 422);
+            $suppList = DB::table('productRestockDetails as prd')
+                ->select('prd.supplierId')
+                ->where('prd.productRestockId', '=', $request->productRestockId)
+                ->groupby('prd.supplierId')
+                ->distinct()
+                ->pluck('prd.supplierId');
+
+            foreach ($suppList as $supp) {
+
+                $findData = DB::table('productRestockDetails')
+                    ->select('purchaseOrderNumber')
+                    ->whereDate('updated_at', Carbon::today())
+                    ->where('purchaseOrderNumber', '!=', '')
+                    ->groupBy('purchaseOrderNumber')
+                    ->get();
+
+                if (count($findData) == 0) {
+                    $number = Carbon::today();
+                    $number = 'RPC-PO-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+                } else {
+                    $number = Carbon::today();
+                    $number = 'RPC-PO-' . $number->format('Ymd') . str_pad(count($findData) + 1, 5, 0, STR_PAD_LEFT);
+                }
+
+                DB::table('productRestockDetails')
+                    ->where('productRestockId', '=', $request->productRestockId)
+                    ->where('supplierId', '=', $supp)
+                    ->update([
+                        'purchaseOrderNumber' => $number
+                    ]);
             }
 
-            if ($findRestock->reStockQuantity != $value['reStockQuantity']) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Restock Quantity not same with system!'],
-                ], 422);
-            }
+            $checkAdminApproval = DB::table('productRestockDetails')
+                ->where('productRestockId', '=', $request->productRestockId)
+                ->where('isAdminApproval', '=', 1)
+                ->get();
 
-            $totalApproval = $value['accepted'] + $value['rejected'];
+            if ($checkAdminApproval) {
 
-            if ($totalApproval != $value['reStockQuantity']) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Total data approval are not same with total Restock!'],
-                ], 422);
-            }
+                $adminApproved = DB::table('productRestockDetails')
+                    ->where('productRestockId', '=', $request->productRestockId)
+                    ->where('isApprovedAdmin', '=', 1)
+                    ->get();
 
-            $findData = productRestockDetails::whereDate('updated_at', Carbon::today())
-                ->where('purchaseOrderNumber', '!=', '')
-                ->count();
-
-            if ($findData == 0) {
-                $number = Carbon::today();
-                $number = 'RPC-PO-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+                if (count($checkAdminApproval) == count($adminApproved)) {
+                    $find->status = 3;
+                    $find->updated_at = Carbon::now();
+                    $find->userUpdateId = $request->user()->id;
+                    $find->save();
+                }
             } else {
-                $number = Carbon::today();
-                $number = 'RPC-PO-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+                $find->status = 3;
+                $find->updated_at = Carbon::now();
+                $find->userUpdateId = $request->user()->id;
+                $find->save();
+            }
+        } elseif ($request->isRejectedAll == '1') {
+            $find->status = 2;
+            $find->updated_at = Carbon::now();
+            $find->userUpdateId = $request->user()->id;
+            $find->save();
+
+            $detail = productRestockDetails::where('productRestockId', '=', $request->productRestockId)->get();
+
+            foreach ($detail as $value) {
+
+                $detail2 = productRestockDetails::find($value['id']);
+
+                if ($isAdmin) {
+                    $detail2->isApprovedAdmin = 2;
+                    $detail2->userIdAdmin = $request->user()->id;
+                    $detail2->adminApprovedAt = Carbon::now();
+                    $detail2->reasonAdmin = $request->reasonRejectAll;
+                } else {
+                    $detail2->isApprovedOffice = 2;
+                    $detail2->userIdOffice = $request->user()->id;
+                    $detail2->officeApprovedAt = Carbon::now();
+                    $detail2->reasonOffice = $request->reasonRejectAll;
+                }
+
+                $detail2->rejected = $detail2->reStockQuantity;
+                $detail2->updated_at = Carbon::now();
+                $detail2->save();
+            }
+        } else {
+            $datas = json_decode($request->productRestocks, true);
+
+            foreach ($datas as $value) {
+                $findRestock = productRestockDetails::find($value['productRestockDetailId']);
+
+                if (!$findRestock) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Data Restock Detail not found!'],
+                    ], 422);
+                }
+
+                if ($findRestock->purchaseRequestNumber == null) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Product do not have Purchase Request Number!'],
+                    ], 422);
+                }
+
+                if ($findRestock->reStockQuantity != $value['reStockQuantity']) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Restock Quantity not same with system!'],
+                    ], 422);
+                }
+
+                $totalApproval = $value['accepted'] + $value['rejected'];
+
+                if ($totalApproval != $value['reStockQuantity']) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Total data approval are not same with total Restock!'],
+                    ], 422);
+                }
+
+                $findData = DB::table('productRestockDetails')
+                    ->whereDate('updated_at', Carbon::today())
+                    ->where('purchaseOrderNumber', '!=', '')
+                    ->get();
+
+                if (count($findData) == 0) {
+                    $number = Carbon::today();
+                    $number = 'RPC-PO-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+                } else {
+                    $number = Carbon::today();
+                    $number = 'RPC-PO-' . $number->format('Ymd') . str_pad(count($findData) + 1, 5, 0, STR_PAD_LEFT);
+                }
+
+                if ($isAdmin) {
+                    //kalo tolak semua
+                    //kalo terima sebagian
+                    //kalo terima semua
+                    if ($value['rejected'] == $value['reStockQuantity']) {
+
+                        $findRestock->isApprovedAdmin = 2;
+                        $findRestock->userIdAdmin = $request->user()->id;
+                        $findRestock->adminApprovedAt = Carbon::now();
+                        $findRestock->reasonAdmin = $value['reasonReject'];
+
+                        $findRestock->rejected = $value['rejected'];
+                        $findRestock->updated_at = Carbon::now();
+                        $findRestock->save();
+                    } else if ($value['rejected'] > 0) {
+
+                        $findRestock->isApprovedAdmin = 1;
+                        $findRestock->userIdAdmin = $request->user()->id;
+                        $findRestock->adminApprovedAt = Carbon::now();
+                        $findRestock->reasonAdmin = $value['reasonReject'];
+
+                        $findRestock->rejected = $value['rejected'];
+                        $findRestock->accepted = $value['accepted'];
+                        $findRestock->updated_at = Carbon::now();
+                        $findRestock->save();
+                    } elseif ($value['accepted'] == $value['reStockQuantity']) {
+                        $findRestock->isApprovedAdmin = 1;
+                        $findRestock->userIdAdmin = $request->user()->id;
+                        $findRestock->adminApprovedAt = Carbon::now();
+
+                        $findRestock->accepted = $value['accepted'];
+                        $findRestock->updated_at = Carbon::now();
+                        $findRestock->save();
+                    }
+                } else {
+                    if ($value['rejected'] == $value['reStockQuantity']) {
+
+                        $findRestock->isApprovedOffice = 2;
+                        $findRestock->userIdOffice = $request->user()->id;
+                        $findRestock->officeApprovedAt = Carbon::now();
+                        $findRestock->reasonOffice = $value['reasonReject'];
+
+                        $findRestock->rejected = $value['rejected'];
+                        $findRestock->updated_at = Carbon::now();
+                        $findRestock->save();
+                    } else if ($value['rejected'] > 0) {
+
+                        $findRestock->isApprovedOffice = 1;
+                        $findRestock->userIdOffice = $request->user()->id;
+                        $findRestock->officeApprovedAt = Carbon::now();
+                        $findRestock->reasonOffice = $value['reasonReject'];
+
+                        $findRestock->rejected = $value['rejected'];
+                        $findRestock->accepted = $value['accepted'];
+                        $findRestock->updated_at = Carbon::now();
+                        $findRestock->save();
+                    } elseif ($value['accepted'] == $value['reStockQuantity']) {
+                        $findRestock->isApprovedOffice = 1;
+                        $findRestock->userIdOffice = $request->user()->id;
+                        $findRestock->officeApprovedAt = Carbon::now();
+
+                        $findRestock->accepted = $value['accepted'];
+                        $findRestock->updated_at = Carbon::now();
+                        $findRestock->save();
+                    }
+                }
+
+                $findRestock2 = productRestockDetails::find($value['productRestockDetailId']);
+
+                if ($findRestock2->isAdminApproval == 1) {
+
+                    if ($findRestock2->isApprovedAdmin == 1 && $findRestock2->isApprovedOffice) {
+                        $findRestock2->purchaseOrderNumber = $number;
+                    }
+                } else {
+                    if ($findRestock2->isApprovedOffice == 1) {
+                        $findRestock2->purchaseOrderNumber = $number;
+                    }
+                }
+
+                $findRestock2->save();
             }
 
-            $findRestock->purchaseOrderNumber = $number;
-            $findRestock->rejected = $value['rejected'];
-            $findRestock->accepted = $value['accepted'];
-            $findRestock->updated_at = Carbon::now();
-            $findRestock->save();
+            $prodRestock = productRestocks::find($request->productRestockId);
+
+            $findDetailAdmin = DB::table('productRestockDetails')
+                ->where('productRestockId', '=', $request->productRestockId)
+                ->where('isAdminApproval', '=', 1)
+                ->get();
+
+            if (count($findDetailAdmin) > 0) {
+                $findAdminApproval = DB::table('productRestockDetails')
+                    ->where('productRestockId', '=', $request->productRestockId)
+                    ->where('isApprovedAdmin', '=', 1)
+                    ->get();
+
+                if (count($findDetailAdmin) == count($findAdminApproval)) {
+                    $prodRestock->status = 3;
+                    $prodRestock->updated_at = Carbon::now();
+                }
+            } else {
+                $findOfficeApproval = DB::table('productRestockDetails')
+                    ->where('productRestockId', '=', $request->productRestockId)
+                    ->where('isApprovedOffice', '=', 1)
+                    ->get();
+
+                if (count($findOfficeApproval) > 0) {
+                    $prodRestock->status = 3;
+                    $prodRestock->updated_at = Carbon::now();
+                }
+            }
+
+            $prodRestock->save();
         }
 
-        $prodRestock = productRestocks::find($request->productRestockId);
-        $prodRestock->status = 3;
-
-
-        return response()->json([
-            'message' => 'Update Data Successful',
-        ], 200);
+        return responseUpdate();
     }
 
     public function sentSupplier(Request $request)
@@ -1539,6 +1732,5 @@ class RestockController extends Controller
 
     public function confirmReceive(Request $request)
     {
-        # code...
     }
 }
