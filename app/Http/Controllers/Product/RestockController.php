@@ -77,10 +77,7 @@ class RestockController extends Controller
                 }
             } else {
                 $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                return responseIndex(0,$data);
             }
         }
 
@@ -144,10 +141,7 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $prodType = "";
@@ -1385,9 +1379,6 @@ class RestockController extends Controller
 
     public function delete(Request $request)
     {
-        if (!adminAccess($request->user()->id)) {
-            return responseInvalid(['Only admin can delete Restock Product']);
-        }
         $validate = Validator::make(
             $request->all(),
             [
@@ -1405,25 +1396,47 @@ class RestockController extends Controller
             return responseInvalid($errors);
         }
 
-        $tmp_num = '';
+        if (adminAccess($request->user()->id)) {
 
-        foreach ($request->id as $va) {
-            $res = productRestocks::find($va);
+            $tmp_num = '';
 
-            if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
+            foreach ($request->id as $va) {
+
+                $res = productRestocks::find($va);
+
+                if (!$res) {
+
+                    return responseInvalid(['There is any Data not found!']);
+                }
+
+                if ($res->status == 5) {
+                    $tmp_num = $tmp_num . (string) $res->numberId . ', ';
+                }
             }
 
-            if ($res->status != 0) {
-                $tmp_num = $tmp_num . (string) $res->numberId . ', ';
+            if ($tmp_num != '') {
+                return responseInvalid(['Restock with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already received!']);
             }
-        }
+        } else {
 
-        if ($tmp_num != '') {
-            return responseInvalid(['Restock with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited!']);
+            $tmp_num = '';
+
+            foreach ($request->id as $va) {
+                $res = productRestocks::find($va);
+
+                if (!$res) {
+
+                    return responseInvalid(['There is any Data not found!']);
+                }
+
+                if ($res->status != 0) {
+                    $tmp_num = $tmp_num . (string) $res->numberId . ', ';
+                }
+            }
+
+            if ($tmp_num != '') {
+                return responseInvalid(['Restock with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited, has sent to Supplier or has already received!']);
+            }
         }
 
         foreach ($request->id as $va) {
@@ -1433,6 +1446,14 @@ class RestockController extends Controller
             $res->isDeleted = true;
             $res->DeletedAt = Carbon::now();
             $res->save();
+
+            DB::table('productRestockDetails')
+                ->where('productRestockId', '=', $va)
+                ->update([
+                    'isDeleted' => true,
+                    'DeletedBy' => $request->user()->id,
+                    'DeletedAt' => Carbon::now()
+                ]);
         }
 
         return responseDelete();
@@ -1744,6 +1765,28 @@ class RestockController extends Controller
 
     public function sentSupplier(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $prod = productRestocks::find($request->id);
+
+        if ($prod->status != 3) {
+            return responseInvalid(['Only accepted restock can be sent to Supplier!']);
+        }
+
+        $prod->status = 4;
+        $prod->save();
+
+        return responseUpdate();
     }
 
     public function confirmReceive(Request $request)
