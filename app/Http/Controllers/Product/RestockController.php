@@ -1061,8 +1061,8 @@ class RestockController extends Controller
                 ->select(
                     DB::raw("DATE_FORMAT(prd.requireDate, '%d/%m/%Y') as requireDate"),
                     DB::raw("IFNULL(prd.purchaseOrderNumber,'-') as purchaseOrderNumber"),
-                    DB::raw("IFNULL(ua.fistName,'-') as adminApprovedBy"),
-                    DB::raw("IFNULL(uo.fistName,'-') as officeApprovedBy"),
+                    DB::raw("IFNULL(ua.firstName,'-') as adminApprovedBy"),
+                    DB::raw("IFNULL(uo.firstName,'-') as officeApprovedBy"),
                 )
                 ->where('prd.productRestockId', '=', $request->id)
                 ->where('prd.supplierId', '=', $dataSupplier->id)
