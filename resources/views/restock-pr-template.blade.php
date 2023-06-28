@@ -406,7 +406,7 @@
                 <label>Tanggal Pemesanan:</label>
             </td>
             <td>
-                <label>12/12/2022</label>
+                <label>{{$dataFooter->requireDate}}</label>
             </td>
         </tr>
         <tr>
@@ -414,15 +414,23 @@
                 <label>No. PO:</label>
             </td>
             <td>
-                <label>123</label>
+                <label>{{$dataFooter->purchaseOrderNumber}}</label>
             </td>
         </tr>
         <tr>
             <td>
-                <label>Disetujui Oleh:</label>
+                <label>Disetujui Oleh Office:</label>
             </td>
             <td>
-                <label>asd</label>
+                <label>{{$dataFooter->officeApprovedBy}}</label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>Disetujui Oleh Admin:</label>
+            </td>
+            <td>
+                <label>{{$dataFooter->adminApprovedBy}}</label>
             </td>
         </tr>
     </table>

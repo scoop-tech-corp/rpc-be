@@ -182,6 +182,63 @@ if (!function_exists('productRestockLog')) {
         ]);
     }
 }
+
+if (!function_exists('responseInvalid')) {
+    function responseInvalid($errors)
+    {
+        return response()->json([
+            'message' => 'The given data was invalid.',
+            'errors' => $errors,
+        ], 422);
+    }
+}
+
+if (!function_exists('responseCreate')) {
+    function responseCreate()
+    {
+        return response()->json(
+            [
+                'message' => 'Add Data Successful!',
+            ],
+            200
+        );
+    }
+}
+
+if (!function_exists('responseUpdate')) {
+    function responseUpdate()
+    {
+        return response()->json([
+            'message' => 'Update Data Successful',
+        ], 200);
+    }
+}
+
+if (!function_exists('responseDelete')) {
+    function responseDelete()
+    {
+        return response()->json([
+            'message' => 'Delete Data Successful',
+        ], 200);
+    }
+}
+
+if (!function_exists('responseIndex')) {
+    function responseIndex($paging, $data)
+    {
+        return response()->json([
+            'totalPagination' => $paging,
+            'data' => $data
+        ], 200);
+    }
+}
+
+if (!function_exists('responseList')) {
+    function responseList($data)
+    {
+        return response()->json($data, 200);
+    }
+}
 //add by danny wahyudi
 // if (!function_exists('securityGroupAdmin')) {
 //     function securityGroupAdmin($id)
