@@ -1055,7 +1055,7 @@ class RestockController extends Controller
                 ->where('ut.usage', 'like', '%utama%')
                 ->first();
 
-            $dataFooter = DB::table('productRestockDetail as prd')
+            $dataFooter = DB::table('productRestockDetails as prd')
                 ->leftjoin('users as ua', 'prd.userIdAdmin', 'ua.id')
                 ->leftjoin('users as uo', 'prd.userIdOffice', 'uo.id')
                 ->select(
