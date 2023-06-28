@@ -77,7 +77,7 @@ class RestockController extends Controller
                 }
             } else {
                 $data = [];
-                return responseIndex(0,$data);
+                return responseIndex(0, $data);
             }
         }
 
@@ -1253,7 +1253,6 @@ class RestockController extends Controller
                 'totalProduct' => $totalProduct,
                 'supplierName' => $suppName,
                 'status' => $statusdata,
-                'isAdminApproval' => 0,
                 'updated_at' => Carbon::now(),
                 'userUpdateId' => $request->user()->id,
             ]
@@ -1267,8 +1266,23 @@ class RestockController extends Controller
 
         $number = "";
         $prNumber = "";
+        $checkAdminApproval = false;
 
         foreach ($datas as $val) {
+
+            if ($val['productType'] === 'productSell') {
+
+                $find = ProductSellLocation::where('productSellId', '=', $val['productId'])->first();
+                $diffStock = $find->diffStock;
+            } elseif ($val['productType'] === 'productClinic') {
+
+                $find = ProductClinicLocation::where('productClinicId', '=', $val['productId'])->first();
+                $diffStock = $find->diffStock;
+            }
+
+            if ($diffStock > 0) {
+                $checkAdminApproval = true;
+            }
 
             if ($request->status == 'final') {
 
@@ -1337,6 +1351,7 @@ class RestockController extends Controller
                         'costPerItem' => $val['costPerItem'],
                         'total' => $val['total'],
                         'remark' => $val['remark'],
+                        'isAdminApproval' => $checkAdminApproval,
                         'updated_at' => Carbon::now(),
                         'userId' => $userId,
                         'userUpdateId' => $request->user()->id,
