@@ -43,7 +43,7 @@ class userSeeder extends Seeder
         $users = [
             //1
             [
-                'firstName' => 'Danny', 'middleName' => '', 'lastName' => 'Wahyudi', 'nickName' => 'danny', 'gender' => 'male', 'status' => 1, 'locationId' => 11,
+                'firstName' => 'Danny', 'middleName' => '', 'lastName' => 'Wahyudi', 'nickName' => 'danny', 'gender' => 'male', 'status' => 1,
                 'jobTitleId' => 1, 'startDate' => '2022-12-01', 'endDate' => '2023-11-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '10000000',
                 'typeId' => 3, 'identificationNumber' => 1501145032, 'additionalInfo' => 'Testing additional information for inputted database',
@@ -54,7 +54,7 @@ class userSeeder extends Seeder
 
             //2
             [
-                'firstName' => 'Adiyansyah', 'middleName' => 'Dwi', 'lastName' => 'Putra', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1, 'locationId' => 12,
+                'firstName' => 'Adiyansyah', 'middleName' => 'Dwi', 'lastName' => 'Putra', 'nickName' => 'Adiyansyah', 'gender' => 'male', 'status' => 1,
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' => 3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 15013534555, 'additionalInfo' => 'Your additional information RPC petshop care',
@@ -66,7 +66,7 @@ class userSeeder extends Seeder
 
             //3
             [
-                'firstName' => 'Robbie', 'middleName' => 'Ponce', 'lastName' => '', 'nickName' => 'Ponce', 'gender' => 'male', 'status' => 0, 'locationId' => 13,
+                'firstName' => 'Robbie', 'middleName' => 'Ponce', 'lastName' => '', 'nickName' => 'Ponce', 'gender' => 'male', 'status' => 0,
                 'jobTitleId' => 3, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '30000000',
                 'typeId' => 1, 'identificationNumber' => 15013534555, 'additionalInfo' => 'Your additional information RPC petshop care',
@@ -77,7 +77,7 @@ class userSeeder extends Seeder
 
             //4
             [
-                'firstName' => 'Rose', 'middleName' => '', 'lastName' => '', 'nickName' => 'Rose', 'gender' => 'female', 'status' => 1, 'locationId' => 14,
+                'firstName' => 'Rose', 'middleName' => '', 'lastName' => '', 'nickName' => 'Rose', 'gender' => 'female', 'status' => 1,
                 'jobTitleId' => 4, 'startDate' => '2022-08-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 1, 'identificationNumber' => 1234567890, 'additionalInfo' => 'Nothing last forever we can change the future',
@@ -88,7 +88,7 @@ class userSeeder extends Seeder
 
             //5
             [
-                'firstName' => 'Jasper', 'middleName' => '', 'lastName' => 'Saunders', 'nickName' => 'Jasper', 'gender' => 'female', 'status' => 0, 'locationId' => 15,
+                'firstName' => 'Jasper', 'middleName' => '', 'lastName' => 'Saunders', 'nickName' => 'Jasper', 'gender' => 'female', 'status' => 0,
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '20000000',
                 'typeId' => 3, 'identificationNumber' => 298765345678, 'additionalInfo' => 'Your additional information RPC petshop care',
@@ -99,7 +99,7 @@ class userSeeder extends Seeder
 
             //6
             [
-                'firstName' => 'Malika', 'middleName' => '', 'lastName' => 'Oktaviani', 'nickName' => 'Malika', 'gender' => 'female', 'status' => 1, 'locationId' => 16,
+                'firstName' => 'Malika', 'middleName' => '', 'lastName' => 'Oktaviani', 'nickName' => 'Malika', 'gender' => 'female', 'status' => 1,
                 'jobTitleId' => 3, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 627254893472, 'additionalInfo' => 'Klarinet is my way',
@@ -110,7 +110,7 @@ class userSeeder extends Seeder
 
             //7
             [
-                'firstName' => 'Sabrina', 'middleName' => '', 'lastName' => 'Palastri', 'nickName' => 'Sabrina', 'gender' => 'female', 'status' => 1, 'locationId' => 17,
+                'firstName' => 'Sabrina', 'middleName' => '', 'lastName' => 'Palastri', 'nickName' => 'Sabrina', 'gender' => 'female', 'status' => 1,
                 'jobTitleId' => 1, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 15013534555, 'additionalInfo' => 'i love krabby patty',
@@ -121,7 +121,7 @@ class userSeeder extends Seeder
 
             //8
             [
-                'firstName' => 'Luhung', 'middleName' => '', 'lastName' => 'Samosir', 'nickName' => 'Luhung', 'gender' => 'male', 'status' => 0, 'locationId' => 18,
+                'firstName' => 'Luhung', 'middleName' => '', 'lastName' => 'Samosir', 'nickName' => 'Luhung', 'gender' => 'male', 'status' => 0,
                 'jobTitleId' => 1, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  3, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 1111111111, 'additionalInfo' => 'Im number one',
@@ -132,22 +132,22 @@ class userSeeder extends Seeder
 
             //9
             [
-                'firstName' => 'Lili', 'middleName' => '', 'lastName' => 'Yolanda ', 'nickName' => 'Yolanda', 'gender' => 'female', 'status' => 1, 'locationId' => 19,
+                'firstName' => 'Lili', 'middleName' => '', 'lastName' => 'Yolanda ', 'nickName' => 'Yolanda', 'gender' => 'female', 'status' => 1,
                 'jobTitleId' => 2, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  2, 'payAmount' =>  '20000000',
                 'typeId' => 2, 'identificationNumber' => 24729258888, 'additionalInfo' => 'Patrik si bintang laut',
-                'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 6,
+                'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 8,
                 'isDeleted' => 0,  'created_at' => now()->addDay(8),  'updated_at' => now(), 'password' => bcrypt("123"),
                 'registrationNo' => '8782784881',  'designation' => '1219835124', 'createdBy' => 'spongebob', 'email' => 'patrikbintanglaut@gmail.com',
             ],
 
             //10
             [
-                'firstName' => 'Rahmi', 'middleName' => '', 'lastName' => 'Yuniar', 'nickName' => 'Rahmi', 'gender' => 'female', 'status' => 0, 'locationId' => 20,
+                'firstName' => 'Rahmi', 'middleName' => '', 'lastName' => 'Yuniar', 'nickName' => 'Rahmi', 'gender' => 'female', 'status' => 0,
                 'jobTitleId' => 4, 'startDate' => '2022-12-01', 'endDate' => '2023-12-02',
                 'annualSickAllowance' => 10, 'annualSickAllowanceRemaining' => 10, 'annualLeaveAllowance' => 10, 'annualLeaveAllowanceRemaining' => 10, 'payPeriodId' =>  1, 'payAmount' =>  '9999999999',
                 'typeId' => 2, 'identificationNumber' => 111512312342, 'additionalInfo' => 'uang uang uang uang uang',
-                'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 2,
+                'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 8,
                 'isDeleted' => 0,  'created_at' => now()->addDay(9),  'updated_at' => now(), 'password' => bcrypt("123"),
                 'registrationNo' => '11111127828',  'designation' => '242351234', 'createdBy' => 'danny', 'email' => 'mrkrab@gmail.com',
             ],
@@ -161,7 +161,7 @@ class userSeeder extends Seeder
                 'nickName' => 'Wibowo',
                 'gender' => 'male',
                 'status' => 1,
-                'locationId' => 11,
+
                 'jobTitleId' => 1,
                 'startDate' => '2022-12-01',
                 'endDate' => '2023-11-02',
@@ -198,7 +198,6 @@ class userSeeder extends Seeder
                 'nickName' => 'Qori',
                 'gender' => 'female',
                 'status' => 1,
-                'locationId' => 11,
                 'jobTitleId' => 1,
                 'startDate' => '2022-12-01',
                 'endDate' => '2023-11-02',
@@ -229,6 +228,9 @@ class userSeeder extends Seeder
 
 
         ];
+
+
+
 
 
         $userstelephone = [
@@ -263,6 +265,29 @@ class userSeeder extends Seeder
 
             //5
             ['usersId' => 5, "email" => 'staff@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
+
+            //6
+            ['usersId' => 6, "email" => 'manager@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
+
+            //7
+            ['usersId' => 7, "email" => 'customer@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
+
+            //8
+            ['usersId' => 8, "email" => 'internship@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
+
+
+            //9
+            ['usersId' => 9, "email" => 'patrikbintanglaut@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
+
+
+            //10
+            ['usersId' => 10, "email" => 'mrkrab@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
+
 
             //11
             ['usersId' => 11, "email" => 'dharma@gmail.com', "usage" =>  "Utama", "isDeleted" => 0, 'email_verified_at' => now(), 'created_at' => now(),],
@@ -330,15 +355,42 @@ class userSeeder extends Seeder
         }
 
 
-        for ($j = 6; $j <= 10; $j++) {
+        // for ($j = 6; $j <= 10; $j++) {
 
-            $emaildata = [
-                ["usersId" => $j, "email" => $faker->email, 'email_verified_at' => now(), "usage" => "Utama", "isDeleted" => 0, 'created_at' => now(),],
-                ["usersId" => $j, "email" => $faker->email, 'email_verified_at' => now(), "usage" => "Secondary", "isDeleted" => 0, 'created_at' => now(),]
-            ];
+        //     $emaildata = [
+        //         ["usersId" => $j, "email" => $faker->email, 'email_verified_at' => now(), "usage" => "Utama", "isDeleted" => 0, 'created_at' => now(),],
+        //         ["usersId" => $j, "email" => $faker->email, 'email_verified_at' => now(), "usage" => "Secondary", "isDeleted" => 0, 'created_at' => now(),]
+        //     ];
 
-            DB::table('usersEmails')->insert($emaildata);
-        }
+        //     DB::table('usersEmails')->insert($emaildata);
+        // }
+
+
+
+
+        $userLocation = [
+            ['usersId' => '1', "locationId" => '11', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '1', "locationId" => '12', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '1', "locationId" => '13', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '1', "locationId" => '14', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '1', "locationId" => '15', "isDeleted" => 0, 'created_at' => now(),],
+
+            ['usersId' => '2', "locationId" => '11', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '2', "locationId" => '12', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '3', "locationId" => '15', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '3', "locationId" => '16', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '3', "locationId" => '17', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '4', "locationId" => '17', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '5', "locationId" => '18', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '6', "locationId" => '18', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '7', "locationId" => '19', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '8', "locationId" => '20', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '9', "locationId" => '17', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '10', "locationId" => '17', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '11', "locationId" => '21', "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => '12', "locationId" => '22', "isDeleted" => 0, 'created_at' => now(),],
+        ];
+
 
         DB::table('users')->insert($users);
         DB::table('usersTelephones')->insert($userstelephone);
@@ -348,5 +400,6 @@ class userSeeder extends Seeder
         DB::table('jobTitle')->insert($jobTitle);
         DB::table('payPeriod')->insert($payPeriod);
         DB::table('typeId')->insert($typeId);
+        DB::table('usersLocation')->insert($userLocation);
     }
 }
