@@ -982,8 +982,6 @@ class RestockController extends Controller
                 );
             }
 
-            $data = [];
-
             $dataSupplier = DB::table('productSuppliers as ps')
                 ->Leftjoin('productSupplierAddresses as psa', 'psa.productSupplierId', 'ps.id')
                 ->Leftjoin('provinsi as p', 'p.kodeProvinsi', 'psa.province')
@@ -1079,6 +1077,8 @@ class RestockController extends Controller
                 'dataPic' => $suppPic,
                 'dataFooter' => $dataFooter
             ];
+
+            $data = [];
 
             $pdf = PDF::loadview('restock-pr-template', $sourceData);
             $pdf->save($path . '/' . 'Restock PR Produk Supplier ' . $dataSupplier->supplierName . '.pdf');
