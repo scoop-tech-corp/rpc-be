@@ -145,6 +145,22 @@ class SupplierController extends Controller
         }
 
         $data = DB::table('productSuppliers as ps')
+            ->select(
+                'ps.pic'
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('ps.pic', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'ps.pic';
+        }
+
+        $data = DB::table('productSuppliers as ps')
             ->join('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
             ->select(
                 'psa.streetAddress'
