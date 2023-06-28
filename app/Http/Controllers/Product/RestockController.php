@@ -948,6 +948,8 @@ class RestockController extends Controller
                             'prd.total'
                         )
                         ->where('ps.id', '=', $value->productId)
+                        ->where('prd.productRestockId', '=', $request->id)
+                        ->where('prd.supplierId', '=', $valSup)
                         ->where('prd.productType', '=', 'productSell')
                         ->first();
                 } elseif ($value->productType == 'productClinic') {
@@ -962,6 +964,8 @@ class RestockController extends Controller
                             'prd.total'
                         )
                         ->where('pc.id', '=', $value->productId)
+                        ->where('prd.productRestockId', '=', $request->id)
+                        ->where('prd.supplierId', '=', $valSup)
                         ->where('prd.productType', '=', 'productClinic')
                         ->first();
                 }
