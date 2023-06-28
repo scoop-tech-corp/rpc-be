@@ -1055,6 +1055,19 @@ class RestockController extends Controller
                 ->where('ut.usage', 'like', '%utama%')
                 ->first();
 
+            $dataFooter = DB::table('productRestockDetail as prd')
+                ->leftjoin('users as ua', 'prd.userIdAdmin', 'ua.id')
+                ->leftjoin('users as uo', 'prd.userIdOffice', 'uo.id')
+                ->select(
+                    DB::raw("DATE_FORMAT(prd.requireDate, '%d/%m/%Y') as requireDate"),
+                    DB::raw("IFNULL(prd.purchaseOrderNumber,'-') as purchaseOrderNumber"),
+                    DB::raw("IFNULL(ua.fistName,'-') as adminApprovedBy"),
+                    DB::raw("IFNULL(uo.fistName,'-') as officeApprovedBy"),
+                )
+                ->where('prd.productRestockId', '=', $request->id)
+                ->where('prd.supplierId', '=', $dataSupplier->id)
+                ->first();
+
             $sourceData = [
                 'dataMaster' => $dataMaster,
                 'data' => $data,
@@ -1062,6 +1075,7 @@ class RestockController extends Controller
                 'dataWhatsApp' => $suppWa,
                 'dataFax' => $suppFax,
                 'dataPic' => $suppPic,
+                'dataFooter' => $dataFooter
             ];
 
             $pdf = PDF::loadview('restock-pr-template', $sourceData);
