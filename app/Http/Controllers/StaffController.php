@@ -48,7 +48,7 @@ class StaffController extends Controller
                     'endDate' => 'required|date|after:startDate',
                     'registrationNo' => 'string|max:20|min:5|nullable',
                     'designation' => 'string|max:20|min:5|nullable',
-                    'locationId' => 'required|integer',
+                    'locationId' => 'required',
                     'annualSickAllowance' => 'integer|nullable',
                     'annualLeaveAllowance' => 'integer|nullable',
                     'payPeriodId' => 'required|integer',
@@ -61,7 +61,7 @@ class StaffController extends Controller
                     'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
                     'reminderEmail' => 'integer|nullable',
                     'reminderWhatsapp' => 'integer|nullable',
-                    'roleId' => 'required|integer',
+                    'roleId' => 'integer|nullable',
                 ]
             );
 
@@ -300,7 +300,7 @@ class StaffController extends Controller
                         'errors' =>  $data_error_email,
                     ], 422);
                 }
-                
+
                 $checkUsageEmail = false;
                 $checkEmail = [];
                 foreach ($arrayemail as $val) {
@@ -328,7 +328,7 @@ class StaffController extends Controller
                         'errors' => $checkEmail,
                     ], 422);
                 }
-                
+
                 if ($checkUsageEmail == false) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
@@ -392,7 +392,7 @@ class StaffController extends Controller
                         }
                     }
                 }
-                
+
 
                 if ($data_error_messenger) {
                     return response()->json([
@@ -423,7 +423,11 @@ class StaffController extends Controller
                     ], 422);
                 }
             }
-            
+
+
+
+
+
 
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
@@ -438,7 +442,6 @@ class StaffController extends Controller
                     'endDate' => $end,
                     'registrationNo' => $request->registrationNo,
                     'designation' => $request->designation,
-                    'locationId' => $request->locationId,
                     'annualSickAllowance' => $request->annualSickAllowance,
                     'annualSickAllowanceRemaining' => $request->annualSickAllowance,
                     'annualLeaveAllowance' => $request->annualLeaveAllowance,
@@ -461,6 +464,22 @@ class StaffController extends Controller
                     'updated_at' => now(),
                     'password' => null,
                 ]);
+
+
+
+            if ($request->locationId) {
+                foreach ($request->locationId as $val) {
+
+                    DB::table('usersLocation')
+                        ->insert([
+                            'usersId' => $lastInsertedID,
+                            'locationId' => $val,
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
 
 
             if ($request->detailAddress) {
@@ -689,7 +708,7 @@ class StaffController extends Controller
                 ], 406);
             } else {
 
-                
+
                 if ($users->password != null) {
                     return response()->json([
                         'message' => 'failed',
@@ -747,7 +766,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
 
     public function updateStatusUsers(Request $request)
     {
@@ -800,7 +819,7 @@ class StaffController extends Controller
                     'errors' => 'Your account already been activated',
                 ], 406);
             } else {
-                
+
                 $users = DB::table('users')
                     ->select('status')
                     ->where('id', '=', $request->id)
@@ -830,7 +849,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
 
     public function getAllHolidaysDate(Request $request)
     {
@@ -909,7 +928,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     public function __construct()
     {
         $this->client = new Client([
@@ -944,7 +963,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     public function getRoleName(Request $request)
     {
 
@@ -970,7 +989,7 @@ class StaffController extends Controller
     }
 
 
-    
+
     public function index(Request $request)
     {
 
@@ -1099,7 +1118,7 @@ class StaffController extends Controller
                         'orderColumn' => $listOrder,
                     ]);
                 }
-                
+
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
                     return response()->json([
@@ -1177,7 +1196,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     private function Search($request)
     {
 
@@ -1902,7 +1921,7 @@ class StaffController extends Controller
                 'errors' => "Data not exists, please try another user id",
             ], 406);
         } else {
-            
+
             $checkImages = DB::table('usersImages')
                 ->where([
                     ['usersId', '=', $request->id],
@@ -1986,10 +2005,9 @@ class StaffController extends Controller
                     'errors' => "Data not exists, please try another user id",
                 ], 406);
             } else {
-                
+
 
                 $users = DB::table('users as a')
-                    ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
                     ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
                     ->leftjoin('typeId as d', 'd.id', '=', 'a.typeId')
                     ->leftjoin('payPeriod as e', 'e.id', '=', 'a.payPeriodId')
@@ -2007,9 +2025,6 @@ class StaffController extends Controller
                         'a.endDate',
                         'a.registrationNo',
                         'a.designation',
-                        'b.id as locationId',
-                        'b.locationname as locationName',
-
                         'a.annualSickAllowance',
                         'a.annualLeaveAllowance',
                         'a.payPeriodId',
@@ -2052,6 +2067,23 @@ class StaffController extends Controller
                     ->get();
 
                 $users->images = $usersimages;
+
+
+
+                $locationId = DB::table('usersLocation as a')
+                    ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
+                    ->select(
+                        'a.locationId as locationId',
+                        'b.locationName as locationName',
+                    )
+                    ->where([
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $users->locationId = $locationId;
+
 
                 $users_detail_address = DB::table('usersDetailAddresses as a')
                     ->select(
@@ -2126,7 +2158,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
 
     public function exportStaff(Request $request)
     {
@@ -2178,7 +2210,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     public function updateStaff(Request $request)
     {
 
@@ -2209,7 +2241,7 @@ class StaffController extends Controller
                     'endDate' => 'required|date|after:startDate',
                     'registrationNo' => 'string|max:20|min:5|nullable',
                     'designation' => 'string|max:20|min:5|nullable',
-                    'locationId' => 'required|integer',
+                    'locationId' => 'required',
                     'annualSickAllowance' => 'integer|nullable',
                     'annualLeaveAllowance' => 'integer|nullable',
                     'payPeriodId' => 'required|integer',
@@ -2220,7 +2252,7 @@ class StaffController extends Controller
                     'generalCustomerCanSchedule' => 'integer|nullable',
                     'generalCustomerReceiveDailyEmail' => 'integer|nullable',
                     'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
-                    'roleId' => 'required|integer',
+                    'roleId' => 'integer|nullable',
                     'reminderEmail' => 'integer|nullable',
                     'reminderWhatsapp' => 'integer|nullable',
                 ]
@@ -2233,7 +2265,7 @@ class StaffController extends Controller
                     'errors' => $errors,
                 ], 422);
             }
-            
+
             $checkIfUsersExists = DB::table('users')
                 ->where([
                     ['id', '=', $request->id],
@@ -2247,7 +2279,7 @@ class StaffController extends Controller
                     'errors' => ['Spesific users not exists please try different id!'],
                 ], 422);
             }
-            
+
 
             if ($request->typeId == 3) {
 
@@ -2257,7 +2289,6 @@ class StaffController extends Controller
                         'message' => 'The given data was invalid.',
                         'errors' => "Identification number must be alpanumeric if identification type is passport!",
                     ], 422);
-
                 }
             } else {
 
@@ -2328,7 +2359,7 @@ class StaffController extends Controller
                         }
                     }
                 }
-                
+
                 if ($data_error_detailaddress) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -2391,7 +2422,7 @@ class StaffController extends Controller
                     }
                 }
 
-                
+
 
                 if ($data_error_telephone) {
                     return response()->json([
@@ -2424,7 +2455,7 @@ class StaffController extends Controller
                     ], 422);
                 }
             }
-            
+
             $data_error_email = [];
             $insertEmailUsers = '';
 
@@ -2467,7 +2498,7 @@ class StaffController extends Controller
                         'errors' => $data_error_email,
                     ], 422);
                 }
-                
+
 
                 $checkEmail = [];
                 $checkUsageEmail = false;
@@ -2511,7 +2542,7 @@ class StaffController extends Controller
                         'errors' => $checkEmail,
                     ], 422);
                 }
-                
+
                 if ($checkUsageEmail == false) {
 
                     return response()->json([
@@ -2566,7 +2597,7 @@ class StaffController extends Controller
                         }
                     }
                 }
-                
+
                 if ($data_messenger_error) {
 
                     return response()->json([
@@ -2600,7 +2631,7 @@ class StaffController extends Controller
                     ], 422);
                 }
             }
-            
+
             $start = Carbon::parse($request->startDate);
             $end = Carbon::parse($request->endDate);
 
@@ -2620,7 +2651,6 @@ class StaffController extends Controller
                         'endDate' => $end,
                         'registrationNo' => $request->registrationNo,
                         'designation' => $request->designation,
-                        'locationId' => $request->locationId,
                         'annualSickAllowance' => $request->annualSickAllowance,
                         'annualSickAllowanceRemaining' => $request->annualSickAllowance,
                         'annualLeaveAllowance' => $request->annualLeaveAllowance,
@@ -2641,6 +2671,26 @@ class StaffController extends Controller
                         'password' => null,
                         'email' => $insertEmailUsers,
                     ]);
+
+
+
+                if ($request->locationId) {
+
+                    DB::table('usersLocation')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->locationId as $val) {
+
+                        DB::table('usersLocation')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'locationId' => $val,
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
 
                 if ($request->detailAddress) {
 
@@ -2771,7 +2821,6 @@ class StaffController extends Controller
                         'endDate' => $end,
                         'registrationNo' => $request->registrationNo,
                         'designation' => $request->designation,
-                        'locationId' => $request->locationId,
                         'annualSickAllowance' => $request->annualSickAllowance,
                         'annualSickAllowanceRemaining' => $request->annualSickAllowance,
                         'annualLeaveAllowance' => $request->annualLeaveAllowance,
@@ -2791,6 +2840,25 @@ class StaffController extends Controller
                         'updated_at' => now(),
 
                     ]);
+
+
+                if ($request->locationId) {
+
+                    DB::table('usersLocation')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->locationId as $val) {
+
+                        DB::table('usersLocation')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'locationId' => $val,
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
 
 
                 if ($request->detailAddress) {
@@ -2884,7 +2952,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
 
     public function getTypeId(Request $request)
     {
@@ -2911,7 +2979,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
 
     public function getPayPeriod(Request $request)
     {
@@ -2938,7 +3006,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
     public function getJobTitle(Request $request)
     {
 
@@ -2965,7 +3033,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     public function insertTypeId(Request $request)
     {
 
@@ -2985,7 +3053,7 @@ class StaffController extends Controller
                 ->first();
 
             if ($checkIfValueExits != null) {
-              
+
                 return response()->json([
                     'message' => 'Failed',
                     'errors' => 'Type name already exists, please choose another name',
@@ -3015,7 +3083,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
 
 
     public function insertJobTitle(Request $request)
@@ -3042,7 +3110,6 @@ class StaffController extends Controller
                     'message' => 'Failed',
                     'errors' => 'Job title already exists, please choose another name',
                 ]);
-                
             } else {
 
                 DB::table('jobTitle')->insert([
@@ -3057,8 +3124,6 @@ class StaffController extends Controller
                     'message' => 'success',
                     'errors' => 'Successfully inserted Job Title',
                 ]);
-
-                
             }
         } catch (Exception $e) {
 
@@ -3097,8 +3162,6 @@ class StaffController extends Controller
                     'message' => 'Failed',
                     'errors' => 'Pay period already exists, please choose another name',
                 ]);
-
-                
             } else {
 
                 DB::table('payPeriod')->insert([
@@ -3141,7 +3204,7 @@ class StaffController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            
+
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => $errors,
@@ -3224,7 +3287,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
     public function staffListTransferProduct(Request $request)
     {
         $validate = Validator::make($request->all(), [
