@@ -185,7 +185,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/restock/detail/history', [RestockController::class, 'detailHistory']);
         Route::get('/restock/detail/supplier', [RestockController::class, 'listSupplier']);
 
-        Route::post('/restock/sendsupplier', [RestockController::class, 'approvasentSupplierl']);
+        Route::post('/restock/sentsupplier', [RestockController::class, 'sentSupplier']);
         Route::post('/restock/receive', [RestockController::class, 'confirmReceive']);
 
         //product bundle
@@ -195,6 +195,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/bundle', [BundleController::class, 'update']);
         Route::put('/bundle/status', [BundleController::class, 'changeStatus']);
         Route::delete('/bundle', [BundleController::class, 'delete']);
+
+        Route::get('/datastatic', [ProductController::class, 'indexDataStatic']);
+        Route::delete('/datastatic', [ProductController::class, 'deleteDataStatic']);
     });
 
     //MODULE CUSTOMER
