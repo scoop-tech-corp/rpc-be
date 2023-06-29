@@ -131,9 +131,9 @@ class ApiController extends Controller
                     ])
                     ->first();
 
-                $data = DB::table('accessControl as a')
+                $data = DB::table('tableAccess as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menuListId')
-                    ->join('accessType as c', 'c.id', '=', 'a.roleAccessId')
+                    ->join('tableRoleAccess as c', 'c.id', '=', 'a.roleAccessId')
                     ->select(
                         'b.menuName',
                         'c.accessType',
@@ -141,10 +141,10 @@ class ApiController extends Controller
                     ->where([['a.roleId', '=', $users->roleId],])
                     ->get();
 
-                $accessLimit = DB::table('accessControl as a')
+                $accessLimit = DB::table('tableAccess as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menulistId')
                     ->join('accessLimit as c', 'c.id', '=', 'a.accessLimitId')
-                    ->join('accessType as d', 'd.id', '=', 'a.roleAccessId')
+                    ->join('tableRoleAccess as d', 'd.id', '=', 'a.roleAccessId')
                     ->select(
                         'b.menuName',
                         'd.accessType',
