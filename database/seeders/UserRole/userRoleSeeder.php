@@ -85,13 +85,13 @@ class userRoleSeeder extends Seeder
         
         DB::table('usersRoles')->insert($userRole);
 
-        $roleAccess = [
+        $accessType = [
             ['accessType' => 'Read', 'created_at' => now(), 'updated_at' => now(), ],
             ['accessType' => 'Write', 'created_at' => now(), 'updated_at' => now(), ],
             ['accessType' => 'None', 'created_at' => now(), 'updated_at' => now(), ],
             ['accessType' => 'Full', 'created_at' => now(), 'updated_at' => now(), ],
         ];
-        DB::table('tableRoleAccess')->insert($roleAccess);
+        DB::table('accessType')->insert($accessType);
 
         $menulist = [
             ['menuName' => 'Location', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(), ],
@@ -116,7 +116,7 @@ class userRoleSeeder extends Seeder
         DB::table('accessLimit')->insert($accesslimit);
 
 
-        $tableaccess = [
+        $accessControl = [
             ['menuListId' => '1', 'roleId' => '1', 'roleAccessId' => '4', 'accessLimitId' => '3',  'created_at' => now(), 'updated_at' => now(), ],
             ['menuListId' => '2', 'roleId' => '1', 'roleAccessId' => '4', 'accessLimitId' => '3',  'created_at' => now(), 'updated_at' => now(), ],
             ['menuListId' => '3', 'roleId' => '1', 'roleAccessId' => '4', 'accessLimitId' => '3',  'created_at' => now(), 'updated_at' => now(), ],
@@ -127,6 +127,6 @@ class userRoleSeeder extends Seeder
             ['menuListId' => '8', 'roleId' => '1', 'roleAccessId' => '4', 'accessLimitId' => '3',  'created_at' => now(), 'updated_at' => now(), ],
             ['menuListId' => '9', 'roleId' => '1', 'roleAccessId' => '4', 'accessLimitId' => '3',  'created_at' => now(), 'updated_at' => now(), ],
         ];
-        DB::table('tableAccess')->insert($tableaccess);
+        DB::table('accessControl')->insert($accessControl);
     }
 }

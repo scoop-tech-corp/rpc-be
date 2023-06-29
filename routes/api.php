@@ -288,12 +288,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     });
 
 
-
-
     //Access Control
     Route::group(['prefix' => 'accesscontrol'], function () {
 
         Route::get('/', [AccessControlController::class, 'index']);
+        Route::get('/history', [AccessControlController::class, 'indexHistory']);
     });
 
 
