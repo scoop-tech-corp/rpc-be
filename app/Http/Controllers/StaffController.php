@@ -465,10 +465,10 @@ class StaffController extends Controller
                     'password' => null,
                 ]);
 
+            $locationId = json_decode($request->locationId, true);
 
-
-            if ($request->locationId) {
-                foreach ($request->locationId as $val) {
+            if ($locationId) {
+                foreach ($locationId as $val) {
 
                     DB::table('usersLocation')
                         ->insert([
@@ -1070,9 +1070,9 @@ class StaffController extends Controller
                 } else if ($res == "status") {
 
                     $data = $data->where('status', 'like', '%' . $request->search . '%');
-                // } else if ($res == "location") {
+                    // } else if ($res == "location") {
 
-                //     $data = $data->where('location', 'like', '%' . $request->search . '%');
+                    //     $data = $data->where('location', 'like', '%' . $request->search . '%');
                 } else if ($res == "createdBy") {
 
                     $data = $data->where('createdBy', 'like', '%' . $request->search . '%');
