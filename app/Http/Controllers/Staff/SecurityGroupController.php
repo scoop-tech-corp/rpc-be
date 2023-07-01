@@ -143,8 +143,17 @@ class SecurityGroupController extends Controller
             ], 403);
         }
 
+        $subquery = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
+
         $data = User::from('users as a')
-            ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
+            ->leftJoinSub($subquery, 'b', function ($join) {
+                $join->on('b.usersId', '=', 'a.id');
+            })
             ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
             ->select(
                 'a.id as usersId',
@@ -153,7 +162,6 @@ class SecurityGroupController extends Controller
                 'b.locationName as locationName',
             )->where([
                 ['a.isDeleted', '=', '0'],
-                ['b.isDeleted', '=', '0'],
                 ['c.isActive', '=', '1'],
             ])
             ->whereNull('a.roleId')
@@ -200,8 +208,16 @@ class SecurityGroupController extends Controller
                 ->where('id', '=', $id)
                 ->first();
 
+            $subquery = DB::table('usersLocation as a')
+                ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                ->select('a.usersId', DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                ->groupBy('a.usersId')
+                ->where('a.isDeleted', '=', 0);
+
             $data = User::from('users as a')
-                ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
+                ->leftJoinSub($subquery, 'b', function ($join) {
+                    $join->on('b.usersId', '=', 'a.id');
+                })
                 ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
                 ->select(
                     'a.id as usersId',
@@ -211,7 +227,6 @@ class SecurityGroupController extends Controller
                 )->where([
                     ['a.roleId', '=', $id],
                     ['a.isDeleted', '=', '0'],
-                    ['b.isDeleted', '=', '0'],
                     ['c.isActive', '=', '1'],
                 ])
                 ->get();
@@ -422,7 +437,6 @@ class SecurityGroupController extends Controller
                             DB::table('users')
                                 ->where('id', '=', $val['userId'])
                                 ->update(['roleId' => $request->status]);
-
                         } else {
 
                             DB::table('users')
