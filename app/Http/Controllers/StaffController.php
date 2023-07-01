@@ -1038,8 +1038,23 @@ class StaffController extends Controller
 
             if ($request->locationId) {
 
-                $data = $data->whereIn('a.locationid', $request->locationId);
+                $data = $data->whereIn('a.locationId', $request->locationId);
             }
+
+
+
+            // if ($request->locationId) {
+
+            //     $val = [];
+            //     foreach ($request->locationId as $temp) {
+            //         $val = $temp;
+            //     }
+
+            //     if ($val) {
+            //         $data = $data->whereIn('a.locationid', $request->locationId);
+            //     }
+            // }
+
 
             if ($request->search) {
 
@@ -1794,7 +1809,7 @@ class StaffController extends Controller
             $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
-        
+
         $data = DB::table($data)
             ->select(
                 'id',
