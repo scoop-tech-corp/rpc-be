@@ -1006,6 +1006,25 @@ class ProductClinicController
 
         $prodClinic->log = $prodClinicLog;
 
+        $productClinicBatch = DB::table('productClinicBatches as psb')
+            ->leftJoin('productClinics as ps', 'psb.productId', 'ps.id')
+            ->leftJoin('productRestocks as pr', 'psb.productRestockId', 'pr.id')
+            ->leftJoin('productRestockDetails as prd', 'psb.productRestockDetailId', 'prd.id')
+            ->leftJoin('productTransfers as pt', 'psb.productTransferId', 'pt.id')
+            ->select(
+                'psb.id',
+                'psb.batchNumber',
+                'ps.fullName',
+                'psb.purchaseOrderNumber',
+                'psb.purchaseRequestNumber',
+                'psb.expiredDate',
+                'psb.sku'
+            )
+            ->where('psb.productId', '=', $request->id)
+            ->get();
+
+        $prodClinic->batches = $productClinicBatch;
+
         return response()->json($prodClinic, 200);
     }
 

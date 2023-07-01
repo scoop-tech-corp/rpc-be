@@ -17,7 +17,7 @@ class productRestockDetails extends Model
         'purchaseRequestNumber', 'purchaseOrderNumber', '', 'productRestockId', 'productId', 'productType', 'supplierId', 'requireDate',
         'currentStock',
         'reStockQuantity', 'rejected', 'canceled', 'accepted', 'received',
-        'costPerItem', 'total', 'remark', 'userIdOffice', 'isApprovedOffice', 'reasonOffice', 'officeApprovedAt',
+        'costPerItem', 'total', 'remark','reasonCancel', 'userIdOffice', 'isApprovedOffice', 'reasonOffice', 'officeApprovedAt',
         'isAdminApproval', 'userIdAdmin', 'isApprovedAdmin', 'reasonAdmin', 'adminApprovedAt',
         'userId', 'userUpdateId'
     ];

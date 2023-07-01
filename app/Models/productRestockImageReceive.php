@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class productRestockImages extends Model
+class productRestockImageReceive extends Model
 {
-    protected $table = "productRestockImages";
+    protected $table = "productRestockImageReceives";
 
     protected $dates = ['created_at', 'deletedAt'];
 
@@ -15,7 +15,6 @@ class productRestockImages extends Model
 
     protected $fillable = [
         'productRestockDetailId',
-        'labelName',
         'realImageName',
         'imagePath',
         'userId',
