@@ -28,6 +28,16 @@ class SupplierController extends Controller
 
         $page = $request->goToPage;
 
+        // $dataLop = DB::table('productSuppliers as ps')
+        //     ->select('ps.id')
+        //     ->distinct()
+        //     ->where('ps.isDeleted', '=', 0)
+        //     ->groupby('ps.id')
+        //     ->distinct()
+        //     ->pluck('ps.id');
+
+        // return $dataLop;
+
         $data = DB::table('productSuppliers as ps')
             ->join('users as u', 'ps.userId', 'u.id')
             ->leftJoin('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
@@ -50,7 +60,7 @@ class SupplierController extends Controller
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
             ->distinct()
-            // ->where('psa.isPrimary', '=', 1)
+            ->where('psa.isPrimary', '=', 1)
             ->where('ps.isDeleted', '=', 0);
 
         if ($request->search) {
