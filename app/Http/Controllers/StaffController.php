@@ -1038,13 +1038,7 @@ class StaffController extends Controller
 
             if ($request->locationId) {
 
-                $test =  $request->locationId;
-
-                $data = $data->where(function ($query) use ($test) {
-                    foreach ($test as $value) {
-                        $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                    }
-                });
+                $data = $data->whereIn('a.locationid', $request->locationId);
             }
 
             if ($request->search) {
@@ -1243,13 +1237,7 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1312,25 +1300,7 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
-        }
-
-        if ($request->locationId) {
-
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1391,13 +1361,7 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1458,14 +1422,9 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
+
         $data = DB::table($data)
             ->select(
                 'id',
@@ -1525,15 +1484,8 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
-
 
 
         $data = DB::table($data)
@@ -1595,13 +1547,7 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1662,13 +1608,7 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1730,13 +1670,7 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1797,15 +1731,8 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
-
         $data = DB::table($data)
             ->select(
                 'id',
@@ -1864,15 +1791,10 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $test =  $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $value) {
-                    $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
-                }
-            });
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
+        
         $data = DB::table($data)
             ->select(
                 'id',
