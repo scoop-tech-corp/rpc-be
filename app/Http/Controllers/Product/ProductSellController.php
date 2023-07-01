@@ -397,6 +397,26 @@ class ProductSellController
 
         $prodSell->log = $prodSellLog;
 
+        $productSellBatch = DB::table('productSellBatches as psb')
+            ->leftJoin('productSells as ps', 'psb.productId', 'ps.id')
+            ->leftJoin('productRestocks as pr', 'psb.productRestockId', 'pr.id')
+            ->leftJoin('productRestockDetails as prd', 'psb.productRestockDetailId', 'prd.id')
+            ->leftJoin('productTransfers as pt', 'psb.productTransferId', 'pt.id')
+            ->select(
+                'psb.id',
+                'psb.batchNumber',
+                'pr.numberId',
+                'psb.purchaseOrderNumber',
+                'psb.purchaseRequestNumber',
+                'prd.received as quantity',
+                'psb.expiredDate',
+                'psb.sku'
+            )
+            ->where('psb.productId', '=', $request->id)
+            ->get();
+
+        $prodSell->batches = $productSellBatch;
+
         return response()->json($prodSell, 200);
     }
 

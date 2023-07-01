@@ -28,6 +28,24 @@ if (!function_exists('adminAccess')) {
     }
 }
 
+if (!function_exists('officeAccess')) {
+    function officeAccess($id)
+    {
+
+        $user = DB::table('users as u')
+            ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
+            ->select('u.id', 'ur.roleName')
+            ->where('u.id', '=', $id)
+            ->first();
+
+        if ($user->roleName != "Office") {
+            return false;
+        } else {
+            return true;
+        }
+    }
+}
+
 
 if (!function_exists('managerAccess')) {
     function managerAccess($id)
