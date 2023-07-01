@@ -33,47 +33,54 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
     {
         $defaultOrderBy = "asc";
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(' ', d.phoneNumber, ' ') as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then 'Ya' else 'Tidak' end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.locationId as locationId',
-                'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
-                'a.updated_at',
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
+        $dataUserLocation = DB::table('usersLocation as a')
+                ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                ->groupBy('a.usersId')
+                ->where('a.isDeleted', '=', 0);
 
-        $data = DB::table($subquery, 'a');
+            $subquery = DB::table('users as a')
+                ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+                ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+                ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+                ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                    $join->on('e.usersId', '=', 'a.id');
+                })
+                ->select(
+                    'a.id as id',
+                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
+                    'b.jobName as jobTitle',
+                    'c.email as emailAddress',
+                    DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                    DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                    DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                    'e.locationName as location',
+                    'e.locationId as locationId',
+                    'a.createdBy as createdBy',
+                    DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                    'a.updated_at'
+                )
+                ->where([
+                    ['a.isDeleted', '=', '0'],
+                    ['b.isActive', '=', '1'],
+                    ['c.usage', '=', 'Utama'],
+                    ['c.isDeleted', '=', '0'],
+                    ['d.usage', '=', 'Utama'],
+                ]);
 
-        if ($this->locationId) {
 
-            $val = [];
-            foreach ($this->locationId as $temp) {
-                $val = $temp;
+            $data = DB::table($subquery, 'a');
+
+            if ($this->locationId) {
+
+                $test =  $this->locationId;
+
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $value) {
+                        $query->orWhere('a.locationid', 'LIKE', '%' . $value . '%');
+                    }
+                });
             }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $this->locationId);
-            }
-        }
 
         if ($this->orderValue) {
 
