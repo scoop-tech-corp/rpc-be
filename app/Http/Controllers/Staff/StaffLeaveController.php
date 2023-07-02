@@ -33,7 +33,6 @@ class StaffLeaveController extends Controller
                 ->get();
 
             return response()->json($getUser, 200);
-            
         } catch (Exception $e) {
 
             return response()->json([
@@ -65,7 +64,7 @@ class StaffLeaveController extends Controller
         }
     }
 
-    
+
 
     public function adjustBalance(Request $request)
     {
@@ -109,7 +108,7 @@ class StaffLeaveController extends Controller
                     'errors' => 'User id not found, please try different id',
                 ], 422);
 
-                
+
 
             $listOrder = array(
                 1, 2, 3, 4
@@ -123,7 +122,7 @@ class StaffLeaveController extends Controller
                     'balanceTypeId' => $listOrder,
                 ]);
             }
-            
+
 
             if ($request->balanceTypeId == 1) {
 
@@ -177,7 +176,7 @@ class StaffLeaveController extends Controller
             ], 422);
         }
     }
-    
+
 
     public function getDropdownBalanceType(Request $request)
     {
@@ -215,7 +214,7 @@ class StaffLeaveController extends Controller
             ]);
         }
     }
-    
+
 
     public function adjustLeaveRequest(Request $request)
     {
@@ -296,7 +295,7 @@ class StaffLeaveController extends Controller
                         ]);
                     }
 
-                    
+
 
                     if ($valueDays == null) {
 
@@ -390,7 +389,7 @@ class StaffLeaveController extends Controller
                         ], 422);
                     }
 
-                    
+
                     if ($request->totalDays > $sickallowance) {
 
                         return response()->json([
@@ -408,7 +407,7 @@ class StaffLeaveController extends Controller
                         ], 422);
                     }
 
-                    
+
                     if ($request->totalDays > $leaveallowance) {
 
                         return response()->json([
@@ -435,11 +434,26 @@ class StaffLeaveController extends Controller
                     ], 422);
                 }
 
-                $userName =  User::select(
-                    'jobTitleId',
-                    'locationId',
-                    DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
-                )
+
+
+
+
+
+                $dataUserLocation = DB::table('usersLocation as a')
+                    ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                    ->groupBy('a.usersId')
+                    ->where('a.isDeleted', '=', 0);
+
+                $userName =  User::from('users as a')
+                    ->leftJoinSub($dataUserLocation, 'b', function ($join) {
+                        $join->on('b.usersId', '=', 'id');
+                    })
+                    ->select(
+                        'jobTitleId',
+                        'b.locationId as locationId',
+                        DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
+                    )
                     ->where('id', '=', $request->usersId)
                     ->where('isDeleted', '=', '0')
                     ->first();
@@ -475,7 +489,7 @@ class StaffLeaveController extends Controller
             ], 422);
         }
     }
-    
+
     public function insertLeaveStaff(Request $request)
     {
         DB::beginTransaction();
@@ -545,7 +559,7 @@ class StaffLeaveController extends Controller
                             'workingDays' => $listOrderUpper,
                         ]);
                     }
-                    
+
                     if ($valueDays == null) {
 
                         $valueDays =  $val['name'];
@@ -592,7 +606,6 @@ class StaffLeaveController extends Controller
                     'message' => 'Failed',
                     'errors' => 'User id not found, please try different id',
                 ], 422);
-
             } else {
 
                 $listOrder = array(
@@ -608,7 +621,7 @@ class StaffLeaveController extends Controller
                     ], 422);
                 }
 
-                
+
                 $sickallowance =  $request->user()->annualSickAllowanceRemaining;
                 $leaveallowance =  $request->user()->annualLeaveAllowanceRemaining;
 
@@ -622,7 +635,7 @@ class StaffLeaveController extends Controller
                             'errors' => 'You dont have any sick allowance left : ' .  $sickallowance,
                         ], 422);
                     }
-                    
+
 
                     if ($request->totalDays > $sickallowance) {
 
@@ -632,7 +645,7 @@ class StaffLeaveController extends Controller
                         ], 422);
                     }
                 } else {
-                    
+
                     if ($leaveallowance == 0) {
 
                         return response()->json([
@@ -667,12 +680,24 @@ class StaffLeaveController extends Controller
                         'errors' => 'You already had request leave on the spesific date, please check again.'
                     ], 422);
                 }
-                
-                $userName =  User::select(
-                    'jobTitleId',
-                    'locationId',
-                    DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
-                )
+
+
+                $dataUserLocation = DB::table('usersLocation as a')
+                    ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                    ->groupBy('a.usersId')
+                    ->where('a.isDeleted', '=', 0);
+
+
+                $userName =  User::from('users as a')
+                    ->leftJoinSub($dataUserLocation, 'b', function ($join) {
+                        $join->on('b.usersId', '=', 'id');
+                    })
+                    ->select(
+                        'jobTitleId',
+                        'b.locationId as locationId',
+                        DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
+                    )
                     ->where('id', '=', $request->usersId)
                     ->where('isDeleted', '=', '0')
                     ->first();
@@ -708,7 +733,7 @@ class StaffLeaveController extends Controller
             ], 422);
         }
     }
-    
+
     public function getWorkingDays(Request $request)
     {
 
@@ -762,7 +787,7 @@ class StaffLeaveController extends Controller
         }
     }
 
-    
+
     public function setStatusLeaveRequest(Request $request)
     {
 
@@ -788,7 +813,7 @@ class StaffLeaveController extends Controller
                     'errors' => 'Status must Approve or Reject',
                 ], 422);
             }
-            
+
 
             if (strtolower($request->status) == "reject" && strtolower($request->reason) == "") {
 
@@ -924,7 +949,7 @@ class StaffLeaveController extends Controller
                     'orderColumn' => $listOrder,
                 ]);
             }
-            
+
             if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
 
                 return response()->json([
@@ -989,10 +1014,16 @@ class StaffLeaveController extends Controller
     private function SearchBalanceAdminandOffice($request)
     {
 
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1016,10 +1047,10 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1032,9 +1063,11 @@ class StaffLeaveController extends Controller
                 ['a.isDeleted', '=', '0'],
             ]);
 
+
         if ($request->search) {
-            $data = $data->where('a.annualLeaveAllowance', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualLeaveAllowance', '=', $request->search);
         }
+
 
         $data = $data->get();
 
@@ -1045,8 +1078,9 @@ class StaffLeaveController extends Controller
 
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1060,7 +1094,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualLeaveAllowanceRemaining', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualLeaveAllowanceRemaining', '=',  $request->search);
         }
 
         $data = $data->get();
@@ -1071,8 +1105,9 @@ class StaffLeaveController extends Controller
         }
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1086,7 +1121,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowance', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualSickAllowance', '=', $request->search);
         }
 
         $data = $data->get();
@@ -1097,8 +1132,9 @@ class StaffLeaveController extends Controller
         }
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1112,7 +1148,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowanceRemaining', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualSickAllowanceRemaining', '=',  $request->search);
         }
 
         $data = $data->get();
@@ -1128,8 +1164,17 @@ class StaffLeaveController extends Controller
     private function SearchBalanceDoctorandStaff($request)
     {
 
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
+
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1157,7 +1202,9 @@ class StaffLeaveController extends Controller
 
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1173,7 +1220,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualLeaveAllowance', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualLeaveAllowance', '=',  $request->search);
         }
 
         $data = $data->get();
@@ -1184,8 +1231,11 @@ class StaffLeaveController extends Controller
         }
 
 
+
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1201,7 +1251,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualLeaveAllowanceRemaining', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualLeaveAllowanceRemaining', '=', $request->search);
         }
 
         $data = $data->get();
@@ -1212,7 +1262,9 @@ class StaffLeaveController extends Controller
         }
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1228,7 +1280,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowance', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualSickAllowance', '=',  $request->search);
         }
 
         $data = $data->get();
@@ -1239,7 +1291,9 @@ class StaffLeaveController extends Controller
         }
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1255,7 +1309,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowanceRemaining', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualSickAllowanceRemaining', '=', $request->search );
         }
 
         $data = $data->get();
@@ -1283,7 +1337,7 @@ class StaffLeaveController extends Controller
                     'errors' => 'Status must Pending, Approve or Reject',
                 ], 422);
             }
-            
+
             $tmp = "";
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
@@ -1340,7 +1394,7 @@ class StaffLeaveController extends Controller
             ]);
         }
     }
-    
+
     public function exportBalance(Request $request)
     {
 
@@ -1400,12 +1454,20 @@ class StaffLeaveController extends Controller
             ], 422);
         }
     }
-    
+
     public function indexBalanceLeaveAdminandOffice(Request $request)
     {
 
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1418,6 +1480,7 @@ class StaffLeaveController extends Controller
             ->where([
                 ['a.isDeleted', '=', '0'],
             ]);
+
 
         if ($request->locationId) {
 
@@ -1451,8 +1514,16 @@ class StaffLeaveController extends Controller
     {
         $defaultOrderBy = "asc";
 
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1775,7 +1846,7 @@ class StaffLeaveController extends Controller
                         'errors' => 'Leave request not found, please try different id',
                     ], 422);
                 }
-                
+
                 $users = User::where([
                     ['id', '=', $leaveRequest->usersId],
                     ['isDeleted', '=', '0'],
@@ -1788,7 +1859,7 @@ class StaffLeaveController extends Controller
                         'errors' => 'Users not found, please try different id',
                     ], 422);
                 }
-                
+
                 if (str_contains($leaveRequest->leaveType, "sick")) {
 
                     if (($leaveRequest->duration) > ($users->annualSickAllowanceRemaining)) {
@@ -1838,7 +1909,7 @@ class StaffLeaveController extends Controller
         }
     }
 
-    
+
 
     public function rejectAll(Request $request)
     {
@@ -1917,9 +1988,11 @@ class StaffLeaveController extends Controller
         }
     }
 
-    
+
     public function getIndexRequestLeave(Request $request)
     {
+
+
         $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
 
@@ -1945,7 +2018,6 @@ class StaffLeaveController extends Controller
                     'message' => 'failed',
                     'errors' => 'Value status must Pending, Approve or Reject',
                 ], 422);
-
             } else {
 
                 $listOrder = [];
@@ -3971,8 +4043,6 @@ class StaffLeaveController extends Controller
                     'message' => 'Failed',
                     'errors' => 'User id not found, please try different id',
                 ]);
-                
-
             } else {
 
                 $annualLeaveAllowance = User::select(
@@ -4010,7 +4080,7 @@ class StaffLeaveController extends Controller
         }
     }
 
-    
+
 
     public function getAllHolidaysDate(Request $request)
     {
@@ -4081,7 +4151,7 @@ class StaffLeaveController extends Controller
             ], 422);
         }
     }
-    
+
     public function __construct()
     {
         $this->client = new Client([

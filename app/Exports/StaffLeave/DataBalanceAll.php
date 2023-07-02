@@ -40,15 +40,26 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
 
         if ($this->rolesIndex == 1) {
 
+
+            $dataUserLocation = DB::table('usersLocation as a')
+                ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                ->groupBy('a.usersId')
+                ->where('a.isDeleted', '=', 0);
+
             $data = DB::table('users as a')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+                ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                    $join->on('e.usersId', '=', 'a.id');
+                })
                 ->select(
                     DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                     'a.annualLeaveAllowance',
                     'a.annualLeaveAllowanceRemaining',
                     'a.annualSickAllowance',
                     'a.annualSickAllowanceRemaining',
+                    'e.locationId',
                     'a.updated_at',
+
                 )
                 ->where([
                     ['a.isDeleted', '=', '0'],
@@ -63,9 +74,10 @@ class DataBalanceAll implements FromCollection, ShouldAutoSize, WithHeadings, Wi
                 }
 
                 if ($val) {
-                    $data = $data->whereIn('a.locationId', $this->locationId);
+                    $data = $data->whereIn('e.locationId', $this->locationId);
                 }
             }
+
         } else {
 
             $data = DB::table('users as a')
