@@ -883,9 +883,10 @@ class RestockController extends Controller
                 );
 
                 $data = [];
-                $restock->dataSupplier = $dataSup;
-                return responseList($restock);
             }
+
+            $restock->dataSupplier = $dataSup;
+            return responseList($restock);
         }
     }
 
