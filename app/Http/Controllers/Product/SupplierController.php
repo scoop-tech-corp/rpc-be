@@ -28,24 +28,12 @@ class SupplierController extends Controller
 
         $page = $request->goToPage;
 
-        // $dataLop = DB::table('productSuppliers as ps')
-        //     ->select('ps.id')
-        //     ->distinct()
-        //     ->where('ps.isDeleted', '=', 0)
-        //     ->groupby('ps.id')
-        //     ->distinct()
-        //     ->pluck('ps.id');
-
-        // return $dataLop;
-
         $data = DB::table('productSuppliers as ps')
             ->join('users as u', 'ps.userId', 'u.id')
-            ->leftJoin('productSupplierAddresses as psa', 'ps.id', 'psa.productSupplierId')
             ->select(
                 'ps.id',
-                'ps.pic',
+                DB::raw("IFNULL(ps.pic,'') as pic"),
                 'ps.supplierName',
-                DB::raw("IFNULL(psa.streetAddress,'') as streetAddress"),
 
                 DB::raw('CASE WHEN (select count(*) from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ') > 0
                 THEN (select number from productSupplierPhones where productSupplierId=ps.id and typePhoneId=' . $idWa->id . ' limit 1)
@@ -59,8 +47,6 @@ class SupplierController extends Controller
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->distinct()
-            ->where('psa.isPrimary', '=', 1)
             ->where('ps.isDeleted', '=', 0);
 
         if ($request->search) {
@@ -76,6 +62,15 @@ class SupplierController extends Controller
                         ->pluck('psp.productSupplierId');
 
                     $data = $data->whereIn('ps.id', $id);
+                } elseif ($res[0] == 'psa.streetAddress') {
+                    $id = DB::table('productSupplierAddresses as psa')
+                        ->select('psa.productSupplierId')
+                        ->where('psa.streetAddress', 'like', '%' . $request->search . '%')
+                        ->where('psa.isDeleted', '=', 0)
+                        ->groupby('psa.productSupplierId')
+                        ->distinct()
+                        ->pluck('psa.productSupplierId');
+                    $data = $data->whereIn('ps.id', $id);
                 } else {
                     $data = $data->where($res[0], 'like', '%' . $request->search . '%');
                 }
@@ -89,6 +84,16 @@ class SupplierController extends Controller
                             ->groupby('psp.productSupplierId')
                             ->distinct()
                             ->pluck('psp.productSupplierId');
+
+                        $data = $data->orWherein('ps.id', $id);
+                    } elseif ($res[$i] === 'psa.streetAddress') {
+                        $id = DB::table('productSupplierAddresses as psa')
+                            ->select('psa.productSupplierId')
+                            ->where('psa.streetAddress', 'like', '%' . $request->search . '%')
+                            ->where('psa.isDeleted', '=', 0)
+                            ->groupby('psa.productSupplierId')
+                            ->distinct()
+                            ->pluck('psa.productSupplierId');
 
                         $data = $data->orWherein('ps.id', $id);
                     } else {
@@ -128,9 +133,38 @@ class SupplierController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
+        foreach ($data as $value) {
+
+            $find = DB::table('productSupplierAddresses')
+                ->where('productSupplierId', '=', $value->id)
+                ->get();
+
+            $address = '';
+
+            if (count($find)) {
+                $find2 = DB::table('productSupplierAddresses')
+                    ->where('productSupplierId', '=', $value->id)
+                    ->where('isPrimary', '=', 1)
+                    ->first();
+
+                $address = $find2->streetAddress;
+            }
+
+            $dataArr[] = array(
+                'id' => $value->id,
+                'pic' => $value->pic,
+                'supplierName' => $value->supplierName,
+                'streetAddress' => $address,
+                'phoneNumber' => $value->phoneNumber,
+                'isWhatsAppActive' => $value->isWhatsAppActive,
+                'createdBy' => $value->createdBy,
+                'createdAt' => $value->createdAt,
+            );
+        }
+
         return response()->json([
             'totalPagination' => ceil($totalPaging),
-            'data' => $data
+            'data' => $dataArr
         ], 200);
     }
 
