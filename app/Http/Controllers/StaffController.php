@@ -998,12 +998,19 @@ class StaffController extends Controller
             $defaultRowPerPage = 5;
             $defaultOrderBy = "asc";
 
+            $dataUserLocation = DB::table('usersLocation as a')
+                ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                ->groupBy('a.usersId')
+                ->where('a.isDeleted', '=', 0);
 
             $subquery = DB::table('users as a')
                 ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
                 ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
                 ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-                // ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+                ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                    $join->on('e.usersId', '=', 'a.id');
+                })
                 ->select(
                     'a.id as id',
                     DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1012,10 +1019,8 @@ class StaffController extends Controller
                     DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
                     DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                     DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                    // 'e.locationName as location',
-                    // 'a.locationId as locationId',
-                    // 'null  as location',
-                    // 'null  as locationId',
+                    'e.locationName as location',
+                    'e.locationId as locationId',
                     'a.createdBy as createdBy',
                     DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
                     'a.updated_at'
@@ -1026,11 +1031,17 @@ class StaffController extends Controller
                     ['c.usage', '=', 'Utama'],
                     ['c.isDeleted', '=', '0'],
                     ['d.usage', '=', 'Utama'],
-                    // ['e.isDeleted', '=', '0'],
                 ]);
 
 
             $data = DB::table($subquery, 'a');
+
+            if ($request->locationId) {
+
+                $data = $data->whereIn('a.locationId', $request->locationId);
+            }
+
+
 
             // if ($request->locationId) {
 
@@ -1043,7 +1054,6 @@ class StaffController extends Controller
             //         $data = $data->whereIn('a.locationid', $request->locationId);
             //     }
             // }
-
 
 
             if ($request->search) {
@@ -1070,9 +1080,9 @@ class StaffController extends Controller
                 } else if ($res == "status") {
 
                     $data = $data->where('status', 'like', '%' . $request->search . '%');
-                    // } else if ($res == "location") {
+                } else if ($res == "location") {
 
-                    //     $data = $data->where('location', 'like', '%' . $request->search . '%');
+                    $data = $data->where('location', 'like', '%' . $request->search . '%');
                 } else if ($res == "createdBy") {
 
                     $data = $data->where('createdBy', 'like', '%' . $request->search . '%');
@@ -1107,7 +1117,7 @@ class StaffController extends Controller
                     'phoneNumber',
                     'isWhatsapp',
                     'status',
-                    // 'location',
+                    'location',
                     'createdBy',
                     'createdAt',
                 );
@@ -1143,7 +1153,7 @@ class StaffController extends Controller
                         'phoneNumber',
                         'isWhatsapp',
                         'status',
-                        // 'location',
+                        'location',
                         'createdBy',
                         'createdAt',
                     )
@@ -1161,7 +1171,7 @@ class StaffController extends Controller
                         'phoneNumber',
                         'isWhatsapp',
                         'status',
-                        // 'location',
+                        'location',
                         'createdBy',
                         'createdAt',
                     )
@@ -1202,11 +1212,20 @@ class StaffController extends Controller
     private function Search($request)
     {
 
+
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
         $subquery = DB::table('users as a')
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1216,11 +1235,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1228,22 +1246,13 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
 
-
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1271,11 +1280,15 @@ class StaffController extends Controller
             return $temp_column;
         }
 
+
+
         $subquery = DB::table('users as a')
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1285,11 +1298,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1297,23 +1309,13 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
-
 
         $data = DB::table($subquery, 'a');
 
-
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1345,7 +1347,9 @@ class StaffController extends Controller
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1355,11 +1359,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                ),
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1367,22 +1370,13 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
-
 
         $data = DB::table($subquery, 'a');
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1414,7 +1408,9 @@ class StaffController extends Controller
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1424,11 +1420,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1436,22 +1431,13 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
 
-
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1484,7 +1470,9 @@ class StaffController extends Controller
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1494,11 +1482,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1506,22 +1493,15 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
+
 
         $data = DB::table($data)
             ->select(
@@ -1553,7 +1533,9 @@ class StaffController extends Controller
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1563,11 +1545,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1575,21 +1556,13 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1621,7 +1594,9 @@ class StaffController extends Controller
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1631,11 +1606,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1643,22 +1617,13 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
-
 
         $data = DB::table($subquery, 'a');
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1674,8 +1639,6 @@ class StaffController extends Controller
                 'createdBy',
                 'createdAt'
             );
-
-
 
         if ($request->search) {
             $data = $data->where('status', 'like', '%' . $request->search . '%');
@@ -1693,7 +1656,9 @@ class StaffController extends Controller
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1703,11 +1668,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1715,21 +1679,13 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
 
-
         $data = DB::table($subquery, 'a');
+
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
 
         $data = DB::table($data)
@@ -1761,7 +1717,9 @@ class StaffController extends Controller
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1771,11 +1729,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1783,22 +1740,14 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
+
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
-
         $data = DB::table($data)
             ->select(
                 'id',
@@ -1828,7 +1777,9 @@ class StaffController extends Controller
             ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
             ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
             ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as id',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
@@ -1838,11 +1789,10 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
+                'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
@@ -1850,21 +1800,15 @@ class StaffController extends Controller
                 ['c.usage', '=', 'Utama'],
                 ['c.isDeleted', '=', '0'],
                 ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
             ]);
 
         $data = DB::table($subquery, 'a');
+
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->whereIn('a.locationid', $request->locationId);
         }
+
 
         $data = DB::table($data)
             ->select(
