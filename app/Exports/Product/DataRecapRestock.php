@@ -21,14 +21,16 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
     protected $locationId;
     protected $supplierId;
     protected $role;
+    protected $type;
 
-    public function __construct($orderValue, $orderColumn, $locationId, $supplierId, $role)
+    public function __construct($orderValue, $orderColumn, $locationId, $supplierId, $role, $type)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->locationId = $locationId;
         $this->supplierId = $supplierId;
         $this->role = $role;
+        $this->type = $type;
     }
     /**
      * @return \Illuminate\Support\Collection
@@ -59,6 +61,14 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
                 DB::raw("DATE_FORMAT(pr.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('pr.isDeleted', '=', 0);
+
+        if ($this->type == 'approval') {
+            $data = $data->whereIn('pr.status', array(1, 3, 4));
+        }
+
+        if ($this->type == 'history') {
+            $data = $data->whereIn('pr.status', array(2, 5));
+        }
 
         $locations = $this->locationId;
         // if (!$locations[0] == null) {

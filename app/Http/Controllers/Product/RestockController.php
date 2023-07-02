@@ -53,11 +53,11 @@ class RestockController extends Controller
             ->where('pr.isDeleted', '=', 0);
 
         if ($request->type == 'approval') {
-            $data = $data->where('pr.status', '=', 1);
+            $data = $data->whereIn('pr.status', array(1, 3, 4));
         }
 
         if ($request->type == 'history') {
-            $data = $data->whereIn('pr.status', array(2, 3, 4, 5));
+            $data = $data->whereIn('pr.status', array(2, 5));
         }
 
         if ($request->locationId) {
@@ -599,13 +599,16 @@ class RestockController extends Controller
             $fileName = "Rekap Restock Produk " . $tmpLoc . " " . $date . ".xlsx";
         }
 
+        $type = $request->type;
+
         return Excel::download(
             new RestockReport(
                 $request->orderValue,
                 $request->orderColumn,
                 $request->locationId,
                 $request->supplierId,
-                $request->user()->role
+                $request->user()->role,
+                $type
             ),
             $fileName
         );

@@ -16,14 +16,16 @@ class RestockReport implements WithMultipleSheets
     protected $locationId;
     protected $supplierId;
     protected $role;
+    protected $type;
 
-    public function __construct($orderValue, $orderColumn, $locationId, $supplierId, $role)
+    public function __construct($orderValue, $orderColumn, $locationId, $supplierId, $role, $type)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->locationId = $locationId;
         $this->supplierId = $supplierId;
         $this->role = $role;
+        $this->type = $type;
     }
 
     function array(): array
@@ -36,7 +38,7 @@ class RestockReport implements WithMultipleSheets
         $sheets = [];
 
         $sheets = [
-            new DataRecapRestock($this->orderValue, $this->orderColumn, $this->locationId, $this->supplierId, $this->role)
+            new DataRecapRestock($this->orderValue, $this->orderColumn, $this->locationId, $this->supplierId, $this->role, $this->type)
         ];
 
         return $sheets;
