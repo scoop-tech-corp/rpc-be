@@ -149,7 +149,7 @@ class SupplierController extends Controller
                     ->where('isPrimary', '=', 1)
                     ->first();
 
-                if (count($find2)) {
+                if ($find2) {
                     $address = $find2->streetAddress;
                 }
             }
