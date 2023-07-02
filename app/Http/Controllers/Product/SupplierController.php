@@ -137,6 +137,7 @@ class SupplierController extends Controller
 
             $find = DB::table('productSupplierAddresses')
                 ->where('productSupplierId', '=', $value->id)
+                ->where('isDeleted', '=', 0)
                 ->get();
 
             $address = '';
@@ -144,6 +145,7 @@ class SupplierController extends Controller
             if (count($find)) {
                 $find2 = DB::table('productSupplierAddresses')
                     ->where('productSupplierId', '=', $value->id)
+                    ->where('isDeleted', '=', 0)
                     ->where('isPrimary', '=', 1)
                     ->first();
 
