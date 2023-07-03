@@ -434,16 +434,21 @@ class StaffLeaveController extends Controller
                     ], 422);
                 }
 
-
-
-
-
-
+                
                 $dataUserLocation = DB::table('usersLocation as a')
                     ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                    ->select(
+                        'a.usersId',
+                        DB::raw('MIN(b.id) as locationId')
+                    )
                     ->groupBy('a.usersId')
                     ->where('a.isDeleted', '=', 0);
+
+                // $dataUserLocation = DB::table('usersLocation as a')
+                //     ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                //     ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                //     ->groupBy('a.usersId')
+                //     ->where('a.isDeleted', '=', 0);
 
                 $userName =  User::from('users as a')
                     ->leftJoinSub($dataUserLocation, 'b', function ($join) {
@@ -682,9 +687,19 @@ class StaffLeaveController extends Controller
                 }
 
 
+                // $dataUserLocation = DB::table('usersLocation as a')
+                //     ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                //     ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                //     ->groupBy('a.usersId')
+                //     ->where('a.isDeleted', '=', 0);
+                // ->first();
+
                 $dataUserLocation = DB::table('usersLocation as a')
                     ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                    ->select(
+                        'a.usersId',
+                        DB::raw('MIN(b.id) as locationId')
+                    )
                     ->groupBy('a.usersId')
                     ->where('a.isDeleted', '=', 0);
 
@@ -1309,7 +1324,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowanceRemaining', '=', $request->search );
+            $data = $data->where('a.annualSickAllowanceRemaining', '=', $request->search);
         }
 
         $data = $data->get();
