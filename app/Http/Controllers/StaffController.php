@@ -1004,6 +1004,9 @@ class StaffController extends Controller
                 ->groupBy('a.usersId')
                 ->where('a.isDeleted', '=', 0);
 
+
+            info($dataUserLocation);
+
             $subquery = DB::table('users as a')
                 ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
                 ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
@@ -1041,7 +1044,7 @@ class StaffController extends Controller
                 $data = $data->whereIn('a.locationId', $request->locationId);
             }
 
-
+            info($request->locationId);
 
             // if ($request->locationId) {
 
