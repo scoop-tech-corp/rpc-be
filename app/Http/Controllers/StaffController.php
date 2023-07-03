@@ -1004,9 +1004,6 @@ class StaffController extends Controller
                 ->groupBy('a.usersId')
                 ->where('a.isDeleted', '=', 0);
 
-
-            info($dataUserLocation->get());
-
             $subquery = DB::table('users as a')
                 ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
                 ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
@@ -1041,7 +1038,6 @@ class StaffController extends Controller
 
             if ($request->locationId) {
 
-
                 $test = $request->locationId;
 
                 $data = $data->where(function ($query) use ($test) {
@@ -1049,28 +1045,7 @@ class StaffController extends Controller
                         $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
                     }
                 });
-
-
-
-
-
-                //$data = $data->where('a.locationId', 'like', '%' . $request->locationId . '%');
             }
-
-            info($request->locationId);
-            info($data->get());
-            // if ($request->locationId) {
-
-            //     $val = [];
-            //     foreach ($request->locationId as $temp) {
-            //         $val = $temp;
-            //     }
-
-            //     if ($val) {
-            //         $data = $data->whereIn('a.locationid', $request->locationId);
-            //     }
-            // }
-
 
             if ($request->search) {
 
@@ -1268,7 +1243,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1331,7 +1312,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1392,7 +1379,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1453,7 +1446,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1515,7 +1514,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
 
@@ -1578,7 +1583,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1639,7 +1650,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1701,7 +1718,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1762,8 +1785,16 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
+
+
         $data = DB::table($data)
             ->select(
                 'id',
@@ -1822,7 +1853,13 @@ class StaffController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('a.locationid', $request->locationId);
+            $test = $request->locationId;
+
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
 
