@@ -1041,9 +1041,19 @@ class StaffController extends Controller
 
             if ($request->locationId) {
 
-                $data = $data->whereRaw("FIND_IN_SET(a.locationId, ?)", [implode(',', $request->locationId)]);
 
-                
+                $test = $request->locationId;
+
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
+
+
+
+
+
                 //$data = $data->where('a.locationId', 'like', '%' . $request->locationId . '%');
             }
 
