@@ -1045,7 +1045,7 @@ class StaffController extends Controller
             }
 
             info($request->locationId);
-
+            info($data->get());
             // if ($request->locationId) {
 
             //     $val = [];
