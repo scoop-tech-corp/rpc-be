@@ -3250,10 +3250,11 @@ class StaffController extends Controller
         }
 
         $data = DB::table('users as u')
-            ->join('location as l', 'u.locationId', 'l.id')
+            ->join('usersLocation as ul', 'ul.usersId', 'u.id')
+            ->join('location as l', 'ul.locationId', 'l.id')
             ->select('u.id', 'u.firstName as name')
             ->where('u.isDeleted', '=', 0)
-            ->where('u.locationId', '=', $request->locationId)
+            ->where('ul.locationId', '=', $request->locationId)
             ->where('u.id', '<>', $request->user()->id)
             ->orderBy('u.created_at', 'desc')
             ->get();
