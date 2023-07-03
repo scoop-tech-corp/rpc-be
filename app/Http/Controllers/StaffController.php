@@ -1041,7 +1041,8 @@ class StaffController extends Controller
 
             if ($request->locationId) {
 
-                $data = $data->whereIn('a.locationId', $request->locationId);
+                // $data = $data->where('a.locationId', $request->locationId);
+                $data = $data->where('a.locationId', 'like', '%' . $request->locationId . '%');
             }
 
             info($request->locationId);
