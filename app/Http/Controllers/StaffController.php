@@ -1005,7 +1005,7 @@ class StaffController extends Controller
                 ->where('a.isDeleted', '=', 0);
 
 
-            info($dataUserLocation);
+            info($dataUserLocation->get());
 
             $subquery = DB::table('users as a')
                 ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
