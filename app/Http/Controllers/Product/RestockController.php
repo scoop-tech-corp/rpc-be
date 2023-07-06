@@ -711,10 +711,10 @@ class RestockController extends Controller
 
             $restock = productRestocks::find($request->id);
 
-            if ($restock->status != 3) {
-                $restock = [];
-                return responseList($restock);
-            }
+            // if ($restock->status != 3) {
+            //     $restock = [];
+            //     return responseList($restock);
+            // }
 
             $isAdmin = false;
             $isOffice = false;
