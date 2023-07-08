@@ -297,7 +297,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/', [AccessControlController::class, 'index']);
         Route::get('/history', [AccessControlController::class, 'indexHistory']);
+        Route::put('/menu', [AccessControlController::class, 'updateAccessControlMenu']);
+        Route::post('/menu', [AccessControlController::class, 'insertAccessControlMenut']);
+        Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
+        Route::post('/menulist', [AccessControlController::class, 'insertMenutList']);
+        
     });
+
 
 
     //GLOBAL VARIABLE

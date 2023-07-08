@@ -452,8 +452,6 @@ class FacilityController extends Controller
             ['facility.isDeleted', '=', '0']
         ])->first();
 
-
-        info($checkIfValueExits);
         if ($checkIfValueExits === null) {
 
             return response()->json([

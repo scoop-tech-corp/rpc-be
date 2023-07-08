@@ -15,7 +15,8 @@ return new class extends Migration
     {
         Schema::create('accessControlHistory', function (Blueprint $table) {
             $table->id();
-            $table->string('menuName');
+            $table->string('menuId');
+            $table->string('roleId');
             $table->string('remark');
             $table->string('updatedBy');
             $table->timestamps();

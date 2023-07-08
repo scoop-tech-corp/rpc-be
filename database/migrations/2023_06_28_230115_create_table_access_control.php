@@ -24,8 +24,9 @@ return new class extends Migration
             $table->id();
             $table->integer('menuListId');
             $table->integer('roleId');
-            $table->integer('roleAccessId');
+            $table->integer('accessTypeId');
             $table->integer('accessLimitId');
+            $table->integer('isDeleted');
             $table->timestamps();
         });
     }
@@ -43,7 +44,7 @@ return new class extends Migration
             $table->id();
             $table->integer('menuListId');
             $table->integer('roleId');
-            $table->integer('roleAccessId');
+            $table->integer('accessTypeId');
             $table->integer('accessLimitId');
             $table->timestamps();
         });

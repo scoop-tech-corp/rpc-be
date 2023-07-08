@@ -5,11 +5,11 @@ namespace App\Models\AccessControl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AccessControlHistory extends Model
+class MenuList extends Model
 {
     use HasFactory;
 
-    protected $table = "accessControlHistory";
+    protected $table = "menuList";
 
     protected $dates = ['created_at', 'updated_at'];
 
@@ -18,6 +18,6 @@ class AccessControlHistory extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'menuName', 'roleId', 'remark', 'updatedBy', 'created_at', 'updated_at'
+        'menuName', 'isActive', 'created_at', 'updated_at'
     ];
 }

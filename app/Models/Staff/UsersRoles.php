@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Models\AccessControl;
+namespace App\Models\Staff;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AccessControlHistory extends Model
+class UsersRoles extends Model
 {
     use HasFactory;
 
-    protected $table = "accessControlHistory";
+    protected $table = "usersRoles";
 
     protected $dates = ['created_at', 'updated_at'];
 
@@ -18,6 +18,6 @@ class AccessControlHistory extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'menuName', 'roleId', 'remark', 'updatedBy', 'created_at', 'updated_at'
+        'roleName', 'isActive', 'created_at', 'updated_at'
     ];
 }

@@ -9,16 +9,16 @@ class AccessControl extends Model
 {
     use HasFactory;
 
-    // protected $table = "usersRoles";
+    protected $table = "accessControl";
 
-    // protected $dates = ['created_at', 'updated_at'];
+    protected $dates = ['created_at', 'updated_at'];
 
-    // protected $guarded = ['id'];
+    protected $guarded = ['id'];
 
-    // public $timestamps = true;
+    public $timestamps = true;
 
-    // protected $fillable = [
-    //     'roleName', 'isActive', 'created_at', 'updated_at'
-    // ];
+    protected $fillable = [
+        'menuListId', 'roleId', 'accessTypeId', 'accessLimitId', 'isDeleted', 'created_at', 'updated_at'
+    ];
+
 }
-
