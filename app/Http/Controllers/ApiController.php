@@ -133,7 +133,7 @@ class ApiController extends Controller
 
                 $data = DB::table('accessControl as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menuListId')
-                    ->join('accessType as c', 'c.id', '=', 'a.roleAccessId')
+                    ->join('accessType as c', 'c.id', '=', 'a.accessTypeId')
                     ->select(
                         'b.menuName',
                         'c.accessType',
@@ -144,7 +144,7 @@ class ApiController extends Controller
                 $accessLimit = DB::table('accessControl as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menulistId')
                     ->join('accessLimit as c', 'c.id', '=', 'a.accessLimitId')
-                    ->join('accessType as d', 'd.id', '=', 'a.roleAccessId')
+                    ->join('accessType as d', 'd.id', '=', 'a.accessTypeId')
                     ->select(
                         'b.menuName',
                         'd.accessType',
