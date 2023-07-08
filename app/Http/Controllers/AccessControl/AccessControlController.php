@@ -471,7 +471,7 @@ class AccessControlController extends Controller
 
             $remark_value =   "Menu " . $checkIfDataMenuExists->menuName . " is Deleted By " . $Request->user()->firstName;
 
-            DB::table('accesscontrolhistory')
+            DB::table('accessControlHistory')
                 ->insert([
                     'menuId' => $Request->menuListId,
                     'roleId' => $Request->roleId,
