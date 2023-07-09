@@ -322,7 +322,7 @@ class SecurityGroupController extends Controller
 
                 if ($request->status == 1) {
 
-                    foreach ($request->usersId as $val) {
+                    foreach ($userIdArray as $val) {
 
                         DB::table('users')
                             ->where('id', '=', $val)
