@@ -268,6 +268,10 @@ class SecurityGroupController extends Controller
 
         try {
 
+
+
+
+
             $checkIfRoleExists = SecurityGroups::where([
                 ['roleName', '=', $request->role],
             ])->first();
@@ -280,7 +284,11 @@ class SecurityGroupController extends Controller
             } else {
 
                 $data_item = [];
-                foreach ($request->usersId as $val) {
+
+
+                $userIdArray = json_decode($request->usersId, true);
+
+                foreach ($userIdArray as $val) {
 
                     $checkIfDataExits = DB::table('users')
                         ->where([
