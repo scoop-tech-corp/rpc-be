@@ -37,7 +37,7 @@ class SecurityGroupController extends Controller
                 'a.roleName',
                 DB::raw("CAST(IFNULL(count(b.roleId),0) AS INT) as totalUser"),
                 DB::raw("CASE WHEN a.IsActive = 1 THEN 1 else 0 END as status"),
-                DB::raw("CASE WHEN a.id = 1 THEN 1 else 0 END as isAdmin"),
+                DB::raw("CASE WHEN a.id = 1 THEN 0 else 1 END as isDeleted"),
                 'a.updated_at as updatedAt'
             )->groupBy('b.roleId', 'a.id', 'a.roleName', 'a.IsActive', 'a.updated_at');
 
@@ -48,7 +48,7 @@ class SecurityGroupController extends Controller
                 'roleName',
                 'totalUser',
                 'status',
-                'isAdmin',
+                'isDeleted',
                 'updatedAt'
             );
 
@@ -64,7 +64,7 @@ class SecurityGroupController extends Controller
                 'id',
                 'roleName',
                 'totalUser',
-                'isAdmin',
+                'isDeleted',
                 'status',
             );
 
@@ -96,7 +96,7 @@ class SecurityGroupController extends Controller
                     'roleName',
                     'totalUser',
                     'status',
-                    'isAdmin'
+                    'isDeleted'
                 )
                 ->orderBy($request->orderColumn, $defaultOrderBy)
                 ->orderBy('id', 'asc');
@@ -108,7 +108,7 @@ class SecurityGroupController extends Controller
                     'roleName',
                     'totalUser',
                     'status',
-                    'isAdmin'
+                    'isDeleted'
                 )
                 ->orderBy('id', 'asc');
         }
