@@ -69,9 +69,6 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                     ->where([['a.status', '=', $this->status],]);
             }
 
-
-            info($data->get());
-
             if (strtotime($this->fromDate) !== false && strtotime($this->toDate) !== false) {
 
                 $start = Carbon::parse($this->fromDate);
@@ -88,20 +85,19 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
             }
 
 
-            info($this->locationId);
-            if (!is_null($this->locationId)) {
-                info("masuk sini");
-                $test = $this->locationId;
+            if ($this->locationId) {
 
-                $data = $data->where(function ($query) use ($test) {
-                    foreach ($test as $id) {
-                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                    }
-                });
+                $test = $this->locationId;
+                if ((!is_null($test[0]))) {
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
             }
 
-
-            info($data->get());
         } else {
 
             if (strtolower($this->status) == "pending") {

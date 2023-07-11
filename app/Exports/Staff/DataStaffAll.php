@@ -74,12 +74,14 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
         if ($this->locationId) {
 
             $test = $this->locationId;
+            if ((!is_null($test[0]))) {
 
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
+            }
         }
 
         if ($this->orderValue) {
