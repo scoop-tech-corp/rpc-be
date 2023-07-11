@@ -89,7 +89,7 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
 
 
             info($this->locationId);
-            if ($this->locationId) {
+            if (!is_null($this->locationId)) {
                 info("masuk sini");
                 $test = $this->locationId;
 
