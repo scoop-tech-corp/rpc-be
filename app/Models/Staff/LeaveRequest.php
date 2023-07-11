@@ -18,7 +18,8 @@ class LeaveRequest extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'usersId', 'requesterName', 'jobTitle', 'locationId', 'leaveType','fromDate', 'toDate', 'duration', 'workingDays',
+
+        'usersId', 'requesterName', 'jobTitle', 'locationId','locationName', 'leaveType','fromDate', 'toDate', 'duration', 'workingDays',
         'status', 'remark', 'approveOrRejectedBy', 'approveOrRejectedDate', 'rejectedReason','created_at', 'updated_at'
     ];
 }

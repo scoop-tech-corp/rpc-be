@@ -52,23 +52,20 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
             if (strtolower($this->status) == "pending") {
 
                 $data = DB::table('leaveRequest as a')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.updated_at as updatedAt')
+                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'a.locationId as locationId',  'a.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status],]);
             } elseif (strtolower($this->status) == "approve") {
 
                 $data = DB::table('leaveRequest as a')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as approvedBy', 'a.approveOrRejectedDate as approvedAt', 'a.updated_at as updatedAt')
+                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'a.locationId as locationId',  'a.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as approvedBy', 'a.approveOrRejectedDate as approvedAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status],]);
             } else {
 
                 $data = DB::table('leaveRequest as a')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as rejectedBy', 'a.rejectedReason as  rejectedReason', 'a.approveOrRejectedDate as rejectedAt', 'a.updated_at as updatedAt')
+                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'a.locationId as locationId', 'a.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as rejectedBy', 'a.rejectedReason as  rejectedReason', 'a.approveOrRejectedDate as rejectedAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status],]);
             }
 
@@ -89,27 +86,24 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 $data = $data->whereBetween('fromDate', [$this->fromDate, $this->toDate]);
             }
 
-
             if ($this->locationId) {
 
-                $val = [];
+                $test = $this->locationId;
 
-                foreach ($this->locationId as $temp) {
-                    $val = $temp;
-                }
-
-                if ($val) {
-                    $data = $data->whereIn('a.locationId', $this->locationId);
-                }
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
             }
+
         } else {
 
             if (strtolower($this->status) == "pending") {
 
                 $data = DB::table('leaveRequest as a')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.updated_at as updatedAt')
+                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'a.locationId as locationId', 'a.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status], ['a.usersId', '=', $this->userId],]);
             } elseif (strtolower($this->status) == "approve") {
 
@@ -117,14 +111,14 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 $data = DB::table('leaveRequest as a')
                     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as approvedBy', 'a.approveOrRejectedDate as approvedAt', 'a.updated_at as updatedAt')
+                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'a.locationId as locationId', 'a.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as approvedBy', 'a.approveOrRejectedDate as approvedAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status], ['a.usersId', '=', $this->userId],]);
             } else {
 
                 $data = DB::table('leaveRequest as a')
                     ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'c.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as rejectedBy', 'a.rejectedReason as  rejectedReason', 'a.approveOrRejectedDate as rejectedAt', 'a.updated_at as updatedAt')
+                    ->select('a.id as leaveRequestId', 'a.requesterName as requester', 'a.locationId as locationId',  'a.locationName as locationName', 'b.jobName as jobName', 'a.leaveType as leaveType', 'a.fromDate as date', 'a.duration as days', 'a.remark as remark', 'a.created_at as createdAt', 'a.approveOrRejectedBy as rejectedBy', 'a.rejectedReason as  rejectedReason', 'a.approveOrRejectedDate as rejectedAt', 'a.updated_at as updatedAt')
                     ->where([['a.status', '=', $this->status], ['a.usersId', '=', $this->userId],]);
             }
 
@@ -142,6 +136,17 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 }
 
                 $data = $data->whereBetween('fromDate', [$this->fromDate, $this->toDate]);
+            }
+
+            if ($this->locationId) {
+
+                $test = $this->locationId;
+
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
             }
         }
 

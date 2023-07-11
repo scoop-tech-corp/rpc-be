@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('requesterName');
             $table->string('jobTitle');
             $table->string('locationId');
+            $table->string('locationName');
             $table->string('leaveType');
             $table->date('fromDate');
             $table->date('toDate');

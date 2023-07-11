@@ -434,21 +434,21 @@ class StaffLeaveController extends Controller
                     ], 422);
                 }
 
-                
-                $dataUserLocation = DB::table('usersLocation as a')
-                    ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                    ->select(
-                        'a.usersId',
-                        DB::raw('MIN(b.id) as locationId')
-                    )
-                    ->groupBy('a.usersId')
-                    ->where('a.isDeleted', '=', 0);
 
                 // $dataUserLocation = DB::table('usersLocation as a')
                 //     ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                //     ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                //     ->select(
+                //         'a.usersId',
+                //         DB::raw('MIN(b.id) as locationId')
+                //     )
                 //     ->groupBy('a.usersId')
                 //     ->where('a.isDeleted', '=', 0);
+
+                $dataUserLocation = DB::table('usersLocation as a')
+                    ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                    ->groupBy('a.usersId')
+                    ->where('a.isDeleted', '=', 0);
 
                 $userName =  User::from('users as a')
                     ->leftJoinSub($dataUserLocation, 'b', function ($join) {
@@ -457,6 +457,7 @@ class StaffLeaveController extends Controller
                     ->select(
                         'jobTitleId',
                         'b.locationId as locationId',
+                        'b.locationName as locationName',
                         DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
                     )
                     ->where('id', '=', $request->usersId)
@@ -468,6 +469,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->requesterName = $userName->name;
                 $staffLeave->jobTitle = $userName->jobTitleId;
                 $staffLeave->locationId =  $userName->locationId;
+                $staffLeave->locationName =  $userName->locationName;
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
@@ -687,21 +689,21 @@ class StaffLeaveController extends Controller
                 }
 
 
-                // $dataUserLocation = DB::table('usersLocation as a')
-                //     ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                //     ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
-                //     ->groupBy('a.usersId')
-                //     ->where('a.isDeleted', '=', 0);
-                // ->first();
-
                 $dataUserLocation = DB::table('usersLocation as a')
                     ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                    ->select(
-                        'a.usersId',
-                        DB::raw('MIN(b.id) as locationId')
-                    )
+                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
                     ->groupBy('a.usersId')
                     ->where('a.isDeleted', '=', 0);
+
+
+                // $dataUserLocation = DB::table('usersLocation as a')
+                //     ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                //     ->select(
+                //         'a.usersId',
+                //         DB::raw('MIN(b.id) as locationId')
+                //     )
+                //     ->groupBy('a.usersId')
+                //     ->where('a.isDeleted', '=', 0);
 
 
                 $userName =  User::from('users as a')
@@ -710,6 +712,7 @@ class StaffLeaveController extends Controller
                     })
                     ->select(
                         'jobTitleId',
+                        'b.locationName as locationName',
                         'b.locationId as locationId',
                         DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
                     )
@@ -722,6 +725,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->requesterName = $userName->name;
                 $staffLeave->jobTitle = $userName->jobTitleId;
                 $staffLeave->locationId =  $userName->locationId;
+                $staffLeave->locationName =  $userName->locationName;
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
@@ -1575,12 +1579,11 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
                     'a.fromDate as fromDate',
@@ -1596,12 +1599,11 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
                     'a.fromDate as fromDate',
@@ -1618,12 +1620,11 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
                     'a.fromDate as fromDate',
@@ -1640,19 +1641,18 @@ class StaffLeaveController extends Controller
                 ]);
         }
 
-
+        //YOLO
         if ($request->locationId) {
 
-            $val = [];
+            $test = $request->locationId;
 
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationId', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
+        //YOLO
 
         if (strtotime($request->fromDate) !== false && strtotime($request->toDate) !== false) {
 
@@ -1696,12 +1696,11 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
                     'a.fromDate as fromDate',
@@ -1714,16 +1713,16 @@ class StaffLeaveController extends Controller
                     ['a.status', '=', $request->status],
                     ['a.usersId', '=', $request->user()->id],
                 ]);
+
         } elseif (strtolower($request->status) == "approve") {
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
                     'a.fromDate as fromDate',
@@ -1741,12 +1740,11 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
                     'a.fromDate as fromDate',
@@ -1763,6 +1761,7 @@ class StaffLeaveController extends Controller
                     ['a.usersId', '=', $request->user()->id],
                 ]);
         }
+
 
         if (strtotime($request->fromDate) !== false && strtotime($request->toDate) !== false) {
 
@@ -2140,12 +2139,11 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
                     'a.fromDate as fromDate',
@@ -2158,6 +2156,19 @@ class StaffLeaveController extends Controller
                     ['a.status', '=', $request->status],
                     ['a.usersId', '=', $request->user()->id],
                 ]);
+
+
+            if ($request->locationId) {
+
+                $test = $request->locationId;
+
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
+            }
+
 
             if ($request->search) {
                 $data = $data->where('a.duration', '=', $request->search);
@@ -2175,12 +2186,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2193,6 +2203,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -2208,12 +2229,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2226,6 +2246,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -2240,12 +2271,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2259,26 +2289,36 @@ class StaffLeaveController extends Controller
                         ['a.usersId', '=', $request->user()->id],
                     ]);
 
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2291,6 +2331,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -2305,12 +2356,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2323,6 +2373,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -2337,12 +2398,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2355,6 +2415,18 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -2369,12 +2441,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2387,6 +2458,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -2402,12 +2484,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2422,6 +2503,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -2437,12 +2529,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2457,6 +2548,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -2471,12 +2573,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2492,26 +2593,36 @@ class StaffLeaveController extends Controller
                         ['a.usersId', '=', $request->user()->id],
                     ]);
 
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2526,6 +2637,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -2540,12 +2662,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2560,6 +2681,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -2574,12 +2706,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2594,6 +2725,20 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -2608,12 +2753,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2628,6 +2772,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -2642,12 +2797,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2662,6 +2816,19 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -2676,12 +2843,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationId as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2696,6 +2862,19 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
@@ -2710,12 +2889,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2730,6 +2908,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
@@ -2745,12 +2934,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2767,6 +2955,19 @@ class StaffLeaveController extends Controller
                         ['a.usersId', '=', $request->user()->id],
                     ]);
 
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
+
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
                 }
@@ -2781,12 +2982,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2816,12 +3016,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2838,26 +3037,38 @@ class StaffLeaveController extends Controller
                         ['a.usersId', '=', $request->user()->id],
                     ]);
 
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
-
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2873,6 +3084,19 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -2887,12 +3111,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2908,6 +3131,18 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -2922,12 +3157,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2943,6 +3177,19 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -2957,12 +3204,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -2978,6 +3224,17 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -2992,12 +3249,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3013,6 +3269,19 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
@@ -3027,12 +3296,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3048,6 +3316,18 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.rejectedReason', 'like', '%' . $request->search . '%');
@@ -3063,12 +3343,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3106,12 +3385,11 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
                     'a.fromDate as fromDate',
@@ -3123,6 +3401,19 @@ class StaffLeaveController extends Controller
                 ->where([
                     ['a.status', '=', $request->status],
                 ]);
+
+
+            if ($request->locationId) {
+
+                $test = $request->locationId;
+
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
+            }
+
 
             if ($request->search) {
                 $data = $data->where('a.duration', '=', $request->search);
@@ -3140,12 +3431,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3157,6 +3447,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -3172,12 +3474,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3189,6 +3490,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -3203,12 +3515,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3221,26 +3532,37 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                     ]);
 
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3252,6 +3574,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -3266,12 +3599,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3283,6 +3615,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -3297,12 +3641,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3314,6 +3657,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -3326,14 +3680,15 @@ class StaffLeaveController extends Controller
                     return $temp_column;
                 }
 
+
+
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3345,6 +3700,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -3360,12 +3727,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3379,6 +3745,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -3394,12 +3771,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3413,6 +3789,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -3427,12 +3814,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3447,26 +3833,38 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                     ]);
 
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3480,6 +3878,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -3494,12 +3904,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3513,6 +3922,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -3527,12 +3947,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3546,6 +3965,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -3560,12 +3991,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3579,6 +4009,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -3593,12 +4035,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3612,6 +4053,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -3626,12 +4079,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3645,6 +4097,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
@@ -3659,12 +4123,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3678,6 +4141,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
@@ -3693,12 +4168,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3713,6 +4187,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -3728,12 +4213,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3748,6 +4232,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -3762,12 +4258,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3783,8 +4278,20 @@ class StaffLeaveController extends Controller
                         ['a.status', '=', $request->status],
                     ]);
 
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
@@ -3797,12 +4304,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3817,6 +4323,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -3831,12 +4348,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3851,6 +4367,17 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -3865,12 +4392,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3885,6 +4411,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -3899,12 +4437,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3919,6 +4456,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -3933,12 +4482,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3953,6 +4501,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
@@ -3970,12 +4530,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -3990,6 +4549,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.rejectedReason', 'like', '%' . $request->search . '%');
@@ -4005,12 +4576,11 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
                         'a.fromDate as fromDate',
@@ -4025,6 +4595,18 @@ class StaffLeaveController extends Controller
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
