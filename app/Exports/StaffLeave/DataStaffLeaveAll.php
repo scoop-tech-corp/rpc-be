@@ -87,8 +87,10 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
                 $data = $data->whereBetween('fromDate', [$this->fromDate, $this->toDate]);
             }
 
-            if ($this->locationId) {
 
+            info($this->locationId);
+            if ($this->locationId) {
+                info("masuk sini");
                 $test = $this->locationId;
 
                 $data = $data->where(function ($query) use ($test) {
@@ -100,7 +102,6 @@ class DataStaffLeaveAll implements FromCollection, ShouldAutoSize, WithHeadings,
 
 
             info($data->get());
-            
         } else {
 
             if (strtolower($this->status) == "pending") {
