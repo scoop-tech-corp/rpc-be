@@ -277,6 +277,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/leave/rejectall', [StaffLeaveController::class, 'rejectAll']);
 
         Route::get('/product/transfer', [StaffController::class, 'staffListTransferProduct']);
+
+
+        Route::get('/datastatic', [StaffController::class, 'indexDataStatic']);
+        Route::delete('/datastatic', [StaffController::class, 'deleteDataStaticStaff']);
+
     });
 
 
