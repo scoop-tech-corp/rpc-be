@@ -171,6 +171,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/transfer/detail', [TransferProductController::class, 'detail']);
         Route::get('/transfer/export', [TransferProductController::class, 'export']);
 
+        Route::post('/transfer/multiple', [TransferProductController::class, 'createMultiple']);
+        Route::get('/transfer/producttwobranch', [TransferProductController::class, 'productListWithTwoBranch']);
+
         Route::get('/restock', [RestockController::class, 'index']);
         Route::post('/restock', [RestockController::class, 'create']);
         Route::put('/restock', [RestockController::class, 'update']);
@@ -301,7 +304,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/menu', [AccessControlController::class, 'insertAccessControlMenut']);
         Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
         Route::post('/menulist', [AccessControlController::class, 'insertMenutList']);
-        
     });
 
 

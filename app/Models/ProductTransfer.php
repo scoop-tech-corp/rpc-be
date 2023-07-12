@@ -14,16 +14,8 @@ class ProductTransfer extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'transferNumber', 'transferName','groupData', 'productIdOrigin', 'productIdDestination', 'productType',
-        'totalItem', 'userIdReceiver', 'additionalCost', 'remark','status',
-
-        'isUserReceived', 'receivedAt', 'reference',
-
-        'realImageName', 'imagePath',
-
-        'userIdOffice', 'isApprovedOffice', 'reasonOffice', 'officeApprovedAt',
-
-        'isAdminApproval', 'userIdAdmin', 'isApprovedAdmin', 'reasonAdmin', 'adminApprovedAt',
+        'numberId', 'transferNumber', 'transferName', 'locationIdOrigin', 'locationIdDestination',
+        'variantProduct', 'totalProduct', 'userIdReceiver', 'status',
 
         'userId', 'userUpdateId'
     ];

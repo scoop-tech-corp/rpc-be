@@ -8,6 +8,8 @@ use App\Models\ProductClinicLocation;
 use App\Models\ProductSell;
 use App\Models\ProductSellLocation;
 use App\Models\ProductTransfer;
+use App\Models\productTransferDetails;
+use App\Models\productTransferSentImages;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
@@ -117,25 +119,46 @@ class TransferProductController
                 $checkAdminApproval = true;
             }
 
-            $productType = "";
+            $cntNum = DB::table('productTransfers')
+                ->where('status', '!=', 0)
+                ->count();
 
-            if ($request->productType == 'productSell') {
-                $productType = 'Product Sell';
-            } elseif ($request->productType == 'productClinic') {
-                $productType = 'Product Clinic';
+            if ($cntNum == 0) {
+                $numberId = '#' . str_pad(1, 8, 0, STR_PAD_LEFT);
+            } else {
+                $numberId = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
             }
 
-            ProductTransfer::create([
+            $master = ProductTransfer::create([
+                'numberId' => $numberId,
                 'transferNumber' => $number,
                 'transferName' => $request->transferName,
-                'groupData' => 'product',
-                'totalItem' => $request->totalItem,
+                // 'productIdOrigin' => $request->productId,
+                // 'productIdDestination' => $prodDest->id,
+                'locationIdOrigin' => 0,
+                'locationIdDestination' => 0,
+                'variantProduct' => 1,
+                'totalProduct' => $request->totalItem,
                 'userIdReceiver' => $request->userIdReceiver,
+                // 'additionalCost' => $request->additionalCost,
+                'status' => 1,
+                // 'totalItem' => $request->totalItem,
+
+                // 'productType' => $productType,
+
+                // 'remark' => $request->remark,
+                // 'isAdminApproval' => $checkAdminApproval,
+                'userId' => $request->user()->id,
+            ]);
+
+            productTransferDetails::create([
+                'productTransferId' => $master->id,
                 'productIdOrigin' => $request->productId,
                 'productIdDestination' => $prodDest->id,
-                'productType' => $productType,
-                'additionalCost' => $request->additionalCost,
+                'productType' => $request->productType,
                 'remark' => $request->remark,
+                'quantity' => $request->totalItem,
+                'additionalCost' => $request->additionalCost,
                 'isAdminApproval' => $checkAdminApproval,
                 'userId' => $request->user()->id,
             ]);
@@ -152,6 +175,187 @@ class TransferProductController
             ],
             200
         );
+    }
+
+    public function createMultiple(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'type' => 'required|string|in:draft,final',
+            'transferNumber' => 'required|string',
+            'transferName' => 'required|string',
+            'locationIdOrigin' => 'required|integer',
+            'locationIdDestination' => 'required|integer',
+            'userIdReceiver' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $datas = json_decode($request->products, true);
+
+        $validate = Validator::make(
+            $datas,
+            [
+                '*.productId' => 'required|integer',
+                '*.productType' => 'required|string|in:productSell,productClinic',
+                '*.quantity' => 'required|integer',
+                '*.additionalCost' => 'required|numeric',
+                '*.remark' => 'nullable|string',
+            ],
+            [
+                '*.productId.required' => 'Product Id Should be Required!',
+                '*.productId.integer' => 'Product Id Should be Integer!',
+
+                '*.productType.required' => 'Product Type Should be Required!',
+                '*.productType.string' => 'Product Type Should be String!',
+
+                '*.quantity.required' => 'Quantity Should be Required!',
+                '*.quantity.integer' => 'Quantity Should be Integer!',
+
+                '*.additionalCost.required' => 'Additional Cost Should be Required!',
+                '*.additionalCost.numeric' => 'Additional Cost Should be Numeric!',
+
+                '*.remark.string' => 'Remark Should be String!',
+            ]
+        );
+
+        $numberId = '';
+        $transferNumber = '';
+        $variantProduct = 0;
+        $totalProduct = 0;
+        $status = 0;
+        $checkAdminApproval = false;
+
+        if ($request->type == 'final') {
+            $status = 1;
+
+            $cntNum = DB::table('productTransfers')
+                ->where('status', '!=', 0)
+                ->count();
+
+            if ($cntNum == 0) {
+                $numberId = '#' . str_pad(1, 8, 0, STR_PAD_LEFT);
+            } else {
+                $numberId = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
+            }
+        } elseif ($request->type = 'draft') {
+            $numberId = 'draft';
+        }
+
+        $findData = ProductTransfer::whereDate('created_at', Carbon::today())->count();
+
+        if ($findData == 0) {
+            $transferNumber = Carbon::today();
+            $transferNumber = 'RPC-TRF-' . $transferNumber->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+        } else {
+            $transferNumber = Carbon::today();
+            $transferNumber = 'RPC-TRF-' . $transferNumber->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+        }
+
+        foreach ($datas as $value) {
+            $variantProduct += 1;
+            $totalProduct += $value['quantity'];
+        }
+
+        $master = ProductTransfer::create([
+            'numberId' => $numberId,
+            'transferNumber' => $transferNumber,
+            'transferName' => $request->transferName,
+            'locationIdOrigin' => $request->locationIdOrigin,
+            'locationIdDestination' => $request->locationIdDestination,
+            'variantProduct' => $variantProduct,
+            'totalProduct' => $totalProduct,
+            'userIdReceiver' => $request->userIdReceiver,
+            'status' => $status,
+            'userId' => $request->user()->id,
+        ]);
+
+        $productIdDestination = 0;
+
+        foreach ($datas as $value) {
+
+            if ($value['productType'] == 'productSell') {
+
+                $dataProductOr = DB::table('productSells as ps')
+                    ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                    ->select('ps.fullName', 'psl.diffStock')
+                    ->where('psl.locationId', '=', $request->locationIdOrigin)
+                    ->where('ps.id', '=', $value['productId'])
+                    ->first();
+
+                $data = DB::table('productSells as ps')
+                    ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                    ->select('ps.*')
+                    ->where('psl.locationId', '=', $request->locationIdDestination)
+                    ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                    ->first();
+
+                $productIdDestination = $data->id;
+
+                if ($dataProductOr->diffStock <= 0) {
+                    $checkAdminApproval = true;
+                }
+            } elseif ($value['productType'] == 'productClinic') {
+
+                $dataProductOr = DB::table('productClinics as ps')
+                    ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                    ->select('ps.fullName', 'psl.diffStock')
+                    ->where('psl.locationId', '=', $request->locationIdOrigin)
+                    ->where('ps.id', '=', $value['productId'])
+                    ->first();
+
+                $data = DB::table('productClinics as ps')
+                    ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                    ->select('ps.*')
+                    ->where('psl.locationId', '=', $request->locationIdDestination)
+                    ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                    ->first();
+
+                $productIdDestination = $data->id;
+
+                if ($dataProductOr->diffStock <= 0) {
+                    $checkAdminApproval = true;
+                }
+            }
+
+            $detail = productTransferDetails::create([
+                'productTransferId' => $master->id,
+                'productIdOrigin' => $value['productId'],
+                'productIdDestination' => $productIdDestination,
+                'productType' => $value['productType'],
+                'quantity' => $value['quantity'],
+                'remark' => $value['remark'],
+                'isAdminApproval' => $checkAdminApproval,
+                'additionalCost' => $value['additionalCost'],
+                'userId' => $request->user()->id,
+            ]);
+
+            foreach ($value['images'] as $img) {
+
+                if ($img['imagePath'] != '') {
+                    $image = str_replace('data:image/', '', $img['imagePath']);
+                    $image = explode(';base64,', $image);
+                    $imageName = Str::random(40) . '.' . $image[0];
+                    File::put(public_path('ProductTransferSentImages') . '/' . $imageName, base64_decode($image[1]));
+
+                    productTransferSentImages::create([
+                        'productTransferDetailId' => $detail->id,
+                        'labelName' => $img['label'],
+                        'realImageName' => $img['originalName'],
+                        'imagePath' => '/ProductTransferSentImages' . '/' . $imageName,
+                        'userId' => $request->user()->id,
+                    ]);
+                }
+            }
+        }
+
+        return responseCreate();
     }
 
     public function index(Request $request)
@@ -482,6 +686,63 @@ class TransferProductController
         $findData = ProductTransfer::find($request->id);
 
         if ($findData) {
+
+            $data = DB::table('productTransfers as pt')
+                ->Leftjoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
+                ->Leftjoin('location as ld', 'pt.locationIdDestination', 'ld.id')
+                ->join('users as u', 'pt.userId', 'u.id')
+                ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
+                ->select(
+                    'pt.numberId',
+                    'pt.transferNumber',
+                    'pt.transferName',
+                    'lo.locationName as locationNameOrigin',
+                    'ld.locationName as locationNameDestination',
+                    'pt.variantProduct',
+                    'pt.totalProduct',
+                    DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
+                    'u.firstName as createdBy',
+                    DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+                )
+                ->where('pt.id', '=', $request->id)
+                ->get();
+
+            $detail = productTransferDetails::where('productTransferId', '=', $request->id)->get();
+
+            foreach ($detail as $value) {
+                if ($value->productType == 'productSell') {
+                    $prd = DB::table('productSells as ps')
+                        ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                        ->select(
+                            'ptd.id',
+                            'ps.fullName',
+                            DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                            'ptd.remark',
+                        )
+                        ->where('ptd.id', '=', $value->id)
+                        ->first();
+                } elseif ($value->productType == 'productClinic') {
+                    $prd = DB::table('productClinics as ps')
+                        ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                        ->select(
+                            'ptd.id',
+                            'ps.fullName',
+                            DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                            'ptd.remark',
+                        )
+                        ->where('ptd.id', '=', $value->id)
+                        ->first();
+                }
+
+                $data[] = array(
+                    'id' => $prd->id,
+                    'fullName' => $prd->fullName,
+                    'productType' => $prd->productType,
+                    'quantity' => $prd->quantity,
+                    'remark' => $prd->remark,
+                    'additionalCost' => $prd->additionalCost,
+                );
+            }
 
             if ($findData->productType == 'Product Sell') {
 
@@ -942,5 +1203,43 @@ class TransferProductController
                 'errors' => ['Product does not exist!'],
             ], 422);
         }
+    }
+
+    function productListWithTwoBranch(Request $request)
+    {
+        //proses:
+        // barang yang akan ditransfer tidak mencari id dari barang destination, karena bisa saja ada kemungkinan bahawa barang di cabang origin
+        // tidak ada di cabang destination
+        // jika memang ada, maka akan melakukan pencarian berdasarkan full name dengan fungsi like, jadi tidak akan membuat produk baru di cabang destination.
+        $validate = Validator::make($request->all(), [
+            'productType' => 'required|string|in:productSell,productClinic',
+            'branchOrigin' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        if ($request->productType == 'productSell') {
+            $data = DB::table('productSellLocations as psl')
+                ->select('ps.id', 'ps.fullName')
+                ->join('productSells as ps', 'psl.productSellId', 'ps.id')
+                ->where('psl.locationId', '=', $request->branchOrigin)
+                ->get();
+        } else if ($request->productType == 'productClinic') {
+            $data = DB::table('productClinicLocations as psl')
+                ->select('ps.id', 'ps.fullName')
+                ->join('productClinics as ps', 'psl.productClinicId', 'ps.id')
+                ->where('psl.locationId', '=', $request->branchOrigin)
+                ->get();
+        }
+
+        responseList($data);
     }
 }
