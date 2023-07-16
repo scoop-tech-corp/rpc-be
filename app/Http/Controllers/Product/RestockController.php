@@ -742,7 +742,7 @@ class RestockController extends Controller
 
             foreach ($prodList as $value) {
 
-                if ($value->reStockQuantity != $value->rejected) {
+                // if ($value->reStockQuantity != $value->rejected) {
                     if ($value->productType == 'productSell') {
                         $prd = DB::table('productSells as ps')
                             ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
@@ -778,7 +778,7 @@ class RestockController extends Controller
                         'unitCost' => $prd->costPerItem,
                         'orderQuantity' => $prd->reStockQuantity,
                     );
-                }
+                // }
             }
 
             return responseList($data);
