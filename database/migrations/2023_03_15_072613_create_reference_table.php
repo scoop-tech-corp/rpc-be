@@ -17,7 +17,6 @@ return new class extends Migration
             $table->id();
             $table->string('referenceName');
             $table->boolean('isActive');
-            $table->boolean('isDeleted')->nullable()->default(false);
             $table->string('deletedBy')->nullable();
             $table->timestamp('deletedAt',0)->nullable();
             $table->timestamps();
