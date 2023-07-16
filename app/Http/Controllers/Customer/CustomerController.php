@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\CustomerGroups;
-use App\Models\Customer\CustomerImages;
+use App\Models\Customer\CustomerImages; 
 use App\Models\Customer\CustomerMessengers;
 use App\Models\Customer\CustomerTelephones;
 use App\Models\Customer\CustomerEmails;
@@ -1844,23 +1844,6 @@ class CustomerController extends Controller
                     }
                 }
             }
-
-
-            // $json_array = json_decode($request->imagesName, true);
-            // $int = 0;
-            // //echo ($int);
-
-            // for ($i = 0; $i < count($json_array); $i++) {
-            //     $image = $json_array[$i];
-            //     //  echo $image['status'];
-
-            //     if ($image['status'] != "del") {
-            //         echo $image['name'];
-            //     }
-
-            // }
-
-
 
             DB::commit();
 

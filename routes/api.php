@@ -19,9 +19,12 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\VerifyUserandPasswordController;
 use App\Http\Controllers\Staff\StaffLeaveController;
+use App\Http\Controllers\Staff\DataStaticStaffController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Staff\SecurityGroupController;
 use App\Http\Controllers\AccessControl\AccessControlController;
+use App\Http\Controllers\Customer\DataStaticCustomerController;
+
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -237,6 +240,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/source', [CustomerController::class, 'getSourceCustomer']);
 
         Route::put('/pet', [CustomerController::class, 'updatePetAge']);
+
+
+
+        Route::post('/datastatic', [DataStaticCustomerController::class, 'insertDataStaticCustomer']);
+        Route::get('/datastaticcustomer', [DataStaticCustomerController::class, 'getDataStaticCustomer']);
+        Route::get('/datastatic', [DataStaticCustomerController::class, 'indexDataStaticCustomer']);
+        Route::delete('/datastatic', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
     });
 
 
@@ -280,6 +290,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/leave/rejectall', [StaffLeaveController::class, 'rejectAll']);
 
         Route::get('/product/transfer', [StaffController::class, 'staffListTransferProduct']);
+
+
+        Route::get('/datastatic', [DataStaticStaffController::class, 'indexDataStaticStaff']);
+        Route::delete('/datastatic', [DataStaticStaffController::class, 'deleteDataStaticStaff']);
+        Route::get('/datastaticstaff', [DataStaticStaffController::class, 'getDataStaticStaff']);
+        Route::post('/datastatic', [DataStaticStaffController::class, 'insertDataStaticStaff']);
+
     });
 
 
@@ -298,12 +315,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //Access Control
     Route::group(['prefix' => 'accesscontrol'], function () {
 
-        Route::get('/', [AccessControlController::class, 'index']);
+        Route::get('/user', [AccessControlController::class, 'index']);
         Route::get('/history', [AccessControlController::class, 'indexHistory']);
         Route::put('/menu', [AccessControlController::class, 'updateAccessControlMenu']);
         Route::post('/menu', [AccessControlController::class, 'insertAccessControlMenut']);
         Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
         Route::post('/menulist', [AccessControlController::class, 'insertMenutList']);
+        Route::get('/', [AccessControlController::class, 'indexAccessControlDashboard']);
+
+        Route::get('/accesstype', [AccessControlController::class, 'dropdownAccessType']);
     });
 
 

@@ -442,19 +442,19 @@ class SecurityGroupController extends Controller
                     if ($val['status'] == "del") { // set user to role id become non active
                         DB::table('users')
                             ->where('id', '=', $val['userId'])
-                            ->update(['roleId' => ""]);
+                            ->update(['roleId' => null]);
                     } else {
 
 
                         if ($request->status == 1) {
                             DB::table('users')
                                 ->where('id', '=', $val['userId'])
-                                ->update(['roleId' => $request->status]);
+                                ->update(['roleId' => $request->id]);
                         } else {
 
                             DB::table('users')
                                 ->where('id', '=', $val['userId'])
-                                ->update(['roleId' => ""]);
+                                ->update(['roleId' => null]);
                         }
                     }
                 }

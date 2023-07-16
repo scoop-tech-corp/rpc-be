@@ -13,12 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('referenceCustomer', function (Blueprint $table) {
+        Schema::create('dataStaticCustomer', function (Blueprint $table) {
             $table->id();
-            $table->string('referenceName');
-            $table->boolean('isActive');
-            $table->string('deletedBy')->nullable();
-            $table->timestamp('deletedAt',0)->nullable();
+            $table->string('value');
+            $table->string('name');
+            $table->boolean('isDeleted');
             $table->timestamps();
         });
     }
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('referenceCustomer');
+        Schema::dropIfExists('dataStaticCustomer');
     }
 };
