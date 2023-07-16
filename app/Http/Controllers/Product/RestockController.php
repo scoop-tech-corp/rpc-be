@@ -737,6 +737,8 @@ class RestockController extends Controller
                 $prodList = $prodList->get();
             }
 
+            $data[] = null;
+
             foreach ($prodList as $value) {
 
                 if ($value->reStockQuantity != $value->rejected) {
