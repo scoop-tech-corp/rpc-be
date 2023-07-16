@@ -52,12 +52,12 @@ return new class extends Migration
             $table->dropColumn('userIdOffice');
             $table->dropColumn('isApprovedOffice');
             $table->dropColumn('reasonOffice');
-            $table->dropColumn('officeApprovedAt', 0);
-            $table->boolean('isAdminApproval');
+            $table->dropColumn('officeApprovedAt');
+            $table->dropColumn('isAdminApproval');
             $table->dropColumn('userIdAdmin');
             $table->dropColumn('isApprovedAdmin');
             $table->dropColumn('reasonAdmin');
-            $table->dropColumn('adminApprovedAt', 0);
+            $table->dropColumn('adminApprovedAt');
         });
 
         Schema::table('productRestocks', function (Blueprint $table) {
