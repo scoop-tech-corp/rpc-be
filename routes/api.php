@@ -244,7 +244,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/datastaticcustomer', [DataStaticCustomerController::class, 'getDataStaticCustomer']);
         Route::get('/datastatic', [DataStaticCustomerController::class, 'indexDataStaticCustomer']);
         Route::delete('/datastatic', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
-
     });
 
 
@@ -290,8 +289,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/product/transfer', [StaffController::class, 'staffListTransferProduct']);
 
 
-        Route::get('/datastatic', [DataStaticStaffController::class, 'indexDataStatic']);
+        Route::get('/datastatic', [DataStaticStaffController::class, 'indexDataStaticStaff']);
         Route::delete('/datastatic', [DataStaticStaffController::class, 'deleteDataStaticStaff']);
+        Route::get('/datastaticstaff', [DataStaticStaffController::class, 'getDataStaticStaff']);
+        Route::post('/datastatic', [DataStaticStaffController::class, 'insertDataStaticStaff']);
 
     });
 
@@ -320,7 +321,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [AccessControlController::class, 'indexAccessControlDashboard']);
 
         Route::get('/accesstype', [AccessControlController::class, 'dropdownAccessType']);
-        
     });
 
 

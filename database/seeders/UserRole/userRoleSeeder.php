@@ -17,7 +17,7 @@ class userRoleSeeder extends Seeder
     {
 
         DB::table('data_static')->truncate();
-        // DB::table('dataStaticStaff')->truncate();
+        DB::table('dataStaticStaff')->truncate();
         DB::table('dataStaticCustomer')->truncate();
         DB::table('usersRoles')->truncate();
         DB::table('accessType')->truncate();
@@ -117,7 +117,7 @@ class userRoleSeeder extends Seeder
 
 
         DB::table('data_static')->insert($data);
-        // DB::table('dataStaticStaff')->insert($data); //add by dw data static 
+        DB::table('dataStaticStaff')->insert($data); //add by dw data static 
         DB::table('dataStaticCustomer')->insert($data); //add by dw data static customer
         DB::table('usersRoles')->insert($userRole);
         DB::table('accessType')->insert($accessType);
