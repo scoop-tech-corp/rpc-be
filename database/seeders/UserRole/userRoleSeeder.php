@@ -17,12 +17,12 @@ class userRoleSeeder extends Seeder
     {
 
         DB::table('data_static')->truncate();
-        DB::table('dataStaticStaff')->truncate();
+        // DB::table('dataStaticStaff')->truncate();
         DB::table('dataStaticCustomer')->truncate();
         DB::table('usersRoles')->truncate();
         DB::table('accessType')->truncate();
         DB::table('menuList')->truncate();
-        DB::table('menuMaster')->truncate();
+        // DB::table('menuMaster')->truncate();
         DB::table('accessLimit')->truncate();
         DB::table('accessControl')->truncate();
 
@@ -61,39 +61,39 @@ class userRoleSeeder extends Seeder
         ];
 
 
+        $menulist = [
+            ['menuName' => 'Location', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+            ['menuName' => 'Facility', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+            ['menuName' => 'Product', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+            ['menuName' => 'Staff', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+            ['menuName' => 'Services', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+            ['menuName' => 'Customer', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+            ['menuName' => 'Promo', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+            ['menuName' => 'Kalender', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+            ['menuName' => 'Messenger', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+
+        ];
+
+
         // $menulist = [
-        //     ['menuName' => 'Location', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-        //     ['menuName' => 'Facility', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-        //     ['menuName' => 'Product', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-        //     ['menuName' => 'Staff', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-        //     ['menuName' => 'Services', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-        //     ['menuName' => 'Customer', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-        //     ['menuName' => 'Promo', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-        //     ['menuName' => 'Kalender', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-        //     ['menuName' => 'Messenger', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '1',   'menuName' => 'Location', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '1', 'menuName' => 'Facility', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '2', 'menuName' => 'Product', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '3', 'menuName' => 'Staff', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '', 'menuName' => 'Services', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '4', 'menuName' => 'Customer', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '', 'menuName' => 'Promo', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '', 'menuName' => 'Kalender', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterId' => '', 'menuName' => 'Messenger', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
 
         // ];
 
-
-        $menulist = [
-            ['masterId' => '1',   'menuName' => 'Location', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-            ['masterId' => '1', 'menuName' => 'Facility', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-            ['masterId' => '2', 'menuName' => 'Product', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-            ['masterId' => '3', 'menuName' => 'Staff', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-            ['masterId' => '', 'menuName' => 'Services', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-            ['masterId' => '4', 'menuName' => 'Customer', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-            ['masterId' => '', 'menuName' => 'Promo', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-            ['masterId' => '', 'menuName' => 'Kalender', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-            ['masterId' => '', 'menuName' => 'Messenger', 'isActive' => '1', 'created_at' => now(), 'updated_at' => now(),],
-
-        ];
-
-        $menuMaster = [
-            ['masterName' => 'Location', 'isDeleted' => 1, 'created_at' => now(), 'updated_at' => now(),],
-            ['masterName' => 'Product', 'isDeleted' => 1, 'created_at' => now(), 'updated_at' => now(),],
-            ['masterName' => 'Staff', 'isDeleted' => 1, 'created_at' => now(), 'updated_at' => now(),],
-            ['masterName' => 'Customer', 'isDeleted' => 1, 'created_at' => now(), 'updated_at' => now(),],
-        ];
+        // $menuMaster = [
+        //     ['masterName' => 'Location', 'isDeleted' => 1, 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterName' => 'Product', 'isDeleted' => 1, 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterName' => 'Staff', 'isDeleted' => 1, 'created_at' => now(), 'updated_at' => now(),],
+        //     ['masterName' => 'Customer', 'isDeleted' => 1, 'created_at' => now(), 'updated_at' => now(),],
+        // ];
 
         $accesslimit = [
             ['timeLimit' => '60', 'startDuration' => now(), 'created_at' => now(), 'updated_at' => now(),],
@@ -122,7 +122,7 @@ class userRoleSeeder extends Seeder
         DB::table('usersRoles')->insert($userRole);
         DB::table('accessType')->insert($accessType);
         DB::table('menuList')->insert($menulist);
-        DB::table('menuMaster')->insert($menuMaster);
+        // DB::table('menuMaster')->insert($menuMaster);
         DB::table('accessLimit')->insert($accesslimit);
         DB::table('accessControl')->insert($accessControl);
     }
