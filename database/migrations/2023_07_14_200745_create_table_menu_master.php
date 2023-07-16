@@ -13,11 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('menuList', function (Blueprint $table) {
+        Schema::create('menuMaster', function (Blueprint $table) {
             $table->id();
-            $table->string('masterId')->nullable();
-            $table->string('menuName');
-            $table->integer('isActive');
+            $table->string('masterName');
+            $table->boolean('isDeleted');
             $table->timestamps();
         });
     }
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('menuList');
+        Schema::dropIfExists('menuMaster');
     }
 };
