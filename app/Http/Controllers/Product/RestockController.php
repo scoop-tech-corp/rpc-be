@@ -738,7 +738,7 @@ class RestockController extends Controller
                 $prodList = $prodList->get();
             }
 
-            $data[] = null;
+            $data = null;
 
             foreach ($prodList as $value) {
 
