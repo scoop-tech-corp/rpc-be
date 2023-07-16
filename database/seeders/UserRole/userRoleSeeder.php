@@ -117,7 +117,7 @@ class userRoleSeeder extends Seeder
 
 
         DB::table('data_static')->insert($data);
-        DB::table('dataStaticStaff')->insert($data); //add by dw data static 
+        // DB::table('dataStaticStaff')->insert($data); //add by dw data static 
         DB::table('dataStaticCustomer')->insert($data); //add by dw data static customer
         DB::table('usersRoles')->insert($userRole);
         DB::table('accessType')->insert($accessType);
