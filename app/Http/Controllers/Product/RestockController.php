@@ -728,10 +728,11 @@ class RestockController extends Controller
             }
 
             $prodList = DB::table('productRestockDetails as pr')
-                ->where('productRestockId', '=', $request->id);
+                ->where('pr.productRestockId', '=', $request->id)
+                ->where('pr.isDeleted', '=', 0);
 
             if ($isAdmin) {
-                $prodList = $prodList->where('isAdminApproval', '=', 1)
+                $prodList = $prodList->where('pr.isAdminApproval', '=', 1)
                     ->get();
             } else if ($isOffice) {
                 $prodList = $prodList->get();
