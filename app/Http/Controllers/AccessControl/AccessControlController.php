@@ -447,7 +447,7 @@ class AccessControlController extends Controller
                         $accessControls = DB::table('accessControl')
                             ->join('menuList', 'accessControl.menuListId', '=', 'menuList.id')
                             ->join('usersRoles', 'accessControl.roleID', '=', 'usersRoles.id')
-                            ->select('MenuList.id as menuId', 'MenuList.MenuName as menuName', 'usersRoles.RoleName as roleName', 'accessControl.accessTypeId')
+                            ->select('menuList.id as menuId', 'menuList.menuName as menuName', 'usersRoles.roleName as roleName', 'accessControl.accessTypeId')
                             ->where([
                                 ['menuListId', '=', $datamenulist->id],
                             ])->get();
@@ -477,7 +477,6 @@ class AccessControlController extends Controller
                 }
 
 
-
                 $data['lists'][] = [
                     'module' => $menu->module,
                     'menu' =>  $menus
@@ -486,8 +485,6 @@ class AccessControlController extends Controller
 
 
             $modifiedJsonData = json_encode($data);
-
-            info($modifiedJsonData);
 
             return response()->json($data, 200);
 
@@ -879,7 +876,7 @@ class AccessControlController extends Controller
                     'errors' => ['Access type id already same, please try different id!'],
                 ], 422);
             }
-            
+
             //  }
 
 
