@@ -764,125 +764,123 @@ class AccessControlController extends Controller
 
 
             ////kalau ada access limit 
-            if ($Request->accessLimitId) {
+            // if ($Request->accessLimitId) {
 
-                //         $checkIfAccessLimitExists = AccessLimit::where([['id', '=', $Request->accessLimitId]])->first();
+            //     $checkIfAccessLimitExists = AccessLimit::where([['id', '=', $Request->accessLimitId]])->first();
 
-                //         if (!$checkIfAccessLimitExists) {
-                //             return response()->json([
-                //                 'message' => 'The given data was invalid.',
-                //                 'errors' => ['Access Limit id not exists please try different id!'],
-                //             ], 422);
-                //         }
+            //     if (!$checkIfAccessLimitExists) {
+            //         return response()->json([
+            //             'message' => 'The given data was invalid.',
+            //             'errors' => ['Access Limit id not exists please try different id!'],
+            //         ], 422);
+            //     }
 
-                //         $getFinal = AccessControl::where([
-                //             ['menuListId', '=', $Request->menuListId],
-                //             ['roleId', '=', $Request->roleId]
-                //         ])->first();
+            //     $getFinal = AccessControl::where([
+            //         ['menuListId', '=', $Request->menuId],
+            //         ['roleId', '=', $roleIdAccessControl]
+            //     ])->first();
 
-                //         //3 condition 
-                //         // kalau role id sama tapi limit beda 
-                //         // kalau role id beda tapi limit sama
-                //         // kalau 2 2 nya berbeda
+            //     //         //3 condition 
+            //     //         // kalau role id sama tapi limit beda 
+            //     //         // kalau role id beda tapi limit sama
+            //     //         // kalau 2 2 nya berbeda
 
-                //         if (($getFinal->accessTypeId == $Request->accessTypeId) && ($getFinal->accessLimitId != $Request->accessLimitId)) {
+            //     if (($getFinal->accessTypeId == $Request->type) && ($getFinal->accessLimitId != $Request->accessLimitId)) {
 
-                //             $valeuremark = "Access Limit  " . $checkIfDataMenuExists->menuName . " is change to " .  $checkIfAccessLimitExists->timeLimit . " by " . $Request->user()->firstName;
+            //                     $valeuremark = "Access Limit  " . $checkIfDataMenuExists->menuName . " is change to " .  $checkIfAccessLimitExists->timeLimit . " by " . $Request->user()->firstName;
 
-                //             AccessControl::where([
-                //                 ['menuListId', '=', $Request->menuListId],
-                //                 ['roleId', '=', $Request->roleId]
-                //             ])->update(['accessLimitId' => $Request->accessLimitId]);
-
-
-                //             $AccessControlHistory = new AccessControlHistory();
-                //             $AccessControlHistory->menuId = $Request->menuListId;
-                //             $AccessControlHistory->roleId = $Request->roleId;
-                //             $AccessControlHistory->remark = $valeuremark;
-                //             $AccessControlHistory->updatedBy = $Request->user()->id;
-                //             $AccessControlHistory->created_at = now();
-                //             $AccessControlHistory->updated_at = now();
-                //             $AccessControlHistory->save();
-                //         } elseif (($getFinal->accessTypeId != $Request->accessTypeId) && ($getFinal->accessLimitId == $Request->accessLimitId)) {
-
-                //             $valeuremark = "Access Type " . $checkIfDataMenuExists->menuName . " is change to " . $checkIfDataExits->accessType . " by " . $Request->user()->firstName;
-
-                //             AccessControl::where([
-                //                 ['menuListId', '=', $Request->menuListId],
-                //                 ['roleId', '=', $Request->roleId]
-                //             ])->update(['accessTypeId' => $Request->accessTypeId]);
+            //                     AccessControl::where([
+            //                         ['menuListId', '=', $Request->menuId],
+            //                         ['roleId', '=', $Request->roleId]
+            //                     ])->update(['accessLimitId' => $Request->accessLimitId]);
 
 
-                //             $AccessControlHistory = new AccessControlHistory();
-                //             $AccessControlHistory->menuId = $Request->menuListId;
-                //             $AccessControlHistory->roleId = $Request->roleId;
-                //             $AccessControlHistory->remark = $valeuremark;
-                //             $AccessControlHistory->updatedBy = $Request->user()->id;
-                //             $AccessControlHistory->created_at = now();
-                //             $AccessControlHistory->updated_at = now();
-                //             $AccessControlHistory->save();
-                //         } elseif (($getFinal->accessTypeId != $Request->accessTypeId) &&  ($getFinal->accessLimitId != $Request->accessLimitId)) {
+            //                     $AccessControlHistory = new AccessControlHistory();
+            //                     $AccessControlHistory->menuId = $Request->menuId;
+            //                     $AccessControlHistory->roleId = $roleIdAccessControl;
+            //                     $AccessControlHistory->remark = $valeuremark;
+            //                     $AccessControlHistory->updatedBy = $Request->user()->id;
+            //                     $AccessControlHistory->created_at = now();
+            //                     $AccessControlHistory->updated_at = now();
+            //                     $AccessControlHistory->save();
+            //           } elseif (($getFinal->accessTypeId != $Request->accessTypeId) && ($getFinal->accessLimitId == $Request->accessLimitId)) {
 
-                //             $valeuremark = "Access type menu " . $checkIfDataMenuExists->menuName . " is change to " . $checkIfDataExits->accessType . " & Access Limit change to " . $checkIfAccessLimitExists->timeLimit . " by " . $Request->user()->firstName;
+            //         //             $valeuremark = "Access Type " . $checkIfDataMenuExists->menuName . " is change to " . $checkIfDataExits->accessType . " by " . $Request->user()->firstName;
 
-                //             AccessControl::where([
-                //                 ['menuListId', '=', $Request->menuListId],
-                //                 ['roleId', '=', $Request->roleId]
-                //             ])->update(['accessTypeId' => $Request->accessTypeId, 'accessLimitId' => $Request->accessLimitId]);
+            //         //             AccessControl::where([
+            //         //                 ['menuListId', '=', $Request->menuListId],
+            //         //                 ['roleId', '=', $Request->roleId]
+            //         //             ])->update(['accessTypeId' => $Request->accessTypeId]);
 
 
-                //             $AccessControlHistory = new AccessControlHistory();
-                //             $AccessControlHistory->menuId = $Request->menuListId;
-                //             $AccessControlHistory->roleId = $Request->roleId;
-                //             $AccessControlHistory->remark = $valeuremark;
-                //             $AccessControlHistory->updatedBy = $Request->user()->id;
-                //             $AccessControlHistory->created_at = now();
-                //             $AccessControlHistory->updated_at = now();
-                //             $AccessControlHistory->save();
-                //         } else {
+            //         //             $AccessControlHistory = new AccessControlHistory();
+            //         //             $AccessControlHistory->menuId = $Request->menuListId;
+            //         //             $AccessControlHistory->roleId = $Request->roleId;
+            //         //             $AccessControlHistory->remark = $valeuremark;
+            //         //             $AccessControlHistory->updatedBy = $Request->user()->id;
+            //         //             $AccessControlHistory->created_at = now();
+            //         //             $AccessControlHistory->updated_at = now();
+            //         //             $AccessControlHistory->save();
+            //         //         } elseif (($getFinal->accessTypeId != $Request->accessTypeId) &&  ($getFinal->accessLimitId != $Request->accessLimitId)) {
 
-                //             return response()->json([
-                //                 'message' => 'The given data was invalid.',
-                //                 'errors' => ['Access type id and access limit already same, please try different id!'],
-                //             ], 422);
-                //         }
+            //         //             $valeuremark = "Access type menu " . $checkIfDataMenuExists->menuName . " is change to " . $checkIfDataExits->accessType . " & Access Limit change to " . $checkIfAccessLimitExists->timeLimit . " by " . $Request->user()->firstName;
 
+            //         //             AccessControl::where([
+            //         //                 ['menuListId', '=', $Request->menuListId],
+            //         //                 ['roleId', '=', $Request->roleId]
+            //         //             ])->update(['accessTypeId' => $Request->accessTypeId, 'accessLimitId' => $Request->accessLimitId]);
+
+
+            //         //             $AccessControlHistory = new AccessControlHistory();
+            //         //             $AccessControlHistory->menuId = $Request->menuListId;
+            //         //             $AccessControlHistory->roleId = $Request->roleId;
+            //         //             $AccessControlHistory->remark = $valeuremark;
+            //         //             $AccessControlHistory->updatedBy = $Request->user()->id;
+            //         //             $AccessControlHistory->created_at = now();
+            //         //             $AccessControlHistory->updated_at = now();
+            //         //             $AccessControlHistory->save();
+            //         //         } else {
+
+            //         //             return response()->json([
+            //         //                 'message' => 'The given data was invalid.',
+            //         //                 'errors' => ['Access type id and access limit already same, please try different id!'],
+            //         //             ], 422);
+            //     }
+            // } else {
+
+            //kalau tidak ada access limit
+
+            $getFinal = AccessControl::where([
+                ['menuListId', '=', $Request->menuId],
+                ['roleId', '=', $roleIdAccessControl]
+            ])->first();
+
+            if (($getFinal->accessTypeId != $Request->type)) {
+
+                $valeuremark = "Access Type " . $checkIfDataMenuExists->menuName . " is change to " . $checkIfDataExits->accessType . " by " . $Request->user()->firstName;
+
+                AccessControl::where([
+                    ['menuListId', '=', $Request->menuId],
+                    ['roleId', '=', $roleIdAccessControl]
+                ])->update(['accessTypeId' => $Request->type]);
+
+                $AccessControlHistory = new AccessControlHistory();
+                $AccessControlHistory->menuId = $Request->menuId;
+                $AccessControlHistory->roleId = $roleIdAccessControl;
+                $AccessControlHistory->remark = $valeuremark;
+                $AccessControlHistory->updatedBy = $Request->user()->id;
+                $AccessControlHistory->created_at = now();
+                $AccessControlHistory->updated_at = now();
+                $AccessControlHistory->save();
             } else {
 
-                //         //kalau tidak ada access limit
-
-                //         $getFinal = AccessControl::where([
-                //             ['menuListId', '=', $Request->menuListId],
-                //             ['roleId', '=', $Request->roleId]
-                //         ])->first();
-
-                //         if (($getFinal->accessTypeId != $Request->accessTypeId)) {
-
-                //             $valeuremark = "Access Type " . $checkIfDataMenuExists->menuName . " is change to " . $checkIfDataExits->accessType . " by " . $Request->user()->firstName;
-
-                //             AccessControl::where([
-                //                 ['menuListId', '=', $Request->menuListId],
-                //                 ['roleId', '=', $Request->roleId]
-                //             ])->update(['accessTypeId' => $Request->accessTypeId]);
-
-
-                //             $AccessControlHistory = new AccessControlHistory();
-                //             $AccessControlHistory->menuId = $Request->menuListId;
-                //             $AccessControlHistory->roleId = $Request->roleId;
-                //             $AccessControlHistory->remark = $valeuremark;
-                //             $AccessControlHistory->updatedBy = $Request->user()->id;
-                //             $AccessControlHistory->created_at = now();
-                //             $AccessControlHistory->updated_at = now();
-                //             $AccessControlHistory->save();
-                //         } else {
-
-                //             return response()->json([
-                //                 'message' => 'The given data was invalid.',
-                //                 'errors' => ['Access type id already same, please try different id!'],
-                //             ], 422);
-                //         }
-
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Access type id already same, please try different id!'],
+                ], 422);
             }
+            
+            //  }
 
 
             DB::commit();
