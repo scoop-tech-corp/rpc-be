@@ -375,7 +375,7 @@ class DataStaticStaffController extends Controller
     }
 
 
-    public function SearchDataStatic(Request $request)
+    private function SearchDataStatic(Request $request)
     {
 
         $data = $this->getAllStatic();
