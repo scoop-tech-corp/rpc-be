@@ -6,7 +6,7 @@ use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Support\Facades\Event;
 use App\Models\PushNotifications\PushNotifications;
 use App\Exports\Facility\exportFacility;
-use App\Events\MessageCreated;  
+use App\Events\MessageCreated;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Facility\FacilityUnit;
 use App\Models\Facility\Facility;
@@ -415,8 +415,6 @@ class FacilityController extends Controller
                 'result' => 'success',
                 'message' => 'Successfully deleted facility',
             ]);
-
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -1240,15 +1238,15 @@ class FacilityController extends Controller
     public function facilityLocation(Request $request)
     {
 
+
         try {
 
-            $getLocationFasilitas = Location::from('location as location')
-                ->leftjoin(
-                    DB::raw('(select locationId,isDeleted from facility  where isDeleted=0 ) as facility'),
-                    function ($join) {
-                        $join->on('facility.locationId', '=', 'location.id');
-                    }
-                )
+            $getLocationFasilitas = Location::leftJoin(
+                DB::raw('(select locationId,isDeleted from facility  where isDeleted=0 ) as facility'),
+                function ($join) {
+                    $join->on('facility.locationId', '=', 'location.id');
+                }
+            )
                 ->select(
                     'location.id as id',
                     'location.locationName as locationName',
