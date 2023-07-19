@@ -27,24 +27,30 @@ class DataStaticCustomerController extends Controller
                 'value as value',
                 'name as name',
             )->where(
-                ['value', '=', 'Telephone'],
-                ['isDeleted', '=', '0']
+                [
+                    ['value', '=', 'Telephone'],
+                    ['isDeleted', '=', '0']
+                ]
             )->get();
 
             $data_static_messenger = DataStaticCustomers::select(
                 'value as value',
                 'name as name',
             )->where(
-                ['value', '=', 'messenger'],
-                ['isDeleted', '=', '0']
+                [
+                    ['value', '=', 'messenger'],
+                    ['isDeleted', '=', '0']
+                ]
             )->get();
 
             $dataStaticUsage = DataStaticCustomers::select(
                 'value as value',
                 'name as name',
             )->where(
-                ['value', '=', 'Usage'],
-                ['isDeleted', '=', '0']
+                [
+                    ['value', '=', 'Usage'],
+                    ['isDeleted', '=', '0']
+                ]
             )
                 ->get();
 
