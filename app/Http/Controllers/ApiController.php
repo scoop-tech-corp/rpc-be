@@ -113,7 +113,7 @@ class ApiController extends Controller
 
                 $userId = $checkIfValueExits->usersId;
                 $emailaddress = $checkIfValueExits->email;
-
+                info("masuk kesini 4");
                 $users = DB::table('users')
                     ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
                     ->leftjoin('usersRoles', 'usersRoles.id', '=', 'users.roleId')
@@ -130,7 +130,7 @@ class ApiController extends Controller
                         ['jobTitle.isActive', '=', '1']
                     ])
                     ->first();
-
+                info("masuk kesini 3");
                 $data = DB::table('accessControl as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menuListId')
                     ->join('accessType as c', 'c.id', '=', 'a.accessTypeId')
@@ -141,6 +141,7 @@ class ApiController extends Controller
                     ->where([['a.roleId', '=', $users->roleId],])
                     ->get();
 
+                info("masuk kesini");
                 $accessLimit = DB::table('accessControl as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menulistId')
                     ->join('accessLimit as c', 'c.id', '=', 'a.accessLimitId')
@@ -153,7 +154,7 @@ class ApiController extends Controller
                     ->where([['a.roleId', '=', $users->roleId],])
                     ->get();
 
-
+                info("masuk kesini 2");
                 return response()->json([
                     'success' => true,
                     'token' => $token,
