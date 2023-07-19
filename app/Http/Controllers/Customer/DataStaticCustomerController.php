@@ -26,19 +26,26 @@ class DataStaticCustomerController extends Controller
             $data_static_telepon = DataStaticCustomers::select(
                 'value as value',
                 'name as name',
-            )->where('value', '=', 'Telephone')
-                ->get();
+            )->where(
+                ['value', '=', 'Telephone'],
+                ['isDeleted', '=', '0']
+            )->get();
 
             $data_static_messenger = DataStaticCustomers::select(
                 'value as value',
                 'name as name',
-            )->where('value', '=', 'messenger')
-                ->get();
+            )->where(
+                ['value', '=', 'messenger'],
+                ['isDeleted', '=', '0']
+            )->get();
 
             $dataStaticUsage = DataStaticCustomers::select(
                 'value as value',
                 'name as name',
-            )->where('value', '=', 'Usage')
+            )->where(
+                ['value', '=', 'Usage'],
+                ['isDeleted', '=', '0']
+            )
                 ->get();
 
             $dataTitleCustomer = TitleCustomer::select(
@@ -133,8 +140,7 @@ class DataStaticCustomerController extends Controller
 
             if ($checkIfValueExits != null) {
 
-               return responseInvalid(['Data static customer already exists! Please choose another keyword and name!']);
-
+                return responseInvalid(['Data static customer already exists! Please choose another keyword and name!']);
             } else {
 
                 $DataStatic = new DataStaticCustomers();

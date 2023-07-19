@@ -23,27 +23,33 @@ class DataStaticStaffController extends Controller
             $data_static_telepon = DataStaticStaff::select(
                 'value as value',
                 'name as name',
-            )->where('value', '=', 'Telephone')
-                ->get();
+            )->where(
+                ['value', '=', 'Telephone'],
+                ['isDeleted', '=', '0']
+            )->get();
+
 
             $data_static_messenger = DataStaticStaff::select(
                 'value as value',
                 'name as name',
-            )->where('value', '=', 'Messenger')
-                ->get();
+            )->where(
+                ['value', '=', 'Messenger'],
+                ['isDeleted', '=', '0']
+            )->get();
 
             $dataStaticUsage = DataStaticStaff::select(
                 'value as value',
                 'name as name',
-            )->where('value', '=', 'Usage')
-                ->get();
-
+            )->where(
+                ['value', '=', 'Usage'],
+                ['isDeleted', '=', '0']
+            )->get();
 
             $dataTypeId = TypeId::select(
                 DB::raw("'Type id' as value"),
                 'typeName as name',
             )->where('isActive', '=', 1)
-                ->get();
+             ->get();
 
 
             $dataPayPeriod = PayPeriod::select(
