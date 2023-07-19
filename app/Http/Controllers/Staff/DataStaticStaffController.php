@@ -161,10 +161,7 @@ class DataStaticStaffController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Data Static ' . $val['type'] . ' is not exists! Please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Data Static ' . $val['type'] . ' is not exists! Please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "job title") {
 

@@ -116,10 +116,8 @@ class AccessControlController extends Controller
                 }
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
-                    return response()->json([
-                        'message' => 'failed',
-                        'errors' => 'order value must Ascending: ASC or Descending: DESC ',
-                    ]);
+
+                    return responseInvalid(['order value must Ascending: ASC or Descending: DESC ']);
                 }
 
 
@@ -216,6 +214,19 @@ class AccessControlController extends Controller
                 $MenuMasters->created_at = now();
                 $MenuMasters->updated_at = now();
                 $MenuMasters->save();
+                $newMenuMasterId = $MenuMasters->id;
+
+                $remark_value =   "Menu Master" . $Request->masterName . " is created By " . $Request->user()->firstName;
+
+                $AccessControlHistory = new AccessControlHistory();
+                $AccessControlHistory->menuId = $newMenuMasterId;
+                $AccessControlHistory->roleId = $Request->user()->roleId;
+                $AccessControlHistory->remark = $remark_value;
+                $AccessControlHistory->updatedBy = $Request->user()->id;
+                $AccessControlHistory->created_at = now();
+                $AccessControlHistory->updated_at = now();
+                $AccessControlHistory->save();
+
                 DB::commit();
             }
 
@@ -225,6 +236,134 @@ class AccessControlController extends Controller
             DB::rollback();
 
             return responseInvalid([$e]);
+        }
+    }
+
+
+
+    public function insertAccessControlMenu(Request $Request)
+    {
+        DB::beginTransaction();
+
+        try {
+
+
+            $validate = Validator::make($Request->all(), [
+                'menuId' => 'required|integer',
+                'roleId' => 'required|integer',
+                'accessTypeId' => 'required|integer',
+                'accessLimitId' => 'required|integer',
+            ]);
+
+
+            if ($validate->fails()) {
+
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+
+            }
+
+
+
+            $checkMenuList = MenuList::where([
+                ['id', '=', $Request->menuListId],
+            ])->first();
+
+            if (!$checkMenuList) {
+
+                return responseInvalid(['Menu list with spesific id not exists, please try another menu list id']);
+            }
+
+
+
+            $checkMenuList = MenuList::where([['id', '=', $Request->menuListId],])->first();
+
+            if (!$checkMenuList) {
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Menu list with spesific id not exists, please try another menu list id!'],
+                ], 422);
+            }
+
+
+            $checkIfUserRoleExists = UsersRoles::where([['id', '=', $Request->roleId], ['isActive', '=', 1],])->first();
+
+            if (!$checkIfUserRoleExists) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['User role id not exists please try different id!'],
+                ], 422);
+            }
+
+            $checkIfDataExits = AccessType::where([['id', '=', $Request->accessTypeId]])->first();
+
+            if (!$checkIfDataExits) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Access type id not exists please try different id!'],
+                ], 422);
+            }
+
+
+            $checkIfAccessLimitExists = AccessLimit::where([['id', '=', $Request->accessLimitId]])->first();
+
+            if (!$checkIfAccessLimitExists) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Access Limit id not exists please try different id!'],
+                ], 422);
+            }
+
+
+            $getFinal = AccessControl::where([
+                ['menuListId', '=', $Request->menuListId],
+                ['roleId', '=', $Request->roleId]
+            ])->first();
+
+            if ($getFinal) {
+                return response()->json([
+                    'result' => 'Failed',
+                    'message' => "Menu list id and role id already exists, please try another menu id and role id",
+                ]);
+            }
+
+
+            $valeuremark = "Menu List " . $checkMenuList->menuName . " with role name " .  $checkIfUserRoleExists->roleName . " has been added by " . $Request->user()->firstName;
+
+            $AccessControl = new AccessControl();
+            $AccessControl->menuListId = $Request->menuListId;
+            $AccessControl->roleId =  $Request->roleId;
+            $AccessControl->accessTypeId = $Request->accessTypeId;
+            $AccessControl->accessLimitId = $Request->accessLimitId;
+            $AccessControl->isDeleted = 0;
+            $AccessControl->created_at = now();
+            $AccessControl->updated_at = now();
+            $AccessControl->save();
+
+            $AccessControlHistory = new AccessControlHistory();
+            $AccessControlHistory->menuId = $Request->menuListId;
+            $AccessControlHistory->roleId = $Request->roleId;
+            $AccessControlHistory->remark = $valeuremark;
+            $AccessControlHistory->updatedBy = $Request->user()->id;
+            $AccessControlHistory->created_at = now();
+            $AccessControlHistory->updated_at = now();
+            $AccessControlHistory->save();
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'success',
+                'message' => 'successfuly insert menu access control',
+            ]);
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'Failed',
+                'message' =>  $e,
+            ]);
         }
     }
 
@@ -303,6 +442,16 @@ class AccessControlController extends Controller
                     $AccessControl->save();
                 }
 
+                $remark_value =   "Menu " . $Request->menuName . " is created By " . $Request->user()->firstName;
+
+                $AccessControlHistory = new AccessControlHistory();
+                $AccessControlHistory->menuId = $newMenuListId;
+                $AccessControlHistory->roleId = $Request->user()->roleId;
+                $AccessControlHistory->remark = $remark_value;
+                $AccessControlHistory->updatedBy = $Request->user()->id;
+                $AccessControlHistory->created_at = now();
+                $AccessControlHistory->updated_at = now();
+                $AccessControlHistory->save();
 
                 DB::commit();
             }
@@ -621,10 +770,7 @@ class AccessControlController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+                return responseInvalid($errors);
             }
 
 
@@ -634,17 +780,13 @@ class AccessControlController extends Controller
 
 
             if (!$checkIfDataExits) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Menu list with spesific id not exists! Please try different id!'],
-                ], 422);
+
+                return responseInvalid(['Menu list with spesific id not exists! Please try different id!']);
             } else {
 
                 if ($checkIfDataExits->menuName == $Request->menuName) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Menu name same with previous name! Please try different name!'],
-                    ], 422);
+
+                    return responseInvalid(['Menu name same with previous name! Please try different name!']);
                 }
 
                 $checkIfMenuExits = MenuList::where([
@@ -653,10 +795,8 @@ class AccessControlController extends Controller
 
 
                 if ($checkIfMenuExits) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Menu name already exists! Please try different name!'],
-                    ], 422);
+
+                    return responseInvalid(['Menu name already exists! Please try different name!']);
                 } else {
                     MenuList::where([
                         ['id', '=', $Request->id]
@@ -770,7 +910,6 @@ class AccessControlController extends Controller
             DB::commit();
 
             return responseUpdate();
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -880,10 +1019,8 @@ class AccessControlController extends Controller
                 }
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
-                    return response()->json([
-                        'message' => 'failed',
-                        'errors' => 'order value must Ascending: ASC or Descending: DESC ',
-                    ]);
+
+                    return responseInvalid(['order value must Ascending: ASC or Descending: DESC ']);
                 }
 
 
@@ -942,10 +1079,7 @@ class AccessControlController extends Controller
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
@@ -1260,6 +1394,8 @@ class AccessControlController extends Controller
             $temp_column = 'roleName';
             return $temp_column;
         }
+
+
 
         $data = DB::table('users as a')
             ->leftjoin('usersRoles as b', 'b.id', '=', 'a.roleId')
