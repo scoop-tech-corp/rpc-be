@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Facility\FacilityUnit;
 use App\Models\Facility\Facility;
 use App\Models\Facility\FacilityImages;
-use App\Models\Location;
+use App\Models\location;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Validator;
@@ -1241,7 +1241,7 @@ class FacilityController extends Controller
 
         try {
 
-            $getLocationFasilitas = Location::leftJoin(
+            $getLocationFasilitas = location::leftJoin(
                 DB::raw('(select locationId,isDeleted from facility  where isDeleted=0 ) as facility'),
                 function ($join) {
                     $join->on('facility.locationId', '=', 'location.id');
