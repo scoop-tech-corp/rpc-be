@@ -260,7 +260,6 @@ class AccessControlController extends Controller
 
                 $errors = $validate->errors()->all();
                 return responseInvalid($errors);
-
             }
 
 
@@ -560,7 +559,8 @@ class AccessControlController extends Controller
                 ])->get();
 
                 $menus = [];
-                if ($menuListsData) {
+
+                if (!$menuListsData->isEmpty()) {
 
                     foreach ($menuListsData as $datamenulist) {
 
@@ -599,13 +599,12 @@ class AccessControlController extends Controller
                             }
                         }
                     }
+
+                    $data['lists'][] = [
+                        'module' => $menu->module,
+                        'menus' =>  $menus
+                    ];
                 }
-
-
-                $data['lists'][] = [
-                    'module' => $menu->module,
-                    'menus' =>  $menus
-                ];
             }
 
             return response()->json($data, 200);
