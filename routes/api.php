@@ -296,7 +296,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/datastatic', [DataStaticStaffController::class, 'deleteDataStaticStaff']);
         Route::get('/datastatic/staff', [DataStaticStaffController::class, 'getDataStaticStaff']);
         Route::post('/datastatic', [DataStaticStaffController::class, 'insertDataStaticStaff']);
-
     });
 
 
@@ -317,12 +316,17 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/user', [AccessControlController::class, 'index']);
         Route::get('/history', [AccessControlController::class, 'indexHistory']);
-        Route::put('/menu', [AccessControlController::class, 'updateAccessControlMenu']);
-        Route::post('/menu', [AccessControlController::class, 'insertAccessControlMenut']);
-        Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
-        Route::post('/menulist', [AccessControlController::class, 'insertMenutList']);
         Route::get('/', [AccessControlController::class, 'indexAccessControlDashboard']);
         Route::get('/accesstype', [AccessControlController::class, 'dropdownAccessType']);
+        Route::get('/menumaster', [AccessControlController::class, 'dropdownMenuMaster']);
+        Route::get('/menulist', [AccessControlController::class, 'dropdownMenuList']);
+        Route::post('/menulist', [AccessControlController::class, 'insertMenutList']);
+        Route::post('/menumaster', [AccessControlController::class, 'insertMenuMaster']);
+        Route::put('/menu', [AccessControlController::class, 'updateAccessControlMenu']);
+        Route::put('/menulist', [AccessControlController::class, 'updateMenuList']);
+        Route::put('/menumaster', [AccessControlController::class, 'updateMenuMaster']);
+        Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
+
     });
 
 

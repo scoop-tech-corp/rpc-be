@@ -10,8 +10,6 @@ use App\Models\Customer\ReferenceCustomer;
 use App\Models\Customer\PetCategory;
 use App\Models\Customer\SourceCustomer;
 use App\Models\CustomerGroups;
-
-
 use Illuminate\Http\Request;
 use Validator;
 use DB;
@@ -19,7 +17,7 @@ use DB;
 
 class DataStaticCustomerController extends Controller
 {
-    public function getDataStaticCustomer(Request $request)
+    public function getDataStaticCustomer()
     {
         try {
 
@@ -43,9 +41,49 @@ class DataStaticCustomerController extends Controller
             )->where('value', '=', 'Usage')
                 ->get();
 
+            $dataTitleCustomer = TitleCustomer::select(
+                DB::raw("'Title Customer' as value"),
+                'titleName as name',
+            )->where('isActive', '=', 1)->get();
+
+            $dataCustomerOccupation = CustomerOccupation::select(
+                DB::raw("'Occupation Customer' as value"),
+                'occupationName as name',
+            )->where('isActive', '=', 1)->get();
+
+
+            $dataCustomerReference = ReferenceCustomer::select(
+                DB::raw("'Reference Customer' as value"),
+                'referenceName as name',
+            )->where('isActive', '=', 1)->get();
+
+            $dataPetCategory = PetCategory::select(
+                DB::raw("'Pet Category' as value"),
+                'petCategoryName as name',
+            )->where('isActive', '=', 1)->get();
+
+
+            $dataSourceCustomer = SourceCustomer::select(
+                DB::raw("'Source Customer' as value"),
+                'sourceName as name',
+            )->where('isActive', '=', 1)->get();
+
+            $dataCustomerGroup = CustomerGroups::select(
+                DB::raw("'Customer Group' as value"),
+                'customerGroup as name',
+            )->where('isDeleted', '=', 0)->get();
+
+
+
             $param_customer = array('dataStaticTelephone' => $data_static_telepon);
             $param_customer['dataStaticMessenger'] = $data_static_messenger;
             $param_customer['dataStaticUsage'] = $dataStaticUsage;
+            $param_customer['dataStaticTitleCustomer'] = $dataTitleCustomer;
+            $param_customer['dataStaticCustomerOccupation'] = $dataCustomerOccupation;
+            $param_customer['dataStaticCustomerReference'] = $dataCustomerReference;
+            $param_customer['dataStaticPetCategory'] = $dataPetCategory;
+            $param_customer['dataStaticSourceCustomer'] = $dataSourceCustomer;
+            $param_customer['dataStaticCustomerGroup'] = $dataCustomerGroup;
 
             return response()->json($param_customer, 200);
         } catch (Exception $e) {
@@ -70,18 +108,33 @@ class DataStaticCustomerController extends Controller
 
         try {
 
+
+            $listOrder = array(
+                'telephone',
+                'messenger',
+                'usage',
+            );
+
+
+            if (!in_array(strtolower($request->input('keyword')), $listOrder)) {
+
+                return response()->json([
+                    'message' => 'failed',
+                    'errors' => 'Please try different keyword',
+                    'type' => $listOrder,
+                ]);
+            }
+
+
             $checkIfValueExits = DataStaticCustomers::where([
                 ['value', '=', $request->input('keyword')],
                 ['name', '=', $request->input('name')]
-            ])
-                ->first();
+            ])->first();
 
             if ($checkIfValueExits != null) {
 
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Data static customer already exists, please choose another keyword and name',
-                ]);
+               return responseInvalid(['Data static customer already exists! Please choose another keyword and name!']);
+
             } else {
 
                 $DataStatic = new DataStaticCustomers();
@@ -94,19 +147,13 @@ class DataStaticCustomerController extends Controller
 
                 DB::commit();
 
-                return response()->json([
-                    'result' => 'success',
-                    'message' => 'Successfully inserted data static customer',
-                ]);
+                return responseCreate();
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return response()->json([
-                'result' => 'failed',
-                'message' => $e,
-            ]);
+            return responseInvalid([$e]);
         }
     }
 
@@ -305,10 +352,8 @@ class DataStaticCustomerController extends Controller
 
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
-                    return response()->json([
-                        'message' => 'failed',
-                        'errors' => 'order value must Ascending: ASC or Descending: DESC ',
-                    ]);
+
+                    return responseInvalid(['order value must Ascending: ASC or Descending: DESC']);
                 }
 
                 $checkOrder = true;
@@ -348,10 +393,7 @@ class DataStaticCustomerController extends Controller
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
@@ -378,10 +420,7 @@ class DataStaticCustomerController extends Controller
 
                 $errors = $validate->errors()->all();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+                return responseInvalid($errors);
             }
 
 
@@ -391,7 +430,7 @@ class DataStaticCustomerController extends Controller
 
                 $message = [
                     'id.required' => 'id on data is required',
-                    'type.required' => 't   ype on data is required'
+                    'type.required' => 'type on data is required'
                 ];
 
 
@@ -417,10 +456,7 @@ class DataStaticCustomerController extends Controller
 
                     if ($data_item) {
 
-                        return response()->json([
-                            'message' =>  'Inputed data is not valid',
-                            'errors' => $data_item,
-                        ], 422);
+                        return responseInvalid([$data_item]);
                     }
                 }
 
@@ -459,10 +495,7 @@ class DataStaticCustomerController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Data Static ' . $val['type'] . ' is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Data Static ' . $val['type'] . ' is not exists , please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "title customer") {
 
@@ -474,10 +507,7 @@ class DataStaticCustomerController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Title customer id is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Title customer id is not exists , please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "occupation customer") {
 
@@ -488,10 +518,7 @@ class DataStaticCustomerController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Customer occupation id is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Customer occupation id is not exists , please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "reference customer") {
 
@@ -502,10 +529,7 @@ class DataStaticCustomerController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Reference customer is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Reference customer is not exists , please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "source customer") {
 
@@ -517,10 +541,7 @@ class DataStaticCustomerController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Source customer is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Source customer is not exists , please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "customer group") {
 
@@ -532,10 +553,7 @@ class DataStaticCustomerController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Customer group is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Customer group is not exists , please try different id !']);
                     }
                 }
             }
@@ -549,29 +567,27 @@ class DataStaticCustomerController extends Controller
                     DataStaticCustomers::where([
                         ['value', '=', strtolower($val['type'])],
                         ['id', '=', $val['id']]
-                    ])->update(['isDeleted' => 1, 'updated_at' => now()]); 
+                    ])->update(['isDeleted' => 1, 'updated_at' => now()]);
                 } else if (strtolower($val['type']) == "title customer") {
 
                     TitleCustomer::where([
                         ['id', '=', $val['id']]
-                    ])->update(['isActive' => 0, 'updated_at' => now()]); 
-
-                } else if (strtolower($val['type']) == "occupation customer") { 
+                    ])->update(['isActive' => 0, 'updated_at' => now()]);
+                } else if (strtolower($val['type']) == "occupation customer") {
 
                     CustomerOccupation::where([
                         ['id', '=', $val['id']]
                     ])->update(['isActive' => 0, 'updated_at' => now()]);
-
-                } else if (strtolower($val['type']) == "reference customer") { 
+                } else if (strtolower($val['type']) == "reference customer") {
 
                     ReferenceCustomer::where([
                         ['id', '=', $val['id']]
                     ])->update(['isActive' => 0, 'updated_at' => now()]);
-                } else if (strtolower($val['type']) == "source customer") { 
+                } else if (strtolower($val['type']) == "source customer") {
 
                     SourceCustomer::where([
                         ['id', '=', $val['id']]
-                    ])->update(['isActive' => 0, 'updated_at' => now()]); 
+                    ])->update(['isActive' => 0, 'updated_at' => now()]);
                 } else if (strtolower($val['type']) == "customer group") {
 
                     CustomerGroups::where([
@@ -583,19 +599,10 @@ class DataStaticCustomerController extends Controller
             DB::commit();
 
 
-            return response()->json(
-                [
-                    'result' => 'success',
-                    'message' => 'Deleted Data Static Customer Successful!',
-                ],
-                200
-            );
+            return responseDelete();
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 }

@@ -14,7 +14,7 @@ use DB;
 class DataStaticStaffController extends Controller
 {
 
-    public function getDataStaticStaff(Request $request)
+    public function getDataStaticStaff()
     {
         try {
 
@@ -38,17 +38,31 @@ class DataStaticStaffController extends Controller
             )->where('value', '=', 'Usage')
                 ->get();
 
+
+            $dataTypeId = TypeId::select(
+                DB::raw("'Type id' as value"),
+                'typeName as name',
+            )->where('isActive', '=', 1)
+                ->get();
+
+
+            $dataPayPeriod = PayPeriod::select(
+                DB::raw("'Pay Period' as value"),
+                'periodName as name',
+            )->where('isActive', '=', 1)
+                ->get();
+
+
             $param_customer = array('dataStaticTelephone' => $data_static_telepon);
             $param_customer['dataStaticMessenger'] = $data_static_messenger;
             $param_customer['dataStaticUsage'] = $dataStaticUsage;
+            $param_customer['dataStaticTypeId'] = $dataTypeId;
+            $param_customer['dataStaticPayPeriod'] = $dataPayPeriod;
 
             return response()->json($param_customer, 200);
         } catch (Exception $e) {
 
-            return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
-            ]);
+            return responseInvalid([$e]);
         }
     }
 
@@ -75,10 +89,7 @@ class DataStaticStaffController extends Controller
 
                 $errors = $validate->errors()->all();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+                return responseInvalid($errors);
             }
 
 
@@ -88,7 +99,7 @@ class DataStaticStaffController extends Controller
 
                 $message = [
                     'id.required' => 'id on data is required',
-                    'type.required' => 't   ype on data is required'
+                    'type.required' => 'type on data is required'
                 ];
 
 
@@ -114,10 +125,7 @@ class DataStaticStaffController extends Controller
 
                     if ($data_item) {
 
-                        return response()->json([
-                            'message' =>  'Inputed data is not valid',
-                            'errors' => $data_item,
-                        ], 422);
+                        return responseInvalid($data_item);
                     }
                 }
 
@@ -137,7 +145,7 @@ class DataStaticStaffController extends Controller
 
                     return response()->json([
                         'message' => 'failed',
-                        'errors' => 'Please try different type',
+                        'errors' => 'Please try different type!',
                         'type' => $listOrder,
                     ]);
                 }
@@ -155,7 +163,7 @@ class DataStaticStaffController extends Controller
 
                         return response()->json([
                             'message' => 'The given data was invalid.',
-                            'errors' => ['Data Static ' . $val['type'] . ' is not exists , please try different id !'],
+                            'errors' => ['Data Static ' . $val['type'] . ' is not exists! Please try different id !'],
                         ], 422);
                     }
                 } else if (strtolower($val['type']) == "job title") {
@@ -168,10 +176,7 @@ class DataStaticStaffController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Job Title id is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Job Title id is not exists! Please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "type id") {
 
@@ -182,10 +187,7 @@ class DataStaticStaffController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Type id is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Type id is not exists! Please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "pay period") {
 
@@ -196,10 +198,7 @@ class DataStaticStaffController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Pay period id is not exists , please try different id !'],
-                        ], 422);
+                        return responseInvalid(['Pay period id is not exists! Please try different id !']);
                     }
                 }
             }
@@ -234,20 +233,10 @@ class DataStaticStaffController extends Controller
 
             DB::commit();
 
-
-            return response()->json(
-                [
-                    'result' => 'success',
-                    'message' => 'Deleted Data Static Staff Successful!',
-                ],
-                200
-            );
+            return responseDelete();
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
@@ -256,12 +245,29 @@ class DataStaticStaffController extends Controller
     {
 
         $request->validate([
-            'keyword' => 'required|max:255',
+            'keyword' => 'required|max:255|string',
         ]);
 
         DB::beginTransaction();
 
         try {
+
+
+            $listOrder = array(
+                'telephone',
+                'messenger',
+                'usage',
+            );
+
+
+            if (!in_array(strtolower($request->input('keyword')), $listOrder)) {
+
+                return response()->json([
+                    'message' => 'failed',
+                    'errors' => 'Please try different keyword',
+                    'type' => $listOrder,
+                ]);
+            }
 
             $checkIfValueExits = DataStaticStaff::where([
                 ['value', '=', $request->input('keyword')],
@@ -272,7 +278,7 @@ class DataStaticStaffController extends Controller
 
                 return response()->json([
                     'result' => 'Failed',
-                    'message' => 'Data static staff already exists, please choose another keyword and name',
+                    'message' => 'Data static staff already exists! Please choose another keyword and name !',
                 ]);
             } else {
 
@@ -286,19 +292,13 @@ class DataStaticStaffController extends Controller
 
                 DB::commit();
 
-                return response()->json([
-                    'result' => 'success',
-                    'message' => 'Successfully inserted data static staff',
-                ]);
+                return responseCreate();
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return response()->json([
-                'result' => 'failed',
-                'message' => $e,
-            ]);
+            return responseInvalid([$e]);
         }
     }
 
@@ -474,10 +474,8 @@ class DataStaticStaffController extends Controller
 
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
-                    return response()->json([
-                        'message' => 'failed',
-                        'errors' => 'order value must Ascending: ASC or Descending: DESC ',
-                    ]);
+
+                    return responseInvalid(['order value must Ascending: ASC or Descending: DESC ']);
                 }
 
                 $checkOrder = true;
@@ -517,10 +515,7 @@ class DataStaticStaffController extends Controller
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 }
