@@ -131,6 +131,7 @@ class ApiController extends Controller
                     ])
                     ->first();
                 info("masuk kesini 3");
+                info($users);
                 $data = DB::table('accessControl as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menuListId')
                     ->join('accessType as c', 'c.id', '=', 'a.accessTypeId')
@@ -155,6 +156,8 @@ class ApiController extends Controller
                     ->get();
 
                 info("masuk kesini 2");
+                info($accessLimit);
+                info($data);
                 return response()->json([
                     'success' => true,
                     'token' => $token,
