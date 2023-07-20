@@ -131,7 +131,8 @@ class ApiController extends Controller
                     ])
                     ->first();
                 info("masuk kesini 3");
-                info($users);
+                info($users->roleName);
+                info($userId);
                 $data = DB::table('accessControl as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menuListId')
                     ->join('accessType as c', 'c.id', '=', 'a.accessTypeId')
