@@ -120,7 +120,7 @@ class ApiController extends Controller
                     ->select(
                         'users.id',
                         'users.roleId',
-                        'usersRoles.roleName',
+                        DB::raw("IF(usersRoles.roleName IS NULL OR usersRoles.roleName = 0, '', usersRoles.roleName) as roleName"),
                         'jobTitle.jobName as jobName',
                         DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.lastName,'')) as name"),
                     )
