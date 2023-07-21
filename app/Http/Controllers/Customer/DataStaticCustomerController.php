@@ -34,6 +34,7 @@ class DataStaticCustomerController extends Controller
             )->get();
 
             $data_static_messenger = DataStaticCustomers::select(
+                'id',
                 'value as value',
                 'name as name',
             )->where(
@@ -44,6 +45,7 @@ class DataStaticCustomerController extends Controller
             )->get();
 
             $dataStaticUsage = DataStaticCustomers::select(
+                'id',
                 'value as value',
                 'name as name',
             )->where(
@@ -55,38 +57,42 @@ class DataStaticCustomerController extends Controller
                 ->get();
 
             $dataTitleCustomer = TitleCustomer::select(
+                'id',
                 DB::raw("'Title Customer' as value"),
                 'titleName as name',
             )->where('isActive', '=', 1)->get();
 
             $dataCustomerOccupation = CustomerOccupation::select(
+                'id',
                 DB::raw("'Occupation Customer' as value"),
                 'occupationName as name',
             )->where('isActive', '=', 1)->get();
 
 
             $dataCustomerReference = ReferenceCustomer::select(
+                'id',
                 DB::raw("'Reference Customer' as value"),
                 'referenceName as name',
             )->where('isActive', '=', 1)->get();
 
             $dataPetCategory = PetCategory::select(
+                'id',
                 DB::raw("'Pet Category' as value"),
                 'petCategoryName as name',
             )->where('isActive', '=', 1)->get();
 
 
             $dataSourceCustomer = SourceCustomer::select(
+                'id',
                 DB::raw("'Source Customer' as value"),
                 'sourceName as name',
             )->where('isActive', '=', 1)->get();
 
             $dataCustomerGroup = CustomerGroups::select(
+                'id',
                 DB::raw("'Customer Group' as value"),
                 'customerGroup as name',
             )->where('isDeleted', '=', 0)->get();
-
-
 
             $param_customer = array('dataStaticTelephone' => $data_static_telepon);
             $param_customer['dataStaticMessenger'] = $data_static_messenger;

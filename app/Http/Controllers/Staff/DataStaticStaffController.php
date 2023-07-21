@@ -21,6 +21,7 @@ class DataStaticStaffController extends Controller
             $param_customer = [];
 
             $data_static_telepon = DataStaticStaff::select(
+                'id',
                 'value as value',
                 'name as name',
             )->where(
@@ -32,6 +33,7 @@ class DataStaticStaffController extends Controller
 
 
             $data_static_messenger = DataStaticStaff::select(
+                'id',
                 'value as value',
                 'name as name',
             )->where(
@@ -42,6 +44,7 @@ class DataStaticStaffController extends Controller
             )->get();
 
             $dataStaticUsage = DataStaticStaff::select(
+                'id',
                 'value as value',
                 'name as name',
             )->where(
@@ -53,6 +56,7 @@ class DataStaticStaffController extends Controller
 
 
             $dataTypeId = TypeId::select(
+                'id',
                 DB::raw("'Type id' as value"),
                 'typeName as name',
             )->where('isActive', '=', 1)
@@ -60,6 +64,7 @@ class DataStaticStaffController extends Controller
 
 
             $dataPayPeriod = PayPeriod::select(
+                'id',
                 DB::raw("'Pay Period' as value"),
                 'periodName as name',
             )->where('isActive', '=', 1)
