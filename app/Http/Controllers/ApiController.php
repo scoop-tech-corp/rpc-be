@@ -126,8 +126,7 @@ class ApiController extends Controller
                     )
                     ->where([
                         ['users.id', '=', $userId],
-                        ['users.isDeleted', '=', '0'],
-                        ['jobTitle.isActive', '=', '1']
+                        ['users.isDeleted', '=', '0']
                     ])
                     ->first();
 
