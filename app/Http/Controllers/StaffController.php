@@ -2136,15 +2136,13 @@ class StaffController extends Controller
                 ['isActive', '=', '1']
             ])->first();
 
-            info($request->typeId);
-            info($getTypeIDName->typeName);
             if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
-                info('here');
+
                 if ((is_numeric($request->identificationNumber))) {
                     return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
                 }
             } else {
-                info('not here');
+
                 if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
                     return responseInvalid(["Identification number must be integer!"]);
                 }
