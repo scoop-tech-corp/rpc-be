@@ -1074,7 +1074,7 @@ class StaffController extends Controller
 
             $total_paging = $count_data / $defaultRowPerPage;
 
-            return responseIndex(ceil($total_paging), $data);
+            return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
         } catch (Exception $e) {
 
             return responseInvalid([$e]);
@@ -2136,12 +2136,15 @@ class StaffController extends Controller
                 ['isActive', '=', '1']
             ])->first();
 
+            info($request->typeId);
+            info($getTypeIDName->typeName);
             if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
-
+                info('here');
                 if ((is_numeric($request->identificationNumber))) {
                     return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
                 }
             } else {
+                info('not here');
                 if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
                     return responseInvalid(["Identification number must be integer!"]);
                 }
