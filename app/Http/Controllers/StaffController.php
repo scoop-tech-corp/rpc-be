@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\Staff\exportStaff;
 use App\Models\Staff\TypeId;
-use App\Models\Staff\JobTitle;
 use Illuminate\Http\Request;
 use App\Mail\SendEmail;
 use GuzzleHttp\Client;
@@ -2843,6 +2842,7 @@ class StaffController extends Controller
             if ($checkIfValueExits != null) {
 
                 return responseInvalid(['Type name already exists, please choose another name']);
+
             } else {
 
                 $TypeId = new TypeId();
@@ -2877,34 +2877,43 @@ class StaffController extends Controller
 
         try {
 
-            $checkIfValueExits = JobTitle::where([
-                ['jobName', '=', $request->jobName],
-                ['isActive', '=', 1]
-            ])->first();
-            info("asdasd");
+            $checkIfValueExits = DB::table('jobTitle as a')
+                ->where([
+                    ['a.jobName', '=', $request->jobName],
+                    ['a.isActive', '=', 1]
+                ])
+                ->first();
+
             if ($checkIfValueExits != null) {
 
                 return response()->json([
                     'message' => 'Failed',
                     'errors' => 'Job title already exists, please choose another name',
                 ]);
+                
             } else {
 
-                $JobTitle = new JobTitle();
-                $JobTitle->jobName = $request->jobName;
-                $JobTitle->isActive = 1;
-                $JobTitle->created_at = now();
-                $JobTitle->updated_at = now();
-                $JobTitle->save();
+                DB::table('jobTitle')->insert([
+                    'jobName' => $request->jobName,
+                    'created_at' => now(),
+                    'isActive' => 1,
+                ]);
+
                 DB::commit();
 
-                return responseCreate();
+                return response()->json([
+                    'message' => 'success',
+                    'errors' => 'Successfully inserted Job Title',
+                ]);
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
