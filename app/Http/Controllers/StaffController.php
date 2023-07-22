@@ -2881,7 +2881,7 @@ class StaffController extends Controller
                 ['jobName', '=', $request->jobName],
                 ['isActive', '=', 1]
             ])->first();
-
+            info("asdasd");
             if ($checkIfValueExits != null) {
 
                 return response()->json([
@@ -2895,7 +2895,7 @@ class StaffController extends Controller
                 $JobTitle->isActive = 1;
                 $JobTitle->created_at = now();
                 $JobTitle->updated_at = now();
-
+                $JobTitle->save();
                 DB::commit();
 
                 return responseCreate();
