@@ -2136,6 +2136,16 @@ class StaffController extends Controller
                 ['isActive', '=', '1']
             ])->first();
 
+
+            info("check");
+            info($getTypeIDName->get());
+
+
+            info("check");
+            info($request->typeId);
+            info($getTypeIDName->typeName);
+            info("done");
+
             if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
 
                 if ((is_numeric($request->identificationNumber))) {
