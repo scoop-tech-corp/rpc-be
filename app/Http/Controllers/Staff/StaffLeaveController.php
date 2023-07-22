@@ -39,7 +39,7 @@ class StaffLeaveController extends Controller
         }
     }
 
-    public function getAllStaffActive(Request $request)
+    public function getAllStaffActive()
     {
 
         try {
@@ -51,6 +51,7 @@ class StaffLeaveController extends Controller
                 ->get();
 
             return response()->json($getUser, 200);
+            
         } catch (Exception $e) {
 
             return responseInvalid([$e]);
@@ -161,7 +162,7 @@ class StaffLeaveController extends Controller
     }
 
 
-    public function getDropdownBalanceType(Request $request)
+    public function getDropdownBalanceType()
     {
 
         try {
@@ -189,6 +190,7 @@ class StaffLeaveController extends Controller
             $combinedArray = array($array1, $array2, $array3, $array4);
 
             return response()->json($combinedArray, 200);
+
         } catch (Exception $e) {
 
             return responseInvalid([$e]);
