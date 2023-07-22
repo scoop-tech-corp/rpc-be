@@ -2884,8 +2884,10 @@ class StaffController extends Controller
 
             if ($checkIfValueExits != null) {
 
-                return responseInvalid('Job title already exists, please choose another name');
-
+                return response()->json([
+                    'message' => 'Failed',
+                    'errors' => 'Job title already exists, please choose another name',
+                ]);
             } else {
 
                 $JobTitle = new JobTitle();
@@ -2893,12 +2895,10 @@ class StaffController extends Controller
                 $JobTitle->isActive = 1;
                 $JobTitle->created_at = now();
                 $JobTitle->updated_at = now();
-                $JobTitle->save();
 
                 DB::commit();
 
                 return responseCreate();
-
             }
         } catch (Exception $e) {
 
