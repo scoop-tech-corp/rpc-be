@@ -2131,22 +2131,7 @@ class StaffController extends Controller
                 return responseInvalid(['Spesific users not exists please try different id!']);
             }
 
-            $getTypeIDName = TypeId::where([
-                ['id', '=', $request->typeId],
-                ['isActive', '=', '1']
-            ])->first();
-
-
-            info("check");
-            info($getTypeIDName->get());
-
-
-            info("check");
-            info($request->typeId);
-            info($getTypeIDName->typeName);
-            info("done");
-
-            if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
+            if (str_contains(strtolower($request->typeId), 'paspor') || str_contains(strtolower($request->typeId), 'passpor')) {
 
                 if ((is_numeric($request->identificationNumber))) {
                     return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
