@@ -2884,7 +2884,7 @@ class StaffController extends Controller
 
             if ($checkIfValueExits != null) {
 
-                return responseInvalid(['Job title already exists, please choose another name']);
+                return responseInvalid('Job title already exists, please choose another name');
 
             } else {
 
@@ -2898,7 +2898,7 @@ class StaffController extends Controller
                 DB::commit();
 
                 return responseCreate();
-                
+
             }
         } catch (Exception $e) {
 
