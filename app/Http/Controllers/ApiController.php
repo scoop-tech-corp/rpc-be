@@ -120,8 +120,8 @@ class ApiController extends Controller
                     ->select(
                         'users.id',
                         'users.roleId',
-                        DB::raw("IF(usersRoles.roleName IS NULL OR usersRoles.roleName = 0, '', usersRoles.roleName) as roleName"),
-                        DB::raw("IF(jobTitle.jobName IS NULL OR jobTitle.jobName = 0, '', jobTitle.jobName) as jobName"),
+                        DB::raw("IF(usersRoles.roleName IS NULL, '', usersRoles.roleName) as roleName"),
+                        DB::raw("IF(jobTitle.jobName IS NULL,'', jobTitle.jobName) as jobName"),
                         DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.lastName,'')) as name"),
                     )
                     ->where([
@@ -129,6 +129,8 @@ class ApiController extends Controller
                         ['users.isDeleted', '=', '0']
                     ])
                     ->first();
+
+                info($users->roleName);
 
                 $data = DB::table('accessControl as a')
                     ->join('menuList as b', 'b.id', '=', 'a.menuListId')
