@@ -62,20 +62,21 @@ class StaffController extends Controller
                 ]
             );
 
+            $getTypeIDName = TypeId::where([
+                ['id', '=', $request->typeId],
+                ['isActive', '=', '1']
+            ])->first();
 
-
-            if ($request->typeId == 3) {
+            if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
 
                 if ((is_numeric($request->identificationNumber))) {
                     return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
                 }
             } else {
-
                 if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
                     return responseInvalid(["Identification number must be integer!"]);
                 }
             }
-
 
 
             $start = Carbon::parse($request->startDate);
@@ -2842,7 +2843,6 @@ class StaffController extends Controller
             if ($checkIfValueExits != null) {
 
                 return responseInvalid(['Type name already exists, please choose another name']);
-
             } else {
 
                 $TypeId = new TypeId();
@@ -2886,11 +2886,7 @@ class StaffController extends Controller
 
             if ($checkIfValueExits != null) {
 
-                return response()->json([
-                    'message' => 'Failed',
-                    'errors' => 'Job title already exists, please choose another name',
-                ]);
-                
+                return responseInvalid(['Job title already exists, please choose another name']);
             } else {
 
                 DB::table('jobTitle')->insert([
