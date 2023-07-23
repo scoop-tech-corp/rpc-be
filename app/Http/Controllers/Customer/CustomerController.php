@@ -80,10 +80,10 @@ class CustomerController extends Controller
                 'id as typeId',
                 'typeName as typeName',
             )->where([
-                    ['isActive', '=', 1],
-                ])
-            ->orderBy('a.created_at', 'desc')
-            ->get();
+                ['isActive', '=', 1],
+            ])
+                ->orderBy('a.created_at', 'desc')
+                ->get();
 
             return responseList($getTypeId);
         } catch (Exception $e) {
@@ -1118,31 +1118,11 @@ class CustomerController extends Controller
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
 
-                            // 'dateOfBirth' => 'required_without_all:petMonth,petYear',
-                            // 'petMonth' => 'required_without_all:dateOfBirth,petYear',
-                            // 'petYear' => 'required_without_all:dateOfBirth,petMonth',
-
                         ],
                         $messageCustomerPet
                     );
 
 
-                    // if (!($key['dateOfBirth'] === "") && (!($key['petMonth'] === "") or !($key['petYear'] === ""))) {
-                    //     return response()->json([
-                    //         'result' => 'Inputed data is not valid',
-                    //         'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                    //     ], 422);
-                    // }
-
-                    // if ($key['command'] != "del") {
-
-                    //     if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
-                    //         return response()->json([
-                    //             'message' => 'The given data was invalid.',
-                    //             'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                    //         ], 422);
-                    //     }
-                    // }
 
                     if ($validateDetail->fails()) {
 
@@ -1672,8 +1652,6 @@ class CustomerController extends Controller
 
                     foreach ($ResultImageDatas as $value) {
 
-                        // if ($value['status'] != "del") {
-
                         if ($value['name'] == "") {
 
                             return response()->json([
@@ -1681,7 +1659,6 @@ class CustomerController extends Controller
                                 'errors' => ['Image name can not be empty!'],
                             ], 422);
                         }
-                        // }
                     }
                 } else {
 
@@ -2097,22 +2074,10 @@ class CustomerController extends Controller
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
 
-                            //'dateOfBirth' => 'required_without_all:petMonth,petYear',
-                            // 'petMonth' => 'required_without_all:dateOfBirth,petYear',
-                            // 'petYear' => 'required_without_all:dateOfBirth,petMonth',
                         ],
                         $messageCustomerPet
                     );
 
-                    // if ($key['command'] != "del") {
-
-                    //     if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
-                    //         return response()->json([
-                    //             'message' => 'Inputed data is not valid',
-                    //             'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                    //         ], 422);
-                    //     }
-                    // }
 
 
                     if ($validateDetail->fails()) {

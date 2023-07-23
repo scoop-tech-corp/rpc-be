@@ -290,7 +290,7 @@ class DataStaticCustomerController extends Controller
                 } else {
 
                     $TypeIdCustomer = new TypeIdCustomer();
-                    $TypeIdCustomer->jobName = $request->input('name');
+                    $TypeIdCustomer->typeName = $request->input('name');
                     $TypeIdCustomer->isActive = 1;
                     $TypeIdCustomer->created_at = now();
                     $TypeIdCustomer->updated_at = now();
