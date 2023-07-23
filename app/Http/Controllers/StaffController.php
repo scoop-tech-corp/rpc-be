@@ -1805,7 +1805,10 @@ class StaffController extends Controller
                     ])
                     ->get();
 
-                $users->images = $usersimages;
+                info($usersimages);
+                if ($usersimages) {
+                    $users->images = $usersimages;
+                }
 
                 $locationId = DB::table('usersLocation as a')
                     ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
