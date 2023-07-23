@@ -70,14 +70,22 @@ class DataStaticStaffController extends Controller
             )->where('isActive', '=', 1)
                 ->get();
 
+            $dataJobTitle = JobTitle::select(
+                'id',
+                DB::raw("'Job Title' as type"),
+                'jobName as typeName',
+            )->where('isActive', '=', 1)
+                ->get();
 
             $param_customer = array('dataStaticTelephone' => $data_static_telepon);
             $param_customer['dataStaticMessenger'] = $data_static_messenger;
             $param_customer['dataStaticUsage'] = $dataStaticUsage;
             $param_customer['dataStaticTypeId'] = $dataTypeId;
             $param_customer['dataStaticPayPeriod'] = $dataPayPeriod;
+            $param_customer['dataStaticJobTitle'] = $dataJobTitle;
 
             return response()->json($param_customer, 200);
+            
         } catch (Exception $e) {
 
             return responseInvalid([$e]);
