@@ -170,7 +170,6 @@ class DataStaticCustomerController extends Controller
                 if ($checkIfValueExits != null) {
 
                     return responseInvalid(['Data static customer already exists! Please choose another name !']);
-
                 } else {
 
                     $DataStatic = new DataStaticCustomers();
@@ -296,6 +295,26 @@ class DataStaticCustomerController extends Controller
                     $TypeIdCustomer->created_at = now();
                     $TypeIdCustomer->updated_at = now();
                     $TypeIdCustomer->save();
+                }
+            } else if (strtolower($request->input('keyword')) == "pet category") {
+
+
+                $checkDataExists =  PetCategory::where([
+                    ['petCategoryName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Pet Category already exists! Please try different value!']);
+                } else {
+
+                    $PetCategory = new PetCategory();
+                    $PetCategory->petCategoryName = $request->input('name');
+                    $PetCategory->isActive = 1;
+                    $PetCategory->created_at = now();
+                    $PetCategory->updated_at = now();
+                    $PetCategory->save();
                 }
             }
 
@@ -725,7 +744,7 @@ class DataStaticCustomerController extends Controller
 
                         return responseInvalid(['Type Id is not exists , please try different id !']);
                     }
-                }else if (strtolower($val['type']) == "pet category") {
+                } else if (strtolower($val['type']) == "pet category") {
 
                     $checkDataExists =  PetCategory::where([
                         ['id', '=', $val['id']],
@@ -779,8 +798,7 @@ class DataStaticCustomerController extends Controller
                     TypeIdCustomer::where([
                         ['id', '=', $val['id']]
                     ])->update(['isActive' => 0, 'updated_at' => now()]);
-
-                }else if (strtolower($val['type']) == "pet category") {
+                } else if (strtolower($val['type']) == "pet category") {
 
                     PetCategory::where([
                         ['id', '=', $val['id']]
