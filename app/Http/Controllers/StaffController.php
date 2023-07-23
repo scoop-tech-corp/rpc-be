@@ -1791,6 +1791,22 @@ class StaffController extends Controller
                     ])
                     ->first();
 
+
+
+                $usersimages = DB::table('usersImages as a')
+                    ->select(
+                        'a.id as id',
+                        'a.usersId as usersId',
+                        'a.imagePath as imagePath',
+                    )
+                    ->where([
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $users->images = $usersimages;
+
                 $locationId = DB::table('usersLocation as a')
                     ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
                     ->select(
