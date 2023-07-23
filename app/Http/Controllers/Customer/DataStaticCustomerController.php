@@ -271,8 +271,8 @@ class DataStaticCustomerController extends Controller
 
                     $CustomerGroups = new CustomerGroups();
                     $CustomerGroups->customerGroup = $request->input('name');
-                    $CustomerGroups->isActive = 1;
-                    $CustomerGroups->userId =  $request->user()->id;
+                    $CustomerGroups->isDeleted = 0;
+                    $CustomerGroups->userId = $request->user()->id;
                     $CustomerGroups->created_at = now();
                     $CustomerGroups->updated_at = now();
                     $CustomerGroups->save();
