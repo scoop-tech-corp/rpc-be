@@ -72,8 +72,8 @@ class DataStaticStaffController extends Controller
 
             $dataJobTitle = JobTitle::select(
                 'id',
-                DB::raw("'Job Title' as type"),
-                'jobName as typeName',
+                DB::raw("'Job Title' as value"),
+                'jobName as name',
             )->where('isActive', '=', 1)
                 ->get();
 
@@ -85,7 +85,6 @@ class DataStaticStaffController extends Controller
             $param_customer['dataStaticJobTitle'] = $dataJobTitle;
 
             return response()->json($param_customer, 200);
-            
         } catch (Exception $e) {
 
             return responseInvalid([$e]);
