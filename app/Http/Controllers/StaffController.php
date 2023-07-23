@@ -25,7 +25,11 @@ class StaffController extends Controller
     {
 
         if (adminAccess($request->user()->id) != 1) {
-            return responseInvalid(['User Access not Authorize!']);
+
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => 'User Access not Authorize!',
+            ], 403);
         }
         DB::beginTransaction();
 
@@ -62,6 +66,8 @@ class StaffController extends Controller
                 ]
             );
 
+
+
             $getTypeIDName = TypeId::where([
                 ['id', '=', $request->typeId],
                 ['isActive', '=', '1']
@@ -79,13 +85,17 @@ class StaffController extends Controller
             }
 
 
+
             $start = Carbon::parse($request->startDate);
             $end = Carbon::parse($request->endDate);
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
 
-                return responseInvalid($errors);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
             }
 
 
@@ -111,11 +121,15 @@ class StaffController extends Controller
                 }
 
                 if ($primaryCount == 0) {
-
-                    return responseInvalid(['Detail address must have at least 1 primary address']);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address must have at least 1 primary address',
+                    ], 422);
                 } elseif ($primaryCount > 1) {
-
-                    return responseInvalid(['Detail address have 2 primary address, please check again']);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address have 2 primary address, please check again',
+                    ], 422);
                 }
 
                 foreach ($arrayDetailAddress as $key) {
@@ -145,16 +159,23 @@ class StaffController extends Controller
                 }
 
                 if ($data_item) {
-                    return responseInvalid([$data_item]);
+
+                    return response()->json([
+                        'message' =>  'Inputed data is not valid',
+                        'errors' => $data_item,
+                    ], 422);
                 }
             } else {
 
-                return responseInvalid(['Detail address can not be empty!']);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
+                ], 422);
             }
 
 
 
-
+            $checkusageUtama = 0;
             $data_telephone = [];
 
             if ($request->telephone) {
@@ -179,6 +200,16 @@ class StaffController extends Controller
                         $messagePhone
                     );
 
+
+                    if ($checkusageUtama > 1) {
+                        return responseInvalid(['Usage utama on phone must only one!']);
+                    }
+
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtama = $checkusageUtama + 1;
+                    }
+
                     if ($validateTelephone->fails()) {
 
                         $errors = $validateTelephone->errors()->all();
@@ -193,13 +224,20 @@ class StaffController extends Controller
 
                     if (strtolower($key['type']) == "whatshapp") {
 
-                        return responseInvalid(['Please check your phone number, for type whatshapp must start with 62']);
+                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                            ], 422);
+                        }
                     }
                 }
 
                 if ($data_telephone) {
-
-                    return responseInvalid([$data_telephone]);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $data_telephone,
+                    ], 422);
                 }
 
                 $checkTelephone = [];
@@ -220,10 +258,14 @@ class StaffController extends Controller
 
 
                 if ($checkTelephone) {
-                    return responseInvalid([$checkTelephone]);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkTelephone,
+                    ], 422);
                 }
             }
 
+            $checkEmailUtama = 0;
             $data_error_email = [];
             $insertEmailUsers = '';
             if ($request->email) {
@@ -246,6 +288,18 @@ class StaffController extends Controller
                         $messageEmail
                     );
 
+
+
+                    if ($checkEmailUtama > 1) {
+
+                        return responseInvalid(['Usage utama on email must only one!']);
+                    }
+
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkEmailUtama = $checkEmailUtama + 1;
+                    }
+
                     if ($validateEmail->fails()) {
 
                         $errors = $validateEmail->errors()->all();
@@ -261,7 +315,10 @@ class StaffController extends Controller
 
 
                 if ($data_error_email) {
-                    return responseInvalid([$data_error_email]);
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' =>  $data_error_email,
+                    ], 422);
                 }
 
                 $checkUsageEmail = false;
@@ -286,16 +343,24 @@ class StaffController extends Controller
                 }
 
                 if ($checkEmail) {
-
-                    return responseInvalid([$checkEmail]);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkEmail,
+                    ], 422);
                 }
 
                 if ($checkUsageEmail == false) {
-                    return responseInvalid(['Must have one primary email']);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Must have one primary email',
+                    ], 422);
                 }
             } else {
 
-                return responseInvalid(['Email can not be empty!']);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Email can not be empty!'],
+                ], 422);
             }
 
 
@@ -311,6 +376,10 @@ class StaffController extends Controller
                     'usage.required' => 'Usage on tab messenger is required',
                 ];
 
+
+
+                $checkMessengerUtama = 0;
+
                 foreach ($arraymessenger as $key) {
 
                     $validateMessenger = Validator::make(
@@ -322,6 +391,18 @@ class StaffController extends Controller
                         ],
                         $messageMessenger
                     );
+
+
+
+                    if ($checkMessengerUtama > 1) {
+                        return responseInvalid(['Usage utama on messenger must only one!']);
+                    }
+
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkMessengerUtama = $checkMessengerUtama + 1;
+                    }
+
 
                     if ($validateMessenger->fails()) {
 
@@ -340,15 +421,20 @@ class StaffController extends Controller
 
                         if (!(substr($key['messengerNumber'], 0, 3) === "62")) {
 
-                            return responseInvalid(['Please check your phone number, for type whatshapp must start with 62']);
+                            return response()->json([
+                                'message' => 'Inputed data is not valid',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                            ], 422);
                         }
                     }
                 }
 
 
                 if ($data_error_messenger) {
-
-                    return responseInvalid([$data_error_messenger]);
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_messenger,
+                    ], 422);
                 }
 
                 $checkMessenger = [];
@@ -367,8 +453,10 @@ class StaffController extends Controller
                 }
 
                 if ($checkMessenger) {
-
-                    return responseInvalid([$checkMessenger]);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkMessenger,
+                    ], 422);
                 }
             }
 
@@ -559,23 +647,44 @@ class StaffController extends Controller
 
                 DB::commit();
 
-                return responseCreate();
+                return response()->json(
+                    [
+                        'result' => 'success',
+                        'message' => 'Insert Data Users Successful! Please check your email for verification',
+                    ],
+                    200
+                );
             } else {
 
                 DB::commit();
 
-                return responseCreate();
+                return response()->json(
+                    [
+                        'result' => 'success',
+                        'message' => 'Insert Data Users Successful!',
+                    ],
+                    200
+                );
             }
 
 
             DB::commit();
 
-            return responseCreate();
+            return response()->json(
+                [
+                    'result' => 'success',
+                    'message' => 'Insert Data Users Successful!',
+                ],
+                200
+            );
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ], 422);
         }
     }
 
@@ -594,10 +703,12 @@ class StaffController extends Controller
         ]);
 
         if ($validate->fails()) {
-
             $errors = $validate->errors()->all();
 
-            return responseInvalid($errors);
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
         }
 
         DB::beginTransaction();
@@ -611,8 +722,10 @@ class StaffController extends Controller
                 ->first();
 
             if (!$checkIfDataExits) {
-
-                return responseInvalid(['Data not found! try different ID']);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Data not found! try different ID'],
+                ], 422);
             }
 
 
@@ -625,13 +738,18 @@ class StaffController extends Controller
                 ->first();
 
             if ($users->status == 0) {
-                return responseInvalid(['Please activated your account first']);
+                return response()->json([
+                    'message' => 'Failed',
+                    'errors' => 'Please activated your account first',
+                ], 406);
             } else {
 
 
                 if ($users->password != null) {
-
-                    return responseInvalid(['Your account password has been set and verified within email']);
+                    return response()->json([
+                        'message' => 'failed',
+                        'errors' => 'Your account password has been set and verified within email',
+                    ], 406);
                 } else {
 
                     $sendEmailPrimary = DB::table('users')
@@ -670,12 +788,18 @@ class StaffController extends Controller
                 }
             }
 
-            return responseCreate();
+            return response()->json([
+                'result' => 'success',
+                'message' => 'Successfully send email! Please check your email for verification',
+            ], 200);
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
@@ -697,7 +821,10 @@ class StaffController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return responseInvalid($errors);
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
         }
 
         DB::beginTransaction();
@@ -711,8 +838,10 @@ class StaffController extends Controller
                 ->first();
 
             if (!$checkIfDataExits) {
-
-                return responseInvalid(['Data not found! try different ID']);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Data not found! try different ID'],
+                ], 422);
             }
 
             $users = DB::table('users')
@@ -721,8 +850,10 @@ class StaffController extends Controller
                 ->first();
 
             if ($users->status == 1) {
-
-                return responseInvalid(['Your account already been activated']);
+                return response()->json([
+                    'message' => 'failed',
+                    'errors' => 'Your account already been activated',
+                ], 406);
             } else {
 
                 $users = DB::table('users')
@@ -738,13 +869,19 @@ class StaffController extends Controller
 
                 DB::commit();
 
-                return responseCreate();
+                return response()->json([
+                    'result' => 'success',
+                    'message' => 'Successfuly activated your account, you can send email for setting your password',
+                ], 200);
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
@@ -814,10 +951,16 @@ class StaffController extends Controller
 
             DB::commit();
 
-            return responseCreate();
+            return response()->json([
+                'result' => 'Success',
+                'message' => "Successfully input date holidays",
+            ], 200);
         } catch (Exception $e) {
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
@@ -832,7 +975,7 @@ class StaffController extends Controller
     }
 
 
-    public function getRoleStaff()
+    public function getRoleStaff(Request $request)
     {
 
         try {
@@ -846,15 +989,18 @@ class StaffController extends Controller
                 ->orderBy('id', 'asc')
                 ->get();
 
-            return responseList($getRole);
+            return response()->json($getRole, 200);
         } catch (Exception $e) {
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
 
-    public function getRoleName()
+    public function getRoleName(Request $request)
     {
 
         try {
@@ -868,10 +1014,13 @@ class StaffController extends Controller
                 ->orderBy('id', 'asc')
                 ->get();
 
-            return responseList($getRole);
+            return response()->json($getRole, 200);
         } catch (Exception $e) {
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
@@ -1011,8 +1160,10 @@ class StaffController extends Controller
 
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
-
-                    return responseInvalid(['order value must Ascending: ASC or Descending: DESC ']);
+                    return response()->json([
+                        'message' => 'failed',
+                        'errors' => 'order value must Ascending: ASC or Descending: DESC ',
+                    ]);
                 }
 
                 $checkOrder = true;
@@ -1077,7 +1228,10 @@ class StaffController extends Controller
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
         } catch (Exception $e) {
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
@@ -1782,7 +1936,10 @@ class StaffController extends Controller
 
             $errors = $validate->errors()->all();
 
-            return responseInvalid($errors);
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
         }
 
         $checkIfValueExits = DB::table('users')
@@ -1794,7 +1951,10 @@ class StaffController extends Controller
 
         if ($checkIfValueExits === null) {
 
-            return responseInvalid(['Data not exists, please try another user id']);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => "Data not exists, please try another user id",
+            ], 406);
         } else {
 
             $checkImages = DB::table('usersImages')
@@ -1835,7 +1995,13 @@ class StaffController extends Controller
 
                 DB::commit();
 
-                return responseCreate();
+                return response()->json(
+                    [
+                        'result' => 'success',
+                        'message' => 'Upload image users Success!',
+                    ],
+                    200
+                );
             }
         }
     }
@@ -1854,7 +2020,10 @@ class StaffController extends Controller
 
                 $errors = $validate->errors()->all();
 
-                return responseInvalid($errors);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
             }
 
             $checkIfValueExits = DB::table('users')
@@ -1866,7 +2035,10 @@ class StaffController extends Controller
 
             if ($checkIfValueExits === null) {
 
-                return responseInvalid(["Data not exists, please try another user id"]);
+                return response()->json([
+                    'message' => 'Failed',
+                    'errors' => "Data not exists, please try another user id",
+                ], 406);
             } else {
 
 
@@ -2008,13 +2180,16 @@ class StaffController extends Controller
 
                 $users->telephone = $userstelephone;
 
-                return responseList($users);
+                return response()->json($users, 200);
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
@@ -2063,7 +2238,10 @@ class StaffController extends Controller
 
             DB::rollback();
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ]);
         }
     }
 
@@ -2073,7 +2251,10 @@ class StaffController extends Controller
 
 
         if (adminAccess($request->user()->id) != 1) {
-            return responseInvalid(['User Access not Authorize!']);
+            return response()->json([
+                'message' => 'The user role was invalid.',
+                'errors' => ['User Access not Authorize!'],
+            ], 403);
         }
 
         DB::beginTransaction();
@@ -2100,7 +2281,7 @@ class StaffController extends Controller
                     'annualLeaveAllowance' => 'integer|nullable',
                     'payPeriodId' => 'required|integer',
                     'payAmount' => 'numeric|nullable',
-                    'typeId' => 'required',
+                    'typeId' => 'required|integer',
                     'identificationNumber' => 'string|nullable|max:30',
                     'additionalInfo' => 'string|nullable|max:100',
                     'generalCustomerCanSchedule' => 'integer|nullable',
@@ -2113,10 +2294,11 @@ class StaffController extends Controller
             );
 
             if ($validate->fails()) {
-
                 $errors = $validate->errors()->all();
-
-                return responseInvalid($errors);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
             }
 
             $checkIfUsersExists = DB::table('users')
@@ -2127,9 +2309,12 @@ class StaffController extends Controller
                 ->first();
 
             if (!$checkIfUsersExists) {
-
-                return responseInvalid(['Spesific users not exists please try different id!']);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Spesific users not exists please try different id!'],
+                ], 422);
             }
+
 
             $getTypeIDName = TypeId::where([
                 ['id', '=', $request->typeId],
@@ -2146,6 +2331,7 @@ class StaffController extends Controller
                     return responseInvalid(["Identification number must be integer!"]);
                 }
             }
+
 
             $data_error_detailaddress = [];
 
@@ -2167,11 +2353,15 @@ class StaffController extends Controller
                 }
 
                 if ($primaryCount == 0) {
-
-                    return responseInvalid(['Detail address must have at least 1 primary address']);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address must have at least 1 primary address',
+                    ], 422);
                 } elseif ($primaryCount > 1) {
-
-                    return responseInvalid(['Detail address have 2 primary address, please check again']);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Detail address have 2 primary address, please check again',
+                    ], 422);
                 }
 
 
@@ -2202,15 +2392,20 @@ class StaffController extends Controller
                 }
 
                 if ($data_error_detailaddress) {
-
-                    return responseInvalid([$data_error_detailaddress]);
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_detailaddress,
+                    ], 422);
                 }
             } else {
 
-                return responseInvalid(['Detail address can not be empty!']);
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Detail address can not be empty!'],
+                ], 422);
             }
 
-
+            $checkusageUtamaPhone = 0;
             $data_error_telephone = [];
 
             if ($request->telephone) {
@@ -2233,6 +2428,16 @@ class StaffController extends Controller
                         $messagePhone
                     );
 
+
+                    if ($checkusageUtamaPhone > 1) {
+                        return responseInvalid(['Usage utama on phone must only one!']);
+                    }
+
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtamaPhone = $checkusageUtamaPhone + 1;
+                    }
+
                     if ($telephoneDetail->fails()) {
 
                         $errors = $telephoneDetail->errors()->all();
@@ -2250,7 +2455,10 @@ class StaffController extends Controller
 
                         if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
 
-                            return responseInvalid(['Please check your phone number, for type whatshapp must start with 62']);
+                            return response()->json([
+                                'message' => 'Failed',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                            ], 422);
                         }
                     }
                 }
@@ -2258,8 +2466,10 @@ class StaffController extends Controller
 
 
                 if ($data_error_telephone) {
-
-                    return responseInvalid([$data_error_telephone]);
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_telephone,
+                    ], 422);
                 }
 
                 $checkTelephone = [];
@@ -2280,11 +2490,14 @@ class StaffController extends Controller
                 }
 
                 if ($checkTelephone) {
-
-                    return responseInvalid([$checkTelephone]);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkTelephone,
+                    ], 422);
                 }
             }
 
+            $checkusageUtamaEmail = 0;
             $data_error_email = [];
             $insertEmailUsers = '';
 
@@ -2307,6 +2520,16 @@ class StaffController extends Controller
                     );
 
 
+                    if ($checkusageUtamaEmail > 1) {
+                        return responseInvalid(['Usage utama on email must only one!']);
+                    }
+
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtamaEmail = $checkusageUtamaEmail + 1;
+                    }
+
+
                     if ($emailDetail->fails()) {
 
                         $errors = $emailDetail->errors()->all();
@@ -2322,8 +2545,10 @@ class StaffController extends Controller
 
 
                 if ($data_error_email) {
-
-                    return responseInvalid([$data_error_email]);
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => $data_error_email,
+                    ], 422);
                 }
 
 
@@ -2364,15 +2589,22 @@ class StaffController extends Controller
                 }
 
                 if ($checkEmail) {
-                    return responseInvalid([$checkEmail]);
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => $checkEmail,
+                    ], 422);
                 }
 
                 if ($checkUsageEmail == false) {
-                    return responseInvalid(['Must have one primary email']);
+
+                    return response()->json([
+                        'message' => 'Inputed data is not valid',
+                        'errors' => 'Must have one primary email',
+                    ], 422);
                 }
             }
 
-
+            $checkusageUtamaMessenger = 0;
             $data_messenger_error = [];
             if ($request->messenger) {
 
@@ -2394,6 +2626,13 @@ class StaffController extends Controller
                         $messageMessenger
                     );
 
+                    if ($checkusageUtamaMessenger > 1) {
+                        return responseInvalid(['Usage utama on email must only one!']);
+                    }
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtamaMessenger = $checkusageUtamaMessenger + 1;
+                    }
 
                     if ($messengerDetail->fails()) {
 
@@ -2410,15 +2649,20 @@ class StaffController extends Controller
                     if (strtolower($key['type']) == "whatshapp") {
 
                         if (!(substr($key['messengerNumber'], 0, 2) === "62")) {
-
-                            return responseInvalid(['Please check your phone number, for type whatshapp must start with 62']);
+                            return response()->json([
+                                'message' => 'Failed',
+                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                            ], 422);
                         }
                     }
                 }
 
                 if ($data_messenger_error) {
 
-                    return responseInvalid([$data_messenger_error]);
+                    return response()->json([
+                        'message' => 'Failed',
+                        'errors' => $data_messenger_error,
+                    ], 422);
                 }
 
                 $checkMessenger = [];
@@ -2440,7 +2684,10 @@ class StaffController extends Controller
 
                 if ($checkMessenger) {
 
-                    return responseInvalid([$checkMessenger]);
+                    return response()->json([
+                        'message' => 'Failed',
+                        'errors' => $checkMessenger,
+                    ], 422);
                 }
             }
 
@@ -2581,7 +2828,10 @@ class StaffController extends Controller
                 if ($request->status == 0) {
 
                     DB::commit();
-                    return responseUpdate();
+                    return response()->json([
+                        'result' => 'success',
+                        'message' => 'successfuly update user ',
+                    ]);
                 } else {
 
 
@@ -2608,7 +2858,10 @@ class StaffController extends Controller
 
                     DB::commit();
 
-                    return responseUpdate();
+                    return response()->json([
+                        'result' => 'success',
+                        'message' => 'successfuly update user, your primary email has updated, please check your new email to verify your password',
+                    ]);
                 }
             } else {
 
@@ -2742,18 +2995,25 @@ class StaffController extends Controller
                 }
 
                 DB::commit();
-                return responseUpdate();
+
+                return response()->json([
+                    'result' => 'success',
+                    'message' => 'successfuly update user',
+                ]);
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
 
-    public function getTypeId()
+    public function getTypeId(Request $request)
     {
 
         try {
@@ -2769,15 +3029,18 @@ class StaffController extends Controller
                 ->orderBy('a.created_at', 'desc')
                 ->get();
 
-            return responseList($getTypeId);
+            return response()->json($getTypeId, 200);
         } catch (Exception $e) {
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
 
-    public function getPayPeriod()
+    public function getPayPeriod(Request $request)
     {
 
         try {
@@ -2793,14 +3056,17 @@ class StaffController extends Controller
                 ->orderBy('a.created_at', 'desc')
                 ->get();
 
-            return responseList($getPayPeriod);
+            return response()->json($getPayPeriod, 200);
         } catch (Exception $e) {
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
-    public function getJobTitle()
+    public function getJobTitle(Request $request)
     {
 
         try {
@@ -2816,10 +3082,13 @@ class StaffController extends Controller
                 ->orderBy('a.created_at', 'desc')
                 ->get();
 
-            return responseList($getjobTitle);
+            return response()->json($getjobTitle, 200);
         } catch (Exception $e) {
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
@@ -2835,32 +3104,42 @@ class StaffController extends Controller
 
         try {
 
-            $checkIfValueExits = TypeId::where([
-                ['typeName', '=', $request->typeName],
-                ['isActive', '=', 1]
-            ])->first();
+            $checkIfValueExits = DB::table('typeId as a')
+                ->where([
+                    ['a.typeName', '=', $request->typeName],
+                    ['a.isActive', '=', 1]
+                ])
+                ->first();
 
             if ($checkIfValueExits != null) {
 
-                return responseInvalid(['Type name already exists, please choose another name']);
+                return response()->json([
+                    'message' => 'Failed',
+                    'errors' => 'Type name already exists, please choose another name',
+                ]);
             } else {
 
-                $TypeId = new TypeId();
-                $TypeId->typeName = $request->typeName;
-                $TypeId->isActive = 1;
-                $TypeId->created_at = now();
-                $TypeId->updated_at = now();
-                $TypeId->save();
+                DB::table('typeId')->insert([
+                    'typeName' => $request->typeName,
+                    'created_at' => now(),
+                    'isActive' => 1,
+                ]);
 
                 DB::commit();
 
-                return responseCreate();
+                return response()->json([
+                    'result' => 'success',
+                    'message' => 'Successfully inserted Type ID',
+                ]);
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return responseInvalid([$e]);
+            return response()->json([
+                'message' => 'failed',
+                'errors' => $e,
+            ], 422);
         }
     }
 
@@ -2886,7 +3165,10 @@ class StaffController extends Controller
 
             if ($checkIfValueExits != null) {
 
-                return responseInvalid(['Job title already exists, please choose another name']);
+                return response()->json([
+                    'message' => 'Failed',
+                    'errors' => 'Job title already exists, please choose another name',
+                ]);
             } else {
 
                 DB::table('jobTitle')->insert([
