@@ -51,7 +51,7 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CONCAT(' ', d.phoneNumber, ' ') as phoneNumber"),
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
