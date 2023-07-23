@@ -1746,9 +1746,18 @@ class StaffController extends Controller
 
 
                 $users = DB::table('users as a')
-                    ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
-                    ->leftjoin('typeId as d', 'd.id', '=', 'a.typeId')
-                    ->leftjoin('payPeriod as e', 'e.id', '=', 'a.payPeriodId')
+                    ->leftJoin('jobTitle as c', function ($join) {
+                        $join->on('c.id', '=', 'a.jobTitleId')
+                            ->where('c.isActive', '=', 1);
+                    })
+                    ->leftJoin('typeId as d', function ($join) {
+                        $join->on('d.id', '=', 'a.typeId')
+                            ->where('d.isActive', '=', 1);
+                    })
+                    ->leftJoin('payPeriod as e', function ($join) {
+                        $join->on('e.id', '=', 'a.payPeriodId')
+                            ->where('e.isActive', '=', 1);
+                    })
                     ->select(
                         'a.id',
                         'a.firstName',
@@ -1757,8 +1766,8 @@ class StaffController extends Controller
                         'a.nickName',
                         'a.gender',
                         'a.status',
-                        'c.id as jobTitleId',
-                        'c.jobName as jobName',
+                        DB::raw("IF(c.id  IS NULL, '',c.id ) as jobTitleId"),
+                        DB::raw("IF(c.jobName  IS NULL, '',c.jobName ) as jobName"),
                         'a.startDate',
                         'a.endDate',
                         'a.registrationNo',
@@ -1766,11 +1775,10 @@ class StaffController extends Controller
                         'a.annualSickAllowance',
                         'a.annualLeaveAllowance',
                         'a.payPeriodId',
-                        'e.periodName',
+                        DB::raw("IF(e.periodName IS NULL, '', e.periodName) as periodName"),
                         'a.payAmount',
-
-                        'd.id as typeId',
-                        'd.typeName as typeName',
+                        DB::raw("IF(d.id  IS NULL, '',d.id ) as typeId"),
+                        DB::raw("IF(d.typeName  IS NULL, '',d.typeName ) as typeName"),
                         'a.identificationNumber',
                         'a.additionalInfo',
 
@@ -1785,13 +1793,8 @@ class StaffController extends Controller
                     ->where([
                         ['a.id', '=', $request->id],
                         ['a.isDeleted', '=', '0'],
-                        ['c.isActive', '=', '1'],
-                        ['d.isActive', '=', '1'],
-                        ['e.isActive', '=', '1']
                     ])
                     ->first();
-
-
 
                 $usersimages = DB::table('usersImages as a')
                     ->select(
@@ -1805,10 +1808,7 @@ class StaffController extends Controller
                     ])
                     ->get();
 
-                info($usersimages);
-                if (!empty($usersimages)) {
-                    $users->images = $usersimages;
-                }
+                $users->images = $usersimages;
 
                 $locationId = DB::table('usersLocation as a')
                     ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
