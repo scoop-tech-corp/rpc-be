@@ -170,9 +170,10 @@ class DataStaticStaffController extends Controller
 
                     return response()->json([
                         'message' => 'failed',
-                        'errors' => 'Please try different type!',
+                        'errors' => 'Please try different keyword',
                         'type' => $listOrder,
-                    ]);
+                    ],400 );
+    
                 }
 
 
@@ -276,9 +277,12 @@ class DataStaticStaffController extends Controller
 
 
             $listOrder = array(
-                'telephone',
-                'messenger',
+                'job title',
+                'type id',
+                'pay period',
                 'usage',
+                'telephone',
+                'messenger'
             );
 
 
@@ -288,34 +292,99 @@ class DataStaticStaffController extends Controller
                     'message' => 'failed',
                     'errors' => 'Please try different keyword',
                     'type' => $listOrder,
-                ]);
+                ],400 );
+
             }
 
-            $checkIfValueExits = DataStaticStaff::where([
-                ['value', '=', $request->input('keyword')],
-                ['name', '=', $request->input('name')]
-            ])->first();
 
-            if ($checkIfValueExits != null) {
+            if (strtolower($request->input('keyword')) == "messenger" || strtolower($request->input('keyword')) == "telephone"  || strtolower($request->input('keyword')) == "usage") {
 
-                return response()->json([
-                    'result' => 'Failed',
-                    'message' => 'Data static staff already exists! Please choose another keyword and name !',
-                ]);
-            } else {
+                $checkIfValueExits = DataStaticStaff::where([
+                    ['value', '=', $request->input('keyword')],
+                    ['name', '=', $request->input('name')]
+                ])->first();
 
-                $DataStatic = new DataStaticStaff();
-                $DataStatic->value = $request->input('keyword');
-                $DataStatic->name = $request->input('name');
-                $DataStatic->isDeleted = 0;
-                $DataStatic->created_at = now();
-                $DataStatic->updated_at = now();
-                $DataStatic->save();
+                if ($checkIfValueExits != null) {
 
-                DB::commit();
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'Data static staff already exists! Please choose another keyword and name !',
+                    ]);
+                } else {
 
-                return responseCreate();
+                    $DataStatic = new DataStaticStaff();
+                    $DataStatic->value = $request->input('keyword');
+                    $DataStatic->name = $request->input('name');
+                    $DataStatic->isDeleted = 0;
+                    $DataStatic->created_at = now();
+                    $DataStatic->updated_at = now();
+                    $DataStatic->save();
+                }
+            } else if (strtolower($request->input('keyword')) == "job title") {
+
+                $checkDataExists =  JobTitle::where([
+                    ['jobName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Job Title already exists! Please try different value!']);
+                } else {
+
+                    $JobTitle = new JobTitle();
+                    $JobTitle->jobName = $request->input('name');
+                    $JobTitle->isActive = 1;
+                    $JobTitle->created_at = now();
+                    $JobTitle->updated_at = now();
+                    $JobTitle->save();
+                    
+                }
+            } else if (strtolower($request->input('keyword')) == "type id") {
+
+                $checkDataExists =  TypeId::where([
+                    ['typeName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Type id already exists! Please try different value!']);
+                } else {
+
+                    $TypeId = new TypeId();
+                    $TypeId->typeName = $request->input('name');
+                    $TypeId->isActive = 1;
+                    $TypeId->created_at = now();
+                    $TypeId->updated_at = now();
+                    $TypeId->save();
+                }
+            } else if (strtolower($request->input('keyword')) == "pay period") {
+
+                $checkDataExists =  PayPeriod::where([
+                    ['periodName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Pay period already exists! Please try different value!']);
+                } else {
+
+                    $payPeriod = new PayPeriod();
+                    $payPeriod->periodName = $request->input('name');
+                    $payPeriod->isActive = 1;
+                    $payPeriod->created_at = now();
+                    $payPeriod->updated_at = now();
+                    $payPeriod->save();
+                }
             }
+
+            DB::commit();
+
+
+            return responseCreate();
+
         } catch (Exception $e) {
 
             DB::rollback();
@@ -343,14 +412,11 @@ class DataStaticStaffController extends Controller
             'typeName as typeName',
         )->where('isActive', '=', 1);
 
-
         $dataPayPeroid = PayPeriod::select(
             'id',
             DB::raw("'Pay Period' as type"),
             'periodName as typeName',
         )->where('isActive', '=', 1);
-
-
 
         $dataStaticUsage = DataStaticStaff::select(
             'id',
@@ -361,7 +427,6 @@ class DataStaticStaffController extends Controller
             ['value', '=', 'Usage']
         ]);
 
-
         $dataStaticTelephone = DataStaticStaff::select(
             'id',
             DB::raw("'Telephone' as type"),
@@ -371,7 +436,6 @@ class DataStaticStaffController extends Controller
                 ['isDeleted', '=', '0'],
                 ['value', '=', 'Telephone']
             ]);
-
 
         $dataStaticMessenger = DataStaticStaff::select(
             'id',
