@@ -201,14 +201,14 @@ class StaffController extends Controller
                     );
 
 
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtama = $checkusageUtama + 1;
+                    }
+
                     if ($checkusageUtama > 1) {
                         return responseInvalid(['Usage utama on phone must only one!']);
                     }
 
-
-                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
-                        $checkusageUtama = $checkusageUtama + 1;
-                    }
 
                     if ($validateTelephone->fails()) {
 
@@ -289,15 +289,12 @@ class StaffController extends Controller
                     );
 
 
-
-                    if ($checkEmailUtama > 1) {
-
-                        return responseInvalid(['Usage utama on email must only one!']);
-                    }
-
-
                     if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
                         $checkEmailUtama = $checkEmailUtama + 1;
+                    }
+
+                    if ($checkEmailUtama > 1) {
+                        return responseInvalid(['Usage utama on email must only one!']);
                     }
 
                     if ($validateEmail->fails()) {
@@ -393,16 +390,14 @@ class StaffController extends Controller
                     );
 
 
-
-                    if ($checkMessengerUtama > 1) {
-                        return responseInvalid(['Usage utama on messenger must only one!']);
-                    }
-
-
                     if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
                         $checkMessengerUtama = $checkMessengerUtama + 1;
                     }
 
+
+                    if ($checkMessengerUtama > 1) {
+                        return responseInvalid(['Usage utama on messenger must only one!']);
+                    }
 
                     if ($validateMessenger->fails()) {
 
@@ -2428,14 +2423,13 @@ class StaffController extends Controller
                         $messagePhone
                     );
 
-
-                    if ($checkusageUtamaPhone > 1) {
-                        return responseInvalid(['Usage utama on phone must only one!']);
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtamaPhone = $checkusageUtamaPhone + 1;
                     }
 
 
-                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
-                        $checkusageUtamaPhone = $checkusageUtamaPhone + 1;
+                    if ($checkusageUtamaPhone > 1) {
+                        return responseInvalid(['Usage utama on phone must only one!']);
                     }
 
                     if ($telephoneDetail->fails()) {
@@ -2520,13 +2514,13 @@ class StaffController extends Controller
                     );
 
 
-                    if ($checkusageUtamaEmail > 1) {
-                        return responseInvalid(['Usage utama on email must only one!']);
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtamaEmail = $checkusageUtamaEmail + 1;
                     }
 
 
-                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
-                        $checkusageUtamaEmail = $checkusageUtamaEmail + 1;
+                    if ($checkusageUtamaEmail > 1) {
+                        return responseInvalid(['Usage utama on email must only one!']);
                     }
 
 
@@ -2626,12 +2620,14 @@ class StaffController extends Controller
                         $messageMessenger
                     );
 
-                    if ($checkusageUtamaMessenger > 1) {
-                        return responseInvalid(['Usage utama on email must only one!']);
-                    }
+
 
                     if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
                         $checkusageUtamaMessenger = $checkusageUtamaMessenger + 1;
+                    }
+
+                    if ($checkusageUtamaMessenger > 1) {
+                        return responseInvalid(['Usage utama on messenger must only one!']);
                     }
 
                     if ($messengerDetail->fails()) {
