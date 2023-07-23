@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\CustomerGroups;
-use App\Models\Customer\CustomerImages; 
+use App\Models\Customer\CustomerImages;
 use App\Models\Customer\CustomerMessengers;
 use App\Models\Customer\CustomerTelephones;
 use App\Models\Customer\CustomerEmails;
@@ -17,6 +17,7 @@ use App\Models\Customer\TitleCustomer;
 use App\Models\Customer\CustomerOccupation;
 use App\Models\Customer\ReferenceCustomer;
 use App\Models\Customer\SourceCustomer;
+use App\Models\Customer\TypeIdCustomer;
 use App\Exports\Customer\exportCustomer;
 use App\Models\Customer\PetCategory;
 use Illuminate\Http\Request;
@@ -28,7 +29,68 @@ use DB;
 class CustomerController extends Controller
 {
 
+    public function insertTypeIdCustomer(Request $request)
+    {
 
+        $request->validate([
+            'typeName' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $checkIfValueExits = TypeIdCustomer::where([
+                ['typeName', '=', $request->typeName],
+                ['isActive', '=', 1]
+            ])->first();
+
+            if ($checkIfValueExits != null) {
+
+                return responseInvalid(['Type name already exists, please choose another name']);
+            } else {
+
+                $TypeIdCustomer = new TypeIdCustomer();
+                $TypeIdCustomer->typeName = $request->typeName;
+                $TypeIdCustomer->isActive = 1;
+                $TypeIdCustomer->created_at = now();
+                $TypeIdCustomer->updated_at = now();
+                $TypeIdCustomer->save();
+
+                DB::commit();
+
+                return responseCreate();
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return responseInvalid([$e]);
+        }
+    }
+
+
+
+    public function getTypeIdCustomer()
+    {
+
+        try {
+
+            $getTypeId = TypeIdCustomer::select(
+                'id as typeId',
+                'typeName as typeName',
+            )->where([
+                    ['isActive', '=', 1],
+                ])
+            ->orderBy('a.created_at', 'desc')
+            ->get();
+
+            return responseList($getTypeId);
+        } catch (Exception $e) {
+
+            return responseInvalid([$e]);
+        }
+    }
 
     public function indexCustomer(Request $request)
     {
@@ -3026,8 +3088,7 @@ class CustomerController extends Controller
 
                 return response()->json($param_customer, 200);
             }
-
-        }else{ // untuk view edit disini
+        } else { // untuk view edit disini
 
         }
     }

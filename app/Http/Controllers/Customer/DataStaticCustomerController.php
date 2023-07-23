@@ -9,6 +9,7 @@ use App\Models\Customer\TitleCustomer;
 use App\Models\Customer\ReferenceCustomer;
 use App\Models\Customer\PetCategory;
 use App\Models\Customer\SourceCustomer;
+use App\Models\Customer\TypeIdCustomer;
 use App\Models\CustomerGroups;
 use Illuminate\Http\Request;
 use Validator;
@@ -53,8 +54,7 @@ class DataStaticCustomerController extends Controller
                     ['value', '=', 'Usage'],
                     ['isDeleted', '=', '0']
                 ]
-            )
-                ->get();
+            )->get();
 
             $dataTitleCustomer = TitleCustomer::select(
                 'id',
@@ -94,6 +94,13 @@ class DataStaticCustomerController extends Controller
                 'customerGroup as name',
             )->where('isDeleted', '=', 0)->get();
 
+
+            $dataTypeIdGroup = TypeIdCustomer::select(
+                'id',
+                DB::raw("'Type Id' as value"),
+                'typeName as name',
+            )->where('isActive', '=', 1)->get();
+
             $param_customer = array('dataStaticTelephone' => $data_static_telepon);
             $param_customer['dataStaticMessenger'] = $data_static_messenger;
             $param_customer['dataStaticUsage'] = $dataStaticUsage;
@@ -103,6 +110,7 @@ class DataStaticCustomerController extends Controller
             $param_customer['dataStaticPetCategory'] = $dataPetCategory;
             $param_customer['dataStaticSourceCustomer'] = $dataSourceCustomer;
             $param_customer['dataStaticCustomerGroup'] = $dataCustomerGroup;
+            $param_customer['dataStaticCustomerTypeId'] = $dataTypeIdGroup;
 
             return response()->json($param_customer, 200);
         } catch (Exception $e) {
@@ -129,9 +137,16 @@ class DataStaticCustomerController extends Controller
 
 
             $listOrder = array(
-                'telephone',
-                'messenger',
+                'title customer',
+                'occupation customer',
+                'reference customer',
+                'pet category',
+                'source customer',
+                'customer group',
+                'type id',
                 'usage',
+                'telephone',
+                'messenger'
             );
 
 
@@ -141,32 +156,162 @@ class DataStaticCustomerController extends Controller
                     'message' => 'failed',
                     'errors' => 'Please try different keyword',
                     'type' => $listOrder,
-                ]);
+                ], 400);
             }
 
 
-            $checkIfValueExits = DataStaticCustomers::where([
-                ['value', '=', $request->input('keyword')],
-                ['name', '=', $request->input('name')]
-            ])->first();
+            if (strtolower($request->input('keyword')) == "messenger" || strtolower($request->input('keyword')) == "telephone"  || strtolower($request->input('keyword')) == "usage") {
 
-            if ($checkIfValueExits != null) {
+                $checkIfValueExits = DataStaticCustomers::where([
+                    ['value', '=', $request->input('keyword')],
+                    ['name', '=', $request->input('name')],
+                    ['isDeleted', '=', '0']
+                ])->first();
 
-                return responseInvalid(['Data static customer already exists! Please choose another keyword and name!']);
-            } else {
+                if ($checkIfValueExits != null) {
 
-                $DataStatic = new DataStaticCustomers();
-                $DataStatic->value = $request->input('keyword');
-                $DataStatic->name = $request->input('name');
-                $DataStatic->isDeleted = 0;
-                $DataStatic->created_at = now();
-                $DataStatic->updated_at = now();
-                $DataStatic->save();
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'Data static customer already exists! Please choose another keyword and name !',
+                    ]);
+                } else {
 
-                DB::commit();
+                    $DataStatic = new DataStaticCustomers();
+                    $DataStatic->value = $request->input('keyword');
+                    $DataStatic->name = $request->input('name');
+                    $DataStatic->isDeleted = 0;
+                    $DataStatic->created_at = now();
+                    $DataStatic->updated_at = now();
+                    $DataStatic->save();
+                }
+            } else if (strtolower($request->input('keyword')) == "title customer") {
 
-                return responseCreate();
+                $checkIfValueExits = DataStaticCustomers::where([
+                    ['value', '=', $request->input('keyword')],
+                    ['name', '=', $request->input('name')],
+                    ['isDeleted', '=', '0']
+                ])->first();
+
+                if ($checkIfValueExits != null) {
+
+                    return response()->json([
+                        'result' => 'Failed',
+                        'message' => 'Data static customer already exists! Please choose another keyword and name !',
+                    ]);
+                } else {
+
+                    $DataStatic = new DataStaticCustomers();
+                    $DataStatic->value = $request->input('keyword');
+                    $DataStatic->name = $request->input('name');
+                    $DataStatic->isDeleted = 0;
+                    $DataStatic->created_at = now();
+                    $DataStatic->updated_at = now();
+                    $DataStatic->save();
+                }
+            } else if (strtolower($request->input('keyword')) == "occupation customer") {
+
+
+                $checkDataExists =  CustomerOccupation::where([
+                    ['occupationName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Occupation customer already exists! Please try different value!']);
+                } else {
+
+                    $CustomerOccupation = new CustomerOccupation();
+                    $CustomerOccupation->occupationName = $request->input('name');
+                    $CustomerOccupation->isActive = 1;
+                    $CustomerOccupation->created_at = now();
+                    $CustomerOccupation->updated_at = now();
+                    $CustomerOccupation->save();
+                }
+            } else if (strtolower($request->input('keyword')) == "reference customer") {
+
+                $checkDataExists =  ReferenceCustomer::where([
+                    ['referenceName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Reference Customer already exists! Please try different value!']);
+                } else {
+
+                    $ReferenceCustomer = new ReferenceCustomer();
+                    $ReferenceCustomer->referenceName = $request->input('name');
+                    $ReferenceCustomer->isActive = 1;
+                    $ReferenceCustomer->created_at = now();
+                    $ReferenceCustomer->updated_at = now();
+                    $ReferenceCustomer->save();
+                }
+            } else if (strtolower($request->input('keyword')) == "source customer") {
+
+                $checkDataExists =  SourceCustomer::where([
+                    ['sourceName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Source customer already exists! Please try different value!']);
+                } else {
+
+                    $SourceCustomer = new SourceCustomer();
+                    $SourceCustomer->sourceName = $request->input('name');
+                    $SourceCustomer->isActive = 1;
+                    $SourceCustomer->created_at = now();
+                    $SourceCustomer->updated_at = now();
+                    $SourceCustomer->save();
+                }
+            } else if (strtolower($request->input('keyword')) == "customer group") {
+
+                $checkDataExists =  CustomerGroups::where([
+                    ['customerGroup', '=', $request->input('name')],
+                    ['isDeleted', '=', '0']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Customer group name already exists! Please try different value!']);
+                } else {
+
+                    $CustomerGroups = new CustomerGroups();
+                    $CustomerGroups->customerGroup = $request->input('name');
+                    $CustomerGroups->isActive = 1;
+                    $CustomerGroups->userId =  $request->user()->id;
+                    $CustomerGroups->created_at = now();
+                    $CustomerGroups->updated_at = now();
+                    $CustomerGroups->save();
+                }
+
+            } else if (strtolower($request->input('keyword')) == "type id") {
+
+                $checkDataExists =  TypeIdCustomer::where([
+                    ['typeName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
+                ])->first();
+
+                if ($checkDataExists) {
+
+                    return responseInvalid(['Type Id customer already exists! Please try different value!']);
+                } else {
+
+                    $TypeIdCustomer = new TypeIdCustomer();
+                    $TypeIdCustomer->jobName = $request->input('name');
+                    $TypeIdCustomer->isActive = 1;
+                    $TypeIdCustomer->created_at = now();
+                    $TypeIdCustomer->updated_at = now();
+                    $TypeIdCustomer->save();
+                }
             }
+
+            DB::commit();
+
+            return responseCreate();
+
         } catch (Exception $e) {
 
             DB::rollback();
@@ -246,12 +391,16 @@ class DataStaticCustomerController extends Controller
             'id',
             DB::raw("'Messenger' as type"),
             'name as typeName',
-        )
-            ->where([
-                ['isDeleted', '=', '0'],
-                ['value', '=', 'Messenger']
-            ]);
+        )->where([
+            ['isDeleted', '=', '0'],
+            ['value', '=', 'Messenger']
+        ]);
 
+        $dataStaticTypeId = TypeIdCustomer::select(
+            'id',
+            DB::raw("'Type id' as type"),
+            'typeName as typeName',
+        )->where('isActive', '=', 1);
 
         $dataTitleCustomer = $dataTitleCustomer
             ->union($dataCustomerOccupation)
@@ -259,6 +408,7 @@ class DataStaticCustomerController extends Controller
             ->union($dataPetCategory)
             ->union($dataSourceCustomer)
             ->union($dataCustomerGroup)
+            ->union($dataStaticTypeId)
             ->union($dataStaticUsage)
             ->union($dataStaticTelephone)
             ->union($dataStaticCustomer);
@@ -487,6 +637,7 @@ class DataStaticCustomerController extends Controller
                     'pet category',
                     'source customer',
                     'customer group',
+                    'type id',
                     'usage',
                     'telephone',
                     'messenger'
@@ -499,7 +650,7 @@ class DataStaticCustomerController extends Controller
                         'message' => 'failed',
                         'errors' => 'Please try different type',
                         'type' => $listOrder,
-                    ]);
+                    ], 400);
                 }
 
 
@@ -573,6 +724,17 @@ class DataStaticCustomerController extends Controller
 
                         return responseInvalid(['Customer group is not exists , please try different id !']);
                     }
+                } else if (strtolower($val['type']) == "type id") {
+
+                    $checkDataExists =  TypeIdCustomer::where([
+                        ['id', '=', $val['id']],
+                        ['isActive', '=', '1']
+                    ])->first();
+
+                    if (!$checkDataExists) {
+
+                        return responseInvalid(['Type Id is not exists , please try different id !']);
+                    }
                 }
             }
 
@@ -611,11 +773,15 @@ class DataStaticCustomerController extends Controller
                     CustomerGroups::where([
                         ['id', '=', $val['id']]
                     ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+                } else if (strtolower($val['type']) == "type id") {
+
+                    TypeIdCustomer::where([
+                        ['id', '=', $val['id']]
+                    ])->update(['isActive' => 0, 'updated_at' => now()]);
                 }
             }
 
             DB::commit();
-
 
             return responseDelete();
         } catch (Exception $e) {

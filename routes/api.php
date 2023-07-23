@@ -219,6 +219,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/detail', [CustomerController::class, 'getDetailCustomer']); // add
         Route::post('/images', [CustomerController::class, 'uploadImageCustomer']); // add
         Route::get('/export', [CustomerController::class, 'exportCustomer']); //add
+        Route::get('/typeid', [CustomerController::class, 'getTypeIdCustomer']);
+        Route::post('/typeid', [CustomerController::class, 'insertTypeIdCustomer']);
 
         Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
         Route::post('/group', [CustomerController::class, 'createCustomerGroup']);
