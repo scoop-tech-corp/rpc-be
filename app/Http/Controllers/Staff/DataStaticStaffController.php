@@ -257,6 +257,7 @@ class DataStaticStaffController extends Controller
             DB::commit();
 
             return responseDelete();
+
         } catch (Exception $e) {
 
             return responseInvalid([$e]);
@@ -555,7 +556,7 @@ class DataStaticStaffController extends Controller
                         'message' => 'failed',
                         'errors' => 'Please try different order column',
                         'orderColumn' => $listOrder,
-                    ]);
+                    ],400);
                 }
 
 

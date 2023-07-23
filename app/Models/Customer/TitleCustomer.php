@@ -20,9 +20,7 @@ class TitleCustomer extends Model
     protected $fillable = [
         'titleName',
         'isActive',
-        'isDeleted',
-        'deletedBy',
-        'deletedAt',
-
+        'created_at',
+        'updated_at'
     ];
 }

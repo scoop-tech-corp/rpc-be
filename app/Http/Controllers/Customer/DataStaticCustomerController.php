@@ -25,6 +25,7 @@ class DataStaticCustomerController extends Controller
             $param_customer = [];
 
             $data_static_telepon = DataStaticCustomers::select(
+                'id',
                 'value as value',
                 'name as name',
             )->where(
@@ -62,12 +63,26 @@ class DataStaticCustomerController extends Controller
                 'titleName as name',
             )->where('isActive', '=', 1)->get();
 
+
+
+            $dataCustomerGroup = CustomerGroups::select(
+                'id',
+                DB::raw("'Customer Group' as value"),
+                'customerGroup as name',
+            )->where('isDeleted', '=', 0)->get();
+
+
             $dataCustomerOccupation = CustomerOccupation::select(
                 'id',
                 DB::raw("'Occupation Customer' as value"),
                 'occupationName as name',
             )->where('isActive', '=', 1)->get();
 
+            $dataTypeIdGroup = TypeIdCustomer::select(
+                'id',
+                DB::raw("'Type Id' as value"),
+                'typeName as name',
+            )->where('isActive', '=', 1)->get();
 
             $dataCustomerReference = ReferenceCustomer::select(
                 'id',
@@ -88,19 +103,6 @@ class DataStaticCustomerController extends Controller
                 'sourceName as name',
             )->where('isActive', '=', 1)->get();
 
-            $dataCustomerGroup = CustomerGroups::select(
-                'id',
-                DB::raw("'Customer Group' as value"),
-                'customerGroup as name',
-            )->where('isDeleted', '=', 0)->get();
-
-
-            $dataTypeIdGroup = TypeIdCustomer::select(
-                'id',
-                DB::raw("'Type Id' as value"),
-                'typeName as name',
-            )->where('isActive', '=', 1)->get();
-
             $param_customer = array('dataStaticTelephone' => $data_static_telepon);
             $param_customer['dataStaticMessenger'] = $data_static_messenger;
             $param_customer['dataStaticUsage'] = $dataStaticUsage;
@@ -115,10 +117,7 @@ class DataStaticCustomerController extends Controller
             return response()->json($param_customer, 200);
         } catch (Exception $e) {
 
-            return response()->json([
-                'result' => 'Failed',
-                'message' => $e,
-            ]);
+            return responseInvalid([$e]);
         }
     }
 
@@ -170,10 +169,8 @@ class DataStaticCustomerController extends Controller
 
                 if ($checkIfValueExits != null) {
 
-                    return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'Data static customer already exists! Please choose another keyword and name !',
-                    ]);
+                    return responseInvalid(['Data static customer already exists! Please choose another name !']);
+
                 } else {
 
                     $DataStatic = new DataStaticCustomers();
@@ -186,27 +183,22 @@ class DataStaticCustomerController extends Controller
                 }
             } else if (strtolower($request->input('keyword')) == "title customer") {
 
-                $checkIfValueExits = DataStaticCustomers::where([
-                    ['value', '=', $request->input('keyword')],
-                    ['name', '=', $request->input('name')],
-                    ['isDeleted', '=', '0']
+                $checkIfValueExits = TitleCustomer::where([
+                    ['titleName', '=', $request->input('name')],
+                    ['isActive', '=', '1']
                 ])->first();
 
                 if ($checkIfValueExits != null) {
 
-                    return response()->json([
-                        'result' => 'Failed',
-                        'message' => 'Data static customer already exists! Please choose another keyword and name !',
-                    ]);
+                    return responseInvalid(['Title Customer already exists! Please choose another name !']);
                 } else {
 
-                    $DataStatic = new DataStaticCustomers();
-                    $DataStatic->value = $request->input('keyword');
-                    $DataStatic->name = $request->input('name');
-                    $DataStatic->isDeleted = 0;
-                    $DataStatic->created_at = now();
-                    $DataStatic->updated_at = now();
-                    $DataStatic->save();
+                    $TitleCustomer = new TitleCustomer();
+                    $TitleCustomer->titleName = $request->input('name');
+                    $TitleCustomer->isActive = 1;
+                    $TitleCustomer->created_at = now();
+                    $TitleCustomer->updated_at = now();
+                    $TitleCustomer->save();
                 }
             } else if (strtolower($request->input('keyword')) == "occupation customer") {
 
@@ -286,7 +278,6 @@ class DataStaticCustomerController extends Controller
                     $CustomerGroups->updated_at = now();
                     $CustomerGroups->save();
                 }
-
             } else if (strtolower($request->input('keyword')) == "type id") {
 
                 $checkDataExists =  TypeIdCustomer::where([
@@ -311,7 +302,6 @@ class DataStaticCustomerController extends Controller
             DB::commit();
 
             return responseCreate();
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -735,6 +725,17 @@ class DataStaticCustomerController extends Controller
 
                         return responseInvalid(['Type Id is not exists , please try different id !']);
                     }
+                }else if (strtolower($val['type']) == "pet category") {
+
+                    $checkDataExists =  PetCategory::where([
+                        ['id', '=', $val['id']],
+                        ['isActive', '=', '1']
+                    ])->first();
+
+                    if (!$checkDataExists) {
+
+                        return responseInvalid(['Pet Category is not exists , please try different id !']);
+                    }
                 }
             }
 
@@ -776,6 +777,12 @@ class DataStaticCustomerController extends Controller
                 } else if (strtolower($val['type']) == "type id") {
 
                     TypeIdCustomer::where([
+                        ['id', '=', $val['id']]
+                    ])->update(['isActive' => 0, 'updated_at' => now()]);
+
+                }else if (strtolower($val['type']) == "pet category") {
+
+                    PetCategory::where([
                         ['id', '=', $val['id']]
                     ])->update(['isActive' => 0, 'updated_at' => now()]);
                 }
