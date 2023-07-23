@@ -1806,7 +1806,7 @@ class StaffController extends Controller
                     ->get();
 
                 info($usersimages);
-                if ($usersimages) {
+                if (!empty($usersimages)) {
                     $users->images = $usersimages;
                 }
 
