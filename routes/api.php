@@ -24,6 +24,7 @@ use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Staff\SecurityGroupController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
+use App\Http\Controllers\Staff\AccessControlSchedulesController;
 
 
 Route::post('login', [ApiController::class, 'login']);
@@ -298,6 +299,19 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/datastatic', [DataStaticStaffController::class, 'deleteDataStaticStaff']);
         Route::get('/datastatic/staff', [DataStaticStaffController::class, 'getDataStaticStaff']);
         Route::post('/datastatic', [DataStaticStaffController::class, 'insertDataStaticStaff']);
+
+
+        Route::get('/schedule/mastermenu', [AccessControlSchedulesController::class, 'getMasterMenu']);
+        Route::get('/schedule/menulist', [AccessControlSchedulesController::class, 'getMenuList']);
+        Route::get('/schedule/accesslimit', [AccessControlSchedulesController::class, 'getAccessLimit']);
+        Route::get('/schedule', [AccessControlSchedulesController::class, 'index']);
+        Route::get('/schedule/export', [AccessControlSchedulesController::class, 'export']);
+        Route::post('/schedule', [AccessControlSchedulesController::class, 'insertAccessControlSchedules']);
+        Route::delete('/schedule', [AccessControlSchedulesController::class, 'deleteAccessControlSchedules']);
+        Route::put('/schedule', [AccessControlSchedulesController::class, 'updateAccessControlSchedules']);
+        
+        
+
     });
 
 
@@ -328,7 +342,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/menulist', [AccessControlController::class, 'updateMenuList']);
         Route::put('/menumaster', [AccessControlController::class, 'updateMenuMaster']);
         Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
-
     });
 
 
