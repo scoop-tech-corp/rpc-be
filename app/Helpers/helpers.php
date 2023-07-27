@@ -8,6 +8,7 @@
 
 use App\Models\ProductClinicLog;
 use App\Models\productRestockLog;
+use App\Models\productTransferLog;
 use App\Models\ProductSellLog;
 
 if (!function_exists('adminAccess')) {
@@ -194,6 +195,18 @@ if (!function_exists('productRestockLog')) {
     {
         productRestockLog::create([
             'productRestockId' => $productRestockId,
+            'event' => $event,
+            'details' => $detail,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('productTransferLog')) {
+    function productTransferLog($productTransferId, $event, $detail, $userId)
+    {
+        productTransferLog::create([
+            'productTransferId' => $productTransferId,
             'event' => $event,
             'details' => $detail,
             'userId' => $userId,

@@ -151,6 +151,8 @@ class TransferProductController
                 'userId' => $request->user()->id,
             ]);
 
+            productTransferLog($master->id, "Created", "Waiting for Approval", $request->user()->id);
+
             productTransferDetails::create([
                 'productTransferId' => $master->id,
                 'productIdOrigin' => $request->productId,
@@ -276,6 +278,12 @@ class TransferProductController
             'userId' => $request->user()->id,
         ]);
 
+        if ($numberId == 'draft') {
+            productTransferLog($master->id, "Created", "Draft", $request->user()->id);
+        } else {
+            productTransferLog($master->id, "Created", "Waiting for Approval", $request->user()->id);
+        }
+
         $productIdDestination = 0;
 
         foreach ($datas as $value) {
@@ -368,47 +376,42 @@ class TransferProductController
 
         $data = DB::table('productTransfers as pt')
             ->join('users as u', 'pt.userId', 'u.id')
-            ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-            ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-            ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
+            ->leftjoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
+            ->leftjoin('location as ld', 'pt.locationIdDestination', 'ld.id')
             ->select(
                 'pt.id as id',
-                'pt.productType',
-                'pt.productIdOrigin',
-                'pt.productIdDestination',
-                'pt.transferName',
+                'pt.numberId',
                 'pt.transferNumber',
-                'pt.totalItem',
-                'pt.isAdminApproval',
-                DB::raw("CASE pt.isAdminApproval = 1 WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as Status"),
-                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
+                'pt.transferName',
+                'pt.variantProduct',
+                'pt.totalProduct',
+                'pt.totalProduct',
+                'pt.status',
+                'lo.id as locationOriginId',
+                'lo.locationName as locationOriginName',
+                'ld.id as locationDestinationId',
+                'ld.locationName as locationDestinationName',
                 'u.firstName as createdBy',
-                'ur.firstName as receivedBy',
-
-                DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
-                DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
+                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->where('pt.isDeleted', '=', 0)
-            ->where('pt.groupData', '=', $request->type);
+            ->where('pt.isDeleted', '=', 0);
 
-        if ($role != "Administrator" && $role != "Office") {
-
-            $data = $data->where('pt.userIdReceiver', '=', $request->user()->id);
+        if ($request->locationDestinationId) {
+            $data = $data->whereIn('ld.id', $request->locationDestinationId);
         }
 
-        $data = $data->orderBy('pt.updated_at', 'desc');
+        if ($request->status) {
+            $data = $data->where('pt.status', '=', $request->status);
+        }
 
         if ($request->search) {
+            $res = $this->Search($request);
+            if ($res) {
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
 
-            $tmp = $this->search($request);
+                for ($i = 1; $i < count($res); $i++) {
 
-            if ($tmp) {
-                $data = $data->where($tmp[0], 'like', '%' . $request->search . '%');
-
-                for ($i = 1; $i < count($tmp); $i++) {
-
-                    $data = $data->orWhere($tmp[$i], 'like', '%' . $request->search . '%');
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
                 }
             } else {
                 $data = [];
@@ -418,6 +421,12 @@ class TransferProductController
                 ], 200);
             }
         }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('pt.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -432,130 +441,8 @@ class TransferProductController
 
         $totalPaging = $count_data / $itemPerPage;
 
-        $tempData = [];
 
-        foreach ($data as $value) {
-
-            if ($value->productType == "Product Sell") {
-
-                $res = DB::table('productTransfers as pt')
-                    ->join('productSells as pso', 'pt.productIdOrigin', 'pso.id')
-                    ->join('productSellLocations as pslo', 'pso.id', 'pslo.productSellId')
-                    ->join('location as lo', 'pslo.locationId', 'lo.id')
-
-                    ->join('productSells as psd', 'pt.productIdDestination', 'psd.id')
-                    ->join('productSellLocations as psld', 'psd.id', 'psld.productSellId')
-                    ->join('location as ld', 'psld.locationId', 'ld.id')
-
-                    ->join('users as u', 'pt.userId', 'u.id')
-                    ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-                    ->select(
-                        'pt.id as id',
-                        'pt.productType',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as from',
-                        'lo.id as locationIdOrigin',
-                        'ld.locationName as to',
-                        'ld.id as locationIdDestination',
-                        'pso.fullName as productName',
-                        'pt.transferName',
-                        'pt.transferNumber',
-                        'pt.totalItem',
-                        'pt.status',
-                        'u.firstName as createdBy',
-                        'ur.firstName as receivedBy',
-                        DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                    )
-                    ->where('pt.id', '=', $value->id);
-
-                if ($request->locationId) {
-
-                    if ($request->locationType == 'from') {
-                        $res = $res->whereIn('lo.id', $request->locationId);
-                    } elseif ($request->locationType == 'to') {
-                        $res = $res->whereIn('ld.id', $request->locationId);
-                    }
-                }
-
-                $res = $res->first();
-
-                if ($res) {
-                    array_push($tempData, $res);
-                }
-            } elseif ($value->productType == "Product Clinic") {
-                $res = DB::table('productTransfers as pt')
-
-                    ->join('productClinics as pco', 'pt.productIdOrigin', 'pco.id')
-                    ->join('productClinicLocations as pclo', 'pco.id', 'pclo.productClinicId')
-                    ->join('location as lo', 'pclo.locationId', 'lo.id')
-
-                    ->join('productClinics as pcd', 'pt.productIdDestination', 'pcd.id')
-                    ->join('productClinicLocations as pcld', 'pcd.id', 'pcld.productClinicId')
-                    ->join('location as ld', 'pcld.locationId', 'ld.id')
-
-                    ->join('users as u', 'pt.userId', 'u.id')
-                    ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-                    ->select(
-                        'pt.id as id',
-                        'pt.productType',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as from',
-                        'lo.id as locationIdOrigin',
-                        'ld.locationName as to',
-                        'ld.id as locationIdDestination',
-                        'ld.locationName as to',
-                        'pco.fullName as productName',
-                        'pt.transferName',
-                        'pt.transferNumber',
-                        'pt.totalItem',
-                        'pt.status',
-                        'ur.firstName as receivedBy',
-                        'u.firstName as createdBy',
-                        DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                    )
-                    ->where('pt.id', '=', $value->id);
-
-                if ($request->locationId) {
-
-                    if ($request->locationType == 'from') {
-                        $res = $res->whereIn('lo.id', $request->locationId);
-                    } elseif ($request->locationType == 'to') {
-                        $res = $res->whereIn('ld.id', $request->locationId);
-                    }
-                }
-
-                $res = $res->first();
-
-                if ($res) {
-                    array_push($tempData, $res);
-                }
-            }
-        }
-
-        $tempC = collect($tempData);
-        $sorted = '';
-
-        if ($request->orderValue == 'desc' && $request->orderColumn) {
-            $tempData = $tempC->sortByDesc($request->orderColumn);
-        } elseif ($request->orderValue == 'asc' && $request->orderColumn) {
-            $sorted = $tempC->sortBy($request->orderColumn);
-            $tempData = $sorted->values()->all();
-        }
-
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $tempData
-        ], 200);
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     private function search($request)
@@ -564,18 +451,34 @@ class TransferProductController
 
         $data = DB::table('productTransfers as pt')
             ->select(
-                'pt.productType'
+                'pt.numberId'
             )
             ->where('pt.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('pt.productType', 'like', '%' . $request->search . '%');
+            $data = $data->where('pt.numberId', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'pt.productType';
+            $temp_column[] = 'pt.numberId';
+        }
+
+        $data = DB::table('productTransfers as pt')
+            ->select(
+                'pt.transferNumber'
+            )
+            ->where('pt.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('pt.transferNumber', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'pt.transferNumber';
         }
 
         $data = DB::table('productTransfers as pt')
@@ -594,7 +497,6 @@ class TransferProductController
             $temp_column[] = 'pt.transferName';
         }
 
-        //
         $data = DB::table('productTransfers as pt')
             ->join('users as u', 'pt.userId', 'u.id')
             ->select(
@@ -612,60 +514,58 @@ class TransferProductController
             $temp_column[] = 'u.firstName';
         }
 
-        ///
-        $data = DB::table('productTransfers as pt')
-            ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-            ->select(
-                'ur.firstName'
-            )
-            ->where('pt.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('ur.firstName', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'ur.firstName';
-        }
-
-        ///
-        $data = DB::table('productTransfers as pt')
-            ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-            ->select(
-                'uo.firstName'
-            )
-            ->where('pt.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('uo.firstName', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'uo.firstName';
-        }
-
-        $data = DB::table('productTransfers as pt')
-            ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-            ->select(
-                'ua.firstName'
-            )
-            ->where('pt.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('ua.firstName', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'ua.firstName';
-        }
-
         return $temp_column;
+    }
+
+    public function detailHistory(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        $data = DB::table('productTransferLogs as prl')
+            ->join('users as u', 'prl.userId', 'u.id')
+            ->select(
+                DB::raw("DATE_FORMAT(prl.created_at, '%W, %d %M %Y') as date"),
+                DB::raw("DATE_FORMAT(prl.created_at, '%H:%i') as time"),
+                'u.firstName as createdBy',
+                'prl.details',
+                'prl.event'
+            )
+            ->where('prl.productTransferId', '=', $request->id);
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('prl.updated_at', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     public function detail(Request $request)
@@ -687,167 +587,150 @@ class TransferProductController
 
         if ($findData) {
 
-            $data = DB::table('productTransfers as pt')
-                ->Leftjoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
-                ->Leftjoin('location as ld', 'pt.locationIdDestination', 'ld.id')
-                ->join('users as u', 'pt.userId', 'u.id')
-                ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                ->select(
-                    'pt.numberId',
-                    'pt.transferNumber',
-                    'pt.transferName',
-                    'lo.locationName as locationNameOrigin',
-                    'ld.locationName as locationNameDestination',
-                    'pt.variantProduct',
-                    'pt.totalProduct',
-                    DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-                    'u.firstName as createdBy',
-                    DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
-                )
-                ->where('pt.id', '=', $request->id)
-                ->get();
+            if ($request->type == 'edit') {
 
-            $detail = productTransferDetails::where('productTransferId', '=', $request->id)->get();
+                $data = DB::table('productTransfers as pt')
+                    ->leftJoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
+                    ->leftJoin('location as ld', 'pt.locationIdDestination', 'ld.id')
+                    ->join('users as u', 'pt.userId', 'u.id')
+                    ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
+                    ->select(
+                        'pt.id',
+                        'pt.transferNumber',
+                        DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as transferDate"),
+                        'pt.transferName',
+                        'lo.id as locationOriginId',
+                        'lo.locationName as locationOriginName',
+                        'ld.id as locationDestinationId',
+                        'ld.locationName as locationDestinationName',
+                        'ur.id as userIdReceiver',
+                        DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
+                    )
+                    ->where('pt.id', '=', $request->id)
+                    ->first();
 
-            foreach ($detail as $value) {
-                if ($value->productType == 'productSell') {
-                    $prd = DB::table('productSells as ps')
-                        ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                $detail = productTransferDetails::where('productTransferId', '=', $request->id)->get();
+
+                foreach ($detail as $value) {
+                    if ($value->productType == 'productSell') {
+                        $prd = DB::table('productSells as ps')
+                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                            ->select(
+                                'ptd.id',
+                                'ps.fullName',
+                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                                'ptd.remark',
+                                'ptd.productType',
+                                'ptd.quantity',
+                            )
+                            ->where('ptd.id', '=', $value->id)
+                            ->first();
+                    } elseif ($value->productType == 'productClinic') {
+                        $prd = DB::table('productClinics as ps')
+                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                            ->select(
+                                'ptd.id',
+                                'ps.fullName',
+                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                                'ptd.remark',
+                                'ptd.productType',
+                                'ptd.quantity',
+                            )
+                            ->where('ptd.id', '=', $value->id)
+                            ->first();
+                    }
+
+                    $images = DB::table('productTransferSentImages as pti')
+                        ->join('productTransferDetails as ptd', 'pti.productTransferDetailId', 'ptd.id')
                         ->select(
-                            'ptd.id',
-                            'ps.fullName',
-                            DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
-                            'ptd.remark',
+                            'pti.realImageName',
+                            'pti.label',
+                            'pti.imagePath',
                         )
-                        ->where('ptd.id', '=', $value->id)
-                        ->first();
-                } elseif ($value->productType == 'productClinic') {
-                    $prd = DB::table('productClinics as ps')
-                        ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
-                        ->select(
-                            'ptd.id',
-                            'ps.fullName',
-                            DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
-                            'ptd.remark',
-                        )
-                        ->where('ptd.id', '=', $value->id)
-                        ->first();
+                        ->get();
+
+                    $datas[] = array(
+                        'id' => $prd->id,
+                        'fullName' => $prd->fullName,
+                        'productType' => $prd->productType,
+                        'quantity' => $prd->quantity,
+                        'remark' => $prd->remark,
+                        'additionalCost' => $prd->additionalCost,
+                        'images' => $images
+                    );
                 }
 
-                $data[] = array(
-                    'id' => $prd->id,
-                    'fullName' => $prd->fullName,
-                    'productType' => $prd->productType,
-                    'quantity' => $prd->quantity,
-                    'remark' => $prd->remark,
-                    'additionalCost' => $prd->additionalCost,
-                );
-            }
+                $data->detail = $datas;
 
-            if ($findData->productType == 'Product Sell') {
+                return responseList($data);
+            } elseif ($request->type == 'receive') {
+                # code...
+            } else {
 
                 $data = DB::table('productTransfers as pt')
-                    ->join('productSells as pso', 'pt.productIdOrigin', 'pso.id')
-                    ->join('productSellLocations as pslo', 'pso.id', 'pslo.productSellId')
-                    ->join('location as lo', 'pslo.locationId', 'lo.id')
-
-                    ->join('productSells as psd', 'pt.productIdDestination', 'psd.id')
-                    ->join('productSellLocations as psld', 'psd.id', 'psld.productSellId')
-                    ->join('location as ld', 'psld.locationId', 'ld.id')
-
+                    ->leftJoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
+                    ->leftJoin('location as ld', 'pt.locationIdDestination', 'ld.id')
                     ->join('users as u', 'pt.userId', 'u.id')
                     ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
                     ->select(
-                        'pt.id',
+                        'pt.numberId',
                         'pt.transferNumber',
                         'pt.transferName',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as origin',
-                        'ld.locationName as destination',
-                        'pso.fullName as productName',
-                        'pt.transferName',
-                        'pt.totalItem',
-                        'pt.imagePath',
-                        DB::raw("IFNULL(pt.remark,'') as remark"),
-                        DB::raw("TRIM(pt.additionalCost)+0 as additionalCost"),
-                        DB::raw("CASE WHEN pt.isAdminApproval = 1 THEN 'Yes' WHEN pt.isAdminApproval = 0 THEN 'No' END as isAdminApproval"),
-                        DB::raw("IFNULL(pt.reference,'') as reference"),
-                        DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
-                        DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
-                        'pt.isApprovedOffice',
-                        'u.firstName as createdBy',
-                        'ur.firstName as receivedBy',
-                        'u.firstName as createdBy',
-
-                        DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                        DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
+                        'lo.id as idBranchOrigin',
+                        'lo.locationName as branchOrigin',
+                        'ld.id as idBranchDestination',
+                        'ld.locationName as branchDestination',
+                        'ur.id as idUserReceived',
                         DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as transferDate"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.receivedAt, '%d/%m/%Y %H:%i:%s'),'') as receivedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
+                        'u.firstName as createdBy',
+                        DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as transferDate")
                     )
                     ->where('pt.id', '=', $request->id)
                     ->first();
 
-                return response()->json($data, 200);
-            } elseif ($findData->productType == 'Product Clinic') {
+                $detail = productTransferDetails::where('productTransferId', '=', $request->id)->get();
+                //tinggal gambarnya belom
+                foreach ($detail as $value) {
+                    if ($value->productType == 'productSell') {
+                        $prd = DB::table('productSells as ps')
+                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                            ->select(
+                                'ptd.id',
+                                'ps.fullName',
+                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                                'ptd.remark',
+                                'ptd.productType',
+                                'ptd.quantity',
+                            )
+                            ->where('ptd.id', '=', $value->id)
+                            ->first();
+                    } elseif ($value->productType == 'productClinic') {
+                        $prd = DB::table('productClinics as ps')
+                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                            ->select(
+                                'ptd.id',
+                                'ps.fullName',
+                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                                'ptd.remark',
+                                'ptd.productType',
+                                'ptd.quantity',
+                            )
+                            ->where('ptd.id', '=', $value->id)
+                            ->first();
+                    }
 
-                $data = DB::table('productTransfers as pt')
-                    ->join('productClinics as pco', 'pt.productIdOrigin', 'pco.id')
-                    ->join('productClinicLocations as pclo', 'pco.id', 'pclo.productClinicId')
-                    ->join('location as lo', 'pclo.locationId', 'lo.id')
+                    $datas[] = array(
+                        'id' => $prd->id,
+                        'fullName' => $prd->fullName,
+                        'productType' => $prd->productType,
+                        'quantity' => $prd->quantity,
+                        'remark' => $prd->remark,
+                        'additionalCost' => $prd->additionalCost,
+                    );
+                }
 
-                    ->join('productClinics as pcd', 'pt.productIdDestination', 'pcd.id')
-                    ->join('productClinicLocations as pcld', 'pcd.id', 'pcld.productClinicId')
-                    ->join('location as ld', 'pcld.locationId', 'ld.id')
-
-                    ->join('users as u', 'pt.userId', 'u.id')
-                    ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-                    ->select(
-                        'pt.id',
-                        'pt.transferNumber',
-                        'pt.transferName',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as origin',
-                        'ld.locationName as destination',
-                        'pco.fullName as productName',
-                        'pt.transferName',
-                        'pt.totalItem',
-                        'pt.imagePath',
-                        DB::raw("IFNULL(pt.remark,'') as remark"),
-                        DB::raw("TRIM(pt.additionalCost)+0 as additionalCost"),
-                        DB::raw("CASE WHEN pt.isAdminApproval = 1 THEN 'Yes' WHEN pt.isAdminApproval = 0 THEN 'No' END as isAdminApproval"),
-                        DB::raw("IFNULL(pt.reference,'') as reference"),
-                        DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
-                        DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
-                        'pt.isApprovedOffice',
-                        'u.firstName as createdBy',
-                        'ur.firstName as receivedBy',
-                        'u.firstName as createdBy',
-
-                        DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                        DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
-                        DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as transferDate"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.receivedAt, '%d/%m/%Y %H:%i:%s'),'') as receivedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
-                    )
-                    ->where('pt.id', '=', $request->id)
-                    ->first();
-
-                return response()->json($data, 200);
+                $data->detail = $datas;
+                return responseList($data);
             }
         } else {
             return response()->json([
