@@ -647,6 +647,7 @@ class TransferProductController
                             'pti.label',
                             'pti.imagePath',
                         )
+                        ->where('pti.productTransferDetailId', '=', $value->id)
                         ->get();
 
                     $datas[] = array(
@@ -719,6 +720,16 @@ class TransferProductController
                             ->first();
                     }
 
+                    $images = DB::table('productTransferSentImages as pti')
+                        ->join('productTransferDetails as ptd', 'pti.productTransferDetailId', 'ptd.id')
+                        ->select(
+                            'pti.realImageName',
+                            'pti.label',
+                            'pti.imagePath',
+                        )
+                        ->where('pti.productTransferDetailId', '=', $value->id)
+                        ->get();
+
                     $datas[] = array(
                         'id' => $prd->id,
                         'fullName' => $prd->fullName,
@@ -726,6 +737,7 @@ class TransferProductController
                         'quantity' => $prd->quantity,
                         'remark' => $prd->remark,
                         'additionalCost' => $prd->additionalCost,
+                        'images' => $images
                     );
                 }
 
