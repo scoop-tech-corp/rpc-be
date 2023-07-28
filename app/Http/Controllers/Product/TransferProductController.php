@@ -573,6 +573,92 @@ class TransferProductController
         return responseIndex(ceil($totalPaging), $data);
     }
 
+    public function update(Request $request)
+    {
+    }
+
+    public function delete(Request $request)
+    {
+        $validate = Validator::make(
+            $request->all(),
+            [
+                'id.*' => 'required|integer',
+            ],
+            [
+                'id.*.required' => 'Product Type Should be Required!',
+                'id.*.integer' => 'Product Type Should be Integer!',
+            ]
+        );
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return responseInvalid($errors);
+        }
+
+        if (adminAccess($request->user()->id)) {
+
+            $tmp_num = '';
+
+            foreach ($request->id as $va) {
+
+                $res = ProductTransfer::find($va);
+
+                if (!$res) {
+
+                    return responseInvalid(['There is any Data not found!']);
+                }
+
+                if ($res->status == 5) {
+                    $tmp_num = $tmp_num . (string) $res->numberId . ', ';
+                }
+            }
+
+            if ($tmp_num != '') {
+                return responseInvalid(['Transfer with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already received!']);
+            }
+        } else {
+
+            $tmp_num = '';
+
+            foreach ($request->id as $va) {
+                $res = ProductTransfer::find($va);
+
+                if (!$res) {
+
+                    return responseInvalid(['There is any Data not found!']);
+                }
+
+                if ($res->status != 0) {
+                    $tmp_num = $tmp_num . (string) $res->numberId . ', ';
+                }
+            }
+
+            if ($tmp_num != '') {
+                return responseInvalid(['Restock with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited, has sent to Supplier or has already received!']);
+            }
+        }
+
+        foreach ($request->id as $va) {
+            $res = ProductTransfer::find($va);
+
+            $res->DeletedBy = $request->user()->id;
+            $res->isDeleted = true;
+            $res->DeletedAt = Carbon::now();
+            $res->save();
+
+            DB::table('ProductTransferDetails')
+                ->where('productTransferId', '=', $va)
+                ->update([
+                    'isDeleted' => true,
+                    'DeletedBy' => $request->user()->id,
+                    'DeletedAt' => Carbon::now()
+                ]);
+        }
+
+        return responseDelete();
+    }
+
     public function detail(Request $request)
     {
         $validate = Validator::make($request->all(), [
