@@ -368,8 +368,6 @@ class TransferProductController
 
     public function index(Request $request)
     {
-        $role = role($request->user()->id);
-
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
@@ -385,7 +383,6 @@ class TransferProductController
                 'pt.transferName',
                 'pt.variantProduct',
                 'pt.totalProduct',
-                'pt.totalProduct',
                 'pt.status',
                 'lo.id as locationOriginId',
                 'lo.locationName as locationOriginName',
@@ -398,6 +395,14 @@ class TransferProductController
 
         if ($request->locationDestinationId) {
             $data = $data->whereIn('ld.id', $request->locationDestinationId);
+        }
+
+        if ($request->type == 'approval') {
+            $data = $data->whereIn('pt.status', array(1, 3, 4));
+        }
+
+        if ($request->type == 'history') {
+            $data = $data->whereIn('pt.status', array(2, 5));
         }
 
         if ($request->status) {
@@ -758,13 +763,15 @@ class TransferProductController
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
         $role = role($request->user()->id);
-        $locations = $request->locationId;
+        $locations = $request->locationDestinationId;
+        $status = $request->status;
+        $statusName = "";
 
         if (!$locations[0] == null) {
 
             $location = DB::table('location')
                 ->select('locationName')
-                ->whereIn('id', $request->locationId)
+                ->whereIn('id', $locations)
                 ->get();
 
             if ($location) {
@@ -776,18 +783,40 @@ class TransferProductController
             $tmp = rtrim($tmp, ", ");
         }
 
+        if ($status === 0) {
+            $statusName = "Draft";
+        } elseif ($status === 1) {
+            $statusName = "Waiting for Approval";
+        } elseif ($status === 2) {
+            $statusName = "Rejected";
+        } elseif ($status === 3) {
+            $statusName = "Approved";
+        } elseif ($status === 4) {
+            $statusName = "Product Sent";
+        } elseif ($status === 5) {
+            $statusName = "Product Received";
+        }
+
         if ($tmp == "") {
-            $fileName = "Rekap Produk Transfer " . $date . ".xlsx";
+            if ($statusName == "") {
+                $fileName = "Rekap Produk Transfer " . $date . ".xlsx";
+            } else {
+                $fileName = "Rekap Produk Transfer " . $statusName . " " . $date . ".xlsx";
+            }
         } else {
-            $fileName = "Rekap Produk Transfer " . $tmp . " " . $date . ".xlsx";
+            if ($statusName == "") {
+                $fileName = "Rekap Produk Transfer " . $tmp . " " . $date . ".xlsx";
+            } else {
+                $fileName = "Rekap Produk Transfer " . $statusName . " " . $tmp . " " . $date . ".xlsx";
+            }
         }
 
         return Excel::download(
             new ProductTransferReport(
                 $request->orderValue,
                 $request->orderColumn,
-                $request->locationId,
-                $role
+                $request->locationDestinationId,
+                $request->status
             ),
             $fileName
         );
