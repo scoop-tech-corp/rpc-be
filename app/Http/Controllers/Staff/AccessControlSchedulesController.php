@@ -27,8 +27,11 @@ class AccessControlSchedulesController extends Controller
 
             $currentDateTime = Carbon::now();
 
-            AccessControlSchedule::where([['endTime', '<=', $currentDateTime], ['isDeleted', '=', '0']])
-                ->update(['status' => 'Finished']);
+            AccessControlSchedule::where([
+                ['endTime', '<=', $currentDateTime],
+                ['isDeleted', '=', '0'],
+                ['status', '=', 'On Going']
+            ])->update(['status' => 'Finished']);
 
             DB::commit();
         } catch (Exception $e) {
@@ -36,8 +39,6 @@ class AccessControlSchedulesController extends Controller
             return responseInvalid($e);
         }
     }
-
-
 
     public function getUsersFromLocationId(Request $request)
     {
@@ -83,6 +84,7 @@ class AccessControlSchedulesController extends Controller
         try {
 
 
+            $input_real  = [];
             $data_item = [];
 
             if ($request->schedules) {
@@ -97,21 +99,93 @@ class AccessControlSchedulesController extends Controller
                     'integer' => 'The :attribute must be an integer.',
                 ];
 
-
                 foreach ($request->schedules as $val) {
 
-                    if (array_key_exists('command', $val)) {
-
-                        if ($val['command'] != "del") {
-                            array_push($input_real, $val);
-                        }
-                    } else {
-                        if (array_key_exists('id', $val)) {
-                            // array_push($input_real, $val);
+                    if ($val['command'] != "del" || ($val['command'] == "del" && $val['id'] != "")) {
+                        array_push($input_real, $val);
+                    }
+                }
 
 
+
+                foreach ($input_real as $key) {
+
+                    $validateSchedules = Validator::make(
+                        $key,
+                        [
+                            'locationId' => 'required|integer',
+                            'usersId' => 'required|integer',
+                            'masterId' => 'required|integer',
+                            'menuListId' => 'required|integer',
+                            'accessTypeId' => 'required|integer',
+                            'giveAccessNow' => 'required|boolean',
+                            'startTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i:s' : '',
+                            'endTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i:s|after:startTime' : '',
+                            'duration' => $key['giveAccessNow'] ? 'required_if:giveAccessNow,1|string' : '',
+                        ],
+                        $messageSchedules
+                    );
+
+                    if ($validateSchedules->fails()) {
+
+                        $errors = $validateSchedules->errors()->all();
+
+                        foreach ($errors as $checkisu) {
+
+                            if (!(in_array($checkisu, $data_item))) {
+                                array_push($data_item, $checkisu);
+                            }
                         }
                     }
+
+                    $checkIfMasterExits = MenuMasters::where([['id', '=', $key['masterId']], ['isDeleted', '=', '0']])->first();
+
+                    if ($checkIfMasterExits == null) {
+
+                        return responseInvalid(['Master id not found! please try different id']);
+                    }
+
+                    $checkIfMenuListExits = MenuList::where([['id', '=', $key['menuListId']], ['isActive', '=', '1']])->first();
+
+                    if ($checkIfMenuListExits == null) {
+
+                        return responseInvalid(['Menu list id not found! please try different id']);
+                    }
+
+                    $checkIfAccessTypeExists = AccessType::where([['id', '=', $key['accessTypeId']]])->first();
+
+                    if ($checkIfAccessTypeExists == null) {
+
+                        return responseInvalid(['Access Type id not found! please try different id']);
+                    }
+
+                    $checkIfUsersExits = User::where([['id', '=', $key['usersId']], ['isDeleted', '=', '0']])->first();
+
+                    if ($checkIfUsersExits == null) {
+                        return responseInvalid(['User id not found! please try different id']);
+                    }
+
+                    $checkIfLocationExits = Location::where([['id', '=', $key['locationId']], ['isDeleted', '=', '0']])->first();
+
+                    if ($checkIfLocationExits == null) {
+                        return responseInvalid(['Location id not found! please try different id']);
+                    }
+
+
+                    if ($key['giveAccessNow'] == 1) {
+                        $format = 'd/m/Y H:i:s';
+                        $start = DateTime::createFromFormat($format, $key['startTime']);
+                        $end = DateTime::createFromFormat($format, $key['endTime']);
+
+                        if ($end < $start) {
+                            return responseInvalid(['To date must higher than from date!!']);
+                        }
+                    }
+                }
+
+                if ($data_item) {
+
+                    return responseInvalid($data_item);
                 }
             } else {
 
@@ -119,160 +193,120 @@ class AccessControlSchedulesController extends Controller
             }
 
 
+            foreach ($input_real  as $key) {
+
+                if ($val['id'] == "") {
+
+                    if ($key['giveAccessNow'] == 1) {
+
+                        $format = 'd/m/Y H:i:s';
+                        $start = DateTime::createFromFormat($format, $key['startTime']);
+                        $end = DateTime::createFromFormat($format, $key['endTime']);
+
+                        if ($end < $start) {
+                            return responseInvalid(['To date must higher than from date!!']);
+                        }
+
+                        $format = 'd/m/Y H:i:s';
+                        $start = DateTime::createFromFormat($format, $key['startTime']);
+                        $end = DateTime::createFromFormat($format, $key['endTime']);
+
+                        $AccessControlSchedule = new AccessControlSchedule();
+                        $AccessControlSchedule->locationId = $key['locationId'];
+                        $AccessControlSchedule->usersId = $key['usersId'];
+                        $AccessControlSchedule->masterId = $key['masterId'];
+                        $AccessControlSchedule->menuListId = $key['menuListId'];
+                        $AccessControlSchedule->accessTypeId = $key['accessTypeId'];
+                        $AccessControlSchedule->giveAccessNow = $key['giveAccessNow'];
+                        $AccessControlSchedule->startTime = $start;
+                        $AccessControlSchedule->endTime = $end;
+                        $AccessControlSchedule->status = "On Going";
+                        $AccessControlSchedule->duration =  $key['duration'];
+                        $AccessControlSchedule->createdBy = $request->user()->firstName;
+                        $AccessControlSchedule->created_at = now();
+                        $AccessControlSchedule->updated_at = now();
+                        $AccessControlSchedule->save();
+                    } else {
+
+                        $AccessControlSchedule = new AccessControlSchedule();
+                        $AccessControlSchedule->locationId = $key['locationId'];
+                        $AccessControlSchedule->usersId = $key['usersId'];
+                        $AccessControlSchedule->masterId = $key['masterId'];
+                        $AccessControlSchedule->menuListId = $key['menuListId'];
+                        $AccessControlSchedule->accessTypeId = $key['accessTypeId'];
+                        $AccessControlSchedule->createdBy = $request->user()->firstName;
+                        $AccessControlSchedule->status = "Not Running";
+                        $AccessControlSchedule->created_at = now();
+                        $AccessControlSchedule->updated_at = now();
+                        $AccessControlSchedule->save();
+                    }
+                } else {
+
+                    if ($val['command'] == "del") {
+
+                        AccessControlSchedule::where([
+                            ['id', '=', $val['id']]
+                        ])->update([
+                            'isDeleted' => 1,
+                            'deletedBy' => $request->user()->firstName,
+                            'deletedAt' => now()
+                        ]);
+
+                        $request->user()->firstName;
+                    } else {
+
+                        if ($key['giveAccessNow'] == 1) {
+
+                            $format = 'd/m/Y H:i:s';
+                            $start = DateTime::createFromFormat($format, $key['startTime']);
+                            $end = DateTime::createFromFormat($format, $key['endTime']);
+
+                            if ($end < $start) {
+                                return responseInvalid(['To date must higher than from date!!']);
+                            }
+
+                            $format = 'd/m/Y H:i:s';
+                            $start = DateTime::createFromFormat($format, $key['startTime']);
+                            $end = DateTime::createFromFormat($format, $key['endTime']);
 
 
+                            AccessControlSchedule::where([
+                                ['id', '=', $val['id']]
+                            ])->update([
+                                'masterId' => $key['masterId'],
+                                'menuListId' => $key['menuListId'],
+                                'accessTypeId' => $key['accessTypeId'],
+                                'giveAccessNow' => $key['giveAccessNow'],
+                                'startTime' => $key['start'],
+                                'endTime' => $key['end'],
+                                'status' => "On Going",
+                                'duration' => $key['duration'],
+                                'userUpdateId' => $request->user()->id,
+                                'updated_at' => now()
+                            ]);
+                        } else {
 
+                            AccessControlSchedule::where([
+                                ['id', '=', $val['id']]
+                            ])->update([
+                                'masterId' => $key['masterId'],
+                                'menuListId' => $key['menuListId'],
+                                'accessTypeId' => $key['accessTypeId'],
+                                'giveAccessNow' => $key['giveAccessNow'],
+                                'startTime' => $key['start'],
+                                'endTime' => $key['end'],
+                                'status' => "Not Running",
+                                'userUpdateId' => $request->user()->id,
+                                'updated_at' => now()
+                            ]);
+                        }
+                    }
+                }
+            }
 
+            DB::commit();
 
-
-
-
-            // $validate = Validator::make($request->all(), [
-            //     'locationId' => 'required|integer',
-            //     'usersId' => 'required|integer'
-            // ]);
-
-            // if ($validate->fails()) {
-            //     $errors = $validate->errors()->all();
-            //     return responseInvalid($errors);
-            // }
-
-
-            // $checkIfUsersExits = User::where([['id', '=', $request->usersId], ['isDeleted', '=', '0']])->first();
-
-            // if ($checkIfUsersExits == null) {
-            //     return responseInvalid(['User id not found! please try different id']);
-            // }
-
-
-            // $checkIfLocationExits = Location::where([['id', '=', $request->locationId], ['isDeleted', '=', '0']])->first();
-
-            // if ($checkIfLocationExits == null) {
-            //     return responseInvalid(['Location id not found! please try different id']);
-            // }
-
-
-            // $data_item = [];
-
-            // if ($request->schedules) {
-
-            //     $messageSchedules = [
-            //         'masterId.required' => 'Master id on tab Schedules is required!',
-            //         'menuListId.required' => 'Menu list id on tab Schedules is required!',
-            //         'accessTypeId.required' => 'Access type id on tab Schedules is required!',
-            //         'accessLimitId.required' => 'Access limit id on tab Schedules is required!',
-            //         'startTime.required' => 'Start time on tab Schedules is required!',
-            //         'endTime.required' => 'End time on tab Schedules is required!',
-            //     ];
-
-            //     foreach ($request->schedules as $key) {
-
-            //         $validateSchedules = Validator::make(
-            //             $key,
-            //             [
-            //                 'masterId' => 'required',
-            //                 'menuListId' => 'required',
-            //                 'accessTypeId' => 'required',
-            //                 'accessLimitId' => 'required',
-            //                 'startTime' => 'required',
-            //                 'endTime' => 'required',
-            //             ],
-            //             $messageSchedules
-            //         );
-
-            //         if ($validateSchedules->fails()) {
-
-            //             $errors = $validateSchedules->errors()->all();
-
-            //             foreach ($errors as $checkisu) {
-
-            //                 if (!(in_array($checkisu, $data_item))) {
-            //                     array_push($data_item, $checkisu);
-            //                 }
-            //             }
-            //         }
-
-            //         $checkIfMasterExits = MenuMasters::where([['id', '=', $key['masterId']], ['isDeleted', '=', '0']])->first();
-
-            //         if ($checkIfMasterExits == null) {
-
-            //             return responseInvalid(['Master id not found! please try different id']);
-            //         }
-
-            //         $checkIfMenuListExits = MenuList::where([['id', '=', $key['menuListId']], ['isActive', '=', '1']])->first();
-
-            //         if ($checkIfMenuListExits == null) {
-
-            //             return responseInvalid(['Menu list id not found! please try different id']);
-            //         }
-
-            //         $checkIfAccessTypeExists = AccessType::where([['id', '=', $key['accessTypeId']]])->first();
-
-            //         if ($checkIfAccessTypeExists == null) {
-
-            //             return responseInvalid(['Access Type id not found! please try different id']);
-            //         }
-
-            //         $checkIfAccessLimitExists = AccessLimit::where([['id', '=', $key['accessLimitId']]])->first();
-
-            //         if ($checkIfAccessLimitExists == null) {
-
-            //             return responseInvalid(['Access Limit id not found! please try different id']);
-            //         }
-
-
-            //         $format = 'd/m/Y H:i:s';
-            //         $start = DateTime::createFromFormat($format, $key['startTime']);
-            //         $end = DateTime::createFromFormat($format, $key['endTime']);
-
-            //         if ($end < $start) {
-            //             return responseInvalid(['To date must higher than from date!!']);
-            //         }
-            //     }
-
-            //     if ($data_item) {
-
-            //         return responseInvalid([$data_item]);
-
-            //     }
-
-            // } else {
-
-            //     return responseInvalid(['Schedules can not be empty!']);
-            // }
-
-
-
-
-            // if ($request->schedules) {
-
-            //     // AccessControlSchedule::where('codeLocation', '=', $request->usersId)->delete();
-
-            //     foreach ($request->schedules  as $key) {
-
-            //         // $format = 'd/m/Y H:i:s';
-            //         // $start = DateTime::createFromFormat($format, $key['startTime']);
-            //         // $end = DateTime::createFromFormat($format, $key['endTime']);
-
-            //         // $AccessControlSchedule = new AccessControlSchedule();
-            //         // $AccessControlSchedule->locationId = $request->locationId;
-            //         // $AccessControlSchedule->usersId = $request->usersId;
-            //         // $AccessControlSchedule->masterId = $key['masterId'];
-            //         // $AccessControlSchedule->menuListId = $key['menuListId'];
-            //         // $AccessControlSchedule->accessTypeId = $key['accessTypeId'];
-            //         // $AccessControlSchedule->accessLimitId = $key['accessLimitId'];
-            //         // $AccessControlSchedule->startTime = $start;
-            //         // $AccessControlSchedule->endTime = $end;
-            //         // $AccessControlSchedule->created_at = now();
-            //         // $AccessControlSchedule->updated_at = now();
-            //         // $AccessControlSchedule->save();
-            //     }
-            // }
-
-            // DB::commit();
-
-            // return responseUpdate();
-
+            return responseUpdate();
         } catch (Exception $e) {
 
             DB::rollback();
@@ -280,11 +314,6 @@ class AccessControlSchedulesController extends Controller
             return responseInvalid([$e]);
         }
     }
-
-
-
-
-
 
     public function export(Request $request)
     {
@@ -770,7 +799,7 @@ class AccessControlSchedulesController extends Controller
 
             foreach ($request->usersId as $val) {
 
-                $checkIfUsersExits = User::where([['id', '=', $val], ['isDeleted', '=', '0']])->first();
+                $checkIfUsersExits = User::where([['id', '=', $val], ['status', '=', 'Not Running'], ['isDeleted', '=', '0']])->first();
 
                 if ($checkIfUsersExits == null) {
                     return responseInvalid(['User id not found! please try different id']);
@@ -817,7 +846,7 @@ class AccessControlSchedulesController extends Controller
         try {
 
             $validate = Validator::make($request->all(), [
-                'usersId' => 'required|integer'
+                'id' => 'required|integer'
             ]);
 
             if ($validate->fails()) {
@@ -826,7 +855,7 @@ class AccessControlSchedulesController extends Controller
             }
 
             $checkIfValueExits = AccessControlSchedule::where([
-                ['usersId', '=', $request->usersId],
+                ['id', '=', $request->id],
                 ['isDeleted', '=', '0']
             ])->first();
 
@@ -842,8 +871,11 @@ class AccessControlSchedulesController extends Controller
                     ->select(
                         'a.id',
                         'a.locationId',
-                        'a.masterId',
                         'a.usersId',
+                        'a.masterId',
+                        'a.menuListId',
+                        'a.accessTypeId',
+                        'a.giveAccessNow',
                         'b.masterName',
                         'c.menuName',
                         'd.accessType',
@@ -851,7 +883,8 @@ class AccessControlSchedulesController extends Controller
                         'a.duration',
                         'a.status',
                     )->where([
-                        ['a.isDeleted', '=', 0]
+                        ['a.isDeleted', '=', 0],
+                        ['a.status', '=', 'Not Running']
                     ])->get();
 
                 return response()->json($shedules, 200);
@@ -892,45 +925,20 @@ class AccessControlSchedulesController extends Controller
                 return responseInvalid(['Users with spesific id not found!']);
             } else {
 
-
-                // $shedules = AccessControlSchedule::from('accessControlSchedules as a')
-                // ->leftJoin('menuMaster as b', 'b.id', '=', 'a.masterId')
-                // ->leftJoin('menuList as c', 'c.id', '=', 'a.menuListId')
-                // ->leftJoin('accessType as d', 'd.id', '=', 'a.accessTypeId')
-                // ->select(
-                //     'a.id',
-                //     'a.locationId',
-                //     'a.masterId',
-                //     'a.usersId',
-                //     'b.masterName',
-                //     'c.menuName',
-                //     'd.accessType',
-                //     //DB::raw('CONCAT(DATE_FORMAT(a.startTime, "%d/%m/%Y"), " ", TIME_FORMAT(a.startTime, "%H:%i:%s")) as startTime'),
-                //     // DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
-                //     'a.status',
-                //     'a.duration',
-                //     'a.status',
-                // )->where([
-                //     ['a.isDeleted', '=', 0]
-                // ])->get();
-
                 $shedules = AccessControlSchedule::from('accessControlSchedules as a')
                     ->leftJoin('menuMaster as b', 'b.id', '=', 'a.masterId')
                     ->leftJoin('menuList as c', 'c.id', '=', 'a.menuListId')
                     ->leftJoin('accessType as d', 'd.id', '=', 'a.accessTypeId')
                     ->select(
                         'a.id',
-                        'a.locationId',
-                        'a.masterId',
-                        'a.usersId',
                         'b.masterName',
                         'c.menuName',
                         'd.accessType',
-                        //DB::raw('CONCAT(DATE_FORMAT(a.startTime, "%d/%m/%Y"), " ", TIME_FORMAT(a.startTime, "%H:%i:%s")) as startTime'),
-                        // DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
+                        DB::raw("IFNULL(DATE_FORMAT(a.startTime, '%d/%m/%Y %H:%i:%s'),'') as endTime"),
+                        DB::raw("IFNULL(DATE_FORMAT(a.endTime, '%d/%m/%Y %H:%i:%s'),'') as endTime"),
                         'a.status',
                         'a.duration',
-                        DB::raw('(CASE WHEN a.status = "not running" THEN 1 ELSE 0 END) as isNotRunning'),
+                        DB::raw('(CASE WHEN a.status = "Not Running" THEN 1 ELSE 0 END) as isNotRunning'),
                         'a.status',
                     )->where([
                         ['a.isDeleted', '=', 0]
@@ -1077,8 +1085,20 @@ class AccessControlSchedulesController extends Controller
 
                 foreach ($input_real  as $key) {
 
+                    $existingRecord = AccessControlSchedule::where([
+                        'usersId' =>  $key['usersId'],
+                        'masterId' => $key['masterId'],
+                        'menuListId' => $key['menuListId'],
+                        'startTime' => $start,
+                        'endTime' => $end,
+                    ])->first();
+
+                    if ($existingRecord) {
+                        return responseInvalid(['This schedule already exists!']);
+                    }
 
                     if ($key['giveAccessNow'] == 1) {
+
                         $format = 'd/m/Y H:i:s';
                         $start = DateTime::createFromFormat($format, $key['startTime']);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
@@ -1101,7 +1121,7 @@ class AccessControlSchedulesController extends Controller
                         $AccessControlSchedule->giveAccessNow = $key['giveAccessNow'];
                         $AccessControlSchedule->startTime = $start;
                         $AccessControlSchedule->endTime = $end;
-                        $AccessControlSchedule->status = "In Progress";
+                        $AccessControlSchedule->status = "On Going";
                         $AccessControlSchedule->duration =  $key['duration'];
                         $AccessControlSchedule->createdBy = $request->user()->firstName;
                         $AccessControlSchedule->created_at = now();
@@ -1116,6 +1136,7 @@ class AccessControlSchedulesController extends Controller
                         $AccessControlSchedule->menuListId = $key['menuListId'];
                         $AccessControlSchedule->accessTypeId = $key['accessTypeId'];
                         $AccessControlSchedule->createdBy = $request->user()->firstName;
+                        $AccessControlSchedule->status = "Not Running";
                         $AccessControlSchedule->created_at = now();
                         $AccessControlSchedule->updated_at = now();
                         $AccessControlSchedule->save();
