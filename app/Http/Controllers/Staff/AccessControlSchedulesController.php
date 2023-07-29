@@ -11,7 +11,7 @@ use DB;
 use Carbon\Carbon;
 use DateTime;
 use App\Models\User;
-use App\Models\Location;
+use App\Models\location;
 use App\Models\AccessControl\AccessType;
 use App\Models\AccessControl\MenuList;
 use App\Models\AccessControl\MenuMasters;
