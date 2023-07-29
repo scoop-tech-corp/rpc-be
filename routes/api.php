@@ -295,21 +295,21 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/product/transfer', [StaffController::class, 'staffListTransferProduct']);
 
-
         Route::get('/datastatic', [DataStaticStaffController::class, 'indexDataStaticStaff']);
         Route::delete('/datastatic', [DataStaticStaffController::class, 'deleteDataStaticStaff']);
         Route::get('/datastatic/staff', [DataStaticStaffController::class, 'getDataStaticStaff']);
         Route::post('/datastatic', [DataStaticStaffController::class, 'insertDataStaticStaff']);
 
-
-        Route::get('/schedule/mastermenu', [AccessControlSchedulesController::class, 'getMasterMenu']);
         Route::get('/schedule/menulist', [AccessControlSchedulesController::class, 'getMenuList']);
-        Route::get('/schedule/accesslimit', [AccessControlSchedulesController::class, 'getAccessLimit']);
         Route::get('/schedule', [AccessControlSchedulesController::class, 'index']);
         Route::get('/schedule/export', [AccessControlSchedulesController::class, 'export']);
         Route::post('/schedule', [AccessControlSchedulesController::class, 'insertAccessControlSchedules']);
+        Route::get('/schedule/liststaff', [AccessControlSchedulesController::class, 'getUsersFromLocationId']);
+        Route::get('/schedule/detailshedules', [AccessControlSchedulesController::class, 'detailAllSchedules']);
+        Route::get('/schedule/detail', [AccessControlSchedulesController::class, 'detailSchedules']);
         Route::delete('/schedule', [AccessControlSchedulesController::class, 'deleteAccessControlSchedules']);
         Route::put('/schedule', [AccessControlSchedulesController::class, 'updateAccessControlSchedules']);
+
     });
 
 

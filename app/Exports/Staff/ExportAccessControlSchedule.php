@@ -2,18 +2,40 @@
 
 namespace App\Exports\Staff;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
-use App\Exports\Staff\DataStaffAll;
+use App\Exports\Staff\DataAccessControlScheduleAll;
 
-class ExportAccessControlSchedule implements FromCollection
+class ExportAccessControlSchedule implements WithMultipleSheets
 {
-    /**
-    * @return \Illuminate\Support\Collection
-    */
-    public function collection()
+    use Exportable;
+
+    protected $sheets;
+    protected $orderValue;
+    protected $orderColumn;
+    protected $locationId;
+
+    public function __construct($orderValue, $orderColumn,  $locationId)
     {
-        //
+
+        $this->orderValue = $orderValue;
+        $this->orderColumn = $orderColumn;
+        $this->locationId = $locationId;
+    }
+
+    function array(): array
+    {
+        return $this->sheets;
+    }
+
+    public function sheets(): array
+    {
+        $sheets = [];
+
+        $sheets = [
+            new DataAccessControlScheduleAll($this->orderValue, $this->orderColumn,  $this->locationId),
+        ];
+
+        return $sheets;
     }
 }

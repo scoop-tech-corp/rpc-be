@@ -11,27 +11,29 @@ class AccessControlSchedule extends Model
 
     protected $table = "accessControlSchedules";
 
-    protected $dates = ['startTime','endTime','created_at', 'updated_at'];
+    protected $dates = ['startTime', 'endTime', 'created_at', 'updated_at'];
 
     protected $guarded = ['id'];
 
     public $timestamps = true;
 
     protected $fillable = [
+        'locationId',
         'usersId',
         'masterId',
-        'menuList',
+        'menuListId',
         'accessTypeId',
-        'accessLimitId',
+        'giveAccessNow',
         'startTime',
         'endTime',
+        'status',
+        'duration',
         'isDeleted',
         'userUpdateId',
+        'createdBy',
         'deletedBy',
         'deletedAt',
         'created_at',
         'updated_at'
     ];
 }
-
-
