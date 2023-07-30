@@ -17,6 +17,17 @@ class userSeeder extends Seeder
     public function run()
     {
 
+
+        DB::table('users')->truncate();
+        DB::table('usersTelephones')->truncate();
+        DB::table('usersMessengers')->truncate();
+        DB::table('usersEmails')->truncate();
+        DB::table('usersDetailAddresses')->truncate();
+        DB::table('jobTitle')->truncate();
+        DB::table('payPeriod')->truncate();
+        DB::table('typeId')->truncate();
+        DB::table('usersLocation')->truncate();
+
         $faker = Faker::create('en_US');
         $jobTitle = [
             ['jobName' => 'Vetenarian', 'isActive' => 1,],
@@ -94,7 +105,7 @@ class userSeeder extends Seeder
                 'typeId' => 3, 'identificationNumber' => 298765345678, 'additionalInfo' => 'Your additional information RPC petshop care',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 3, //add by danny wahyudi
                 'isDeleted' => 0,  'created_at' => now()->addDay(4),  'updated_at' => now(), 'password' => bcrypt("123"),
-                'registrationNo' => '8782784881',  'designation' => '1219835124', 'createdBy' => 'alucard', 'email' => 'staff@gmail.com',
+                'registrationNo' => '8782784881',  'designation' => '1219835124', 'createdBy' => 'sabrina', 'email' => 'staff@gmail.com',
             ],
 
             //6
@@ -116,7 +127,7 @@ class userSeeder extends Seeder
                 'typeId' => 2, 'identificationNumber' => 15013534555, 'additionalInfo' => 'i love krabby patty',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 4, //add by danny wahyudi
                 'isDeleted' => 0,  'created_at' => now()->addDay(6),  'updated_at' => now(), 'password' => bcrypt("123"),
-                'registrationNo' => '111111111',  'designation' => '222222', 'createdBy' => 'squidward', 'email' => 'customer@gmail.com',
+                'registrationNo' => '111111111',  'designation' => '222222', 'createdBy' => 'sabrina', 'email' => 'customer@gmail.com',
             ],
 
             //8
@@ -127,7 +138,7 @@ class userSeeder extends Seeder
                 'typeId' => 2, 'identificationNumber' => 1111111111, 'additionalInfo' => 'Im number one',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 5, //add by danny wahyudi
                 'isDeleted' => 0,  'created_at' => now()->addDay(7),  'updated_at' => now(), 'password' => bcrypt("123"),
-                'registrationNo' => '1111111111',  'designation' => '1111111111', 'createdBy' => 'spongebob', 'email' => 'internship@gmail.com',
+                'registrationNo' => '1111111111',  'designation' => '1111111111', 'createdBy' => 'james', 'email' => 'internship@gmail.com',
             ],
 
             //9
@@ -138,7 +149,7 @@ class userSeeder extends Seeder
                 'typeId' => 2, 'identificationNumber' => 24729258888, 'additionalInfo' => 'Patrik si bintang laut',
                 'generalCustomerCanSchedule' => 1, 'generalCustomerReceiveDailyEmail' => 1, 'generalAllowMemberToLogUsingEmail' => 1, 'reminderEmail' => 1, 'reminderWhatsapp' => 1,  'roleId' => 8,
                 'isDeleted' => 0,  'created_at' => now()->addDay(8),  'updated_at' => now(), 'password' => bcrypt("123"),
-                'registrationNo' => '8782784881',  'designation' => '1219835124', 'createdBy' => 'spongebob', 'email' => 'patrikbintanglaut@gmail.com',
+                'registrationNo' => '8782784881',  'designation' => '1219835124', 'createdBy' => 'james', 'email' => 'patrikbintanglaut@gmail.com',
             ],
 
             //10
