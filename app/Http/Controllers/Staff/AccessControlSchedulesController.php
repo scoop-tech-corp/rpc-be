@@ -277,7 +277,6 @@ class AccessControlSchedulesController extends Controller
                                     return responseInvalid(['To date must higher than from date!!']);
                                 }
 
-
                                 AccessControlSchedule::where([
                                     ['id', '=', $key['id']]
                                 ])->update([
@@ -285,8 +284,8 @@ class AccessControlSchedulesController extends Controller
                                     'menuListId' => $key['menuListId'],
                                     'accessTypeId' => $key['accessTypeId'],
                                     'giveAccessNow' => $key['giveAccessNow'],
-                                    'startTime' => $key['start'],
-                                    'endTime' => $key['end'],
+                                    'startTime' => $start,
+                                    'endTime' => $end,
                                     'status' => "On Going",
                                     'duration' => $key['duration'],
                                     'userUpdateId' => $request->user()->id,
@@ -307,7 +306,7 @@ class AccessControlSchedulesController extends Controller
                             }
                         }
                     } else {
-
+                      
                         if ($key['giveAccessNow'] == 1) {
 
                             $format = 'd/m/Y H:i:s';
@@ -325,13 +324,15 @@ class AccessControlSchedulesController extends Controller
                                 'menuListId' => $key['menuListId'],
                                 'accessTypeId' => $key['accessTypeId'],
                                 'giveAccessNow' => $key['giveAccessNow'],
-                                'startTime' => $key['start'],
-                                'endTime' => $key['end'],
+                                'startTime' => $start,
+                                'endTime' => $end,
                                 'status' => "On Going",
                                 'duration' => $key['duration'],
                                 'userUpdateId' => $request->user()->id,
                                 'updated_at' => now()
                             ]);
+
+
                         } else {
 
                             AccessControlSchedule::where([
