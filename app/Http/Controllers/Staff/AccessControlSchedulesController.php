@@ -292,9 +292,6 @@ class AccessControlSchedulesController extends Controller
                                 'masterId' => $key['masterId'],
                                 'menuListId' => $key['menuListId'],
                                 'accessTypeId' => $key['accessTypeId'],
-                                'giveAccessNow' => $key['giveAccessNow'],
-                                'startTime' => $key['start'],
-                                'endTime' => $key['end'],
                                 'status' => "Not Running",
                                 'userUpdateId' => $request->user()->id,
                                 'updated_at' => now()
@@ -861,7 +858,7 @@ class AccessControlSchedulesController extends Controller
 
             if ($checkIfValueExits === null) {
 
-                return responseInvalid(['Users with spesific id not found!']);
+                return responseInvalid(['Schedule with spesific id not found!']);
             } else {
 
                 $shedules = AccessControlSchedule::from('accessControlSchedules as a')
@@ -879,6 +876,8 @@ class AccessControlSchedulesController extends Controller
                         'b.masterName',
                         'c.menuName',
                         'd.accessType',
+                        DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i:%s") as startTime'),
+                        DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
                         'a.status',
                         'a.duration',
                         'a.status',
@@ -934,8 +933,8 @@ class AccessControlSchedulesController extends Controller
                         'b.masterName',
                         'c.menuName',
                         'd.accessType',
-                        DB::raw("IFNULL(DATE_FORMAT(a.startTime, '%d/%m/%Y %H:%i:%s'),'') as endTime"),
-                        DB::raw("IFNULL(DATE_FORMAT(a.endTime, '%d/%m/%Y %H:%i:%s'),'') as endTime"),
+                        DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i:%s") as startTime'),
+                        DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
                         'a.status',
                         'a.duration',
                         DB::raw('(CASE WHEN a.status = "Not Running" THEN 1 ELSE 0 END) as isNotRunning'),
