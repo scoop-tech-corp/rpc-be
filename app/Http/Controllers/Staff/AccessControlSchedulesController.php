@@ -943,6 +943,7 @@ class AccessControlSchedulesController extends Controller
                         ['a.isDeleted', '=', 0]
                     ])->get();
 
+
                 return response()->json($shedules, 200);
             }
 

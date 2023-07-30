@@ -21,8 +21,8 @@ return new class extends Migration
             $table->integer('menuListId');
             $table->integer('accessTypeId');
             $table->boolean('giveAccessNow')->nullable()->default(false);
-            $table->datetime('startTime')->nullable();
-            $table->datetime('endTime')->nullable();
+            $table->timestamp('startTime')->nullable();
+            $table->timestamp('endTime')->nullable();
             $table->string('status')->nullable();
             $table->string('duration')->nullable();
             $table->boolean('isDeleted')->nullable()->default(false);

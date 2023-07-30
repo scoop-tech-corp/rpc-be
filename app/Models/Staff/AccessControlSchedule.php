@@ -11,7 +11,7 @@ class AccessControlSchedule extends Model
 
     protected $table = "accessControlSchedules";
 
-    protected $dates = ['startTime', 'endTime', 'created_at', 'updated_at'];
+    protected $dates = ['created_at', 'updated_at'];
 
     protected $guarded = ['id'];
 
