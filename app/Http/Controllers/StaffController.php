@@ -1046,7 +1046,7 @@ class StaffController extends Controller
                 'e.locationName as location',
                 'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                 'a.updated_at'
             )
             ->where([

@@ -235,17 +235,17 @@ class userSeeder extends Seeder
 
         $userstelephone = [
             //1
-            ['usersId' => 1, "phoneNumber" => '087888821648', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => 1, "phoneNumber" => '6287888821648', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
 
             //2
-            ['usersId' => 2, "phoneNumber" => '085264992941', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => 2, "phoneNumber" => '6285264992941', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
 
             //11
-            ['usersId' => 11, "phoneNumber" => '087888821649', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => 11, "phoneNumber" => '6287888821649', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
 
 
             //12
-            ['usersId' => 12, "phoneNumber" => '087888821625', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
+            ['usersId' => 12, "phoneNumber" => '6287888821625', "type" => 'Telepon Selular', "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],
 
 
         ];
@@ -299,17 +299,17 @@ class userSeeder extends Seeder
 
         $usersmessengers = [
             //1
-            ["usersId" => 1, "messengerNumber" => '085265779499', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
+            ["usersId" => 1, "messengerNumber" => '6285265779499', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
 
             //2
-            ["usersId" => 2, "messengerNumber" => '081501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
+            ["usersId" => 2, "messengerNumber" => '6281501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
 
 
             //11
-            ["usersId" => 11, "messengerNumber" => '081501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
+            ["usersId" => 11, "messengerNumber" => '6281501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
 
             //12
-            ["usersId" => 12, "messengerNumber" => '081501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
+            ["usersId" => 12, "messengerNumber" => '6281501035232', "type" => 'Office', "usage" =>  'Utama', "isDeleted" => 0, 'created_at' => now(),],
 
 
         ];
@@ -331,7 +331,7 @@ class userSeeder extends Seeder
 
         for ($j = 3; $j <= 12; $j++) {
 
-            $phoneNumber = $faker->regexify('/^\+628\d{9,10}$/');
+            $phoneNumber = $faker->regexify('/^\628\d{9,10}$/');
 
             $phone = [
                 ["usersId" => $j, "phoneNumber" => $phoneNumber, "type" => $faker->randomElement(['Telepon Selular', 'Whatshapp']), "usage" =>  "Utama", "isDeleted" => 0, 'created_at' => now(),],

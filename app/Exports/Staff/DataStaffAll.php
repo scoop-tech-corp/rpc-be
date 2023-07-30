@@ -52,12 +52,12 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(' ', d.phoneNumber, ' ') as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then 'Ya' else 'Tidak' end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
                 'e.locationName as location',
                 'e.locationId as locationId',
                 'a.createdBy as createdBy',
-                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
+                DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                 'a.updated_at'
             )
             ->where([
@@ -153,7 +153,7 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
     {
 
         return [
-            'D' => NumberFormat::FORMAT_TEXT,
+            'E' => NumberFormat::FORMAT_TEXT,
         ];
     }
 
@@ -162,7 +162,8 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
         return [
             [
                 'No.',
-                'Nama Staff ',
+                'Nama Staff',
+                'Job Title',
                 'Email Address',
                 'Phone Number',
                 'Nomor Whatshapp Aktif',
@@ -186,6 +187,7 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
             [
                 $item->number,
                 $item->name,
+                $item->jobTitle,
                 $item->emailAddress,
                 $item->phoneNumber,
                 $item->isWhatsapp,
