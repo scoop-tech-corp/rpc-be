@@ -51,7 +51,6 @@ class StaffLeaveController extends Controller
                 ->get();
 
             return response()->json($getUser, 200);
-            
         } catch (Exception $e) {
 
             return responseInvalid([$e]);
@@ -190,7 +189,6 @@ class StaffLeaveController extends Controller
             $combinedArray = array($array1, $array2, $array3, $array4);
 
             return response()->json($combinedArray, 200);
-
         } catch (Exception $e) {
 
             return responseInvalid([$e]);
@@ -1410,10 +1408,10 @@ class StaffLeaveController extends Controller
                     'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1430,12 +1428,12 @@ class StaffLeaveController extends Controller
                     'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.approveOrRejectedBy as  approvedBy',
-                    'a.approveOrRejectedDate as approvedAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                     'a.updated_at as updatedAt',
                 )->where([
                     ['a.status', '=', $request->status],
@@ -1451,13 +1449,13 @@ class StaffLeaveController extends Controller
                     'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.approveOrRejectedBy as  rejectedBy',
                     'a.rejectedReason as  rejectedReason',
-                    'a.approveOrRejectedDate as rejectedAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1525,10 +1523,10 @@ class StaffLeaveController extends Controller
                     'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1546,12 +1544,12 @@ class StaffLeaveController extends Controller
                     'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.approveOrRejectedBy as  approvedBy',
-                    'a.approveOrRejectedDate as approvedAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                     'a.updated_at as updatedAt',
                 )->where([
                     ['a.status', '=', $request->status],
@@ -1568,13 +1566,13 @@ class StaffLeaveController extends Controller
                     'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.approveOrRejectedBy as  rejectedBy',
                     'a.rejectedReason as  rejectedReason',
-                    'a.approveOrRejectedDate as rejectedAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1916,10 +1914,11 @@ class StaffLeaveController extends Controller
                     'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1963,10 +1962,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2006,10 +2005,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2048,10 +2047,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2091,10 +2090,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2133,10 +2132,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2175,10 +2174,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2218,10 +2217,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2261,12 +2260,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2306,12 +2305,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2350,12 +2349,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2395,12 +2394,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2439,12 +2438,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2483,12 +2482,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2530,12 +2529,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2574,12 +2573,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2620,12 +2619,12 @@ class StaffLeaveController extends Controller
                         'a.locationId as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2666,12 +2665,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2711,13 +2710,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2759,13 +2758,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2793,13 +2792,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2841,13 +2840,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2888,13 +2887,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2934,13 +2933,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2981,13 +2980,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3026,13 +3025,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3073,13 +3072,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3120,13 +3119,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3162,10 +3161,10 @@ class StaffLeaveController extends Controller
                     'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -3208,10 +3207,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3251,10 +3250,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3292,10 +3291,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3335,10 +3334,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3376,10 +3375,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3418,10 +3417,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3461,10 +3460,10 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3504,12 +3503,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3548,12 +3547,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3591,12 +3590,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3637,12 +3636,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3681,12 +3680,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3724,12 +3723,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3768,12 +3767,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3812,12 +3811,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3856,12 +3855,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3900,12 +3899,12 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3945,13 +3944,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3990,13 +3989,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -4035,13 +4034,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -4081,13 +4080,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -4125,13 +4124,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -4169,13 +4168,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -4214,13 +4213,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -4259,13 +4258,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -4307,13 +4306,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -4353,13 +4352,13 @@ class StaffLeaveController extends Controller
                         'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([

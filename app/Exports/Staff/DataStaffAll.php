@@ -163,7 +163,7 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
             [
                 'No.',
                 'Nama Staff',
-                'Job Title',
+                'Jabatan',
                 'Email Address',
                 'Phone Number',
                 'Nomor Whatshapp Aktif',
