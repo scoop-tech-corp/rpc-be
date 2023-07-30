@@ -132,7 +132,7 @@ class LocationController extends Controller
                 'result' => 'success',
                 'message' => 'Successfully deleted location',
             ]);
-            
+
         } catch (Exception $e) {
 
             DB::rollback();
@@ -1805,5 +1805,29 @@ class LocationController extends Controller
                 ->get();
             return response()->json($data, 200);
         }
+    }
+
+    public function locationDestination(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required|integer'
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $data = DB::table('location as l')
+        ->select('l.id as id','l.locationName')
+        ->where('l.id','!=',$request->locationId)
+        ->get();
+
+        return responseList($data);
+
     }
 }

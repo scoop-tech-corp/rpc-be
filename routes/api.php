@@ -74,6 +74,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         //product
         Route::get('/product/transfer', [LocationController::class, 'locationTransferProduct']);
+        Route::get('/product/transfer/destination', [LocationController::class, 'locationDestination']);
     });
 
 
