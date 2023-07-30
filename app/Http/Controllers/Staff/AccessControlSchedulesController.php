@@ -235,7 +235,7 @@ class AccessControlSchedulesController extends Controller
                         $AccessControlSchedule->endTime = $end;
                         $AccessControlSchedule->status = "On Going";
                         $AccessControlSchedule->duration =  $key['duration'];
-                        $AccessControlSchedule->createdBy = $request->user()->firstName;
+                        $AccessControlSchedule->createdBy = $request->user()->id;
                         $AccessControlSchedule->created_at = now();
                         $AccessControlSchedule->updated_at = now();
                         $AccessControlSchedule->save();
@@ -247,7 +247,7 @@ class AccessControlSchedulesController extends Controller
                         $AccessControlSchedule->masterId = $key['masterId'];
                         $AccessControlSchedule->menuListId = $key['menuListId'];
                         $AccessControlSchedule->accessTypeId = $key['accessTypeId'];
-                        $AccessControlSchedule->createdBy = $request->user()->firstName;
+                        $AccessControlSchedule->createdBy = $request->user()->id;
                         $AccessControlSchedule->status = "Not Running";
                         $AccessControlSchedule->created_at = now();
                         $AccessControlSchedule->updated_at = now();
@@ -262,7 +262,7 @@ class AccessControlSchedulesController extends Controller
                                 ['id', '=', $key['id']]
                             ])->update([
                                 'isDeleted' => 1,
-                                'deletedBy' => $request->user()->firstName,
+                                'deletedBy' => $request->user()->id,
                                 'deletedAt' => now()
                             ]);
                         } else {
