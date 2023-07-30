@@ -30,7 +30,24 @@ class AccessControlController extends Controller
                 ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
                 ->select(
                     'a.id as id',
-                    DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as name"),
+                    DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(a.firstName, ''),
+                                        IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+                                        IFNULL(CONCAT(' ', a.lastName), ''),
+                                        IFNULL(CONCAT(' (', a.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS name
+                        "),
                     'b.roleName as roleName',
                     'c.jobName as jobName',
                     'a.createdBy as createdBy',
@@ -936,7 +953,24 @@ class AccessControlController extends Controller
                     'c.menuName as menuName',
                     'd.roleName as roleName',
                     'a.remark as action',
-                    DB::raw("CONCAT(IFNULL(b.firstName,''), case when b.middleName is null then '' else ' ' end , IFNULL(b.middleName,'') ,case when b.lastName is null then '' else ' ' end, case when b.lastName is null then '' else b.lastName end ) as createdBy"),
+                    DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(b.firstName, ''),
+                                        IF(b.middleName IS NOT NULL AND b.middleName != '', CONCAT(' ', b.middleName), ''),
+                                        IFNULL(CONCAT(' ', b.lastName), ''),
+                                        IFNULL(CONCAT(' (', b.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS createdBy
+                        "),
                     DB::raw('a.created_at as createdAt'),
                     'a.updated_at'
                 )
@@ -1094,7 +1128,24 @@ class AccessControlController extends Controller
                 'c.menuName as menuName',
                 'd.roleName as roleName',
                 'a.remark as action',
-                DB::raw("CONCAT(IFNULL(b.firstName,''), case when b.middleName is null then '' else ' ' end , IFNULL(b.middleName,'') ,case when b.lastName is null then '' else ' ' end, case when b.lastName is null then '' else b.lastName end ) as createdBy"),
+                DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(b.firstName, ''),
+                                        IF(b.middleName IS NOT NULL AND b.middleName != '', CONCAT(' ', b.middleName), ''),
+                                        IFNULL(CONCAT(' ', b.lastName), ''),
+                                        IFNULL(CONCAT(' (', b.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS createdBy
+                        "),
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
@@ -1139,7 +1190,24 @@ class AccessControlController extends Controller
                 'c.menuName as menuName',
                 'd.roleName as roleName',
                 'a.remark as action',
-                DB::raw("CONCAT(IFNULL(b.firstName,''), case when b.middleName is null then '' else ' ' end , IFNULL(b.middleName,'') ,case when b.lastName is null then '' else ' ' end, case when b.lastName is null then '' else b.lastName end ) as createdBy"),
+                DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(b.firstName, ''),
+                                        IF(b.middleName IS NOT NULL AND b.middleName != '', CONCAT(' ', b.middleName), ''),
+                                        IFNULL(CONCAT(' ', b.lastName), ''),
+                                        IFNULL(CONCAT(' (', b.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS createdBy
+                        "),
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
@@ -1183,7 +1251,24 @@ class AccessControlController extends Controller
                 'c.menuName as menuName',
                 'd.roleName as roleName',
                 'a.remark as action',
-                DB::raw("CONCAT(IFNULL(b.firstName,''), case when b.middleName is null then '' else ' ' end , IFNULL(b.middleName,'') ,case when b.lastName is null then '' else ' ' end, case when b.lastName is null then '' else b.lastName end ) as createdBy"),
+                DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(b.firstName, ''),
+                                        IF(b.middleName IS NOT NULL AND b.middleName != '', CONCAT(' ', b.middleName), ''),
+                                        IFNULL(CONCAT(' ', b.lastName), ''),
+                                        IFNULL(CONCAT(' (', b.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS createdBy
+                        "),
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
@@ -1227,7 +1312,24 @@ class AccessControlController extends Controller
                 'c.menuName as menuName',
                 'd.roleName as roleName',
                 'a.remark as action',
-                DB::raw("CONCAT(IFNULL(b.firstName,''), case when b.middleName is null then '' else ' ' end , IFNULL(b.middleName,'') ,case when b.lastName is null then '' else ' ' end, case when b.lastName is null then '' else b.lastName end ) as createdBy"),
+                DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(b.firstName, ''),
+                                        IF(b.middleName IS NOT NULL AND b.middleName != '', CONCAT(' ', b.middleName), ''),
+                                        IFNULL(CONCAT(' ', b.lastName), ''),
+                                        IFNULL(CONCAT(' (', b.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS createdBy
+                        "),
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
@@ -1271,7 +1373,24 @@ class AccessControlController extends Controller
                 'c.menuName as menuName',
                 'd.roleName as roleName',
                 'a.remark as action',
-                DB::raw("CONCAT(IFNULL(b.firstName,''), case when b.middleName is null then '' else ' ' end , IFNULL(b.middleName,'') ,case when b.lastName is null then '' else ' ' end, case when b.lastName is null then '' else b.lastName end ) as createdBy"),
+                DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(b.firstName, ''),
+                                        IF(b.middleName IS NOT NULL AND b.middleName != '', CONCAT(' ', b.middleName), ''),
+                                        IFNULL(CONCAT(' ', b.lastName), ''),
+                                        IFNULL(CONCAT(' (', b.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS createdBy
+                        "),
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
@@ -1316,7 +1435,24 @@ class AccessControlController extends Controller
             ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as name"),
+                DB::raw("
+		REPLACE(
+			TRIM(
+				REPLACE(
+					CONCAT(
+						IFNULL(a.firstName, ''),
+						IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+						IFNULL(CONCAT(' ', a.lastName), ''),
+						IFNULL(CONCAT(' (', a.nickName, ')'), '')
+					),
+					'  (',
+					'('
+				)
+			),
+			' (',
+			'('
+		) AS name
+		"),
                 'b.roleName as roleName',
                 'c.jobName as jobName',
                 'a.createdBy as createdBy',
@@ -1357,7 +1493,24 @@ class AccessControlController extends Controller
             ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as name"),
+                DB::raw("
+		REPLACE(
+			TRIM(
+				REPLACE(
+					CONCAT(
+						IFNULL(a.firstName, ''),
+						IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+						IFNULL(CONCAT(' ', a.lastName), ''),
+						IFNULL(CONCAT(' (', a.nickName, ')'), '')
+					),
+					'  (',
+					'('
+				)
+			),
+			' (',
+			'('
+		) AS name
+		"),
                 'b.roleName as roleName',
                 'c.jobName as jobName',
                 'a.createdBy as createdBy',
@@ -1401,7 +1554,24 @@ class AccessControlController extends Controller
             ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as name"),
+                DB::raw("
+		REPLACE(
+			TRIM(
+				REPLACE(
+					CONCAT(
+						IFNULL(a.firstName, ''),
+						IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+						IFNULL(CONCAT(' ', a.lastName), ''),
+						IFNULL(CONCAT(' (', a.nickName, ')'), '')
+					),
+					'  (',
+					'('
+				)
+			),
+			' (',
+			'('
+		) AS name
+		"),
                 'b.roleName as roleName',
                 'c.jobName as jobName',
                 'a.createdBy as createdBy',
@@ -1443,7 +1613,24 @@ class AccessControlController extends Controller
             ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as name"),
+                DB::raw("
+		REPLACE(
+			TRIM(
+				REPLACE(
+					CONCAT(
+						IFNULL(a.firstName, ''),
+						IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+						IFNULL(CONCAT(' ', a.lastName), ''),
+						IFNULL(CONCAT(' (', a.nickName, ')'), '')
+					),
+					'  (',
+					'('
+				)
+			),
+			' (',
+			'('
+		) AS name
+		"),
                 'b.roleName as roleName',
                 'c.jobName as jobName',
                 'a.createdBy as createdBy',
@@ -1486,7 +1673,24 @@ class AccessControlController extends Controller
             ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as name"),
+                DB::raw("
+		REPLACE(
+			TRIM(
+				REPLACE(
+					CONCAT(
+						IFNULL(a.firstName, ''),
+						IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+						IFNULL(CONCAT(' ', a.lastName), ''),
+						IFNULL(CONCAT(' (', a.nickName, ')'), '')
+					),
+					'  (',
+					'('
+				)
+			),
+			' (',
+			'('
+		) AS name
+		"),
                 'b.roleName as roleName',
                 'c.jobName as jobName',
                 'a.createdBy as createdBy',

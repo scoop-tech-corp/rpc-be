@@ -611,7 +611,24 @@ class StaffController extends Controller
                     ->select(
                         'usersEmails.usersId',
                         'usersEmails.email',
-                        DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.middleName,'') ,' ', IFNULL(users.lastName,'') ,'(', IFNULL(users.nickName,'') ,')'  ) as name"),
+                        DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(users.firstName, ''),
+                                        IF(users.middleName IS NOT NULL AND users.middleName != '', CONCAT(' ', users.middleName), ''),
+                                        IFNULL(CONCAT(' ', users.lastName), ''),
+                                        IFNULL(CONCAT(' (', users.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS name
+                        "),
                     )
                     ->where([
                         ['usersEmails.usersId', '=', $lastInsertedID],
@@ -1037,7 +1054,24 @@ class StaffController extends Controller
             })
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
+                DB::raw("
+                REPLACE(
+                    TRIM(
+                        REPLACE(
+                            CONCAT(
+                                IFNULL(a.firstName, ''),
+                                IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+                                IFNULL(CONCAT(' ', a.lastName), ''),
+                                IFNULL(CONCAT(' (', a.nickName, ')'), '')
+                            ),
+                            '  (',
+                            '('
+                        )
+                    ),
+                    ' (',
+                    '('
+                ) AS name
+                "),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),

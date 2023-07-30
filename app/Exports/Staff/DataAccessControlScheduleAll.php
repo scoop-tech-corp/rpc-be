@@ -52,7 +52,24 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             })
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
+                DB::raw("
+                REPLACE(
+                    TRIM(
+                        REPLACE(
+                            CONCAT(
+                                IFNULL(a.firstName, ''),
+                                IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+                                IFNULL(CONCAT(' ', a.lastName), ''),
+                                IFNULL(CONCAT(' (', a.nickName, ')'), '')
+                            ),
+                            '  (',
+                            '('
+                        )
+                    ),
+                    ' (',
+                    '('
+                ) AS name
+                "),
                 'b.jobName as jobTitle',
                 'e.locationName as location',
                 'e.locationId as locationId',

@@ -48,7 +48,24 @@ class DataStaffAll implements FromCollection, ShouldAutoSize, WithHeadings, With
             })
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
+                DB::raw("
+                REPLACE(
+                    TRIM(
+                        REPLACE(
+                            CONCAT(
+                                IFNULL(a.firstName, ''),
+                                IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+                                IFNULL(CONCAT(' ', a.lastName), ''),
+                                IFNULL(CONCAT(' (', a.nickName, ')'), '')
+                            ),
+                            '  (',
+                            '('
+                        )
+                    ),
+                    ' (',
+                    '('
+                ) AS name
+                "),
                 'b.jobName as jobTitle',
                 'c.email as emailAddress',
                 DB::raw("CONCAT(' ', d.phoneNumber, ' ') as phoneNumber"),
