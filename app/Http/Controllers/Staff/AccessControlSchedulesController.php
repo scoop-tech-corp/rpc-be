@@ -101,12 +101,15 @@ class AccessControlSchedulesController extends Controller
 
                 foreach ($request->schedules as $val) {
 
-                    if ($val['command'] != "del" || ($val['command'] == "del" && $val['id'] != "")) {
+                    if (array_key_exists('command', $val)) {
+
+                        if ($val['command'] != "del" || ($val['command'] == "del" && $val['id'] != "")) {
+                            array_push($input_real, $val);
+                        }
+                    } else {
                         array_push($input_real, $val);
                     }
                 }
-
-
 
                 foreach ($input_real as $key) {
 
@@ -195,7 +198,7 @@ class AccessControlSchedulesController extends Controller
 
             foreach ($input_real  as $key) {
 
-                if ($val['id'] == "") {
+                if ($key['id'] == "") {
 
                     if ($key['giveAccessNow'] == 1) {
 
@@ -207,9 +210,19 @@ class AccessControlSchedulesController extends Controller
                             return responseInvalid(['To date must higher than from date!!']);
                         }
 
-                        $format = 'd/m/Y H:i:s';
-                        $start = DateTime::createFromFormat($format, $key['startTime']);
-                        $end = DateTime::createFromFormat($format, $key['endTime']);
+
+                        $existingRecord = AccessControlSchedule::where([
+                            'usersId' =>  $key['usersId'],
+                            'masterId' => $key['masterId'],
+                            'menuListId' => $key['menuListId'],
+                            'startTime' => $start,
+                            'endTime' => $end,
+                        ])->first();
+
+                        if ($existingRecord) {
+                            return responseInvalid(['This schedule already exists!']);
+                        }
+
 
                         $AccessControlSchedule = new AccessControlSchedule();
                         $AccessControlSchedule->locationId = $key['locationId'];
@@ -242,17 +255,57 @@ class AccessControlSchedulesController extends Controller
                     }
                 } else {
 
-                    if ($val['command'] == "del") {
+                    if (array_key_exists('command', $key)) {
 
-                        AccessControlSchedule::where([
-                            ['id', '=', $val['id']]
-                        ])->update([
-                            'isDeleted' => 1,
-                            'deletedBy' => $request->user()->firstName,
-                            'deletedAt' => now()
-                        ]);
+                        if ($key['command'] == "del") {
+                            AccessControlSchedule::where([
+                                ['id', '=', $key['id']]
+                            ])->update([
+                                'isDeleted' => 1,
+                                'deletedBy' => $request->user()->firstName,
+                                'deletedAt' => now()
+                            ]);
+                        } else {
 
-                        $request->user()->firstName;
+                            if ($key['giveAccessNow'] == 1) {
+
+                                $format = 'd/m/Y H:i:s';
+                                $start = DateTime::createFromFormat($format, $key['startTime']);
+                                $end = DateTime::createFromFormat($format, $key['endTime']);
+
+                                if ($end < $start) {
+                                    return responseInvalid(['To date must higher than from date!!']);
+                                }
+
+
+                                AccessControlSchedule::where([
+                                    ['id', '=', $key['id']]
+                                ])->update([
+                                    'masterId' => $key['masterId'],
+                                    'menuListId' => $key['menuListId'],
+                                    'accessTypeId' => $key['accessTypeId'],
+                                    'giveAccessNow' => $key['giveAccessNow'],
+                                    'startTime' => $key['start'],
+                                    'endTime' => $key['end'],
+                                    'status' => "On Going",
+                                    'duration' => $key['duration'],
+                                    'userUpdateId' => $request->user()->id,
+                                    'updated_at' => now()
+                                ]);
+                            } else {
+
+                                AccessControlSchedule::where([
+                                    ['id', '=', $key['id']]
+                                ])->update([
+                                    'masterId' => $key['masterId'],
+                                    'menuListId' => $key['menuListId'],
+                                    'accessTypeId' => $key['accessTypeId'],
+                                    'status' => "Not Running",
+                                    'userUpdateId' => $request->user()->id,
+                                    'updated_at' => now()
+                                ]);
+                            }
+                        }
                     } else {
 
                         if ($key['giveAccessNow'] == 1) {
@@ -265,13 +318,8 @@ class AccessControlSchedulesController extends Controller
                                 return responseInvalid(['To date must higher than from date!!']);
                             }
 
-                            $format = 'd/m/Y H:i:s';
-                            $start = DateTime::createFromFormat($format, $key['startTime']);
-                            $end = DateTime::createFromFormat($format, $key['endTime']);
-
-
                             AccessControlSchedule::where([
-                                ['id', '=', $val['id']]
+                                ['id', '=', $key['id']]
                             ])->update([
                                 'masterId' => $key['masterId'],
                                 'menuListId' => $key['menuListId'],
@@ -287,7 +335,7 @@ class AccessControlSchedulesController extends Controller
                         } else {
 
                             AccessControlSchedule::where([
-                                ['id', '=', $val['id']]
+                                ['id', '=', $key['id']]
                             ])->update([
                                 'masterId' => $key['masterId'],
                                 'menuListId' => $key['menuListId'],
@@ -878,15 +926,15 @@ class AccessControlSchedulesController extends Controller
                         'd.accessType',
                         DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i:%s") as startTime'),
                         DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
-                        'a.status',
                         'a.duration',
-                        'a.status',
+
                     )->where([
                         ['a.isDeleted', '=', 0],
-                        ['a.status', '=', 'Not Running']
+                        ['a.status', '=', 'Not Running'],
+                        ['a.id', '=', $request->id],
                     ])->get();
 
-                return response()->json($shedules, 200);
+                return response()->json(['schedules' => $shedules], 200);
             }
 
 
@@ -942,7 +990,6 @@ class AccessControlSchedulesController extends Controller
                     )->where([
                         ['a.isDeleted', '=', 0]
                     ])->get();
-
 
                 return response()->json($shedules, 200);
             }
@@ -1080,22 +1127,9 @@ class AccessControlSchedulesController extends Controller
             }
 
 
-
             if ($request->schedules) {
 
                 foreach ($input_real  as $key) {
-
-                    $existingRecord = AccessControlSchedule::where([
-                        'usersId' =>  $key['usersId'],
-                        'masterId' => $key['masterId'],
-                        'menuListId' => $key['menuListId'],
-                        'startTime' => $start,
-                        'endTime' => $end,
-                    ])->first();
-
-                    if ($existingRecord) {
-                        return responseInvalid(['This schedule already exists!']);
-                    }
 
                     if ($key['giveAccessNow'] == 1) {
 
@@ -1107,10 +1141,17 @@ class AccessControlSchedulesController extends Controller
                             return responseInvalid(['To date must higher than from date!!']);
                         }
 
+                        $existingRecord = AccessControlSchedule::where([
+                            'usersId' =>  $key['usersId'],
+                            'masterId' => $key['masterId'],
+                            'menuListId' => $key['menuListId'],
+                            'startTime' => $start,
+                            'endTime' => $end,
+                        ])->first();
 
-                        $format = 'd/m/Y H:i:s';
-                        $start = DateTime::createFromFormat($format, $key['startTime']);
-                        $end = DateTime::createFromFormat($format, $key['endTime']);
+                        if ($existingRecord) {
+                            return responseInvalid(['This schedule already exists!']);
+                        }
 
                         $AccessControlSchedule = new AccessControlSchedule();
                         $AccessControlSchedule->locationId = $key['locationId'];
