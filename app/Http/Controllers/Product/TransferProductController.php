@@ -1218,7 +1218,6 @@ class TransferProductController
     function productListWithTwoBranch(Request $request)
     {
         //proses:
-        // barang yang akan ditransfer tidak mencari id dari barang destination, karena bisa saja ada kemungkinan bahawa barang di cabang origin
         // tidak ada di cabang destination
         // jika memang ada, maka akan melakukan pencarian berdasarkan full name dengan fungsi like, jadi tidak akan membuat produk baru di cabang destination.
         $validate = Validator::make($request->all(), [
@@ -1238,18 +1237,18 @@ class TransferProductController
 
         if ($request->productType == 'productSell') {
             $data = DB::table('productSellLocations as psl')
-                ->select('ps.id', 'ps.fullName')
                 ->join('productSells as ps', 'psl.productSellId', 'ps.id')
+                ->select('ps.id', 'ps.fullName')
                 ->where('psl.locationId', '=', $request->branchOrigin)
                 ->get();
         } else if ($request->productType == 'productClinic') {
             $data = DB::table('productClinicLocations as psl')
-                ->select('ps.id', 'ps.fullName')
                 ->join('productClinics as ps', 'psl.productClinicId', 'ps.id')
+                ->select('ps.id', 'ps.fullName')
                 ->where('psl.locationId', '=', $request->branchOrigin)
                 ->get();
         }
 
-        responseList($data);
+        return response()->json($data, 200);
     }
 }
