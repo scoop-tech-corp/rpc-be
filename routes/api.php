@@ -176,6 +176,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/transfer/detail', [TransferProductController::class, 'detail']);
         Route::get('/transfer/detail/history', [TransferProductController::class, 'detailHistory']);
         Route::get('/transfer/export', [TransferProductController::class, 'export']);
+        Route::put('/transfer', [TransferProductController::class, 'update']);
 
         Route::post('/transfer/multiple', [TransferProductController::class, 'createMultiple']);
         Route::get('/transfer/producttwobranch', [TransferProductController::class, 'productListWithTwoBranch']);
