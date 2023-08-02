@@ -304,7 +304,11 @@ class TransferProductController
                     ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
                     ->first();
 
-                $productIdDestination = $data->id;
+                if (!$data) {
+                    $productIdDestination = 0;
+                } else {
+                    $productIdDestination = $data->id;
+                }
 
                 if ($dataProductOr->diffStock <= 0) {
                     $checkAdminApproval = true;
@@ -325,7 +329,11 @@ class TransferProductController
                     ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
                     ->first();
 
-                $productIdDestination = $data->id;
+                if (!$data) {
+                    $productIdDestination = 0;
+                } else {
+                    $productIdDestination = $data->id;
+                }
 
                 if ($dataProductOr->diffStock <= 0) {
                     $checkAdminApproval = true;
@@ -575,6 +583,220 @@ class TransferProductController
 
     public function update(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'type' => 'required|string|in:draft,final',
+            'transferNumber' => 'required|string',
+            'transferName' => 'required|string',
+            'locationIdOrigin' => 'required|integer',
+            'locationIdDestination' => 'required|integer',
+            'userIdReceiver' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $validate = Validator::make(
+            $request->products,
+            [
+                '*.detailTransferId' => 'nullable|integer',
+                '*.productId' => 'required|integer',
+                '*.productType' => 'required|string|in:productSell,productClinic',
+                '*.quantity' => 'required|integer',
+                '*.additionalCost' => 'required|numeric',
+                '*.remark' => 'nullable|string',
+            ],
+            [
+                '*.productId.required' => 'Product Id Should be Required!',
+                '*.productId.integer' => 'Product Id Should be Integer!',
+
+                '*.detailTransferId.integer' => 'Detail Transfer Id Should be Integer!',
+
+                '*.productType.required' => 'Product Type Should be Required!',
+                '*.productType.string' => 'Product Type Should be String!',
+
+                '*.quantity.required' => 'Quantity Should be Required!',
+                '*.quantity.integer' => 'Quantity Should be Integer!',
+
+                '*.additionalCost.required' => 'Additional Cost Should be Required!',
+                '*.additionalCost.numeric' => 'Additional Cost Should be Numeric!',
+
+                '*.remark.string' => 'Remark Should be String!',
+            ]
+        );
+
+        $numberId = '';
+        $variantProduct = 0;
+        $totalProduct = 0;
+        $status = 0;
+        $checkAdminApproval = false;
+
+        if ($request->type == 'final') {
+            $status = 1;
+
+            $cntNum = DB::table('productTransfers')
+                ->where('status', '!=', 0)
+                ->count();
+
+            if ($cntNum == 0) {
+                $numberId = '#' . str_pad(1, 8, 0, STR_PAD_LEFT);
+            } else {
+                $numberId = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
+            }
+        } elseif ($request->type = 'draft') {
+            $numberId = 'draft';
+        }
+
+        foreach ($request->products as $value) {
+            $variantProduct += 1;
+            $totalProduct += $value['quantity'];
+        }
+
+        // if(!$tourist->wasRecentlyCreated && $tourist->wasChanged()){
+        //     // updateOrCreate performed an update
+        // }
+
+        // if(!$tourist->wasRecentlyCreated && !$tourist->wasChanged()){
+        //     // updateOrCreate performed nothing, row did not change
+        // }
+
+        // if($tourist->wasRecentlyCreated){
+        //    // updateOrCreate performed create
+        // }
+
+        $master = ProductTransfer::updateOrCreate(
+            ['id' => $request->id],
+            [
+                'numberId' => $numberId,
+                'transferNumber' => $request->transferNumber,
+                'transferName' => $request->transferName,
+                'locationIdOrigin' => $request->locationIdOrigin,
+                'locationIdDestination' => $request->locationIdDestination,
+                'variantProduct' => $variantProduct,
+                'totalProduct' => $totalProduct,
+                'userIdReceiver' => $request->userIdReceiver,
+                'status' => $status,
+                'userId' => $request->user()->id,
+            ]
+        );
+
+        if ($numberId == 'final') {
+            productTransferLog($request->id, "Updated", "Waiting for Approval", $request->user()->id);
+        }
+
+        $productIdDestination = 0;
+
+        foreach ($request->products as $value) {
+
+            if ($value['productType'] == 'productSell') {
+
+                $dataProductOr = DB::table('productSells as ps')
+                    ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                    ->select('ps.fullName', 'psl.diffStock')
+                    ->where('psl.locationId', '=', $request->locationIdOrigin)
+                    ->where('ps.id', '=', $value['productId'])
+                    ->first();
+
+                $data = DB::table('productSells as ps')
+                    ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                    ->select('ps.*')
+                    ->where('psl.locationId', '=', $request->locationIdDestination)
+                    ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                    ->first();
+
+                if (!$data) {
+                    $productIdDestination = 0;
+                } else {
+                    $productIdDestination = $data->id;
+                }
+
+                // $productIdDestination = $data->id;
+
+                if ($dataProductOr->diffStock <= 0) {
+                    $checkAdminApproval = true;
+                }
+            } elseif ($value['productType'] == 'productClinic') {
+
+                $dataProductOr = DB::table('productClinics as ps')
+                    ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                    ->select('ps.fullName', 'psl.diffStock')
+                    ->where('psl.locationId', '=', $request->locationIdOrigin)
+                    ->where('ps.id', '=', $value['productId'])
+                    ->first();
+
+                $data = DB::table('productClinics as ps')
+                    ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                    ->select('ps.*')
+                    ->where('psl.locationId', '=', $request->locationIdDestination)
+                    ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                    ->first();
+
+                if (!$data) {
+                    $productIdDestination = 0;
+                } else {
+                    $productIdDestination = $data->id;
+                }
+
+                if ($dataProductOr->diffStock <= 0) {
+                    $checkAdminApproval = true;
+                }
+            }
+
+            if ($value['status'] === 'del') {
+                if ($value['detailTransferId']) {
+                    $res = productTransferDetails::find($value['detailTransferId']);
+
+                    $res->DeletedBy = $request->user()->id;
+                    $res->isDeleted = true;
+                    $res->DeletedAt = Carbon::now();
+                    $res->save();
+                }
+            } else {
+                $detail = productTransferDetails::updateOrCreate(
+                    ['id' => $value['detailTransferId']],
+                    [
+                        'productTransferId' => $master->id,
+                        'productIdOrigin' => $value['productId'],
+                        'productIdDestination' => $productIdDestination,
+                        'productType' => $value['productType'],
+                        'quantity' => $value['quantity'],
+                        'remark' => $value['remark'],
+                        'isAdminApproval' => $checkAdminApproval,
+                        'additionalCost' => $value['additionalCost'],
+                        'userId' => $request->user()->id,
+                    ]
+                );
+            }
+
+            if (is_null($value['detailTransferId'])) {
+
+                foreach ($value['images'] as $img) {
+
+                    if ($img['imagePath'] != '') {
+                        $image = str_replace('data:image/', '', $img['imagePath']);
+                        $image = explode(';base64,', $image);
+                        $imageName = Str::random(40) . '.' . $image[0];
+                        File::put(public_path('ProductTransferSentImages') . '/' . $imageName, base64_decode($image[1]));
+
+                        productTransferSentImages::create([
+                            'productTransferDetailId' => $detail->id,
+                            'labelName' => $img['label'],
+                            'realImageName' => $img['originalName'],
+                            'imagePath' => '/ProductTransferSentImages' . '/' . $imageName,
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return responseUpdate();
     }
 
     public function delete(Request $request)
@@ -635,7 +857,7 @@ class TransferProductController
             }
 
             if ($tmp_num != '') {
-                return responseInvalid(['Restock with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited, has sent to Supplier or has already received!']);
+                return responseInvalid(['Transfer with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited, has already sent or has already received!']);
             }
         }
 
