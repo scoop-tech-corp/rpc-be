@@ -20,8 +20,8 @@ class AccessControlSchedule extends Model
     protected $fillable = [
         'locationId',
         'usersId',
-        'masterId',
-        'menuListId',
+        'masterMenuId',
+        'listMenuId',
         'accessTypeId',
         'giveAccessNow',
         'startTime',

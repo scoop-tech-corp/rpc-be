@@ -412,5 +412,18 @@ class userSeeder extends Seeder
         DB::table('payPeriod')->insert($payPeriod);
         DB::table('typeId')->insert($typeId);
         DB::table('usersLocation')->insert($userLocation);
+
+
+
+        DB::table('statusSchedules')->truncate();
+
+        $statusSchedules = [
+            ['status' => 'Not Running', 'created_at' => now(), 'updated_at' => now()],
+            ['status' => 'Ongoing', 'created_at' => now(), 'updated_at' => now()],
+            ['status' => 'Finished', 'created_at' => now(), 'updated_at' => now()],
+        ];
+
+
+        DB::table('statusSchedules')->insert($statusSchedules);
     }
 }

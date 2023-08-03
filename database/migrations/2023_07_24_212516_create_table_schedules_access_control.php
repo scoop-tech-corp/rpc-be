@@ -17,14 +17,14 @@ return new class extends Migration
             $table->id();
             $table->integer('locationId');
             $table->integer('usersId');
-            $table->integer('masterId');
-            $table->integer('menuListId');
+            $table->integer('masterMenuId');
+            $table->integer('listMenuId');
             $table->integer('accessTypeId');
             $table->boolean('giveAccessNow')->nullable()->default(false);
             $table->timestamp('startTime')->nullable();
             $table->timestamp('endTime')->nullable();
-            $table->string('status')->nullable();
-            $table->string('duration')->nullable();
+            $table->integer('status')->nullable();
+            $table->integer('duration')->nullable();
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userUpdateId')->nullable();
             $table->string('createdBy')->nullable();

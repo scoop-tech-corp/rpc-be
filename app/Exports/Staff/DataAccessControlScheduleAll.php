@@ -32,59 +32,60 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
 
     public function getAllData()
     {
-
-        $groupedAccessSchedules = AccessControlSchedule::select('usersId', DB::raw('COUNT(*) as totalAccessMenu'))
-            ->groupBy('usersId');
-
-        $dataUserLocation = DB::table('usersLocation as a')
-            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
-            ->groupBy('a.usersId')
-            ->where('a.isDeleted', '=', 0);
-
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
-                $join->on('e.usersId', '=', 'a.id');
-            })
-            ->leftJoinSub($groupedAccessSchedules, 'f', function ($join) {
-                $join->on('f.usersId', '=', 'a.id');
-            })
+        $group =  DB::table('accessControlSchedules as a')
             ->select(
-                'a.id as id',
+                'locationId',
+                'usersId',
+                DB::raw('COUNT(listMenuId) as totalAccessMenu'),
+                DB::raw('CAST(MAX(createdBy) AS SIGNED) as createdBy'),
+                DB::raw('MAX(created_at) as created_at')
+            )->where([
+                ['isDeleted', '=', 0]
+            ])
+            ->groupBy('locationId', 'usersId')
+            ->orderByDesc('created_at');
+
+        $data = DB::table(DB::raw("({$group->toSql()}) as a"))
+            ->mergeBindings($group)
+            ->leftJoin('users as b', function ($join) {
+                $join->on('a.usersId', '=', 'b.id');
+            })
+            ->leftJoin('users as x', function ($join) {
+                $join->on('a.createdBy', '=', 'x.id');
+            })
+            ->leftJoin('location as c', 'c.id', '=', 'a.locationId')
+            ->leftjoin('jobTitle as d', 'd.id', '=', 'b.jobTitleId')
+            ->select(
+                'a.usersId',
                 DB::raw("
-                REPLACE(
-                    TRIM(
-                        REPLACE(
-                            CONCAT(
-                                IFNULL(a.firstName, ''),
-                                IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
-                                IFNULL(CONCAT(' ', a.lastName), ''),
-                                IFNULL(CONCAT(' (', a.nickName, ')'), '')
-                            ),
-                            '  (',
-                            '('
-                        )
-                    ),
-                    ' (',
-                    '('
-                ) AS name
-                "),
-                'b.jobName as jobTitle',
-                'e.locationName as location',
-                'e.locationId as locationId',
-                DB::raw('IFNULL(f.totalAccessMenu, 0) as totalAccessMenu'),
-                'a.createdBy as createdBy',
+            REPLACE(
+                TRIM(
+                    REPLACE(
+                        CONCAT(
+                            IFNULL(b.firstName, ''),
+                            IF(b.middleName IS NOT NULL AND b.middleName != '', CONCAT(' ', b.middleName), ''),
+                            IFNULL(CONCAT(' ', b.lastName), ''),
+                            IFNULL(CONCAT(' (', b.nickName, ')'), '')
+                        ),
+                        '  (',
+                        '('
+                    )
+                ),
+                ' (',
+                '('
+            ) AS name"),
+                'd.jobName as jobTitle',
+                'c.locationName as location',
+                'a.locationId as locationId',
+                DB::raw('IFNULL(a.totalAccessMenu, 0) as totalAccessMenu'),
+                'x.firstName as createdBy',
                 DB::raw('DATE_FORMAT(a.created_at, "%d/%m/%Y %H:%i:%s") as createdAt'),
-                'a.updated_at'
-            )
-            ->where([
-                ['a.isDeleted', '=', '0']
+            )->where([
+                ['b.isDeleted', '=', '0'],
+                ['x.isDeleted', '=', '0']
             ]);
 
-
-        info($subquery->get());
-        $data = DB::table($subquery, 'a');
+        return $data;
 
         return $data;
     }
@@ -118,7 +119,7 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
         if ($this->orderColumn && $defaultOrderBy) {
 
             $listOrder = array(
-                'id',
+                'usersId',
                 'name',
                 'jobTitle',
                 'location',
@@ -149,16 +150,14 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
 
         $data = DB::table($data)
             ->select(
-                'id',
+                'usersId',
                 'name',
                 'jobTitle',
                 'location',
                 'totalAccessMenu',
                 'createdBy',
                 'createdAt',
-            )
-            ->orderBy('updated_at', 'desc')
-            ->get();
+            )->get();
 
         $val = 1;
 
