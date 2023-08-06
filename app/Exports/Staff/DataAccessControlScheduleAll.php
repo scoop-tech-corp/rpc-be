@@ -32,7 +32,7 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
 
     public function getAllData()
     {
-        $group =  DB::table('accessControlSchedules as a')
+        $groupDetails =  DB::table('accessControlSchedulesDetail as a')
             ->select(
                 'locationId',
                 'usersId',
@@ -45,47 +45,50 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             ->groupBy('locationId', 'usersId')
             ->orderByDesc('created_at');
 
-        $data = DB::table(DB::raw("({$group->toSql()}) as a"))
-            ->mergeBindings($group)
-            ->leftJoin('users as b', function ($join) {
-                $join->on('a.usersId', '=', 'b.id');
+        $data = DB::table('accessControlSchedulesMaster as a')
+            ->leftJoinSub($groupDetails, 'b', function ($join) {
+                $join->on('b.usersId', '=', 'a.usersId');
+                $join->on('b.locationId', '=', 'a.locationId');
             })
-            ->leftJoin('users as x', function ($join) {
-                $join->on('a.createdBy', '=', 'x.id');
+            ->leftJoin('users as c', function ($join) {
+                $join->on('a.usersId', '=', 'c.id');
             })
-            ->leftJoin('location as c', 'c.id', '=', 'a.locationId')
-            ->leftjoin('jobTitle as d', 'd.id', '=', 'b.jobTitleId')
+            ->leftJoin('users as d', function ($join) {
+                $join->on('a.createdBy', '=', 'd.id');
+            })
+            ->leftJoin('location as e', 'e.id', '=', 'a.locationId')
+            ->leftjoin('jobTitle as f', 'f.id', '=', 'c.jobTitleId')
+
             ->select(
                 'a.usersId',
                 DB::raw("
-            REPLACE(
-                TRIM(
                     REPLACE(
-                        CONCAT(
-                            IFNULL(b.firstName, ''),
-                            IF(b.middleName IS NOT NULL AND b.middleName != '', CONCAT(' ', b.middleName), ''),
-                            IFNULL(CONCAT(' ', b.lastName), ''),
-                            IFNULL(CONCAT(' (', b.nickName, ')'), '')
+                        TRIM(
+                            REPLACE(
+                                CONCAT(
+                                    IFNULL(c.firstName, ''),
+                                    IF(c.middleName IS NOT NULL AND c.middleName != '', CONCAT(' ', c.middleName), ''),
+                                    IFNULL(CONCAT(' ', c.lastName), ''),
+                                    IFNULL(CONCAT(' (', c.nickName, ')'), '')
+                                ),
+                                '  (',
+                                '('
+                            )
                         ),
-                        '  (',
+                        ' (',
                         '('
-                    )
-                ),
-                ' (',
-                '('
-            ) AS name"),
-                'd.jobName as jobTitle',
-                'c.locationName as location',
+                    ) AS name"),
+                'f.jobName as jobTitle',
+                'e.locationName as location',
                 'a.locationId as locationId',
-                DB::raw('IFNULL(a.totalAccessMenu, 0) as totalAccessMenu'),
-                'x.firstName as createdBy',
+                DB::raw('IFNULL(b.totalAccessMenu, 0) as totalAccessMenu'),
+                'd.firstName as createdBy',
                 DB::raw('DATE_FORMAT(a.created_at, "%d/%m/%Y %H:%i:%s") as createdAt'),
-            )->where([
-                ['b.isDeleted', '=', '0'],
-                ['x.isDeleted', '=', '0']
+            )
+            ->where([
+                ['c.isDeleted', '=', '0'],
+                ['d.isDeleted', '=', '0']
             ]);
-
-        return $data;
 
         return $data;
     }
