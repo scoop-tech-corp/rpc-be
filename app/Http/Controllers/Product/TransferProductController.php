@@ -261,8 +261,10 @@ class TransferProductController
         }
 
         foreach ($datas as $value) {
-            $variantProduct += 1;
-            $totalProduct += $value['quantity'];
+            if (!$value['status'] === 'del') {
+                $variantProduct += 1;
+                $totalProduct += $value['quantity'];
+            }
         }
 
         $master = ProductTransfer::create([
