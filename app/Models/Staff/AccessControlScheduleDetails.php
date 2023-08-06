@@ -18,8 +18,7 @@ class AccessControlScheduleDetails extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'locationId',
-        'usersId',
+        'scheduleMasterId',
         'masterMenuId',
         'listMenuId',
         'accessTypeId',

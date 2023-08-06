@@ -15,8 +15,7 @@ return new class extends Migration
     {
         Schema::create('accessControlSchedulesDetail', function (Blueprint $table) {
             $table->id();
-            $table->integer('locationId');
-            $table->integer('usersId');
+            $table->integer('scheduleMasterId');
             $table->integer('masterMenuId');
             $table->integer('listMenuId');
             $table->integer('accessTypeId');

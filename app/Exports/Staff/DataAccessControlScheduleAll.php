@@ -34,21 +34,19 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
     {
         $groupDetails =  DB::table('accessControlSchedulesDetail as a')
             ->select(
-                'locationId',
-                'usersId',
-                DB::raw('COUNT(listMenuId) as totalAccessMenu'),
+                'scheduleMasterId',
+                DB::raw('CAST(COUNT(listMenuId) AS SIGNED) as totalAccessMenu'),
                 DB::raw('CAST(MAX(createdBy) AS SIGNED) as createdBy'),
                 DB::raw('MAX(created_at) as created_at')
             )->where([
                 ['isDeleted', '=', 0]
             ])
-            ->groupBy('locationId', 'usersId')
+            ->groupBy('scheduleMasterId')
             ->orderByDesc('created_at');
 
         $data = DB::table('accessControlSchedulesMaster as a')
             ->leftJoinSub($groupDetails, 'b', function ($join) {
-                $join->on('b.usersId', '=', 'a.usersId');
-                $join->on('b.locationId', '=', 'a.locationId');
+                $join->on('b.scheduleMasterId', '=', 'a.id');
             })
             ->leftJoin('users as c', function ($join) {
                 $join->on('a.usersId', '=', 'c.id');
@@ -58,9 +56,9 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             })
             ->leftJoin('location as e', 'e.id', '=', 'a.locationId')
             ->leftjoin('jobTitle as f', 'f.id', '=', 'c.jobTitleId')
-
             ->select(
-                'a.usersId',
+                'a.id as scheduleMasterId',
+                DB::raw('CAST((a.usersId) AS SIGNED) as usersId'),
                 DB::raw("
                     REPLACE(
                         TRIM(
@@ -79,9 +77,9 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
                         '('
                     ) AS name"),
                 'f.jobName as jobTitle',
+                DB::raw('CAST((a.locationId) AS SIGNED) as locationId'),
                 'e.locationName as location',
-                'a.locationId as locationId',
-                DB::raw('IFNULL(b.totalAccessMenu, 0) as totalAccessMenu'),
+                DB::raw('CAST(IFNULL(b.totalAccessMenu, 0) AS SIGNED) as totalAccessMenu'),
                 'd.firstName as createdBy',
                 DB::raw('DATE_FORMAT(a.created_at, "%d/%m/%Y %H:%i:%s") as createdAt'),
             )
