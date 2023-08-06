@@ -8,7 +8,7 @@
 
 use App\Models\ProductClinicLog;
 use App\Models\productRestockLog;
-use App\Models\productTransferLog;
+use App\Models\ProductTransferLog;
 use App\Models\ProductSellLog;
 
 if (!function_exists('adminAccess')) {
