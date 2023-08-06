@@ -105,7 +105,7 @@ class AccessControlSchedulesController extends Controller
 
     public function updateAccessControlSchedules(Request $request)
     {
-
+        DB::beginTransaction();
         try {
 
 
@@ -155,6 +155,25 @@ class AccessControlSchedulesController extends Controller
                 $loop = 1;
 
                 foreach ($request->details as $val) {
+
+                    $validateSchedules = Validator::make(
+                        $val,
+                        [
+
+                            'masterMenuId' => 'required|integer',
+                            'listMenuId' => 'required|integer',
+                            'accessTypeId' => 'required|integer',
+                            'giveAccessNow' => 'required|boolean',
+                        ],
+                        $messageSchedules
+                    );
+
+                    if ($validateSchedules->fails()) {
+
+                        $errors = $validateSchedules->errors()->all();
+
+                        return responseInvalid($errors);
+                    }
 
                     if (array_key_exists('command', $val)) {
 
@@ -1287,7 +1306,38 @@ class AccessControlSchedulesController extends Controller
                 $endTimes = [];
                 $loop = 1;
 
+
+                $messageSchedules = [
+
+                    'masterMenuId.required' => 'Master id on tab Schedules is required!',
+                    'menuListId.required' => 'Menu list id on tab Schedules is required!',
+                    'accessTypeId.required' => 'Access type id on tab Schedules is required!',
+                    'giveAccessNow.required' => 'Give access now on tab Schedules is required!',
+                    'integer' => 'The :attribute must be an integer.',
+                ];
+
+
                 foreach ($arraySchedules as $val) {
+
+                    $validateSchedules = Validator::make(
+                        $val,
+                        [
+
+                            'masterMenuId' => 'required|integer',
+                            'listMenuId' => 'required|integer',
+                            'accessTypeId' => 'required|integer',
+                            'giveAccessNow' => 'required|boolean',
+                        ],
+                        $messageSchedules
+                    );
+
+                    if ($validateSchedules->fails()) {
+
+                        $errors = $validateSchedules->errors()->all();
+
+                        return responseInvalid($errors);
+                    }
+
 
                     if (array_key_exists('command', $val)) {
 
@@ -1342,15 +1392,7 @@ class AccessControlSchedulesController extends Controller
                     $loop = $loop + 1;
                 }
 
-                $messageSchedules = [
-
-                    'masterMenuId.required' => 'Master id on tab Schedules is required!',
-                    'menuListId.required' => 'Menu list id on tab Schedules is required!',
-                    'accessTypeId.required' => 'Access type id on tab Schedules is required!',
-                    'giveAccessNow.required' => 'Give access now on tab Schedules is required!',
-                    'integer' => 'The :attribute must be an integer.',
-                ];
-
+             
                 foreach ($input_real as $key) {
 
                     $validateSchedules = Validator::make(
