@@ -57,7 +57,7 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             ->leftJoin('location as e', 'e.id', '=', 'a.locationId')
             ->leftjoin('jobTitle as f', 'f.id', '=', 'c.jobTitleId')
             ->select(
-                'a.id as scheduleMasterId',
+                'a.id',
                 DB::raw('CAST((a.usersId) AS SIGNED) as usersId'),
                 DB::raw("
                     REPLACE(
@@ -76,7 +76,7 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
                         ' (',
                         '('
                     ) AS name"),
-                'f.jobName as jobTitle',
+                'f.jobName as position',
                 DB::raw('CAST((a.locationId) AS SIGNED) as locationId'),
                 'e.locationName as location',
                 DB::raw('CAST(IFNULL(b.totalAccessMenu, 0) AS SIGNED) as totalAccessMenu'),
@@ -122,7 +122,7 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             $listOrder = array(
                 'usersId',
                 'name',
-                'jobTitle',
+                'position',
                 'location',
                 'totalAccessMenu',
                 'createdBy',
@@ -153,7 +153,7 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             ->select(
                 'usersId',
                 'name',
-                'jobTitle',
+                'position',
                 'location',
                 'totalAccessMenu',
                 'createdBy',
@@ -205,7 +205,7 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             [
                 $item->number,
                 $item->name,
-                $item->jobTitle,
+                $item->position,
                 $item->location,
                 (string)$totalAccessMenu,
                 $item->createdBy,
