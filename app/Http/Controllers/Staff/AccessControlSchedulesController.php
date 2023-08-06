@@ -503,7 +503,7 @@ class AccessControlSchedulesController extends Controller
             ->select(
                 'locationId',
                 'usersId',
-                DB::raw('COUNT(listMenuId) as totalAccessMenu'),
+                DB::raw('CAST(COUNT(listMenuId) AS SIGNED) as totalAccessMenu'),
                 DB::raw('CAST(MAX(createdBy) AS SIGNED) as createdBy'),
                 DB::raw('MAX(created_at) as created_at')
             )->where([
@@ -527,7 +527,7 @@ class AccessControlSchedulesController extends Controller
             ->leftjoin('jobTitle as f', 'f.id', '=', 'c.jobTitleId')
 
             ->select(
-                'a.usersId',
+                'CAST(COUNT(a.usersId) AS SIGNED) as usersId',
                 DB::raw("
                         REPLACE(
                             TRIM(
@@ -546,9 +546,9 @@ class AccessControlSchedulesController extends Controller
                             '('
                         ) AS name"),
                 'f.jobName as jobTitle',
+                'CAST(COUNT(a.locationId) AS SIGNED) as locationId',
                 'e.locationName as location',
-                'a.locationId as locationId',
-                DB::raw('IFNULL(b.totalAccessMenu, 0) as totalAccessMenu'),
+                DB::raw('CAST(IFNULL(b.totalAccessMenu, 0) AS SIGNED) as totalAccessMenu'),
                 'd.firstName as createdBy',
                 DB::raw('DATE_FORMAT(a.created_at, "%d/%m/%Y %H:%i:%s") as createdAt'),
             )
@@ -1052,17 +1052,17 @@ class AccessControlSchedulesController extends Controller
                     ->leftJoin('statusSchedules as e', 'e.id', '=', 'a.status')
                     ->select(
                         'a.id',
-                        'a.masterMenuId',
+                        'CAST(COUNT(a.masterMenuId) AS SIGNED) as masterMenuId',
                         'b.masterName',
-                        'a.listMenuId',
+                        'CAST(COUNT(a.listMenuId) AS SIGNED) as listMenuId',
                         'c.menuName',
-                        'a.accessTypeId',
+                        'CAST(COUNT(a.accessTypeId) AS SIGNED) as accessTypeId',
                         'd.accessType',
-                        'a.giveAccessNow',
+                        'CAST(COUNT(a.giveAccessNow) AS SIGNED) as giveAccessNow',
                         DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i:%s") as startTime'),
                         DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
-                        'a.duration',
-                        DB::raw('(CASE WHEN e.status = 1 THEN 1 ELSE 0 END) as isNotRunning'),
+                        'CAST(COUNT(a.duration) AS SIGNED) as duration',
+                        DB::raw('CAST(CASE WHEN e.status = 1 THEN 1 ELSE 0 END)AS SIGNED) as isNotRunning'),
                     )->where([
                         ['a.isDeleted', '=', 0],
                         ['a.id', '=', $request->id],
@@ -1139,9 +1139,10 @@ class AccessControlSchedulesController extends Controller
                         'd.accessType',
                         DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i:%s") as startTime'),
                         DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
-                        'a.duration',
+                        'CAST(COUNT(a.duration) AS SIGNED) as duration',
                         'e.status',
-                        DB::raw('(CASE WHEN a.status = 1 THEN 1 ELSE 0 END) as isNotRunning'),
+                        DB::raw('COUNT((CASE WHEN a.status = 1 THEN 1 ELSE 0 END)AS SIGNED) as isNotRunning'),
+
                     )->where([
                         ['a.locationId', '=', $request->locationId],
                         ['a.usersId', '=',  $request->usersId],
