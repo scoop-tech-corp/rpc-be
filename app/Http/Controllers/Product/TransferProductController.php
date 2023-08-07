@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Validator;
 use DB;
 use Excel;
+use Illuminate\Support\Str;
 
 class TransferProductController
 {
