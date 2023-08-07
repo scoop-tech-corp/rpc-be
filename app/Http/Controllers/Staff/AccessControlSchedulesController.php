@@ -509,17 +509,6 @@ class AccessControlSchedulesController extends Controller
                     } else {
 
 
-                        $checkIfDataExits = AccessControlScheduleDetails::where([
-                            ['id', '=', $key['detailId']],
-                            ['isDeleted', '=', '0'],
-                            ['scheduleMasterId', '=', $request->id],
-                            ['status', '=', '1'],
-                        ])->first();
-
-                        if (!$checkIfDataExits) {
-                            return responseInvalid(['Data Schedules detail with id ' . $key['detailId'] . ' Not Exists! Please try different ID']);
-                        }
-
 
 
                         if ($key['giveAccessNow'] == 1) {
