@@ -17,7 +17,7 @@ class productTransferSentImages extends Model
         'productTransferDetailId',
         'realImageName',
         'imagePath',
-        'labelName',
+        'label',
         'userId',
         'userUpdateId'
     ];
