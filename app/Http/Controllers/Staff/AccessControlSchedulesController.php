@@ -103,6 +103,7 @@ class AccessControlSchedulesController extends Controller
         }
     }
 
+
     public function updateAccessControlSchedules(Request $request)
     {
         DB::beginTransaction();
@@ -183,19 +184,22 @@ class AccessControlSchedulesController extends Controller
                             if ($val['giveAccessNow'] == 1) {
 
                                 $format = 'd/m/Y H:i:s';
-                                $start = DateTime::createFromFormat($format, $val['startTime']);
+                                $currentDateTime = new DateTime();
+                                $formattedCurrentDateTime = $currentDateTime->format($format);
+                                $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                                 $end = DateTime::createFromFormat($format, $val['endTime']);
 
                                 if ($end < $start) {
                                     return responseInvalid(['To date must higher than from date!!']);
                                 }
+                            } else {
 
-                                if (in_array($start, $startTimes) || in_array($end, $endTimes)) {
-                                    return responseInvalid(['Found duplicate data in data ' . $loop . '! Schedule with spesific start time and time already exists!']);
+                                $format = 'd/m/Y H:i:s';
+                                $start = DateTime::createFromFormat($format, $val['startTime']);
+                                $end = DateTime::createFromFormat($format, $val['endTime']);
+                                if ($end < $start) {
+                                    return responseInvalid(['To date must higher than from date!!']);
                                 }
-
-                                $startTimes[] = $start;
-                                $endTimes[] = $end;
                             }
 
                             array_push($input_real, $val);
@@ -205,19 +209,22 @@ class AccessControlSchedulesController extends Controller
                         if ($val['giveAccessNow'] == 1) {
 
                             $format = 'd/m/Y H:i:s';
-                            $start = DateTime::createFromFormat($format, $val['startTime']);
+                            $currentDateTime = new DateTime();
+                            $formattedCurrentDateTime = $currentDateTime->format($format);
+                            $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                             $end = DateTime::createFromFormat($format, $val['endTime']);
 
                             if ($end < $start) {
                                 return responseInvalid(['To date must higher than from date!!']);
                             }
+                        } else {
 
-                            if (in_array($start, $startTimes) || in_array($end, $endTimes)) {
-                                return responseInvalid(['Found duplicate data in data ' . $loop . '! Schedule with spesific start time and time already exists!']);
+                            $format = 'd/m/Y H:i:s';
+                            $start = DateTime::createFromFormat($format, $val['startTime']);
+                            $end = DateTime::createFromFormat($format, $val['endTime']);
+                            if ($end < $start) {
+                                return responseInvalid(['To date must higher than from date!!']);
                             }
-
-                            $startTimes[] = $start;
-                            $endTimes[] = $end;
                         }
 
 
@@ -325,13 +332,23 @@ class AccessControlSchedulesController extends Controller
                     if ($key['giveAccessNow'] == 1) {
 
                         $format = 'd/m/Y H:i:s';
-                        $start = DateTime::createFromFormat($format, $key['startTime']);
+                        $currentDateTime = new DateTime();
+                        $formattedCurrentDateTime = $currentDateTime->format($format);
+                        $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
 
                         if ($end < $start) {
                             return responseInvalid(['To date must higher than from date!!']);
                         }
 
+                        $durationReal = 0;
+                        $duration = $end->getTimestamp() - $start->getTimestamp();
+
+                        if ($duration !== $val['duration']) {
+                            $durationReal = $duration;
+                        } else {
+                            $durationReal = $key['duration'];
+                        }
 
 
                         $existingRecord = AccessControlScheduleDetails::where([
@@ -346,16 +363,6 @@ class AccessControlSchedulesController extends Controller
                             DB::rollback();
                             return responseInvalid(['This schedule already exists! Please check your data']);
                         }
-
-                        $durationReal = 0;
-                        $duration = $end->getTimestamp() - $start->getTimestamp();
-
-                        if ($duration !== $val['duration']) {
-                            $durationReal = $duration;
-                        } else {
-                            $durationReal = $key['duration'];
-                        }
-
 
 
                         $AccessControlSchedule = new AccessControlScheduleDetails();
@@ -376,14 +383,12 @@ class AccessControlSchedulesController extends Controller
 
 
                         $format = 'd/m/Y H:i:s';
-                        $currentDateTime = new DateTime();
-                        $formattedCurrentDateTime = $currentDateTime->format($format);
-                        $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
+                        $start = DateTime::createFromFormat($format, $key['startTime']);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
-
                         if ($end < $start) {
                             return responseInvalid(['To date must higher than from date!!']);
                         }
+
 
                         $durationReal = 0;
                         $duration = $end->getTimestamp() - $start->getTimestamp();
@@ -426,12 +431,15 @@ class AccessControlSchedulesController extends Controller
                             if ($key['giveAccessNow'] == 1) {
 
                                 $format = 'd/m/Y H:i:s';
-                                $start = DateTime::createFromFormat($format, $key['startTime']);
+                                $currentDateTime = new DateTime();
+                                $formattedCurrentDateTime = $currentDateTime->format($format);
+                                $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                                 $end = DateTime::createFromFormat($format, $key['endTime']);
 
                                 if ($end < $start) {
                                     return responseInvalid(['To date must higher than from date!!']);
                                 }
+
 
                                 $durationReal = 0;
                                 $duration = $end->getTimestamp() - $start->getTimestamp();
@@ -472,14 +480,12 @@ class AccessControlSchedulesController extends Controller
                             } else {
 
                                 $format = 'd/m/Y H:i:s';
-                                $currentDateTime = new DateTime();
-                                $formattedCurrentDateTime = $currentDateTime->format($format);
-                                $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
+                                $start = DateTime::createFromFormat($format, $key['startTime']);
                                 $end = DateTime::createFromFormat($format, $key['endTime']);
-
                                 if ($end < $start) {
                                     return responseInvalid(['To date must higher than from date!!']);
                                 }
+
 
                                 $durationReal = 0;
                                 $duration = $end->getTimestamp() - $start->getTimestamp();
@@ -514,14 +520,14 @@ class AccessControlSchedulesController extends Controller
                         if ($key['giveAccessNow'] == 1) {
 
                             $format = 'd/m/Y H:i:s';
-                            $start = DateTime::createFromFormat($format, $key['startTime']);
+                            $currentDateTime = new DateTime();
+                            $formattedCurrentDateTime = $currentDateTime->format($format);
+                            $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                             $end = DateTime::createFromFormat($format, $key['endTime']);
 
                             if ($end < $start) {
                                 return responseInvalid(['To date must higher than from date!!']);
                             }
-
-
 
                             $durationReal = 0;
                             $duration = $end->getTimestamp() - $start->getTimestamp();
@@ -549,14 +555,12 @@ class AccessControlSchedulesController extends Controller
                         } else {
 
                             $format = 'd/m/Y H:i:s';
-                            $currentDateTime = new DateTime();
-                            $formattedCurrentDateTime = $currentDateTime->format($format);
-                            $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
+                            $start = DateTime::createFromFormat($format, $key['startTime']);
                             $end = DateTime::createFromFormat($format, $key['endTime']);
-
                             if ($end < $start) {
                                 return responseInvalid(['To date must higher than from date!!']);
                             }
+
 
                             $durationReal = 0;
                             $duration = $end->getTimestamp() - $start->getTimestamp();
@@ -1185,11 +1189,6 @@ class AccessControlSchedulesController extends Controller
                 }
 
                 $type = $request->type;
-
-
-                if (!$request->has('detailId')) {
-                    return responseInvalid(['For type edit must have detail id']);
-                }
             }
 
 
@@ -1245,8 +1244,8 @@ class AccessControlSchedulesController extends Controller
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i:%s") as startTime'),
                             DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
                             DB::raw('CAST((a.duration) AS SIGNED) as duration'),
-                            'e.status',
-                            DB::raw('CAST((CASE WHEN a.status = 1 THEN 1 ELSE 0 END) AS SIGNED) as isNotRunning'),
+                            'a.status',
+                            DB::raw('CAST((CASE WHEN a.status = 1 THEN 0 ELSE 1 END) AS SIGNED) as isRunning'),
 
                         )->where([
                             ['a.scheduleMasterId', '=', $request->id],
@@ -1254,7 +1253,6 @@ class AccessControlSchedulesController extends Controller
                         ])->get();
 
                     $param_schedules->details = $shedules;
-                    $param_schedules->type = $type;
                 }
             } else {
 
@@ -1296,13 +1294,11 @@ class AccessControlSchedulesController extends Controller
                             DB::raw('CAST((a.duration) AS SIGNED) as duration'),
                         )->where([
                             ['a.isDeleted', '=', 0],
-                            ['a.id', '=', $request->detailId],
+                            ['a.scheduleMasterId', '=', $request->id],
                             ['a.status', '=', 1],
                         ])->get();
 
-
                     $param_schedules->details = $shedules;
-                    $param_schedules->type = $type;
                 }
             }
 
@@ -1316,6 +1312,8 @@ class AccessControlSchedulesController extends Controller
             return responseInvalid([$e]);
         }
     }
+
+
 
 
 
@@ -1401,19 +1399,22 @@ class AccessControlSchedulesController extends Controller
                             if ($val['giveAccessNow'] == 1) {
 
                                 $format = 'd/m/Y H:i:s';
-                                $start = DateTime::createFromFormat($format, $val['startTime']);
+                                $currentDateTime = new DateTime();
+                                $formattedCurrentDateTime = $currentDateTime->format($format);
+                                $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                                 $end = DateTime::createFromFormat($format, $val['endTime']);
 
                                 if ($end < $start) {
                                     return responseInvalid(['To date must higher than from date!!']);
                                 }
+                            } else {
 
-                                if (in_array($start, $startTimes) || in_array($end, $endTimes)) {
-                                    return responseInvalid(['Found duplicate data in data ' . $loop . '! Schedule with spesific start time and time already exists!']);
+                                $format = 'd/m/Y H:i:s';
+                                $start = DateTime::createFromFormat($format, $val['startTime']);
+                                $end = DateTime::createFromFormat($format, $val['endTime']);
+                                if ($end < $start) {
+                                    return responseInvalid(['To date must higher than from date!!']);
                                 }
-
-                                $startTimes[] = $start;
-                                $endTimes[] = $end;
                             }
 
 
@@ -1424,19 +1425,22 @@ class AccessControlSchedulesController extends Controller
                         if ($val['giveAccessNow'] == 1) {
 
                             $format = 'd/m/Y H:i:s';
-                            $start = DateTime::createFromFormat($format, $val['startTime']);
+                            $currentDateTime = new DateTime();
+                            $formattedCurrentDateTime = $currentDateTime->format($format);
+                            $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                             $end = DateTime::createFromFormat($format, $val['endTime']);
 
                             if ($end < $start) {
                                 return responseInvalid(['To date must higher than from date!!']);
                             }
+                        } else {
 
-                            if (in_array($start, $startTimes) || in_array($end, $endTimes)) {
-                                return responseInvalid(['Found duplicate data in data ' . $loop . '! Schedule with spesific start time and time already exists!']);
+                            $format = 'd/m/Y H:i:s';
+                            $start = DateTime::createFromFormat($format, $val['startTime']);
+                            $end = DateTime::createFromFormat($format, $val['endTime']);
+                            if ($end < $start) {
+                                return responseInvalid(['To date must higher than from date!!']);
                             }
-
-                            $startTimes[] = $start;
-                            $endTimes[] = $end;
                         }
 
                         array_push($input_real, $val);
@@ -1542,14 +1546,23 @@ class AccessControlSchedulesController extends Controller
                     if ($key['giveAccessNow'] == 1) {
 
                         $format = 'd/m/Y H:i:s';
-                        $start = DateTime::createFromFormat($format, $key['startTime']);
+                        $currentDateTime = new DateTime();
+                        $formattedCurrentDateTime = $currentDateTime->format($format);
+                        $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
 
                         if ($end < $start) {
                             return responseInvalid(['To date must higher than from date!!']);
                         }
 
+                        $durationReal = 0;
+                        $duration = $end->getTimestamp() - $start->getTimestamp();
 
+                        if ($duration !== $key['duration']) {
+                            $durationReal = $duration;
+                        } else {
+                            $durationReal = $key['duration'];
+                        }
 
                         $existingRecord = AccessControlScheduleDetails::where([
                             'scheduleMasterId' =>  $masterId,
@@ -1564,14 +1577,6 @@ class AccessControlSchedulesController extends Controller
                             return responseInvalid(['This schedule already exists! Please check your data']);
                         }
 
-                        $durationReal = 0;
-                        $duration = $end->getTimestamp() - $start->getTimestamp();
-
-                        if ($duration !== $key['duration']) {
-                            $durationReal = $duration;
-                        } else {
-                            $durationReal = $key['duration'];
-                        }
 
                         $AccessControlSchedule = new AccessControlScheduleDetails();
                         $AccessControlSchedule->scheduleMasterId = $masterId;
@@ -1589,10 +1594,9 @@ class AccessControlSchedulesController extends Controller
                         $AccessControlSchedule->save();
                     } else {
 
+
                         $format = 'd/m/Y H:i:s';
-                        $currentDateTime = new DateTime();
-                        $formattedCurrentDateTime = $currentDateTime->format($format);
-                        $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
+                        $start = DateTime::createFromFormat($format, $key['startTime']);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
 
                         if ($end < $start) {
