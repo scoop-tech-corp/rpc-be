@@ -340,7 +340,7 @@ class userSeeder extends Seeder
         ];
 
 
-        for ($j = 3; $j <= 12; $j++) {
+        for ($j = 3; $j <= 10; $j++) {
 
             $phoneNumber = $faker->regexify('/^\628\d{9,10}$/');
 
