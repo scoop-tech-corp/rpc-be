@@ -190,7 +190,7 @@ class AccessControlSchedulesController extends Controller
                                 $end = DateTime::createFromFormat($format, $val['endTime']);
 
                                 if ($end < $start) {
-                                    return responseInvalid(['To date must higher than from date!!']);
+                                    return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
                                 }
                             } else {
 
@@ -215,7 +215,7 @@ class AccessControlSchedulesController extends Controller
                             $end = DateTime::createFromFormat($format, $val['endTime']);
 
                             if ($end < $start) {
-                                return responseInvalid(['To date must higher than from date!!']);
+                                return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
                             }
                         } else {
 
@@ -1405,7 +1405,7 @@ class AccessControlSchedulesController extends Controller
                                 $end = DateTime::createFromFormat($format, $val['endTime']);
 
                                 if ($end < $start) {
-                                    return responseInvalid(['To date must higher than from date!!']);
+                                    return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
                                 }
                             } else {
 
@@ -1431,7 +1431,7 @@ class AccessControlSchedulesController extends Controller
                             $end = DateTime::createFromFormat($format, $val['endTime']);
 
                             if ($end < $start) {
-                                return responseInvalid(['To date must higher than from date!!']);
+                                return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
                             }
                         } else {
 
@@ -1439,7 +1439,7 @@ class AccessControlSchedulesController extends Controller
                             $start = DateTime::createFromFormat($format, $val['startTime']);
                             $end = DateTime::createFromFormat($format, $val['endTime']);
                             if ($end < $start) {
-                                return responseInvalid(['To date must higher than from date!!']);
+                                return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
                             }
                         }
 
@@ -1552,7 +1552,7 @@ class AccessControlSchedulesController extends Controller
                         $end = DateTime::createFromFormat($format, $key['endTime']);
 
                         if ($end < $start) {
-                            return responseInvalid(['To date must higher than from date!!']);
+                            return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
                         }
 
                         $durationReal = 0;
