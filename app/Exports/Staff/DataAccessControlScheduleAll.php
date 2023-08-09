@@ -45,7 +45,7 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             ->orderByDesc('created_at');
 
         $data = DB::table('accessControlSchedulesMaster as a')
-            ->leftJoinSub($groupDetails, 'b', function ($join) {
+            ->joinSub($groupDetails, 'b', function ($join) {
                 $join->on('b.scheduleMasterId', '=', 'a.id');
             })
             ->leftJoin('users as c', function ($join) {
@@ -85,7 +85,8 @@ class DataAccessControlScheduleAll implements FromCollection, ShouldAutoSize, Wi
             )
             ->where([
                 ['c.isDeleted', '=', '0'],
-                ['d.isDeleted', '=', '0']
+                ['d.isDeleted', '=', '0'],
+                ['b.totalAccessMenu', '>', '0'],
             ]);
 
         return $data;

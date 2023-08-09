@@ -179,26 +179,22 @@ class AccessControlSchedulesController extends Controller
 
                     if (array_key_exists('command', $val)) {
 
-                        if ($val['command'] != "del" || ($val['command'] == "del" && $val['id'] != "")) {
+                        if ($val['command'] != "del" || ($val['command'] == "del" && $val['detailId'] != "")) {
 
                             if ($val['giveAccessNow'] == 1) {
 
-                                $format = 'd/m/Y H:i:s';
-                                $currentDateTime = new DateTime();
-                                $formattedCurrentDateTime = $currentDateTime->format($format);
-                                $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
-                                $end = DateTime::createFromFormat($format, $val['endTime']);
+                                $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
+                                if ($result) {
 
-                                if ($end < $start) {
-                                    return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
+                                    return responseInvalid([$result]);
                                 }
                             } else {
 
-                                $format = 'd/m/Y H:i:s';
-                                $start = DateTime::createFromFormat($format, $val['startTime']);
-                                $end = DateTime::createFromFormat($format, $val['endTime']);
-                                if ($end < $start) {
-                                    return responseInvalid(['To date must higher than from date!!']);
+                                $result = $this->checkValidationTime($val['startTime'], $val['endTime']);
+
+                                if ($result) {
+
+                                    return responseInvalid([$result]);
                                 }
                             }
 
@@ -206,27 +202,23 @@ class AccessControlSchedulesController extends Controller
                         }
                     } else {
 
+
                         if ($val['giveAccessNow'] == 1) {
 
-                            $format = 'd/m/Y H:i:s';
-                            $currentDateTime = new DateTime();
-                            $formattedCurrentDateTime = $currentDateTime->format($format);
-                            $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
-                            $end = DateTime::createFromFormat($format, $val['endTime']);
+                            $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
+                            if ($result) {
 
-                            if ($end < $start) {
-                                return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
+                                return responseInvalid([$result]);
                             }
                         } else {
 
-                            $format = 'd/m/Y H:i:s';
-                            $start = DateTime::createFromFormat($format, $val['startTime']);
-                            $end = DateTime::createFromFormat($format, $val['endTime']);
-                            if ($end < $start) {
-                                return responseInvalid(['To date must higher than from date!!']);
+                            $result = $this->checkValidationTime($val['startTime'], $val['endTime']);
+
+                            if ($result) {
+
+                                return responseInvalid([$result]);
                             }
                         }
-
 
                         array_push($input_real, $val);
                     }
@@ -243,8 +235,8 @@ class AccessControlSchedulesController extends Controller
                             'listMenuId' => 'required|integer',
                             'accessTypeId' => 'required|integer',
                             'giveAccessNow' => 'required|boolean',
-                            'startTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i:s' : '',
-                            'endTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i:s|after:startTime' : '',
+                            'startTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i' : '',
+                            'endTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i|after:startTime' : '',
                             'duration' => $key['giveAccessNow'] ? 'required_if:giveAccessNow,1' : '',
                         ],
                         $messageSchedules
@@ -269,7 +261,8 @@ class AccessControlSchedulesController extends Controller
                         return responseInvalid(['Master id not found! please try different id']);
                     }
 
-                    $checkIfMenuListExits = MenuList::where([['id', '=', $key['listMenuId']], ['isActive', '=', '1']])->first();
+                    $checkIfMenuListExits = MenuList::where([['id', '=', $key['listMenuId']],  ['masterId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
+
 
                     if ($checkIfMenuListExits == null) {
 
@@ -281,17 +274,6 @@ class AccessControlSchedulesController extends Controller
                     if ($checkIfAccessTypeExists == null) {
 
                         return responseInvalid(['Access Type id not found! please try different id']);
-                    }
-
-
-                    if ($key['giveAccessNow'] == 1) {
-                        $format = 'd/m/Y H:i:s';
-                        $start = DateTime::createFromFormat($format, $key['startTime']);
-                        $end = DateTime::createFromFormat($format, $key['endTime']);
-
-                        if ($end < $start) {
-                            return responseInvalid(['To date must higher than from date!!']);
-                        }
                     }
                 }
 
@@ -331,16 +313,11 @@ class AccessControlSchedulesController extends Controller
 
                     if ($key['giveAccessNow'] == 1) {
 
-                        $format = 'd/m/Y H:i:s';
+                        $format = 'd/m/Y H:i';
                         $currentDateTime = new DateTime();
                         $formattedCurrentDateTime = $currentDateTime->format($format);
                         $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
-
-                        if ($end < $start) {
-                            return responseInvalid(['To date must higher than from date!!']);
-                        }
-
                         $durationReal = 0;
                         $duration = $end->getTimestamp() - $start->getTimestamp();
 
@@ -349,7 +326,6 @@ class AccessControlSchedulesController extends Controller
                         } else {
                             $durationReal = $key['duration'];
                         }
-
 
                         $existingRecord = AccessControlScheduleDetails::where([
                             'scheduleMasterId' =>  $request->id,
@@ -382,14 +358,9 @@ class AccessControlSchedulesController extends Controller
                     } else {
 
 
-                        $format = 'd/m/Y H:i:s';
+                        $format = 'd/m/Y H:i';
                         $start = DateTime::createFromFormat($format, $key['startTime']);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
-                        if ($end < $start) {
-                            return responseInvalid(['To date must higher than from date!!']);
-                        }
-
-
                         $durationReal = 0;
                         $duration = $end->getTimestamp() - $start->getTimestamp();
 
@@ -415,10 +386,12 @@ class AccessControlSchedulesController extends Controller
                         $AccessControlSchedule->save();
                     }
                 } else {
-
+                    echo("aaa");
                     if (array_key_exists('command', $key)) {
 
                         if ($key['command'] == "del") {
+
+                            echo("asd");
                             AccessControlScheduleDetails::where([
                                 ['id', '=', $key['detailId']]
                             ])->update([
@@ -430,17 +403,11 @@ class AccessControlSchedulesController extends Controller
 
                             if ($key['giveAccessNow'] == 1) {
 
-                                $format = 'd/m/Y H:i:s';
+                                $format = 'd/m/Y H:i';
                                 $currentDateTime = new DateTime();
                                 $formattedCurrentDateTime = $currentDateTime->format($format);
                                 $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                                 $end = DateTime::createFromFormat($format, $key['endTime']);
-
-                                if ($end < $start) {
-                                    return responseInvalid(['To date must higher than from date!!']);
-                                }
-
-
                                 $durationReal = 0;
                                 $duration = $end->getTimestamp() - $start->getTimestamp();
 
@@ -479,14 +446,9 @@ class AccessControlSchedulesController extends Controller
                                 ]);
                             } else {
 
-                                $format = 'd/m/Y H:i:s';
+                                $format = 'd/m/Y H:i';
                                 $start = DateTime::createFromFormat($format, $key['startTime']);
                                 $end = DateTime::createFromFormat($format, $key['endTime']);
-                                if ($end < $start) {
-                                    return responseInvalid(['To date must higher than from date!!']);
-                                }
-
-
                                 $durationReal = 0;
                                 $duration = $end->getTimestamp() - $start->getTimestamp();
 
@@ -519,15 +481,11 @@ class AccessControlSchedulesController extends Controller
 
                         if ($key['giveAccessNow'] == 1) {
 
-                            $format = 'd/m/Y H:i:s';
+                            $format = 'd/m/Y H:i';
                             $currentDateTime = new DateTime();
                             $formattedCurrentDateTime = $currentDateTime->format($format);
                             $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                             $end = DateTime::createFromFormat($format, $key['endTime']);
-
-                            if ($end < $start) {
-                                return responseInvalid(['To date must higher than from date!!']);
-                            }
 
                             $durationReal = 0;
                             $duration = $end->getTimestamp() - $start->getTimestamp();
@@ -554,14 +512,9 @@ class AccessControlSchedulesController extends Controller
                             ]);
                         } else {
 
-                            $format = 'd/m/Y H:i:s';
+                            $format = 'd/m/Y H:i';
                             $start = DateTime::createFromFormat($format, $key['startTime']);
                             $end = DateTime::createFromFormat($format, $key['endTime']);
-                            if ($end < $start) {
-                                return responseInvalid(['To date must higher than from date!!']);
-                            }
-
-
                             $durationReal = 0;
                             $duration = $end->getTimestamp() - $start->getTimestamp();
 
@@ -660,13 +613,13 @@ class AccessControlSchedulesController extends Controller
                 DB::raw('CAST(MAX(createdBy) AS SIGNED) as createdBy'),
                 DB::raw('MAX(created_at) as created_at')
             )->where([
-                ['isDeleted', '=', 0]
+                ['isDeleted', '=', 0],
             ])
             ->groupBy('scheduleMasterId')
             ->orderByDesc('created_at');
 
         $data = DB::table('accessControlSchedulesMaster as a')
-            ->leftJoinSub($groupDetails, 'b', function ($join) {
+            ->joinSub($groupDetails, 'b', function ($join) {
                 $join->on('b.scheduleMasterId', '=', 'a.id');
             })
             ->leftJoin('users as c', function ($join) {
@@ -706,7 +659,8 @@ class AccessControlSchedulesController extends Controller
             )
             ->where([
                 ['c.isDeleted', '=', '0'],
-                ['d.isDeleted', '=', '0']
+                ['d.isDeleted', '=', '0'],
+                ['b.totalAccessMenu', '>', '0'],
             ]);
 
         return $data;
@@ -1165,6 +1119,73 @@ class AccessControlSchedulesController extends Controller
     }
 
 
+    public function deleteDetailAccessControlSchedules(Request $request)
+    {
+        try {
+
+            $validate = Validator::make($request->all(), [
+                'detailId' => 'required',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
+
+
+            foreach ($request->detailId as $val) {
+
+
+                $checkIfDataExits = AccessControlScheduleDetails::where([
+                    ['id', '=', $val],
+                ])->first();
+                if (!$checkIfDataExits) {
+                    return responseInvalid(['Data Schedules with id ' . $val . ' not exists! try different ID']);
+                }
+
+                $checkIfDataExits = AccessControlScheduleDetails::where([
+                    ['id', '=', $val],
+                    ['isDeleted', '=', '1'],
+                ])->first();
+                echo ("asd");
+                if ($checkIfDataExits) {
+                    return responseInvalid(['Data Schedules with id ' . $val . ' already deleted! try different ID']);
+                }
+
+
+                $checkStatusInProgress = AccessControlScheduleDetails::where([
+                    ['id', '=', $val],
+                    ['status', '<>', '1']
+                ])->first();
+
+                if ($checkStatusInProgress) {
+                    return responseInvalid(['Data Schedules with id ' . $val . ' already On Going or Finished! try different ID']);
+                }
+            }
+
+            foreach ($request->detailId as $val) {
+
+                AccessControlScheduleDetails::where([
+                    ['id', '=', $val]
+                ])->update([
+                    'isDeleted' => 1,
+                    'deletedBy' =>  $request->user()->id,
+                    'deletedAt' =>  Carbon::now()
+                ],);
+            }
+
+            DB::commit();
+
+            return responseDelete();
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return responseInvalid([$e]);
+        }
+    }
+
+
 
     public function detailSchedules(Request $request)
     {
@@ -1205,7 +1226,7 @@ class AccessControlSchedulesController extends Controller
 
                     $param_schedules = AccessControlScheduleMaster::from('accessControlSchedulesMaster as a')
                         ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                        ->leftJoin('users as c', 'b.id', '=', 'a.locationId')
+                        ->leftJoin('users as c', 'b.id', '=', 'a.usersId')
                         ->select(
                             'a.id as id',
                             'b.locationName as location',
@@ -1241,9 +1262,12 @@ class AccessControlSchedulesController extends Controller
                             'b.masterName',
                             'c.menuName',
                             'd.accessType',
-                            DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i:%s") as startTime'),
-                            DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
-                            DB::raw('CAST((a.duration) AS SIGNED) as duration'),
+                            DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
+                            DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
+                            DB::raw('CONCAT(
+                                FLOOR(a.duration / 86400), " Hari ",
+                                FLOOR((a.duration % 86400) / 3600), " Jam"
+                            ) AS duration'),
                             'a.status',
                             DB::raw('CAST((CASE WHEN a.status = 1 THEN 0 ELSE 1 END) AS SIGNED) as isRunning'),
 
@@ -1268,7 +1292,7 @@ class AccessControlSchedulesController extends Controller
 
                     $param_schedules = AccessControlScheduleMaster::from('accessControlSchedulesMaster as a')
                         ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                        ->leftJoin('users as c', 'b.id', '=', 'a.locationId')
+                        ->leftJoin('users as c', 'b.id', '=', 'a.usersId')
                         ->select(
                             'a.id as id',
                             'a.locationId as locationId',
@@ -1289,9 +1313,12 @@ class AccessControlSchedulesController extends Controller
                             DB::raw('CAST((a.listMenuId) AS SIGNED) as listMenuId'),
                             DB::raw('CAST((a.accessTypeId) AS SIGNED) as accessTypeId'),
                             DB::raw('CAST((a.giveAccessNow) AS SIGNED) as giveAccessNow'),
-                            DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i:%s") as startTime'),
-                            DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i:%s") as endTime'),
-                            DB::raw('CAST((a.duration) AS SIGNED) as duration'),
+                            DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
+                            DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
+                            DB::raw('CONCAT(
+                                FLOOR(a.duration / 86400), " Hari ",
+                                FLOOR((a.duration % 86400) / 3600), " Jam"
+                            ) AS duration'),
                         )->where([
                             ['a.isDeleted', '=', 0],
                             ['a.scheduleMasterId', '=', $request->id],
@@ -1353,9 +1380,6 @@ class AccessControlSchedulesController extends Controller
             if ($request->details) {
 
                 $arraySchedules = json_decode($request->details, true);
-
-                $startTimes = [];
-                $endTimes = [];
                 $loop = 1;
 
 
@@ -1363,7 +1387,7 @@ class AccessControlSchedulesController extends Controller
 
                     'masterMenuId.required' => 'Master id on tab Schedules is required!',
                     'menuListId.required' => 'Menu list id on tab Schedules is required!',
-                    'accessTypeId.required' => 'Access type id on tab Schedules is required!',
+                    'accessTypeId.re    quired' => 'Access type id on tab Schedules is required!',
                     'giveAccessNow.required' => 'Give access now on tab Schedules is required!',
                     'integer' => 'The :attribute must be an integer.',
                 ];
@@ -1395,28 +1419,22 @@ class AccessControlSchedulesController extends Controller
 
                         if ($val['command'] != "del") {
 
-
                             if ($val['giveAccessNow'] == 1) {
 
-                                $format = 'd/m/Y H:i:s';
-                                $currentDateTime = new DateTime();
-                                $formattedCurrentDateTime = $currentDateTime->format($format);
-                                $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
-                                $end = DateTime::createFromFormat($format, $val['endTime']);
+                                $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
+                                if ($result) {
 
-                                if ($end < $start) {
-                                    return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
+                                    return responseInvalid([$result]);
                                 }
                             } else {
 
-                                $format = 'd/m/Y H:i:s';
-                                $start = DateTime::createFromFormat($format, $val['startTime']);
-                                $end = DateTime::createFromFormat($format, $val['endTime']);
-                                if ($end < $start) {
-                                    return responseInvalid(['To date must higher than from date!!']);
+                                $result = $this->checkValidationTime($val['startTime'], $val['endTime']);
+
+                                if ($result) {
+
+                                    return responseInvalid([$result]);
                                 }
                             }
-
 
                             array_push($input_real, $val);
                         }
@@ -1424,22 +1442,17 @@ class AccessControlSchedulesController extends Controller
 
                         if ($val['giveAccessNow'] == 1) {
 
-                            $format = 'd/m/Y H:i:s';
-                            $currentDateTime = new DateTime();
-                            $formattedCurrentDateTime = $currentDateTime->format($format);
-                            $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
-                            $end = DateTime::createFromFormat($format, $val['endTime']);
+                            $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
+                            if ($result) {
 
-                            if ($end < $start) {
-                                return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
+                                return responseInvalid([$result]);
                             }
                         } else {
 
-                            $format = 'd/m/Y H:i:s';
-                            $start = DateTime::createFromFormat($format, $val['startTime']);
-                            $end = DateTime::createFromFormat($format, $val['endTime']);
-                            if ($end < $start) {
-                                return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
+                            $result = $this->checkValidationTime($val['startTime'], $val['endTime']);
+                            if ($result) {
+
+                                return responseInvalid([$result]);
                             }
                         }
 
@@ -1461,8 +1474,8 @@ class AccessControlSchedulesController extends Controller
                             'listMenuId' => 'required|integer',
                             'accessTypeId' => 'required|integer',
                             'giveAccessNow' => 'required|boolean',
-                            'startTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i:s' : '',
-                            'endTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i:s|after:startTime' : '',
+                            'startTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i' : '',
+                            'endTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i|after:startTime' : '',
                             'duration' => $key['giveAccessNow'] ? 'required_if:giveAccessNow,1' : '',
                         ],
                         $messageSchedules
@@ -1487,7 +1500,7 @@ class AccessControlSchedulesController extends Controller
                         return responseInvalid(['Master id not found! please try different id']);
                     }
 
-                    $checkIfMenuListExits = MenuList::where([['id', '=', $key['listMenuId']], ['isActive', '=', '1']])->first();
+                    $checkIfMenuListExits = MenuList::where([['id', '=', $key['listMenuId']],  ['masterId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
 
                     if ($checkIfMenuListExits == null) {
 
@@ -1545,15 +1558,11 @@ class AccessControlSchedulesController extends Controller
 
                     if ($key['giveAccessNow'] == 1) {
 
-                        $format = 'd/m/Y H:i:s';
+                        $format = 'd/m/Y H:i';
                         $currentDateTime = new DateTime();
                         $formattedCurrentDateTime = $currentDateTime->format($format);
                         $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
-
-                        if ($end < $start) {
-                            return responseInvalid(['if give access now = 1 , end date must higher than from today!!']);
-                        }
 
                         $durationReal = 0;
                         $duration = $end->getTimestamp() - $start->getTimestamp();
@@ -1595,14 +1604,9 @@ class AccessControlSchedulesController extends Controller
                     } else {
 
 
-                        $format = 'd/m/Y H:i:s';
+                        $format = 'd/m/Y H:i';
                         $start = DateTime::createFromFormat($format, $key['startTime']);
                         $end = DateTime::createFromFormat($format, $key['endTime']);
-
-                        if ($end < $start) {
-                            return responseInvalid(['To date must higher than from date!!']);
-                        }
-
                         $durationReal = 0;
                         $duration = $end->getTimestamp() - $start->getTimestamp();
 
@@ -1637,6 +1641,58 @@ class AccessControlSchedulesController extends Controller
             DB::rollback();
 
             return responseInvalid([$e]);
+        }
+    }
+
+    public function checkValidationTime(string $startTime, string $endTime)
+    {
+
+        $format = 'd/m/Y H:i';
+        $currentDateTime = new DateTime();
+        $formattedCurrentDateTime = $currentDateTime->format($format);
+
+        $dateTimeToday = DateTime::createFromFormat($format, $formattedCurrentDateTime);
+        $start = DateTime::createFromFormat($format, $startTime);
+        $end = DateTime::createFromFormat($format, $endTime);
+
+        if ($start < $dateTimeToday) {
+            return 'Start time cannot be before date time today! Date time now ' . $dateTimeToday->format('d/m/Y H:i') . '. Please check your start time! ';
+        }
+
+        if ($end < $start) {
+            return 'End time must higher than start time!! Please check your end time!';
+        }
+
+
+        if ($end == $start) {
+            return 'End time same with start time!! Please check your end time!';
+        }
+    }
+
+
+    public function checkValidationTimeGiveAccessNow(string $startTime, string $endTime)
+    {
+
+        $format = 'd/m/Y H:i';
+        $currentDateTime = new DateTime();
+        $formattedCurrentDateTime = $currentDateTime->format($format);
+        $start = DateTime::createFromFormat($format, $formattedCurrentDateTime);
+
+        $startFromFE = DateTime::createFromFormat($format, $startTime);
+        $end = DateTime::createFromFormat($format, $endTime);
+
+
+        if ($startFromFE < $start) {
+
+            return 'Start time cannot be before date time today! Date time now ' . $start->format('d/m/Y H:i') . '. Please check your start time! ';
+        }
+
+        if ($end < $start) {
+            return 'End time must higher than start time!! Please check your end time!';
+        }
+
+        if ($end == $start) {
+            return 'End time same with start time!! Please check your end time!';
         }
     }
 
