@@ -386,12 +386,11 @@ class AccessControlSchedulesController extends Controller
                         $AccessControlSchedule->save();
                     }
                 } else {
-                    echo("aaa");
+
                     if (array_key_exists('command', $key)) {
 
                         if ($key['command'] == "del") {
 
-                            echo("asd");
                             AccessControlScheduleDetails::where([
                                 ['id', '=', $key['detailId']]
                             ])->update([
@@ -1147,7 +1146,7 @@ class AccessControlSchedulesController extends Controller
                     ['id', '=', $val],
                     ['isDeleted', '=', '1'],
                 ])->first();
-                echo ("asd");
+
                 if ($checkIfDataExits) {
                     return responseInvalid(['Data Schedules with id ' . $val . ' already deleted! try different ID']);
                 }
@@ -1226,7 +1225,7 @@ class AccessControlSchedulesController extends Controller
 
                     $param_schedules = AccessControlScheduleMaster::from('accessControlSchedulesMaster as a')
                         ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                        ->leftJoin('users as c', 'b.id', '=', 'a.usersId')
+                        ->leftJoin('users as c', 'c.id', '=', 'a.usersId')
                         ->select(
                             'a.id as id',
                             'b.locationName as location',
@@ -1264,10 +1263,11 @@ class AccessControlSchedulesController extends Controller
                             'd.accessType',
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
                             DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
-                            DB::raw('CONCAT(
-                                FLOOR(a.duration / 86400), " Hari ",
-                                FLOOR((a.duration % 86400) / 3600), " Jam"
-                            ) AS duration'),
+                            DB::raw('CASE
+                            WHEN duration >= 86400 THEN CONCAT(FLOOR(duration / 86400), " Hari ", FLOOR((duration % 86400) / 3600), " Jam")
+                            WHEN duration >= 3600 THEN CONCAT(FLOOR(duration / 3600), " Jam")
+                            ELSE CONCAT(FLOOR(duration / 60), " Menit")
+                            END AS duration'),
                             'a.status',
                             DB::raw('CAST((CASE WHEN a.status = 1 THEN 0 ELSE 1 END) AS SIGNED) as isRunning'),
 
@@ -1292,7 +1292,7 @@ class AccessControlSchedulesController extends Controller
 
                     $param_schedules = AccessControlScheduleMaster::from('accessControlSchedulesMaster as a')
                         ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                        ->leftJoin('users as c', 'b.id', '=', 'a.usersId')
+                        ->leftJoin('users as c', 'c.id', '=', 'a.usersId')
                         ->select(
                             'a.id as id',
                             'a.locationId as locationId',
@@ -1315,10 +1315,11 @@ class AccessControlSchedulesController extends Controller
                             DB::raw('CAST((a.giveAccessNow) AS SIGNED) as giveAccessNow'),
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
                             DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
-                            DB::raw('CONCAT(
-                                FLOOR(a.duration / 86400), " Hari ",
-                                FLOOR((a.duration % 86400) / 3600), " Jam"
-                            ) AS duration'),
+                            DB::raw('CASE
+                                WHEN duration >= 86400 THEN CONCAT(FLOOR(duration / 86400), " Hari ", FLOOR((duration % 86400) / 3600), " Jam")
+                                WHEN duration >= 3600 THEN CONCAT(FLOOR(duration / 3600), " Jam")
+                                ELSE CONCAT(FLOOR(duration / 60), " Menit")
+                            END AS duration'),
                         )->where([
                             ['a.isDeleted', '=', 0],
                             ['a.scheduleMasterId', '=', $request->id],
