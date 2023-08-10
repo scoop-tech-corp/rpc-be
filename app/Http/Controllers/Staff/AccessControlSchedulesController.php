@@ -1264,9 +1264,9 @@ class AccessControlSchedulesController extends Controller
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
                             DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
                             DB::raw('CASE
-                            WHEN duration >= 86400 THEN CONCAT(FLOOR(duration / 86400), " Hari ", FLOOR((duration % 86400) / 3600), " Jam")
-                            WHEN duration >= 3600 THEN CONCAT(FLOOR(duration / 3600), " Jam")
-                            ELSE CONCAT(FLOOR(duration / 60), " Menit")
+                                WHEN duration >= 86400 THEN CONCAT(FLOOR(duration / 86400), " Hari ", CASE WHEN FLOOR((duration % 86400) / 3600) > 0 THEN CONCAT(FLOOR((duration % 86400) / 3600), " Jam") ELSE "" END)
+                                WHEN duration >= 3600 THEN CONCAT(FLOOR(duration / 3600), " Jam")
+                                ELSE CONCAT(FLOOR(duration / 60), " Menit")
                             END AS duration'),
                             'a.status',
                             DB::raw('CAST((CASE WHEN a.status = 1 THEN 0 ELSE 1 END) AS SIGNED) as isRunning'),
@@ -1316,7 +1316,7 @@ class AccessControlSchedulesController extends Controller
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
                             DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
                             DB::raw('CASE
-                                WHEN duration >= 86400 THEN CONCAT(FLOOR(duration / 86400), " Hari ", FLOOR((duration % 86400) / 3600), " Jam")
+                                WHEN duration >= 86400 THEN CONCAT(FLOOR(duration / 86400), " Hari ", CASE WHEN FLOOR((duration % 86400) / 3600) > 0 THEN CONCAT(FLOOR((duration % 86400) / 3600), " Jam") ELSE "" END)
                                 WHEN duration >= 3600 THEN CONCAT(FLOOR(duration / 3600), " Jam")
                                 ELSE CONCAT(FLOOR(duration / 60), " Menit")
                             END AS duration'),
