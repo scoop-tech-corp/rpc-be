@@ -237,6 +237,7 @@ class AccessControlSchedulesController extends Controller
                             'giveAccessNow' => 'required|boolean',
                             'startTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i' : '',
                             'endTime' => $key['giveAccessNow'] ? 'required|date_format:d/m/Y H:i|after:startTime' : '',
+                            'duration' => $key['giveAccessNow'] ? 'required_if:giveAccessNow,1' : '',
                         ],
                         $messageSchedules
                     );
