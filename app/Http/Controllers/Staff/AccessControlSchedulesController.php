@@ -1263,11 +1263,11 @@ class AccessControlSchedulesController extends Controller
                             'd.accessType',
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
                             DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
-                            DB::raw('CASE
+                            DB::raw('TRIM(BOTH " " FROM CASE
                                 WHEN duration >= 86400 THEN CONCAT(FLOOR(duration / 86400), " Hari ", CASE WHEN FLOOR((duration % 86400) / 3600) > 0 THEN CONCAT(FLOOR((duration % 86400) / 3600), " Jam") ELSE "" END)
                                 WHEN duration >= 3600 THEN CONCAT(FLOOR(duration / 3600), " Jam")
                                 ELSE CONCAT(FLOOR(duration / 60), " Menit")
-                            END AS duration'),
+                            END) AS duration'),
                             'a.status',
                             DB::raw('CAST((CASE WHEN a.status = 1 THEN 0 ELSE 1 END) AS SIGNED) as isRunning'),
 
@@ -1315,11 +1315,11 @@ class AccessControlSchedulesController extends Controller
                             DB::raw('CAST((a.giveAccessNow) AS SIGNED) as giveAccessNow'),
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
                             DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
-                            DB::raw('CASE
+                            DB::raw('TRIM(BOTH " " FROM CASE
                                 WHEN duration >= 86400 THEN CONCAT(FLOOR(duration / 86400), " Hari ", CASE WHEN FLOOR((duration % 86400) / 3600) > 0 THEN CONCAT(FLOOR((duration % 86400) / 3600), " Jam") ELSE "" END)
                                 WHEN duration >= 3600 THEN CONCAT(FLOOR(duration / 3600), " Jam")
                                 ELSE CONCAT(FLOOR(duration / 60), " Menit")
-                            END AS duration'),
+                            END) AS duration'),
                         )->where([
                             ['a.isDeleted', '=', 0],
                             ['a.scheduleMasterId', '=', $request->id],
