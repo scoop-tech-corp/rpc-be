@@ -1372,6 +1372,14 @@ class AccessControlSchedulesController extends Controller
         if ($checkIfLocationExits == null) {
             return responseInvalid(['Location id not found! please try different id']);
         }
+        
+        $checkIfUsersLocationExists = UsersLocation::where([['usersId', '=', $request->usersId], ['locationId', '=', $request->locationId], ['isDeleted', '=', '0']])->first();
+
+        if ($checkIfUsersLocationExists == null) {
+            return responseInvalid(['User id and Location Id not found! please try different id']);
+        }
+
+
 
         try {
 
