@@ -429,7 +429,6 @@ class AccessControlSchedulesController extends Controller
                                 'deletedBy' => $request->user()->id,
                                 'deletedAt' => now()
                             ]);
-                            
                         } else {
 
                             if ($key['giveAccessNow'] == 1) {
@@ -740,7 +739,7 @@ class AccessControlSchedulesController extends Controller
                     $data = $data->where('location', 'like', '%' . $request->search . '%');
                 } else if ($res == "totalAccessMenu") {
 
-                    $data = $data->where('totalAccessMenu', 'like', '%' . $request->search . '%');
+                    $data = $data->where('totalAccessMenu', '=', $request->search);
                 } else if ($res == "createdBy") {
 
                     $data = $data->where('createdBy', 'like', '%' . $request->search . '%');
@@ -1000,7 +999,7 @@ class AccessControlSchedulesController extends Controller
             );
 
         if ($request->search) {
-            $data = $data->where('totalAccessMenu', 'like', '%' . $request->search . '%');
+            $data = $data->where('totalAccessMenu', '=', $request->search);
         }
 
         $data = $data->get();
