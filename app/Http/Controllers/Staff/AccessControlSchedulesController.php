@@ -391,6 +391,37 @@ class AccessControlSchedulesController extends Controller
 
                         if ($key['command'] == "del") {
 
+
+                            $checkIfDataExits = AccessControlScheduleDetails::where([
+                                ['id', '=', $key['detailId']],
+                            ])->first();
+
+                            if (!$checkIfDataExits) {
+                                DB::rollback();
+                                return responseInvalid(['Data Schedules with id ' . $key['detailId'] . ' not exists! try different ID']);
+                            }
+
+                            $checkIfDataExits = AccessControlScheduleDetails::where([
+                                ['id', '=', $key['detailId']],
+                                ['isDeleted', '=', '1'],
+                            ])->first();
+
+                            if ($checkIfDataExits) {
+                                DB::rollback();
+                                return responseInvalid(['Data Schedules with id ' . $key['detailId'] . ' already deleted! try different ID']);
+                            }
+
+
+                            $checkStatusInProgress = AccessControlScheduleDetails::where([
+                                ['id', '=', $key['detailId']],
+                                ['status', '<>', '1']
+                            ])->first();
+
+                            if ($checkStatusInProgress) {
+                                DB::rollback();
+                                return responseInvalid(['Data Schedules with id ' . $key['detailId'] . ' already On Going or Finished! try different ID']);
+                            }
+
                             AccessControlScheduleDetails::where([
                                 ['id', '=', $key['detailId']]
                             ])->update([
@@ -398,6 +429,7 @@ class AccessControlSchedulesController extends Controller
                                 'deletedBy' => $request->user()->id,
                                 'deletedAt' => now()
                             ]);
+                            
                         } else {
 
                             if ($key['giveAccessNow'] == 1) {
@@ -662,6 +694,8 @@ class AccessControlSchedulesController extends Controller
                 ['b.totalAccessMenu', '>', '0'],
             ]);
 
+
+        $data = DB::table($data, 'a');
         return $data;
     }
 
@@ -889,13 +923,13 @@ class AccessControlSchedulesController extends Controller
             );
 
         if ($request->search) {
-            $data = $data->where('jobTitle', 'like', '%' . $request->search . '%');
+            $data = $data->where('position', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column = 'jobTitle';
+            $temp_column = 'position';
             return $temp_column;
         }
 
@@ -1118,72 +1152,6 @@ class AccessControlSchedulesController extends Controller
     }
 
 
-    public function deleteDetailAccessControlSchedules(Request $request)
-    {
-        try {
-
-            $validate = Validator::make($request->all(), [
-                'detailId' => 'required',
-            ]);
-
-            if ($validate->fails()) {
-                $errors = $validate->errors()->all();
-                return responseInvalid($errors);
-            }
-
-
-            foreach ($request->detailId as $val) {
-
-
-                $checkIfDataExits = AccessControlScheduleDetails::where([
-                    ['id', '=', $val],
-                ])->first();
-                if (!$checkIfDataExits) {
-                    return responseInvalid(['Data Schedules with id ' . $val . ' not exists! try different ID']);
-                }
-
-                $checkIfDataExits = AccessControlScheduleDetails::where([
-                    ['id', '=', $val],
-                    ['isDeleted', '=', '1'],
-                ])->first();
-
-                if ($checkIfDataExits) {
-                    return responseInvalid(['Data Schedules with id ' . $val . ' already deleted! try different ID']);
-                }
-
-
-                $checkStatusInProgress = AccessControlScheduleDetails::where([
-                    ['id', '=', $val],
-                    ['status', '<>', '1']
-                ])->first();
-
-                if ($checkStatusInProgress) {
-                    return responseInvalid(['Data Schedules with id ' . $val . ' already On Going or Finished! try different ID']);
-                }
-            }
-
-            foreach ($request->detailId as $val) {
-
-                AccessControlScheduleDetails::where([
-                    ['id', '=', $val]
-                ])->update([
-                    'isDeleted' => 1,
-                    'deletedBy' =>  $request->user()->id,
-                    'deletedAt' =>  Carbon::now()
-                ],);
-            }
-
-            DB::commit();
-
-            return responseDelete();
-        } catch (Exception $e) {
-
-            DB::rollback();
-
-            return responseInvalid([$e]);
-        }
-    }
-
 
 
     public function detailSchedules(Request $request)
@@ -1372,7 +1340,7 @@ class AccessControlSchedulesController extends Controller
         if ($checkIfLocationExits == null) {
             return responseInvalid(['Location id not found! please try different id']);
         }
-        
+
         $checkIfUsersLocationExists = UsersLocation::where([['usersId', '=', $request->usersId], ['locationId', '=', $request->locationId], ['isDeleted', '=', '0']])->first();
 
         if ($checkIfUsersLocationExists == null) {
