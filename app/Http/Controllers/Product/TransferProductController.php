@@ -810,7 +810,7 @@ class TransferProductController
 
                             productTransferSentImages::create([
                                 'productTransferDetailId' => $detail->id,
-                                'labelName' => $img['label'],
+                                'label' => $img['label'],
                                 'realImageName' => $img['originalName'],
                                 'imagePath' => '/ProductTransferSentImages' . '/' . $imageName,
                                 'userId' => $request->user()->id,
