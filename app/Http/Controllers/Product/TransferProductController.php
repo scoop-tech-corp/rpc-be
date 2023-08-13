@@ -934,6 +934,7 @@ class TransferProductController
                             ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
                             ->select(
                                 'ptd.id',
+                                'ps.id as productId',
                                 'ps.fullName',
                                 DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
                                 'ptd.remark',
@@ -947,6 +948,7 @@ class TransferProductController
                             ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
                             ->select(
                                 'ptd.id',
+                                'ps.id as productId',
                                 'ps.fullName',
                                 DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
                                 'ptd.remark',
@@ -969,6 +971,7 @@ class TransferProductController
 
                     $datas[] = array(
                         'id' => $prd->id,
+                        'productId' => $prd->productId,
                         'fullName' => $prd->fullName,
                         'productType' => $prd->productType,
                         'quantity' => $prd->quantity,
