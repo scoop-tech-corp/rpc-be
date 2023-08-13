@@ -152,7 +152,14 @@ class ApiController extends Controller
                     ->where([['a.roleId', '=', $users->roleId],])
                     ->get();
 
+                $locations = DB::table('usersLocation as ul')
+                    ->join('location as l', 'ul.locationId', 'l.id')
+                    ->select('l.id', 'l.locationName')
+                    ->where('ul.usersId', '=', $userId)
+                    ->get();
+
                 return response()->json([
+                    'id' => $userId,
                     'success' => true,
                     'token' => $token,
                     'usersId' => $userId,
@@ -160,6 +167,7 @@ class ApiController extends Controller
                     "emailAddress" => $emailaddress,
                     "jobName" => $users->jobName,
                     "role" => $users->roleName,
+                    "locations" => $locations,
                     "menuLevel" => $data,
                     "accessLimit" => $accessLimit,
                 ]);
