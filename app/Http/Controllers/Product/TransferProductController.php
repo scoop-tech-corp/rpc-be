@@ -609,7 +609,7 @@ class TransferProductController
         $validate = Validator::make(
             $request->products,
             [
-                '*.detailTransferId' => 'nullable|integer',
+                '*.id' => 'nullable|integer',
                 '*.productId' => 'required|integer',
                 '*.productType' => 'required|string|in:productSell,productClinic',
                 '*.quantity' => 'required|integer',
@@ -620,7 +620,7 @@ class TransferProductController
                 '*.productId.required' => 'Product Id Should be Required!',
                 '*.productId.integer' => 'Product Id Should be Integer!',
 
-                '*.detailTransferId.integer' => 'Detail Transfer Id Should be Integer!',
+                '*.id.integer' => 'Detail Transfer Id Should be Integer!',
 
                 '*.productType.required' => 'Product Type Should be Required!',
                 '*.productType.string' => 'Product Type Should be String!',
@@ -753,8 +753,8 @@ class TransferProductController
             }
 
             if ($value['status'] === 'del') {
-                if ($value['detailTransferId']) {
-                    $res = productTransferDetails::find($value['detailTransferId']);
+                if ($value['id']) {
+                    $res = productTransferDetails::find($value['id']);
 
                     $res->DeletedBy = $request->user()->id;
                     $res->isDeleted = true;
@@ -763,7 +763,7 @@ class TransferProductController
                 }
             } else {
                 $detail = productTransferDetails::updateOrCreate(
-                    ['id' => $value['detailTransferId']],
+                    ['id' => $value['id']],
                     [
                         'productTransferId' => $master->id,
                         'productIdOrigin' => $value['productId'],
@@ -778,7 +778,7 @@ class TransferProductController
                 );
             }
 
-            if (is_null($value['detailTransferId'])) {
+            if (is_null($value['id'])) {
 
                 foreach ($value['images'] as $img) {
 
