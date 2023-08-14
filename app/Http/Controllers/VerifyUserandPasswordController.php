@@ -7,88 +7,85 @@ use DB;
 
 class VerifyUserandPasswordController extends Controller
 {
-  public function index($id)
-  {
+    public function index($id)
+    {
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
-    try {
+        try {
 
+            $checkIfUsersExists = DB::table('users')
+                ->where([
+                    ['isDeleted', '=', '0'],
+                    ['id', '=', $id]
+                ])
+                ->first();
 
+            if ($checkIfUsersExists != null) { //users exists
 
-      $checkIfUsersExists = DB::table('users')
-        ->where([
-          ['isDeleted', '=', '0'],
-          ['id', '=', $id]
-        ])
-        ->first();
+                $checkIfValueExits = DB::table('usersEmails')
+                    ->where([
+                        ['usersEmails.usage', '=', 'Utama'],
+                        ['usersEmails.email_verified_at', '=', null],
+                        ['usersEmails.usersId', '=', $id]
+                    ])
+                    ->first();
 
-      if ($checkIfUsersExists != null) { //users exists
+                if ($checkIfValueExits != null) {
 
-        $checkIfValueExits = DB::table('usersEmails')
-          ->where([
-            ['usersEmails.usage', '=', 'Utama'],
-            ['usersEmails.email_verified_at', '=', null],
-            ['usersEmails.usersId', '=', $id]
-          ])
-          ->first();
+                    return view('posts.setpassword', [
+                        'id' => $id,
+                    ]);
+                } else {
 
-        if ($checkIfValueExits != null) {
+                    return view('posts.accountverified');
+                }
+            } else {
 
-          return view('posts.setpassword', [
-            'id' => $id,
-          ]);
-        } else {
+                return view('posts.accountnotexists');
+            }
+        } catch (Exception $e) {
 
-          return view('posts.accountverified');
+            DB::rollback();
+
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ]);
         }
-      } else {
-
-        return view('posts.accountnotexists');
-      }
-      
-    } catch (Exception $e) {
-
-      DB::rollback();
-
-      return response()->json([
-        'result' => 'failed',
-        'message' => $e,
-      ]);
     }
-  }
 
 
-  public function store(Request $request)
-  {
-    DB::beginTransaction();
+    public function store(Request $request)
+    {
+        DB::beginTransaction();
 
-    try {
+        try {
 
-      $request->validate([
-        'new_password' => 'required|string|min:3|same:confirm_password',
-        'confirm_password' => 'required',
-      ]);
+            $request->validate([
+                'new_password' => 'required|string|min:3|same:confirm_password',
+                'confirm_password' => 'required',
+            ]);
 
-      DB::table('usersEmails')
-        ->where('usersId', '=', $request->hiddenId)
-        ->update(['email_verified_at' => now(),]);
+            DB::table('usersEmails')
+                ->where('usersId', '=', $request->hiddenId)
+                ->update(['email_verified_at' => now(),]);
 
-      DB::table('users')
-        ->where('id', '=', $request->hiddenId)
-        ->update(['password' => bcrypt($request->confirm_password),]);
+            DB::table('users')
+                ->where('id', '=', $request->hiddenId)
+                ->update(['password' => bcrypt($request->confirm_password),]);
 
-      DB::commit();
+            DB::commit();
 
-      return view('posts.accountverified');
-    } catch (Exception $e) {
+            return view('posts.accountverified');
+        } catch (Exception $e) {
 
-      DB::rollback();
+            DB::rollback();
 
-      return response()->json([
-        'result' => 'failed',
-        'message' => $e,
-      ]);
+            return response()->json([
+                'result' => 'failed',
+                'message' => $e,
+            ]);
+        }
     }
-  }
 }

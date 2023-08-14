@@ -238,6 +238,7 @@ class RestockController extends Controller
             'totalProduct' => $request->reStockQuantity,
             'supplierName' => $suppName,
             'status' => 1,
+            'isAdminApproval' => $checkAdminApproval,
             'userId' => $request->user()->id,
             //status 0 = waiting for approval, status 1 = approved, status 2 = reject, status 3 = product has arrive
             //0 = draft, 1 = waiting for approval, 2 = reject, 3 = approved, 4 = submit to supplier, 5 = product received
@@ -340,7 +341,6 @@ class RestockController extends Controller
         $totalProduct = 0;
         $totalImages = 0;
         $suppName = "";
-        $checkAdminApproval = false;
         $diffStock = 0;
 
         //validasi data
@@ -471,6 +471,7 @@ class RestockController extends Controller
             'totalProduct' => $totalProduct,
             'supplierName' => $suppName,
             'status' => $statusdata,
+            'isAdminApproval' => 0,
             'userId' => $request->user()->id,
         ]);
 
@@ -483,7 +484,10 @@ class RestockController extends Controller
         $number = "";
         $prNumber = "";
 
+        $adminApprovalMaster = false;
+
         foreach ($datas as $val) {
+            $checkAdminApproval = false;
 
             if ($request->status == 'final') {
 
@@ -525,6 +529,7 @@ class RestockController extends Controller
 
             if ($diffStock > 0) {
                 $checkAdminApproval = true;
+                $adminApprovalMaster = true;
             }
 
             $prodDetail = productRestockDetails::create([
@@ -564,6 +569,13 @@ class RestockController extends Controller
                     ]);
                 }
             }
+        }
+
+        if ($adminApprovalMaster == true) {
+
+            $res = productRestocks::find($prodRestock->id);
+            $res->isAdminApproval = $adminApprovalMaster;
+            $res->save();
         }
 
         return responseCreate();
@@ -743,41 +755,41 @@ class RestockController extends Controller
             foreach ($prodList as $value) {
 
                 // if ($value->reStockQuantity != $value->rejected) {
-                    if ($value->productType == 'productSell') {
-                        $prd = DB::table('productSells as ps')
-                            ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                            ->select(
-                                'prd.id',
-                                'prd.purchaseRequestNumber',
-                                'ps.fullName',
-                                DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
-                                'prd.reStockQuantity',
-                                'prd.id'
-                            )
-                            ->where('prd.id', '=', $value->id)
-                            ->first();
-                    } elseif ($value->productType == 'productClinic') {
-                        $prd = DB::table('productClinics as pc')
-                            ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
-                            ->select(
-                                'prd.id',
-                                'prd.purchaseRequestNumber',
-                                'pc.fullName',
-                                DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
-                                'prd.reStockQuantity',
-                                'prd.id'
-                            )
-                            ->where('prd.id', '=', $value->id)
-                            ->first();
-                    }
+                if ($value->productType == 'productSell') {
+                    $prd = DB::table('productSells as ps')
+                        ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                        ->select(
+                            'prd.id',
+                            'prd.purchaseRequestNumber',
+                            'ps.fullName',
+                            DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
+                            'prd.reStockQuantity',
+                            'prd.id'
+                        )
+                        ->where('prd.id', '=', $value->id)
+                        ->first();
+                } elseif ($value->productType == 'productClinic') {
+                    $prd = DB::table('productClinics as pc')
+                        ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
+                        ->select(
+                            'prd.id',
+                            'prd.purchaseRequestNumber',
+                            'pc.fullName',
+                            DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
+                            'prd.reStockQuantity',
+                            'prd.id'
+                        )
+                        ->where('prd.id', '=', $value->id)
+                        ->first();
+                }
 
-                    $data[] = array(
-                        'id' => $prd->id,
-                        'purchaseRequestNumber' => $prd->purchaseRequestNumber,
-                        'fullName' => $prd->fullName,
-                        'unitCost' => $prd->costPerItem,
-                        'orderQuantity' => $prd->reStockQuantity,
-                    );
+                $data[] = array(
+                    'id' => $prd->id,
+                    'purchaseRequestNumber' => $prd->purchaseRequestNumber,
+                    'fullName' => $prd->fullName,
+                    'unitCost' => $prd->costPerItem,
+                    'orderQuantity' => $prd->reStockQuantity,
+                );
                 // }
             }
 
@@ -1337,6 +1349,7 @@ class RestockController extends Controller
                 'totalProduct' => $totalProduct,
                 'supplierName' => $suppName,
                 'status' => $statusdata,
+                'isAdminApproval' => 0,
                 'updated_at' => Carbon::now(),
                 'userUpdateId' => $request->user()->id,
             ]
@@ -1350,9 +1363,11 @@ class RestockController extends Controller
 
         $number = "";
         $prNumber = "";
-        $checkAdminApproval = false;
+
+        $adminApprovalMaster = false;
 
         foreach ($datas as $val) {
+            $checkAdminApproval = false;
 
             if ($val['productType'] === 'productSell') {
 
@@ -1366,6 +1381,7 @@ class RestockController extends Controller
 
             if ($diffStock > 0) {
                 $checkAdminApproval = true;
+                $adminApprovalMaster = true;
             }
 
             if ($request->status == 'final') {
@@ -1471,6 +1487,13 @@ class RestockController extends Controller
             //         );
             //     }
             // }
+        }
+
+        if ($adminApprovalMaster == true) {
+
+            $res = productRestocks::find($request->id);
+            $res->isAdminApproval = $adminApprovalMaster;
+            $res->save();
         }
 
         return responseUpdate();
