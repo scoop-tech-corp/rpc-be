@@ -143,6 +143,7 @@ class TransferProductController
                     'variantProduct' => 1,
                     'totalProduct' => $request->totalItem,
                     'userIdReceiver' => $request->userIdReceiver,
+                    'isAdminApproval' => $checkAdminApproval,
                     'status' => 1,
                     'userId' => $request->user()->id,
                 ]);
@@ -231,7 +232,6 @@ class TransferProductController
             $variantProduct = 0;
             $totalProduct = 0;
             $status = 0;
-            $checkAdminApproval = false;
 
             if ($request->type == 'final') {
                 $status = 1;
@@ -275,6 +275,7 @@ class TransferProductController
                 'variantProduct' => $variantProduct,
                 'totalProduct' => $totalProduct,
                 'userIdReceiver' => $request->userIdReceiver,
+                'isAdminApproval' => 0,
                 'status' => $status,
                 'userId' => $request->user()->id,
             ]);
@@ -286,8 +287,10 @@ class TransferProductController
             }
 
             $productIdDestination = 0;
+            $adminApprovalMaster = false;
 
             foreach ($datas as $value) {
+                $checkAdminApproval = false;
 
                 if ($value['productType'] == 'productSell') {
 
@@ -316,6 +319,7 @@ class TransferProductController
                     }
 
                     if ($dataProductOr->diffStock <= 0) {
+                        $adminApprovalMaster = true;
                         $checkAdminApproval = true;
                     }
                 } elseif ($value['productType'] == 'productClinic') {
@@ -345,6 +349,7 @@ class TransferProductController
                     }
 
                     if ($dataProductOr->diffStock <= 0) {
+                        $adminApprovalMaster = true;
                         $checkAdminApproval = true;
                     }
                 }
@@ -379,6 +384,14 @@ class TransferProductController
                     }
                 }
             }
+
+            if ($adminApprovalMaster == true) {
+
+                $res = ProductTransfer::find($master->id);
+                $res->isAdminApproval = $adminApprovalMaster;
+                $res->save();
+            }
+
             DB::commit();
             return responseCreate();
         } catch (\Throwable $th) {
@@ -420,6 +433,10 @@ class TransferProductController
 
         if ($request->type == 'approval') {
             $data = $data->whereIn('pt.status', array(1, 3, 4));
+
+            if (adminAccess($request->user()->id)) {
+                $data = $data->where('pt.isAdminApproval', '=', 1);
+            }
         }
 
         if ($request->type == 'history') {
@@ -697,6 +714,7 @@ class TransferProductController
                     'variantProduct' => $variantProduct,
                     'totalProduct' => $totalProduct,
                     'userIdReceiver' => $request->userIdReceiver,
+                    'isAdminApproval' => 0,
                     'status' => $status,
                     'userId' => $request->user()->id,
                 ]
@@ -707,8 +725,11 @@ class TransferProductController
             }
 
             $productIdDestination = 0;
+            $adminApprovalMaster = false;
 
             foreach ($request->products as $value) {
+
+                $checkAdminApproval = false;
 
                 if ($value['productType'] == 'productSell') {
 
@@ -769,6 +790,7 @@ class TransferProductController
 
                     if ($dataProductOr->diffStock <= 0) {
                         $checkAdminApproval = true;
+                        $adminApprovalMaster = true;
                     }
                 }
 
@@ -819,6 +841,14 @@ class TransferProductController
                     }
                 }
             }
+
+            if ($adminApprovalMaster == true) {
+
+                $res = ProductTransfer::find($master->id);
+                $res->isAdminApproval = $adminApprovalMaster;
+                $res->save();
+            }
+
             DB::commit();
             return responseUpdate();
         } catch (\Throwable $th) {

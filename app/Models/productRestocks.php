@@ -14,7 +14,7 @@ class productRestocks extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'numberId', 'supplierName', 'locationId', 'variantProduct', 'totalProduct', 'status',
+        'numberId', 'supplierName', 'locationId', 'variantProduct', 'totalProduct', 'status', 'isAdminApproval',
         'userId', 'userUpdateId'
     ];
 }
