@@ -391,7 +391,8 @@ class ProfileController extends Controller
 
             DB::commit();
 
-            return responseUpdate();
+            return responseCreate();
+            
         } catch (Exception $e) {
 
             DB::rollback();
