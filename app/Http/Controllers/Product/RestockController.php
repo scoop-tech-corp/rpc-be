@@ -1584,7 +1584,7 @@ class RestockController extends Controller
     public function approval(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'productRestockId' => 'required|integer',
+            'id' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -1601,7 +1601,7 @@ class RestockController extends Controller
             $isAdmin = true;
         }
 
-        $find = productRestocks::find($request->productRestockId);
+        $find = productRestocks::find($request->id);
 
         if (!$find) {
             return response()->json([
@@ -1612,7 +1612,7 @@ class RestockController extends Controller
 
         if ($request->isAcceptedAll == '1') {
 
-            $detail = productRestockDetails::where('productRestockId', '=', $request->productRestockId)->get();
+            $detail = productRestockDetails::where('productRestockId', '=', $request->id)->get();
 
             foreach ($detail as $value) {
 
@@ -1638,7 +1638,7 @@ class RestockController extends Controller
 
             $suppList = DB::table('productRestockDetails as prd')
                 ->select('prd.supplierId')
-                ->where('prd.productRestockId', '=', $request->productRestockId)
+                ->where('prd.productRestockId', '=', $request->id)
                 ->groupby('prd.supplierId')
                 ->distinct()
                 ->pluck('prd.supplierId');
@@ -1661,7 +1661,7 @@ class RestockController extends Controller
                 }
 
                 DB::table('productRestockDetails')
-                    ->where('productRestockId', '=', $request->productRestockId)
+                    ->where('productRestockId', '=', $request->id)
                     ->where('supplierId', '=', $supp)
                     ->update([
                         'purchaseOrderNumber' => $number
@@ -1669,14 +1669,14 @@ class RestockController extends Controller
             }
 
             $checkAdminApproval = DB::table('productRestockDetails')
-                ->where('productRestockId', '=', $request->productRestockId)
+                ->where('productRestockId', '=', $request->id)
                 ->where('isAdminApproval', '=', 1)
                 ->get();
 
             if ($checkAdminApproval) {
 
                 $adminApproved = DB::table('productRestockDetails')
-                    ->where('productRestockId', '=', $request->productRestockId)
+                    ->where('productRestockId', '=', $request->id)
                     ->where('isApprovedAdmin', '=', 1)
                     ->get();
 
@@ -1698,7 +1698,7 @@ class RestockController extends Controller
             $find->userUpdateId = $request->user()->id;
             $find->save();
 
-            $detail = productRestockDetails::where('productRestockId', '=', $request->productRestockId)->get();
+            $detail = productRestockDetails::where('productRestockId', '=', $request->id)->get();
 
             foreach ($detail as $value) {
 
@@ -1882,16 +1882,16 @@ class RestockController extends Controller
                 $findRestock2->save();
             }
 
-            $prodRestock = productRestocks::find($request->productRestockId);
+            $prodRestock = productRestocks::find($request->id);
 
             $findDetailAdmin = DB::table('productRestockDetails')
-                ->where('productRestockId', '=', $request->productRestockId)
+                ->where('productRestockId', '=', $request->id)
                 ->where('isAdminApproval', '=', 1)
                 ->get();
 
             if (count($findDetailAdmin) > 0) {
                 $findAdminApproval = DB::table('productRestockDetails')
-                    ->where('productRestockId', '=', $request->productRestockId)
+                    ->where('productRestockId', '=', $request->id)
                     ->where('isApprovedAdmin', '=', 1)
                     ->get();
 
@@ -1901,7 +1901,7 @@ class RestockController extends Controller
                 }
             } else {
                 $findOfficeApproval = DB::table('productRestockDetails')
-                    ->where('productRestockId', '=', $request->productRestockId)
+                    ->where('productRestockId', '=', $request->id)
                     ->where('isApprovedOffice', '=', 1)
                     ->get();
 
