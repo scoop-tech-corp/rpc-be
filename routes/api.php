@@ -25,7 +25,7 @@ use App\Http\Controllers\Staff\SecurityGroupController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
-
+use App\Http\Controllers\Staff\ProfileController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -311,6 +311,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/schedule/detail', [AccessControlSchedulesController::class, 'detailSchedules']);
         Route::delete('/schedule', [AccessControlSchedulesController::class, 'deleteAccessControlSchedules']);
         Route::put('/schedule', [AccessControlSchedulesController::class, 'updateAccessControlSchedules']);
+
+        Route::get('/profile', [ProfileController::class, 'detailProfile']);
+        Route::put('/profile', [ProfileController::class, 'updateProfile']);
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
+        Route::post('/profile/image', [ProfileController::class, 'uploadImageProfile']);
     });
 
 
