@@ -310,9 +310,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/schedule/detailshedules', [AccessControlSchedulesController::class, 'detailAllSchedules']);
         Route::get('/schedule/detail', [AccessControlSchedulesController::class, 'detailSchedules']);
         Route::delete('/schedule', [AccessControlSchedulesController::class, 'deleteAccessControlSchedules']);
-        Route::delete('/schedule/detail', [AccessControlSchedulesController::class, 'deleteDetailAccessControlSchedules']);
         Route::put('/schedule', [AccessControlSchedulesController::class, 'updateAccessControlSchedules']);
-
     });
 
 
