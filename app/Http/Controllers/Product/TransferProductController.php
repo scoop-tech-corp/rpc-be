@@ -422,6 +422,7 @@ class TransferProductController
                 'lo.locationName as locationOriginName',
                 'ld.id as locationDestinationId',
                 'ld.locationName as locationDestinationName',
+                'u.id as userId',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y') as createdAt")
             )
