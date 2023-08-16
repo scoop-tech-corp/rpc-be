@@ -193,6 +193,55 @@ class ProfileController extends Controller
 
 
 
+            $latestPhoneNumber = $this->getPhoneLatest();
+            $latestMessenger = $this->getMessengerLatest();
+            $latestEmail = $this->getEmailLatest();
+            $latestAddress = $this->getDetailAddressLatest();
+
+
+            $checkDataUser = User::from('users as a')
+                ->leftJoinSub($latestPhoneNumber, 'e', function ($join) {
+                    $join->on('e.usersId', '=', 'a.id');
+                })->leftJoinSub($latestMessenger, 'f', function ($join) {
+                    $join->on('f.usersId', '=', 'a.id');
+                })->leftJoinSub($latestEmail, 'g', function ($join) {
+                    $join->on('g.usersId', '=', 'a.id');
+                })->leftJoinSub($latestAddress, 'h', function ($join) {
+                    $join->on('h.usersId', '=', 'a.id');
+                })->select(
+                    'a.id',
+                    'e.phoneNumberId as phoneNumberId',
+                    'f.messengerId as messengerNumberId',
+                    'g.emailId as emailId',
+                    'h.detailAddressId as detailAddressId',
+                )
+                ->where([
+                    ['a.id', '=', $request->id],
+                    ['a.isDeleted', '=', '0'],
+                ])
+                ->first();
+
+
+            if ($checkDataUser->phoneNumberId != $request->phoneNumberId) {
+                return responseInvalid(['Phone number id is not primary for update, please use id ' . $checkDataUser->phoneNumberId  . ' as phoneNumberId']);
+            }
+
+
+            if ($checkDataUser->messengerNumberId != $request->messengerNumberId) {
+                return responseInvalid(['Messenger id is not primary for update, please use id ' . $checkDataUser->messengerNumberId  . ' as messengerNumberId']);
+            }
+
+
+            if ($checkDataUser->emailId != $request->emailId) {
+                return responseInvalid(['Email id is not primary for update, please use id ' . $checkDataUser->detailAddressId  . ' as emailId']);
+            }
+
+
+
+            if ($checkDataUser->detailAddressId != $request->detailAddressId) {
+                return responseInvalid(['Detail address id is not primary for update, please use id ' . $checkDataUser->detailAddressId  . ' as detailAddressId']);
+            }
+
             User::where('id', '=', $request->id)
                 ->update([
                     'firstName' => $request->firstName,
@@ -392,7 +441,6 @@ class ProfileController extends Controller
             DB::commit();
 
             return responseCreate();
-            
         } catch (Exception $e) {
 
             DB::rollback();
@@ -499,6 +547,11 @@ class ProfileController extends Controller
 
                 $data->locationId = $locationId;
             } else {
+
+                $latestPhoneNumber = $this->getPhoneLatest();
+                $latestMessenger = $this->getMessengerLatest();
+                $latestEmail = $this->getEmailLatest();
+                $latestAddress = $this->getDetailAddressLatest();
 
 
                 $data = User::from('users as a')
