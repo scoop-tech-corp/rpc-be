@@ -17,6 +17,197 @@ use DB;
 
 class AccessControlController extends Controller
 {
+    public function indexMenuMaster(Request $request)
+    {
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        $data = DB::table('menuMaster as mm')
+            ->join('users as u', 'mm.userId', 'u.id')
+            ->select(
+                'mm.id',
+                'mm.masterName',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(mm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('mm.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $res = $this->searchMasterMenu($request);
+            if ($res) {
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
+            } else {
+                $data = [];
+                return response()->json([
+                    'totalPagination' => 0,
+                    'data' => $data
+                ], 200);
+            }
+        }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('mm.updated_at', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+
+        return responseIndex(ceil($totalPaging), $data);
+    }
+
+    public function indexMenuList(Request $request)
+    {
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        $data = DB::table('menuList as ml')
+            ->join('menuMaster as mm', 'mm.id', 'ml.masterId')
+            ->join('users as u', 'ml.userId', 'u.id')
+            ->select(
+                'ml.id',
+                'mm.masterName',
+                'ml.menuName',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(mm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('mm.isDeleted', '=', 0);
+
+        if ($request->search) {
+
+            $res = $this->searchListMenu($request);
+            if ($res) {
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
+            } else {
+                $data = [];
+                return response()->json([
+                    'totalPagination' => 0,
+                    'data' => $data
+                ], 200);
+            }
+        }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('mm.updated_at', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+
+        return responseIndex(ceil($totalPaging), $data);
+    }
+
+    private function searchListMenu($request)
+    {
+        $temp_column = null;
+
+        $data = DB::table('menuList as ml')
+            ->join('menuMaster as mm', 'mm.id', 'ml.masterId')
+            ->join('users as u', 'ml.userId', 'u.id')
+            ->select(
+                'ml.id',
+                'mm.masterName',
+                'ml.menuName',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(mm.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('mm.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('mm.masterName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'mm.masterName';
+        }
+
+        $data = DB::table('menuList as ml')
+            ->join('menuMaster as mm', 'mm.id', 'ml.masterId')
+            ->join('users as u', 'ml.userId', 'u.id')
+            ->select(
+                'ml.id',
+                'mm.masterName',
+                'ml.menuName',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(mm.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('mm.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('ml.menuName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'ml.menuName';
+        }
+
+        $data = DB::table('menuList as ml')
+            ->join('menuMaster as mm', 'mm.id', 'ml.masterId')
+            ->join('users as u', 'ml.userId', 'u.id')
+            ->select(
+                'ml.id',
+                'mm.masterName',
+                'ml.menuName',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(mm.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('mm.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'u.firstName';
+        }
+
+        return $temp_column;
+    }
+
+
     public function index(Request $request)
     {
 
@@ -197,6 +388,52 @@ class AccessControlController extends Controller
         }
     }
 
+    private function searchMasterMenu($request)
+    {
+        $temp_column = null;
+
+        $data = DB::table('menuMaster as mm')
+            ->join('users as u', 'mm.userId', 'u.id')
+            ->select(
+                'mm.id',
+                'mm.masterName',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(mm.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('mm.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('mm.masterName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'mm.masterName';
+        }
+
+        $data = DB::table('menuMaster as mm')
+            ->join('users as u', 'mm.userId', 'u.id')
+            ->select(
+                'mm.id',
+                'mm.masterName',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(mm.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('mm.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'u.firstName';
+        }
+
+        return $temp_column;
+    }
 
     public function insertMenuMaster(Request $Request)
     {
@@ -227,6 +464,7 @@ class AccessControlController extends Controller
 
                 $MenuMasters = new MenuMasters();
                 $MenuMasters->masterName = $Request->masterName;
+                $MenuMasters->userId = $Request->user()->id;;
                 $MenuMasters->isDeleted = 0;
                 $MenuMasters->created_at = now();
                 $MenuMasters->updated_at = now();
@@ -425,6 +663,7 @@ class AccessControlController extends Controller
                 $MenuList->masterId = $Request->masterId;
                 $MenuList->menuName = $Request->menuName;
                 $MenuList->isActive = 1;
+                $MenuList->userId = $Request->user()->id;
                 $MenuList->created_at = now();
                 $MenuList->updated_at = now();
                 $MenuList->save();
@@ -440,18 +679,12 @@ class AccessControlController extends Controller
                         ['AccessType', '=', 'None']
                     ])->first();
 
-                $getAccessLimit = accesslimit::select('id')
-                    ->where([
-                        ['id', '=', 1],
-                    ])->first();
-
                 foreach ($getAllUserRoles as $roles) {
 
                     $AccessControl = new AccessControl();
                     $AccessControl->menuListId = $newMenuListId;
                     $AccessControl->roleId = $roles->id;
                     $AccessControl->accessTypeId = $getAccessType->id;
-                    $AccessControl->accessLimitId = $getAccessLimit->id;
                     $AccessControl->isDeleted = 0;
                     $AccessControl->created_at = now();
                     $AccessControl->updated_at = now();
@@ -482,21 +715,35 @@ class AccessControlController extends Controller
         }
     }
 
-    public function dropdownMenuList()
+    public function dropdownMenuList(Request $request)
     {
-
         try {
 
-            $menuListsData = DB::table('menuList as a')
-                ->leftJoin('menuMaster as b', 'a.masterId', '=', 'b.id')
-                ->select(
-                    'a.id',
-                    'b.id as masterId',
-                    'b.masterName as masterName',
-                    'a.menuName as menuName'
-                )->where([
-                    ['a.isActive', '=', 1]
-                ])->get();
+            if ($request->masterId) {
+
+                $menuListsData = DB::table('menuList as a')
+                    ->leftJoin('menuMaster as b', 'a.masterId', '=', 'b.id')
+                    ->select(
+                        'a.id',
+                        'b.id as masterId',
+                        'b.masterName as masterName',
+                        'a.menuName as menuName'
+                    )->where([
+                        ['a.isActive', '=', 1], ['a.masterId', '=', $request->masterId]
+                    ])->get();
+            } else {
+
+                $menuListsData = DB::table('menuList as a')
+                    ->leftJoin('menuMaster as b', 'a.masterId', '=', 'b.id')
+                    ->select(
+                        'a.id',
+                        'b.id as masterId',
+                        'b.masterName as masterName',
+                        'a.menuName as menuName'
+                    )->where([
+                        ['a.isActive', '=', 1]
+                    ])->get();
+            }
 
             return responseList($menuListsData);
         } catch (Exception $e) {

@@ -18,6 +18,6 @@ class MenuMasters extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'menuMaster', 'isDeleted', 'created_at', 'updated_at'
+        'menuMaster', 'isDeleted', 'created_at', 'updated_at', 'userId', 'userUpdateId'
     ];
 }

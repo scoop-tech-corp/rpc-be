@@ -339,7 +339,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [AccessControlController::class, 'indexAccessControlDashboard']);
         Route::get('/accesstype', [AccessControlController::class, 'dropdownAccessType']);
         Route::get('/menumaster', [AccessControlController::class, 'dropdownMenuMaster']);
+        Route::get('/menumaster/index', [AccessControlController::class, 'indexMenuMaster']);
         Route::get('/menulist', [AccessControlController::class, 'dropdownMenuList']);
+        Route::get('/menulist/index', [AccessControlController::class, 'indexMenuList']);
         Route::post('/menulist', [AccessControlController::class, 'insertMenutList']);
         Route::post('/menumaster', [AccessControlController::class, 'insertMenuMaster']);
         Route::put('/menu', [AccessControlController::class, 'updateAccessControlMenu']);
@@ -347,7 +349,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/menumaster', [AccessControlController::class, 'updateMenuMaster']);
         Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
     });
-
 
 
     //GLOBAL VARIABLE
