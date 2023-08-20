@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Validator;
 use JWTAuth;
 use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Exceptions\JWTException;
-
+use App\Models\AccessControl\MenuList;
+use App\Models\AccessControl\MenuMasters;
 class ApiController extends Controller
 {
 
@@ -140,23 +141,127 @@ class ApiController extends Controller
                     ->where([['a.roleId', '=', $users->roleId],])
                     ->get();
 
-                $accessLimit = DB::table('accessControl as a')
-                    ->join('menuList as b', 'b.id', '=', 'a.menulistId')
-                    ->join('accessLimit as c', 'c.id', '=', 'a.accessLimitId')
-                    ->join('accessType as d', 'd.id', '=', 'a.accessTypeId')
-                    ->select(
-                        'b.menuName',
-                        'd.accessType',
-                        'c.timeLimit',
-                    )
-                    ->where([['a.roleId', '=', $users->roleId],])
-                    ->get();
-
                 $locations = DB::table('usersLocation as ul')
                     ->join('location as l', 'ul.locationId', 'l.id')
                     ->select('l.id', 'l.locationName')
                     ->where('ul.usersId', '=', $userId)
                     ->get();
+
+                $menuMastersData = MenuMasters::select('id', 'masterName as module')->where([
+                    ['isDeleted', '=', 0],
+                ])->get();
+
+
+                foreach ($menuMastersData as $menu) {
+
+                    $menuListsData = MenuList::select('id', 'menuName as menuName')->where([
+                        ['isActive', '=', 1],
+                        ['masterId', '=', $menu->id],
+                    ])->get();
+
+                    $menus = [];
+
+                    if (!$menuListsData->isEmpty()) {
+                        foreach ($menuListsData as $datamenulist) {
+
+                            $accessControls = DB::table('accessControl')
+                                ->join('menuList', 'accessControl.menuListId', '=', 'menuList.id')
+                                ->join('usersRoles', 'accessControl.roleID', '=', 'usersRoles.id')
+                                ->select(
+                                    'menuList.id as uid',
+                                    'menuList.menuName as menuName',
+                                    DB::raw('LOWER(usersRoles.roleName) as roleName'),
+                                )
+                                ->where([
+                                    ['menuListId', '=', $datamenulist->id],
+                                ])->get();
+
+
+                            foreach ($accessControls as $accessControl) {
+
+                                $menuId = $accessControl->uid;
+                                $menuName = $accessControl->menuName;
+
+                                $menuIndex = array_search($menuId, array_column($menus, 'uid'));
+
+                                if ($menuIndex === false) {
+
+                                    $menus[] = [
+                                        'uid' => $menuId,
+                                        'childName' => $menuName,
+
+                                    ];
+                                }
+                            }
+                        }
+
+
+                        $data[] = [
+                            'menuName' => $menu->module,
+                            'children' =>  $menus
+                        ];
+                    }
+                }
+
+
+                foreach ($menuMastersData as $menu) {
+
+                    $menuListsData = MenuList::select('id', 'menuName as menuName')->where([
+                        ['isActive', '=', 1],
+                        ['masterId', '=', $menu->id],
+                    ])->get();
+
+                    $menus = [];
+
+                    if (!$menuListsData->isEmpty()) {
+                        foreach ($menuListsData as $datamenulist) {
+
+                            $accessControls = DB::table('accessControl')
+                                ->join('menuList', 'accessControl.menuListId', '=', 'menuList.id')
+                                ->join('usersRoles', 'accessControl.roleID', '=', 'usersRoles.id')
+                                ->join('accessType', 'accessType.id', '=', 'accessControl.accessTypeId')
+                                ->select(
+                                    'menuList.id as uid',
+                                    'menuList.menuName as menuName',
+                                    'accessType.id as accessTypeId',
+                                    'accessType.accessType as accessTypeName',
+                                    DB::raw('LOWER(usersRoles.roleName) as roleName'),
+                                )
+                                ->where([
+                                    ['menuListId', '=', $datamenulist->id],
+                                ])->get();
+
+
+                            foreach ($accessControls as $accessControl) {
+
+                                $menuId = $accessControl->uid;
+                                $menuName = $accessControl->menuName;
+                                $accessType = $accessControl->accessTypeName;
+                                $accessTypeId = $accessControl->accessTypeId;
+
+                                $menuIndex = array_search($menuId, array_column($menus, 'uid'));
+
+                                if ($menuIndex === false) {
+
+                                    $menus[] = [
+                                        'uid' => $menuId,
+                                        'childName' => $menuName,
+                                        'accessTypeId' => $accessTypeId,
+                                        'accessType' => $accessType,
+                                    ];
+                                }
+                            }
+                        }
+
+
+                        $accessTypeMenu[] = [
+                            'menuName' => $menu->module,
+                            'children' =>  $menus
+                        ];
+                    }
+                }
+
+
 
                 return response()->json([
                     'id' => $userId,
@@ -169,7 +274,7 @@ class ApiController extends Controller
                     "role" => $users->roleName,
                     "locations" => $locations,
                     "menuLevel" => $data,
-                    "accessLimit" => $accessLimit,
+                    "accessType" => $accessTypeMenu,
                 ]);
             }
         } else {
