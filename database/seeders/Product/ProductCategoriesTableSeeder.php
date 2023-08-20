@@ -14,15 +14,16 @@ class ProductCategoriesTableSeeder extends Seeder
      */
     public function run()
     {
-        
+
 
         \DB::table('productCategories')->delete();
-        
+
         \DB::table('productCategories')->insert(array (
-            0 => 
+            0 =>
             array (
                 'id' => 1,
                 'categoryName' => 'bius 5',
+                'expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -31,10 +32,11 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:01:11',
                 'updated_at' => '2023-01-19 01:01:11',
             ),
-            1 => 
+            1 =>
             array (
                 'id' => 2,
                 'categoryName' => 'bius 1',
+                'expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -43,10 +45,11 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:01:12',
                 'updated_at' => '2023-01-19 01:01:12',
             ),
-            2 => 
+            2 =>
             array (
                 'id' => 3,
                 'categoryName' => 'obat kering',
+                'expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -55,10 +58,11 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:01:16',
                 'updated_at' => '2023-01-19 01:01:16',
             ),
-            3 => 
+            3 =>
             array (
                 'id' => 4,
                 'categoryName' => 'obat moinum',
+                'expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -67,10 +71,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:01:21',
                 'updated_at' => '2023-01-19 01:01:21',
             ),
-            4 => 
+            4 =>
             array (
                 'id' => 5,
-                'categoryName' => 'obat minum',
+                'categoryName' => 'obat minum','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -79,10 +83,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:01:23',
                 'updated_at' => '2023-01-19 01:01:23',
             ),
-            5 => 
+            5 =>
             array (
                 'id' => 6,
-                'categoryName' => 'barang tajam',
+                'categoryName' => 'barang tajam','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -91,10 +95,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:04:16',
                 'updated_at' => '2023-01-19 01:04:16',
             ),
-            6 => 
+            6 =>
             array (
                 'id' => 7,
-                'categoryName' => 'barang tumpul',
+                'categoryName' => 'barang tumpul','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -103,10 +107,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:04:19',
                 'updated_at' => '2023-01-19 01:04:19',
             ),
-            7 => 
+            7 =>
             array (
                 'id' => 8,
-                'categoryName' => 'barang kecil',
+                'categoryName' => 'barang kecil','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -115,10 +119,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:04:22',
                 'updated_at' => '2023-01-19 01:04:22',
             ),
-            8 => 
+            8 =>
             array (
                 'id' => 9,
-                'categoryName' => 'barang sedang',
+                'categoryName' => 'barang sedang','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -127,10 +131,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:04:30',
                 'updated_at' => '2023-01-19 01:04:30',
             ),
-            9 => 
+            9 =>
             array (
                 'id' => 10,
-                'categoryName' => 'barang besar',
+                'categoryName' => 'barang besar','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -139,10 +143,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:04:35',
                 'updated_at' => '2023-01-19 01:04:35',
             ),
-            10 => 
+            10 =>
             array (
                 'id' => 11,
-                'categoryName' => 'untuk customer',
+                'categoryName' => 'untuk customer','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -151,10 +155,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:04:40',
                 'updated_at' => '2023-01-19 01:04:40',
             ),
-            11 => 
+            11 =>
             array (
                 'id' => 12,
-                'categoryName' => 'dapat di daur ulang',
+                'categoryName' => 'dapat di daur ulang','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -163,10 +167,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:04:54',
                 'updated_at' => '2023-01-19 01:04:54',
             ),
-            12 => 
+            12 =>
             array (
                 'id' => 13,
-                'categoryName' => 'mudah terbakar',
+                'categoryName' => 'mudah terbakar','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -175,10 +179,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:05:02',
                 'updated_at' => '2023-01-19 01:05:02',
             ),
-            13 => 
+            13 =>
             array (
                 'id' => 14,
-                'categoryName' => 'dapat berasap',
+                'categoryName' => 'dapat berasap','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -187,10 +191,10 @@ class ProductCategoriesTableSeeder extends Seeder
                 'created_at' => '2023-01-19 01:05:11',
                 'updated_at' => '2023-01-19 01:05:11',
             ),
-            14 => 
+            14 =>
             array (
                 'id' => 15,
-                'categoryName' => 'arsenik',
+                'categoryName' => 'arsenik','expiredDay' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -200,7 +204,7 @@ class ProductCategoriesTableSeeder extends Seeder
                 'updated_at' => '2023-01-19 01:05:18',
             ),
         ));
-        
-        
+
+
     }
 }
