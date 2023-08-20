@@ -18,6 +18,6 @@ class MenuList extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'menuName', 'isActive', 'created_at', 'updated_at'
+        'menuName', 'isActive', 'created_at', 'updated_at', 'userId', 'userUpdateId'
     ];
 }
