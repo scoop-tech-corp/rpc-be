@@ -329,10 +329,7 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         $datas = json_decode($request->productList, true);
@@ -392,10 +389,7 @@ class RestockController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->first();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => [$errors],
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         foreach ($datas as $value) {
@@ -635,10 +629,7 @@ class RestockController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         productRestockTracking::create([
@@ -658,10 +649,7 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         if ($request->type == 'edit') {
@@ -916,10 +904,7 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         $itemPerPage = $request->rowPerPage;
@@ -967,10 +952,7 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         $data = DB::table('productRestockDetails as prd')
@@ -993,10 +975,7 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         $time = Carbon::now()->format('YmdHisu');
@@ -1208,10 +1187,7 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         $datas = $request->productList;
@@ -1598,10 +1574,8 @@ class RestockController extends Controller
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+
+                return responseInvalid([$errors]);
             }
 
             $isAdmin = false;
@@ -1938,10 +1912,8 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+
+            return responseInvalid([$errors]);
         }
 
         $prod = productRestocks::find($request->productRestockId);
@@ -1964,10 +1936,7 @@ class RestockController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
         $datas = json_decode($request->productRestocks, true);
