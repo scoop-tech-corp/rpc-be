@@ -14,12 +14,8 @@ use App\Models\Staff\UsersEmails;
 use App\Models\Staff\UsersDetailAddresses;
 use File;
 
-
 class ProfileController extends Controller
 {
-
-
-
     public function getPhoneLatest()
     {
 
@@ -42,8 +38,6 @@ class ProfileController extends Controller
 
         return $subquery;
     }
-
-
 
     public function getMessengerLatest()
     {
@@ -79,8 +73,6 @@ class ProfileController extends Controller
             ->where('isDeleted', 0)
             ->orderBy('id', 'asc');
 
-
-
         return $messengerSubquery;
     }
 
@@ -108,8 +100,6 @@ class ProfileController extends Controller
 
         return $subquery;
     }
-
-
 
     public function updateProfile(Request $request)
     {
@@ -301,8 +291,6 @@ class ProfileController extends Controller
         }
     }
 
-
-
     public function updatePassword(Request $request)
     {
         try {
@@ -345,8 +333,6 @@ class ProfileController extends Controller
                 return responseInvalid(['Confirm Password Not Match! Please Check Your Password Again!']);
             }
 
-
-
             User::where('id', '=', $request->id)
                 ->update([
                     'password' => bcrypt($request->confirmPassword),
@@ -363,7 +349,6 @@ class ProfileController extends Controller
             return responseInvalid([$e]);
         }
     }
-
 
     public function uploadImageProfile(Request $request)
     {
@@ -449,7 +434,6 @@ class ProfileController extends Controller
         }
     }
 
-
     public function detailProfile(Request $request)
     {
         try {
@@ -469,23 +453,12 @@ class ProfileController extends Controller
                 return responseInvalid(['User id not found, please try different id']);
             }
 
-            $type = '';
-            if ($request->has('type')) {
-
-                if (strtolower($request->type) != "edit") {
-                    return responseInvalid(['Type must set to edit']);
-                }
-
-                $type = $request->type;
-            }
-
-
             $latestPhoneNumber = $this->getPhoneLatest();
             $latestMessenger = $this->getMessengerLatest();
             $latestEmail = $this->getEmailLatest();
             $latestAddress = $this->getDetailAddressLatest();
 
-            if ($type == "") {
+            if ($request->type) {
 
                 $data = User::from('users as a')
                     ->leftJoin('jobTitle as c', function ($join) {
