@@ -30,7 +30,7 @@ class DataRecapServiceCategory implements FromCollection, ShouldAutoSize, WithHe
 
         $data = DB::table('serviceCategory as sc')->where('sc.isDeleted', '=', 0)
             ->join('users', 'sc.userId', '=', 'users.id')
-            ->select('sc.id', 'sc.categoryName', 'sc.created_at', 'sc.updated_at', DB::raw("DATE_FORMAT(sc.updated_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy');
+            ->select('sc.id', 'sc.categoryName', 'sc.created_at', DB::raw("DATE_FORMAT(sc.created_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy');
 
         if ($this->orderValue) {
             $data = $data->orderBy($this->orderColumn, $this->orderValue);

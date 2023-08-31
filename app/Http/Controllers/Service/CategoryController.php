@@ -24,13 +24,13 @@ class CategoryController extends Controller
             }
 
             if ($request->orderValue && $request->orderColumn != 'totalProduct') {
-                $orderByColumn = $request->orderColumn == 'createdAt' ? 'sc.updated_at' : $request->orderColumn;
+                $orderByColumn = $request->orderColumn == 'createdAt' ? 'sc.created_at' : $request->orderColumn;
                 $data = $data->orderBy($orderByColumn, $request->orderValue);
             } else {
-                $data = $data->orderBy('sc.updated_at', 'desc');
+                $data = $data->orderBy('sc.created_at', 'desc');
             }
 
-            return $data->select('sc.id', 'sc.categoryName', 'sc.created_at', 'sc.updated_at', DB::raw("DATE_FORMAT(sc.updated_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy');
+            return $data->select('sc.id', 'sc.categoryName', 'sc.created_at', 'sc.updated_at', DB::raw("DATE_FORMAT(sc.created_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy');
         }
 
         $data = buildQuery($request);
