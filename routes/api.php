@@ -27,12 +27,19 @@ use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Staff\ProfileController;
 
+use App\Http\Controllers\Service\CategoryController as ServiceCategoryController;
+
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
 
     //location
+    Route::get('/service/category/export', [ServiceCategoryController::class, 'export']);
+    Route::get('/service/category', [ServiceCategoryController::class, 'index']);
+    Route::post('/service/category', [ServiceCategoryController::class, 'create']);
+    Route::put('/service/category', [ServiceCategoryController::class, 'update']);
+    Route::delete('/service/category', [ServiceCategoryController::class, 'delete']);
 
 
     Route::post('logout', [ApiController::class, 'logout']);
@@ -154,6 +161,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/category/detail/clinic', [CategoryController::class, 'detailClinic']);
         Route::get('/category/export', [CategoryController::class, 'export']);
         Route::post('/category', [CategoryController::class, 'create']);
+
+        //service Category
+
+
 
         Route::get('/sell/dropdown', [ProductController::class, 'IndexProductSell']);
         Route::get('/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
@@ -350,6 +361,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/menumaster', [AccessControlController::class, 'updateMenuMaster']);
         Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
     });
+
+
 
 
     //GLOBAL VARIABLE

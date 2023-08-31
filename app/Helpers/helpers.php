@@ -270,6 +270,55 @@ if (!function_exists('responseList')) {
         return response()->json($data, 200);
     }
 }
+
+if(!function_exists('paginateData')){
+    function paginateData($query,  $request)
+    {
+        $itemPerPage = $request->rowPerPage;
+        $page = $request->goToPage;
+    
+        $offset = ($page - 1) * $itemPerPage;
+        $count_data = $query->count();
+        $count_result = $count_data - $offset;
+    
+        if ($count_result < 0) {
+            $data = $query->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $query->offset($offset)->limit($itemPerPage)->get();
+        }
+    
+        $totalPaging = $count_data / $itemPerPage;
+    
+        return collect([
+            'totalPagination' => ceil($totalPaging),
+            'totalData' => $count_data,
+            'data' => $data
+        ]);
+    }
+}
+if(!function_exists('responseSuccess')){
+    function responseSuccess($data=[], $msg='Insert Data Successful!'){
+        return response()->json(
+            [
+                'data' => $data,
+                'message' => $msg,
+            ],
+            200
+        );
+    }
+}
+if(!function_exists('responseErrorValidation')){
+    function responseErrorValidation($errors, $msg='The given data was invalid.'){
+        return response()->json(
+            [
+                'message' => $msg,
+                'errors' => $errors,
+            ],
+            422
+        );
+    }
+}
+
 //add by danny wahyudi
 // if (!function_exists('securityGroupAdmin')) {
 //     function securityGroupAdmin($id)
