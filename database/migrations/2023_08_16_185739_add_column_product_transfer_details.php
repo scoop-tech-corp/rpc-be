@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('canceled')->nullable()->default(0)->after('rejected');
             $table->integer('accepted')->nullable()->default(0)->after('canceled');
             $table->integer('received')->nullable()->default(0)->after('accepted');
+            $table->string('reasonCancel')->nullable()->after('reference');
         });
     }
 
@@ -34,6 +35,7 @@ return new class extends Migration
             $table->dropColumn('canceled')->after('rejected');
             $table->dropColumn('accepted')->after('canceled');
             $table->dropColumn('received')->after('accepted');
+            $table->dropColumn('reasonCancel')->after('reference');
         });
     }
 };
