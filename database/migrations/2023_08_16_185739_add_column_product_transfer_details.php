@@ -30,12 +30,34 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('productTransferDetails', function (Blueprint $table) {
-            $table->dropColumn('rejected')->after('additionalCost');
-            $table->dropColumn('canceled')->after('rejected');
-            $table->dropColumn('accepted')->after('canceled');
-            $table->dropColumn('received')->after('accepted');
-            $table->dropColumn('reasonCancel')->after('reference');
-        });
+        if (Schema::hasColumn('productTransferDetails', 'rejected')) {
+            Schema::table('productTransferDetails', function (Blueprint $table) {
+                $table->dropColumn('rejected');
+            });
+        }
+
+        if (Schema::hasColumn('productTransferDetails', 'canceled')) {
+            Schema::table('productTransferDetails', function (Blueprint $table) {
+                $table->dropColumn('canceled');
+            });
+        }
+
+        if (Schema::hasColumn('productTransferDetails', 'accepted')) {
+            Schema::table('productTransferDetails', function (Blueprint $table) {
+                $table->dropColumn('accepted');
+            });
+        }
+
+        if (Schema::hasColumn('productTransferDetails', 'received')) {
+            Schema::table('productTransferDetails', function (Blueprint $table) {
+                $table->dropColumn('received');
+            });
+        }
+
+        if (Schema::hasColumn('productTransferDetails', 'reasonCancel')) {
+            Schema::table('productTransferDetails', function (Blueprint $table) {
+                $table->dropColumn('reasonCancel');
+            });
+        }
     }
 };
