@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Staff\AbsentController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\DataStaticController;
@@ -362,7 +363,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
     });
 
+    Route::group(['prefix' => 'absent'], function(){
 
+        Route::post('/', [AbsentController::class, 'createAbsent']);
+    });
 
 
     //GLOBAL VARIABLE

@@ -18,7 +18,7 @@ class productTransferDetails extends Model
 
         'isUserReceived', 'receivedAt', 'reference', 'additionalCost',
 
-        'rejected', 'canceled', 'accepted', 'received',
+        'rejected', 'canceled', 'accepted', 'received', 'reasonCancel',
 
         'userIdOffice', 'isApprovedOffice', 'reasonOffice', 'officeApprovedAt',
 
