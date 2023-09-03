@@ -460,6 +460,7 @@ class ProfileController extends Controller
                         $join->on('h.usersId', '=', 'a.id');
                     })->select(
                         'a.id',
+                        'a.imagePath',
                         'a.firstName',
                         'a.middleName',
                         'a.lastName',
@@ -474,7 +475,7 @@ class ProfileController extends Controller
                         'a.annualSickAllowance',
                         'a.annualSickAllowanceRemaining',
                         'a.annualLeaveAllowance',
-                        'a.annualSickAllowanceRemaining',
+                        'a.annualLeaveAllowanceRemaining',
                         DB::raw("IF(a.payPeriodId IS NULL, '', a.payPeriodId) as payPeriodId"),
                         DB::raw("IF(e.periodName IS NULL, '', e.periodName) as periodName"),
                         'a.userName',
