@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\StaffAbsents;
 use Illuminate\Http\Request;
 use Validator;
+use Illuminate\Support\Carbon;
+use DB;
 
 class AbsentController extends Controller
 {
@@ -15,7 +17,7 @@ class AbsentController extends Controller
             'presentTime' => 'required|date_format:Y-m-d H:i:s',
             'longitude' => 'required|string',
             'latitude' => 'required|string',
-            'status' => 'required|integer|in:1,2,3',
+            'status' => 'required|integer|in:1,2,3,4',
             'reason' => 'nullable|string',
             'image' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:5000',
         ]);
@@ -26,10 +28,30 @@ class AbsentController extends Controller
             return responseInvalid([$errors]);
         }
 
-        $data = StaffAbsents::where('userId', '=', $request->user()->id)->first();
+        $present = DB::table('StaffAbsents')
+            ->where('userId', '=', $request->user()->id)
+            ->whereDate('created_at', Carbon::today())
+            // ->where('status', '=', 1)
+            ->get();
+
+        if (count($present) > 0) {
+            return responseInvalid(['You have already absent today!']);
+        }
+
+        if ($request->status == 4) {
+
+            if (count($present) <= 0) {
+                return responseInvalid(['You can not miss going home today! Cause you have not been absent today!']);
+            }
+        }
+
+        if (($request->status == 2 || $request->status == 3) && $request->reason == '') {
+            return responseInvalid(['Reason should be filled!']);
+        }
 
         $oldname = '';
         $realName = '';
+        $path = '';
 
         if ($request->hasfile('image')) {
 
@@ -46,6 +68,8 @@ class AbsentController extends Controller
                 $oldname = $file->getClientOriginalName();
 
                 $file->move(public_path() . '/AbsentImages/', $realName);
+
+                $path = "/AbsentImages/" . $realName;
             }
         }
 
@@ -56,7 +80,7 @@ class AbsentController extends Controller
             'status' => $request->status,
             'reason' => $request->reason,
             'realImageName' => $oldname,
-            'imagePath' =>  "/AbsentImages/" . $realName,
+            'imagePath' =>  $path,
             'address' => '',
             'city' => '',
             'province' => '',

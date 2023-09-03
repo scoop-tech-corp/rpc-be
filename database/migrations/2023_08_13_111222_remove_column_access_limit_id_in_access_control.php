@@ -25,14 +25,14 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::create('accessControl', function (Blueprint $table) {
-            $table->id();
-            $table->integer('menuListId');
-            $table->integer('roleId');
-            $table->integer('accessTypeId');
+        Schema::table('accessControl', function (Blueprint $table) {
             $table->integer('accessLimitId');
-            $table->integer('isDeleted');
-            $table->timestamps();
+            // $table->integer('menuListId');
+            // $table->integer('roleId');
+            // $table->integer('accessTypeId');
+            // $table->integer('accessLimitId');
+            // $table->integer('isDeleted');
+            // $table->timestamps();
         });
     }
 };

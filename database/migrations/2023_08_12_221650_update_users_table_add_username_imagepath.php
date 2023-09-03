@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('imagePath')->nullable()->after('imageName');
         });
 
+        DB::statement('UPDATE users SET imageName = "" WHERE imageName IS NULL;');
+        DB::statement('UPDATE users SET imagePath = "" WHERE imagePath IS NULL;');
     }
 
     /**

@@ -1972,6 +1972,10 @@ class RestockController extends Controller
 
             $dtl = productRestockDetails::find($value['productRestockDetailId']);
 
+            if(!$dtl){
+                return responseInvalid(['There is no any data Detail Restock!']);
+            }
+
             if ($value['accepted'] != ($value['received'] + $value['canceled'])) {
                 if ($dtl->productType == 'productSell') {
                     $find = ProductSell::find($dtl->productId);
