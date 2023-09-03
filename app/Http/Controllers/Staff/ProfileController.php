@@ -352,12 +352,11 @@ class ProfileController extends Controller
 
     public function uploadImageProfile(Request $request)
     {
-
         try {
-
 
             $validator = Validator::make($request->all(), [
                 'id' => 'required',
+                'image' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:5000',
             ]);
 
             if ($validator->fails()) {
@@ -365,63 +364,47 @@ class ProfileController extends Controller
                 return responseInvalid([$errors]);
             }
 
-            $users = User::find($request->id);
+            $user = User::find($request->id);
 
-            if (!$users) {
+            if (!$user) {
                 return responseInvalid(['Data not found!']);
             }
 
-            $json_array = json_decode($request->imagesName, true);
-            $files[] = $request->file('images');
-            $index = 0;
+            $path = '';
+            $realName = '';
 
-            foreach ($json_array as $val) {
+            if ($user->imageName && $user->imagePath) {
+                if (File::exists(public_path() . $user->imagePath)) {
 
-                if (($val['id'] == "" || $val['id'] == 0)  && ($val['status'] == "")) {
-
-                    $name = $files[0][$index]->hashName();
-
-                    $files[0][$index]->move(public_path() . '/UsersProfiles/', $name);
-
-                    $fileName = "/UsersProfiles/" . $name;
-
-                    User::where('id', '=', $request->id)->where('isDeleted', '=', '0')->update([
-                        'imageName' => $name,
-                        'imagePath' => $fileName,
-                        'updated_at' => now(),
-                    ]);
-
-                    $index = $index + 1;
-                } elseif (($val['id'] != "" && $val['id'] != 0)  && ($val['status'] == "del")) {
-
-                    $find_image = User::select(
-                        'imageName',
-                        'imagePath'
-                    )->where('id', '=', $val['id'])
-                        ->first();
-
-                    if ($find_image) {
-
-                        if (file_exists(public_path() . $find_image->imagePath)) {
-
-                            File::delete(public_path() . $find_image->imagePath);
-
-                            User::where([['id', '=', $val['id']]])->update([
-                                'imageName' => null,
-                                'imagePath' => null,
-                                'updated_at' => now(),
-                            ]);
-                        }
-                    }
-                } elseif (($val['id'] != "" || $val['id'] != 0)  && ($val['status'] == "")) {
-
-                    User::where([['id', '=', $val['id']]])->update([
-                        'imageName' => null,
-                        'imagePath' => null,
-                        'updated_at' => now(),
-                    ]);
+                    File::delete(public_path() . $user->imagePath);
                 }
             }
+
+            if ($request->hasfile('image')) {
+
+                $files[] = $request->file('image');
+
+                foreach ($files as $file) {
+
+                    $realName = $file->hashName();
+
+                    $file_size = $file->getSize();
+
+                    $file_size = $file_size / 1024;
+
+                    $originalName = $file->getClientOriginalName();
+
+                    $file->move(public_path() . '/UsersProfiles/', $realName);
+
+                    $path = "/UsersProfiles/" . $realName;
+                }
+            }
+
+            User::where([['id', '=', $request->id]])->update([
+                'imageName' => $originalName,
+                'imagePath' => $path,
+                'updated_at' => now(),
+            ]);
 
             DB::commit();
 
@@ -458,7 +441,7 @@ class ProfileController extends Controller
             $latestEmail = $this->getEmailLatest();
             $latestAddress = $this->getDetailAddressLatest();
 
-            if ($request->type) {
+            if ($request->type === 'view') {
 
                 $data = User::from('users as a')
                     ->leftJoin('jobTitle as c', function ($join) {
@@ -518,8 +501,8 @@ class ProfileController extends Controller
                     ])
                     ->get();
 
-                $data->locationId = $locationId;
-            } else {
+                $data->locations = $locationId;
+            } else if ($request->type === 'edit') {
 
                 $latestPhoneNumber = $this->getPhoneLatest();
                 $latestMessenger = $this->getMessengerLatest();
