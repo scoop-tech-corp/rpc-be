@@ -31,7 +31,6 @@ class AbsentController extends Controller
         $present = DB::table('StaffAbsents')
             ->where('userId', '=', $request->user()->id)
             ->whereDate('created_at', Carbon::today())
-            // ->where('status', '=', 1)
             ->get();
 
         if (count($present) > 0) {
