@@ -1265,4 +1265,16 @@ class FacilityController extends Controller
             ]);
         }
     }
+
+    public function listFacilityWithLocation(Request $request)
+    {
+
+        $data = DB::table('facility_unit as f')
+            ->select('f.id', 'f.unitName')
+            ->whereIn('f.locationId', $request->locationId)
+            ->where('f.isDeleted', '=', 0)
+            ->get();
+
+        responseList($data);
+    }
 }

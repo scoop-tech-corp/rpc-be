@@ -522,6 +522,7 @@ class ProfileController extends Controller
                         $join->on('h.usersId', '=', 'a.id');
                     })->select(
                         'a.id',
+                        'a.imagePath',
                         'a.firstName',
                         'a.middleName',
                         'a.lastName',

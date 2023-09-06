@@ -1751,7 +1751,7 @@ class LocationController extends Controller
         }
     }
 
-    public function locationList(Request $request)
+    public function locationList()
     {
         $Data = DB::table('location')
             ->select('id', 'locationName')
