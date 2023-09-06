@@ -76,6 +76,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/facility/facilityimages', [FacilityController::class, 'searchImageFacility']);
         Route::post('/facility/imagefacility', [FacilityController::class, 'uploadImageFacility']);
 
+        Route::get('/facility/location', [FacilityController::class, 'listFacilityWithLocation']);
+
         //data static
         Route::get('/datastatic', [DataStaticController::class, 'datastatic']);
         Route::delete('/datastatic', [DataStaticController::class, 'datastaticlocation']);
@@ -169,6 +171,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/sell/dropdown', [ProductController::class, 'IndexProductSell']);
         Route::get('/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
+
+        Route::get('/sell/list/location', [ProductController::class, 'ListProductSellWithLocation']);
+        Route::get('/clinic/list/location', [ProductController::class, 'ListProductClinicWithLocation']);
 
         Route::post('/usage', [ProductController::class, 'CreateUsage']);
         Route::get('/usage', [ProductController::class, 'IndexUsage']);
@@ -286,7 +291,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/staffdetail', [StaffController::class, 'getDetailStaff']);
         Route::put('/', [StaffController::class, 'updateStaff']);
         Route::get('/', [StaffController::class, 'index']);
+
         Route::get('/list', [StaffController::class, 'listStaff']);
+        Route::get('/list/location', [StaffController::class, 'listStaffWithLocation']);
+
         Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
         Route::post('/sendEmail', [StaffController::class, 'sendEmailVerification']);
         Route::put('/statusStaff', [StaffController::class, 'updateStatusUsers']);

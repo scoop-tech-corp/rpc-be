@@ -151,7 +151,7 @@ class ProductController
         }
     }
 
-    public function IndexUsage(Request $request)
+    public function IndexUsage()
     {
 
         $data = DB::table('usages as u')
@@ -661,5 +661,51 @@ class ProductController
         }
 
         return responseDelete();
+    }
+
+    public function ListProductSellWithLocation(Request $request)
+    {
+        if ($request->locationId == 'all') {
+
+            $data = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('ps.fullName')
+                ->where('ps.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        } else {
+            $data = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('ps.fullName')
+                ->wherein('psl.locationId', $request->locationId)
+                ->where('ps.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        }
+
+        return responseList($data);
+    }
+
+    public function ListProductClinicWithLocation(Request $request)
+    {
+        if ($request->locationId == 'all') {
+
+            $data = DB::table('productClinics as pc')
+                ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+                ->select('pc.fullName')
+                ->where('pc.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        } else {
+            $data = DB::table('productClinics as pc')
+                ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+                ->select('pc.fullName')
+                ->wherein('pcl.locationId', $request->locationId)
+                ->where('pc.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        }
+
+        return responseList($data);
     }
 }
