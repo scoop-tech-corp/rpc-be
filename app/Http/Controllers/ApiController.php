@@ -11,6 +11,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Models\AccessControl\MenuList;
 use App\Models\AccessControl\MenuMasters;
+use App\Models\StaffAbsents;
+use Carbon\Carbon;
+
 class ApiController extends Controller
 {
 
@@ -261,7 +264,13 @@ class ApiController extends Controller
                     }
                 }
 
-
+                $absent = StaffAbsents::where('userId', '=', $userId)
+                    ->whereDate('created_at', Carbon::today())
+                    ->first();
+                $isAbsent = 1;
+                if (!$absent) {
+                    $isAbsent = 0;
+                }
 
                 return response()->json([
                     'id' => $userId,
@@ -272,6 +281,7 @@ class ApiController extends Controller
                     "emailAddress" => $emailaddress,
                     "jobName" => $users->jobName,
                     "role" => $users->roleName,
+                    "isAbsent" => $isAbsent,
                     "locations" => $locations,
                     "menuLevel" => $data,
                     "accessType" => $accessTypeMenu,
