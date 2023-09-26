@@ -303,11 +303,10 @@ class ProfileController extends Controller
                     'newPassword' => [
                         'required',
                         'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/',
-                    ],
-                    'confirmPassword' => 'required',
+                    ]
                 ],
                 [
-                    'newPassword.regex' => 'The new password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character (@$!%*?&).',
+                    'newPassword.regex' => 'The new password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character!',
                 ]
             );
 
@@ -329,13 +328,9 @@ class ProfileController extends Controller
                 return responseInvalid(['Old Password Not Match! Please Check Your Password Again!']);
             }
 
-            if (($request->confirmPassword != $request->newPassword)) {
-                return responseInvalid(['Confirm Password Not Match! Please Check Your Password Again!']);
-            }
-
             User::where('id', '=', $request->id)
                 ->update([
-                    'password' => bcrypt($request->confirmPassword),
+                    'password' => bcrypt($request->newPassword),
                     'updated_at' => now(),
                 ]);
 
