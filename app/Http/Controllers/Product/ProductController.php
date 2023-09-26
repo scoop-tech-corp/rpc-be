@@ -665,6 +665,8 @@ class ProductController
 
     public function ListProductSellWithLocation(Request $request)
     {
+        $request->locationId = json_decode($request->locationId);
+
         if ($request->locationId == 'all') {
 
             $data = DB::table('productSells as ps')
@@ -688,6 +690,7 @@ class ProductController
 
     public function ListProductClinicWithLocation(Request $request)
     {
+        $request->locationId = json_decode($request->locationId);
         if ($request->locationId == 'all') {
 
             $data = DB::table('productClinics as pc')

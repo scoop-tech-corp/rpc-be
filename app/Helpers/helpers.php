@@ -275,19 +275,26 @@ if(!function_exists('paginateData')){
     function paginateData($query,  $request)
     {
         $itemPerPage = $request->rowPerPage;
-        $page = $request->goToPage;
+        $totalPaging = 0;
+        $count_data = 0;
     
-        $offset = ($page - 1) * $itemPerPage;
-        $count_data = $query->count();
-        $count_result = $count_data - $offset;
+        if($itemPerPage == 0){
+            $data = $query->get();
+            $count_data = $query->count();
+        }else{
+            $page = $request->goToPage;
     
-        if ($count_result < 0) {
-            $data = $query->offset(0)->limit($itemPerPage)->get();
-        } else {
-            $data = $query->offset($offset)->limit($itemPerPage)->get();
+            $offset = ($page - 1) * $itemPerPage;
+            $count_data = $query->count();
+            $count_result = $count_data - $offset;
+            if ($count_result < 0) {
+                $data = $query->offset(0)->limit($itemPerPage)->get();
+            } else {
+                $data = $query->offset($offset)->limit($itemPerPage)->get();
+            }
+            $totalPaging = $count_data / $itemPerPage;
         }
     
-        $totalPaging = $count_data / $itemPerPage;
     
         return collect([
             'totalPagination' => ceil($totalPaging),
@@ -315,6 +322,17 @@ if(!function_exists('responseErrorValidation')){
                 'errors' => $errors,
             ],
             422
+        );
+    }
+}
+if(!function_exists('responseError')){
+    function responseError($errors, $msg='The given data was invalid.'){
+        return response()->json(
+            [
+                'message' => $msg,
+                'errors' => $errors,
+            ],
+            500
         );
     }
 }

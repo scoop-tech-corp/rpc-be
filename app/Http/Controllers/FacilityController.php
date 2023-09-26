@@ -1268,13 +1268,13 @@ class FacilityController extends Controller
 
     public function listFacilityWithLocation(Request $request)
     {
-
+        $request->locationId = json_decode($request->locationId);
         $data = DB::table('facility_unit as f')
-            ->select('f.id', 'f.unitName')
-            ->whereIn('f.locationId', $request->locationId)
-            ->where('f.isDeleted', '=', 0)
-            ->get();
+        ->select('f.id', 'f.unitName')
+        ->whereIn('f.locationId', $request->locationId)
+        ->where('f.isDeleted', '=', 0)
+        ->get();
 
-        responseList($data);
+        return responseList($data);
     }
 }

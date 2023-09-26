@@ -24,13 +24,12 @@ class CategoryController extends Controller
             }
 
             if ($request->orderValue && $request->orderColumn != 'totalProduct') {
-                $orderByColumn = $request->orderColumn == 'createdAt' ? 'sc.created_at' : $request->orderColumn;
+                $orderByColumn = $request->orderColumn == 'createdAt' ? 'sc.updated_at' : $request->orderColumn;
                 $data = $data->orderBy($orderByColumn, $request->orderValue);
             } else {
-                $data = $data->orderBy('sc.created_at', 'desc');
+                $data = $data->orderBy('sc.updated_at', 'desc');
             }
-
-            return $data->select('sc.id', 'sc.categoryName', 'sc.created_at', 'sc.updated_at', DB::raw("DATE_FORMAT(sc.created_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy');
+            return $data->select('sc.id', 'sc.categoryName', 'sc.created_at', 'sc.updated_at',DB::raw('(SELECT COUNT(*) FROM servicesCategoryList as scl WHERE sc.id = scl.category_id AND scl.isDeleted = 0) as totalServices'), DB::raw("DATE_FORMAT(sc.updated_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy');
         }
 
         $data = buildQuery($request);
@@ -38,7 +37,7 @@ class CategoryController extends Controller
 
         return response()->json($data);
     }
-
+  
     public function create(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -61,6 +60,7 @@ class CategoryController extends Controller
         $result = ServiceCategories::create([
             'categoryName' => $request->categoryName,
             'userId' => $request->user()->id,
+            'updated_at' => Carbon::now(),
         ]);
         return responseSuccess($result);
     }
