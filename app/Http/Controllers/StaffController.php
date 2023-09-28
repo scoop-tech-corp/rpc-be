@@ -3129,6 +3129,7 @@ class StaffController extends Controller
 
     public function listStaffWithLocation(Request $request)
     {
+        $request->locationId = json_decode($request->locationId);
         $data = DB::table('users as u')
             ->join('usersLocation as ul', 'u.id', 'ul.usersId')
             ->join('jobTitle as j', 'j.id', 'u.jobTitleId')

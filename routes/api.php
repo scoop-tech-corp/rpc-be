@@ -28,6 +28,8 @@ use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Staff\ProfileController;
 
+use App\Http\Controllers\Service\ServiceController;
+
 use App\Http\Controllers\Service\CategoryController as ServiceCategoryController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -36,11 +38,6 @@ Route::post('register', [ApiController::class, 'register']);
 Route::group(['middleware' => ['jwt.verify']], function () {
 
     //location
-    Route::get('/service/category/export', [ServiceCategoryController::class, 'export']);
-    Route::get('/service/category', [ServiceCategoryController::class, 'index']);
-    Route::post('/service/category', [ServiceCategoryController::class, 'create']);
-    Route::put('/service/category', [ServiceCategoryController::class, 'update']);
-    Route::delete('/service/category', [ServiceCategoryController::class, 'delete']);
 
 
     Route::post('logout', [ApiController::class, 'logout']);
@@ -372,8 +369,28 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     });
 
     Route::group(['prefix' => 'absent'], function(){
-
         Route::post('/', [AbsentController::class, 'createAbsent']);
+    });
+
+
+    // Service
+    Route::group(['prefix' => 'service'], function(){
+        Route::group(['prefix' => 'category'], function(){
+            Route::get('/export', [ServiceCategoryController::class, 'export']);
+            Route::get('/', [ServiceCategoryController::class, 'index']);
+            Route::post('/', [ServiceCategoryController::class, 'create']);
+            Route::put('/', [ServiceCategoryController::class, 'update']);
+            Route::delete('/', [ServiceCategoryController::class, 'delete']);    
+        });
+        Route::group(['prefix' => 'list'], function(){
+            Route::get('/category', [ServiceController::class, 'findByCategory']);
+            Route::get('/detail', [ServiceController::class, 'detail']);
+            Route::get('/', [ServiceController::class, 'index']);
+            Route::post('/', [ServiceController::class, 'create']);
+            Route::put('/', [ServiceController::class, 'update']);
+            Route::delete('/', [ServiceController::class, 'destroy']);
+        });
+
     });
 
 
