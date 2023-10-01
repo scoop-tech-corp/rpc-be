@@ -35,6 +35,7 @@ use App\Http\Controllers\Service\CategoryController as ServiceCategoryController
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
 
+
 Route::group(['middleware' => ['jwt.verify']], function () {
 
     //location
@@ -386,6 +387,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/category', [ServiceController::class, 'findByCategory']);
             Route::get('/detail', [ServiceController::class, 'detail']);
             Route::get('/', [ServiceController::class, 'index']);
+            Route::get('/template', [ServiceController::class, 'downloadTemplate']);
+            Route::post('/import', [ServiceController::class, 'Import']);
             Route::post('/', [ServiceController::class, 'create']);
             Route::put('/', [ServiceController::class, 'update']);
             Route::delete('/', [ServiceController::class, 'destroy']);
