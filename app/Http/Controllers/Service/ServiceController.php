@@ -10,6 +10,10 @@ use Illuminate\Http\Request;
 use DB;
 use Validator;
 use Illuminate\Support\Carbon;
+use App\Exports\Service\TemplateUploadServiceList;
+use Excel;
+// use App\Imports\Service\ImportServiceList;
+use App\Imports\Service\ImportServiceList;
 
 class ServiceController extends Controller
 {
@@ -120,7 +124,7 @@ class ServiceController extends Controller
             $this->userId = $request->user()->id;
 
             if($request->categories){
-                dd($request->categories);
+                // dd($request->categories);
                 $request->categories = json_decode($request->categories, true);
                 collect($request->categories)->map(function (array $category) {
                     DB::table('servicesCategoryList')->insert([
@@ -239,9 +243,106 @@ class ServiceController extends Controller
         }
     }
 
- 
+    public function downloadTemplate(){
+        // return view('example-input-service-list');
+        return (new TemplateUploadServiceList())->download('Template Upload Layanan.xlsx');
+    }
 
-    /**
+    public function Import(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => $errors,
+            ], 422);
+        }
+
+        $id = $request->user()->id;
+        $rows = Excel::toArray(new ImportServiceList($id), $request->file('file'));
+        $src = $rows[0];
+
+        $count_row = 1;
+        
+        if ($src) {
+            foreach ($src as $value) {
+
+                // Validation the input
+
+                // "tipe" => null
+                // "nama" => null
+                // "nama_singkat" => "KH01"
+                // "warna" => "yellow"
+                // "status" => 1
+                // "lokasi" => "1,2"
+                // "perkenalan" => "hellow test"
+                // "deskripsi" => "htest"
+                // "ketentuan" => 0
+                // "dapat_dipesan_online" => 1
+                // "rekam_medis_alasan_kunjungan" => 1
+                // "rekam_diagnosa" => 1
+                // "followup" => "1,2"
+                // "kategori" => "2,3"
+
+                if ($value['tipe'] != 'Pet Shop' && $value['tipe'] != 2) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any input invalid Tipe at row ' . $count_row],
+                    ], 422);
+
+                }
+
+
+                if ($value['warna'] == "") {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any empty cell on column Warna at row ' . $count_row],
+                    ], 422);
+                }
+
+                if ($value['nama'] == "") {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any empty cell on column Nama at row ' . $count_row],
+                    ], 422);
+                }
+
+                if ($value['status'] != 1 && $value['status'] != 2) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any input invalid Status at row ' . $count_row],
+                    ], 422);
+                }
+
+                // $name = ProductSell::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
+
+                // $isCanBuy = $value['dapat_membeli_produk'];
+            }
+            // dd($src);
+
+
+            //here
+            // $codeLocation = explode(';', $value['kode_lokasi']);
+         
+        } else {
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => ['There is no any data to import'],
+            ], 422);
+        }
+
+        return response()->json(
+            [
+                'message' => 'Insert Data Successful!',
+            ],
+            200
+        );
+    }    /**
      * Display the specified resource.
      *
      * @param  \App\Models\Service  $service
