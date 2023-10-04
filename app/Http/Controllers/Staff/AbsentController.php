@@ -14,12 +14,15 @@ class AbsentController extends Controller
     public function createAbsent(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'presentTime' => 'required|date_format:Y-m-d H:i:s',
-            'longitude' => 'required|string',
-            'latitude' => 'required|string',
+            'presentTime' => 'required|date_format:Y-m-d H:i',
+            'longitude' => 'nullable|string',
+            'latitude' => 'nullable|string',
             'status' => 'required|integer|in:1,2,3,4',
             'reason' => 'nullable|string',
-            'image' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:5000',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string',
+            'province' => 'nullable|string',
+            'image' => 'image|mimes:jpg,png,jpeg,gif,svg|max:5000',
         ]);
 
         if ($validate->fails()) {
@@ -80,9 +83,9 @@ class AbsentController extends Controller
             'reason' => $request->reason,
             'realImageName' => $oldname,
             'imagePath' =>  $path,
-            'address' => '',
-            'city' => '',
-            'province' => '',
+            'address' => $request->address,
+            'city' => $request->city,
+            'province' => $request->province,
             'userId' => $request->user()->id,
         ]);
 
