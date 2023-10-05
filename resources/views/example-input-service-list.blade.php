@@ -9,9 +9,9 @@
             </th>
             <th style="text-align: center; border: 1px solid black; background-color: #70AD47;" width="20"><b>Nama
                     Singkat</b></th>
-            <th style="text-align: center; border: 1px solid black; background-color: #70AD47;" width="20"><b>
+            {{-- <th style="text-align: center; border: 1px solid black; background-color: #70AD47;" width="20"><b>
                     Warna*
-                </b></th>
+                </b></th> --}}
             <th style="text-align: center; border: 1px solid black; background-color: #70AD47;" width="20">
                 <b>Status*</b>
             </th>
@@ -84,10 +84,10 @@
             <td style="text-align: center; border: 1px solid black; background-color: #70AD47;" width="20">
 
             </td>
-            <td style="text-align: center; border: 1px solid black; background-color: #70AD47;" width="20">
+            {{-- <td style="text-align: center; border: 1px solid black; background-color: #70AD47;" width="20">
                 Bagian ini wajib diisi, bisa diisi dengan menentukan warna dalam bahasa inggris Contoh: yellow,
                 green, red
-            </td>
+            </td> --}}
             <td style="text-align: center; border: 1px solid black; background-color: #70AD47;" width="20">
 
                 Bagian ini wajib diisi. 0 menandakan tidak aktif 1 menandakan aktif.

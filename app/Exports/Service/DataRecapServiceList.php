@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
 
-class DataRecapServiceCategory implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
+class DataRecapServiceList implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
 {
     use Exportable;
 
@@ -28,16 +28,11 @@ class DataRecapServiceCategory implements FromCollection, ShouldAutoSize, WithHe
     public function collection()
     {
 
-        $data = DB::table('serviceCategory as sc')->where('sc.isDeleted', '=', 0)
-            ->join('users', 'sc.userId', '=', 'users.id')
-            ->select('sc.id', 'sc.categoryName', 'sc.created_at', DB::raw("DATE_FORMAT(sc.created_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy', DB::raw('(SELECT COUNT(*) FROM servicesCategoryList as scl WHERE sc.id = scl.category_id AND scl.isDeleted = 0) as totalServices'));
-
-        if ($this->orderValue) {
-            $data = $data->orderBy($this->orderColumn, $this->orderValue);
-        }
-
-        $data = $data->get();
-
+            $data = DB::table('services as sc')->where('sc.isDeleted', '=', 0)
+                    ->join('users', 'sc.userId', '=', 'users.id')
+                    ->orderBy('sc.updated_at', 'desc')
+                    ->select('sc.id', 'sc.fullName', 'sc.color', 'sc.type', 'sc.optionPolicy1', 'sc.status', 'sc.created_at', 'sc.updated_at', DB::raw("DATE_FORMAT(sc.created_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy')
+                    ->get();
         $val = 1;
         foreach ($data as $key) {
             $key->number = $val;
@@ -51,14 +46,14 @@ class DataRecapServiceCategory implements FromCollection, ShouldAutoSize, WithHe
     {
         return [
             [
-                'No.', 'Nama Kategori', 'Jumlah Service', 'Dibuat Oleh', 'Tanggal Dibuat'
+                'No.', 'Nama', 'Tipe','Pesan Online', 'Status', 'Dibuat Oleh', 'Tanggal Dibuat'
             ],
         ];
     }
 
     public function title(): string
     {
-        return 'Produk Jual';
+        return 'Daftar Servis';
     }
 
     public function map($item): array
@@ -66,8 +61,10 @@ class DataRecapServiceCategory implements FromCollection, ShouldAutoSize, WithHe
         $res = [
             [
                 $item->number,
-                $item->categoryName,
-                $item->totalServices ? $item->totalServices : "0",
+                $item->fullName,
+                $item->type == 1 ? 'Petshop' : ($item->type == 2 ? 'Grooming' : 'Klinik'),
+                $item->optionPolicy1 == 1 ? 'Ya' : 'Tidak',
+                $item->status == 1 ? 'Aktif' : 'Tidak Aktif',
                 $item->createdBy,
                 $item->createdAt,
             ],
