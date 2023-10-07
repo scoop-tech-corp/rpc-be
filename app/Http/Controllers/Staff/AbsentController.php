@@ -14,7 +14,7 @@ class AbsentController extends Controller
     public function createAbsent(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'presentTime' => 'required|date_format:Y-m-d H:i',
+            'presentTime' => 'required|date_format:d/m/Y H:i',
             'longitude' => 'nullable|string',
             'latitude' => 'nullable|string',
             'status' => 'required|integer|in:1,2,3,4',
@@ -24,6 +24,8 @@ class AbsentController extends Controller
             'province' => 'nullable|string',
             'image' => 'image|mimes:jpg,png,jpeg,gif,svg|max:5000',
         ]);
+
+        $presentTime = date('Y-m-d H:i', strtotime($request->presentTime));
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
@@ -75,17 +77,38 @@ class AbsentController extends Controller
             }
         }
 
+        $address = '';
+        $city = '';
+        $province = '';
+        $reason = '';
+
+        if ($request->address != '') {
+            $address = $request->address;
+        }
+
+        if ($request->city != '') {
+            $city = $request->city;
+        }
+
+        if ($request->province != '') {
+            $province = $request->province;
+        }
+
+        if ($request->reason != '') {
+            $reason = $request->reason;
+        }
+
         StaffAbsents::create([
-            'presentTime' => $request->presentTime,
+            'presentTime' => $presentTime,
             'longitude' => $request->longitude,
             'latitude' => $request->latitude,
             'status' => $request->status,
-            'reason' => $request->reason,
+            'reason' => $reason,
             'realImageName' => $oldname,
             'imagePath' =>  $path,
-            'address' => $request->address,
-            'city' => $request->city,
-            'province' => $request->province,
+            'address' => $address,
+            'city' => $city,
+            'province' => $province,
             'userId' => $request->user()->id,
         ]);
 
