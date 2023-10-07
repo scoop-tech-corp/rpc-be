@@ -6,14 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreServiceRequest;
 use App\Http\Requests\UpdateServiceRequest;
 use App\Models\Service;
+use App\Models\location;
 use Illuminate\Http\Request;
 use DB;
 use Validator;
 use Illuminate\Support\Carbon;
 use App\Exports\Service\TemplateUploadServiceList;
 use Excel;
-// use App\Imports\Service\ImportServiceList;
 use App\Imports\Service\ImportServiceList;
+use App\Exports\Service\ServiceListExport;
+
 
 class ServiceController extends Controller
 {
@@ -53,6 +55,21 @@ class ServiceController extends Controller
 
         return response()->json($data);
 
+    }
+    public function export(Request $request)
+    {
+        $fileName = "";
+        $date = Carbon::now()->format('d-m-y');
+
+        $fileName = "Rekap Daftar Servis " . $date . ".xlsx";
+
+        return Excel::download(
+            new ServiceListExport(
+                $request->orderValue,
+                $request->orderColumn,
+            ),
+            $fileName
+        );
     }
 
     /**
@@ -111,10 +128,11 @@ class ServiceController extends Controller
         if ($validate->fails()) {
             return responseErrorValidation($validate->errors()->all());
         }
-        $request->merge(['userId' => $request->user()->id]);
+        $request->merge(['userId' => $request->user()->id, 'surcharges' => $request->surcharges ? $request->surcharges : 0]);
 
         DB::beginTransaction();
         try {
+            
             $val = $request->all();
             $val = $request->except(['userUpdateId']);
             $val['optionPolicy1'] = $request->optionPolicy1 ? 1 : 0;
@@ -124,8 +142,6 @@ class ServiceController extends Controller
             $this->userId = $request->user()->id;
 
             if($request->categories){
-                // dd($request->categories);
-                $request->categories = json_decode($request->categories, true);
                 collect($request->categories)->map(function (array $category) {
                     DB::table('servicesCategoryList')->insert([
                         'service_id' => $this->createService->id,
@@ -153,8 +169,8 @@ class ServiceController extends Controller
                         'service_id' => $this->createService->id,
                         'fullName' => $listStaff['fullName'],
                         'jobName' => $listStaff['jobName'],
-                        'price' => $listStaff['price'],
-                        'surcharges' => $this->createService->surcharges,
+                        'price' => isset($value['price']) ? $listStaff['price'] : 0,
+                        'surcharges' => isset($this->createService->surcharges) ? $this->createService->surcharges : 0,
                         'userId' => $this->userId,
                         'created_at' => Carbon::now(),
 
@@ -266,43 +282,18 @@ class ServiceController extends Controller
         $id = $request->user()->id;
         $rows = Excel::toArray(new ImportServiceList($id), $request->file('file'));
         $src = $rows[0];
-
+        $tempValue = [];
         $count_row = 1;
         
         if ($src) {
+            $count_row = $count_row + 2;
             foreach ($src as $value) {
-
-                // Validation the input
-
-                // "tipe" => null
-                // "nama" => null
-                // "nama_singkat" => "KH01"
-                // "warna" => "yellow"
-                // "status" => 1
-                // "lokasi" => "1,2"
-                // "perkenalan" => "hellow test"
-                // "deskripsi" => "htest"
-                // "ketentuan" => 0
-                // "dapat_dipesan_online" => 1
-                // "rekam_medis_alasan_kunjungan" => 1
-                // "rekam_diagnosa" => 1
-                // "followup" => "1,2"
-                // "kategori" => "2,3"
-
-                if ($value['tipe'] != 'Pet Shop' && $value['tipe'] != 2) {
+                if ($value['tipe'] != 'Pet Shop' && $value['tipe'] != 'Grooming' && $value['tipe'] != 'Klinik'){
                     return response()->json([
                         'errors' => 'The given data was invalid.',
                         'message' => ['There is any input invalid Tipe at row ' . $count_row],
                     ], 422);
 
-                }
-
-
-                if ($value['warna'] == "") {
-                    return response()->json([
-                        'errors' => 'The given data was invalid.',
-                        'message' => ['There is any empty cell on column Warna at row ' . $count_row],
-                    ], 422);
                 }
 
                 if ($value['nama'] == "") {
@@ -312,23 +303,119 @@ class ServiceController extends Controller
                     ], 422);
                 }
 
-                if ($value['status'] != 1 && $value['status'] != 2) {
+                if ($value['status'] != 0 && $value['status'] != 1) {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
                         'message' => ['There is any input invalid Status at row ' . $count_row],
                     ], 422);
                 }
 
-                // $name = ProductSell::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
+                if ($value['lokasi'] == "") {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is any empty cell on column Location at row ' . $count_row],
+                    ], 422);
+                }
 
-                // $isCanBuy = $value['dapat_membeli_produk'];
+
+                $codeLocation = explode(';', $value['lokasi']);
+                if(count($codeLocation)){
+                    $location = location::whereIn('id', $codeLocation)->where('isDeleted', '=', 0)->count();
+                    if($location != count($codeLocation)){
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any input invalid Lokasi Code at row ' . $count_row],
+                        ], 422);
+                    }
+    
+                }
+                $codeFollowup = explode(';', $value['followup']);
+                if($codeFollowup && $value['followup'] != ''){
+                    $followup = DB::table('services')->whereIn('id', $codeFollowup)->where('isDeleted', '=', 0)->count();
+                    if($followup != count(array_values($codeFollowup))){
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any input invalid Followup Code at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                $codeCategory = explode(';', $value['kategori']);
+                if(count($codeCategory) && $value['kategori'] != ''){
+                    $category = DB::table('serviceCategory')->whereIn('id', $codeCategory)->where('isDeleted', '=', 0)->count();
+                    if($category != count($codeCategory)){
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any input invalid Kategori Code at row ' . $count_row],
+                        ], 422);
+                    }
+                }
+
+                $tempValue[] = [
+                    'type' => $value['tipe'] == 'Pet Shop' ? 1 : ($value['tipe'] == 'Grooming' ? 2 : 3),
+                    'fullName' => $value['nama'],
+                    'simpleName' => $value['nama_singkat'],
+                    'status' => $value['status'],
+                    'color' => '#000000',
+                    'policy' => $value['ketentuan'] ? 1 : 0,
+                    'description' => $value['perkenalan'],
+                    'introduction' => $value['deskripsi'],
+                    'surcharges' => 1,
+                    'optionPolicy1' => $value['dapat_dipesan_online'] ? 1 : 0,
+                    'optionPolicy2' => $value['rekam_medis_alasan_kunjungan'] ? 1 : 0,
+                    'optionPolicy3' => $value['rekam_diagnosa'] ? 1 : 0,
+                    'location' => $codeLocation && $value['lokasi'] != '' ? $codeLocation : [],
+                    'followup' => $codeFollowup && $value['followup'] != '' ? $codeFollowup : [],
+                    'category' => $codeCategory && $value['kategori'] != '' ? $codeCategory : []
+                ];
             }
-            // dd($src);
+            try {
+                DB::beginTransaction();
+                foreach ($tempValue as $key => $value) {
+                    $val = $value;
+                    $val['userId'] = $request->user()->id;
+                    $this->createService = Service::create($val);
+                    $this->userId = $request->user()->id;
 
+                    if(count($val['category'])){
+                        collect($val['category'])->map(function ($category) {
+                            DB::table('servicesCategoryList')->insert([
+                                'service_id' => $this->createService->id,
+                                'category_id' => (int)$category,
+                                'userId' => $this->userId,
+                                'created_at' => Carbon::now(),
+                            ]);
+                        });
+                    }
 
-            //here
-            // $codeLocation = explode(';', $value['kode_lokasi']);
-         
+                    if(count($val['followup'])){
+                        collect($val['followup'])->map(function ($followup) {
+                            DB::table('servicesFollowup')->insert([
+                                'service_id' => $this->createService->id,
+                                'followup_id' => $followup,
+                                'userId' => $this->userId,
+                                'created_at' => Carbon::now(),
+                            ]);
+                        });
+                    }
+
+                    if(count($val['location'])){
+                        collect($val['location'])->map(function ($location) {
+                            DB::table('servicesLocation')->insert([
+                                'service_id' => $this->createService->id,
+                                'location_id' => $location,
+                                'userId' => $this->userId,
+                                'created_at' => Carbon::now(),
+                            ]);
+                        });
+                    }
+                }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollback();
+                return responseError($e->getMessage(), 'Something went wrong');
+            }
+
         } else {
             return response()->json([
                 'errors' => 'The given data was invalid.',
@@ -372,12 +459,11 @@ class ServiceController extends Controller
             'status' => 'required|integer',
             'color' => 'required'
         ]);
-// dd($request->all());
         if (!$service) return responseErrorValidation('Service not found!');
         if ($validate->fails()) return responseErrorValidation($validate->errors()->all());
 
         
-        $request->merge(['userUpdateId' => $request->user()->id]);
+        $request->merge(['userUpdateId' => $request->user()->id, 'surcharges' => $request->surcharges ? $request->surcharges : 0]);
         
         // Hasil array setelah menghapus nilai null
         $val = array_filter($request->all(), function ($value) {
@@ -391,8 +477,7 @@ class ServiceController extends Controller
         DB::beginTransaction();
         try {
             $service->update($val);
-            // dd($request->all());
-
+            
             $this->updateService = Service::find($request->id);
             $this->userId = $request->user()->id;
             $request->categories = json_decode($request->categories, true);
@@ -427,7 +512,6 @@ class ServiceController extends Controller
                 });
                 foreach ($getId as $key => $value) {
                     if(!in_array($value, array_column($followupWithCreatedAt, 'id'))){
-                        // dd($getId,$followupWithCreatedAt);
                         DB::table('servicesFollowup')->where('id', $value)->update([
                             'isDeleted' => 1,
                             'deletedBy' => $this->userId,
@@ -557,8 +641,8 @@ class ServiceController extends Controller
                 foreach ($request->listStaff as $key => $value) {
                     if(in_array($value['id'], $getId->toArray())){
                         DB::table('servicesStaff')->where('id', $value)->update([
-                            'price' => $value['price'],
-                            'surcharges' => $this->updateService->surcharges,
+                            'price' => isset($value['price']) ? $value['price'] : 0,
+                            'surcharges' => isset($this->updateService->surcharges) ? $this->updateService->surcharges : 0,
                         ]);
                     }
                 }
@@ -571,8 +655,8 @@ class ServiceController extends Controller
                         'service_id' => $this->updateService->id,
                         'fullName' => $listStaff['fullName'],
                         'jobName' => $listStaff['jobName'],
-                        'price' => $listStaff['price'],
-                        'surcharges' => $this->updateService->surcharges,
+                        'price' => isset($value['price']) ? $value['price'] : 0,
+                        'surcharges' => isset($this->updateService->surcharges) ? $this->updateService->surcharges : 0,
                         'userId' => $this->userId,
                         'created_at' => Carbon::now(),
 

@@ -18,7 +18,6 @@ class AddServiceList implements ShouldAutoSize, WithHeadings, WithTitle, WithEve
                 'Tipe*', 
                 'Nama*', 
                 'Nama Singkat',
-                'Warna*',
                 'Status*',
                 'Lokasi*',
                 'Perkenalan',
@@ -43,37 +42,37 @@ class AddServiceList implements ShouldAutoSize, WithHeadings, WithTitle, WithEve
         return [
             AfterSheet::class    => function (AfterSheet $event) {
 
-                $event->sheet->getDelegate()->getStyle('A1:E1')
+                $event->sheet->getDelegate()->getStyle('A1:D1')
                     ->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()
                     ->setARGB('70AD47');
 
-                $event->sheet->getDelegate()->getStyle('F1')
+                $event->sheet->getDelegate()->getStyle('E1')
                     ->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()
                     ->setARGB('FFC000');
                 
-                $event->sheet->getDelegate()->getStyle('G1:H1')
+                $event->sheet->getDelegate()->getStyle('F1:G1')
                     ->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()
                     ->setARGB('4472C4');
 
-                $event->sheet->getDelegate()->getStyle('I1:L1')
+                $event->sheet->getDelegate()->getStyle('H1:K1')
                     ->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()
                     ->setARGB('FFFF00');
 
-                $event->sheet->getDelegate()->getStyle('M1')
+                $event->sheet->getDelegate()->getStyle('L1')
                     ->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()
                     ->setARGB('BF9000');
 
-                $event->sheet->getDelegate()->getStyle('N1')
+                $event->sheet->getDelegate()->getStyle('M1')
                     ->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()

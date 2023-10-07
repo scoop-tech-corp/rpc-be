@@ -385,6 +385,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         });
         Route::group(['prefix' => 'list'], function(){
             Route::get('/category', [ServiceController::class, 'findByCategory']);
+            Route::get('/export', [ServiceController::class, 'export']);
             Route::get('/detail', [ServiceController::class, 'detail']);
             Route::get('/', [ServiceController::class, 'index']);
             Route::get('/template', [ServiceController::class, 'downloadTemplate']);
