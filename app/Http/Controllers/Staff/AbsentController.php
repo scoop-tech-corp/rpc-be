@@ -33,7 +33,7 @@ class AbsentController extends Controller
             return responseInvalid([$errors]);
         }
 
-        $present = DB::table('StaffAbsents')
+        $present = DB::table('staffAbsents')
             ->where('userId', '=', $request->user()->id)
             ->whereDate('created_at', Carbon::today())
             ->get();
