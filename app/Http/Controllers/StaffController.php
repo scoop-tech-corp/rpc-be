@@ -3119,7 +3119,9 @@ class StaffController extends Controller
         $data = DB::table('users')
             ->select(
                 'id',
-                DB::raw("CONCAT(firstName,' ',middleName,CASE WHEN middleName = '' THEN '' ELSE ' ' END,lastName) as fullName")
+                DB::raw("TRIM(CONCAT(CASE WHEN firstName = '' or firstName is null THEN '' ELSE CONCAT(firstName,' ') END
+                ,CASE WHEN middleName = '' or middleName is null THEN '' ELSE CONCAT(middleName,' ') END,
+                case when lastName = '' or lastName is null then '' else lastName end)) as fullName")
             )
             ->where('isDeleted', '=', 0)
             ->get();
@@ -3137,7 +3139,7 @@ class StaffController extends Controller
                 DB::raw("CONCAT(firstName,' ',middleName,CASE WHEN middleName = '' THEN '' ELSE ' ' END,lastName) as fullName"),
                 'j.jobName'
             )
-            ->whereIn('ul.locationId',$request->locationId)
+            ->whereIn('ul.locationId', $request->locationId)
             ->where('u.isDeleted', '=', 0)
             ->groupBy('fullName')
             ->groupBy('j.jobName')
