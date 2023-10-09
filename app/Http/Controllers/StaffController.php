@@ -3136,7 +3136,9 @@ class StaffController extends Controller
             ->join('usersLocation as ul', 'u.id', 'ul.usersId')
             ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
             ->select(
-                DB::raw("CONCAT(firstName,' ',middleName,CASE WHEN middleName = '' THEN '' ELSE ' ' END,lastName) as fullName"),
+                DB::raw("TRIM(CONCAT(CASE WHEN firstName = '' or firstName is null THEN '' ELSE CONCAT(firstName,' ') END
+                ,CASE WHEN middleName = '' or middleName is null THEN '' ELSE CONCAT(middleName,' ') END,
+                case when lastName = '' or lastName is null then '' else lastName end)) as fullName"),
                 'j.jobName'
             )
             ->whereIn('ul.locationId', $request->locationId)
