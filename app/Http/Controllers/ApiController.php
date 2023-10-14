@@ -13,6 +13,7 @@ use App\Models\AccessControl\MenuList;
 use App\Models\AccessControl\MenuMasters;
 use App\Models\StaffAbsents;
 use Carbon\Carbon;
+use Carbon\Doctrine\CarbonDoctrineType;
 
 class ApiController extends Controller
 {
@@ -264,12 +265,22 @@ class ApiController extends Controller
                     }
                 }
 
-                $absent = StaffAbsents::where('userId', '=', $userId)
-                    ->whereDate('created_at', Carbon::today())
-                    ->first();
-                $isAbsent = 1;
-                if (!$absent) {
-                    $isAbsent = 0;
+                $curTime = Carbon::now();
+                $compareTime = Carbon::createFromFormat('H:i:s', '07:00:00');
+
+                $diffTime = $compareTime->diffInSeconds($curTime, false);
+
+                if ($diffTime < 0) {
+                    $isAbsent = 1;
+                } else {
+
+                    $absent = StaffAbsents::where('userId', '=', $userId)
+                        ->whereDate('created_at', Carbon::today())
+                        ->first();
+                    $isAbsent = 1;
+                    if (!$absent) {
+                        $isAbsent = 0;
+                    }
                 }
 
                 return response()->json([
