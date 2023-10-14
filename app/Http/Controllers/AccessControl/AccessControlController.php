@@ -242,9 +242,9 @@ class AccessControlController extends Controller
                     'b.roleName as roleName',
                     'c.jobName as jobName',
                     'a.createdBy as createdBy',
-                    DB::raw("DATE_FORMAT(a.created_at, '%d/%m/%Y') as createdAt"),
+                    DB::raw("DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
                     //DB::raw('a.created_at as createdAt'),
-                    DB::raw("DATE_FORMAT(a.updated_at, '%d/%m/%Y') as updated_at")
+                    DB::raw("DATE_FORMAT(a.updated_at, '%d/%m/%Y %H:%i:%s') as updated_at")
                 )
                 ->where([
                     ['a.isDeleted', '=', '0'],
