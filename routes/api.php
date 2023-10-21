@@ -28,9 +28,8 @@ use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Staff\ProfileController;
 
-use App\Http\Controllers\Service\ServiceController;
+use App\Http\Controllers\Service\{ServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
 
-use App\Http\Controllers\Service\CategoryController as ServiceCategoryController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -394,7 +393,29 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::put('/', [ServiceController::class, 'update']);
             Route::delete('/', [ServiceController::class, 'destroy']);
         });
+        Route::group(['prefix' => 'treatment'], function(){
+            Route::get('/export', [TreatmentController::class, 'export']);
+            Route::get('/item', [TreatmentController::class, 'indexItem']);
+            Route::get('/', [TreatmentController::class, 'index']);
+            Route::get('/detail', [TreatmentController::class, 'detail']);
+            Route::post('/', [TreatmentController::class, 'store']);
+            Route::put('/', [TreatmentController::class, 'update']);
+            Route::put('/item', [TreatmentController::class, 'addNewItem']);
+            Route::get('/detail', [TreatmentController::class, 'detail']); 
+            Route::delete('/', [TreatmentController::class, 'destroy']);
+        });
 
+        Route::group(['prefix' => 'diagnose'], function(){
+            Route::get('/', [DiagnoseController::class, 'index']);
+        });
+
+        Route::group(['prefix' => 'frequency'], function(){
+            Route::get('/', [FrequencyController::class, 'index']);
+        });
+
+        Route::group(['prefix' => 'task'], function(){
+            Route::get('/', [TaskController::class, 'index']);
+        });
     });
 
 

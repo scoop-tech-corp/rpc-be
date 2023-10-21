@@ -40,6 +40,12 @@ class ServiceController extends Controller
                 $data = $data->where('sc.fullName', 'like', '%' . $request->search . '%')->orWhere('users.firstName', 'like', '%' . $request->search . '%');
             }
 
+            if ($request->location_id) {
+                $data = $data->join('servicesLocation as sl', 'sc.id', '=', 'sl.service_id')
+                            ->where('sl.isDeleted', 0)
+                            ->where('sl.location_id', $request->location_id);
+            }
+
             if ($request->orderValue) {
                 $orderByColumn = $request->orderColumn == 'createdAt' ? 'sc.created_at' : $request->orderColumn;
                 $data = $data->orderBy($orderByColumn, $request->orderValue);
@@ -98,7 +104,7 @@ class ServiceController extends Controller
             $data = $data->join('users', 'services.userId', '=', 'users.id');
 
             if ($request->search) {
-                $data = $data->where('services.fullName', 'like', '%' . $request->search . '%')->orWhere('users.firstName', 'like', '%' . $request->search . '%');
+                $data = $data->where('services.fullName', 'like', '%' . $request->search . '%');
             }
 
             if ($request->orderValue) {
@@ -140,8 +146,9 @@ class ServiceController extends Controller
             $val['optionPolicy3'] = $request->optionPolicy3 ? 1 : 0;
             $this->createService = Service::create($val);
             $this->userId = $request->user()->id;
-
             if($request->categories){
+                $request->categories = json_decode($request->categories, true);
+
                 collect($request->categories)->map(function (array $category) {
                     DB::table('servicesCategoryList')->insert([
                         'service_id' => $this->createService->id,
