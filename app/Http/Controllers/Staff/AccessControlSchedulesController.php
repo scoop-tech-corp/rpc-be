@@ -1156,11 +1156,9 @@ class AccessControlSchedulesController extends Controller
     public function detailSchedules(Request $request)
     {
         try {
-
-
-
             $validate = Validator::make($request->all(), [
                 'id' => 'required|integer',
+                'type' => 'required|in:edit,detail'
             ]);
 
             if ($validate->fails()) {
@@ -1168,18 +1166,7 @@ class AccessControlSchedulesController extends Controller
                 return responseInvalid($errors);
             }
 
-            $type = '';
-            if ($request->has('type')) {
-
-                if (strtolower($request->type) != "edit") {
-                    return responseInvalid(['Type must set to edit']);
-                }
-
-                $type = $request->type;
-            }
-
-
-            if ($type == "") {
+            if ($request->type == "detail") {
                 $checkIfValueExits = AccessControlScheduleMaster::where([
                     ['id', '=', $request->id],
                     ['isDeleted', '=', '0']
@@ -1187,7 +1174,7 @@ class AccessControlSchedulesController extends Controller
 
                 if ($checkIfValueExits === null) {
 
-                    return responseInvalid(['Users with spesific id not found!']);
+                    return responseInvalid(['Data not found!']);
                 } else {
 
                     $param_schedules = AccessControlScheduleMaster::from('accessControlSchedulesMaster as a')
@@ -1245,7 +1232,7 @@ class AccessControlSchedulesController extends Controller
 
                     $param_schedules->details = $shedules;
                 }
-            } else {
+            } else if ($request->type == "edit") {
 
                 $checkIfValueExits = AccessControlScheduleMaster::where([
                     ['id', '=', $request->id],
@@ -1254,7 +1241,7 @@ class AccessControlSchedulesController extends Controller
 
                 if ($checkIfValueExits === null) {
 
-                    return responseInvalid(['Users with spesific id not found!']);
+                    return responseInvalid(['Data not found!']);
                 } else {
 
                     $param_schedules = AccessControlScheduleMaster::from('accessControlSchedulesMaster as a')
