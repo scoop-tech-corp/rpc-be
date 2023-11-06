@@ -3,6 +3,7 @@
 use App\Events\MessageCreated;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VerifyUserandPasswordController;
+use App\Models\Chat;
 
 /*
 |--------------------------------------------------------------------------
@@ -37,7 +38,10 @@ Route::get('/', function () {
 // 'verify' => true
 
 // ]);
-
+Route::get('/send-event', function (){
+    $data = Chat::find(1);
+    broadcast(new \App\Events\SendMessage($data));
+});
 Route::resource('/posts/{id}', \App\Http\Controllers\VerifyUserandPasswordController::class);
 Route::post('/posts', '\App\Http\Controllers\VerifyUserandPasswordController@store')->name('reset.password.store');
 // Route::post('/holidays', '\App\Http\Controllers\StaffController@getAllHolidaysDate');

@@ -275,6 +275,7 @@ if(!function_exists('paginateData')){
     function paginateData($query,  $request)
     {
         $itemPerPage = $request->rowPerPage;
+        // dd($request->all());
         $totalPaging = 0;
         $count_data = 0;
     
