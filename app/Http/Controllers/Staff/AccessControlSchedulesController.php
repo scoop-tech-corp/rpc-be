@@ -25,7 +25,6 @@ class AccessControlSchedulesController extends Controller
 
     public function setSchedulerProgress()
     {
-
         try {
 
             $currentDateTime = Carbon::now();
@@ -46,7 +45,6 @@ class AccessControlSchedulesController extends Controller
     public function getUsersFromLocationId(Request $request)
     {
         try {
-
             $validate = Validator::make($request->all(), [
                 'locationId' => 'required|integer'
             ]);
@@ -103,13 +101,10 @@ class AccessControlSchedulesController extends Controller
         }
     }
 
-
     public function updateAccessControlSchedules(Request $request)
     {
         DB::beginTransaction();
         try {
-
-
             $validate = Validator::make($request->all(), [
                 'id' => 'required|integer',
                 'locationId' => 'required|integer',
@@ -152,16 +147,11 @@ class AccessControlSchedulesController extends Controller
                     'integer' => 'The :attribute must be an integer.',
                 ];
 
-                $startTimes = [];
-                $endTimes = [];
-                $loop = 1;
-
                 foreach ($request->details as $val) {
 
                     $validateSchedules = Validator::make(
                         $val,
                         [
-
                             'masterMenuId' => 'required|integer',
                             'listMenuId' => 'required|integer',
                             'accessTypeId' => 'required|integer',
@@ -586,9 +576,7 @@ class AccessControlSchedulesController extends Controller
 
     public function export(Request $request)
     {
-
         try {
-
             $tmp = "";
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
@@ -698,15 +686,11 @@ class AccessControlSchedulesController extends Controller
         return $data;
     }
 
-
-
     public function index(Request $request)
     {
-
         try {
-
             $defaultRowPerPage = 5;
-            $defaultOrderBy = "asc";
+            $defaultOrderBy = "desc";
 
             $data = $this->getAllData();
 
@@ -1150,9 +1134,6 @@ class AccessControlSchedulesController extends Controller
         }
     }
 
-
-
-
     public function detailSchedules(Request $request)
     {
         try {
@@ -1295,10 +1276,6 @@ class AccessControlSchedulesController extends Controller
         }
     }
 
-
-
-
-
     public function insertAccessControlSchedules(Request $request)
     {
 
@@ -1313,7 +1290,6 @@ class AccessControlSchedulesController extends Controller
             $errors = $validate->errors()->all();
             return responseInvalid([$errors]);
         }
-
 
         $checkIfUsersExits = User::where([['id', '=', $request->usersId], ['isDeleted', '=', '0']])->first();
 
@@ -1332,8 +1308,6 @@ class AccessControlSchedulesController extends Controller
         if ($checkIfUsersLocationExists == null) {
             return responseInvalid(['User id and Location Id not found! please try different id']);
         }
-
-
 
         try {
 
@@ -1619,16 +1593,16 @@ class AccessControlSchedulesController extends Controller
         $end = DateTime::createFromFormat($format, $endTime);
 
         if ($start < $dateTimeToday) {
-            return 'Start time cannot be before date time today! Date time now ' . $dateTimeToday->format('d/m/Y H:i') . '. Please check your start time! ';
+            return 'Start time cannot be lower than current time!';
         }
 
         if ($end < $start) {
-            return 'End time must higher than start time!! Please check your end time!';
+            return 'End time must higher than start time!';
         }
 
 
         if ($end == $start) {
-            return 'End time same with start time!! Please check your end time!';
+            return 'End time cannot same with start time!';
         }
     }
 
