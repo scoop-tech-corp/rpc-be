@@ -622,8 +622,6 @@ class AccessControlSchedulesController extends Controller
 
     public function getAllData()
     {
-
-
         $groupDetails =  DB::table('accessControlSchedulesDetail as a')
             ->select(
                 'scheduleMasterId',
@@ -674,15 +672,20 @@ class AccessControlSchedulesController extends Controller
                 DB::raw('CAST(IFNULL(b.totalAccessMenu, 0) AS SIGNED) as totalAccessMenu'),
                 'd.firstName as createdBy',
                 DB::raw('DATE_FORMAT(a.created_at, "%d/%m/%Y %H:%i:%s") as createdAt'),
-            )
-            ->where([
-                ['c.isDeleted', '=', '0'],
-                ['d.isDeleted', '=', '0'],
-                ['b.totalAccessMenu', '>', '0'],
-            ]);
+                DB::raw('DATE_FORMAT(a.updated_at, "%d/%m/%Y %H:%i:%s") as updatedAt'),
+            )->orderBy('a.updated_at', 'desc');
+        // ->where([
+        //     ['c.isDeleted', '=', '0'],
+        //     ['d.isDeleted', '=', '0'],
+        //     ['b.totalAccessMenu', '>', '0'],
+        // ])
+        // ->get();
 
+        // $dt = DB::table('accessControlSchedulesMaster as a')
+        // ->orderBy('a.updated_at', 'desc')
+        // ->get();
 
-        $data = DB::table($data, 'a');
+        // $data = DB::table($data, 'a')->get();
         return $data;
     }
 
@@ -695,14 +698,14 @@ class AccessControlSchedulesController extends Controller
             $data = $this->getAllData();
 
             if ($request->locationId) {
+                $data = $data->whereIn('a.locationId', $request->locationId);
+                // $test = $request->locationId;
 
-                $test = $request->locationId;
-
-                $data = $data->where(function ($query) use ($test) {
-                    foreach ($test as $id) {
-                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                    }
-                });
+                // $data = $data->where(function ($query) use ($test) {
+                //     foreach ($test as $id) {
+                //         $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                //     }
+                // });
             }
 
             if ($request->search) {
@@ -748,7 +751,6 @@ class AccessControlSchedulesController extends Controller
             $checkOrder = null;
 
             if ($request->orderColumn && $defaultOrderBy) {
-
                 $listOrder = array(
                     'id',
                     'usersId',
@@ -793,23 +795,22 @@ class AccessControlSchedulesController extends Controller
                         'createdAt',
                     )
                     ->orderBy($request->orderColumn, $defaultOrderBy)
-                    ->orderBy('createdAt', 'desc');
-            } else {
-
-
-                $data = DB::table($data)
-                    ->select(
-                        'id',
-                        'usersId',
-                        'name',
-                        'position',
-                        'locationId',
-                        'location',
-                        'totalAccessMenu',
-                        'createdBy',
-                        'createdAt',
-                    )->orderBy('createdAt', 'desc');
+                    ->orderBy('updatedAt', 'desc');
             }
+            // else {
+            //     $data = DB::table($data)
+            //         ->select(
+            //             'id',
+            //             'usersId',
+            //             'name',
+            //             'position',
+            //             'locationId',
+            //             'location',
+            //             'totalAccessMenu',
+            //             'createdBy',
+            //             'createdAt',
+            //         )->orderBy('updatedAt', 'desc');
+            // }
 
 
             if ($request->rowPerPage > 0) {
@@ -1248,6 +1249,7 @@ class AccessControlSchedulesController extends Controller
                             DB::raw('CAST((a.listMenuId) AS SIGNED) as listMenuId'),
                             DB::raw('CAST((a.accessTypeId) AS SIGNED) as accessTypeId'),
                             DB::raw('CAST((a.giveAccessNow) AS SIGNED) as giveAccessNow'),
+                            DB::raw('CASE WHEN a.status = 2 or a.status = 3 THEN 0 ELSE 1 END as isEdited'),
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
                             DB::raw('DATE_FORMAT(a.endTime, "%d/%m/%Y %H:%i") as endTime'),
                             DB::raw('TRIM(BOTH " " FROM CASE
@@ -1258,7 +1260,7 @@ class AccessControlSchedulesController extends Controller
                         )->where([
                             ['a.isDeleted', '=', 0],
                             ['a.scheduleMasterId', '=', $request->id],
-                            ['a.status', '=', 1],
+                            // ['a.status', '=', 1],
                         ])->get();
 
                     $param_schedules->details = $shedules;
