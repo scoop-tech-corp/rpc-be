@@ -124,6 +124,7 @@ class ApiController extends Controller
                     ->leftjoin('usersRoles', 'usersRoles.id', '=', 'users.roleId')
                     ->select(
                         'users.id',
+                        'users.imagePath',
                         'users.roleId',
                         DB::raw("IF(usersRoles.roleName IS NULL, '', usersRoles.roleName) as roleName"),
                         DB::raw("IF(jobTitle.jobName IS NULL,'', jobTitle.jobName) as jobName"),
@@ -282,7 +283,7 @@ class ApiController extends Controller
                         $isAbsent = 0;
                     }
                 }
-
+                // broadcast(new \App\Events\UserLoggedIn($userId));
                 return response()->json([
                     'id' => $userId,
                     'success' => true,
@@ -292,6 +293,7 @@ class ApiController extends Controller
                     "emailAddress" => $emailaddress,
                     "jobName" => $users->jobName,
                     "role" => $users->roleName,
+                    'imagePath' => $users->imagePath,
                     "isAbsent" => $isAbsent,
                     "locations" => $locations,
                     "menuLevel" => $data,
@@ -342,5 +344,9 @@ class ApiController extends Controller
         $user = JWTAuth::authenticate($request->token);
 
         return response()->json(['user' => $user]);
+    }
+
+    public function online($id){
+        return $id;
     }
 }

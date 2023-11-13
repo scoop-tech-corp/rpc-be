@@ -15,3 +15,5 @@ yarn-error.log
 composer.lock
 composer.lock
 /public/ServiceListImages/*
+/public/chat/*
+/public/UserImages/*

@@ -30,15 +30,20 @@ use App\Http\Controllers\Staff\ProfileController;
 
 use App\Http\Controllers\Service\{ServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
 
+use App\Http\Controllers\ChatController;
+
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
 
+Route::put('user/{user}/online', [ApiController::class, 'online']);
+// Route::post('/realtime/auth', function(){
+//     return true;
+// });
 
 Route::group(['middleware' => ['jwt.verify']], function () {
 
     //location
-
 
     Route::post('logout', [ApiController::class, 'logout']);
 
@@ -372,6 +377,14 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/', [AbsentController::class, 'createAbsent']);
     });
 
+    // Chat
+    Route::group(['prefix' => 'chat'], function(){
+        Route::get('/list-user', [ChatController::class, 'list']);
+        Route::get('/detail', [ChatController::class, 'detail']);
+        Route::get('/', [ChatController::class, 'index']);
+        Route::post('/', [ChatController::class, 'create']);
+        Route::post('/read', [ChatController::class, 'read']);
+    });
 
     // Service
     Route::group(['prefix' => 'service'], function(){
