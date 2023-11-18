@@ -324,39 +324,46 @@ class ServiceController extends Controller
                     ], 422);
                 }
 
-
-                $codeLocation = explode(';', $value['lokasi']);
-                if(count($codeLocation)){
-                    $location = location::whereIn('id', $codeLocation)->where('isDeleted', '=', 0)->count();
-                    if($location != count($codeLocation)){
-                        return response()->json([
-                            'errors' => 'The given data was invalid.',
-                            'message' => ['There is any input invalid Lokasi Code at row ' . $count_row],
-                        ], 422);
+                if (array_key_exists('lokasi', $value) && $value['lokasi'] !== "") {
+                    $codeLocation = explode(';', $value['lokasi']);
+                    if (count($codeLocation)) {
+                        $location = location::whereIn('id', $codeLocation)->where('isDeleted', '=', 0)->count();
+                        if ($location != count($codeLocation)) {
+                            return response()->json([
+                                'errors' => 'The given data was invalid.',
+                                'message' => ['There is any input invalid Lokasi Code at row ' . $count_row],
+                            ], 422);
+                        }
                     }
+                }
     
-                }
-                $codeFollowup = explode(';', $value['followup']);
-                if($codeFollowup && $value['followup'] != ''){
-                    $followup = DB::table('services')->whereIn('id', $codeFollowup)->where('isDeleted', '=', 0)->count();
-                    if($followup != count(array_values($codeFollowup))){
-                        return response()->json([
-                            'errors' => 'The given data was invalid.',
-                            'message' => ['There is any input invalid Followup Code at row ' . $count_row],
-                        ], 422);
+                if (array_key_exists('followup', $value) && $value['followup'] !== "") {
+                    $codeFollowup = explode(';', $value['followup']);
+                    if ($codeFollowup && $value['followup'] != '') {
+                        $followup = DB::table('services')->whereIn('id', $codeFollowup)->where('isDeleted', '=', 0)->count();
+                        if ($followup != count(array_values($codeFollowup))) {
+                            return response()->json([
+                                'errors' => 'The given data was invalid.',
+                                'message' => ['There is any input invalid Followup Code at row ' . $count_row],
+                            ], 422);
+                        }
                     }
                 }
-
-                $codeCategory = explode(';', $value['kategori']);
-                if(count($codeCategory) && $value['kategori'] != ''){
-                    $category = DB::table('serviceCategory')->whereIn('id', $codeCategory)->where('isDeleted', '=', 0)->count();
-                    if($category != count($codeCategory)){
-                        return response()->json([
-                            'errors' => 'The given data was invalid.',
-                            'message' => ['There is any input invalid Kategori Code at row ' . $count_row],
-                        ], 422);
+    
+                // Check 'kategori' key before exploding
+                if (array_key_exists('kategori', $value) && $value['kategori'] !== "") {
+                    $codeCategory = explode(';', $value['kategori']);
+                    if (count($codeCategory) && $value['kategori'] != '') {
+                        $category = DB::table('serviceCategory')->whereIn('id', $codeCategory)->where('isDeleted', '=', 0)->count();
+                        if ($category != count($codeCategory)) {
+                            return response()->json([
+                                'errors' => 'The given data was invalid.',
+                                'message' => ['There is any input invalid Kategori Code at row ' . $count_row],
+                            ], 422);
+                        }
                     }
                 }
+    
 
                 $tempValue[] = [
                     'type' => $value['tipe'] == 'Pet Shop' ? 1 : ($value['tipe'] == 'Grooming' ? 2 : 3),
