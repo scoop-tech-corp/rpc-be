@@ -167,10 +167,13 @@ class AccessControlSchedulesController extends Controller
                         return responseInvalid($errors);
                     }
 
+                    $check_detail = AccessControlScheduleDetails::where([
+                        'id' =>  $val['detailId']
+                    ])->first();
+
                     if (array_key_exists('command', $val)) {
 
                         if ($val['command'] != "del" || ($val['command'] == "del" && $val['detailId'] != "")) {
-
                             if ($val['giveAccessNow'] == 1) {
 
                                 $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
@@ -179,20 +182,21 @@ class AccessControlSchedulesController extends Controller
                                     return responseInvalid([$result]);
                                 }
                             } else {
+                                if ($check_detail) {
+                                    if ($check_detail->status == 1) {
+                                        $result = $this->checkValidationTime($val['startTime'], $val['endTime']);
 
-                                $result = $this->checkValidationTime($val['startTime'], $val['endTime']);
+                                        if ($result) {
 
-                                if ($result) {
-
-                                    return responseInvalid([$result]);
+                                            return responseInvalid([$result]);
+                                        }
+                                    }
                                 }
                             }
 
                             array_push($input_real, $val);
                         }
                     } else {
-
-
                         if ($val['giveAccessNow'] == 1) {
 
                             $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
@@ -202,11 +206,15 @@ class AccessControlSchedulesController extends Controller
                             }
                         } else {
 
-                            $result = $this->checkValidationTime($val['startTime'], $val['endTime']);
+                            if ($check_detail) {
+                                if ($check_detail->status == 1) {
+                                    $result = $this->checkValidationTime($val['startTime'], $val['endTime']);
 
-                            if ($result) {
+                                    if ($result) {
 
-                                return responseInvalid([$result]);
+                                        return responseInvalid([$result]);
+                                    }
+                                }
                             }
                         }
 
@@ -250,7 +258,6 @@ class AccessControlSchedulesController extends Controller
 
                         return responseInvalid(['Master id not found! please try different id']);
                     }
-
                     $checkIfMenuListExits = MenuList::where([['id', '=', $key['listMenuId']],  ['masterId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
 
 
