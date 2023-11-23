@@ -176,10 +176,15 @@ class AccessControlSchedulesController extends Controller
                         if ($val['command'] != "del" || ($val['command'] == "del" && $val['detailId'] != "")) {
                             if ($val['giveAccessNow'] == 1) {
 
-                                $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
-                                if ($result) {
+                                if ($check_detail) {
+                                    if ($check_detail->status == 1) {
 
-                                    return responseInvalid([$result]);
+                                        $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
+                                        if ($result) {
+
+                                            return responseInvalid([$result]);
+                                        }
+                                    }
                                 }
                             } else {
                                 if ($check_detail) {
@@ -199,10 +204,15 @@ class AccessControlSchedulesController extends Controller
                     } else {
                         if ($val['giveAccessNow'] == 1) {
 
-                            $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
-                            if ($result) {
+                            if ($check_detail) {
+                                if ($check_detail->status == 1) {
 
-                                return responseInvalid([$result]);
+                                    $result = $this->checkValidationTimeGiveAccessNow($val['startTime'], $val['endTime']);
+                                    if ($result) {
+
+                                        return responseInvalid([$result]);
+                                    }
+                                }
                             }
                         } else {
 
