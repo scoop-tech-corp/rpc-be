@@ -12,8 +12,10 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Models\AccessControl\MenuList;
 use App\Models\AccessControl\MenuMasters;
 use App\Models\StaffAbsents;
+use App\Models\menuGroup;
 use Carbon\Carbon;
 use Carbon\Doctrine\CarbonDoctrineType;
+use Illuminate\Support\Facades\DB as FacadesDB;
 
 class ApiController extends Controller
 {
@@ -283,6 +285,62 @@ class ApiController extends Controller
                         $isAbsent = 0;
                     }
                 }
+
+                $masterMenu = (object)[];
+                $resChild = [];
+                $valueRes = [];
+
+                $groups = DB::table('menuGroups')
+                    ->select('id as idNum', 'groupName as id', DB::raw('"group" as type'))
+                    ->get();
+
+                foreach ($groups as $value) {
+
+                    $tempChildren = DB::table('childrenMenuGroups')
+                        ->select('id as idNum', 'identify as id', 'title', 'type', 'url', 'icon')
+                        ->where('groupId', '=', $value->idNum)->get();
+
+                    if (count($tempChildren) == 1) {
+                        if ($tempChildren[0]->url == "") {
+
+                            $grandchild = DB::table('grandChildrenMenuGroups')
+                                ->select('identify as id', 'title', 'type', 'url')
+                                ->where('childrenId', '=', $tempChildren[0]->idNum)->get();
+
+                            $resChild[] = array(
+                                'id' => $tempChildren[0]->id,
+                                'title' => $tempChildren[0]->title,
+                                'type' => $tempChildren[0]->type,
+                                'icon' => $tempChildren[0]->icon,
+                                'children' => $grandchild
+                            );
+
+                            $valueRes = $resChild;
+                            $resChild = [];
+                        }
+                    } else {
+                        $children = DB::table('childrenMenuGroups')
+                            ->select('identify as id', 'title', 'type', 'url', 'icon')
+                            ->where('groupId', '=', $value->idNum)->get();
+
+                        $valueRes = $children;
+                    }
+
+                    $masterMenu->items[] = array(
+                        'id' => $value->id,
+                        'type' => $value->type,
+                        'children' => $valueRes
+                    );
+
+                    $valueRes = [];
+                }
+
+                $profileMenu = (object)[];
+
+                $profileMenu->items = DB::table('menuProfiles')
+                    ->select('title', 'url', 'icon')
+                    ->get();
+
                 // broadcast(new \App\Events\UserLoggedIn($userId));
                 return response()->json([
                     'id' => $userId,
@@ -295,9 +353,11 @@ class ApiController extends Controller
                     "role" => $users->roleName,
                     'imagePath' => $users->imagePath,
                     "isAbsent" => $isAbsent,
-                    "locations" => $locations,
-                    "menuLevel" => $data,
-                    "accessType" => $accessTypeMenu,
+                    "masterMenu" => $masterMenu,
+                    'profileMenu' => $profileMenu,
+                    // "locations" => $locations,
+                    // "menuLevel" => $data,
+                    // "accessType" => $accessTypeMenu,
                 ]);
             }
         } else {
@@ -346,7 +406,8 @@ class ApiController extends Controller
         return response()->json(['user' => $user]);
     }
 
-    public function online($id){
+    public function online($id)
+    {
         return $id;
     }
 }
