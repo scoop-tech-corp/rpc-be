@@ -14,6 +14,7 @@ class TreatmentsItem extends Model
         'treatments_id',
         'frequency_id',
         'duration',
+        'quantity',
         'service_id',
         'notes',
         'start',
