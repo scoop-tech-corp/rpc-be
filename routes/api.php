@@ -28,7 +28,7 @@ use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Staff\ProfileController;
 
-use App\Http\Controllers\Service\{ServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
+use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
 
 use App\Http\Controllers\ChatController;
 
@@ -373,12 +373,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
     });
 
-    Route::group(['prefix' => 'absent'], function(){
+    Route::group(['prefix' => 'absent'], function () {
         Route::post('/', [AbsentController::class, 'createAbsent']);
     });
 
     // Chat
-    Route::group(['prefix' => 'chat'], function(){
+    Route::group(['prefix' => 'chat'], function () {
         Route::get('/list-user', [ChatController::class, 'list']);
         Route::get('/detail', [ChatController::class, 'detail']);
         Route::get('/', [ChatController::class, 'index']);
@@ -387,15 +387,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     });
 
     // Service
-    Route::group(['prefix' => 'service'], function(){
-        Route::group(['prefix' => 'category'], function(){
+    Route::group(['prefix' => 'service'], function () {
+        Route::group(['prefix' => 'category'], function () {
             Route::get('/export', [ServiceCategoryController::class, 'export']);
             Route::get('/', [ServiceCategoryController::class, 'index']);
             Route::post('/', [ServiceCategoryController::class, 'create']);
             Route::put('/', [ServiceCategoryController::class, 'update']);
-            Route::delete('/', [ServiceCategoryController::class, 'delete']);    
+            Route::delete('/', [ServiceCategoryController::class, 'delete']);
         });
-        Route::group(['prefix' => 'list'], function(){
+        Route::group(['prefix' => 'list'], function () {
             Route::get('/category', [ServiceController::class, 'findByCategory']);
             Route::get('/export', [ServiceController::class, 'export']);
             Route::get('/detail', [ServiceController::class, 'detail']);
@@ -406,27 +406,32 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::put('/', [ServiceController::class, 'update']);
             Route::delete('/', [ServiceController::class, 'destroy']);
         });
-        Route::group(['prefix' => 'treatment'], function(){
+        Route::group(['prefix' => 'treatment'], function () {
             Route::get('/export', [TreatmentController::class, 'export']);
             Route::get('/item', [TreatmentController::class, 'indexItem']);
             Route::get('/', [TreatmentController::class, 'index']);
             Route::get('/detail', [TreatmentController::class, 'detail']);
             Route::post('/', [TreatmentController::class, 'store']);
             Route::put('/', [TreatmentController::class, 'update']);
-            Route::put('/item', [TreatmentController::class, 'addNewItem']);
-            Route::get('/detail', [TreatmentController::class, 'detail']); 
+            Route::put('/item', [TreatmentController::class, 'manageItem']);
+            Route::get('/detail', [TreatmentController::class, 'detail']);
             Route::delete('/', [TreatmentController::class, 'destroy']);
         });
 
-        Route::group(['prefix' => 'diagnose'], function(){
+        Route::group(['prefix' => 'data-static'], function () {
+            Route::get('/', [DataStaticServiceController::class, 'index']);
+            Route::delete('/', [DataStaticServiceController::class, 'delete']);
+        });
+
+        Route::group(['prefix' => 'diagnose'], function () {
             Route::get('/', [DiagnoseController::class, 'index']);
         });
 
-        Route::group(['prefix' => 'frequency'], function(){
+        Route::group(['prefix' => 'frequency'], function () {
             Route::get('/', [FrequencyController::class, 'index']);
         });
 
-        Route::group(['prefix' => 'task'], function(){
+        Route::group(['prefix' => 'task'], function () {
             Route::get('/', [TaskController::class, 'index']);
         });
     });

@@ -30,24 +30,24 @@ class TreatmentController extends Controller
             if ($request->type) {
                 $data = $data->where('tm.type', $request->type);
             }
-            
+
             $data = $data->join('users', 'tm.userId', '=', 'users.id')
-                         ->join('diagnose as d', 'tm.diagnose_id', '=', 'd.id')
-                         ->join('location as l', 'tm.location_id', '=', 'l.id');
+                ->join('diagnose as d', 'tm.diagnose_id', '=', 'd.id')
+                ->join('location as l', 'tm.location_id', '=', 'l.id');
 
             if ($request->name) {
                 $data = $data->where('tm.name', 'like', '%' . $request->name . '%');
             }
 
-            if($request->diagnose_id){
+            if ($request->diagnose_id) {
                 $data = $data->whereIn('tm.diagnose_id', $request->diagnose_id);
             }
 
-            if($request->location_id){
+            if ($request->location_id) {
                 $data = $data->whereIn('tm.location_id', $request->location_id);
             }
 
-            if($request->status){
+            if ($request->status) {
                 $data = $data->where('tm.status', $request->status);
             }
 
@@ -58,29 +58,28 @@ class TreatmentController extends Controller
                 $data = $data->orderBy('tm.created_at', 'detm');
             }
 
-            return $data->select('tm.id', 'tm.name as treatmentName', 'tm.column','d.name as diagnoseName', 'l.locationName','tm.status', 'tm.created_at', 'tm.updated_at', DB::raw("DATE_FORMAT(tm.created_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy');
+            return $data->select('tm.id', 'tm.name as treatmentName', 'tm.column', 'd.name as diagnoseName', 'l.locationName', 'tm.status', 'tm.created_at', 'tm.updated_at', DB::raw("DATE_FORMAT(tm.created_at, '%d/%m/%Y') as createdAt"), 'users.firstName as createdBy');
         }
 
         $data = buildQuery($request);
         $data = paginateData($data, $request);
 
         return response()->json($data);
-
     }
     public function indexItem(Request $request)
     {
         function buildQuery(Request $request)
         {
             $data = DB::table('treatmentsItems as ti')->where('ti.isDeleted', '=', 0)
-            ->where('treatments_id', $request->treatments_id)
-            ->leftJoin('services as s', 'ti.service_id', '=', 's.id')
-            ->leftJoin('task as t', 'ti.task_id', '=', 't.id')
-            ->leftJoin('servicesFrequency as sf', 'ti.frequency_id', '=', 'sf.id')
-            ->leftJoin('users', 'ti.userId', '=', 'users.id');
+                ->where('treatments_id', $request->treatments_id)
+                ->leftJoin('services as s', 'ti.service_id', '=', 's.id')
+                ->leftJoin('task as t', 'ti.task_id', '=', 't.id')
+                ->leftJoin('servicesFrequency as sf', 'ti.frequency_id', '=', 'sf.id')
+                ->leftJoin('users', 'ti.userId', '=', 'users.id');
 
             $data = $data->orderBy('ti.updated_at', 'desc');
-            
-            return $data->select('ti.id', 's.fullName as serviceName', 'sf.name as frequencyName','t.name as taskName', 'ti.product_name as productName','ti.created_at', 'ti.start', 'ti.duration','users.firstName as createdBy');
+
+            return $data->select('ti.id', 's.fullName as serviceName', 'sf.name as frequencyName', 't.name as taskName', 'ti.product_name as productName', 'ti.created_at', 'ti.quantity', 'ti.notes', 'ti.frequency_id as frequencyId', 'ti.start', 'ti.duration', 'users.firstName as createdBy');
         }
 
         $data = buildQuery($request);
@@ -99,9 +98,9 @@ class TreatmentController extends Controller
     {
         $request->merge(['location_id' => isset($request->location_id['value']) ? $request->location_id['value'] : 0]);
 
-        if(isset($request->diagnose_id) && !isset($request->diagnose_id['isNew']) ){
+        if (isset($request->diagnose_id) && !isset($request->diagnose_id['isNew'])) {
             $request->merge(['diagnose_id' => $request->diagnose_id['value']]);
-        } else if(isset($request->diagnose_id) && isset($request->diagnose_id['isNew']) && $request->diagnose_id['isNew'] == true){
+        } else if (isset($request->diagnose_id) && isset($request->diagnose_id['isNew']) && $request->diagnose_id['isNew'] == true) {
             $diagnose = Diagnose::create([
                 'name' => $request->diagnose_id['label'],
                 'status' => 1,
@@ -134,7 +133,7 @@ class TreatmentController extends Controller
 
         return response()->json($result);
     }
-    public function addNewItem(Request $request)
+    public function manageItem(Request $request)
     {
         $validate = Validator::make($request->all(), [
             'start' => 'required',
@@ -148,29 +147,48 @@ class TreatmentController extends Controller
             'notes' => 'nullable|string',
         ]);
         if ($validate->fails()) return responseErrorValidation($validate->errors()->all());
+        $result = '';
 
-        if($request->task_id){
-            $task = $request->task_id;
+        if ($request->isEdit) {
 
-            if(isset($task['isNew'])){
-                $task = Task::create([
-                    'name' => $task['label'],
-                    'userId' => auth()->user()->id,
-                    'updated_at' => Carbon::now(),
-                ]);
-                $request->merge(['task_id' => $task->id]);
-            } else {
-                $task = Task::where('id', $task['value'])->first();
-                if(!$task){
-                    return responseError('id not found','Task not found!');
-                }
+            $result = TreatmentsItem::where('id', $request->id)->first();
+
+            if (!$result) {
+                return responseError('id not found', 'Treatment Item not found!');
             }
-            
-            $request->merge(['task_id' => $task->id]);
+
+            $result->start = $request->start;
+            $result->frequency_id = $request->frequency_id;
+            $result->duration = $request->duration;
+            $result->quantity = $request->quantity ? $request->quantity : 0;
+            $result->notes = $request->notes;
+            // save
+            $result->save();
+        } else {
+            if ($request->task_id) {
+                $task = $request->task_id;
+
+                if (isset($task['isNew'])) {
+                    $task = Task::create([
+                        'name' => $task['label'],
+                        'userId' => auth()->user()->id,
+                        'updated_at' => Carbon::now(),
+                    ]);
+                    $request->merge(['task_id' => $task->id]);
+                } else {
+                    $task = Task::where('id', $task['value'])->first();
+                    if (!$task) {
+                        return responseError('id not found', 'Task not found!');
+                    }
+                }
+
+                $request->merge(['task_id' => $task->id]);
+            }
+
+            $request->merge(['userId' => auth()->user()->id]);
+            $result = TreatmentsItem::create($request->all());
         }
 
-        $request->merge(['userId' => auth()->user()->id]);
-        $result = TreatmentsItem::create($request->all());
         return response()->json($result);
     }
 
@@ -183,20 +201,20 @@ class TreatmentController extends Controller
     public function detail(Request $request)
     {
         $result = Treatment::where('treatments.id', $request->id)
-                    ->where('treatments.isDeleted', 0)
-                    ->join('users', 'treatments.userId', '=', 'users.id')
-                    ->join('diagnose as d', 'treatments.diagnose_id', '=', 'd.id')
-                    ->join('location as l', 'treatments.location_id', '=', 'l.id')
-                    ->select('treatments.id', 'treatments.name as treatmentName', 'treatments.location_id','d.name as diagnoseName', 'l.locationName','treatments.status', 'treatments.created_at', 'treatments.column','treatments.updated_at', DB::raw("DATE_FORMAT(treatments.created_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy')
-                    ->first();
+            ->where('treatments.isDeleted', 0)
+            ->join('users', 'treatments.userId', '=', 'users.id')
+            ->join('diagnose as d', 'treatments.diagnose_id', '=', 'd.id')
+            ->join('location as l', 'treatments.location_id', '=', 'l.id')
+            ->select('treatments.id', 'treatments.name as treatmentName', 'treatments.location_id', 'd.name as diagnoseName', 'l.locationName', 'treatments.status', 'treatments.created_at', 'treatments.column', 'treatments.updated_at', DB::raw("DATE_FORMAT(treatments.created_at, '%d/%m/%Y') as createdAt"), 'users.firstName as createdBy')
+            ->first();
 
         if (!$result) {
-            return responseError('id not found','Treatment not found!');
+            return responseError('id not found', 'Treatment not found!');
         }
         return response()->json($result);
     }
 
-    
+
     public function export(Request $request)
     {
         $fileName = "";
@@ -236,10 +254,10 @@ class TreatmentController extends Controller
 
         foreach ($request->id as $va) {
             $cat = Treatment::find($va);
-            if(isset($request->status)){
+            if (isset($request->status)) {
                 $cat->status = $request->status;
             }
-            if(isset($request->column)){
+            if (isset($request->column)) {
                 $data = DB::table('treatmentsItems as tm')
                     ->where('tm.isDeleted', '=', 0)
                     ->where('tm.treatments_id', $request->id)
@@ -247,7 +265,7 @@ class TreatmentController extends Controller
                     ->orderBy('maxDay', 'desc')
                     ->first();
 
-                if(isset($data->maxDay) && $data->maxDay > $request->column){
+                if (isset($data->maxDay) && $data->maxDay > $request->column) {
                     return responseErrorValidation('', 'Duration must be greater than ' . $data->maxDay .  '!');
                 }
                 $cat->column = $request->column;
@@ -263,7 +281,8 @@ class TreatmentController extends Controller
      * @param  \App\Models\Treatment  $treatment
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Request $request){
+    public function destroy(Request $request)
+    {
         if (!$request->id) {
             return responseErrorValidation(['There is no any Data to delete!']);
         }
@@ -284,7 +303,6 @@ class TreatmentController extends Controller
             $cat->save();
         }
 
-       return responseSuccess($request->id, 'Delete Data Successful!');
-
+        return responseSuccess($request->id, 'Delete Data Successful!');
     }
 }

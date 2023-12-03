@@ -14,6 +14,7 @@ class Diagnose extends Model
         'name',
         'userId',
         'userUpdateId',
+        'isDeleted',
         'deletedBy'
     ];
 
