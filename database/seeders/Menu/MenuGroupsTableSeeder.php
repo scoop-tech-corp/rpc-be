@@ -23,6 +23,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 1,
                 'groupName' => 'menu-group-1',
+                'orderData' => 1,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -35,6 +36,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 2,
                 'groupName' => 'group-customer',
+                'orderData' => 2,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -47,6 +49,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 3,
                 'groupName' => 'group-staff',
+                'orderData' => 3,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -59,6 +62,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 4,
                 'groupName' => 'group-promotion',
+                'orderData' => 4,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -71,6 +75,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 5,
                 'groupName' => 'group-service',
+                'orderData' => 5,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -83,6 +88,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 6,
                 'groupName' => 'group-product',
+                'orderData' => 6,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -95,6 +101,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 7,
                 'groupName' => 'group-location',
+                'orderData' => 7,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -107,6 +114,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 8,
                 'groupName' => 'group-finance',
+                'orderData' => 8,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,
@@ -119,6 +127,7 @@ class MenuGroupsTableSeeder extends Seeder
             array (
                 'id' => 9,
                 'groupName' => 'menu-group-2',
+                'orderData' => 9,
                 'isDeleted' => 0,
                 'userId' => 1,
                 'userUpdateId' => NULL,

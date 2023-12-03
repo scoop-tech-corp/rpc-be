@@ -297,16 +297,28 @@ class ApiController extends Controller
                 foreach ($groups as $value) {
 
                     $tempChildren = DB::table('childrenMenuGroups')
-                        ->select('id as idNum', 'identify as id', 'title', 'type', 'url', 'icon')
+                        ->select('id as idNum', 'identify as id', 'title', 'type', 'icon')
                         ->where('groupId', '=', $value->idNum)->get();
 
                     if (count($tempChildren) == 1) {
-                        if ($tempChildren[0]->url == "") {
 
-                            $grandchild = DB::table('grandChildrenMenuGroups')
-                                ->select('identify as id', 'title', 'type', 'url')
-                                ->where('childrenId', '=', $tempChildren[0]->idNum)->get();
+                        $grandchild = DB::table('grandChildrenMenuGroups as gcm')
+                            ->join('accessControl as ac', 'ac.menuListId', 'gcm.id')
+                            ->select('gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'accessTypeId as accessType')
+                            ->where('gcm.childrenId', '=', $tempChildren[0]->idNum)
+                            ->where('ac.roleId', '=', $users->roleId)
+                            ->get();
+                        if (count($grandchild) == 1) {
 
+                            $resChild[] = array(
+                                'id' => $grandchild[0]->id,
+                                'title' => $grandchild[0]->title,
+                                'type' => $grandchild[0]->type,
+                                'url' => $grandchild[0]->url,
+                                'icon' => $tempChildren[0]->icon,
+                                'accessType' => $grandchild[0]->accessType,
+                            );
+                        } else {
                             $resChild[] = array(
                                 'id' => $tempChildren[0]->id,
                                 'title' => $tempChildren[0]->title,
@@ -314,16 +326,55 @@ class ApiController extends Controller
                                 'icon' => $tempChildren[0]->icon,
                                 'children' => $grandchild
                             );
-
-                            $valueRes = $resChild;
-                            $resChild = [];
                         }
+
+                        $valueRes = $resChild;
+                        $resChild = [];
                     } else {
-                        $children = DB::table('childrenMenuGroups')
-                            ->select('identify as id', 'title', 'type', 'url', 'icon')
+                        $childrens = DB::table('childrenMenuGroups')
+                            ->select('id as idNum', 'identify as id', 'title', 'type', 'icon')
                             ->where('groupId', '=', $value->idNum)->get();
 
-                        $valueRes = $children;
+                        foreach ($childrens as $valueChild) {
+                            $grandChilds = DB::table('grandChildrenMenuGroups as gcm')
+                                ->join('accessControl as ac', 'ac.menuListId', 'gcm.id')
+                                ->select('gcm.id as idNum', 'gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'ac.accessTypeId as accessType')
+                                ->where('gcm.childrenId', '=', $valueChild->idNum)
+                                ->where('ac.roleId', '=', $users->roleId)
+                                ->get();
+
+                            if (count($grandChilds) == 1) {
+
+                                $resChild[] = array(
+                                    'id' => $grandChilds[0]->id,
+                                    'title' => $grandChilds[0]->title,
+                                    'type' => $grandChilds[0]->type,
+                                    'url' => $grandChilds[0]->url,
+                                    'icon' => $valueChild->icon,
+                                    'accessType' => $grandChilds[0]->accessType,
+                                );
+                                array_push($valueRes,$resChild);
+                                $resChild = [];
+                            } else {
+                                $grandChildsNew = DB::table('grandChildrenMenuGroups as gcm')
+                                    ->join('accessControl as ac', 'ac.menuListId', 'gcm.id')
+                                    ->select('gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'ac.accessTypeId as accessType')
+                                    ->where('ac.roleId', '=', $users->roleId)
+                                    ->where('gcm.childrenId', '=', $valueChild->idNum)
+                                    ->get();
+
+                                $resChild[] = array(
+                                    'id' => $grandChilds[0]->id,
+                                    'title' => $grandChilds[0]->title,
+                                    'type' => $grandChilds[0]->type,
+                                    'url' => $grandChilds[0]->url,
+                                    'icon' => $valueChild->icon,
+                                    'children' => $grandChildsNew,
+                                );
+                                $valueRes = $resChild;
+                                $resChild = [];
+                            }
+                        }
                     }
 
                     $masterMenu->items[] = array(

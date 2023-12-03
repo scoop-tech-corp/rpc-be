@@ -13,8 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->integer('isLogin');
+        Schema::table('childrenMenuGroups', function (Blueprint $table) {
+            $table->dropColumn('url');
         });
     }
 
@@ -25,8 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('isLogin');
+        Schema::table('childrenMenuGroups', function (Blueprint $table) {
+            $table->string('url')->after('type');
         });
     }
 };
