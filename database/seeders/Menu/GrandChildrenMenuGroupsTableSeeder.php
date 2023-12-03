@@ -16,9 +16,9 @@ class GrandChildrenMenuGroupsTableSeeder extends Seeder
     {
 
 
-        \DB::table('grandchildrenMenuGroups')->delete();
+        \DB::table('grandChildrenMenuGroups')->delete();
 
-        \DB::table('grandchildrenMenuGroups')->insert(array (
+        \DB::table('grandChildrenMenuGroups')->insert(array (
             0 =>
             array (
                 'id' => 1,
