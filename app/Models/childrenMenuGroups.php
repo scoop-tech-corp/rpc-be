@@ -7,5 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class childrenMenuGroups extends Model
 {
-    use HasFactory;
+    protected $table = "childrenMenuGroups";
+
+    protected $dates = ['created_at', 'DeletedAt'];
+
+    protected $guarded = ['id'];
+
+    protected $fillable = [
+        'groupId', 'orderData', 'menuName',
+        'identify', 'title', 'type', 'icon', 'isActive', 'userId', 'userUpdateId'
+    ];
 }

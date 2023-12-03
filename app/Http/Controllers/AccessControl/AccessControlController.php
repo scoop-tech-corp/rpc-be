@@ -10,6 +10,9 @@ use App\Models\AccessControl\MenuList;
 use App\Models\AccessControl\AccessLimit;
 use App\Models\AccessControl\AccessType;
 use App\Models\AccessControl\MenuMasters;
+use App\Models\childrenMenuGroups;
+use App\Models\grandChildrenMenuGroups;
+use App\Models\menuGroup;
 use App\Models\Staff\UsersRoles;
 
 use Validator;
@@ -804,9 +807,10 @@ class AccessControlController extends Controller
 
             $data = json_decode($jsonData, true);
 
-            $menuMastersData = MenuMasters::select('id', 'masterName as module')->where([
+            $menuMastersData = childrenMenuGroups::select('id', 'menuName as module')->where([
                 ['isDeleted', '=', 0],
-            ])->get();
+            ])
+                ->get();
 
             $menuMastersDataNew = $menuMastersData->map(function ($item) {
                 return collect($item)->forget('id');
@@ -817,10 +821,9 @@ class AccessControlController extends Controller
                 ->union($tolo);
 
             foreach ($menuMastersData as $menu) {
-
-                $menuListsData = MenuList::select('id', 'menuName as menuName')->where([
+                $menuListsData = childrenMenuGroups::select('id', 'menuName')->where([
                     ['isActive', '=', 1],
-                    ['masterId', '=', $menu->id],
+                    ['id', '=', $menu->id],
                 ])->get();
 
                 $menus = [];
@@ -829,21 +832,20 @@ class AccessControlController extends Controller
 
                     foreach ($menuListsData as $datamenulist) {
 
-                        $accessControls = DB::table('accessControl')
-                            ->join('menuList', 'accessControl.menuListId', '=', 'menuList.id')
-                            ->join('usersRoles', 'accessControl.roleID', '=', 'usersRoles.id')
+                        $accessControls = DB::table('accessControl as ac')
+                            ->join('grandChildrenMenuGroups as gcm', 'ac.menuListId', '=', 'gcm.id')
+                            ->join('usersRoles as ur', 'ac.roleID', '=', 'ur.id')
                             ->select(
-                                'menuList.id as menuId',
-                                'menuList.menuName as menuName',
-                                DB::raw('LOWER(usersRoles.roleName) as roleName'),
-                                'accessControl.accessTypeId'
+                                'gcm.id as menuId',
+                                'gcm.menuName as menuName',
+                                DB::raw('LOWER(ur.roleName) as roleName'),
+                                'ac.accessTypeId'
                             )
                             ->where([
-                                ['menuListId', '=', $datamenulist->id],
+                                ['gcm.childrenId', '=', $datamenulist->id],
                             ])->get();
 
                         foreach ($accessControls as $accessControl) {
-
                             $menuId = $accessControl->menuId;
                             $menuName = $accessControl->menuName;
                             $roleName = $accessControl->roleName;
@@ -1038,7 +1040,7 @@ class AccessControlController extends Controller
             }
 
 
-            $checkIfDataExits = MenuList::where([
+            $checkIfDataExits = grandChildrenMenuGroups::where([
                 ['id', '=', $Request->id]
             ])->first();
 
@@ -1053,7 +1055,7 @@ class AccessControlController extends Controller
                     return responseInvalid(['Menu name same with previous name! Please try different name!']);
                 }
 
-                $checkIfMenuExits = MenuList::where([
+                $checkIfMenuExits = grandChildrenMenuGroups::where([
                     ['menuName', '=', $Request->menuName]
                 ])->first();
 
@@ -1062,7 +1064,7 @@ class AccessControlController extends Controller
 
                     return responseInvalid(['Menu name already exists! Please try different name!']);
                 } else {
-                    MenuList::where([
+                    grandChildrenMenuGroups::where([
                         ['id', '=', $Request->id]
                     ])->update(['menuName' => $Request->menuName]);
                 }
@@ -1112,7 +1114,7 @@ class AccessControlController extends Controller
             }
 
 
-            $checkIfDataMenuExists = MenuList::where('id', '=', $Request->menuId)->first();
+            $checkIfDataMenuExists = grandChildrenMenuGroups::where('id', '=', $Request->menuId)->first();
 
             if (!$checkIfDataMenuExists) {
 
@@ -1195,7 +1197,7 @@ class AccessControlController extends Controller
             $data = DB::table('accessControlHistory as a')
                 ->leftjoin('users as b', 'b.id', '=', 'a.updatedBy')
                 ->leftjoin('usersRoles as d', 'd.id', '=', 'a.roleId')
-                ->leftjoin('menuList as c', 'c.id', '=', 'a.menuId')
+                ->leftjoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.menuId')
                 ->select(
                     'a.id as id',
                     'c.menuName as menuName',
@@ -1370,7 +1372,7 @@ class AccessControlController extends Controller
         $data = DB::table('accessControlHistory as a')
             ->leftjoin('users as b', 'b.id', '=', 'a.updatedBy')
             ->leftjoin('usersRoles as d', 'd.id', '=', 'a.roleId')
-            ->leftjoin('menuList as c', 'c.id', '=', 'a.menuId')
+            ->leftjoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.menuId')
             ->select(
                 'a.id as id',
                 'c.menuName as menuName',
@@ -1432,7 +1434,7 @@ class AccessControlController extends Controller
         $data = DB::table('accessControlHistory as a')
             ->leftjoin('users as b', 'b.id', '=', 'a.updatedBy')
             ->leftjoin('usersRoles as d', 'd.id', '=', 'a.roleId')
-            ->leftjoin('menuList as c', 'c.id', '=', 'a.menuId')
+            ->leftjoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.menuId')
             ->select(
                 'a.id as id',
                 'c.menuName as menuName',
@@ -1493,7 +1495,7 @@ class AccessControlController extends Controller
         $data = DB::table('accessControlHistory as a')
             ->leftjoin('users as b', 'b.id', '=', 'a.updatedBy')
             ->leftjoin('usersRoles as d', 'd.id', '=', 'a.roleId')
-            ->leftjoin('menuList as c', 'c.id', '=', 'a.menuId')
+            ->leftjoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.menuId')
             ->select(
                 'a.id as id',
                 'c.menuName as menuName',
@@ -1554,7 +1556,7 @@ class AccessControlController extends Controller
         $data = DB::table('accessControlHistory as a')
             ->leftjoin('users as b', 'b.id', '=', 'a.updatedBy')
             ->leftjoin('usersRoles as d', 'd.id', '=', 'a.roleId')
-            ->leftjoin('menuList as c', 'c.id', '=', 'a.menuId')
+            ->leftjoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.menuId')
             ->select(
                 'a.id as id',
                 'c.menuName as menuName',
@@ -1615,7 +1617,7 @@ class AccessControlController extends Controller
         $data = DB::table('accessControlHistory as a')
             ->leftjoin('users as b', 'b.id', '=', 'a.updatedBy')
             ->leftjoin('usersRoles as d', 'd.id', '=', 'a.roleId')
-            ->leftjoin('menuList as c', 'c.id', '=', 'a.menuId')
+            ->leftjoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.menuId')
             ->select(
                 'a.id as id',
                 'c.menuName as menuName',
