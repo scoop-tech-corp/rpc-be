@@ -99,7 +99,7 @@ class DataStaticCustomerController extends Controller
 
             $dataSourceCustomer = SourceCustomer::select(
                 'id',
-                DB::raw("'Source Customer' as value"),
+                DB::raw("'Source Reminder' as value"),
                 'sourceName as name',
             )->where('isActive', '=', 1)->get();
 
@@ -140,7 +140,7 @@ class DataStaticCustomerController extends Controller
                 'occupation customer',
                 'reference customer',
                 'pet category',
-                'source customer',
+                'source reminder',
                 'customer group',
                 'type id',
                 'usage',
@@ -238,7 +238,7 @@ class DataStaticCustomerController extends Controller
                     $ReferenceCustomer->updated_at = now();
                     $ReferenceCustomer->save();
                 }
-            } else if (strtolower($request->input('keyword')) == "source customer") {
+            } else if (strtolower($request->input('keyword')) == "source reminder") {
 
                 $checkDataExists =  SourceCustomer::where([
                     ['sourceName', '=', $request->input('name')],
@@ -247,7 +247,7 @@ class DataStaticCustomerController extends Controller
 
                 if ($checkDataExists) {
 
-                    return responseInvalid(['Source customer already exists! Please try different value!']);
+                    return responseInvalid(['Source reminder already exists! Please try different value!']);
                 } else {
 
                     $SourceCustomer = new SourceCustomer();
@@ -363,7 +363,7 @@ class DataStaticCustomerController extends Controller
 
         $dataSourceCustomer = SourceCustomer::select(
             'id',
-            DB::raw("'Source Customer' as type"),
+            DB::raw("'Source Reminder' as type"),
             'sourceName as typeName',
         )->where('isActive', '=', 1);
 
@@ -644,7 +644,7 @@ class DataStaticCustomerController extends Controller
                     'occupation customer',
                     'reference customer',
                     'pet category',
-                    'source customer',
+                    'source reminder',
                     'customer group',
                     'type id',
                     'usage',
@@ -709,7 +709,7 @@ class DataStaticCustomerController extends Controller
 
                         return responseInvalid(['Reference customer is not exists , please try different id !']);
                     }
-                } else if (strtolower($val['type']) == "source customer") {
+                } else if (strtolower($val['type']) == "source reminder") {
 
                     $checkDataExists =  SourceCustomer::where([
                         ['id', '=', $val['id']],
@@ -719,7 +719,7 @@ class DataStaticCustomerController extends Controller
 
                     if (!$checkDataExists) {
 
-                        return responseInvalid(['Source customer is not exists , please try different id !']);
+                        return responseInvalid(['Source reminder is not exists , please try different id !']);
                     }
                 } else if (strtolower($val['type']) == "customer group") {
 
@@ -783,7 +783,7 @@ class DataStaticCustomerController extends Controller
                     ReferenceCustomer::where([
                         ['id', '=', $val['id']]
                     ])->update(['isActive' => 0, 'updated_at' => now()]);
-                } else if (strtolower($val['type']) == "source customer") {
+                } else if (strtolower($val['type']) == "source reminder") {
 
                     SourceCustomer::where([
                         ['id', '=', $val['id']]
