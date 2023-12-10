@@ -31,7 +31,7 @@ use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
 
 use App\Http\Controllers\ChatController;
-
+use App\Http\Controllers\MenuManagementController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -384,6 +384,28 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [ChatController::class, 'index']);
         Route::post('/', [ChatController::class, 'create']);
         Route::post('/read', [ChatController::class, 'read']);
+    });
+
+    Route::group(['prefix' => 'menu'], function () {
+        Route::get('/menu-group', [MenuManagementController::class, 'indexMenuGroup']);
+        Route::post('/menu-group', [MenuManagementController::class, 'insertMenuGroup']);
+        Route::put('/menu-group', [MenuManagementController::class, 'updateMenuGroup']);
+        Route::delete('/menu-group', [MenuManagementController::class, 'deleteMenuGroup']);
+
+        Route::get('/child-menu-group', [MenuManagementController::class, 'indexChildrenMenu']);
+        Route::post('/child-menu-group', [MenuManagementController::class, 'insertChildrenMenu']);
+        Route::put('/child-menu-group', [MenuManagementController::class, 'updateChildMenu']);
+        Route::delete('/child-menu-group', [MenuManagementController::class, 'deleteChildMenu']);
+
+        Route::get('/grand-child-menu-group', [MenuManagementController::class, 'indexGrandChildMenu']);
+        Route::post('/grand-child-menu-group', [MenuManagementController::class, 'insertGrandChildMenu']);
+        Route::put('/grand-child-menu-group', [MenuManagementController::class, 'updateGrandChildMenu']);
+        Route::delete('/grand-child-menu-group', [MenuManagementController::class, 'deleteGrandChildMenu']);
+
+        Route::get('/profile', [MenuManagementController::class, 'indexMenuProfile']);
+        Route::post('/profile', [MenuManagementController::class, 'insertMenuProfile']);
+        Route::put('/profile', [MenuManagementController::class, 'updateMenuProfile']);
+        Route::delete('/profile', [MenuManagementController::class, 'deleteMenuProfile']);
     });
 
     // Service

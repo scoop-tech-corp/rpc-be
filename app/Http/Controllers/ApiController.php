@@ -294,13 +294,16 @@ class ApiController extends Controller
 
                 $groups = DB::table('menuGroups')
                     ->select('id as idNum', 'groupName as id', DB::raw('"group" as type'))
+                    ->where('isDeleted', '=', 0)
                     ->get();
 
                 foreach ($groups as $value) {
 
                     $tempChildren = DB::table('childrenMenuGroups')
                         ->select('id as idNum', 'identify as id', 'title', 'type', 'icon')
-                        ->where('groupId', '=', $value->idNum)->get();
+                        ->where('groupId', '=', $value->idNum)
+                        ->where('isDeleted', '=', 0)
+                        ->get();
 
                     if (count($tempChildren) == 1) {
 
@@ -310,6 +313,7 @@ class ApiController extends Controller
                             ->select('gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'cm.icon', 'accessTypeId as accessType')
                             ->where('gcm.childrenId', '=', $tempChildren[0]->idNum)
                             ->where('ac.roleId', '=', $users->roleId)
+                            ->where('gcm.isDeleted', '=', 0)
                             ->get();
                         if (count($grandChilds) == 1) {
 
@@ -319,6 +323,7 @@ class ApiController extends Controller
                                 ->select('gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'cm.icon', 'accessTypeId as accessType')
                                 ->where('gcm.childrenId', '=', $tempChildren[0]->idNum)
                                 ->where('ac.roleId', '=', $users->roleId)
+                                ->where('gcm.isDeleted', '=', 0)
                                 ->first();
 
                             array_push($valueResSingle, $grandChilds);
@@ -336,7 +341,9 @@ class ApiController extends Controller
                     } else {
                         $childrens = DB::table('childrenMenuGroups')
                             ->select('id as idNum', 'identify as id', 'title', 'type', 'icon')
-                            ->where('groupId', '=', $value->idNum)->get();
+                            ->where('groupId', '=', $value->idNum)
+                            ->where('isDeleted', '=', 0)
+                            ->get();
 
                         foreach ($childrens as $valueChild) {
                             $grandChilds = DB::table('grandChildrenMenuGroups as gcm')
@@ -345,6 +352,7 @@ class ApiController extends Controller
                                 ->select('gcm.id as idNum', 'gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'cm.icon', 'ac.accessTypeId as accessType')
                                 ->where('gcm.childrenId', '=', $valueChild->idNum)
                                 ->where('ac.roleId', '=', $users->roleId)
+                                ->where('gcm.isDeleted', '=', 0)
                                 ->get();
 
                             if (count($grandChilds) == 1) {
@@ -355,6 +363,7 @@ class ApiController extends Controller
                                     ->select('gcm.id as idNum', 'gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'cm.icon', 'ac.accessTypeId as accessType')
                                     ->where('gcm.childrenId', '=', $valueChild->idNum)
                                     ->where('ac.roleId', '=', $users->roleId)
+                                    ->where('gcm.isDeleted', '=', 0)
                                     ->first();
 
                                 array_push($valueResSingle, $grandChilds);
@@ -364,6 +373,7 @@ class ApiController extends Controller
                                     ->select('gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'ac.accessTypeId as accessType')
                                     ->where('ac.roleId', '=', $users->roleId)
                                     ->where('gcm.childrenId', '=', $valueChild->idNum)
+                                    ->where('gcm.isDeleted', '=', 0)
                                     ->get();
 
                                 $resChild[] = array(
@@ -401,6 +411,7 @@ class ApiController extends Controller
 
                 $profileMenu->items = DB::table('menuProfiles')
                     ->select('title', 'url', 'icon')
+                    ->where('isDeleted', '=', 0)
                     ->get();
 
                 // broadcast(new \App\Events\UserLoggedIn($userId));

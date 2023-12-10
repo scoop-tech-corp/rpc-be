@@ -7,5 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class menuProfile extends Model
 {
-    use HasFactory;
+    protected $table = "menuProfiles";
+
+    protected $dates = ['created_at', 'DeletedAt'];
+
+    protected $guarded = ['id'];
+
+    protected $fillable = [
+        'title', 'url', 'icon', 'userId', 'userUpdateId'
+    ];
 }
