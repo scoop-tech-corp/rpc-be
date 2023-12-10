@@ -14,6 +14,6 @@ class menuGroup extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'groupName'
+        'groupName', 'orderData', 'userId', 'userUpdateId'
     ];
 }
