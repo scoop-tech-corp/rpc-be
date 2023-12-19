@@ -387,11 +387,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     });
 
     Route::group(['prefix' => 'menu'], function () {
+        Route::get('/list-menu-group', [MenuManagementController::class, 'listMenuGroup']);
         Route::get('/menu-group', [MenuManagementController::class, 'indexMenuGroup']);
         Route::post('/menu-group', [MenuManagementController::class, 'insertMenuGroup']);
         Route::put('/menu-group', [MenuManagementController::class, 'updateMenuGroup']);
         Route::delete('/menu-group', [MenuManagementController::class, 'deleteMenuGroup']);
 
+        Route::get('/list-child-menu-group', [MenuManagementController::class, 'listChildrenMenu']);
         Route::get('/child-menu-group', [MenuManagementController::class, 'indexChildrenMenu']);
         Route::post('/child-menu-group', [MenuManagementController::class, 'insertChildrenMenu']);
         Route::put('/child-menu-group', [MenuManagementController::class, 'updateChildMenu']);
@@ -406,6 +408,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/profile', [MenuManagementController::class, 'insertMenuProfile']);
         Route::put('/profile', [MenuManagementController::class, 'updateMenuProfile']);
         Route::delete('/profile', [MenuManagementController::class, 'deleteMenuProfile']);
+
+        Route::get('/setting', [MenuManagementController::class, 'indexMenuSetting']);
+        Route::post('/setting', [MenuManagementController::class, 'insertMenuSetting']);
+        Route::put('/setting', [MenuManagementController::class, 'updateMenuSetting']);
+        Route::delete('/setting', [MenuManagementController::class, 'deleteMenuSetting']);
     });
 
     // Service
