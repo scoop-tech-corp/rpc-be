@@ -315,6 +315,7 @@ class ApiController extends Controller
                             ->where('ac.roleId', '=', $users->roleId)
                             ->where('gcm.isDeleted', '=', 0)
                             ->get();
+
                         if (count($grandChilds) == 1) {
 
                             $grandChilds = DB::table('grandChildrenMenuGroups as gcm')
@@ -414,6 +415,16 @@ class ApiController extends Controller
                     ->where('isDeleted', '=', 0)
                     ->get();
 
+                $settingMenu = (object)[];
+
+                if ($users->roleName == 'Administrator') {
+
+                    $settingMenu->items = DB::table('menuSettings')
+                        ->select('title', 'url', 'icon')
+                        ->where('isDeleted', '=', 0)
+                        ->get();
+                }
+
                 // broadcast(new \App\Events\UserLoggedIn($userId));
                 return response()->json([
                     'id' => $userId,
@@ -428,6 +439,7 @@ class ApiController extends Controller
                     "isAbsent" => $isAbsent,
                     "masterMenu" => $masterMenu,
                     'profileMenu' => $profileMenu,
+                    'settingMenu' => $settingMenu,
                     // "locations" => $locations,
                     // "menuLevel" => $data,
                     // "accessType" => $accessTypeMenu,

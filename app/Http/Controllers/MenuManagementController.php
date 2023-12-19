@@ -6,6 +6,7 @@ use App\Models\childrenMenuGroups;
 use App\Models\grandChildrenMenuGroups;
 use App\Models\menuGroup;
 use App\Models\menuProfile;
+use App\Models\menuSettings;
 use Illuminate\Http\Request;
 use DB;
 use Validator;
@@ -13,6 +14,29 @@ use Illuminate\Support\Carbon;
 
 class MenuManagementController extends Controller
 {
+    public function listMenuGroup()
+    {
+        $data = DB::table('menuGroups')
+            ->select('id', 'groupName')
+            ->where('isDeleted', '=', 0)
+            ->orderBy('orderData', 'asc')
+            ->get();
+
+        return responseList($data);
+    }
+
+    public function listChildrenMenu(Request $request)
+    {
+        $data = DB::table('grandChildrenMenuGroups')
+            ->select('id', 'menuName')
+            ->where('childrenId', '=', $request->id)
+            ->where('isDeleted', '=', 0)
+            ->orderBy('orderData', 'asc')
+            ->get();
+
+        return responseList($data);
+    }
+
     public function indexMenuGroup(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
@@ -478,11 +502,94 @@ class MenuManagementController extends Controller
         ], 200);
     }
 
+    function indexMenuSetting(Request $request)
+    {
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        $data = DB::table('menuSettings as mp')
+            ->join('users as u', 'mp.userId', 'u.id')
+            ->select(
+                'mp.id',
+                'mp.title',
+                'mp.url',
+                'mp.icon',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(mp.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('mp.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $res = $this->SearchMenuSetting($request);
+            if ($res) {
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
+            } else {
+                $data = [];
+                return response()->json([
+                    'totalPagination' => 0,
+                    'data' => $data
+                ], 200);
+            }
+        }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('mp.updated_at', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+        return response()->json([
+            'totalPagination' => ceil($totalPaging),
+            'data' => $data
+        ], 200);
+    }
+
     private function SearchMenuProfile($request)
     {
         $temp_column = null;
 
         $data = DB::table('menuGroups as mg')
+            ->select(
+                'mg.groupName',
+            )
+            ->where('mg.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('mg.groupName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'mg.groupName';
+        }
+
+        return $temp_column;
+    }
+
+    private function SearchMenuSetting($request)
+    {
+        $temp_column = null;
+
+        $data = DB::table('menuSettings as mg')
             ->select(
                 'mg.groupName',
             )
@@ -529,6 +636,53 @@ class MenuManagementController extends Controller
         DB::beginTransaction();
         try {
             menuProfile::create([
+                'title' => $request->title,
+                'url' => $request->url,
+                'icon' => $request->icon,
+                'userId' => $request->user()->id,
+            ]);
+
+            DB::commit();
+
+            return responseCreate();
+        } catch (\Throwable $e) {
+            DB::rollback();
+
+            return response()->json([
+                'message' => 'Insert Failed',
+                'errors' => $e,
+            ]);
+        }
+    }
+
+    public function insertMenuSetting(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'title' => 'required|string',
+            'url' => 'required|string',
+            'icon' => 'required|string',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $menu = menuSettings::where('title', '=', $request->title)
+            ->where('isDeleted', '=', 0)
+            ->first();
+
+        if ($menu) {
+            return responseError('Menu Setting has already exists!');
+        }
+
+        DB::beginTransaction();
+        try {
+            menuSettings::create([
                 'title' => $request->title,
                 'url' => $request->url,
                 'icon' => $request->icon,
@@ -802,6 +956,42 @@ class MenuManagementController extends Controller
         return responseUpdate();
     }
 
+    public function updateMenuSetting(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'title' => 'required|string',
+            'url' => 'required|string',
+            'icon' => 'required|string',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $menu = menuSettings::where('id', '=', $request->id)
+            ->where('isDeleted', '=', 0)
+            ->first();
+
+        if (!$menu) {
+            return responseError('There is no any Data found!');
+        }
+
+        $menu->title = $request->title;
+        $menu->url = $request->url;
+        $menu->icon = $request->icon;
+        $menu->userUpdateId = $request->user()->id;
+        $menu->updated_at = \Carbon\Carbon::now();
+        $menu->save();
+
+        return responseUpdate();
+    }
+
     public function updateChildMenu(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -933,6 +1123,32 @@ class MenuManagementController extends Controller
         foreach ($request->id as $va) {
 
             $menu = menuProfile::find($va);
+
+            $menu->DeletedBy = $request->user()->id;
+            $menu->isDeleted = true;
+            $menu->DeletedAt = Carbon::now();
+            $menu->save();
+        }
+
+        return responseDelete();
+    }
+
+    public function deleteMenuSetting(Request $request)
+    {
+        foreach ($request->id as $va) {
+            $res = menuSettings::find($va);
+
+            if (!$res) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['There is any Data not found!'],
+                ], 422);
+            }
+        }
+
+        foreach ($request->id as $va) {
+
+            $menu = menuSettings::find($va);
 
             $menu->DeletedBy = $request->user()->id;
             $menu->isDeleted = true;
