@@ -725,24 +725,35 @@ class AccessControlController extends Controller
 
             if ($request->masterId) {
 
-                $menuListsData = DB::table('menuList as a')
-                    ->leftJoin('menuMaster as b', 'a.masterId', '=', 'b.id')
+                $menuListsData = DB::table('grandChildrenMenuGroups as a')
+                    ->leftJoin('childrenMenuGroups as b', 'a.childrenId', '=', 'b.id')
                     ->select(
                         'a.id',
                         'b.id as masterId',
-                        'b.masterName as masterName',
+                        'b.menuName as masterName',
                         'a.menuName as menuName'
                     )->where([
-                        ['a.isActive', '=', 1], ['a.masterId', '=', $request->masterId]
+                        ['a.isActive', '=', 1], ['a.childrenId', '=', $request->masterId]
                     ])->get();
+
+                // $menuListsData = DB::table('menuList as a')
+                //     ->leftJoin('menuMaster as b', 'a.masterId', '=', 'b.id')
+                //     ->select(
+                //         'a.id',
+                //         'b.id as masterId',
+                //         'b.masterName as masterName',
+                //         'a.menuName as menuName'
+                //     )->where([
+                //         ['a.isActive', '=', 1], ['a.masterId', '=', $request->masterId]
+                //     ])->get();
             } else {
 
-                $menuListsData = DB::table('menuList as a')
-                    ->leftJoin('menuMaster as b', 'a.masterId', '=', 'b.id')
+                $menuListsData = DB::table('grandChildrenMenuGroups as a')
+                    ->leftJoin('childrenMenuGroups as b', 'a.childrenId', '=', 'b.id')
                     ->select(
                         'a.id',
                         'b.id as masterId',
-                        'b.masterName as masterName',
+                        'b.menuName as masterName',
                         'a.menuName as menuName'
                     )->where([
                         ['a.isActive', '=', 1]
@@ -765,7 +776,7 @@ class AccessControlController extends Controller
 
         try {
 
-            $menuMastersData = MenuMasters::select('id', 'masterName as masterName')->where([
+            $menuMastersData = childrenMenuGroups::select('id', 'menuName as masterName')->where([
                 ['isDeleted', '=', 0],
             ])->get();
 
