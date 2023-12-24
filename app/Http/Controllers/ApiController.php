@@ -315,6 +315,7 @@ class ApiController extends Controller
                             ->where('gcm.childrenId', '=', $tempChildren[0]->idNum)
                             ->where('ac.roleId', '=', $users->roleId)
                             ->where('gcm.isDeleted', '=', 0)
+                            ->orderBy('gcm.orderMenu', 'asc')
                             ->get();
 
                         if (count($grandChilds) == 1) {
@@ -345,6 +346,7 @@ class ApiController extends Controller
                             ->select('id as idNum', 'identify as id', 'title', 'type', 'icon')
                             ->where('groupId', '=', $value->idNum)
                             ->where('isDeleted', '=', 0)
+                            ->orderBy('orderMenu', 'asc')
                             ->get();
 
                         foreach ($childrens as $valueChild) {
@@ -355,6 +357,7 @@ class ApiController extends Controller
                                 ->where('gcm.childrenId', '=', $valueChild->idNum)
                                 ->where('ac.roleId', '=', $users->roleId)
                                 ->where('gcm.isDeleted', '=', 0)
+                                ->orderBy('gcm.orderMenu', 'asc')
                                 ->get();
 
                             if (count($grandChilds) == 1) {
@@ -376,6 +379,7 @@ class ApiController extends Controller
                                     ->where('ac.roleId', '=', $users->roleId)
                                     ->where('gcm.childrenId', '=', $valueChild->idNum)
                                     ->where('gcm.isDeleted', '=', 0)
+                                    ->orderBy('gcm.orderMenu', 'asc')
                                     ->get();
 
                                 $resChild[] = array(
