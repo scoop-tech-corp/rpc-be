@@ -295,6 +295,7 @@ class ApiController extends Controller
                 $groups = DB::table('menuGroups')
                     ->select('id as idNum', 'groupName as id', DB::raw('"group" as type'))
                     ->where('isDeleted', '=', 0)
+                    ->orderBy('orderMenu', 'asc')
                     ->get();
 
                 foreach ($groups as $value) {

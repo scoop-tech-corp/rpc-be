@@ -19,7 +19,7 @@ class MenuManagementController extends Controller
         $data = DB::table('menuGroups')
             ->select('id', 'groupName')
             ->where('isDeleted', '=', 0)
-            ->orderBy('orderData', 'asc')
+            ->orderBy('orderMenu', 'asc')
             ->get();
 
         return responseList($data);
@@ -31,7 +31,7 @@ class MenuManagementController extends Controller
             ->select('id', 'menuName')
             ->where('childrenId', '=', $request->id)
             ->where('isDeleted', '=', 0)
-            ->orderBy('orderData', 'asc')
+            ->orderBy('orderMenu', 'asc')
             ->get();
 
         return responseList($data);
@@ -48,7 +48,7 @@ class MenuManagementController extends Controller
             ->select(
                 'mg.id',
                 'mg.groupName',
-                'mg.orderData',
+                'mg.orderMenu',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(mg.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
@@ -134,7 +134,7 @@ class MenuManagementController extends Controller
                 'cmg.title',
                 'cmg.type',
                 'cmg.icon',
-                'cmg.orderData',
+                'cmg.orderMenu',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(cmg.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
@@ -285,7 +285,7 @@ class MenuManagementController extends Controller
                 'cmg.title',
                 'cmg.type',
                 'cmg.url',
-                'cmg.orderData',
+                'cmg.orderMenu',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(cmg.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
@@ -706,7 +706,7 @@ class MenuManagementController extends Controller
     {
         $validate = Validator::make($request->all(), [
             'groupName' => 'required|string',
-            'orderData' => 'required|integer',
+            'orderMenu' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -726,12 +726,12 @@ class MenuManagementController extends Controller
             return responseError('Menu Group has already exists!');
         }
 
-        $order = menuGroup::select('orderData')
+        $order = menuGroup::select('orderMenu')
             ->where('isDeleted', '=', 0)
-            ->orderby('orderData', 'desc')
+            ->orderby('orderMenu', 'desc')
             ->first();
 
-        if (($order->orderData + 1) != $request->orderData) {
+        if (($order->orderMenu + 1) != $request->orderMenu) {
             return responseError('Order data is not valid!');
         }
 
@@ -739,7 +739,7 @@ class MenuManagementController extends Controller
         try {
             menuGroup::create([
                 'groupName' => $request->groupName,
-                'orderData' => $request->orderData,
+                'orderMenu' => $request->orderMenu,
                 'userId' => $request->user()->id,
             ]);
 
@@ -765,7 +765,7 @@ class MenuManagementController extends Controller
             'title' => 'required|string',
             'type' => 'required|string',
             'icon' => 'required|string',
-            'orderData' => 'required|integer',
+            'orderMenu' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -785,12 +785,12 @@ class MenuManagementController extends Controller
             return responseError('Menu Group is not exists!');
         }
 
-        $order = childrenMenuGroups::select('orderData')
+        $order = childrenMenuGroups::select('orderMenu')
             ->where('isDeleted', '=', 0)
-            ->orderby('orderData', 'desc')
+            ->orderby('orderMenu', 'desc')
             ->first();
 
-        if (($order->orderData + 1) != $request->orderData) {
+        if (($order->orderMenu + 1) != $request->orderMenu) {
             return responseError('Order data is not valid!');
         }
 
@@ -798,7 +798,7 @@ class MenuManagementController extends Controller
         try {
             childrenMenuGroups::create([
                 'groupId' => $request->groupId,
-                'orderData' => $request->orderData,
+                'orderMenu' => $request->orderMenu,
                 'menuName' => $request->menuName,
                 'identify' => $request->identify,
                 'title' => $request->title,
@@ -830,7 +830,7 @@ class MenuManagementController extends Controller
             'title' => 'required|string',
             'type' => 'required|string',
             'url' => 'required|string',
-            'orderData' => 'required|integer',
+            'orderMenu' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -850,12 +850,12 @@ class MenuManagementController extends Controller
             return responseError('Children Menu Group is not exists!');
         }
 
-        $order = grandChildrenMenuGroups::select('orderData')
+        $order = grandChildrenMenuGroups::select('orderMenu')
             ->where('isDeleted', '=', 0)
-            ->orderby('orderData', 'desc')
+            ->orderby('orderMenu', 'desc')
             ->first();
 
-        if (($order->orderData + 1) != $request->orderData) {
+        if (($order->orderMenu + 1) != $request->orderMenu) {
             return responseError('Order data is not valid!');
         }
 
@@ -863,7 +863,7 @@ class MenuManagementController extends Controller
         try {
             grandChildrenMenuGroups::create([
                 'childrenId' => $request->childrenId,
-                'orderData' => $request->orderData,
+                'orderMenu' => $request->orderMenu,
                 'menuName' => $request->menuName,
                 'identify' => $request->identify,
                 'title' => $request->title,
@@ -891,7 +891,7 @@ class MenuManagementController extends Controller
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
             'groupName' => 'required|string',
-            'orderData' => 'required|integer',
+            'orderMenu' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -912,7 +912,7 @@ class MenuManagementController extends Controller
         }
 
         $menu->groupName = $request->groupName;
-        $menu->orderData = $request->orderData;
+        $menu->orderMenu = $request->orderMenu;
         $menu->userUpdateId = $request->user()->id;
         $menu->updated_at = \Carbon\Carbon::now();
         $menu->save();
@@ -1002,7 +1002,7 @@ class MenuManagementController extends Controller
             'title' => 'required|string',
             'type' => 'required|string',
             'icon' => 'required|string',
-            'orderData' => 'required|integer',
+            'orderMenu' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -1028,7 +1028,7 @@ class MenuManagementController extends Controller
         $menu->title = $request->title;
         $menu->type = $request->type;
         $menu->icon = $request->icon;
-        $menu->orderData = $request->orderData;
+        $menu->orderMenu = $request->orderMenu;
         $menu->userUpdateId = $request->user()->id;
         $menu->updated_at = \Carbon\Carbon::now();
         $menu->save();
@@ -1046,7 +1046,7 @@ class MenuManagementController extends Controller
             'title' => 'required|string',
             'type' => 'required|string',
             'url' => 'required|string',
-            'orderData' => 'required|integer',
+            'orderMenu' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -1073,7 +1073,7 @@ class MenuManagementController extends Controller
         $menu->type = $request->type;
         $menu->url = $request->url;
         $menu->isActive = $request->isActive;
-        $menu->orderData = $request->orderData;
+        $menu->orderMenu = $request->orderMenu;
         $menu->userUpdateId = $request->user()->id;
         $menu->updated_at = \Carbon\Carbon::now();
         $menu->save();
