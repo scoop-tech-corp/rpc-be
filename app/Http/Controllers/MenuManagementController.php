@@ -14,6 +14,39 @@ use Illuminate\Support\Carbon;
 
 class MenuManagementController extends Controller
 {
+    public function lastOrderGrandChildMenu()
+    {
+        $data = DB::table('grandChildrenMenuGroups')
+            ->select('orderMenu')
+            ->where('isDeleted', '=', 0)
+            ->orderBy('orderMenu', 'desc')
+            ->first();
+
+        return responseList($data->orderMenu + 1);
+    }
+
+    public function lastOrderChildMenu()
+    {
+        $data = DB::table('childrenMenuGroups')
+            ->select('orderMenu')
+            ->where('isDeleted', '=', 0)
+            ->orderBy('orderMenu', 'desc')
+            ->first();
+
+        return responseList($data->orderMenu + 1);
+    }
+
+    public function lastOrderMenuGroup()
+    {
+        $data = DB::table('menuGroups')
+            ->select('orderMenu')
+            ->where('isDeleted', '=', 0)
+            ->orderBy('orderMenu', 'desc')
+            ->first();
+
+        return responseList($data->orderMenu + 1);
+    }
+
     public function listMenuGroup()
     {
         $data = DB::table('menuGroups')
@@ -126,14 +159,12 @@ class MenuManagementController extends Controller
         $page = $request->goToPage;
 
         $data = DB::table('childrenMenuGroups as cmg')
+            ->join('menuGroups as mg', 'cmg.groupId', 'mg.id')
             ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
                 'cmg.id',
                 'cmg.menuName',
-                'cmg.identify',
-                'cmg.title',
-                'cmg.type',
-                'cmg.icon',
+                'mg.groupName',
                 'cmg.orderMenu',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(cmg.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
@@ -279,12 +310,8 @@ class MenuManagementController extends Controller
             ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
                 'cmg.id',
-                'cm.menuName as childMenuName',
+                'cm.menuName as childrenMenuName',
                 'cmg.menuName',
-                'cmg.identify',
-                'cmg.title',
-                'cmg.type',
-                'cmg.url',
                 'cmg.orderMenu',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(cmg.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
