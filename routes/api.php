@@ -387,6 +387,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     });
 
     Route::group(['prefix' => 'menu'], function () {
+
+        Route::get('/last-order-menu-group', [MenuManagementController::class, 'lastOrderMenuGroup']);
+        Route::get('/last-order-child-menu-group', [MenuManagementController::class, 'lastOrderChildMenu']);
+        Route::get('/last-order-grand-child-menu-group', [MenuManagementController::class, 'lastOrderGrandChildMenu']);
+
         Route::get('/list-menu-group', [MenuManagementController::class, 'listMenuGroup']);
         Route::get('/menu-group', [MenuManagementController::class, 'indexMenuGroup']);
         Route::post('/menu-group', [MenuManagementController::class, 'insertMenuGroup']);
