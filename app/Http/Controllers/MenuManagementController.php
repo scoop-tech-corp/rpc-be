@@ -759,7 +759,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (($order->orderMenu + 1) != $request->orderMenu) {
-            return responseError('Order data is not valid!');
+            return responseError('Order Menu is not valid!');
         }
 
         DB::beginTransaction();
@@ -818,7 +818,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (($order->orderMenu + 1) != $request->orderMenu) {
-            return responseError('Order data is not valid!');
+            return responseError('Order Menu is not valid!');
         }
 
         DB::beginTransaction();
@@ -883,7 +883,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (($order->orderMenu + 1) != $request->orderMenu) {
-            return responseError('Order data is not valid!');
+            return responseError('Order Menu is not valid!');
         }
 
         DB::beginTransaction();
@@ -911,6 +911,52 @@ class MenuManagementController extends Controller
                 'errors' => $e,
             ]);
         }
+    }
+
+    public function detailChildrenMenu(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $data = DB::table('childrenMenuGroups')
+            ->select('id', 'groupId', 'orderMenu', 'menuName', 'identify', 'title', 'type', 'icon')
+            ->where('id', '=', $request->id)
+            ->first();
+
+        return response()->json($data, 200);
+    }
+
+    public function detailGrandChildMenu(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $data = DB::table('grandChildrenMenuGroups')
+            ->select('id', 'childrenId', 'orderMenu', 'menuName', 'identify', 'title', 'type', 'url')
+            ->where('id', '=', $request->id)
+            ->first();
+
+        return response()->json($data, 200);
     }
 
     public function updateMenuGroup(Request $request)

@@ -400,11 +400,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/list-child-menu-group', [MenuManagementController::class, 'listChildrenMenu']);
         Route::get('/child-menu-group', [MenuManagementController::class, 'indexChildrenMenu']);
+        Route::get('/detail-child-menu-group', [MenuManagementController::class, 'detailChildrenMenu']);
         Route::post('/child-menu-group', [MenuManagementController::class, 'insertChildrenMenu']);
         Route::put('/child-menu-group', [MenuManagementController::class, 'updateChildMenu']);
         Route::delete('/child-menu-group', [MenuManagementController::class, 'deleteChildMenu']);
 
         Route::get('/grand-child-menu-group', [MenuManagementController::class, 'indexGrandChildMenu']);
+        Route::get('/detail-grand-child-menu-group', [MenuManagementController::class, 'detailGrandChildMenu']);
         Route::post('/grand-child-menu-group', [MenuManagementController::class, 'insertGrandChildMenu']);
         Route::put('/grand-child-menu-group', [MenuManagementController::class, 'updateGrandChildMenu']);
         Route::delete('/grand-child-menu-group', [MenuManagementController::class, 'deleteGrandChildMenu']);
