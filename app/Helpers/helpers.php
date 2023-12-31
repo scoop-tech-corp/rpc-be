@@ -271,20 +271,20 @@ if (!function_exists('responseList')) {
     }
 }
 
-if(!function_exists('paginateData')){
+if (!function_exists('paginateData')) {
     function paginateData($query,  $request)
     {
         $itemPerPage = $request->rowPerPage;
         // dd($request->all());
         $totalPaging = 0;
         $count_data = 0;
-    
-        if($itemPerPage == 0){
+
+        if ($itemPerPage == 0) {
             $data = $query->get();
             $count_data = $query->count();
-        }else{
+        } else {
             $page = $request->goToPage;
-    
+
             $offset = ($page - 1) * $itemPerPage;
             $count_data = $query->count();
             $count_result = $count_data - $offset;
@@ -295,8 +295,8 @@ if(!function_exists('paginateData')){
             }
             $totalPaging = $count_data / $itemPerPage;
         }
-    
-    
+
+
         return collect([
             'totalPagination' => ceil($totalPaging),
             'totalData' => $count_data,
@@ -304,8 +304,9 @@ if(!function_exists('paginateData')){
         ]);
     }
 }
-if(!function_exists('responseSuccess')){
-    function responseSuccess($data=[], $msg='Insert Data Successful!'){
+if (!function_exists('responseSuccess')) {
+    function responseSuccess($data = [], $msg = 'Insert Data Successful!')
+    {
         return response()->json(
             [
                 'data' => $data,
@@ -315,8 +316,9 @@ if(!function_exists('responseSuccess')){
         );
     }
 }
-if(!function_exists('responseErrorValidation')){
-    function responseErrorValidation($errors, $msg='The given data was invalid.'){
+if (!function_exists('responseErrorValidation')) {
+    function responseErrorValidation($errors, $msg = 'The given data was invalid.')
+    {
         return response()->json(
             [
                 'message' => $msg,
@@ -326,8 +328,9 @@ if(!function_exists('responseErrorValidation')){
         );
     }
 }
-if(!function_exists('responseError')){
-    function responseError($errors, $msg='The given data was invalid.'){
+if (!function_exists('responseError')) {
+    function responseError($errors, $msg = 'The given data was invalid.')
+    {
         return response()->json(
             [
                 'message' => $msg,
