@@ -97,10 +97,7 @@ class MenuManagementController extends Controller
                 }
             } else {
                 $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                return responseIndex(0, $data);
             }
         }
 
@@ -123,10 +120,7 @@ class MenuManagementController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     private function SearchMenuGroup($request)
@@ -134,6 +128,7 @@ class MenuManagementController extends Controller
         $temp_column = null;
 
         $data = DB::table('menuGroups as mg')
+            ->join('users as u', 'mg.userId', 'u.id')
             ->select(
                 'mg.groupName',
             )
@@ -147,6 +142,23 @@ class MenuManagementController extends Controller
 
         if (count($data)) {
             $temp_column[] = 'mg.groupName';
+        }
+
+        $data = DB::table('menuGroups as mg')
+            ->join('users as u', 'mg.userId', 'u.id')
+            ->select(
+                'u.firstName',
+            )
+            ->where('mg.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'u.firstName';
         }
 
         return $temp_column;
@@ -180,10 +192,7 @@ class MenuManagementController extends Controller
                 }
             } else {
                 $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                return responseIndex(0, $data);
             }
         }
 
@@ -206,10 +215,7 @@ class MenuManagementController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     private function SearchChildMenu($request)
@@ -217,6 +223,8 @@ class MenuManagementController extends Controller
         $temp_column = null;
 
         $data = DB::table('childrenMenuGroups as cmg')
+            ->join('menuGroups as mg', 'cmg.groupId', 'mg.id')
+            ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
                 'cmg.menuName',
             )
@@ -233,67 +241,57 @@ class MenuManagementController extends Controller
         }
 
         $data = DB::table('childrenMenuGroups as cmg')
+            ->join('menuGroups as mg', 'cmg.groupId', 'mg.id')
+            ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
-                'cmg.identify',
+                'mg.groupName',
             )
             ->where('cmg.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('cmg.identify', 'like', '%' . $request->search . '%');
+            $data = $data->where('mg.groupName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'cmg.identify';
+            $temp_column[] = 'mg.groupName';
         }
 
         $data = DB::table('childrenMenuGroups as cmg')
+            ->join('menuGroups as mg', 'cmg.groupId', 'mg.id')
+            ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
-                'cmg.title',
+                'cmg.orderMenu',
             )
             ->where('cmg.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('cmg.title', 'like', '%' . $request->search . '%');
+            $data = $data->where('cmg.orderMenu', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'cmg.title';
+            $temp_column[] = 'cmg.orderMenu';
         }
 
         $data = DB::table('childrenMenuGroups as cmg')
+            ->join('menuGroups as mg', 'cmg.groupId', 'mg.id')
+            ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
-                'cmg.type',
+                'u.firstName',
             )
             ->where('cmg.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('cmg.type', 'like', '%' . $request->search . '%');
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'cmg.type';
-        }
-
-        $data = DB::table('childrenMenuGroups as cmg')
-            ->select(
-                'cmg.icon',
-            )
-            ->where('cmg.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('cmg.icon', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'cmg.icon';
+            $temp_column[] = 'u.firstName';
         }
 
         return $temp_column;
@@ -328,10 +326,7 @@ class MenuManagementController extends Controller
                 }
             } else {
                 $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                return responseIndex(0, $data);
             }
         }
 
@@ -354,10 +349,7 @@ class MenuManagementController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     private function SearchGrandChild($request)
@@ -366,6 +358,7 @@ class MenuManagementController extends Controller
 
         $data = DB::table('grandChildrenMenuGroups as cmg')
             ->join('childrenMenuGroups as cm', 'cmg.childrenId', 'cm.id')
+            ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
                 'cm.menuName',
             )
@@ -383,6 +376,7 @@ class MenuManagementController extends Controller
 
         $data = DB::table('grandChildrenMenuGroups as cmg')
             ->join('childrenMenuGroups as cm', 'cmg.childrenId', 'cm.id')
+            ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
                 'cmg.menuName',
             )
@@ -400,70 +394,38 @@ class MenuManagementController extends Controller
 
         $data = DB::table('grandChildrenMenuGroups as cmg')
             ->join('childrenMenuGroups as cm', 'cmg.childrenId', 'cm.id')
+            ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
-                'cmg.identify',
+                'cmg.orderMenu',
             )
             ->where('cmg.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('cmg.identify', 'like', '%' . $request->search . '%');
+            $data = $data->where('cmg.orderMenu', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'cmg.identify';
+            $temp_column[] = 'cmg.orderMenu';
         }
 
         $data = DB::table('grandChildrenMenuGroups as cmg')
             ->join('childrenMenuGroups as cm', 'cmg.childrenId', 'cm.id')
+            ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
-                'cmg.title',
+                'u.firstName',
             )
             ->where('cmg.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('cmg.title', 'like', '%' . $request->search . '%');
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'cmg.title';
-        }
-
-        $data = DB::table('grandChildrenMenuGroups as cmg')
-            ->join('childrenMenuGroups as cm', 'cmg.childrenId', 'cm.id')
-            ->select(
-                'cmg.type',
-            )
-            ->where('cmg.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('cmg.type', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'cmg.type';
-        }
-
-        $data = DB::table('grandChildrenMenuGroups as cmg')
-            ->join('childrenMenuGroups as cm', 'cmg.childrenId', 'cm.id')
-            ->select(
-                'cmg.url',
-            )
-            ->where('cmg.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('cmg.url', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'cmg.url';
+            $temp_column[] = 'u.firstName';
         }
 
         return $temp_column;
@@ -497,10 +459,7 @@ class MenuManagementController extends Controller
                 }
             } else {
                 $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                return responseIndex(0, $data);
             }
         }
 
@@ -523,10 +482,65 @@ class MenuManagementController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
+        return responseIndex(ceil($totalPaging), $data);
+    }
+
+    private function SearchMenuProfile($request)
+    {
+        $temp_column = null;
+
+        $data = DB::table('menuProfiles as mp')
+            ->join('users as u', 'mp.userId', 'u.id')
+            ->select(
+                'mp.title',
+            )
+            ->where('mp.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('mp.title', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'mp.title';
+        }
+
+        $data = DB::table('menuProfiles as mp')
+            ->join('users as u', 'mp.userId', 'u.id')
+            ->select(
+                'mp.url',
+            )
+            ->where('mp.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('mp.url', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'mp.url';
+        }
+
+        $data = DB::table('menuProfiles as mp')
+            ->join('users as u', 'mp.userId', 'u.id')
+            ->select(
+                'mp.icon',
+            )
+            ->where('mp.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('mp.icon', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'mp.icon';
+        }
+
+        return $temp_column;
     }
 
     function indexMenuSetting(Request $request)
@@ -557,10 +571,7 @@ class MenuManagementController extends Controller
                 }
             } else {
                 $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                return responseIndex(0, $data);
             }
         }
 
@@ -583,53 +594,62 @@ class MenuManagementController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $data
-        ], 200);
-    }
-
-    private function SearchMenuProfile($request)
-    {
-        $temp_column = null;
-
-        $data = DB::table('menuGroups as mg')
-            ->select(
-                'mg.groupName',
-            )
-            ->where('mg.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('mg.groupName', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'mg.groupName';
-        }
-
-        return $temp_column;
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     private function SearchMenuSetting($request)
     {
         $temp_column = null;
 
-        $data = DB::table('menuSettings as mg')
+        $data = DB::table('menuSettings as mp')
+            ->join('users as u', 'mp.userId', 'u.id')
             ->select(
-                'mg.groupName',
+                'mp.title',
             )
-            ->where('mg.isDeleted', '=', 0);
+            ->where('mp.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('mg.groupName', 'like', '%' . $request->search . '%');
+            $data = $data->where('mp.title', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'mg.groupName';
+            $temp_column[] = 'mp.title';
+        }
+
+        $data = DB::table('menuSettings as mp')
+            ->join('users as u', 'mp.userId', 'u.id')
+            ->select(
+                'mp.url',
+            )
+            ->where('mp.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('mp.url', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'mp.url';
+        }
+
+        $data = DB::table('menuSettings as mp')
+            ->join('users as u', 'mp.userId', 'u.id')
+            ->select(
+                'mp.icon',
+            )
+            ->where('mp.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('mp.icon', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'mp.icon';
         }
 
         return $temp_column;
@@ -646,10 +666,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = menuProfile::where('title', '=', $request->title)
@@ -657,7 +674,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if ($menu) {
-            return responseError('Menu Profile has already exists!');
+            return responseInvalid(['Menu Profile has already exists!']);
         }
 
         DB::beginTransaction();
@@ -693,10 +710,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = menuSettings::where('title', '=', $request->title)
@@ -704,7 +718,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if ($menu) {
-            return responseError('Menu Setting has already exists!');
+            return responseInvalid('Menu Setting has already exists!');
         }
 
         DB::beginTransaction();
@@ -739,10 +753,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = menuGroup::where('groupName', '=', $request->groupName)
@@ -750,7 +761,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if ($menu) {
-            return responseError('Menu Group has already exists!');
+            return responseInvalid(['Menu Group has already exists!']);
         }
 
         $order = menuGroup::select('orderMenu')
@@ -759,7 +770,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (($order->orderMenu + 1) != $request->orderMenu) {
-            return responseError('Order Menu is not valid!');
+            return responseInvalid(['Order Menu is not valid!']);
         }
 
         DB::beginTransaction();
@@ -798,10 +809,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = menuGroup::where('id', '=', $request->groupId)
@@ -809,7 +817,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (!$menu) {
-            return responseError('Menu Group is not exists!');
+            return responseInvalid(['Menu Group is not exists!']);
         }
 
         $order = childrenMenuGroups::select('orderMenu')
@@ -818,7 +826,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (($order->orderMenu + 1) != $request->orderMenu) {
-            return responseError('Order Menu is not valid!');
+            return responseInvalid(['Order Menu is not valid!']);
         }
 
         DB::beginTransaction();
@@ -863,10 +871,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = childrenMenuGroups::where('id', '=', $request->childrenId)
@@ -874,7 +879,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (!$menu) {
-            return responseError('Children Menu Group is not exists!');
+            return responseInvalid(['Children Menu Group is not exists!']);
         }
 
         $order = grandChildrenMenuGroups::select('orderMenu')
@@ -883,7 +888,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (($order->orderMenu + 1) != $request->orderMenu) {
-            return responseError('Order Menu is not valid!');
+            return responseInvalid(['Order Menu is not valid!']);
         }
 
         DB::beginTransaction();
@@ -922,10 +927,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $data = DB::table('childrenMenuGroups')
@@ -945,10 +947,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $data = DB::table('grandChildrenMenuGroups')
@@ -970,10 +969,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = menuGroup::where('id', '=', $request->id)
@@ -981,7 +977,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (!$menu) {
-            return responseError('There is no any Data found!');
+            return responseInvalid(['There is no any Data found!']);
         }
 
         $menu->groupName = $request->groupName;
@@ -1005,10 +1001,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = menuProfile::where('id', '=', $request->id)
@@ -1016,7 +1009,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (!$menu) {
-            return responseError('There is no any Data found!');
+            return responseInvalid(['There is no any Data found!']);
         }
 
         $menu->title = $request->title;
@@ -1041,10 +1034,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = menuSettings::where('id', '=', $request->id)
@@ -1052,7 +1042,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (!$menu) {
-            return responseError('There is no any Data found!');
+            return responseInvalid(['There is no any Data found!']);
         }
 
         $menu->title = $request->title;
@@ -1081,10 +1071,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = childrenMenuGroups::where('id', '=', $request->id)
@@ -1092,7 +1079,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (!$menu) {
-            return responseError('There is no any Data found!');
+            return responseInvalid(['There is no any Data found!']);
         }
 
         $menu->groupId = $request->groupId;
@@ -1125,10 +1112,7 @@ class MenuManagementController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         }
 
         $menu = grandChildrenMenuGroups::where('id', '=', $request->id)
@@ -1136,7 +1120,7 @@ class MenuManagementController extends Controller
             ->first();
 
         if (!$menu) {
-            return responseError('There is no any Data found!');
+            return responseInvalid(['There is no any Data found!']);
         }
 
         $menu->childrenId = $request->childrenId;
@@ -1160,10 +1144,8 @@ class MenuManagementController extends Controller
             $res = menuGroup::find($va);
 
             if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
+
+                return responseInvalid(['There is any Data not found!']);
             }
         }
 
@@ -1177,6 +1159,22 @@ class MenuManagementController extends Controller
             $menu->save();
         }
 
+        $newMenu = DB::table('menuGroups')
+            ->select('id')
+            ->where('isDeleted', '=', 0)
+            ->orderBy('orderMenu', 'asc')
+            ->get();
+
+        $count = 1;
+
+        foreach ($newMenu as $value) {
+
+            $menu = menuGroup::find($value->id);
+            $menu->orderMenu = $count;
+            $menu->save();
+            $count += 1;
+        }
+
         return responseDelete();
     }
 
@@ -1186,10 +1184,7 @@ class MenuManagementController extends Controller
             $res = menuProfile::find($va);
 
             if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
+                return responseInvalid(['There is any Data not found!']);
             }
         }
 
@@ -1212,10 +1207,7 @@ class MenuManagementController extends Controller
             $res = menuSettings::find($va);
 
             if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
+                return responseInvalid(['There is any Data not found!']);
             }
         }
 
@@ -1238,10 +1230,7 @@ class MenuManagementController extends Controller
             $res = childrenMenuGroups::find($va);
 
             if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
+                return responseInvalid(['There is any Data not found!']);
             }
         }
 
@@ -1255,6 +1244,22 @@ class MenuManagementController extends Controller
             $menu->save();
         }
 
+        $newMenu = DB::table('childrenMenuGroups')
+            ->select('id')
+            ->where('isDeleted', '=', 0)
+            ->orderBy('orderMenu', 'asc')
+            ->get();
+
+        $count = 1;
+
+        foreach ($newMenu as $value) {
+
+            $menu = childrenMenuGroups::find($value->id);
+            $menu->orderMenu = $count;
+            $menu->save();
+            $count += 1;
+        }
+
         return responseDelete();
     }
 
@@ -1264,10 +1269,7 @@ class MenuManagementController extends Controller
             $res = grandChildrenMenuGroups::find($va);
 
             if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
+                return responseInvalid(['There is any Data not found!']);
             }
         }
 
@@ -1279,6 +1281,22 @@ class MenuManagementController extends Controller
             $menu->isDeleted = true;
             $menu->DeletedAt = Carbon::now();
             $menu->save();
+        }
+
+        $newMenu = DB::table('grandChildrenMenuGroups')
+            ->select('id')
+            ->where('isDeleted', '=', 0)
+            ->orderBy('orderMenu', 'asc')
+            ->get();
+
+        $count = 1;
+
+        foreach ($newMenu as $value) {
+
+            $menu = grandChildrenMenuGroups::find($value->id);
+            $menu->orderMenu = $count;
+            $menu->save();
+            $count += 1;
         }
 
         return responseDelete();
