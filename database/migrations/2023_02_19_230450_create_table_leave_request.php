@@ -18,7 +18,8 @@ return new class extends Migration
             $table->integer('usersId');
             $table->string('requesterName');
             $table->string('jobTitle');
-            $table->integer('locationId');
+            $table->string('locationId');
+            $table->string('locationName');
             $table->string('leaveType');
             $table->date('fromDate');
             $table->date('toDate');

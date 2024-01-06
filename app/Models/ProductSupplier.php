@@ -13,5 +13,7 @@ class ProductSupplier extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['supplierName','userId', 'userUpdateId'];
+    protected $fillable = [
+        'supplierName', 'pic', 'userId', 'userUpdateId'
+    ];
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Staff\AbsentController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\DataStaticController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\Product\BundleController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Product\ProductController;
+use App\Http\Controllers\Product\SupplierController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Product\ProductSellController;
 use App\Http\Controllers\Product\TransferProductController;
@@ -18,15 +20,30 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\VerifyUserandPasswordController;
 use App\Http\Controllers\Staff\StaffLeaveController;
+use App\Http\Controllers\Staff\DataStaticStaffController;
 use App\Http\Controllers\Product\CategoryController;
+use App\Http\Controllers\Staff\SecurityGroupController;
+use App\Http\Controllers\AccessControl\AccessControlController;
+use App\Http\Controllers\Customer\DataStaticCustomerController;
+use App\Http\Controllers\Staff\AccessControlSchedulesController;
+use App\Http\Controllers\Staff\ProfileController;
+
+use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
+
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\MenuManagementController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
 
+Route::put('user/{user}/online', [ApiController::class, 'online']);
+// Route::post('/realtime/auth', function(){
+//     return true;
+// });
+
 Route::group(['middleware' => ['jwt.verify']], function () {
 
     //location
-
 
     Route::post('logout', [ApiController::class, 'logout']);
 
@@ -61,12 +78,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/facility/facilityimages', [FacilityController::class, 'searchImageFacility']);
         Route::post('/facility/imagefacility', [FacilityController::class, 'uploadImageFacility']);
 
+        Route::get('/facility/location', [FacilityController::class, 'listFacilityWithLocation']);
+
         //data static
         Route::get('/datastatic', [DataStaticController::class, 'datastatic']);
         Route::delete('/datastatic', [DataStaticController::class, 'datastaticlocation']);
 
         //product
         Route::get('/product/transfer', [LocationController::class, 'locationTransferProduct']);
+        Route::get('/product/transfer/destination', [LocationController::class, 'locationDestination']);
     });
 
 
@@ -78,8 +98,21 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //list produk
     Route::group(['prefix' => 'product'], function () {
 
-        Route::post('/supplier', [ProductController::class, 'addProductSupplier']);
-        Route::get('/supplier', [ProductController::class, 'IndexProductSupplier']);
+        Route::post('/supplier', [SupplierController::class, 'create']);
+        Route::delete('/supplier', [SupplierController::class, 'delete']);
+        Route::put('/supplier', [SupplierController::class, 'update']);
+
+        Route::get('/supplier', [SupplierController::class, 'index']);
+        Route::get('/supplier/detail', [SupplierController::class, 'detail']);
+
+        Route::post('/supplier/usage', [SupplierController::class, 'createSupplierUsage']);
+        Route::post('/supplier/phone', [SupplierController::class, 'createSupplierTypePhone']);
+        Route::post('/supplier/messenger', [SupplierController::class, 'createSupplierTypeMessenger']);
+
+        Route::get('/supplier/usage', [SupplierController::class, 'listSupplierUsage']);
+        Route::get('/supplier/phone', [SupplierController::class, 'listSupplierTypePhone']);
+        Route::get('/supplier/messenger', [SupplierController::class, 'listSupplierTypeMessenger']);
+        Route::get('/supplier/export', [SupplierController::class, 'export']);
 
         Route::post('/brand', [ProductController::class, 'addProductBrand']);
         Route::get('/brand', [ProductController::class, 'IndexProductBrand']);
@@ -134,8 +167,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/category/export', [CategoryController::class, 'export']);
         Route::post('/category', [CategoryController::class, 'create']);
 
+        //service Category
+
+
+
         Route::get('/sell/dropdown', [ProductController::class, 'IndexProductSell']);
         Route::get('/clinic/dropdown', [ProductController::class, 'IndexProductClinic']);
+
+        Route::get('/sell/list/location', [ProductController::class, 'ListProductSellWithLocation']);
+        Route::get('/clinic/list/location', [ProductController::class, 'ListProductClinicWithLocation']);
 
         Route::post('/usage', [ProductController::class, 'CreateUsage']);
         Route::get('/usage', [ProductController::class, 'IndexUsage']);
@@ -150,13 +190,22 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/transfernumber', [TransferProductController::class, 'transferProductNumber']);
         Route::post('/transfer', [TransferProductController::class, 'create']);
         Route::get('/transfer', [TransferProductController::class, 'index']);
-        Route::put('/transfer/approval', [TransferProductController::class, 'approval']);
+        Route::post('/transfer/approval', [TransferProductController::class, 'approval']);
+        Route::post('/transfer/sent', [TransferProductController::class, 'sentReceiver']);
         Route::post('/transfer/receive', [TransferProductController::class, 'receive']);
         Route::get('/transfer/detail', [TransferProductController::class, 'detail']);
+        Route::get('/transfer/detail/history', [TransferProductController::class, 'detailHistory']);
         Route::get('/transfer/export', [TransferProductController::class, 'export']);
+        Route::put('/transfer', [TransferProductController::class, 'update']);
+
+        Route::post('/transfer/multiple', [TransferProductController::class, 'createMultiple']);
+        Route::get('/transfer/producttwobranch', [TransferProductController::class, 'productListWithTwoBranch']);
 
         Route::get('/restock', [RestockController::class, 'index']);
         Route::post('/restock', [RestockController::class, 'create']);
+        Route::put('/restock', [RestockController::class, 'update']);
+        Route::delete('/restock', [RestockController::class, 'delete']);
+
         Route::post('/restock/multiple', [RestockController::class, 'createMultiple']);
         Route::get('/restock/export', [RestockController::class, 'export']);
         Route::get('/restock/export/pdf', [RestockController::class, 'exportPDF']);
@@ -166,6 +215,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/restock/detail/history', [RestockController::class, 'detailHistory']);
         Route::get('/restock/detail/supplier', [RestockController::class, 'listSupplier']);
 
+        Route::post('/restock/approval', [RestockController::class, 'approval']);
+        Route::post('/restock/sentsupplier', [RestockController::class, 'sentSupplier']);
+        Route::post('/restock/receive', [RestockController::class, 'confirmReceive']);
+
         //product bundle
         Route::get('/bundle', [BundleController::class, 'index']);
         Route::get('/bundle/detail', [BundleController::class, 'detail']);
@@ -173,6 +226,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/bundle', [BundleController::class, 'update']);
         Route::put('/bundle/status', [BundleController::class, 'changeStatus']);
         Route::delete('/bundle', [BundleController::class, 'delete']);
+
+        Route::get('/datastatic', [ProductController::class, 'indexDataStatic']);
+        Route::delete('/datastatic', [ProductController::class, 'deleteDataStatic']);
     });
 
     //MODULE CUSTOMER
@@ -187,6 +243,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/detail', [CustomerController::class, 'getDetailCustomer']); // add
         Route::post('/images', [CustomerController::class, 'uploadImageCustomer']); // add
         Route::get('/export', [CustomerController::class, 'exportCustomer']); //add
+        Route::get('/typeid', [CustomerController::class, 'getTypeIdCustomer']);
+        Route::post('/typeid', [CustomerController::class, 'insertTypeIdCustomer']);
 
         Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
         Route::post('/group', [CustomerController::class, 'createCustomerGroup']);
@@ -208,6 +266,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/source', [CustomerController::class, 'getSourceCustomer']);
 
         Route::put('/pet', [CustomerController::class, 'updatePetAge']);
+
+
+
+        Route::post('/datastatic', [DataStaticCustomerController::class, 'insertDataStaticCustomer']);
+        Route::get('/datastatic/customer', [DataStaticCustomerController::class, 'getDataStaticCustomer']);
+        Route::get('/datastatic', [DataStaticCustomerController::class, 'indexDataStaticCustomer']);
+        Route::delete('/datastatic', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
     });
 
 
@@ -228,7 +293,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/staffdetail', [StaffController::class, 'getDetailStaff']);
         Route::put('/', [StaffController::class, 'updateStaff']);
         Route::get('/', [StaffController::class, 'index']);
+
         Route::get('/list', [StaffController::class, 'listStaff']);
+        Route::get('/list/location', [StaffController::class, 'listStaffWithLocation']);
+
         Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
         Route::post('/sendEmail', [StaffController::class, 'sendEmailVerification']);
         Route::put('/statusStaff', [StaffController::class, 'updateStatusUsers']);
@@ -251,7 +319,159 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/leave/rejectall', [StaffLeaveController::class, 'rejectAll']);
 
         Route::get('/product/transfer', [StaffController::class, 'staffListTransferProduct']);
+
+        Route::get('/datastatic', [DataStaticStaffController::class, 'indexDataStaticStaff']);
+        Route::delete('/datastatic', [DataStaticStaffController::class, 'deleteDataStaticStaff']);
+        Route::get('/datastatic/staff', [DataStaticStaffController::class, 'getDataStaticStaff']);
+        Route::post('/datastatic', [DataStaticStaffController::class, 'insertDataStaticStaff']);
+
+        Route::get('/schedule/menulist', [AccessControlSchedulesController::class, 'getMenuList']);
+        Route::get('/schedule', [AccessControlSchedulesController::class, 'index']);
+        Route::get('/schedule/export', [AccessControlSchedulesController::class, 'export']);
+        Route::post('/schedule', [AccessControlSchedulesController::class, 'insertAccessControlSchedules']);
+        Route::get('/schedule/liststaff', [AccessControlSchedulesController::class, 'getUsersFromLocationId']);
+        Route::get('/schedule/detailshedules', [AccessControlSchedulesController::class, 'detailAllSchedules']);
+        Route::get('/schedule/detail', [AccessControlSchedulesController::class, 'detailSchedules']);
+        Route::delete('/schedule', [AccessControlSchedulesController::class, 'deleteAccessControlSchedules']);
+        Route::put('/schedule', [AccessControlSchedulesController::class, 'updateAccessControlSchedules']);
+
+        Route::get('/profile', [ProfileController::class, 'detailProfile']);
+        Route::put('/profile', [ProfileController::class, 'updateProfile']);
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
+        Route::post('/profile/image', [ProfileController::class, 'uploadImageProfile']);
     });
+
+
+    //Security Group
+    Route::group(['prefix' => 'securitygroup'], function () {
+
+        Route::get('/', [SecurityGroupController::class, 'index']);
+        Route::post('/', [SecurityGroupController::class, 'insertSecurityGroup']);
+        Route::delete('/', [SecurityGroupController::class, 'deleteSecurityGroup']);
+        Route::get('/detail', [SecurityGroupController::class, 'detailSecurityGroup']);
+        Route::get('/users', [SecurityGroupController::class, 'dropdownUsersSecurityGroup']);
+        Route::put('/', [SecurityGroupController::class, 'updateSecurityGroup']);
+    });
+
+
+    //Access Control
+    Route::group(['prefix' => 'accesscontrol'], function () {
+
+        Route::get('/user', [AccessControlController::class, 'index']);
+        Route::get('/history', [AccessControlController::class, 'indexHistory']);
+        Route::get('/', [AccessControlController::class, 'indexAccessControlDashboard']);
+        Route::get('/accesstype', [AccessControlController::class, 'dropdownAccessType']);
+        Route::get('/menumaster', [AccessControlController::class, 'dropdownMenuMaster']);
+        Route::get('/menumaster/index', [AccessControlController::class, 'indexMenuMaster']);
+        Route::get('/menulist', [AccessControlController::class, 'dropdownMenuList']);
+        Route::get('/menulist/index', [AccessControlController::class, 'indexMenuList']);
+        Route::post('/menulist', [AccessControlController::class, 'insertMenutList']);
+        Route::post('/menumaster', [AccessControlController::class, 'insertMenuMaster']);
+        Route::put('/menu', [AccessControlController::class, 'updateAccessControlMenu']);
+        Route::put('/menulist', [AccessControlController::class, 'updateMenuList']);
+        Route::put('/menumaster', [AccessControlController::class, 'updateMenuMaster']);
+        Route::delete('/menu', [AccessControlController::class, 'deleteAccessControlMenu']);
+    });
+
+    Route::group(['prefix' => 'absent'], function () {
+        Route::post('/', [AbsentController::class, 'createAbsent']);
+    });
+
+    // Chat
+    Route::group(['prefix' => 'chat'], function () {
+        Route::get('/list-user', [ChatController::class, 'list']);
+        Route::get('/detail', [ChatController::class, 'detail']);
+        Route::get('/', [ChatController::class, 'index']);
+        Route::post('/', [ChatController::class, 'create']);
+        Route::post('/read', [ChatController::class, 'read']);
+    });
+
+    Route::group(['prefix' => 'menu'], function () {
+
+        Route::get('/last-order-menu-group', [MenuManagementController::class, 'lastOrderMenuGroup']);
+        Route::get('/last-order-child-menu-group', [MenuManagementController::class, 'lastOrderChildMenu']);
+        Route::get('/last-order-grand-child-menu-group', [MenuManagementController::class, 'lastOrderGrandChildMenu']);
+
+        Route::get('/list-menu-group', [MenuManagementController::class, 'listMenuGroup']);
+        Route::get('/menu-group', [MenuManagementController::class, 'indexMenuGroup']);
+        Route::post('/menu-group', [MenuManagementController::class, 'insertMenuGroup']);
+        Route::put('/menu-group', [MenuManagementController::class, 'updateMenuGroup']);
+        Route::delete('/menu-group', [MenuManagementController::class, 'deleteMenuGroup']);
+
+        Route::get('/list-child-menu-group', [MenuManagementController::class, 'listChildrenMenu']);
+        Route::get('/child-menu-group', [MenuManagementController::class, 'indexChildrenMenu']);
+        Route::get('/detail-child-menu-group', [MenuManagementController::class, 'detailChildrenMenu']);
+        Route::post('/child-menu-group', [MenuManagementController::class, 'insertChildrenMenu']);
+        Route::put('/child-menu-group', [MenuManagementController::class, 'updateChildMenu']);
+        Route::delete('/child-menu-group', [MenuManagementController::class, 'deleteChildMenu']);
+
+        Route::get('/grand-child-menu-group', [MenuManagementController::class, 'indexGrandChildMenu']);
+        Route::get('/detail-grand-child-menu-group', [MenuManagementController::class, 'detailGrandChildMenu']);
+        Route::post('/grand-child-menu-group', [MenuManagementController::class, 'insertGrandChildMenu']);
+        Route::put('/grand-child-menu-group', [MenuManagementController::class, 'updateGrandChildMenu']);
+        Route::delete('/grand-child-menu-group', [MenuManagementController::class, 'deleteGrandChildMenu']);
+
+        Route::get('/profile', [MenuManagementController::class, 'indexMenuProfile']);
+        Route::post('/profile', [MenuManagementController::class, 'insertMenuProfile']);
+        Route::put('/profile', [MenuManagementController::class, 'updateMenuProfile']);
+        Route::delete('/profile', [MenuManagementController::class, 'deleteMenuProfile']);
+
+        Route::get('/setting', [MenuManagementController::class, 'indexMenuSetting']);
+        Route::post('/setting', [MenuManagementController::class, 'insertMenuSetting']);
+        Route::put('/setting', [MenuManagementController::class, 'updateMenuSetting']);
+        Route::delete('/setting', [MenuManagementController::class, 'deleteMenuSetting']);
+    });
+
+    // Service
+    Route::group(['prefix' => 'service'], function () {
+        Route::group(['prefix' => 'category'], function () {
+            Route::get('/export', [ServiceCategoryController::class, 'export']);
+            Route::get('/', [ServiceCategoryController::class, 'index']);
+            Route::post('/', [ServiceCategoryController::class, 'create']);
+            Route::put('/', [ServiceCategoryController::class, 'update']);
+            Route::delete('/', [ServiceCategoryController::class, 'delete']);
+        });
+        Route::group(['prefix' => 'list'], function () {
+            Route::get('/category', [ServiceController::class, 'findByCategory']);
+            Route::get('/export', [ServiceController::class, 'export']);
+            Route::get('/detail', [ServiceController::class, 'detail']);
+            Route::get('/', [ServiceController::class, 'index']);
+            Route::get('/template', [ServiceController::class, 'downloadTemplate']);
+            Route::post('/import', [ServiceController::class, 'Import']);
+            Route::post('/', [ServiceController::class, 'create']);
+            Route::put('/', [ServiceController::class, 'update']);
+            Route::delete('/', [ServiceController::class, 'destroy']);
+        });
+        Route::group(['prefix' => 'treatment'], function () {
+            Route::get('/export', [TreatmentController::class, 'export']);
+            Route::get('/item', [TreatmentController::class, 'indexItem']);
+            Route::get('/', [TreatmentController::class, 'index']);
+            Route::get('/detail', [TreatmentController::class, 'detail']);
+            Route::post('/', [TreatmentController::class, 'store']);
+            Route::put('/', [TreatmentController::class, 'update']);
+            Route::put('/item', [TreatmentController::class, 'manageItem']);
+            Route::get('/detail', [TreatmentController::class, 'detail']);
+            Route::delete('/', [TreatmentController::class, 'destroy']);
+        });
+
+        Route::group(['prefix' => 'data-static'], function () {
+            Route::get('/', [DataStaticServiceController::class, 'index']);
+            Route::delete('/', [DataStaticServiceController::class, 'delete']);
+        });
+
+        Route::group(['prefix' => 'diagnose'], function () {
+            Route::get('/', [DiagnoseController::class, 'index']);
+        });
+
+        Route::group(['prefix' => 'frequency'], function () {
+            Route::get('/', [FrequencyController::class, 'index']);
+        });
+
+        Route::group(['prefix' => 'task'], function () {
+            Route::get('/', [TaskController::class, 'index']);
+        });
+    });
+
 
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);

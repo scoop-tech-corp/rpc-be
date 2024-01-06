@@ -17,6 +17,7 @@ use App\Models\Customer\TitleCustomer;
 use App\Models\Customer\CustomerOccupation;
 use App\Models\Customer\ReferenceCustomer;
 use App\Models\Customer\SourceCustomer;
+use App\Models\Customer\TypeIdCustomer;
 use App\Exports\Customer\exportCustomer;
 use App\Models\Customer\PetCategory;
 use Illuminate\Http\Request;
@@ -28,7 +29,68 @@ use DB;
 class CustomerController extends Controller
 {
 
+    public function insertTypeIdCustomer(Request $request)
+    {
 
+        $request->validate([
+            'typeName' => 'required|string',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $checkIfValueExits = TypeIdCustomer::where([
+                ['typeName', '=', $request->typeName],
+                ['isActive', '=', 1]
+            ])->first();
+
+            if ($checkIfValueExits != null) {
+
+                return responseInvalid(['Type name already exists, please choose another name']);
+            } else {
+
+                $TypeIdCustomer = new TypeIdCustomer();
+                $TypeIdCustomer->typeName = $request->typeName;
+                $TypeIdCustomer->isActive = 1;
+                $TypeIdCustomer->created_at = now();
+                $TypeIdCustomer->updated_at = now();
+                $TypeIdCustomer->save();
+
+                DB::commit();
+
+                return responseCreate();
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return responseInvalid([$e]);
+        }
+    }
+
+
+
+    public function getTypeIdCustomer()
+    {
+
+        try {
+
+            $getTypeId = TypeIdCustomer::select(
+                'id as typeId',
+                'typeName as typeName',
+            )->where([
+                ['isActive', '=', 1],
+            ])
+                ->orderBy('a.created_at', 'desc')
+                ->get();
+
+            return responseList($getTypeId);
+        } catch (Exception $e) {
+
+            return responseInvalid([$e]);
+        }
+    }
 
     public function indexCustomer(Request $request)
     {
@@ -54,7 +116,7 @@ class CustomerController extends Controller
                 ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
                 ->select(
                     'a.id as id',
-                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                    DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                     DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                     'd.locationName as location',
                     'a.locationId as locationId',
@@ -333,7 +395,7 @@ class CustomerController extends Controller
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -420,7 +482,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -505,7 +567,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -587,7 +649,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -669,7 +731,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -748,7 +810,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -826,7 +888,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -905,7 +967,7 @@ class CustomerController extends Controller
 
             ->select(
                 'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
@@ -1056,31 +1118,11 @@ class CustomerController extends Controller
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
 
-                            // 'dateOfBirth' => 'required_without_all:petMonth,petYear',
-                            // 'petMonth' => 'required_without_all:dateOfBirth,petYear',
-                            // 'petYear' => 'required_without_all:dateOfBirth,petMonth',
-
                         ],
                         $messageCustomerPet
                     );
 
 
-                    // if (!($key['dateOfBirth'] === "") && (!($key['petMonth'] === "") or !($key['petYear'] === ""))) {
-                    //     return response()->json([
-                    //         'result' => 'Inputed data is not valid',
-                    //         'message' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                    //     ], 422);
-                    // }
-
-                    // if ($key['command'] != "del") {
-
-                    //     if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
-                    //         return response()->json([
-                    //             'message' => 'The given data was invalid.',
-                    //             'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                    //         ], 422);
-                    //     }
-                    // }
 
                     if ($validateDetail->fails()) {
 
@@ -1610,8 +1652,6 @@ class CustomerController extends Controller
 
                     foreach ($ResultImageDatas as $value) {
 
-                        // if ($value['status'] != "del") {
-
                         if ($value['name'] == "") {
 
                             return response()->json([
@@ -1619,7 +1659,6 @@ class CustomerController extends Controller
                                 'errors' => ['Image name can not be empty!'],
                             ], 422);
                         }
-                        // }
                     }
                 } else {
 
@@ -1845,23 +1884,6 @@ class CustomerController extends Controller
                 }
             }
 
-
-            // $json_array = json_decode($request->imagesName, true);
-            // $int = 0;
-            // //echo ($int);
-
-            // for ($i = 0; $i < count($json_array); $i++) {
-            //     $image = $json_array[$i];
-            //     //  echo $image['status'];
-
-            //     if ($image['status'] != "del") {
-            //         echo $image['name'];
-            //     }
-
-            // }
-
-
-
             DB::commit();
 
             return response()->json(
@@ -2052,22 +2074,10 @@ class CustomerController extends Controller
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
 
-                            //'dateOfBirth' => 'required_without_all:petMonth,petYear',
-                            // 'petMonth' => 'required_without_all:dateOfBirth,petYear',
-                            // 'petYear' => 'required_without_all:dateOfBirth,petMonth',
                         ],
                         $messageCustomerPet
                     );
 
-                    // if ($key['command'] != "del") {
-
-                    //     if (!($key['dateOfBirth'] === "" || $key['dateOfBirth'] === null) && (!($key['petMonth'] === "" || $key['petMonth'] === null) || !($key['petYear'] === ""  || $key['petYear'] === null))) {
-                    //         return response()->json([
-                    //             'message' => 'Inputed data is not valid',
-                    //             'errors' => 'Please check your pets data, only require date of birth or pet month or pet Year',
-                    //         ], 422);
-                    //     }
-                    // }
 
 
                     if ($validateDetail->fails()) {
@@ -2825,193 +2835,226 @@ class CustomerController extends Controller
 
     public function getDetailCustomer(Request $request)
     {
+
+
+        $validate = Validator::make($request->all(), [
+            'customerId' => 'required'
+        ]);
+
+        if ($validate->fails()) {
+
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
+            ], 422);
+        }
+
         $request->validate(['customerId' => 'required|max:10000']);
         $customerId = $request->input('customerId');
 
-        $checkIfValueExits = Customer::where([
-            ['id', '=', $request->input('customerId')],
-            ['isDeleted', '=', '0']
-        ])
-            ->first();
 
-        if ($checkIfValueExits === null) {
+        if ($request->input('type') != "" &&  $request->input('type') != "edit") {
 
             return response()->json([
-                'message' => 'Failed',
-                'errors' => "Data not exists, please try another customer id",
-            ]);
-        } else {
+                'message' => 'Inputed data is not valid',
+                'errors' => ['Type must "" or "edit" '],
+            ], 422);
+        }
 
 
-            $param_customer = DB::table('customer')
-                ->select(
-                    'id as customerId',
-                    'firstName',
-                    'middleName',
-                    'lastName',
-                    'nickName',
-                    'gender',
-                    'titleCustomerId',
-                    'customerGroupId',
-                    'locationId',
-                    'notes',
-                    DB::raw("DATE_FORMAT(joinDate, '%Y-%m-%d') as joinDate"),
-                    'typeId',
-                    'numberId',
-                    'occupationId',
-                    DB::raw("DATE_FORMAT(birthDate, '%Y-%m-%d') as birthDate"),
-                    'referenceCustomerId',
-                    'isReminderBooking',
-                    'isReminderPayment'
-                )
-                ->where('id', '=', $customerId)
-                ->first();
-
-            $customerPets = DB::table('customerPets')
-                ->select(
-                    'id',
-                    'petName',
-                    'petCategoryId',
-                    'races',
-                    'condition',
-                    'color',
-                    'petMonth',
-                    'petYear',
-                    DB::raw("DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth"),
-                    'petGender',
-                    'isSteril',
-                    DB::raw("'' as command")
-                )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->customerPets = $customerPets;
 
 
-            $reminderBooking = CustomerReminder::select(
-                'id',
-                'sourceId',
-                'unit',
-                'timing',
-                'status'
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['type', '=', 'B'],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
 
-            $param_customer->reminderBooking = $reminderBooking;
-
-
-            $reminderPayment = CustomerReminder::select(
-                'sourceId',
-                'unit',
-                'timing',
-                'status'
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['type', '=', 'P'],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->reminderPayment = $reminderPayment;
-
-            $reminderLatePayment = CustomerReminder::select(
-                'sourceId',
-                'unit',
-                'timing',
-                'status'
-            )->where([
-                ['customerId', '=', $customerId],
-                ['type', '=', 'LP'],
+        if ($request->input('type') == "") {
+            $checkIfValueExits = Customer::where([
+                ['id', '=', $request->input('customerId')],
                 ['isDeleted', '=', '0']
             ])
-                ->get();
+                ->first();
 
-            $param_customer->reminderLatePayment = $reminderLatePayment;
+            if ($checkIfValueExits === null) {
 
-            $detailAddresses = CustomerAddresses::select(
-                'addressName as addressName',
-                'additionalInfo as additionalInfo',
-                'provinceCode as provinceCode',
-                'cityCode as cityCode',
-                'postalCode as postalCode',
-                'country as country',
-                'isPrimary as isPrimary',
-            )
-                ->where([
+                return response()->json([
+                    'message' => 'Failed',
+                    'errors' => "Data not exists, please try another customer id",
+                ]);
+            } else {
+
+
+                $param_customer = DB::table('customer')
+                    ->select(
+                        'id as customerId',
+                        'firstName',
+                        'middleName',
+                        'lastName',
+                        'nickName',
+                        'gender',
+                        'titleCustomerId',
+                        'customerGroupId',
+                        'locationId',
+                        'notes',
+                        DB::raw("DATE_FORMAT(joinDate, '%Y-%m-%d') as joinDate"),
+                        'typeId',
+                        'numberId',
+                        'occupationId',
+                        DB::raw("DATE_FORMAT(birthDate, '%Y-%m-%d') as birthDate"),
+                        'referenceCustomerId',
+                        'isReminderBooking',
+                        'isReminderPayment'
+                    )
+                    ->where('id', '=', $customerId)
+                    ->first();
+
+                $customerPets = DB::table('customerPets')
+                    ->select(
+                        'id',
+                        'petName',
+                        'petCategoryId',
+                        'races',
+                        'condition',
+                        'color',
+                        'petMonth',
+                        'petYear',
+                        DB::raw("DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth"),
+                        'petGender',
+                        'isSteril',
+                        DB::raw("'' as command")
+                    )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->customerPets = $customerPets;
+
+
+                $reminderBooking = CustomerReminder::select(
+                    'id',
+                    'sourceId',
+                    'unit',
+                    'timing',
+                    'status'
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['type', '=', 'B'],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->reminderBooking = $reminderBooking;
+
+
+                $reminderPayment = CustomerReminder::select(
+                    'sourceId',
+                    'unit',
+                    'timing',
+                    'status'
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['type', '=', 'P'],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->reminderPayment = $reminderPayment;
+
+                $reminderLatePayment = CustomerReminder::select(
+                    'sourceId',
+                    'unit',
+                    'timing',
+                    'status'
+                )->where([
                     ['customerId', '=', $customerId],
+                    ['type', '=', 'LP'],
                     ['isDeleted', '=', '0']
                 ])
-                ->get();
+                    ->get();
 
-            $param_customer->detailAddresses = $detailAddresses;
+                $param_customer->reminderLatePayment = $reminderLatePayment;
 
+                $detailAddresses = CustomerAddresses::select(
+                    'addressName as addressName',
+                    'additionalInfo as additionalInfo',
+                    'provinceCode as provinceCode',
+                    'cityCode as cityCode',
+                    'postalCode as postalCode',
+                    'country as country',
+                    'isPrimary as isPrimary',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
 
-            $telephones = CustomerTelephones::select(
-                'phoneNumber as phoneNumber',
-                'type as type',
-                'usage as usage',
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->telephones = $telephones;
-
-
-            $emails = CustomerEmails::select(
-                'email as email',
-                'usage as usage',
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->emails = $emails;
+                $param_customer->detailAddresses = $detailAddresses;
 
 
-            $messengers = CustomerMessengers::select(
-                'messengerNumber as messengerNumber',
-                'type as type',
-                'usage as usage',
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
+                $telephones = CustomerTelephones::select(
+                    'phoneNumber as phoneNumber',
+                    'type as type',
+                    'usage as usage',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
 
-            $param_customer->messengers = $messengers;
-
-
-
-            $customeImages = CustomerImages::select(
-                'id as id',
-                'labelName as labelName',
-                'imagePath as imagePath',
-            )
-                ->where([
-                    ['customerId', '=', $customerId],
-                    ['isDeleted', '=', '0']
-                ])
-                ->get();
-
-            $param_customer->images = $customeImages;
+                $param_customer->telephones = $telephones;
 
 
-            return response()->json($param_customer, 200);
+                $emails = CustomerEmails::select(
+                    'email as email',
+                    'usage as usage',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->emails = $emails;
+
+
+                $messengers = CustomerMessengers::select(
+                    'messengerNumber as messengerNumber',
+                    'type as type',
+                    'usage as usage',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->messengers = $messengers;
+
+
+
+                $customeImages = CustomerImages::select(
+                    'id as id',
+                    'labelName as labelName',
+                    'imagePath as imagePath',
+                )
+                    ->where([
+                        ['customerId', '=', $customerId],
+                        ['isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $param_customer->images = $customeImages;
+
+
+                return response()->json($param_customer, 200);
+            }
+        } else { // untuk view edit disini
+
         }
     }
 

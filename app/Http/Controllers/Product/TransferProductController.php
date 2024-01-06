@@ -8,15 +8,19 @@ use App\Models\ProductClinicLocation;
 use App\Models\ProductSell;
 use App\Models\ProductSellLocation;
 use App\Models\ProductTransfer;
+use App\Models\productTransferDetails;
+use App\Models\productTransferSentImages;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
 use Excel;
+use Illuminate\Support\Str;
+use File;
 
 class TransferProductController
 {
-    public function transferProductNumber(Request $request)
+    public function transferProductNumber()
     {
         $findData = ProductTransfer::whereDate('created_at', Carbon::today())->count();
 
@@ -35,176 +39,423 @@ class TransferProductController
 
     public function create(Request $request)
     {
-        $validate = Validator::make($request->all(), [
-            'transferNumber' => 'required|string',
-            'transferName' => 'required|string',
-            'locationId' => 'required|integer',
-            'totalItem' => 'required|integer',
-            'userIdReceiver' => 'required|integer',
-            'productId' => 'required|integer',
-            'productType' => 'required|string|in:productSell,productClinic',
-            'additionalCost' => 'numeric',
-            'remark' => 'nullable|string',
-        ]);
+        DB::beginTransaction();
+        try {
 
-        if ($validate->fails()) {
-            $errors = $validate->errors()->all();
+            $validate = Validator::make($request->all(), [
+                'transferNumber' => 'required|string',
+                'transferName' => 'required|string',
+                'locationId' => 'required|integer',
+                'totalItem' => 'required|integer',
+                'userIdReceiver' => 'required|integer',
+                'productId' => 'required|integer',
+                'productType' => 'required|string|in:productSell,productClinic',
+                'additionalCost' => 'numeric',
+                'remark' => 'nullable|string',
+            ]);
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
-        }
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
 
-        $prodDest = null;
-
-        $findData = ProductTransfer::whereDate('created_at', Carbon::today())->count();
-
-        $number = "";
-
-        if ($findData == 0) {
-            $number = Carbon::today();
-            $number = 'RPC-TRF-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
-        } else {
-            $number = Carbon::today();
-            $number = 'RPC-TRF-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
-        }
-
-        //find product id destination
-        if ($request->productType == 'productSell') {
-
-            $prodOrigin = ProductSell::find($request->productId);
-
-            if ($prodOrigin) {
-
-                $prodDest = DB::table('productSells as ps')
-                    ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                    ->select('ps.*', 'psl.diffStock')
-                    ->where('psl.locationId', '=', $request->locationId)
-                    ->where('ps.fullName', '=', $prodOrigin->fullName)
-                    ->first();
-            } else {
                 return response()->json([
                     'message' => 'The given data was invalid.',
-                    'errors' => ['Product does not exist!'],
+                    'errors' => $errors,
                 ], 422);
             }
-        } elseif ($request->productType == 'productClinic') {
 
-            $prodOrigin = ProductClinic::find($request->productId);
+            $prodDest = null;
 
-            if ($prodOrigin) {
+            $findData = ProductTransfer::whereDate('created_at', Carbon::today())->count();
 
-                $prodDest = DB::table('productClinics as pc')
-                    ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
-                    ->select('pc.*', 'pcl.diffStock')
-                    ->where('pcl.locationId', '=', $request->locationId)
-                    ->where('pc.fullName', '=', $prodOrigin->fullName)
-                    ->first();
+            $number = "";
+
+            if ($findData == 0) {
+                $number = Carbon::today();
+                $number = 'RPC-TRF-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
             } else {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Product does not exist!'],
-                ], 422);
-            }
-        }
-
-        $checkAdminApproval = false;
-
-        if ($prodDest) {
-
-            if ($prodDest->diffStock > 0) {
-                $checkAdminApproval = true;
+                $number = Carbon::today();
+                $number = 'RPC-TRF-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
             }
 
-            $productType = "";
-
+            //find product id destination
             if ($request->productType == 'productSell') {
-                $productType = 'Product Sell';
+
+                $prodOrigin = ProductSell::find($request->productId);
+
+                if ($prodOrigin) {
+
+                    $prodDest = DB::table('productSells as ps')
+                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                        ->select('ps.*', 'psl.diffStock')
+                        ->where('psl.locationId', '=', $request->locationId)
+                        ->where('ps.fullName', '=', $prodOrigin->fullName)
+                        ->first();
+                } else {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Product does not exist!'],
+                    ], 422);
+                }
             } elseif ($request->productType == 'productClinic') {
-                $productType = 'Product Clinic';
+
+                $prodOrigin = ProductClinic::find($request->productId);
+
+                if ($prodOrigin) {
+
+                    $prodDest = DB::table('productClinics as pc')
+                        ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+                        ->select('pc.*', 'pcl.diffStock')
+                        ->where('pcl.locationId', '=', $request->locationId)
+                        ->where('pc.fullName', '=', $prodOrigin->fullName)
+                        ->first();
+                } else {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Product does not exist!'],
+                    ], 422);
+                }
             }
 
-            ProductTransfer::create([
-                'transferNumber' => $number,
+            $checkAdminApproval = false;
+
+            if ($prodDest) {
+
+                if ($prodDest->diffStock > 0) {
+                    $checkAdminApproval = true;
+                }
+
+                $cntNum = DB::table('productTransfers')
+                    ->where('status', '!=', 0)
+                    ->count();
+
+                if ($cntNum == 0) {
+                    $numberId = '#' . str_pad(1, 8, 0, STR_PAD_LEFT);
+                } else {
+                    $numberId = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
+                }
+
+                $master = ProductTransfer::create([
+                    'numberId' => $numberId,
+                    'transferNumber' => $number,
+                    'transferName' => $request->transferName,
+                    'locationIdOrigin' => 0,
+                    'locationIdDestination' => 0,
+                    'variantProduct' => 1,
+                    'totalProduct' => $request->totalItem,
+                    'userIdReceiver' => $request->userIdReceiver,
+                    'isAdminApproval' => $checkAdminApproval,
+                    'status' => 1,
+                    'userId' => $request->user()->id,
+                ]);
+
+                productTransferLog($master->id, "Created", "Waiting for Approval", $request->user()->id);
+
+                productTransferDetails::create([
+                    'productTransferId' => $master->id,
+                    'productIdOrigin' => $request->productId,
+                    'productIdDestination' => $prodDest->id,
+                    'productType' => $request->productType,
+                    'remark' => $request->remark,
+                    'quantity' => $request->totalItem,
+                    'additionalCost' => $request->additionalCost,
+                    'isAdminApproval' => $checkAdminApproval,
+                    'userId' => $request->user()->id,
+                ]);
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Product Destination does not exist!'],
+                ], 422);
+            }
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    public function createMultiple(Request $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $validate = Validator::make($request->all(), [
+                'type' => 'required|string|in:draft,final',
+                'transferNumber' => 'required|string',
+                'transferName' => 'required|string',
+                'locationIdOrigin' => 'required|integer',
+                'locationIdDestination' => 'required|integer',
+                'userIdReceiver' => 'required|integer',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            $datas = json_decode($request->products, true);
+
+            $validate = Validator::make(
+                $datas,
+                [
+                    '*.productId' => 'required|integer',
+                    '*.productType' => 'required|string|in:productSell,productClinic',
+                    '*.quantity' => 'required|integer',
+                    '*.additionalCost' => 'required|numeric',
+                    '*.remark' => 'nullable|string',
+                ],
+                [
+                    '*.productId.required' => 'Product Id Should be Required!',
+                    '*.productId.integer' => 'Product Id Should be Integer!',
+
+                    '*.productType.required' => 'Product Type Should be Required!',
+                    '*.productType.string' => 'Product Type Should be String!',
+
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Integer!',
+
+                    '*.additionalCost.required' => 'Additional Cost Should be Required!',
+                    '*.additionalCost.numeric' => 'Additional Cost Should be Numeric!',
+
+                    '*.remark.string' => 'Remark Should be String!',
+                ]
+            );
+
+            $numberId = '';
+            $transferNumber = '';
+            $variantProduct = 0;
+            $totalProduct = 0;
+            $status = 0;
+
+            if ($request->type == 'final') {
+                $status = 1;
+
+                $cntNum = DB::table('productTransfers')
+                    ->where('status', '!=', 0)
+                    ->count();
+
+                if ($cntNum == 0) {
+                    $numberId = '#' . str_pad(1, 8, 0, STR_PAD_LEFT);
+                } else {
+                    $numberId = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
+                }
+            } elseif ($request->type = 'draft') {
+                $numberId = 'draft';
+            }
+
+            $findData = ProductTransfer::whereDate('created_at', Carbon::today())->count();
+
+            if ($findData == 0) {
+                $transferNumber = Carbon::today();
+                $transferNumber = 'RPC-TRF-' . $transferNumber->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+            } else {
+                $transferNumber = Carbon::today();
+                $transferNumber = 'RPC-TRF-' . $transferNumber->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
+            }
+
+            foreach ($datas as $value) {
+                if (!$value['status'] === 'del') {
+                    $variantProduct += 1;
+                    $totalProduct += $value['quantity'];
+                }
+            }
+
+            $master = ProductTransfer::create([
+                'numberId' => $numberId,
+                'transferNumber' => $transferNumber,
                 'transferName' => $request->transferName,
-                'groupData' => 'product',
-                'totalItem' => $request->totalItem,
+                'locationIdOrigin' => $request->locationIdOrigin,
+                'locationIdDestination' => $request->locationIdDestination,
+                'variantProduct' => $variantProduct,
+                'totalProduct' => $totalProduct,
                 'userIdReceiver' => $request->userIdReceiver,
-                'productIdOrigin' => $request->productId,
-                'productIdDestination' => $prodDest->id,
-                'productType' => $productType,
-                'additionalCost' => $request->additionalCost,
-                'remark' => $request->remark,
-                'isAdminApproval' => $checkAdminApproval,
+                'isAdminApproval' => 0,
+                'status' => $status,
                 'userId' => $request->user()->id,
             ]);
-        } else {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Product Destination does not exist!'],
-            ], 422);
-        }
 
-        return response()->json(
-            [
-                'message' => 'Add Data Successful!',
-            ],
-            200
-        );
+            if ($numberId == 'draft') {
+                productTransferLog($master->id, "Created", "Draft", $request->user()->id);
+            } else {
+                productTransferLog($master->id, "Created", "Waiting for Approval", $request->user()->id);
+            }
+
+            $productIdDestination = 0;
+            $adminApprovalMaster = false;
+
+            foreach ($datas as $value) {
+                $checkAdminApproval = false;
+
+                if ($value['productType'] == 'productSell') {
+
+                    $dataProductOr = DB::table('productSells as ps')
+                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                        ->select('ps.fullName', 'psl.diffStock')
+                        ->where('psl.locationId', '=', $request->locationIdOrigin)
+                        ->where('ps.id', '=', $value['productId'])
+                        ->first();
+
+                    if (!$dataProductOr) {
+                        return responseInvalid(['Location Origin with Product Id is not exists in our data']);
+                    }
+
+                    $data = DB::table('productSells as ps')
+                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                        ->select('ps.*')
+                        ->where('psl.locationId', '=', $request->locationIdDestination)
+                        ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                        ->first();
+
+                    if (!$data) {
+                        $productIdDestination = 0;
+                    } else {
+                        $productIdDestination = $data->id;
+                    }
+
+                    if ($dataProductOr->diffStock <= 0) {
+                        $adminApprovalMaster = true;
+                        $checkAdminApproval = true;
+                    }
+                } elseif ($value['productType'] == 'productClinic') {
+
+                    $dataProductOr = DB::table('productClinics as ps')
+                        ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                        ->select('ps.fullName', 'psl.diffStock')
+                        ->where('psl.locationId', '=', $request->locationIdOrigin)
+                        ->where('ps.id', '=', $value['productId'])
+                        ->first();
+
+                    if (!$dataProductOr) {
+                        return responseInvalid(['Location Origin with Product Id is not exists in our data']);
+                    }
+
+                    $data = DB::table('productClinics as ps')
+                        ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                        ->select('ps.*')
+                        ->where('psl.locationId', '=', $request->locationIdDestination)
+                        ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                        ->first();
+
+                    if (!$data) {
+                        $productIdDestination = 0;
+                    } else {
+                        $productIdDestination = $data->id;
+                    }
+
+                    if ($dataProductOr->diffStock <= 0) {
+                        $adminApprovalMaster = true;
+                        $checkAdminApproval = true;
+                    }
+                }
+
+                $detail = productTransferDetails::create([
+                    'productTransferId' => $master->id,
+                    'productIdOrigin' => $value['productId'],
+                    'productIdDestination' => $productIdDestination,
+                    'productType' => $value['productType'],
+                    'quantity' => $value['quantity'],
+                    'remark' => $value['remark'],
+                    'isAdminApproval' => $checkAdminApproval,
+                    'additionalCost' => $value['additionalCost'],
+                    'userId' => $request->user()->id,
+                ]);
+
+                foreach ($value['images'] as $img) {
+
+                    if ($img['imagePath'] != '') {
+                        $image = str_replace('data:image/', '', $img['imagePath']);
+                        $image = explode(';base64,', $image);
+                        $imageName = Str::random(40) . '.' . $image[0];
+                        File::put(public_path('ProductTransferSentImages') . '/' . $imageName, base64_decode($image[1]));
+
+                        productTransferSentImages::create([
+                            'productTransferDetailId' => $detail->id,
+                            'label' => $img['label'],
+                            'realImageName' => $img['originalName'],
+                            'imagePath' => '/ProductTransferSentImages' . '/' . $imageName,
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+            }
+
+            if ($adminApprovalMaster == true) {
+
+                $res = ProductTransfer::find($master->id);
+                $res->isAdminApproval = $adminApprovalMaster;
+                $res->save();
+            }
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
     }
 
     public function index(Request $request)
     {
-        $role = role($request->user()->id);
-
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
 
         $data = DB::table('productTransfers as pt')
             ->join('users as u', 'pt.userId', 'u.id')
-            ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-            ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-            ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
+            ->leftjoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
+            ->leftjoin('location as ld', 'pt.locationIdDestination', 'ld.id')
             ->select(
                 'pt.id as id',
-                'pt.productType',
-                'pt.productIdOrigin',
-                'pt.productIdDestination',
-                'pt.transferName',
+                'pt.numberId',
                 'pt.transferNumber',
-                'pt.totalItem',
-                'pt.isAdminApproval',
-                DB::raw("CASE pt.isAdminApproval = 1 WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as Status"),
-                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
+                'pt.transferName',
+                'pt.variantProduct',
+                'pt.totalProduct',
+                'pt.status',
+                'lo.id as locationOriginId',
+                'lo.locationName as locationOriginName',
+                'ld.id as locationDestinationId',
+                'ld.locationName as locationDestinationName',
+                'u.id as userId',
                 'u.firstName as createdBy',
-                'ur.firstName as receivedBy',
-
-                DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
-                DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
+                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->where('pt.isDeleted', '=', 0)
-            ->where('pt.groupData', '=', $request->type);
+            ->where('pt.isDeleted', '=', 0);
 
-        if ($role != "Administrator" && $role != "Office") {
-
-            $data = $data->where('pt.userIdReceiver', '=', $request->user()->id);
+        if ($request->locationDestinationId) {
+            $data = $data->whereIn('ld.id', $request->locationDestinationId);
         }
 
-        $data = $data->orderBy('pt.updated_at', 'desc');
+        if ($request->type == 'approval') {
+            $data = $data->whereIn('pt.status', array(1, 3, 4));
+
+            if (adminAccess($request->user()->id)) {
+                $data = $data->where('pt.isAdminApproval', '=', 1);
+            }
+        }
+
+        if ($request->type == 'history') {
+            $data = $data->whereIn('pt.status', array(2, 5));
+        }
+
+        if ($request->status) {
+            $data = $data->where('pt.status', '=', $request->status);
+        }
 
         if ($request->search) {
+            $res = $this->Search($request);
+            if ($res) {
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
 
-            $tmp = $this->search($request);
+                for ($i = 1; $i < count($res); $i++) {
 
-            if ($tmp) {
-                $data = $data->where($tmp[0], 'like', '%' . $request->search . '%');
-
-                for ($i = 1; $i < count($tmp); $i++) {
-
-                    $data = $data->orWhere($tmp[$i], 'like', '%' . $request->search . '%');
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
                 }
             } else {
                 $data = [];
@@ -214,6 +465,12 @@ class TransferProductController
                 ], 200);
             }
         }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('pt.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -228,130 +485,8 @@ class TransferProductController
 
         $totalPaging = $count_data / $itemPerPage;
 
-        $tempData = [];
 
-        foreach ($data as $value) {
-
-            if ($value->productType == "Product Sell") {
-
-                $res = DB::table('productTransfers as pt')
-                    ->join('productSells as pso', 'pt.productIdOrigin', 'pso.id')
-                    ->join('productSellLocations as pslo', 'pso.id', 'pslo.productSellId')
-                    ->join('location as lo', 'pslo.locationId', 'lo.id')
-
-                    ->join('productSells as psd', 'pt.productIdDestination', 'psd.id')
-                    ->join('productSellLocations as psld', 'psd.id', 'psld.productSellId')
-                    ->join('location as ld', 'psld.locationId', 'ld.id')
-
-                    ->join('users as u', 'pt.userId', 'u.id')
-                    ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-                    ->select(
-                        'pt.id as id',
-                        'pt.productType',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as from',
-                        'lo.id as locationIdOrigin',
-                        'ld.locationName as to',
-                        'ld.id as locationIdDestination',
-                        'pso.fullName as productName',
-                        'pt.transferName',
-                        'pt.transferNumber',
-                        'pt.totalItem',
-                        'pt.status',
-                        'u.firstName as createdBy',
-                        'ur.firstName as receivedBy',
-                        DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                    )
-                    ->where('pt.id', '=', $value->id);
-
-                if ($request->locationId) {
-
-                    if ($request->locationType == 'from') {
-                        $res = $res->whereIn('lo.id', $request->locationId);
-                    } elseif ($request->locationType == 'to') {
-                        $res = $res->whereIn('ld.id', $request->locationId);
-                    }
-                }
-
-                $res = $res->first();
-
-                if ($res) {
-                    array_push($tempData, $res);
-                }
-            } elseif ($value->productType == "Product Clinic") {
-                $res = DB::table('productTransfers as pt')
-
-                    ->join('productClinics as pco', 'pt.productIdOrigin', 'pco.id')
-                    ->join('productClinicLocations as pclo', 'pco.id', 'pclo.productClinicId')
-                    ->join('location as lo', 'pclo.locationId', 'lo.id')
-
-                    ->join('productClinics as pcd', 'pt.productIdDestination', 'pcd.id')
-                    ->join('productClinicLocations as pcld', 'pcd.id', 'pcld.productClinicId')
-                    ->join('location as ld', 'pcld.locationId', 'ld.id')
-
-                    ->join('users as u', 'pt.userId', 'u.id')
-                    ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-                    ->select(
-                        'pt.id as id',
-                        'pt.productType',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as from',
-                        'lo.id as locationIdOrigin',
-                        'ld.locationName as to',
-                        'ld.id as locationIdDestination',
-                        'ld.locationName as to',
-                        'pco.fullName as productName',
-                        'pt.transferName',
-                        'pt.transferNumber',
-                        'pt.totalItem',
-                        'pt.status',
-                        'ur.firstName as receivedBy',
-                        'u.firstName as createdBy',
-                        DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                    )
-                    ->where('pt.id', '=', $value->id);
-
-                if ($request->locationId) {
-
-                    if ($request->locationType == 'from') {
-                        $res = $res->whereIn('lo.id', $request->locationId);
-                    } elseif ($request->locationType == 'to') {
-                        $res = $res->whereIn('ld.id', $request->locationId);
-                    }
-                }
-
-                $res = $res->first();
-
-                if ($res) {
-                    array_push($tempData, $res);
-                }
-            }
-        }
-
-        $tempC = collect($tempData);
-        $sorted = '';
-
-        if ($request->orderValue == 'desc' && $request->orderColumn) {
-            $tempData = $tempC->sortByDesc($request->orderColumn);
-        } elseif ($request->orderValue == 'asc' && $request->orderColumn) {
-            $sorted = $tempC->sortBy($request->orderColumn);
-            $tempData = $sorted->values()->all();
-        }
-
-        return response()->json([
-            'totalPagination' => ceil($totalPaging),
-            'data' => $tempData
-        ], 200);
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     private function search($request)
@@ -360,18 +495,34 @@ class TransferProductController
 
         $data = DB::table('productTransfers as pt')
             ->select(
-                'pt.productType'
+                'pt.numberId'
             )
             ->where('pt.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('pt.productType', 'like', '%' . $request->search . '%');
+            $data = $data->where('pt.numberId', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'pt.productType';
+            $temp_column[] = 'pt.numberId';
+        }
+
+        $data = DB::table('productTransfers as pt')
+            ->select(
+                'pt.transferNumber'
+            )
+            ->where('pt.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('pt.transferNumber', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'pt.transferNumber';
         }
 
         $data = DB::table('productTransfers as pt')
@@ -390,7 +541,6 @@ class TransferProductController
             $temp_column[] = 'pt.transferName';
         }
 
-        //
         $data = DB::table('productTransfers as pt')
             ->join('users as u', 'pt.userId', 'u.id')
             ->select(
@@ -408,60 +558,419 @@ class TransferProductController
             $temp_column[] = 'u.firstName';
         }
 
-        ///
-        $data = DB::table('productTransfers as pt')
-            ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-            ->select(
-                'ur.firstName'
-            )
-            ->where('pt.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('ur.firstName', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'ur.firstName';
-        }
-
-        ///
-        $data = DB::table('productTransfers as pt')
-            ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-            ->select(
-                'uo.firstName'
-            )
-            ->where('pt.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('uo.firstName', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'uo.firstName';
-        }
-
-        $data = DB::table('productTransfers as pt')
-            ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-            ->select(
-                'ua.firstName'
-            )
-            ->where('pt.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('ua.firstName', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column[] = 'ua.firstName';
-        }
-
         return $temp_column;
+    }
+
+    public function detailHistory(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        $data = DB::table('productTransferLogs as prl')
+            ->join('users as u', 'prl.userId', 'u.id')
+            ->select(
+                DB::raw("DATE_FORMAT(prl.created_at, '%W, %d %M %Y') as date"),
+                DB::raw("DATE_FORMAT(prl.created_at, '%H:%i') as time"),
+                'u.firstName as createdBy',
+                'prl.details',
+                'prl.event'
+            )
+            ->where('prl.productTransferId', '=', $request->id);
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('prl.updated_at', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+        return responseIndex(ceil($totalPaging), $data);
+    }
+
+    public function update(Request $request)
+    {
+        DB::beginTransaction();
+
+        try {
+            $validate = Validator::make($request->all(), [
+                'id' => 'required|integer',
+                'type' => 'required|string|in:draft,final',
+                'transferNumber' => 'required|string',
+                'transferName' => 'required|string',
+                'locationIdOrigin' => 'required|integer',
+                'locationIdDestination' => 'required|integer',
+                'userIdReceiver' => 'required|integer',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            $validate = Validator::make(
+                $request->products,
+                [
+                    '*.id' => 'nullable|integer',
+                    '*.productId' => 'required|integer',
+                    '*.productType' => 'required|string|in:productSell,productClinic',
+                    '*.quantity' => 'required|integer',
+                    '*.additionalCost' => 'required|numeric',
+                    '*.remark' => 'nullable|string',
+                ],
+                [
+                    '*.productId.required' => 'Product Id Should be Required!',
+                    '*.productId.integer' => 'Product Id Should be Integer!',
+
+                    '*.id.integer' => 'Detail Transfer Id Should be Integer!',
+
+                    '*.productType.required' => 'Product Type Should be Required!',
+                    '*.productType.string' => 'Product Type Should be String!',
+
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Integer!',
+
+                    '*.additionalCost.required' => 'Additional Cost Should be Required!',
+                    '*.additionalCost.numeric' => 'Additional Cost Should be Numeric!',
+
+                    '*.remark.string' => 'Remark Should be String!',
+                ]
+            );
+
+            $numberId = '';
+            $variantProduct = 0;
+            $totalProduct = 0;
+            $status = 0;
+            $checkAdminApproval = false;
+
+            if ($request->type == 'final') {
+                $status = 1;
+
+                $cntNum = DB::table('productTransfers')
+                    ->where('status', '!=', 0)
+                    ->count();
+
+                if ($cntNum == 0) {
+                    $numberId = '#' . str_pad(1, 8, 0, STR_PAD_LEFT);
+                } else {
+                    $numberId = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
+                }
+            } elseif ($request->type = 'draft') {
+                $numberId = 'draft';
+            }
+
+            foreach ($request->products as $value) {
+                $variantProduct += 1;
+                $totalProduct += $value['quantity'];
+            }
+
+            // if(!$tourist->wasRecentlyCreated && $tourist->wasChanged()){
+            //     // updateOrCreate performed an update
+            // }
+
+            // if(!$tourist->wasRecentlyCreated && !$tourist->wasChanged()){
+            //     // updateOrCreate performed nothing, row did not change
+            // }
+
+            // if($tourist->wasRecentlyCreated){
+            //    // updateOrCreate performed create
+            // }
+
+            $master = ProductTransfer::updateOrCreate(
+                ['id' => $request->id],
+                [
+                    'numberId' => $numberId,
+                    'transferNumber' => $request->transferNumber,
+                    'transferName' => $request->transferName,
+                    'locationIdOrigin' => $request->locationIdOrigin,
+                    'locationIdDestination' => $request->locationIdDestination,
+                    'variantProduct' => $variantProduct,
+                    'totalProduct' => $totalProduct,
+                    'userIdReceiver' => $request->userIdReceiver,
+                    'isAdminApproval' => 0,
+                    'status' => $status,
+                    'userId' => $request->user()->id,
+                ]
+            );
+
+            if ($numberId == 'final') {
+                productTransferLog($request->id, "Updated", "Waiting for Approval", $request->user()->id);
+            }
+
+            $productIdDestination = 0;
+            $adminApprovalMaster = false;
+
+            foreach ($request->products as $value) {
+
+                $checkAdminApproval = false;
+
+                if ($value['productType'] == 'productSell') {
+
+                    $dataProductOr = DB::table('productSells as ps')
+                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                        ->select('ps.fullName', 'psl.diffStock')
+                        ->where('psl.locationId', '=', $request->locationIdOrigin)
+                        ->where('ps.id', '=', $value['productId'])
+                        ->first();
+
+                    if (!$dataProductOr) {
+                        return responseInvalid(['Location Origin with Product Id is not exists in our data']);
+                    }
+
+                    $data = DB::table('productSells as ps')
+                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                        ->select('ps.*')
+                        ->where('psl.locationId', '=', $request->locationIdDestination)
+                        ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                        ->first();
+
+                    if (!$data) {
+                        $productIdDestination = 0;
+                    } else {
+                        $productIdDestination = $data->id;
+                    }
+
+                    // $productIdDestination = $data->id;
+
+                    if ($dataProductOr->diffStock <= 0) {
+                        $checkAdminApproval = true;
+                    }
+                } elseif ($value['productType'] == 'productClinic') {
+
+                    $dataProductOr = DB::table('productClinics as ps')
+                        ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                        ->select('ps.fullName', 'psl.diffStock')
+                        ->where('psl.locationId', '=', $request->locationIdOrigin)
+                        ->where('ps.id', '=', $value['productId'])
+                        ->first();
+
+                    if (!$dataProductOr) {
+                        return responseInvalid(['Location Origin with Product Id is not exists in our data']);
+                    }
+
+                    $data = DB::table('productClinics as ps')
+                        ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                        ->select('ps.*')
+                        ->where('psl.locationId', '=', $request->locationIdDestination)
+                        ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                        ->first();
+
+                    if (!$data) {
+                        $productIdDestination = 0;
+                    } else {
+                        $productIdDestination = $data->id;
+                    }
+
+                    if ($dataProductOr->diffStock <= 0) {
+                        $checkAdminApproval = true;
+                        $adminApprovalMaster = true;
+                    }
+                }
+
+                if ($value['status'] === 'del') {
+                    if ($value['id']) {
+                        $res = productTransferDetails::find($value['id']);
+
+                        $res->DeletedBy = $request->user()->id;
+                        $res->isDeleted = true;
+                        $res->DeletedAt = Carbon::now();
+                        $res->save();
+
+                        $images = productTransferSentImages::where('productTransferDetailId', '=', $value['id'])->get();
+
+                        if ($images) {
+                            foreach ($images as $vaDetail) {
+
+                                DB::table('productTransferSentImages')
+                                    ->where('productTransferDetailId', '=', $vaDetail['id'])
+                                    ->update([
+                                        'isDeleted' => true,
+                                        'DeletedBy' => $request->user()->id,
+                                        'DeletedAt' => Carbon::now()
+                                    ]);
+                            }
+                        }
+                    }
+                } else {
+                    $detail = productTransferDetails::updateOrCreate(
+                        ['id' => $value['id']],
+                        [
+                            'productTransferId' => $master->id,
+                            'productIdOrigin' => $value['productId'],
+                            'productIdDestination' => $productIdDestination,
+                            'productType' => $value['productType'],
+                            'quantity' => $value['quantity'],
+                            'remark' => $value['remark'],
+                            'isAdminApproval' => $checkAdminApproval,
+                            'additionalCost' => $value['additionalCost'],
+                            'userId' => $request->user()->id,
+                        ]
+                    );
+                }
+
+                if (is_null($value['id'])) {
+
+                    foreach ($value['images'] as $img) {
+
+                        if ($img['imagePath'] != '') {
+                            $image = str_replace('data:image/', '', $img['imagePath']);
+                            $image = explode(';base64,', $image);
+                            $imageName = Str::random(40) . '.' . $image[0];
+                            File::put(public_path('ProductTransferSentImages') . '/' . $imageName, base64_decode($image[1]));
+
+                            productTransferSentImages::create([
+                                'productTransferDetailId' => $detail->id,
+                                'label' => $img['label'],
+                                'realImageName' => $img['originalName'],
+                                'imagePath' => '/ProductTransferSentImages' . '/' . $imageName,
+                                'userId' => $request->user()->id,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            if ($adminApprovalMaster == true) {
+
+                $res = ProductTransfer::find($master->id);
+                $res->isAdminApproval = $adminApprovalMaster;
+                $res->save();
+            }
+
+            DB::commit();
+            return responseUpdate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    public function delete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $validate = Validator::make(
+                $request->all(),
+                [
+                    'id.*' => 'required|integer',
+                ],
+                [
+                    'id.*.required' => 'Product Type Should be Required!',
+                    'id.*.integer' => 'Product Type Should be Integer!',
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return responseInvalid($errors);
+            }
+
+            if (adminAccess($request->user()->id)) {
+
+                $tmp_num = '';
+
+                foreach ($request->id as $va) {
+
+                    $res = ProductTransfer::find($va);
+
+                    if (!$res) {
+
+                        return responseInvalid(['There is any Data not found!']);
+                    }
+
+                    if ($res->status == 5) {
+                        $tmp_num = $tmp_num . (string) $res->numberId . ', ';
+                    }
+                }
+
+                if ($tmp_num != '') {
+                    return responseInvalid(['Transfer with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already received!']);
+                }
+            } else {
+
+                $tmp_num = '';
+
+                foreach ($request->id as $va) {
+                    $res = ProductTransfer::find($va);
+
+                    if (!$res) {
+
+                        return responseInvalid(['There is any Data not found!']);
+                    }
+
+                    if ($res->status != 0) {
+                        $tmp_num = $tmp_num . (string) $res->numberId . ', ';
+                    }
+                }
+
+                if ($tmp_num != '') {
+                    return responseInvalid(['Transfer with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited, has already sent or has already received!']);
+                }
+            }
+
+            foreach ($request->id as $va) {
+                $res = ProductTransfer::find($va);
+
+                $res->DeletedBy = $request->user()->id;
+                $res->isDeleted = true;
+                $res->DeletedAt = Carbon::now();
+                $res->save();
+
+                $detail = productTransferDetails::where('productTransferId', '=', $va)->get();
+
+                foreach ($detail as $vaDetail) {
+
+                    DB::table('productTransferSentImages')
+                        ->where('productTransferDetailId', '=', $vaDetail['id'])
+                        ->update([
+                            'isDeleted' => true,
+                            'DeletedBy' => $request->user()->id,
+                            'DeletedAt' => Carbon::now()
+                        ]);
+                }
+                DB::table('ProductTransferDetails')
+                    ->where('productTransferId', '=', $va)
+                    ->update([
+                        'isDeleted' => true,
+                        'DeletedBy' => $request->user()->id,
+                        'DeletedAt' => Carbon::now()
+                    ]);
+            }
+            DB::commit();
+            return responseDelete();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
     }
 
     public function detail(Request $request)
@@ -483,110 +992,169 @@ class TransferProductController
 
         if ($findData) {
 
-            if ($findData->productType == 'Product Sell') {
+            if ($request->type == 'edit') {
 
                 $data = DB::table('productTransfers as pt')
-                    ->join('productSells as pso', 'pt.productIdOrigin', 'pso.id')
-                    ->join('productSellLocations as pslo', 'pso.id', 'pslo.productSellId')
-                    ->join('location as lo', 'pslo.locationId', 'lo.id')
-
-                    ->join('productSells as psd', 'pt.productIdDestination', 'psd.id')
-                    ->join('productSellLocations as psld', 'psd.id', 'psld.productSellId')
-                    ->join('location as ld', 'psld.locationId', 'ld.id')
-
+                    ->leftJoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
+                    ->leftJoin('location as ld', 'pt.locationIdDestination', 'ld.id')
                     ->join('users as u', 'pt.userId', 'u.id')
                     ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
                     ->select(
                         'pt.id',
                         'pt.transferNumber',
+                        DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as transferDate"),
                         'pt.transferName',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as origin',
-                        'ld.locationName as destination',
-                        'pso.fullName as productName',
-                        'pt.transferName',
-                        'pt.totalItem',
-                        'pt.imagePath',
-                        DB::raw("IFNULL(pt.remark,'') as remark"),
-                        DB::raw("TRIM(pt.additionalCost)+0 as additionalCost"),
-                        DB::raw("CASE WHEN pt.isAdminApproval = 1 THEN 'Yes' WHEN pt.isAdminApproval = 0 THEN 'No' END as isAdminApproval"),
-                        DB::raw("IFNULL(pt.reference,'') as reference"),
-                        DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
-                        DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
-                        'pt.isApprovedOffice',
-                        'u.firstName as createdBy',
-                        'ur.firstName as receivedBy',
-                        'u.firstName as createdBy',
-
-                        DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                        DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
+                        'lo.id as locationOriginId',
+                        'lo.locationName as locationOriginName',
+                        'ld.id as locationDestinationId',
+                        'ld.locationName as locationDestinationName',
+                        'ur.id as userIdReceiver',
                         DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as transferDate"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.receivedAt, '%d/%m/%Y %H:%i:%s'),'') as receivedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
                     )
                     ->where('pt.id', '=', $request->id)
                     ->first();
 
-                return response()->json($data, 200);
-            } elseif ($findData->productType == 'Product Clinic') {
+                $detail = productTransferDetails::where('productTransferId', '=', $request->id)->get();
+
+                foreach ($detail as $value) {
+                    if ($value->productType == 'productSell') {
+                        $prd = DB::table('productSells as ps')
+                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                            ->select(
+                                'ptd.id',
+                                'ps.id as productId',
+                                'ps.fullName',
+                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                                'ptd.remark',
+                                'ptd.productType',
+                                'ptd.quantity',
+                            )
+                            ->where('ptd.id', '=', $value->id)
+                            ->where('ptd.isDeleted', '=', 0)
+                            ->first();
+                    } elseif ($value->productType == 'productClinic') {
+                        $prd = DB::table('productClinics as ps')
+                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                            ->select(
+                                'ptd.id',
+                                'ps.id as productId',
+                                'ps.fullName',
+                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                                'ptd.remark',
+                                'ptd.productType',
+                                'ptd.quantity',
+                            )
+                            ->where('ptd.id', '=', $value->id)
+                            ->where('ptd.isDeleted', '=', 0)
+                            ->first();
+                    }
+
+                    if ($prd) {
+                        $images = DB::table('productTransferSentImages as pti')
+                            ->join('productTransferDetails as ptd', 'pti.productTransferDetailId', 'ptd.id')
+                            ->select(
+                                'pti.realImageName',
+                                'pti.label',
+                                'pti.imagePath',
+                            )
+                            ->where('pti.productTransferDetailId', '=', $value->id)
+                            ->get();
+
+                        $datas[] = array(
+                            'id' => $prd->id,
+                            'productId' => $prd->productId,
+                            'fullName' => $prd->fullName,
+                            'productType' => $prd->productType,
+                            'quantity' => $prd->quantity,
+                            'remark' => $prd->remark,
+                            'additionalCost' => $prd->additionalCost,
+                            'images' => $images
+                        );
+                    }
+                    $data->detail = $datas;
+                }
+
+                return responseList($data);
+            } elseif ($request->type == 'receive') {
+                # code...
+            } else {
 
                 $data = DB::table('productTransfers as pt')
-                    ->join('productClinics as pco', 'pt.productIdOrigin', 'pco.id')
-                    ->join('productClinicLocations as pclo', 'pco.id', 'pclo.productClinicId')
-                    ->join('location as lo', 'pclo.locationId', 'lo.id')
-
-                    ->join('productClinics as pcd', 'pt.productIdDestination', 'pcd.id')
-                    ->join('productClinicLocations as pcld', 'pcd.id', 'pcld.productClinicId')
-                    ->join('location as ld', 'pcld.locationId', 'ld.id')
-
+                    ->leftJoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
+                    ->leftJoin('location as ld', 'pt.locationIdDestination', 'ld.id')
                     ->join('users as u', 'pt.userId', 'u.id')
                     ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
                     ->select(
-                        'pt.id',
+                        'pt.numberId',
                         'pt.transferNumber',
                         'pt.transferName',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as origin',
-                        'ld.locationName as destination',
-                        'pco.fullName as productName',
-                        'pt.transferName',
-                        'pt.totalItem',
-                        'pt.imagePath',
-                        DB::raw("IFNULL(pt.remark,'') as remark"),
-                        DB::raw("TRIM(pt.additionalCost)+0 as additionalCost"),
-                        DB::raw("CASE WHEN pt.isAdminApproval = 1 THEN 'Yes' WHEN pt.isAdminApproval = 0 THEN 'No' END as isAdminApproval"),
-                        DB::raw("IFNULL(pt.reference,'') as reference"),
-                        DB::raw("CASE WHEN pt.isAdminApproval = 0 THEN '' WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as statusAdmin"),
-                        DB::raw("CASE WHEN pt.isApprovedOffice = 0 THEN 'Waiting for approval' WHEN pt.isApprovedOffice = 1 THEN 'Approved' ELSE 'Reject' END as statusOffice"),
-                        'pt.isApprovedOffice',
-                        'u.firstName as createdBy',
-                        'ur.firstName as receivedBy',
-                        'u.firstName as createdBy',
-
-                        DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                        DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
+                        'lo.id as idBranchOrigin',
+                        'lo.locationName as branchOrigin',
+                        'ld.id as idBranchDestination',
+                        'ld.locationName as branchDestination',
+                        'ur.id as idUserReceived',
                         DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as transferDate"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.officeApprovedAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.receivedAt, '%d/%m/%Y %H:%i:%s'),'') as receivedAt"),
-                        DB::raw("IFNULL(DATE_FORMAT(pt.adminApprovedAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
+                        'u.firstName as createdBy',
+                        DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as transferDate")
                     )
                     ->where('pt.id', '=', $request->id)
                     ->first();
 
-                return response()->json($data, 200);
+                $detail = productTransferDetails::where('productTransferId', '=', $request->id)->get();
+                //tinggal gambarnya belom
+                foreach ($detail as $value) {
+                    if ($value->productType == 'productSell') {
+                        $prd = DB::table('productSells as ps')
+                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                            ->select(
+                                'ptd.id',
+                                'ps.fullName',
+                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                                'ptd.remark',
+                                'ptd.productType',
+                                'ptd.quantity',
+                            )
+                            ->where('ptd.id', '=', $value->id)
+                            ->first();
+                    } elseif ($value->productType == 'productClinic') {
+                        $prd = DB::table('productClinics as ps')
+                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                            ->select(
+                                'ptd.id',
+                                'ps.fullName',
+                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                                'ptd.remark',
+                                'ptd.productType',
+                                'ptd.quantity',
+                            )
+                            ->where('ptd.id', '=', $value->id)
+                            ->first();
+                    }
+
+                    $images = DB::table('productTransferSentImages as pti')
+                        ->join('productTransferDetails as ptd', 'pti.productTransferDetailId', 'ptd.id')
+                        ->select(
+                            'pti.realImageName',
+                            'pti.label',
+                            'pti.imagePath',
+                        )
+                        ->where('pti.productTransferDetailId', '=', $value->id)
+                        ->where('pti.isDeleted', '=', 0)
+                        ->get();
+
+                    $datas[] = array(
+                        'id' => $prd->id,
+                        'fullName' => $prd->fullName,
+                        'productType' => $prd->productType,
+                        'quantity' => $prd->quantity,
+                        'remark' => $prd->remark,
+                        'additionalCost' => $prd->additionalCost,
+                        'images' => $images
+                    );
+                }
+
+                $data->detail = $datas;
+                return responseList($data);
             }
         } else {
             return response()->json([
@@ -602,13 +1170,15 @@ class TransferProductController
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
         $role = role($request->user()->id);
-        $locations = $request->locationId;
+        $locations = $request->locationDestinationId;
+        $status = $request->status;
+        $statusName = "";
 
         if (!$locations[0] == null) {
 
             $location = DB::table('location')
                 ->select('locationName')
-                ->whereIn('id', $request->locationId)
+                ->whereIn('id', $locations)
                 ->get();
 
             if ($location) {
@@ -620,18 +1190,40 @@ class TransferProductController
             $tmp = rtrim($tmp, ", ");
         }
 
+        if ($status === 0) {
+            $statusName = "Draft";
+        } elseif ($status === 1) {
+            $statusName = "Waiting for Approval";
+        } elseif ($status === 2) {
+            $statusName = "Rejected";
+        } elseif ($status === 3) {
+            $statusName = "Approved";
+        } elseif ($status === 4) {
+            $statusName = "Product Sent";
+        } elseif ($status === 5) {
+            $statusName = "Product Received";
+        }
+
         if ($tmp == "") {
-            $fileName = "Rekap Produk Transfer " . $date . ".xlsx";
+            if ($statusName == "") {
+                $fileName = "Rekap Produk Transfer " . $date . ".xlsx";
+            } else {
+                $fileName = "Rekap Produk Transfer " . $statusName . " " . $date . ".xlsx";
+            }
         } else {
-            $fileName = "Rekap Produk Transfer " . $tmp . " " . $date . ".xlsx";
+            if ($statusName == "") {
+                $fileName = "Rekap Produk Transfer " . $tmp . " " . $date . ".xlsx";
+            } else {
+                $fileName = "Rekap Produk Transfer " . $statusName . " " . $tmp . " " . $date . ".xlsx";
+            }
         }
 
         return Excel::download(
             new ProductTransferReport(
                 $request->orderValue,
                 $request->orderColumn,
-                $request->locationId,
-                $role
+                $request->locationDestinationId,
+                $request->status
             ),
             $fileName
         );
@@ -662,129 +1254,323 @@ class TransferProductController
 
     public function approval(Request $request)
     {
+        DB::beginTransaction();
+        try {
+
+            $validate = Validator::make($request->all(), [
+                'productTransferId' => 'required|integer',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return responseInvalid([$errors]);
+            }
+
+            $isAdmin = false;
+
+            if (adminAccess($request->user()->id)) {
+                $isAdmin = true;
+            }
+
+            $find = ProductTransfer::find($request->productTransferId);
+
+            if (!$find) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Data Transfer Product not found!'],
+                ], 422);
+            } elseif ($find->numberId == 'draft') {
+                return responseInvalid(['Transfer Product currenlty still in draft!']);
+            }
+
+            if ($request->isAcceptedAll == '1') {
+
+                $detail = productTransferDetails::where('productTransferId', '=', $request->productTransferId)->get();
+
+                foreach ($detail as $value) {
+
+                    $detail2 = productTransferDetails::find($value['id']);
+
+                    if ($isAdmin) {
+
+                        if ($detail2->isAdminApproval == 1) {
+                            $detail2->isApprovedAdmin = 1;
+                            $detail2->userIdAdmin = $request->user()->id;
+                            $detail2->adminApprovedAt = Carbon::now();
+                        }
+                    } else {
+                        $detail2->isApprovedOffice = 1;
+                        $detail2->userIdOffice = $request->user()->id;
+                        $detail2->officeApprovedAt = Carbon::now();
+                    }
+
+                    $detail2->accepted = $detail2->quantity;
+                    $detail2->updated_at = Carbon::now();
+                    $detail2->save();
+                }
+
+                $checkAdminApproval = DB::table('productTransferDetails')
+                    ->where('productTransferId', '=', $request->productTransferId)
+                    ->where('isAdminApproval', '=', 1)
+                    ->get();
+
+                if ($checkAdminApproval) {
+
+                    $adminApproved = DB::table('productTransferDetails')
+                        ->where('productTransferId', '=', $request->productTransferId)
+                        ->where('isApprovedAdmin', '=', 1)
+                        ->get();
+
+                    if (count($checkAdminApproval) == count($adminApproved)) {
+                        $find->status = 3;
+                        $find->updated_at = Carbon::now();
+                        $find->userUpdateId = $request->user()->id;
+                        $find->save();
+                    }
+                } else {
+                    $find->status = 3;
+                    $find->updated_at = Carbon::now();
+                    $find->userUpdateId = $request->user()->id;
+                    $find->save();
+                }
+            } elseif ($request->isRejectedAll == '1') {
+                $find->status = 2;
+                $find->updated_at = Carbon::now();
+                $find->userUpdateId = $request->user()->id;
+                $find->save();
+
+                $detail = productTransferDetails::where('productTransferId', '=', $request->productTransferId)->get();
+
+                foreach ($detail as $value) {
+
+                    $detail2 = productTransferDetails::find($value['id']);
+
+                    if ($isAdmin) {
+                        $detail2->isApprovedAdmin = 2;
+                        $detail2->userIdAdmin = $request->user()->id;
+                        $detail2->adminApprovedAt = Carbon::now();
+                        $detail2->reasonAdmin = $request->reasonRejectAll;
+                    } else {
+                        $detail2->isApprovedOffice = 2;
+                        $detail2->userIdOffice = $request->user()->id;
+                        $detail2->officeApprovedAt = Carbon::now();
+                        $detail2->reasonOffice = $request->reasonRejectAll;
+                    }
+
+                    $detail2->rejected = $detail2->quantity;
+                    $detail2->updated_at = Carbon::now();
+                    $detail2->save();
+                }
+            } else {
+
+                $datas = json_decode($request->productTransfers, true);
+
+                $validate = Validator::make(
+                    $datas,
+                    [
+                        '*.productTransferDetailId' => 'required|integer',
+                        '*.transferQuantity' => 'required|integer',
+                        '*.accepted' => 'required|integer',
+                        '*.rejected' => 'required|integer',
+                    ],
+                    [
+                        '*.productTransferDetailId.required' => 'Product Transfer Detail Id Should be Required!',
+                        '*.productTransferDetailId.integer' => 'Product Transfer Detail Id Should be Integer!',
+                        '*.transferQuantity.required' => 'Transfer Quantity Should be Required!',
+                        '*.transferQuantity.integer' => 'Transfer Quantity Should be Integer!',
+                        '*.accepted.required' => 'Accepeted Should be Required!',
+                        '*.accepted.integer' => 'Accepeted Should be Integer!',
+                        '*.rejected.required' => 'Rejected Should be Required!',
+                        '*.rejected.integer' => 'Rejected Should be Integer!',
+                    ]
+                );
+
+                if ($validate->fails()) {
+                    $errors = $validate->errors()->first();
+
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => [$errors],
+                    ], 422);
+                }
+
+                foreach ($datas as $value) {
+
+                    $validateProductTransfer = productTransferDetails::where('id', '=', $value['productTransferDetailId'])
+                        ->where('productTransferId', '=', $request->productTransferId)->first();
+
+                    if (!$validateProductTransfer) {
+
+                        return responseInvalid(['Data Product Transfer with Product Transfer Detail are not valid!']);
+                    }
+
+                    $findQuantity = productTransferDetails::find($value['productTransferDetailId']);
+
+                    if (!$findQuantity) {
+
+                        return responseInvalid(['Data not found!']);
+                    }
+
+                    if ($findQuantity->quantity != $value['transferQuantity']) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Quantity Transfer Product not same with system!'],
+                        ], 422);
+                    }
+
+                    $totalApproval = $value['accepted'] + $value['rejected'];
+
+                    if ($totalApproval != $value['transferQuantity']) {
+                        return response()->json([
+                            'message' => 'The given data was invalid.',
+                            'errors' => ['Total data approval and reject are not same with total Transfer Product!'],
+                        ], 422);
+                    }
+
+                    if ($isAdmin) {
+                        if ($value['rejected'] == $value['transferQuantity']) {
+
+                            if ($value['reasonReject'] == '') {
+                                return responseInvalid(['Reason Reject must be filled!']);
+                            }
+
+                            $findQuantity->isApprovedAdmin = 2;
+                            $findQuantity->userIdAdmin = $request->user()->id;
+                            $findQuantity->adminApprovedAt = Carbon::now();
+                            $findQuantity->reasonAdmin = $value['reasonReject'];
+
+                            $findQuantity->rejected = $value['rejected'];
+                            $findQuantity->updated_at = Carbon::now();
+                            $findQuantity->save();
+                        } else if ($value['rejected'] > 0) {
+
+                            if ($value['reasonReject'] == '') {
+                                return responseInvalid(['Reason Reject must be filled!']);
+                            }
+
+                            $findQuantity->isApprovedAdmin = 1;
+                            $findQuantity->userIdAdmin = $request->user()->id;
+                            $findQuantity->adminApprovedAt = Carbon::now();
+                            $findQuantity->reasonAdmin = $value['reasonReject'];
+
+                            $findQuantity->rejected = $value['rejected'];
+                            $findQuantity->accepted = $value['accepted'];
+                            $findQuantity->updated_at = Carbon::now();
+                            $findQuantity->save();
+                        } elseif ($value['accepted'] == $value['transferQuantity']) {
+                            $findQuantity->isApprovedAdmin = 1;
+                            $findQuantity->userIdAdmin = $request->user()->id;
+                            $findQuantity->adminApprovedAt = Carbon::now();
+
+                            $findQuantity->accepted = $value['accepted'];
+                            $findQuantity->updated_at = Carbon::now();
+                            $findQuantity->save();
+                        }
+                    } else {
+                        if ($value['rejected'] == $value['transferQuantity']) {
+
+                            if ($value['reasonReject'] == '') {
+                                return responseInvalid(['Reason Reject must be filled!']);
+                            }
+
+                            $findQuantity->isApprovedOffice = 2;
+                            $findQuantity->userIdOffice = $request->user()->id;
+                            $findQuantity->officeApprovedAt = Carbon::now();
+                            $findQuantity->reasonOffice = $value['reasonReject'];
+
+                            $findQuantity->rejected = $value['rejected'];
+                            $findQuantity->updated_at = Carbon::now();
+                            $findQuantity->save();
+                        } else if ($value['rejected'] > 0) {
+
+                            if ($value['reasonReject'] == '') {
+                                return responseInvalid(['Reason Reject must be filled!']);
+                            }
+
+                            $findQuantity->isApprovedOffice = 1;
+                            $findQuantity->userIdOffice = $request->user()->id;
+                            $findQuantity->officeApprovedAt = Carbon::now();
+                            $findQuantity->reasonOffice = $value['reasonReject'];
+
+                            $findQuantity->rejected = $value['rejected'];
+                            $findQuantity->accepted = $value['accepted'];
+                            $findQuantity->updated_at = Carbon::now();
+                            $findQuantity->save();
+                        } elseif ($value['accepted'] == $value['transferQuantity']) {
+                            $findQuantity->isApprovedOffice = 1;
+                            $findQuantity->userIdOffice = $request->user()->id;
+                            $findQuantity->officeApprovedAt = Carbon::now();
+
+                            $findQuantity->accepted = $value['accepted'];
+                            $findQuantity->updated_at = Carbon::now();
+                            $findQuantity->save();
+                        }
+                    }
+                }
+
+                $prodTransfer = ProductTransfer::find($request->productTransferId);
+
+                $findDetailAdmin = DB::table('productTransferDetails')
+                    ->where('productTransferId', '=', $request->productTransferId)
+                    ->where('isAdminApproval', '=', 1)
+                    ->get();
+
+                if (count($findDetailAdmin) > 0) {
+                    $findAdminApproval = DB::table('productTransferDetails')
+                        ->where('productTransferId', '=', $request->productTransferId)
+                        ->where('isApprovedAdmin', '=', 1)
+                        ->get();
+
+                    if (count($findDetailAdmin) == count($findAdminApproval)) {
+                        $prodTransfer->status = 3;
+                        $prodTransfer->updated_at = Carbon::now();
+                    }
+                } else {
+                    $findOfficeApproval = DB::table('productTransferDetails')
+                        ->where('productTransferId', '=', $request->productTransferId)
+                        ->where('isApprovedOffice', '=', 1)
+                        ->get();
+
+                    if (count($findOfficeApproval) > 0) {
+                        $prodTransfer->status = 3;
+                        $prodTransfer->updated_at = Carbon::now();
+                    }
+                }
+
+                $prodTransfer->save();
+            }
+
+            DB::commit();
+            return responseUpdate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    public function sentReceiver(Request $request)
+    {
         $validate = Validator::make($request->all(), [
-            'id' => 'required|integer',
-            'status' => 'required|integer|in:1,2',
-            'reason' => 'nullable|string',
+            'productTransferId' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
-
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
-        $status = $this->validationApproval($request);
+        $prod = ProductTransfer::find($request->productTransferId);
 
-        if ($status == '') {
-
-            $role = role($request->user()->id);
-
-            $trfProd = ProductTransfer::find($request->id);
-
-            if ($role == 'Administrator') {
-
-                if ($trfProd->isApprovedAdmin == 1 || $trfProd->isApprovedAdmin == 2) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Product has already approved or rejected'],
-                    ], 422);
-                }
-
-                if ($request->status == 2) {
-                    ProductTransfer::where('id', '=', $request->id)
-                        ->update(
-                            [
-                                'groupData' => 'history',
-                                'userIdAdmin' => $request->user()->id,
-                                'isApprovedAdmin' => $request->status,
-                                'reasonAdmin' => $request->reason,
-                                'adminApprovedAt' => Carbon::now()
-                            ]
-                        );
-                } else {
-                    ProductTransfer::where('id', '=', $request->id)
-                        ->update(
-                            [
-                                'userIdAdmin' => $request->user()->id,
-                                'isApprovedAdmin' => $request->status,
-                                'reasonAdmin' => $request->reason,
-                                'adminApprovedAt' => Carbon::now()
-                            ]
-                        );
-                }
-            } elseif ($role == 'Office') {
-
-                if ($trfProd->isApprovedOffice == 1 || $trfProd->isApprovedOffice == 2) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Product has already approved or rejected'],
-                    ], 422);
-                }
-
-                if ($request->status == 2) {
-                    ProductTransfer::where('id', '=', $request->id)
-                        ->update(
-                            [
-                                'groupData' => 'history',
-                                'userIdOffice' => $request->user()->id,
-                                'isApprovedOffice' => $request->status,
-                                'reasonOffice' => $request->reason,
-                                'officeApprovedAt' => Carbon::now()
-                            ]
-                        );
-                } else {
-                    ProductTransfer::where('id', '=', $request->id)
-                        ->update(
-                            [
-                                'userIdOffice' => $request->user()->id,
-                                'isApprovedOffice' => $request->status,
-                                'reasonOffice' => $request->reason,
-                                'officeApprovedAt' => Carbon::now()
-                            ]
-                        );
-                }
-            }
-
-            $prod = ProductTransfer::find($request->id);
-
-            $status = 0;
-
-            if ($prod->isAdminApproval == 0) {
-                if ($prod->isApprovedOffice == 1) {
-                    $status = 1;
-                } elseif ($prod->isApprovedOffice == 2) {
-                    $status = 2;
-                }
-            } elseif ($prod->isAdminApproval == 1) {
-
-                if ($prod->isApprovedAdmin == 1 && $prod->isApprovedOffice == 1) {
-                    $status = 1;
-                } elseif ($prod->isApprovedAdmin == 2) {
-                    $status = 2;
-                }
-            }
-
-            ProductTransfer::where('id', '=', $request->id)
-                ->update(
-                    [
-                        'status' => $status,
-                    ]
-                );
-        } else {
-            return $status;
+        if ($prod->status != 3) {
+            return responseInvalid(['Only accepted Transfer can be sent to Receiver!']);
         }
 
-        return response()->json(
-            [
-                'message' => 'Approval Data Successful!',
-            ],
-            200
-        );
+        $prod->status = 4;
+        $prod->save();
+
+        return responseUpdate();
     }
 
     public function receive(Request $request)
@@ -942,5 +1728,42 @@ class TransferProductController
                 'errors' => ['Product does not exist!'],
             ], 422);
         }
+    }
+
+    function productListWithTwoBranch(Request $request)
+    {
+        //proses:
+        // tidak ada di cabang destination
+        // jika memang ada, maka akan melakukan pencarian berdasarkan full name dengan fungsi like, jadi tidak akan membuat produk baru di cabang destination.
+        $validate = Validator::make($request->all(), [
+            'productType' => 'required|string|in:productSell,productClinic',
+            'branchOrigin' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        if ($request->productType == 'productSell') {
+            $data = DB::table('productSellLocations as psl')
+                ->join('productSells as ps', 'psl.productSellId', 'ps.id')
+                ->select('ps.id', 'ps.fullName')
+                ->where('psl.locationId', '=', $request->branchOrigin)
+                ->get();
+        } else if ($request->productType == 'productClinic') {
+            $data = DB::table('productClinicLocations as psl')
+                ->join('productClinics as ps', 'psl.productClinicId', 'ps.id')
+                ->select('ps.id', 'ps.fullName')
+                ->where('psl.locationId', '=', $request->branchOrigin)
+                ->get();
+        }
+
+        return response()->json($data, 200);
     }
 }

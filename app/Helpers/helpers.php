@@ -8,6 +8,7 @@
 
 use App\Models\ProductClinicLog;
 use App\Models\productRestockLog;
+use App\Models\ProductTransferLog;
 use App\Models\ProductSellLog;
 
 if (!function_exists('adminAccess')) {
@@ -21,6 +22,24 @@ if (!function_exists('adminAccess')) {
             ->first();
 
         if ($user->roleName != "Administrator") {
+            return false;
+        } else {
+            return true;
+        }
+    }
+}
+
+if (!function_exists('officeAccess')) {
+    function officeAccess($id)
+    {
+
+        $user = DB::table('users as u')
+            ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
+            ->select('u.id', 'ur.roleName')
+            ->where('u.id', '=', $id)
+            ->first();
+
+        if ($user->roleName != "Office") {
             return false;
         } else {
             return true;
@@ -182,6 +201,146 @@ if (!function_exists('productRestockLog')) {
         ]);
     }
 }
+
+if (!function_exists('productTransferLog')) {
+    function productTransferLog($productTransferId, $event, $detail, $userId)
+    {
+        productTransferLog::create([
+            'productTransferId' => $productTransferId,
+            'event' => $event,
+            'details' => $detail,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('responseInvalid')) {
+    function responseInvalid($errors)
+    {
+        return response()->json([
+            'message' => 'The given data was invalid.',
+            'errors' => $errors,
+        ], 422);
+    }
+}
+
+if (!function_exists('responseCreate')) {
+    function responseCreate()
+    {
+        return response()->json(
+            [
+                'message' => 'Add Data Successful!',
+            ],
+            200
+        );
+    }
+}
+
+if (!function_exists('responseUpdate')) {
+    function responseUpdate()
+    {
+        return response()->json([
+            'message' => 'Update Data Successful',
+        ], 200);
+    }
+}
+
+if (!function_exists('responseDelete')) {
+    function responseDelete()
+    {
+        return response()->json([
+            'message' => 'Delete Data Successful',
+        ], 200);
+    }
+}
+
+if (!function_exists('responseIndex')) {
+    function responseIndex($paging, $data)
+    {
+        return response()->json([
+            'totalPagination' => $paging,
+            'data' => $data
+        ], 200);
+    }
+}
+
+if (!function_exists('responseList')) {
+    function responseList($data)
+    {
+        return response()->json($data, 200);
+    }
+}
+
+if (!function_exists('paginateData')) {
+    function paginateData($query,  $request)
+    {
+        $itemPerPage = $request->rowPerPage;
+        // dd($request->all());
+        $totalPaging = 0;
+        $count_data = 0;
+
+        if ($itemPerPage == 0) {
+            $data = $query->get();
+            $count_data = $query->count();
+        } else {
+            $page = $request->goToPage;
+
+            $offset = ($page - 1) * $itemPerPage;
+            $count_data = $query->count();
+            $count_result = $count_data - $offset;
+            if ($count_result < 0) {
+                $data = $query->offset(0)->limit($itemPerPage)->get();
+            } else {
+                $data = $query->offset($offset)->limit($itemPerPage)->get();
+            }
+            $totalPaging = $count_data / $itemPerPage;
+        }
+
+
+        return collect([
+            'totalPagination' => ceil($totalPaging),
+            'totalData' => $count_data,
+            'data' => $data
+        ]);
+    }
+}
+if (!function_exists('responseSuccess')) {
+    function responseSuccess($data = [], $msg = 'Insert Data Successful!')
+    {
+        return response()->json(
+            [
+                'data' => $data,
+                'message' => $msg,
+            ],
+            200
+        );
+    }
+}
+if (!function_exists('responseErrorValidation')) {
+    function responseErrorValidation($errors, $msg = 'The given data was invalid.')
+    {
+        return response()->json(
+            [
+                'message' => $msg,
+                'errors' => $errors,
+            ],
+            422
+        );
+    }
+}
+if (!function_exists('responseError')) {
+    function responseError($errors, $msg = 'The given data was invalid.')
+    {
+        return response()->json(
+            [
+                'message' => $msg,
+                'errors' => $errors,
+            ],
+            500
+        );
+    }
+}
+
 //add by danny wahyudi
 // if (!function_exists('securityGroupAdmin')) {
 //     function securityGroupAdmin($id)

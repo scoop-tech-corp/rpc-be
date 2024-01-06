@@ -18,179 +18,79 @@ class DataRecapProductTransfer implements FromCollection, ShouldAutoSize, WithHe
 
     protected $orderValue;
     protected $orderColumn;
-    protected $locationId;
-    protected $role;
+    protected $locationDestinationId;
+    protected $status;
 
-    public function __construct($orderValue, $orderColumn, $locationId, $role)
+    public function __construct($orderValue, $orderColumn, $locationDestinationId, $status)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
-        $this->locationId = $locationId;
-        $this->role = $role;
+        $this->locationDestinationId = $locationDestinationId;
+        $this->status = $status;
     }
 
     public function collection()
     {
         $data = DB::table('productTransfers as pt')
             ->join('users as u', 'pt.userId', 'u.id')
-            ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-            ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-            ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
+            ->leftjoin('location as lo', 'pt.locationIdOrigin', 'lo.id')
+            ->leftjoin('location as ld', 'pt.locationIdDestination', 'ld.id')
             ->select(
-                'pt.id as id',
-                'pt.productType',
-                'pt.productIdOrigin',
-                'pt.productIdDestination',
-                'pt.transferName',
+                'pt.numberId',
                 'pt.transferNumber',
-                'pt.totalItem',
-                'pt.isAdminApproval',
-                DB::raw("CASE pt.isAdminApproval = 1 WHEN pt.isApprovedAdmin = 0 THEN 'Waiting for approval' WHEN pt.isApprovedAdmin = 1 THEN 'Approved' ELSE 'Reject' END as Status"),
-                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
+                'pt.transferName',
+                'pt.variantProduct',
+                'pt.totalProduct',
+                'pt.totalProduct',
+                DB::raw("
+                CASE
+                WHEN pt.status = 0 THEN 'Draft'
+                WHEN pt.status = 1 THEN 'Waiting for Approval'
+                WHEN pt.status = 2 THEN 'Rejected'
+                WHEN pt.status = 3 THEN 'Approved'
+                WHEN pt.status = 4 THEN 'Product Sent'
+                WHEN pt.status = 5 THEN 'Product Received'
+                END as status"),
+                'lo.locationName as locationOriginName',
+                'ld.locationName as locationDestinationName',
                 'u.firstName as createdBy',
-                'ur.firstName as receivedBy',
-
-                DB::raw("IFNULL(uo.firstName,'') as officeApprovedBy"),
-                DB::raw("IFNULL(ua.firstName,'') as adminApprovedBy"),
-                DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
+                DB::raw("DATE_FORMAT(pt.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->where('pt.isDeleted', '=', 0)
-            ->where('pt.groupData', '=', 'history');
+            ->where('pt.isDeleted', '=', 0);
+
+        $locations = $this->locationDestinationId;
+
+        // if ($this->locationDestinationId) {
+        if (!$locations[0] == null) {
+            $data = $data->whereIn('ld.id', $this->locationDestinationId);
+        }
+
+        if ($this->status) {
+            $data = $data->where('pt.status', '=', $this->status);
+        }
+
+        if ($this->orderValue) {
+            $data = $data->orderBy($this->orderColumn, $this->orderValue);
+        }
 
         $data = $data->orderBy('pt.updated_at', 'desc')->get();
 
-        $tempData = [];
-
-        foreach ($data as $value) {
-
-            if ($value->productType == "Product Sell") {
-
-                $res = DB::table('productTransfers as pt')
-                    ->join('productSells as pso', 'pt.productIdOrigin', 'pso.id')
-                    ->join('productSellLocations as pslo', 'pso.id', 'pslo.productSellId')
-                    ->join('location as lo', 'pslo.locationId', 'lo.id')
-
-                    ->join('productSells as psd', 'pt.productIdDestination', 'psd.id')
-                    ->join('productSellLocations as psld', 'psd.id', 'psld.productSellId')
-                    ->join('location as ld', 'psld.locationId', 'ld.id')
-
-                    ->join('users as u', 'pt.userId', 'u.id')
-                    ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-                    ->select(
-                        'pt.id as id',
-                        'pt.productType',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as from',
-                        'lo.id as locationIdOrigin',
-                        'ld.locationName as to',
-                        'ld.id as locationIdDestination',
-                        'pso.fullName as productName',
-                        'pt.transferName',
-                        'pt.transferNumber',
-                        'pt.totalItem',
-                        'pt.status',
-                        'u.firstName as createdBy',
-                        'ur.firstName as receivedBy',
-                        DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                    )
-                    ->where('pt.id', '=', $value->id);
-
-                $locations = $this->locationId;
-
-                if (!$locations[0] == null) {
-
-                    $data = $data->whereIn('lo.id', $this->locationId);
-                }
-
-                $res = $res->first();
-
-                if ($res) {
-                    array_push($tempData, $res);
-                }
-            } elseif ($value->productType == "Product Clinic") {
-                $res = DB::table('productTransfers as pt')
-
-                    ->join('productClinics as pco', 'pt.productIdOrigin', 'pco.id')
-                    ->join('productClinicLocations as pclo', 'pco.id', 'pclo.productClinicId')
-                    ->join('location as lo', 'pclo.locationId', 'lo.id')
-
-                    ->join('productClinics as pcd', 'pt.productIdDestination', 'pcd.id')
-                    ->join('productClinicLocations as pcld', 'pcd.id', 'pcld.productClinicId')
-                    ->join('location as ld', 'pcld.locationId', 'ld.id')
-
-                    ->join('users as u', 'pt.userId', 'u.id')
-                    ->join('users as ur', 'pt.userIdReceiver', 'ur.id')
-                    ->leftjoin('users as uo', 'pt.userIdOffice', 'uo.id')
-                    ->leftjoin('users as ua', 'pt.userIdAdmin', 'ua.id')
-                    ->select(
-                        'pt.id as id',
-                        'pt.productType',
-                        'pt.productIdOrigin',
-                        'pt.productIdDestination',
-                        'lo.locationName as from',
-                        'lo.id as locationIdOrigin',
-                        'ld.locationName as to',
-                        'ld.id as locationIdDestination',
-                        'ld.locationName as to',
-                        'pco.fullName as productName',
-                        'pt.transferName',
-                        'pt.transferNumber',
-                        'pt.totalItem',
-                        'pt.status',
-                        'ur.firstName as receivedBy',
-                        'u.firstName as createdBy',
-                        DB::raw("IFNULL(ur.firstName,'') as receivedBy"),
-
-                        DB::raw("IFNULL(DATE_FORMAT(pt.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                    )
-                    ->where('pt.id', '=', $value->id);
-
-                $locations = $this->locationId;
-
-                if (!$locations[0] == null) {
-
-                    $data = $data->whereIn('lo.id', $this->locationId);
-                }
-
-                $res = $res->first();
-
-                if ($res) {
-                    array_push($tempData, $res);
-                }
-            }
-        }
-
-        $tempC = collect($tempData);
-        $sorted = '';
-
-        if ($this->orderValue == 'desc' && $this->orderColumn) {
-            $tempData = $tempC->sortByDesc($this->orderColumn);
-        } elseif ($this->orderValue == 'asc' && $this->orderColumn) {
-            $sorted = $tempC->sortBy($this->orderColumn);
-            $tempData = $sorted->values()->all();
-        }
-
         $val = 1;
-        foreach ($tempData as $key) {
+        foreach ($data as $key) {
             $key->number = $val;
             $val++;
         }
 
-        return collect($tempData);
+        return $data;
     }
 
     public function headings(): array
     {
         return [
             [
-                'No.', 'Nomor Transfer', 'Nama Transfer', 'Asal',
-                'Tujuan', 'Tipe Produk',
-                'Nama Produk', 'Jumlah Item', 'Status', 'Dibuat Oleh',
+                'No.', 'Nomor ID', 'Nomor Transfer', 'Nama Transfer', 'Varian Produk', 'Total Produk',
+                'Status', 'Cabang Asal', 'Cabang Tujuan',
+                'Dibuat Oleh',
                 'Tanggal Dibuat'
             ],
         ];
@@ -206,14 +106,14 @@ class DataRecapProductTransfer implements FromCollection, ShouldAutoSize, WithHe
         $res = [
             [
                 $item->number,
+                $item->numberId,
                 $item->transferNumber,
                 $item->transferName,
-                $item->from,
-                $item->to,
-                $item->productType,
-                $item->productName,
-                strval($item->totalItem),
+                strval($item->variantProduct),
+                strval($item->totalProduct),
                 $item->status,
+                $item->locationOriginName,
+                $item->locationDestinationName,
                 $item->createdBy,
                 $item->createdAt,
             ],

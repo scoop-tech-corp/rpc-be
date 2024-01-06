@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Facility\FacilityUnit;
 use App\Models\Facility\Facility;
 use App\Models\Facility\FacilityImages;
-use App\Models\Location;
+use App\Models\location;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Validator;
@@ -415,8 +415,6 @@ class FacilityController extends Controller
                 'result' => 'success',
                 'message' => 'Successfully deleted facility',
             ]);
-
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -452,8 +450,6 @@ class FacilityController extends Controller
             ['facility.isDeleted', '=', '0']
         ])->first();
 
-
-        info($checkIfValueExits);
         if ($checkIfValueExits === null) {
 
             return response()->json([
@@ -1242,15 +1238,15 @@ class FacilityController extends Controller
     public function facilityLocation(Request $request)
     {
 
+
         try {
 
-            $getLocationFasilitas = Location::from('location as location')
-                ->leftjoin(
-                    DB::raw('(select locationId,isDeleted from facility  where isDeleted=0 ) as facility'),
-                    function ($join) {
-                        $join->on('facility.locationId', '=', 'location.id');
-                    }
-                )
+            $getLocationFasilitas = location::leftJoin(
+                DB::raw('(select locationId,isDeleted from facility  where isDeleted=0 ) as facility'),
+                function ($join) {
+                    $join->on('facility.locationId', '=', 'location.id');
+                }
+            )
                 ->select(
                     'location.id as id',
                     'location.locationName as locationName',
@@ -1268,5 +1264,17 @@ class FacilityController extends Controller
                 'message' => $e,
             ]);
         }
+    }
+
+    public function listFacilityWithLocation(Request $request)
+    {
+        $request->locationId = json_decode($request->locationId);
+        $data = DB::table('facility_unit as f')
+        ->select('f.id', 'f.unitName')
+        ->whereIn('f.locationId', $request->locationId)
+        ->where('f.isDeleted', '=', 0)
+        ->get();
+
+        return responseList($data);
     }
 }

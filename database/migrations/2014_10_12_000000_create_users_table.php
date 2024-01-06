@@ -27,7 +27,6 @@ return new class extends Migration
             $table->date('endDate');
             $table->string('registrationNo')->nullable();
             $table->string('designation')->nullable();
-            $table->integer('locationId');
             $table->integer('annualSickAllowance')->nullable();
             $table->integer('annualLeaveAllowance')->nullable();
             $table->integer('annualSickAllowanceRemaining')->nullable();
@@ -42,7 +41,7 @@ return new class extends Migration
             $table->boolean('generalAllowMemberToLogUsingEmail')->nullable();
             $table->boolean('reminderEmail')->nullable();
             $table->boolean('reminderWhatsapp')->nullable();
-            $table->integer('roleId');
+            $table->integer('roleId')->nullable();
             $table->string('password')->nullable();
             $table->string('email')->nullable();
             $table->rememberToken();

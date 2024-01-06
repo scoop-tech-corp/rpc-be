@@ -13,5 +13,12 @@ class productRestockImages extends Model
 
     protected $guarded = ['id'];
 
-    protected $fillable = ['productRestockDetailId','labelName','realImageName','imagePath','userId', 'userUpdateId'];
+    protected $fillable = [
+        'productRestockDetailId',
+        'labelName',
+        'realImageName',
+        'imagePath',
+        'userId',
+        'userUpdateId'
+    ];
 }

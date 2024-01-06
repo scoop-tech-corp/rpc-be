@@ -182,29 +182,45 @@
                         <label>Alamat:</label>
                     </td>
                     <td style="width:50%">
-                        <label>{{$dataSupplier->address}}</label>
+                        <label>{{$dataSupplier->streetAddress}}</label>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <label>Provinsi:</label>
                     </td>
+
+                    @php
+                    $provinsi = $dataSupplier->namaProvinsi;
+                    @endphp
+
                     <td style="width:50%">
-                        <label>{{$dataSupplier->provinsi}}</label>
+                        <label>{{$provinsi}}</label>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <label>Kota:</label>
                     </td>
+
+                    @php
+                    $kota = $dataSupplier->namaKabupaten;
+                    @endphp
+
+
                     <td style="width:50%">
-                        <label>{{$dataSupplier->kota}}</label>
+                        <label>{{$kota}}</label>
                     </td>
                 </tr>
                 <tr>
                     <td>
                         <label>Kode POS:</label>
                     </td>
+
+                    @php
+                    $postalCode = $dataSupplier->postalCode;
+                    @endphp
+
                     <td style="width:50%">
                         <label>{{$dataSupplier->postalCode}}</label>
                     </td>
@@ -214,7 +230,12 @@
                         <label>No. Telp:</label>
                     </td>
                     <td style="width:50%">
-                        <label>{{$dataSupplier->telephone}}</label>
+                        @if(is_null($dataWhatsApp))
+                        <label>-</label>
+                        @else
+                        <label>{{$dataWhatsApp->number}}</label>
+                        @endif
+
                     </td>
                 </tr>
                 <tr>
@@ -222,7 +243,11 @@
                         <label>Fax:</label>
                     </td>
                     <td style="width:50%">
-                        <label>{{$dataSupplier->fax}}</label>
+                        @if(is_null($dataFax))
+                        <label>-</label>
+                        @else
+                        <label>{{$dataFax->number}}</label>
+                        @endif
                     </td>
                 </tr>
                 <tr>
@@ -230,7 +255,11 @@
                         <label>No. Telp PIC:</label>
                     </td>
                     <td style="width:50%">
-                        <label>{{$dataSupplier->picTelephone}}</label>
+                        @if(is_null($dataPic))
+                        <label>-</label>
+                        @else
+                        <label>{{$dataPic->number}}</label>
+                        @endif
                     </td>
                 </tr>
 
@@ -377,7 +406,7 @@
                 <label>Tanggal Pemesanan:</label>
             </td>
             <td>
-                <label>12/12/2022</label>
+                <label>{{$dataFooter->requireDate}}</label>
             </td>
         </tr>
         <tr>
@@ -385,15 +414,23 @@
                 <label>No. PO:</label>
             </td>
             <td>
-                <label>123</label>
+                <label>{{$dataFooter->purchaseOrderNumber}}</label>
             </td>
         </tr>
         <tr>
             <td>
-                <label>Disetujui Oleh:</label>
+                <label>Disetujui Oleh Office:</label>
             </td>
             <td>
-                <label>asd</label>
+                <label>{{$dataFooter->officeApprovedBy}}</label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label>Disetujui Oleh Admin:</label>
+            </td>
+            <td>
+                <label>{{$dataFooter->adminApprovedBy}}</label>
             </td>
         </tr>
     </table>

@@ -2,12 +2,17 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
+    "keywords": [
+        "framework",
+        "laravel"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.0.2",
         "barryvdh/laravel-dompdf": "^2.0",
+        "beyondcode/laravel-websockets": "^1.14",
         "darkaonline/l5-swagger": "^8.3",
+        "doctrine/dbal": "^3.6",
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^9.19",
         "laravel/sanctum": "^3.0",
@@ -16,6 +21,8 @@
         "maatwebsite/excel": "^3.1",
         "orangehill/iseed": "^3.0",
         "phpoffice/phpspreadsheet": "^1.24",
+        "pusher/pusher-php-server": "7.0.2",
+        "react/promise": "^2.3",
         "stechstudio/laravel-zipstream": "^4.13",
         "tymon/jwt-auth": "^1.0"
     },

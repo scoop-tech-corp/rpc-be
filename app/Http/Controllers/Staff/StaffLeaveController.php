@@ -33,17 +33,13 @@ class StaffLeaveController extends Controller
                 ->get();
 
             return response()->json($getUser, 200);
-            
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
-    public function getAllStaffActive(Request $request)
+    public function getAllStaffActive()
     {
 
         try {
@@ -51,30 +47,23 @@ class StaffLeaveController extends Controller
             $getUser = User::select(
                 'id as usersId',
                 DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name"),
-            )
-                ->where('isDeleted', '0')
+            )->where('isDeleted', '0')
                 ->get();
 
             return response()->json($getUser, 200);
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
-    
+
 
     public function adjustBalance(Request $request)
     {
 
         if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+            return responseInvalid(['User Access not Authorize!']);
         }
 
         DB::beginTransaction();
@@ -93,23 +82,22 @@ class StaffLeaveController extends Controller
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+                return responseInvalid($errors);
             }
 
 
             $User =  User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->first();
 
-            if ($User == null)
+            if ($User == null) {
 
                 return response()->json([
                     'message' => 'Failed',
                     'errors' => 'User id not found, please try different id',
                 ], 422);
 
-                
+                return responseInvalid(['User id not found, please try different id']);
+            }
+
 
             $listOrder = array(
                 1, 2, 3, 4
@@ -123,7 +111,7 @@ class StaffLeaveController extends Controller
                     'balanceTypeId' => $listOrder,
                 ]);
             }
-            
+
 
             if ($request->balanceTypeId == 1) {
 
@@ -163,23 +151,17 @@ class StaffLeaveController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'result' => 'Success',
-                'message' => 'Successfully update balance user',
-            ], 200);
+            return responseUpdate();
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
-    
 
-    public function getDropdownBalanceType(Request $request)
+
+    public function getDropdownBalanceType()
     {
 
         try {
@@ -209,22 +191,16 @@ class StaffLeaveController extends Controller
             return response()->json($combinedArray, 200);
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ]);
+            return responseInvalid([$e]);
         }
     }
-    
+
 
     public function adjustLeaveRequest(Request $request)
     {
 
         if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+            return responseInvalid(['User Access not Authorize!']);
         }
 
         DB::beginTransaction();
@@ -247,10 +223,7 @@ class StaffLeaveController extends Controller
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+                return responseInvalid($errors);
             }
 
             $valueDays = null;
@@ -264,10 +237,7 @@ class StaffLeaveController extends Controller
 
                 if (preg_match('/\d+/', $val['name'])) {
 
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => 'Working days contain number, please check again'
-                    ], 422);
+                    return responseInvalid(['Working days contain number, please check again']);
                 } else {
 
 
@@ -296,7 +266,7 @@ class StaffLeaveController extends Controller
                         ]);
                     }
 
-                    
+
 
                     if ($valueDays == null) {
 
@@ -313,10 +283,8 @@ class StaffLeaveController extends Controller
             $end = Carbon::parse($request->toDate);
 
             if ($end < $start) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['To date must higher than from date!!'],
-                ], 422);
+
+                return responseInvalid(['To date must higher than from date!!']);
             }
 
             $countDays = 0;
@@ -337,30 +305,9 @@ class StaffLeaveController extends Controller
             }
 
 
-            // if ($countDays != $request->totalDays) {
-
-            //     return response()->json([
-            //         'result' => 'Failed',
-            //         'message' => 'Wrong duration, please check again. Your duration day must be ' . $countDays,
-            //     ], 422);
-            // }
-
-
-            // if ($request->totalDays != $hitungNameDays) {
-
-            //     return response()->json([
-            //         'result' => 'Failed',
-            //         'message' => 'Wrong working days, please check again. Your working days must be ' .  $request->totalDays . ' days '
-            //     ], 422);
-            // }
-
-
             if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
 
-                return response()->json([
-                    'message' => 'Failed',
-                    'errors' => 'User id not found, please try different id',
-                ], 422);
+                return responseInvalid(['User id not found, please try different id']);
             } else {
 
                 $listOrder = array(
@@ -370,10 +317,7 @@ class StaffLeaveController extends Controller
 
                 if (!in_array(strtolower($request->leaveType), $listOrder)) {
 
-                    return response()->json([
-                        'message' => 'Failed',
-                        'errors' => 'Only leave allowance or sick allowance is allowed',
-                    ], 422);
+                    return responseInvalid(['Only leave allowance or sick allowance is allowed']);
                 }
 
 
@@ -383,38 +327,22 @@ class StaffLeaveController extends Controller
                 if (str_contains(strtolower($request->leaveType), "sick")) {
 
                     if ($sickallowance == 0) {
-
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'You dont have any sick allowance left : ' .  $sickallowance,
-                        ], 422);
+                        return responseInvalid(['You dont have any sick allowance left : ' .  $sickallowance]);
                     }
 
-                    
-                    if ($request->totalDays > $sickallowance) {
 
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance,
-                        ], 422);
+                    if ($request->totalDays > $sickallowance) {
+                        return responseInvalid(['Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance]);
                     }
                 } else {
 
                     if ($leaveallowance == 0) {
-
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'You dont have any leave allowance left : ' .  $leaveallowance,
-                        ], 422);
+                        return responseInvalid(['You dont have any leave allowance left : ' .  $leaveallowance]);
                     }
 
-                    
-                    if ($request->totalDays > $leaveallowance) {
 
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance,
-                        ], 422);
+                    if ($request->totalDays > $leaveallowance) {
+                        return responseInvalid(['Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance]);
                     }
                 }
 
@@ -429,17 +357,25 @@ class StaffLeaveController extends Controller
 
                 if ($resultCheckExists) {
 
-                    return response()->json([
-                        'message' => 'Failed',
-                        'errors' => 'You already had request leave on the spesific date, please check again.'
-                    ], 422);
+                    return responseInvalid(['You already had request leave on the spesific date, please check again.']);
                 }
 
-                $userName =  User::select(
-                    'jobTitleId',
-                    'locationId',
-                    DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
-                )
+                $dataUserLocation = DB::table('usersLocation as a')
+                    ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                    ->groupBy('a.usersId')
+                    ->where('a.isDeleted', '=', 0);
+
+                $userName =  User::from('users as a')
+                    ->leftJoinSub($dataUserLocation, 'b', function ($join) {
+                        $join->on('b.usersId', '=', 'id');
+                    })
+                    ->select(
+                        'jobTitleId',
+                        'b.locationId as locationId',
+                        'b.locationName as locationName',
+                        DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
+                    )
                     ->where('id', '=', $request->usersId)
                     ->where('isDeleted', '=', '0')
                     ->first();
@@ -449,6 +385,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->requesterName = $userName->name;
                 $staffLeave->jobTitle = $userName->jobTitleId;
                 $staffLeave->locationId =  $userName->locationId;
+                $staffLeave->locationName =  $userName->locationName;
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
@@ -460,22 +397,16 @@ class StaffLeaveController extends Controller
 
                 DB::commit();
 
-                return response()->json([
-                    'result' => 'Success',
-                    'message' => 'Successfully input request leave',
-                ], 200);
+                return responseCreate();
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
-    
+
     public function insertLeaveStaff(Request $request)
     {
         DB::beginTransaction();
@@ -498,10 +429,7 @@ class StaffLeaveController extends Controller
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+                return responseInvalid($errors);
             }
 
             $valueDays = null;
@@ -511,13 +439,9 @@ class StaffLeaveController extends Controller
 
             foreach ($json_array_name as $val) {
 
-
                 if (preg_match('/\d+/', $val['name'])) {
 
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => 'Working days contain number, please check again'
-                    ], 422);
+                    return responseInvalid(['Working days contain number, please check again']);
                 } else {
 
 
@@ -545,7 +469,7 @@ class StaffLeaveController extends Controller
                             'workingDays' => $listOrderUpper,
                         ]);
                     }
-                    
+
                     if ($valueDays == null) {
 
                         $valueDays =  $val['name'];
@@ -562,10 +486,8 @@ class StaffLeaveController extends Controller
             $end = Carbon::parse($request->toDate);
 
             if ($end < $start) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['To date must higher than from date!!'],
-                ], 422);
+
+                return responseInvalid(['To date must higher than from date!!']);
             }
 
 
@@ -588,11 +510,7 @@ class StaffLeaveController extends Controller
 
             if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
 
-                return response()->json([
-                    'message' => 'Failed',
-                    'errors' => 'User id not found, please try different id',
-                ], 422);
-
+                return responseInvalid(['User id not found, please try different id']);
             } else {
 
                 $listOrder = array(
@@ -602,13 +520,10 @@ class StaffLeaveController extends Controller
 
                 if (!in_array(strtolower($request->leaveType), $listOrder)) {
 
-                    return response()->json([
-                        'message' => 'Failed',
-                        'errors' => 'Only leave allowance or sick allowance is allowed',
-                    ], 422);
+                    return responseInvalid(['Only leave allowance or sick allowance is allowed']);
                 }
 
-                
+
                 $sickallowance =  $request->user()->annualSickAllowanceRemaining;
                 $leaveallowance =  $request->user()->annualLeaveAllowanceRemaining;
 
@@ -617,37 +532,25 @@ class StaffLeaveController extends Controller
 
                     if ($sickallowance == 0) {
 
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'You dont have any sick allowance left : ' .  $sickallowance,
-                        ], 422);
+                        return responseInvalid(['You dont have any sick allowance left : ' .  $sickallowance]);
                     }
-                    
+
 
                     if ($request->totalDays > $sickallowance) {
 
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance,
-                        ], 422);
+                        return responseInvalid(['Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance]);
                     }
                 } else {
-                    
+
                     if ($leaveallowance == 0) {
 
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'You dont have any leave allowance left : ' .  $leaveallowance,
-                        ], 422);
+                        return responseInvalid(['You dont have any leave allowance left : ' .  $leaveallowance]);
                     }
 
 
                     if ($request->totalDays > $leaveallowance) {
 
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance,
-                        ], 422);
+                        return responseInvalid(['Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance]);
                     }
                 }
 
@@ -662,17 +565,26 @@ class StaffLeaveController extends Controller
 
                 if ($resultCheckExists) {
 
-                    return response()->json([
-                        'message' => 'Failed',
-                        'errors' => 'You already had request leave on the spesific date, please check again.'
-                    ], 422);
+                    return responseInvalid(['You already had request leave on the spesific date, please check again.']);
                 }
-                
-                $userName =  User::select(
-                    'jobTitleId',
-                    'locationId',
-                    DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
-                )
+
+
+                $dataUserLocation = DB::table('usersLocation as a')
+                    ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                    ->groupBy('a.usersId')
+                    ->where('a.isDeleted', '=', 0);
+
+                $userName =  User::from('users as a')
+                    ->leftJoinSub($dataUserLocation, 'b', function ($join) {
+                        $join->on('b.usersId', '=', 'id');
+                    })
+                    ->select(
+                        'jobTitleId',
+                        'b.locationName as locationName',
+                        'b.locationId as locationId',
+                        DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
+                    )
                     ->where('id', '=', $request->usersId)
                     ->where('isDeleted', '=', '0')
                     ->first();
@@ -682,6 +594,7 @@ class StaffLeaveController extends Controller
                 $staffLeave->requesterName = $userName->name;
                 $staffLeave->jobTitle = $userName->jobTitleId;
                 $staffLeave->locationId =  $userName->locationId;
+                $staffLeave->locationName =  $userName->locationName;
                 $staffLeave->leaveType = $request->leaveType;
                 $staffLeave->fromDate = $request->fromDate;
                 $staffLeave->toDate = $request->toDate;
@@ -693,22 +606,16 @@ class StaffLeaveController extends Controller
 
                 DB::commit();
 
-                return response()->json([
-                    'result' => 'Success',
-                    'message' => 'Successfully input request leave',
-                ], 200);
+                return responseCreate();
             }
         } catch (Exception $e) {
 
             DB::rollback();
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
-    
+
     public function getWorkingDays(Request $request)
     {
 
@@ -718,10 +625,7 @@ class StaffLeaveController extends Controller
             $end = Carbon::parse($request->toDate);
 
             if ($end < $start) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['To date must higher than from date!!'],
-                ], 422);
+                return responseInvalid(['To date must higher than from date!!']);
             }
 
             $results = Holidays::whereBetween('date', [$start, $end])->get();
@@ -755,22 +659,17 @@ class StaffLeaveController extends Controller
             );
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
-    
+
     public function setStatusLeaveRequest(Request $request)
     {
 
         if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+
+            return responseInvalid(['User Access not Authorize!']);
         }
 
         try {
@@ -783,19 +682,14 @@ class StaffLeaveController extends Controller
             ]);
 
             if (strtolower($request->status) != "approve" && strtolower($request->status) != "reject") {
-                return response()->json([
-                    'message' => 'failed',
-                    'errors' => 'Status must Approve or Reject',
-                ], 422);
+
+                return responseInvalid(['Status must Approve or Reject']);
             }
-            
+
 
             if (strtolower($request->status) == "reject" && strtolower($request->reason) == "") {
 
-                return response()->json([
-                    'message' => 'failed',
-                    'errors' => 'Please input reason if status is reject',
-                ], 422);
+                return responseInvalid(['Please input reason if status is reject']);
             }
 
 
@@ -804,10 +698,8 @@ class StaffLeaveController extends Controller
                 ->first();
 
             if ($leaveRequest == null) {
-                return response()->json([
-                    'message' => 'Failed',
-                    'errors' => 'Leave request not found, please try different id',
-                ], 422);
+
+                return responseInvalid(['Leave request not found, please try different id']);
             }
 
             $users = User::where([
@@ -817,10 +709,7 @@ class StaffLeaveController extends Controller
 
             if ($users == null) {
 
-                return response()->json([
-                    'message' => 'Failed',
-                    'errors' => 'Users not found, please try different id',
-                ], 422);
+                return responseInvalid(['Users not found, please try different id']);
             }
 
             $reason = null;
@@ -841,20 +730,16 @@ class StaffLeaveController extends Controller
                 if (str_contains($leaveRequest->leaveType, "sick")) {
 
                     if (($leaveRequest->duration) > ($users->annualSickAllowanceRemaining)) {
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'Invalid input, your sick leave remaining ' . $users->annualSickAllowanceRemaining,
-                        ], 422);
+
+                        return responseInvalid(['Invalid input, your sick leave remaining ' . $users->annualSickAllowanceRemaining]);
                     } else {
                         $users->annualSickAllowanceRemaining =  $users->annualSickAllowanceRemaining - $leaveRequest->duration;
                     }
                 } else {
 
                     if (($leaveRequest->duration) > ($users->annualLeaveAllowanceRemaining)) {
-                        return response()->json([
-                            'message' => 'Failed',
-                            'errors' => 'Invalid input, your leave allowance remaining ' . $users->annualLeaveAllowanceRemaining,
-                        ], 422);
+
+                        return responseInvalid(['Invalid input, your leave allowance remaining ' . $users->annualLeaveAllowanceRemaining]);
                     } else {
                         $users->annualLeaveAllowanceRemaining =  $users->annualLeaveAllowanceRemaining - $leaveRequest->duration;
                     }
@@ -862,21 +747,13 @@ class StaffLeaveController extends Controller
             }
             $leaveRequest->save();
             $users->save();
-            $statusMessage = strtolower($request->status);
 
             DB::commit();
 
-            return response()->json([
-                'message' => 'Success',
-                'errors' => 'Successfully ' . $statusMessage . ' leave request',
-            ], 200);
+            return responseUpdate();
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
@@ -924,13 +801,10 @@ class StaffLeaveController extends Controller
                     'orderColumn' => $listOrder,
                 ]);
             }
-            
+
             if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
 
-                return response()->json([
-                    'message' => 'failed',
-                    'errors' => 'order value must Ascending: ASC or Descending: DESC ',
-                ]);
+                return responseInvalid(['order value must Ascending: ASC or Descending: DESC ']);
             }
 
             $checkOrder = true;
@@ -989,10 +863,16 @@ class StaffLeaveController extends Controller
     private function SearchBalanceAdminandOffice($request)
     {
 
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1016,10 +896,10 @@ class StaffLeaveController extends Controller
             return $temp_column;
         }
 
-
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1032,9 +912,11 @@ class StaffLeaveController extends Controller
                 ['a.isDeleted', '=', '0'],
             ]);
 
+
         if ($request->search) {
-            $data = $data->where('a.annualLeaveAllowance', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualLeaveAllowance', '=', $request->search);
         }
+
 
         $data = $data->get();
 
@@ -1045,8 +927,9 @@ class StaffLeaveController extends Controller
 
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1060,7 +943,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualLeaveAllowanceRemaining', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualLeaveAllowanceRemaining', '=',  $request->search);
         }
 
         $data = $data->get();
@@ -1071,8 +954,9 @@ class StaffLeaveController extends Controller
         }
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1086,7 +970,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowance', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualSickAllowance', '=', $request->search);
         }
 
         $data = $data->get();
@@ -1097,8 +981,9 @@ class StaffLeaveController extends Controller
         }
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
-            ->select(
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
                 'a.annualLeaveAllowance as annualLeaveAllowance',
@@ -1112,7 +997,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowanceRemaining', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualSickAllowanceRemaining', '=',  $request->search);
         }
 
         $data = $data->get();
@@ -1128,8 +1013,17 @@ class StaffLeaveController extends Controller
     private function SearchBalanceDoctorandStaff($request)
     {
 
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
+
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1157,7 +1051,9 @@ class StaffLeaveController extends Controller
 
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1173,7 +1069,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualLeaveAllowance', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualLeaveAllowance', '=',  $request->search);
         }
 
         $data = $data->get();
@@ -1184,8 +1080,11 @@ class StaffLeaveController extends Controller
         }
 
 
+
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1201,7 +1100,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualLeaveAllowanceRemaining', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualLeaveAllowanceRemaining', '=', $request->search);
         }
 
         $data = $data->get();
@@ -1212,7 +1111,9 @@ class StaffLeaveController extends Controller
         }
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1228,7 +1129,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowance', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualSickAllowance', '=',  $request->search);
         }
 
         $data = $data->get();
@@ -1239,7 +1140,9 @@ class StaffLeaveController extends Controller
         }
 
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1255,7 +1158,7 @@ class StaffLeaveController extends Controller
             ]);
 
         if ($request->search) {
-            $data = $data->where('a.annualSickAllowanceRemaining', '=', '%' . $request->search . '%');
+            $data = $data->where('a.annualSickAllowanceRemaining', '=', $request->search);
         }
 
         $data = $data->get();
@@ -1278,12 +1181,10 @@ class StaffLeaveController extends Controller
             ]);
 
             if (strtolower($request->status) != "approve" && strtolower($request->status) != "reject" and strtolower($request->status) != "pending") {
-                return response()->json([
-                    'message' => 'failed',
-                    'errors' => 'Status must Pending, Approve or Reject',
-                ], 422);
+
+                return responseInvalid(['Status must Pending, Approve or Reject']);
             }
-            
+
             $tmp = "";
             $fileName = "";
             $date = Carbon::now()->format('d-m-Y');
@@ -1334,13 +1235,10 @@ class StaffLeaveController extends Controller
 
             DB::rollback();
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ]);
+            return responseInvalid([$e]);
         }
     }
-    
+
     public function exportBalance(Request $request)
     {
 
@@ -1394,18 +1292,23 @@ class StaffLeaveController extends Controller
 
             DB::rollback();
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
-    
+
     public function indexBalanceLeaveAdminandOffice(Request $request)
     {
 
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1418,6 +1321,7 @@ class StaffLeaveController extends Controller
             ->where([
                 ['a.isDeleted', '=', '0'],
             ]);
+
 
         if ($request->locationId) {
 
@@ -1451,8 +1355,16 @@ class StaffLeaveController extends Controller
     {
         $defaultOrderBy = "asc";
 
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
         $data = User::from('users as a')
-            ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
             ->select(
                 'a.id as usersId',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,'') ,')'  ) as name"),
@@ -1489,18 +1401,17 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1510,20 +1421,19 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.approveOrRejectedBy as  approvedBy',
-                    'a.approveOrRejectedDate as approvedAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                     'a.updated_at as updatedAt',
                 )->where([
                     ['a.status', '=', $request->status],
@@ -1532,21 +1442,20 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.approveOrRejectedBy as  rejectedBy',
                     'a.rejectedReason as  rejectedReason',
-                    'a.approveOrRejectedDate as rejectedAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1554,18 +1463,15 @@ class StaffLeaveController extends Controller
                 ]);
         }
 
-
         if ($request->locationId) {
 
-            $val = [];
+            $test = $request->locationId;
 
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
-
-            if ($val) {
-                $data = $data->whereIn('a.locationId', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         if (strtotime($request->fromDate) !== false && strtotime($request->toDate) !== false) {
@@ -1610,18 +1516,17 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1632,20 +1537,19 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.approveOrRejectedBy as  approvedBy',
-                    'a.approveOrRejectedDate as approvedAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                     'a.updated_at as updatedAt',
                 )->where([
                     ['a.status', '=', $request->status],
@@ -1655,21 +1559,20 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.approveOrRejectedBy as  rejectedBy',
                     'a.rejectedReason as  rejectedReason',
-                    'a.approveOrRejectedDate as rejectedAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
@@ -1678,16 +1581,15 @@ class StaffLeaveController extends Controller
                 ]);
         }
 
+
         if (strtotime($request->fromDate) !== false && strtotime($request->toDate) !== false) {
 
             $start = Carbon::parse($request->fromDate);
             $end = Carbon::parse($request->toDate);
 
             if ($end < $start) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['To date must higher than from date!!'],
-                ], 422);
+
+                return responseInvalid(['To date must higher than from date!!']);
             }
 
             $data = $data->whereBetween('fromDate', [$request->fromDate, $request->toDate]);
@@ -1717,10 +1619,7 @@ class StaffLeaveController extends Controller
     {
 
         if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+            return responseInvalid(['User Access not Authorize!']);
         }
 
         try {
@@ -1732,10 +1631,7 @@ class StaffLeaveController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+                return responseInvalid($errors);
             }
 
             DB::beginTransaction();
@@ -1755,10 +1651,7 @@ class StaffLeaveController extends Controller
 
 
             if ($data_item) {
-                return response()->json([
-                    'message' => 'Inputed data is not valid',
-                    'errors' => $data_item,
-                ], 422);
+                return responseInvalid([$data_item]);
             }
 
             $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
@@ -1770,12 +1663,10 @@ class StaffLeaveController extends Controller
                     ->first();
 
                 if ($leaveRequest == null) {
-                    return response()->json([
-                        'message' => 'Failed',
-                        'errors' => 'Leave request not found, please try different id',
-                    ], 422);
+
+                    return responseInvalid(['Leave request not found, please try different id']);
                 }
-                
+
                 $users = User::where([
                     ['id', '=', $leaveRequest->usersId],
                     ['isDeleted', '=', '0'],
@@ -1783,31 +1674,21 @@ class StaffLeaveController extends Controller
 
                 if ($users == null) {
 
-                    return response()->json([
-                        'message' => 'Failed',
-                        'errors' => 'Users not found, please try different id',
-                    ], 422);
+                    return responseInvalid(['Users not found, please try different id']);
                 }
-                
+
                 if (str_contains($leaveRequest->leaveType, "sick")) {
 
                     if (($leaveRequest->duration) > ($users->annualSickAllowanceRemaining)) {
 
-                        return response()->json([
-                            'message' => 'Inputed data is not valid',
-                            'errors' => 'User Id ' . $leaveRequest->usersId . ' , with request sick leave id ' .  $val . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining'
-                        ], 422);
+                        return responseInvalid(['User Id ' . $leaveRequest->usersId . ' , with request sick leave id ' .  $val . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining']);
                     } else {
                         $users->annualSickAllowanceRemaining = $users->annualSickAllowanceRemaining  - $leaveRequest->duration;
                     }
                 } else {
 
                     if (($leaveRequest->duration) > ($users->annualLeaveAllowanceRemaining)) {
-
-                        return response()->json([
-                            'message' => 'Inputed data is not valid',
-                            'errors' => 'User Id ' . $leaveRequest->usersId . ' , with request leave id ' . $val . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining'
-                        ], 422);
+                        return responseInvalid(['User Id ' . $leaveRequest->usersId . ' , with request leave id ' . $val . ', the request allowance is higher, than remaining allowance : ' . $users->annualLeaveAllowanceRemaining . ' remaining']);
                     } else {
                         $users->annualLeaveAllowanceRemaining = $users->annualLeaveAllowanceRemaining  - $leaveRequest->duration;
                     }
@@ -1825,29 +1706,21 @@ class StaffLeaveController extends Controller
                 DB::commit();
             }
 
-            return response()->json([
-                'result' => 'Success',
-                'message' => 'Successfully approve all leave request',
-            ], 200);
+            return responseUpdate();
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
-    
+
 
     public function rejectAll(Request $request)
     {
 
         if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+
+            return responseInvalid(['User Access not Authorize!']);
         }
 
         try {
@@ -1859,10 +1732,7 @@ class StaffLeaveController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+                return responseInvalid($errors);
             }
 
             DB::beginTransaction();
@@ -1882,10 +1752,7 @@ class StaffLeaveController extends Controller
 
 
             if ($data_item) {
-                return response()->json([
-                    'message' => 'Inputed data is not valid',
-                    'errors' => $data_item,
-                ], 422);
+                return responseInvalid([$data_item]);
             }
 
             $userName =  $request->user()->firstName . " " . $request->user()->middleName . " " . $request->user()->lastName . "(" . $request->user()->nickName . ")";
@@ -1904,22 +1771,19 @@ class StaffLeaveController extends Controller
 
                 DB::commit();
             }
-            return response()->json([
-                'result' => 'Success',
-                'message' => 'Successfully reject all leave request',
-            ], 200);
+
+            return responseUpdate();
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
 
-    
+
     public function getIndexRequestLeave(Request $request)
     {
+
+
         $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
 
@@ -1933,19 +1797,12 @@ class StaffLeaveController extends Controller
 
             $errors = $validate->errors()->all();
 
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid($errors);
         } else {
 
             if (strtolower($request->status) != "approve" && strtolower($request->status) != "reject" && strtolower($request->status) != "pending") {
 
-                return response()->json([
-                    'message' => 'failed',
-                    'errors' => 'Value status must Pending, Approve or Reject',
-                ], 422);
-
+                return responseInvalid(['Value status must Pending, Approve or Reject']);
             } else {
 
                 $listOrder = [];
@@ -1992,10 +1849,7 @@ class StaffLeaveController extends Controller
 
                     if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
 
-                        return response()->json([
-                            'message' => 'failed',
-                            'errors' => 'order value must Ascending: ASC or Descending: DESC ',
-                        ]);
+                        return responseInvalid(['order value must Ascending: ASC or Descending: DESC ']);
                     }
 
                     $checkOrder = true;
@@ -2053,24 +1907,37 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
                     ['a.status', '=', $request->status],
                     ['a.usersId', '=', $request->user()->id],
                 ]);
+
+
+            if ($request->locationId) {
+
+                $test = $request->locationId;
+
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
+            }
+
 
             if ($request->search) {
                 $data = $data->where('a.duration', '=', $request->search);
@@ -2088,24 +1955,34 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -2121,24 +1998,34 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -2153,18 +2040,17 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2172,38 +2058,59 @@ class StaffLeaveController extends Controller
                         ['a.usersId', '=', $request->user()->id],
                     ]);
 
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -2218,24 +2125,34 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -2250,24 +2167,35 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -2282,24 +2210,34 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -2315,26 +2253,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -2350,26 +2298,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -2384,20 +2342,19 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2405,40 +2362,61 @@ class StaffLeaveController extends Controller
                         ['a.usersId', '=', $request->user()->id],
                     ]);
 
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -2453,26 +2431,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -2487,26 +2475,39 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -2521,26 +2522,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -2555,26 +2566,38 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -2589,26 +2612,38 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationId as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
@@ -2623,26 +2658,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
@@ -2658,27 +2703,39 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -2694,21 +2751,20 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2729,21 +2785,20 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -2751,41 +2806,66 @@ class StaffLeaveController extends Controller
                         ['a.usersId', '=', $request->user()->id],
                     ]);
 
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
-
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
+
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -2800,27 +2880,38 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -2835,27 +2926,39 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -2870,27 +2973,37 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -2905,27 +3018,39 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
@@ -2940,27 +3065,38 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                         ['a.usersId', '=', $request->user()->id],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.rejectedReason', 'like', '%' . $request->search . '%');
@@ -2976,21 +3112,20 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
@@ -3019,23 +3154,35 @@ class StaffLeaveController extends Controller
 
             $data = LeaveRequest::from('leaveRequest as a')
                 ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                 ->select(
                     'a.id as leaveRequestId',
                     'a.requesterName as requesterName',
                     'b.jobName as jobName',
-                    'c.locationName as locationName',
+                    'a.locationName as locationName',
                     'a.locationId as locationId',
                     'a.leaveType as leaveType',
-                    'a.fromDate as fromDate',
+                    DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                     'a.duration as duration',
                     'a.remark as remark',
-                    'a.created_at as createdAt',
+                    DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                     'a.updated_at as updatedAt',
                 )
                 ->where([
                     ['a.status', '=', $request->status],
                 ]);
+
+
+            if ($request->locationId) {
+
+                $test = $request->locationId;
+
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
+            }
+
 
             if ($request->search) {
                 $data = $data->where('a.duration', '=', $request->search);
@@ -3053,23 +3200,34 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -3085,23 +3243,33 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -3116,55 +3284,76 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
 
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -3179,23 +3368,34 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -3210,23 +3410,33 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -3239,25 +3449,38 @@ class StaffLeaveController extends Controller
                     return $temp_column;
                 }
 
+
+
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -3273,25 +3496,35 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -3307,25 +3540,35 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -3340,59 +3583,82 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
 
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
 
                 if (count($data)) {
-                    $temp_column = 'c.locationName';
+                    $temp_column = 'a.locationName';
                     return $temp_column;
                 }
 
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -3407,25 +3673,35 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -3440,25 +3716,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -3473,25 +3760,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -3506,25 +3804,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -3539,25 +3848,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
@@ -3572,25 +3892,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  approvedBy',
-                        'a.approveOrRejectedDate as approvedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as approvedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
@@ -3606,26 +3937,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.requesterName', 'like', '%' . $request->search . '%');
@@ -3641,26 +3982,37 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('b.jobName', 'like', '%' . $request->search . '%');
@@ -3675,29 +4027,40 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
 
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
+
                 if ($request->search) {
-                    $data = $data->where('c.locationName', 'like', '%' . $request->search . '%');
+                    $data = $data->where('a.locationName', 'like', '%' . $request->search . '%');
                 }
 
                 $data = $data->get();
@@ -3710,26 +4073,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.leaveType', 'like', '%' . $request->search . '%');
@@ -3744,26 +4117,36 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
 
                 if ($request->search) {
                     $data = $data->where('a.fromDate', 'like', '%' . $request->search . '%');
@@ -3778,26 +4161,37 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.remark', 'like', '%' . $request->search . '%');
@@ -3812,26 +4206,37 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.created_at', 'like', '%' . $request->search . '%');
@@ -3846,26 +4251,37 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedBy', 'like', '%' . $request->search . '%');
@@ -3883,26 +4299,37 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.rejectedReason', 'like', '%' . $request->search . '%');
@@ -3918,26 +4345,37 @@ class StaffLeaveController extends Controller
 
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
-                    ->leftjoin('location as c', 'a.locationId', '=', 'c.id')
                     ->select(
                         'a.id as leaveRequestId',
                         'a.requesterName as requesterName',
                         'b.jobName as jobName',
-                        'c.locationName as locationName',
+                        'a.locationName as locationName',
                         'a.locationId as locationId',
                         'a.leaveType as leaveType',
-                        'a.fromDate as fromDate',
+                        DB::raw("IFNULL(DATE_FORMAT(a.fromDate, '%d/%m/%Y %H:%i:%s'),'') as fromDate"),
                         'a.duration as duration',
                         'a.remark as remark',
-                        'a.created_at as createdAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
                         'a.approveOrRejectedBy as  rejectedBy',
                         'a.rejectedReason as  rejectedReason',
-                        'a.approveOrRejectedDate as rejectedAt',
+                        DB::raw("IFNULL(DATE_FORMAT(a.approveOrRejectedDate, '%d/%m/%Y %H:%i:%s'),'') as rejectedAt"),
                         'a.updated_at as updatedAt',
                     )
                     ->where([
                         ['a.status', '=', $request->status],
                     ]);
+
+                if ($request->locationId) {
+
+                    $test = $request->locationId;
+
+                    $data = $data->where(function ($query) use ($test) {
+                        foreach ($test as $id) {
+                            $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                        }
+                    });
+                }
+
 
                 if ($request->search) {
                     $data = $data->where('a.approveOrRejectedDate', 'like', '%' . $request->search . '%');
@@ -3971,8 +4409,6 @@ class StaffLeaveController extends Controller
                     'message' => 'Failed',
                     'errors' => 'User id not found, please try different id',
                 ]);
-                
-
             } else {
 
                 $annualLeaveAllowance = User::select(
@@ -4010,7 +4446,7 @@ class StaffLeaveController extends Controller
         }
     }
 
-    
+
 
     public function getAllHolidaysDate(Request $request)
     {
@@ -4069,19 +4505,13 @@ class StaffLeaveController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'result' => 'Success',
-                'message' => "Successfully input date holidays",
-            ], 200);
+            return responseCreate();
         } catch (Exception $e) {
 
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
+            return responseInvalid([$e]);
         }
     }
-    
+
     public function __construct()
     {
         $this->client = new Client([

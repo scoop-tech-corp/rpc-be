@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('menuList', function (Blueprint $table) {
             $table->id();
+            $table->string('masterId')->nullable();
             $table->string('menuName');
             $table->integer('isActive');
             $table->timestamps();

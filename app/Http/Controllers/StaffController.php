@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\Staff\exportStaff;
+use App\Models\Staff\TypeId;
 use Illuminate\Http\Request;
 use App\Mail\SendEmail;
 use GuzzleHttp\Client;
@@ -48,12 +49,12 @@ class StaffController extends Controller
                     'endDate' => 'required|date|after:startDate',
                     'registrationNo' => 'string|max:20|min:5|nullable',
                     'designation' => 'string|max:20|min:5|nullable',
-                    'locationId' => 'required|integer',
+                    'locationId' => 'required',
                     'annualSickAllowance' => 'integer|nullable',
                     'annualLeaveAllowance' => 'integer|nullable',
                     'payPeriodId' => 'required|integer',
                     'payAmount' => 'numeric|nullable',
-                    'typeId' => 'required|integer',
+                    'typeId' => 'required',
                     'identificationNumber' => 'string|nullable|max:30',
                     'additionalInfo' => 'string|nullable|max:100',
                     'generalCustomerCanSchedule' => 'integer|nullable',
@@ -61,29 +62,25 @@ class StaffController extends Controller
                     'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
                     'reminderEmail' => 'integer|nullable',
                     'reminderWhatsapp' => 'integer|nullable',
-                    'roleId' => 'required|integer',
+                    'roleId' => 'integer|nullable',
                 ]
             );
 
 
 
-            if ($request->typeId == 3) {
+            $getTypeIDName = TypeId::where([
+                ['id', '=', $request->typeId],
+                ['isActive', '=', '1']
+            ])->first();
+
+            if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
 
                 if ((is_numeric($request->identificationNumber))) {
-
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => "Identification number must be alpanumeric if identification type is passport!",
-                    ], 422);
+                    return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
                 }
             } else {
-
                 if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
-
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => "Identification number must be integer!",
-                    ], 422);
+                    return responseInvalid(["Identification number must be integer!"]);
                 }
             }
 
@@ -178,7 +175,7 @@ class StaffController extends Controller
 
 
 
-
+            $checkusageUtama = 0;
             $data_telephone = [];
 
             if ($request->telephone) {
@@ -202,6 +199,16 @@ class StaffController extends Controller
                         ],
                         $messagePhone
                     );
+
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtama = $checkusageUtama + 1;
+                    }
+
+                    if ($checkusageUtama > 1) {
+                        return responseInvalid(['Usage utama on phone must only one!']);
+                    }
+
 
                     if ($validateTelephone->fails()) {
 
@@ -258,6 +265,7 @@ class StaffController extends Controller
                 }
             }
 
+            $checkEmailUtama = 0;
             $data_error_email = [];
             $insertEmailUsers = '';
             if ($request->email) {
@@ -280,6 +288,15 @@ class StaffController extends Controller
                         $messageEmail
                     );
 
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkEmailUtama = $checkEmailUtama + 1;
+                    }
+
+                    if ($checkEmailUtama > 1) {
+                        return responseInvalid(['Usage utama on email must only one!']);
+                    }
+
                     if ($validateEmail->fails()) {
 
                         $errors = $validateEmail->errors()->all();
@@ -300,7 +317,7 @@ class StaffController extends Controller
                         'errors' =>  $data_error_email,
                     ], 422);
                 }
-                
+
                 $checkUsageEmail = false;
                 $checkEmail = [];
                 foreach ($arrayemail as $val) {
@@ -328,7 +345,7 @@ class StaffController extends Controller
                         'errors' => $checkEmail,
                     ], 422);
                 }
-                
+
                 if ($checkUsageEmail == false) {
                     return response()->json([
                         'message' => 'Inputed data is not valid',
@@ -356,6 +373,10 @@ class StaffController extends Controller
                     'usage.required' => 'Usage on tab messenger is required',
                 ];
 
+
+
+                $checkMessengerUtama = 0;
+
                 foreach ($arraymessenger as $key) {
 
                     $validateMessenger = Validator::make(
@@ -367,6 +388,16 @@ class StaffController extends Controller
                         ],
                         $messageMessenger
                     );
+
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkMessengerUtama = $checkMessengerUtama + 1;
+                    }
+
+
+                    if ($checkMessengerUtama > 1) {
+                        return responseInvalid(['Usage utama on messenger must only one!']);
+                    }
 
                     if ($validateMessenger->fails()) {
 
@@ -392,7 +423,7 @@ class StaffController extends Controller
                         }
                     }
                 }
-                
+
 
                 if ($data_error_messenger) {
                     return response()->json([
@@ -423,7 +454,11 @@ class StaffController extends Controller
                     ], 422);
                 }
             }
-            
+
+
+
+
+
 
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
@@ -438,7 +473,6 @@ class StaffController extends Controller
                     'endDate' => $end,
                     'registrationNo' => $request->registrationNo,
                     'designation' => $request->designation,
-                    'locationId' => $request->locationId,
                     'annualSickAllowance' => $request->annualSickAllowance,
                     'annualSickAllowanceRemaining' => $request->annualSickAllowance,
                     'annualLeaveAllowance' => $request->annualLeaveAllowance,
@@ -461,6 +495,22 @@ class StaffController extends Controller
                     'updated_at' => now(),
                     'password' => null,
                 ]);
+
+            $locationId = json_decode($request->locationId, true);
+
+            if ($locationId) {
+                foreach ($locationId as $val) {
+
+                    DB::table('usersLocation')
+                        ->insert([
+                            'usersId' => $lastInsertedID,
+                            'locationId' => $val,
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
 
 
             if ($request->detailAddress) {
@@ -561,7 +611,24 @@ class StaffController extends Controller
                     ->select(
                         'usersEmails.usersId',
                         'usersEmails.email',
-                        DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.middleName,'') ,' ', IFNULL(users.lastName,'') ,'(', IFNULL(users.nickName,'') ,')'  ) as name"),
+                        DB::raw("
+                        REPLACE(
+                            TRIM(
+                                REPLACE(
+                                    CONCAT(
+                                        IFNULL(users.firstName, ''),
+                                        IF(users.middleName IS NOT NULL AND users.middleName != '', CONCAT(' ', users.middleName), ''),
+                                        IFNULL(CONCAT(' ', users.lastName), ''),
+                                        IFNULL(CONCAT(' (', users.nickName, ')'), '')
+                                    ),
+                                    '  (',
+                                    '('
+                                )
+                            ),
+                            ' (',
+                            '('
+                        ) AS name
+                        "),
                     )
                     ->where([
                         ['usersEmails.usersId', '=', $lastInsertedID],
@@ -689,7 +756,7 @@ class StaffController extends Controller
                 ], 406);
             } else {
 
-                
+
                 if ($users->password != null) {
                     return response()->json([
                         'message' => 'failed',
@@ -747,7 +814,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
 
     public function updateStatusUsers(Request $request)
     {
@@ -800,7 +867,7 @@ class StaffController extends Controller
                     'errors' => 'Your account already been activated',
                 ], 406);
             } else {
-                
+
                 $users = DB::table('users')
                     ->select('status')
                     ->where('id', '=', $request->id)
@@ -830,7 +897,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
 
     public function getAllHolidaysDate(Request $request)
     {
@@ -909,7 +976,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     public function __construct()
     {
         $this->client = new Client([
@@ -944,7 +1011,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     public function getRoleName(Request $request)
     {
 
@@ -968,9 +1035,69 @@ class StaffController extends Controller
             ], 422);
         }
     }
+    public function getDataIndex()
+    {
 
 
-    
+        $dataUserLocation = DB::table('usersLocation as a')
+            ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+            ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+            ->groupBy('a.usersId')
+            ->where('a.isDeleted', '=', 0);
+
+        $subquery = DB::table('users as a')
+            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
+            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
+            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
+            ->leftJoinSub($dataUserLocation, 'e', function ($join) {
+                $join->on('e.usersId', '=', 'a.id');
+            })
+            ->select(
+                'a.id as id',
+                DB::raw("
+                REPLACE(
+                    TRIM(
+                        REPLACE(
+                            CONCAT(
+                                IFNULL(a.firstName, ''),
+                                IF(a.middleName IS NOT NULL AND a.middleName != '', CONCAT(' ', a.middleName), ''),
+                                IFNULL(CONCAT(' ', a.lastName), ''),
+                                IFNULL(CONCAT(' (', a.nickName, ')'), '')
+                            ),
+                            '  (',
+                            '('
+                        )
+                    ),
+                    ' (',
+                    '('
+                ) AS name
+                "),
+                'b.jobName as jobTitle',
+                'c.email as emailAddress',
+                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
+                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
+                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'e.locationName as location',
+                'e.locationId as locationId',
+                'a.createdBy as createdBy',
+                DB::raw("IFNULL(DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0'],
+                ['c.usage', '=', 'Utama'],
+                ['c.isDeleted', '=', '0'],
+                ['d.usage', '=', 'Utama'],
+            ]);
+
+
+        $data = DB::table($subquery, 'a');
+
+        return $data;
+    }
+
+
+
     public function index(Request $request)
     {
 
@@ -979,51 +1106,18 @@ class StaffController extends Controller
             $defaultRowPerPage = 5;
             $defaultOrderBy = "asc";
 
-
-            $subquery = DB::table('users as a')
-                ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-                ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-                ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-                ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-                ->select(
-                    'a.id as id',
-                    DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                    'b.jobName as jobTitle',
-                    'c.email as emailAddress',
-                    DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                    DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                    DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                    'e.locationName as location',
-                    'a.locationId as locationId',
-                    'a.createdBy as createdBy',
-                    DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt'),
-                    'a.updated_at'
-                )
-                ->where([
-                    ['a.isDeleted', '=', '0'],
-                    ['b.isActive', '=', '1'],
-                    ['c.usage', '=', 'Utama'],
-                    ['c.isDeleted', '=', '0'],
-                    ['d.usage', '=', 'Utama'],
-                    ['e.isDeleted', '=', '0'],
-                ]);
-
-
-            $data = DB::table($subquery, 'a');
+            $data = $this->getDataIndex();
 
             if ($request->locationId) {
 
-                $val = [];
-                foreach ($request->locationId as $temp) {
-                    $val = $temp;
-                }
+                $test = $request->locationId;
 
-                if ($val) {
-                    $data = $data->whereIn('a.locationid', $request->locationId);
-                }
+                $data = $data->where(function ($query) use ($test) {
+                    foreach ($test as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
             }
-
-
 
             if ($request->search) {
 
@@ -1099,7 +1193,7 @@ class StaffController extends Controller
                         'orderColumn' => $listOrder,
                     ]);
                 }
-                
+
 
                 if (strtolower($defaultOrderBy) != "asc" && strtolower($defaultOrderBy) != "desc") {
                     return response()->json([
@@ -1177,52 +1271,21 @@ class StaffController extends Controller
         }
     }
 
-    
+
     private function Search($request)
     {
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
-
-        $data = DB::table($subquery, 'a');
-
+        $data = $this->getDataIndex();
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1250,49 +1313,17 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
-
-
-        $data = DB::table($subquery, 'a');
-
+        $data = $this->getDataIndex();
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1320,48 +1351,17 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                ),
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
-
-
-        $data = DB::table($subquery, 'a');
+        $data = $this->getDataIndex();
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1389,48 +1389,17 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
-
-        $data = DB::table($subquery, 'a');
-
+        $data = $this->getDataIndex();
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1459,48 +1428,19 @@ class StaffController extends Controller
         }
 
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
-
-        $data = DB::table($subquery, 'a');
+        $data = $this->getDataIndex();
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
+
 
         $data = DB::table($data)
             ->select(
@@ -1528,47 +1468,17 @@ class StaffController extends Controller
         }
 
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
-
-        $data = DB::table($subquery, 'a');
+        $data = $this->getDataIndex();
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1596,48 +1506,17 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
-
-
-        $data = DB::table($subquery, 'a');
+        $data = $this->getDataIndex();
 
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1654,8 +1533,6 @@ class StaffController extends Controller
                 'createdAt'
             );
 
-
-
         if ($request->search) {
             $data = $data->where('status', 'like', '%' . $request->search . '%');
         }
@@ -1668,47 +1545,17 @@ class StaffController extends Controller
         }
 
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
+        $data = $this->getDataIndex();
 
-
-        $data = DB::table($subquery, 'a');
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
 
         $data = DB::table($data)
@@ -1736,47 +1583,19 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
+        $data = $this->getDataIndex();
 
-        $data = DB::table($subquery, 'a');
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
+
 
         $data = DB::table($data)
             ->select(
@@ -1803,47 +1622,19 @@ class StaffController extends Controller
             return $temp_column;
         }
 
-        $subquery = DB::table('users as a')
-            ->leftjoin('jobTitle as b', 'b.id', '=', 'a.jobTitleId')
-            ->leftjoin('usersEmails as c', 'c.usersId', '=', 'a.id')
-            ->leftjoin('usersTelephones as d', 'd.usersId', '=', 'a.id')
-            ->leftjoin('location as e', 'e.id', '=', 'a.locationId')
-            ->select(
-                'a.id as id',
-                DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ,'(', IFNULL(a.nickName,a.firstName) ,')'  ) as name"),
-                'b.jobName as jobTitle',
-                'c.email as emailAddress',
-                DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
-                DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
-                'e.locationName as location',
-                'a.createdBy as createdBy',
-                DB::raw(
-                    'DATE_FORMAT(a.created_at, "%d-%m-%Y") as createdAt',
-                    'a.updated_at'
-                )
-            )
-            ->where([
-                ['a.isDeleted', '=', '0'],
-                ['b.isActive', '=', '1'],
-                ['c.usage', '=', 'Utama'],
-                ['c.isDeleted', '=', '0'],
-                ['d.usage', '=', 'Utama'],
-                ['e.isDeleted', '=', '0'],
-            ]);
+        $data = $this->getDataIndex();
 
-        $data = DB::table($subquery, 'a');
         if ($request->locationId) {
 
-            $val = [];
-            foreach ($request->locationId as $temp) {
-                $val = $temp;
-            }
+            $test = $request->locationId;
 
-            if ($val) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
-            }
+            $data = $data->where(function ($query) use ($test) {
+                foreach ($test as $id) {
+                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                }
+            });
         }
+
 
         $data = DB::table($data)
             ->select(
@@ -1902,7 +1693,7 @@ class StaffController extends Controller
                 'errors' => "Data not exists, please try another user id",
             ], 406);
         } else {
-            
+
             $checkImages = DB::table('usersImages')
                 ->where([
                     ['usersId', '=', $request->id],
@@ -1986,13 +1777,21 @@ class StaffController extends Controller
                     'errors' => "Data not exists, please try another user id",
                 ], 406);
             } else {
-                
+
 
                 $users = DB::table('users as a')
-                    ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
-                    ->leftjoin('jobTitle as c', 'c.id', '=', 'a.jobTitleId')
-                    ->leftjoin('typeId as d', 'd.id', '=', 'a.typeId')
-                    ->leftjoin('payPeriod as e', 'e.id', '=', 'a.payPeriodId')
+                    ->leftJoin('jobTitle as c', function ($join) {
+                        $join->on('c.id', '=', 'a.jobTitleId')
+                            ->where('c.isActive', '=', 1);
+                    })
+                    ->leftJoin('typeId as d', function ($join) {
+                        $join->on('d.id', '=', 'a.typeId')
+                            ->where('d.isActive', '=', 1);
+                    })
+                    ->leftJoin('payPeriod as e', function ($join) {
+                        $join->on('e.id', '=', 'a.payPeriodId')
+                            ->where('e.isActive', '=', 1);
+                    })
                     ->select(
                         'a.id',
                         'a.firstName',
@@ -2001,23 +1800,19 @@ class StaffController extends Controller
                         'a.nickName',
                         'a.gender',
                         'a.status',
-                        'c.id as jobTitleId',
-                        'c.jobName as jobName',
+                        DB::raw("IF(c.id  IS NULL, '',c.id ) as jobTitleId"),
+                        DB::raw("IF(c.jobName  IS NULL, '',c.jobName ) as jobName"),
                         'a.startDate',
                         'a.endDate',
                         'a.registrationNo',
                         'a.designation',
-                        'b.id as locationId',
-                        'b.locationname as locationName',
-
                         'a.annualSickAllowance',
                         'a.annualLeaveAllowance',
                         'a.payPeriodId',
-                        'e.periodName',
+                        DB::raw("IF(e.periodName IS NULL, '', e.periodName) as periodName"),
                         'a.payAmount',
-
-                        'd.id as typeId',
-                        'd.typeName as typeName',
+                        DB::raw("IF(d.id  IS NULL, '',d.id ) as typeId"),
+                        DB::raw("IF(d.typeName  IS NULL, '',d.typeName ) as typeName"),
                         'a.identificationNumber',
                         'a.additionalInfo',
 
@@ -2032,12 +1827,8 @@ class StaffController extends Controller
                     ->where([
                         ['a.id', '=', $request->id],
                         ['a.isDeleted', '=', '0'],
-                        ['c.isActive', '=', '1'],
-                        ['d.isActive', '=', '1'],
-                        ['e.isActive', '=', '1']
                     ])
                     ->first();
-
 
                 $usersimages = DB::table('usersImages as a')
                     ->select(
@@ -2052,6 +1843,21 @@ class StaffController extends Controller
                     ->get();
 
                 $users->images = $usersimages;
+
+                $locationId = DB::table('usersLocation as a')
+                    ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
+                    ->select(
+                        'a.locationId as locationId',
+                        'b.locationName as locationName',
+                    )
+                    ->where([
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', '0']
+                    ])
+                    ->get();
+
+                $users->locationId = $locationId;
+
 
                 $users_detail_address = DB::table('usersDetailAddresses as a')
                     ->select(
@@ -2126,7 +1932,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
 
     public function exportStaff(Request $request)
     {
@@ -2178,7 +1984,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     public function updateStaff(Request $request)
     {
 
@@ -2209,7 +2015,7 @@ class StaffController extends Controller
                     'endDate' => 'required|date|after:startDate',
                     'registrationNo' => 'string|max:20|min:5|nullable',
                     'designation' => 'string|max:20|min:5|nullable',
-                    'locationId' => 'required|integer',
+                    'locationId' => 'required',
                     'annualSickAllowance' => 'integer|nullable',
                     'annualLeaveAllowance' => 'integer|nullable',
                     'payPeriodId' => 'required|integer',
@@ -2220,7 +2026,7 @@ class StaffController extends Controller
                     'generalCustomerCanSchedule' => 'integer|nullable',
                     'generalCustomerReceiveDailyEmail' => 'integer|nullable',
                     'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
-                    'roleId' => 'required|integer',
+                    'roleId' => 'integer|nullable',
                     'reminderEmail' => 'integer|nullable',
                     'reminderWhatsapp' => 'integer|nullable',
                 ]
@@ -2233,7 +2039,7 @@ class StaffController extends Controller
                     'errors' => $errors,
                 ], 422);
             }
-            
+
             $checkIfUsersExists = DB::table('users')
                 ->where([
                     ['id', '=', $request->id],
@@ -2247,26 +2053,21 @@ class StaffController extends Controller
                     'errors' => ['Spesific users not exists please try different id!'],
                 ], 422);
             }
-            
 
-            if ($request->typeId == 3) {
+
+            $getTypeIDName = TypeId::where([
+                ['id', '=', $request->typeId],
+                ['isActive', '=', '1']
+            ])->first();
+
+            if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
 
                 if ((is_numeric($request->identificationNumber))) {
-
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => "Identification number must be alpanumeric if identification type is passport!",
-                    ], 422);
-
+                    return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
                 }
             } else {
-
                 if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
-
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => "Identification number must be integer!",
-                    ], 422);
+                    return responseInvalid(["Identification number must be integer!"]);
                 }
             }
 
@@ -2328,7 +2129,7 @@ class StaffController extends Controller
                         }
                     }
                 }
-                
+
                 if ($data_error_detailaddress) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
@@ -2343,7 +2144,7 @@ class StaffController extends Controller
                 ], 422);
             }
 
-
+            $checkusageUtamaPhone = 0;
             $data_error_telephone = [];
 
             if ($request->telephone) {
@@ -2365,6 +2166,15 @@ class StaffController extends Controller
                         ],
                         $messagePhone
                     );
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtamaPhone = $checkusageUtamaPhone + 1;
+                    }
+
+
+                    if ($checkusageUtamaPhone > 1) {
+                        return responseInvalid(['Usage utama on phone must only one!']);
+                    }
 
                     if ($telephoneDetail->fails()) {
 
@@ -2391,7 +2201,7 @@ class StaffController extends Controller
                     }
                 }
 
-                
+
 
                 if ($data_error_telephone) {
                     return response()->json([
@@ -2424,7 +2234,8 @@ class StaffController extends Controller
                     ], 422);
                 }
             }
-            
+
+            $checkusageUtamaEmail = 0;
             $data_error_email = [];
             $insertEmailUsers = '';
 
@@ -2447,6 +2258,16 @@ class StaffController extends Controller
                     );
 
 
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtamaEmail = $checkusageUtamaEmail + 1;
+                    }
+
+
+                    if ($checkusageUtamaEmail > 1) {
+                        return responseInvalid(['Usage utama on email must only one!']);
+                    }
+
+
                     if ($emailDetail->fails()) {
 
                         $errors = $emailDetail->errors()->all();
@@ -2467,7 +2288,7 @@ class StaffController extends Controller
                         'errors' => $data_error_email,
                     ], 422);
                 }
-                
+
 
                 $checkEmail = [];
                 $checkUsageEmail = false;
@@ -2511,7 +2332,7 @@ class StaffController extends Controller
                         'errors' => $checkEmail,
                     ], 422);
                 }
-                
+
                 if ($checkUsageEmail == false) {
 
                     return response()->json([
@@ -2521,7 +2342,7 @@ class StaffController extends Controller
                 }
             }
 
-
+            $checkusageUtamaMessenger = 0;
             $data_messenger_error = [];
             if ($request->messenger) {
 
@@ -2543,6 +2364,15 @@ class StaffController extends Controller
                         $messageMessenger
                     );
 
+
+
+                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
+                        $checkusageUtamaMessenger = $checkusageUtamaMessenger + 1;
+                    }
+
+                    if ($checkusageUtamaMessenger > 1) {
+                        return responseInvalid(['Usage utama on messenger must only one!']);
+                    }
 
                     if ($messengerDetail->fails()) {
 
@@ -2566,7 +2396,7 @@ class StaffController extends Controller
                         }
                     }
                 }
-                
+
                 if ($data_messenger_error) {
 
                     return response()->json([
@@ -2600,7 +2430,7 @@ class StaffController extends Controller
                     ], 422);
                 }
             }
-            
+
             $start = Carbon::parse($request->startDate);
             $end = Carbon::parse($request->endDate);
 
@@ -2620,7 +2450,6 @@ class StaffController extends Controller
                         'endDate' => $end,
                         'registrationNo' => $request->registrationNo,
                         'designation' => $request->designation,
-                        'locationId' => $request->locationId,
                         'annualSickAllowance' => $request->annualSickAllowance,
                         'annualSickAllowanceRemaining' => $request->annualSickAllowance,
                         'annualLeaveAllowance' => $request->annualLeaveAllowance,
@@ -2641,6 +2470,26 @@ class StaffController extends Controller
                         'password' => null,
                         'email' => $insertEmailUsers,
                     ]);
+
+
+
+                if ($request->locationId) {
+
+                    DB::table('usersLocation')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->locationId as $val) {
+
+                        DB::table('usersLocation')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'locationId' => $val,
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
 
                 if ($request->detailAddress) {
 
@@ -2771,7 +2620,6 @@ class StaffController extends Controller
                         'endDate' => $end,
                         'registrationNo' => $request->registrationNo,
                         'designation' => $request->designation,
-                        'locationId' => $request->locationId,
                         'annualSickAllowance' => $request->annualSickAllowance,
                         'annualSickAllowanceRemaining' => $request->annualSickAllowance,
                         'annualLeaveAllowance' => $request->annualLeaveAllowance,
@@ -2791,6 +2639,25 @@ class StaffController extends Controller
                         'updated_at' => now(),
 
                     ]);
+
+
+                if ($request->locationId) {
+
+                    DB::table('usersLocation')->where('usersId', '=', $request->id)->delete();
+
+                    foreach ($request->locationId as $val) {
+
+                        DB::table('usersLocation')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'locationId' => $val,
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                    }
+                }
+
 
 
                 if ($request->detailAddress) {
@@ -2884,7 +2751,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
 
     public function getTypeId(Request $request)
     {
@@ -2911,7 +2778,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
 
     public function getPayPeriod(Request $request)
     {
@@ -2938,7 +2805,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
     public function getJobTitle(Request $request)
     {
 
@@ -2965,7 +2832,7 @@ class StaffController extends Controller
         }
     }
 
-    
+
     public function insertTypeId(Request $request)
     {
 
@@ -2985,7 +2852,7 @@ class StaffController extends Controller
                 ->first();
 
             if ($checkIfValueExits != null) {
-              
+
                 return response()->json([
                     'message' => 'Failed',
                     'errors' => 'Type name already exists, please choose another name',
@@ -3015,7 +2882,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
 
 
     public function insertJobTitle(Request $request)
@@ -3042,7 +2909,6 @@ class StaffController extends Controller
                     'message' => 'Failed',
                     'errors' => 'Job title already exists, please choose another name',
                 ]);
-                
             } else {
 
                 DB::table('jobTitle')->insert([
@@ -3057,8 +2923,6 @@ class StaffController extends Controller
                     'message' => 'success',
                     'errors' => 'Successfully inserted Job Title',
                 ]);
-
-                
             }
         } catch (Exception $e) {
 
@@ -3097,8 +2961,6 @@ class StaffController extends Controller
                     'message' => 'Failed',
                     'errors' => 'Pay period already exists, please choose another name',
                 ]);
-
-                
             } else {
 
                 DB::table('payPeriod')->insert([
@@ -3141,7 +3003,7 @@ class StaffController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            
+
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => $errors,
@@ -3224,7 +3086,7 @@ class StaffController extends Controller
             ], 422);
         }
     }
-    
+
     public function staffListTransferProduct(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -3241,10 +3103,11 @@ class StaffController extends Controller
         }
 
         $data = DB::table('users as u')
-            ->join('location as l', 'u.locationId', 'l.id')
+            ->join('usersLocation as ul', 'ul.usersId', 'u.id')
+            ->join('location as l', 'ul.locationId', 'l.id')
             ->select('u.id', 'u.firstName as name')
             ->where('u.isDeleted', '=', 0)
-            ->where('u.locationId', '=', $request->locationId)
+            ->where('ul.locationId', '=', $request->locationId)
             ->where('u.id', '<>', $request->user()->id)
             ->orderBy('u.created_at', 'desc')
             ->get();
@@ -3256,9 +3119,32 @@ class StaffController extends Controller
         $data = DB::table('users')
             ->select(
                 'id',
-                DB::raw("CONCAT(firstName,' ',middleName,CASE WHEN middleName = '' THEN '' ELSE ' ' END,lastName) as fullName")
+                DB::raw("TRIM(CONCAT(CASE WHEN firstName = '' or firstName is null THEN '' ELSE CONCAT(firstName,' ') END
+                ,CASE WHEN middleName = '' or middleName is null THEN '' ELSE CONCAT(middleName,' ') END,
+                case when lastName = '' or lastName is null then '' else lastName end)) as fullName")
             )
             ->where('isDeleted', '=', 0)
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function listStaffWithLocation(Request $request)
+    {
+        $request->locationId = json_decode($request->locationId);
+        $data = DB::table('users as u')
+            ->join('usersLocation as ul', 'u.id', 'ul.usersId')
+            ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
+            ->select(
+                DB::raw("TRIM(CONCAT(CASE WHEN firstName = '' or firstName is null THEN '' ELSE CONCAT(firstName,' ') END
+                ,CASE WHEN middleName = '' or middleName is null THEN '' ELSE CONCAT(middleName,' ') END,
+                case when lastName = '' or lastName is null then '' else lastName end)) as fullName"),
+                'j.jobName'
+            )
+            ->whereIn('ul.locationId', $request->locationId)
+            ->where('u.isDeleted', '=', 0)
+            ->groupBy('fullName')
+            ->groupBy('j.jobName')
             ->get();
 
         return response()->json($data, 200);

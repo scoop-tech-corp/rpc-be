@@ -21,14 +21,16 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
     protected $locationId;
     protected $supplierId;
     protected $role;
+    protected $type;
 
-    public function __construct($orderValue, $orderColumn, $locationId, $supplierId, $role)
+    public function __construct($orderValue, $orderColumn, $locationId, $supplierId, $role, $type)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
         $this->locationId = $locationId;
         $this->supplierId = $supplierId;
         $this->role = $role;
+        $this->type = $type;
     }
     /**
      * @return \Illuminate\Support\Collection
@@ -36,6 +38,7 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
     public function collection()
     {
         $data = DB::table('productRestocks as pr')
+            ->join('productRestockDetails as prd', 'prd.productRestockId', 'pr.id')
             ->join('location as loc', 'loc.Id', 'pr.locationId')
             ->join('users as u', 'pr.userId', 'u.id')
             ->select(
@@ -59,25 +62,33 @@ class DataRecapRestock implements FromCollection, ShouldAutoSize, WithHeadings, 
             )
             ->where('pr.isDeleted', '=', 0);
 
+        if ($this->type == 'approval') {
+            $data = $data->whereIn('pr.status', array(1, 3, 4));
+        }
+
+        if ($this->type == 'history') {
+            $data = $data->whereIn('pr.status', array(2, 5));
+        }
+
         $locations = $this->locationId;
         // if (!$locations[0] == null) {
         if ($locations) {
 
-            $data = $data->whereIn('loc.id', $this->locationId);
+            $data = $data->whereIn('pr.locationId', $this->locationId);
         }
 
         $suppliers = $this->supplierId;
         // if (!$suppliers[0] == null) {
         if ($suppliers) {
 
-            $detail = DB::table('productRestockDetails as pr')
-                ->select('pr.productRestockId')
-                ->whereIn('pr.supplierId', $this->supplierId)
-                ->where('pr.isDeleted', '=', 0)
-                ->distinct()
-                ->pluck('pr.productRestockId');
+            // $detail = DB::table('productRestockDetails as pr')
+            //     ->select('pr.productRestockId')
+            //     ->whereIn('pr.supplierId', $this->supplierId)
+            //     ->where('pr.isDeleted', '=', 0)
+            //     ->distinct()
+            //     ->pluck('pr.productRestockId');
 
-            $data = $data->whereIn('pr.id', $detail);
+            $data = $data->whereIn('prd.supplierId', $suppliers);
         }
 
         if ($this->orderValue) {

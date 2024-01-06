@@ -9,7 +9,9 @@ use App\Models\ProductSellLocation;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductSell;
 use App\Models\ProductClinic;
-use App\Models\ProductSupplier;
+use App\Models\productSupplierTypeMessenger;
+use App\Models\productSupplierTypePhone;
+use App\Models\productSupplierUsage;
 use App\Models\usages;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,16 +20,6 @@ use Illuminate\Support\Carbon;
 
 class ProductController
 {
-    public function IndexProductSupplier(Request $request)
-    {
-        $Data = DB::table('productSuppliers')
-            ->select('id', 'supplierName')
-            ->where('isDeleted', '=', 0)
-            ->get();
-
-        return response()->json($Data, 200);
-    }
-
     public function IndexProductBrand(Request $request)
     {
         $Data = DB::table('productBrands')
@@ -36,66 +28,6 @@ class ProductController
             ->get();
 
         return response()->json($Data, 200);
-    }
-
-    public function addProductSupplier(Request $request)
-    {
-        try {
-
-            $validate = Validator::make($request->all(), [
-                'supplierName' => 'required',
-            ]);
-
-            if ($validate->fails()) {
-                $errors = $validate->errors()->all();
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
-            }
-
-            $checkIfValueExits = DB::table('productSuppliers')
-                ->where('supplierName', '=', $request->supplierName)
-                ->first();
-
-            if ($checkIfValueExits === null) {
-
-                // DB::beginTransaction();
-
-                // DB::table('product_supplier')->insert([
-                //     'supplierName' => $request->supplierName,
-                //     'isDeleted' => 0,
-                // ]);
-
-                // DB::commit();
-                ProductSupplier::create([
-                    'supplierName' => $request->supplierName,
-                    'userId' => $request->user()->id,
-                ]);
-
-                return response()->json(
-                    [
-                        'message' => 'Insert Data Successful!',
-                    ],
-                    200
-                );
-            } else {
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Supplier name already exists, please try different name!'],
-                ], 422);
-            }
-        } catch (Exception $e) {
-
-            return response()->json(
-                [
-                    'message' => $e,
-                ],
-                500
-            );
-        }
     }
 
     public function addProductBrand(Request $request)
@@ -219,7 +151,7 @@ class ProductController
         }
     }
 
-    public function IndexUsage(Request $request)
+    public function IndexUsage()
     {
 
         $data = DB::table('usages as u')
@@ -553,5 +485,230 @@ class ProductController
         return response()->json([
             'data' => $data
         ], 200);
+    }
+
+    public function indexDataStatic(Request $request)
+    {
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        $dataMessenger = DB::table('productSupplierTypeMessengers as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.typeName',
+                DB::raw("'messenger' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $dataTypePhone = DB::table('productSupplierTypePhones as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.typeName',
+                DB::raw("'phone' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $dataTypeUsages = DB::table('productSupplierUsages as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.usageName',
+                DB::raw("'usage' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $dataTypePhone = $dataTypePhone
+            ->union($dataMessenger)
+            ->union($dataTypeUsages);
+
+        $data = DB::query()->fromSub($dataTypePhone, 'p_pn')
+            ->select('id', 'typeName', 'type', 'createdBy', 'createdAt');
+
+        $dataTemp = DB::query()->fromSub($dataTypePhone, 'p_pn')
+            ->select('id', 'typeName', 'type', 'createdBy', 'createdAt');
+
+        $temp_column = null;
+
+        if ($request->search) {
+
+            $data1 = $dataTemp->where('typeName', 'like', '%' . $request->search . '%')->get();
+
+            if (count($data1)) {
+                $temp_column[] = 'typeName';
+            }
+
+            $dataTemp = DB::query()->fromSub($dataTypePhone, 'p_pn')
+                ->select('id', 'typeName', 'type', 'createdBy', 'createdAt');
+
+            $data2 = $dataTemp->where('type', 'like', '%' . $request->search . '%')->get();
+
+            if (count($data2)) {
+                $temp_column[] = 'type';
+            }
+
+            $dataTemp = DB::query()->fromSub($dataTypePhone, 'p_pn')
+                ->select('id', 'typeName', 'type', 'createdBy', 'createdAt');
+
+            $data3 = $dataTemp->where('createdBy', 'like', '%' . $request->search . '%')->get();
+
+            if (count($data3)) {
+                $temp_column[] = 'createdBy';
+            }
+
+            $res = $temp_column;
+
+            if ($res) {
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
+            } else {
+                $data = [];
+                return responseIndex(0, $data);
+            }
+        }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('createdAt', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+        return responseIndex(ceil($totalPaging), $data);
+    }
+
+    public function deleteDataStatic(Request $request)
+    {
+
+        $validate = Validator::make(
+            $request->datas,
+            [
+                '*.id' => 'required|integer',
+                '*.type' => 'required|string|in:phone,messenger,usage',
+            ],
+            [
+                '*.id.required' => 'Id Should be Required!',
+                '*.id.integer' => 'Id Should be Integer!',
+
+                '*.type.required' => 'Type Should be Required!',
+                '*.type.string' => 'Type Should be String!',
+                '*.type.in' => 'Type Should be Phone, Messenger, or Usage!',
+            ]
+        );
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->first();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
+            ], 422);
+        }
+
+        foreach ($request->datas as $value) {
+            if ($value['type'] == 'phone') {
+
+                productSupplierTypePhone::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } elseif ($value['type'] == 'messenger') {
+                productSupplierTypeMessenger::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } elseif ($value['type'] == 'usage') {
+                productSupplierUsage::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            }
+        }
+
+        return responseDelete();
+    }
+
+    public function ListProductSellWithLocation(Request $request)
+    {
+        $request->locationId = json_decode($request->locationId);
+
+        if ($request->locationId == 'all') {
+
+            $data = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('ps.fullName')
+                ->where('ps.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        } else {
+            $data = DB::table('productSells as ps')
+                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+                ->select('ps.fullName')
+                ->wherein('psl.locationId', $request->locationId)
+                ->where('ps.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        }
+
+        return responseList($data);
+    }
+
+    public function ListProductClinicWithLocation(Request $request)
+    {
+        $request->locationId = json_decode($request->locationId);
+        if ($request->locationId == 'all') {
+
+            $data = DB::table('productClinics as pc')
+                ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+                ->select('pc.fullName')
+                ->where('pc.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        } else {
+            $data = DB::table('productClinics as pc')
+                ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+                ->select('pc.fullName')
+                ->wherein('pcl.locationId', $request->locationId)
+                ->where('pc.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        }
+
+        return responseList($data);
     }
 }

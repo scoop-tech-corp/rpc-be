@@ -13,15 +13,15 @@ class ProductTransferReport implements WithMultipleSheets
 
     protected $orderValue;
     protected $orderColumn;
-    protected $locationId;
-    protected $role;
+    protected $locationDestinationId;
+    protected $status;
 
-    public function __construct($orderValue, $orderColumn, $locationId, $role)
+    public function __construct($orderValue, $orderColumn, $locationDestinationId, $status)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
-        $this->locationId = $locationId;
-        $this->role = $role;
+        $this->locationDestinationId = $locationDestinationId;
+        $this->status = $status;
     }
 
     function array(): array
@@ -34,7 +34,7 @@ class ProductTransferReport implements WithMultipleSheets
         $sheets = [];
 
         $sheets = [
-            new DataRecapProductTransfer($this->orderValue, $this->orderColumn, $this->locationId, $this->role)
+            new DataRecapProductTransfer($this->orderValue, $this->orderColumn, $this->locationDestinationId, $this->status)
         ];
 
         return $sheets;
