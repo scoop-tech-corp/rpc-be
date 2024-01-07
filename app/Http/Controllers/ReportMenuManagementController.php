@@ -16,16 +16,20 @@ class ReportMenuManagementController extends Controller
 
         $page = $request->goToPage;
 
-        $data = DB::table('menuGroups as mg')
-            ->join('users as u', 'mg.userId', 'u.id')
+        $data = DB::table('accessReportMenus as ar')
+            ->join('users as u', 'ar.userId', 'u.id')
+            ->join('usersRoles as ur', 'ar.roleId', 'ur.id')
+            ->join('accessType as at', 'ar.accessTypeId', 'at.id')
             ->select(
-                'mg.id',
-                'mg.groupName',
-                'mg.orderMenu',
+                'ar.id',
+                'ar.groupName',
+                'ar.menuName',
+                'ur.roleName',
+                'at.accessType',
                 'u.firstName as createdBy',
-                DB::raw("DATE_FORMAT(mg.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+                DB::raw("DATE_FORMAT(ar.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
-            ->where('mg.isDeleted', '=', 0);
+            ->where('ar.isDeleted', '=', 0);
 
         if ($request->search) {
             $res = $this->Search($request);
@@ -45,7 +49,7 @@ class ReportMenuManagementController extends Controller
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
-        $data = $data->orderBy('mg.updated_at', 'desc');
+        $data = $data->orderBy('ar.updated_at', 'desc');
 
         $offset = ($page - 1) * $itemPerPage;
 
@@ -67,38 +71,75 @@ class ReportMenuManagementController extends Controller
     {
         $temp_column = null;
 
-        $data = DB::table('menuGroups as mg')
-            ->join('users as u', 'mg.userId', 'u.id')
+        $data = DB::table('accessReportMenus as ar')
+            ->join('users as u', 'ar.userId', 'u.id')
             ->select(
-                'mg.groupName',
+                'ar.groupName',
             )
-            ->where('mg.isDeleted', '=', 0);
+            ->where('ar.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('mg.groupName', 'like', '%' . $request->search . '%');
+            $data = $data->where('ar.groupName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'mg.groupName';
+            $temp_column[] = 'ar.groupName';
         }
 
-        $data = DB::table('menuGroups as mg')
-            ->join('users as u', 'mg.userId', 'u.id')
+        $data = DB::table('accessReportMenus as ar')
+            ->join('users as u', 'ar.userId', 'u.id')
             ->select(
-                'u.firstName',
+                'ar.menuName',
             )
-            ->where('mg.isDeleted', '=', 0);
+            ->where('ar.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+            $data = $data->where('ar.menuName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'u.firstName';
+            $temp_column[] = 'ar.menuName';
+        }
+
+        $data = DB::table('accessReportMenus as ar')
+            ->join('users as u', 'ar.userId', 'u.id')
+            ->join('usersRoles as ur', 'ar.roleId', 'ur.id')
+            ->select(
+                'ur.roleName',
+            )
+            ->where('ar.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('ur.roleName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'ur.roleName';
+        }
+
+        $data = DB::table('accessReportMenus as ar')
+            ->join('users as u', 'ar.userId', 'u.id')
+            ->join('usersRoles as ur', 'ar.roleId', 'ur.id')
+            ->join('accessType as at', 'ar.accessTypeId', 'at.id')
+            ->select(
+                'at.accessType',
+            )
+            ->where('ar.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('at.accessType', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'at.accessType';
         }
 
         return $temp_column;
