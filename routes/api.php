@@ -32,6 +32,7 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MenuManagementController;
+use App\Http\Controllers\ReportMenuManagementController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -420,6 +421,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/setting', [MenuManagementController::class, 'insertMenuSetting']);
         Route::put('/setting', [MenuManagementController::class, 'updateMenuSetting']);
         Route::delete('/setting', [MenuManagementController::class, 'deleteMenuSetting']);
+
+        Route::get('/menu-report', [ReportMenuManagementController::class, 'Index']);
+        Route::post('/menu-report', [ReportMenuManagementController::class, 'Insert']);
+        Route::put('/menu-report', [ReportMenuManagementController::class, 'Update']);
+        Route::delete('/menu-report', [ReportMenuManagementController::class, 'Delete']);
     });
 
     // Service
