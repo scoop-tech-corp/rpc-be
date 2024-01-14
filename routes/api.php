@@ -424,6 +424,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/menu-report', [ReportMenuManagementController::class, 'Index']);
         Route::post('/menu-report', [ReportMenuManagementController::class, 'Insert']);
+        Route::get('/menu-report/detail', [ReportMenuManagementController::class, 'Detail']);
         Route::put('/menu-report', [ReportMenuManagementController::class, 'Update']);
         Route::delete('/menu-report', [ReportMenuManagementController::class, 'Delete']);
     });

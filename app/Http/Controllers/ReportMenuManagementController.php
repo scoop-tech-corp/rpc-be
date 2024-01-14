@@ -145,6 +145,42 @@ class ReportMenuManagementController extends Controller
         return $temp_column;
     }
 
+    public function Detail(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return responseInvalid($errors);
+        }
+
+        $data = DB::table('accessReportMenus as ar')
+            ->join('usersRoles as ur', 'ar.roleId', 'ur.id')
+            ->join('accessType as at', 'ar.accessTypeId', 'at.id')
+            ->select(
+                'ar.id',
+                'ar.groupName',
+                'ar.menuName',
+                'ar.url',
+                'ar.roleId',
+                'ur.roleName',
+                'ar.accessTypeId',
+                'at.accessType',
+            )
+            ->where('ar.id', '=', $request->id)
+            ->where('ar.isDeleted', '=', 0)
+            ->first();
+
+        if (!$data) {
+            return responseInvalid(['Menu Report is not exists or has already deleted!']);
+        }
+
+        return response()->json($data, 200);
+    }
+
     public function Insert(Request $request)
     {
         $validate = Validator::make($request->all(), [
