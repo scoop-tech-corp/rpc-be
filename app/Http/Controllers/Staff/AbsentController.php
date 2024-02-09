@@ -11,19 +11,46 @@ use DB;
 
 class AbsentController extends Controller
 {
+    public function Index(Request $request)
+    {
+    }
+
+    public function Export(Request $request)
+    {
+    }
+
+    public function staffListAbsent(Request $request)
+    {
+    }
+
     public function createAbsent(Request $request)
     {
-        $validate = Validator::make($request->all(), [
-            'presentTime' => 'required|date_format:d/m/Y H:i',
-            'longitude' => 'nullable|string',
-            'latitude' => 'nullable|string',
-            'status' => 'required|integer|in:1,2,3,4',
-            'reason' => 'nullable|string',
-            'address' => 'nullable|string',
-            'city' => 'nullable|string',
-            'province' => 'nullable|string',
-            'image' => 'image|mimes:jpg,png,jpeg,gif,svg|max:5000',
-        ]);
+
+        if ($request->status == 1 || $request->status == 4) {
+            $validate = Validator::make($request->all(), [
+                'presentTime' => 'required|date_format:d/m/Y H:i',
+                'longitude' => 'nullable|string',
+                'latitude' => 'nullable|string',
+                'status' => 'required|integer|in:1,2,3,4',
+                'reason' => 'nullable|string',
+                'address' => 'nullable|string',
+                'city' => 'nullable|string',
+                'province' => 'nullable|string',
+                'image' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:5000',
+            ]);
+        } else {
+            $validate = Validator::make($request->all(), [
+                'presentTime' => 'required|date_format:d/m/Y H:i',
+                'longitude' => 'nullable|string',
+                'latitude' => 'nullable|string',
+                'status' => 'required|integer|in:1,2,3,4',
+                'reason' => 'nullable|string',
+                'address' => 'nullable|string',
+                'city' => 'nullable|string',
+                'province' => 'nullable|string',
+                'image' => 'nullable',
+            ]);
+        }
 
         $presentTime = date('Y-m-d H:i', strtotime($request->presentTime));
 
@@ -36,16 +63,16 @@ class AbsentController extends Controller
         $present = DB::table('staffAbsents')
             ->where('userId', '=', $request->user()->id)
             ->whereDate('created_at', Carbon::today())
-            ->get();
+            ->first();
 
-        if (count($present) > 0) {
+        if ($present && $request->status != 3) {
             return responseInvalid(['You have already absent today!']);
         }
 
         if ($request->status == 4) {
 
             if (count($present) <= 0) {
-                return responseInvalid(['You can not miss going home today! Cause you have not been absent today!']);
+                return responseInvalid(['You can not absent home today! Cause you have not been absent present today!']);
             }
         }
 
@@ -77,14 +104,9 @@ class AbsentController extends Controller
             }
         }
 
-        $address = '';
         $city = '';
         $province = '';
         $reason = '';
-
-        if ($request->address != '') {
-            $address = $request->address;
-        }
 
         if ($request->city != '') {
             $city = $request->city;
@@ -98,19 +120,36 @@ class AbsentController extends Controller
             $reason = $request->reason;
         }
 
-        StaffAbsents::create([
-            'presentTime' => $presentTime,
-            'longitude' => $request->longitude,
-            'latitude' => $request->latitude,
-            'status' => $request->status,
-            'reason' => $reason,
-            'realImageName' => $oldname,
-            'imagePath' =>  $path,
-            'address' => $address,
-            'city' => $city,
-            'province' => $province,
-            'userId' => $request->user()->id,
-        ]);
+        if (!$present) {
+            StaffAbsents::create([
+                'presentTime' => $presentTime,
+                'presentLongitude' => $request->longitude,
+                'presentLatitude' => $request->latitude,
+                'statusPresent' => $request->status,
+                'reasonPresent' => $reason,
+                'realImageNamePresent' => $oldname,
+                'imagePathPresent' =>  $path,
+                'cityPresent' => $city,
+                'provincePresent' => $province,
+                'userId' => $request->user()->id,
+            ]);
+        } else {
+
+            StaffAbsents::where('id', '=', $present->id)
+                ->update(
+                    [
+                        'homeTime' => $presentTime,
+                        'homeLongitude' => $request->longitude,
+                        'homeLatitude' => $request->latitude,
+                        'statusHome' => $request->status,
+                        'reasonHome' => $reason,
+                        'realImageNameHome' => $oldname,
+                        'imagePathHome' =>  $path,
+                        'cityHome' => $city,
+                        'provinceHome' => $province,
+                    ]
+                );
+        }
 
         return responseCreate();
     }
