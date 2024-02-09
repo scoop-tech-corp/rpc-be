@@ -14,8 +14,9 @@ class StaffAbsents extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'presentTime', 'longitude', 'latitude', 'status', 'reason', 'realImageName', 'imagePath', 'address', 'city', 'province',
-
+        'presentTime', 'homeTime', 'presentLongitude', 'homeLongitude', 'presentLatitude', 'homeLatitude', 'statusPresent', 'statusHome',
+        'reasonPresent', 'reasonHome', 'realImageNameHome', 'realImageNamePresent',
+        'imagePathPresent', 'imagePathHome', 'cityPresent', 'cityHome', 'provincePresent', 'provinceHome',
         'userId', 'userUpdateId'
     ];
 }
