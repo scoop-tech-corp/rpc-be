@@ -18,6 +18,10 @@ return new class extends Migration
         });
 
         Schema::table('staffAbsents', function (Blueprint $table) {
+            $table->time('duration')->nullable()->after('homeTime');
+        });
+
+        Schema::table('staffAbsents', function (Blueprint $table) {
             $table->string('homeLongitude')->nullable()->after('longitude');
         });
 
@@ -97,6 +101,10 @@ return new class extends Migration
     {
         Schema::table('staffAbsents', function (Blueprint $table) {
             $table->dropColumn('homeTime');
+        });
+
+        Schema::table('staffAbsents', function (Blueprint $table) {
+            $table->dropColumn('duration');
         });
 
         Schema::table('staffAbsents', function (Blueprint $table) {
