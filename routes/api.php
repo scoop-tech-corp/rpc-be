@@ -376,6 +376,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::group(['prefix' => 'absent'], function () {
         Route::post('/', [AbsentController::class, 'createAbsent']);
+        Route::get('/staff-list', [AbsentController::class, 'staffListAbsent']);
+        Route::get('/index', [AbsentController::class, 'Index']);
+        Route::get('/present-list', [AbsentController::class, 'presentStatusList']);
+        Route::get('/detail', [AbsentController::class, 'Detail']);
+        Route::get('/export', [AbsentController::class, 'Export']);
     });
 
     // Chat
