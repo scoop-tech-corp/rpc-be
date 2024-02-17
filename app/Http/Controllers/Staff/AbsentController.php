@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Exports\Absent\AbsentReport;
 use App\Http\Controllers\Controller;
 use App\Models\StaffAbsents;
 use Illuminate\Http\Request;
@@ -9,6 +10,7 @@ use Validator;
 use Illuminate\Support\Carbon;
 use DB;
 use Symfony\Component\HttpFoundation\Response;
+use Excel;
 
 class AbsentController extends Controller
 {
@@ -177,6 +179,43 @@ class AbsentController extends Controller
 
     public function Export(Request $request)
     {
+        $fileName = "";
+        $date = "";
+        $location = "";
+
+        if ($request->locationId) {
+            $dataLocation = DB::table('location as l')
+                ->select(DB::raw("GROUP_CONCAT(l.locationName SEPARATOR ', ') as location"))
+                ->whereIn('l.id', $request->locationId)
+                ->distinct()
+                ->pluck('location')
+                ->first();
+
+            $location = " " . $dataLocation;
+        }
+
+
+        if ($request->dateFrom && $request->dateTo) {
+            $fromDate = Carbon::parse($request->dateFrom);
+            $toDate = Carbon::parse($request->dateTo);
+
+            $date = " " . $fromDate->format('dmy') . "-" . $toDate->format('dmy');
+        }
+
+        $fileName = "Rekap Absensi" . $location . $date . ".xlsx";
+
+        return Excel::download(
+            new AbsentReport(
+                $request->orderValue,
+                $request->orderColumn,
+                $request->dateFrom,
+                $request->dateTo,
+                $request->locationId,
+                $request->staff,
+                $request->statusPresent
+            ),
+            $fileName
+        );
     }
 
     public function presentStatusList()
