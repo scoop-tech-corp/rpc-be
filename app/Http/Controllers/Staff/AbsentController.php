@@ -46,7 +46,7 @@ class AbsentController extends Controller
                     DATE_FORMAT(sa.presentTime, '%e %b %Y')
                 ) AS day
                 "),
-                DB::raw("TIME_FORMAT(sa.presentTime, '%H.%i') AS presentTime"),
+                DB::raw("TIME_FORMAT(sa.presentTime, '%H:%i') AS presentTime"),
                 DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H.%i') END AS homeTime"),
                 DB::raw("CASE WHEN sa.duration is null THEN '' ELSE CONCAT(
                     HOUR(sa.duration), ' jam ',
