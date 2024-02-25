@@ -32,6 +32,7 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MenuManagementController;
+use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\ReportMenuManagementController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -276,6 +277,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/datastatic', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
     });
 
+    Route::group(['prefix'=>'promotion'],function(){
+
+        Route::post('/', [PromotionController::class, 'create']);
+        Route::get('/', [PromotionController::class, 'index']);
+        Route::get('/export', [PromotionController::class, 'export']);
+        Route::get('/list-type', [PromotionController::class, 'listType']);
+        Route::get('/detail', [PromotionController::class, 'detail']);
+        Route::put('/', [PromotionController::class, 'update']);
+        Route::delete('/', [PromotionController::class, 'delete']);
+    });
 
     //STAFF
     Route::group(['prefix' => 'staff'], function () {

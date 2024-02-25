@@ -113,7 +113,7 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             'sa.cityHome'
         );
 
-        $data = $data->orderBy('sa.updated_at', 'desc')->get();;
+        $data = $data->orderBy('sa.updated_at', 'desc')->get();
 
         $val = 1;
         foreach ($data as $key) {
