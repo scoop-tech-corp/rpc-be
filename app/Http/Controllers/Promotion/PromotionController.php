@@ -171,7 +171,6 @@ class PromotionController extends Controller
                 $ResultBundleDetails,
                 [
                     '*.productOrService' => 'required|string',
-                    '*.percentOrAmount' => 'required|string',
                     '*.productType' => 'required|string',
                     '*.productId' => 'nullable|integer',
                     '*.serviceId' => 'nullable|integer',
@@ -180,8 +179,6 @@ class PromotionController extends Controller
                 [
                     '*.productOrService.required' => 'Product or Service Should be Required!',
                     '*.productOrService.string' => 'Product or Service Should be Filled!',
-                    '*.percentOrAmount.required' => 'Percent or Amount Should be Required!',
-                    '*.percentOrAmount.string' => 'Percent or Amount Should be Filled!',
                     '*.productType.required' => 'Product Type Should be Required!',
                     '*.productType.string' => 'Product Type Should be Filled!',
                     '*.productId.integer' => 'Product Id Should be Filled!',
@@ -385,7 +382,6 @@ class PromotionController extends Controller
                         PromotionBundleDetail::create([
                             'promoBundleId' => $idBundle->id,
                             'productOrService' => $res['productOrService'],
-                            'percentOrAmount' => $res['percentOrAmount'],
                             'productType' => $res['productType'],
                             'productId' => $dataProdId->id,
                             'serviceId' => $res['serviceId'],
@@ -543,7 +539,6 @@ class PromotionController extends Controller
     {
         $data = DB::table('promotionMasters as pm')
             ->join('promotionTypes as pt', 'pm.type', 'pt.id')
-            // ->join('promotionLocations as pl', 'pl.promoMasterId', 'pm.id')
             ->join('users as u', 'pm.userId', 'u.id')
             ->select(
                 'pm.id as id',
@@ -585,45 +580,194 @@ class PromotionController extends Controller
                 ->first();
 
             if ($temp->productBuyType == 'Sell') {
-                $dataProd = DB::table('productSells')
+                $dataProdBuy = DB::table('productSells as p')
+                    ->select('p.fullName')
                     ->where('id', '=', $temp->productBuyId)
                     ->first();
-
-                return $dataProd;
             } elseif ($temp->productBuyType == 'Clinic') {
 
-                $dataProd = DB::table('productClinics')
+                $dataProdBuy = DB::table('productClinics as p')
+                    ->select('p.fullName')
                     ->where('id', '=', $temp->productBuyId)
                     ->first();
-
-                return $dataProd;
             }
 
-            return $temp;
+
+            if ($temp->productFreeType == 'Sell') {
+                $dataProdFree = DB::table('productSells as p')
+                    ->select('p.fullName')
+                    ->where('id', '=', $temp->productFreeId)
+                    ->first();
+            } elseif ($temp->productFreeType == 'Clinic') {
+
+                $dataProdFree = DB::table('productClinics as p')
+                    ->select('p.fullName')
+                    ->where('id', '=', $temp->productFreeId)
+                    ->first();
+            }
+
+            $data->quantityBuyItem = $temp->quantityBuyItem;
+            $data->productBuyType = $temp->productBuyType;
+            $data->productBuyId = $temp->productBuyId;
+            $data->productBuyName = $dataProdBuy->fullName;
+
+            $data->quantityFreeItem = $temp->quantityFreeItem;
+            $data->productFreeType = $temp->productFreeType;
+            $data->productFreeId = $temp->productFreeId;
+            $data->productFreeName = $dataProdFree->fullName;
+
+            $data->totalMaxUsage = $temp->totalMaxUsage;
+            $data->maxUsagePerCustomer = $temp->maxUsagePerCustomer;
         } elseif ($data->typeId == 2) {
             $temp = DB::table('promotionDiscounts as pd')
-                ->select(
-                    'pd.id'
-                )
                 ->where('pd.promoMasterId', '=', $request->id)
                 ->first();
+
+            if ($temp->productOrService == 'product') {
+
+                if ($temp->productType == 'Sell') {
+                    $dataProd = DB::table('productSells as p')
+                        ->select('p.fullName')
+                        ->where('id', '=', $temp->productId)
+                        ->first();
+                } elseif ($temp->productType == 'Clinic') {
+
+                    $dataProd = DB::table('productClinics as p')
+                        ->select('p.fullName')
+                        ->where('id', '=', $temp->productId)
+                        ->first();
+                }
+
+                $data->productId = $temp->productId;
+                $data->productName = $dataProd->fullName;
+            } elseif ($temp->productOrService == 'service') {
+                $dataService = DB::table('services')
+                    ->select('fullName')
+                    ->where('id', '=', $temp->serviceId)
+                    ->first();
+
+                $data->serviceId = $temp->serviceId;
+                $data->serviceName = $dataService->fullName;
+            }
+
+            $data->productOrService = $temp->productOrService;
+            $data->percentOrAmount = $temp->percentOrAmount;
+            $data->productType = $temp->productType;
+
+            if ($temp->percentOrAmount == 'percent') {
+                $data->percent = $temp->percent;
+            } elseif ($temp->percentOrAmount == 'amount') {
+                $data->amount = $temp->amount;
+            }
+
+            $data->totalMaxUsage = $temp->totalMaxUsage;
+            $data->maxUsagePerCustomer = $temp->maxUsagePerCustomer;
         } elseif ($data->typeId == 3) {
             $temp = DB::table('promotionBundles as pb')
-                ->select(
-                    'pb.id'
-                )
-                ->where('pb.promoMasterId', '=', $request->id)
-                ->get();
-        } elseif ($data->typeId == 4) {
-            $temp = DB::table('promotionBasedSales as pb')
-                ->select(
-                    'pb.id',
-                    'pb.minPurchase',
-                    'pb.maxPurchase',
-
-                )
                 ->where('pb.promoMasterId', '=', $request->id)
                 ->first();
+
+            $customList = [];
+
+            $temp2 = DB::table('promotionBundleDetails as pb')
+                ->where('pb.promoBundleId', '=', $temp->id)
+                ->get();
+
+            foreach ($temp2 as $value) {
+
+                if ($value->productOrService == 'product') {
+
+                    if ($value->productType == 'Sell') {
+                        $dataProd = DB::table('productSells as p')
+                            ->select('p.fullName')
+                            ->where('id', '=', $value->productId)
+                            ->first();
+                    } elseif ($value->productType == 'Clinic') {
+                        $dataProd = DB::table('productClinics as p')
+                            ->select('p.fullName')
+                            ->where('id', '=', $value->productId)
+                            ->first();
+                    }
+
+                    $tempList = [
+                        'productOrService' => $value->productOrService,
+                        'productType' => $value->productType,
+                        'productId' => $value->productId,
+                        'productName' => $dataProd->fullName,
+                        'quantity' => $value->quantity,
+                    ];
+
+                    $customList[] = $tempList;
+                } elseif ($value['productOrService'] == 'service') {
+                    $dataService = DB::table('services')
+                        ->select('fullName')
+                        ->where('id', '=', $value['serviceId'])
+                        ->first();
+
+                    $tempList = [
+                        'productOrService' => $value->productOrService,
+                        'serviceId' => $dataService->fullName,
+                        'quantity' => $value->quantity,
+                    ];
+
+                    $customList[] = $tempList;
+                }
+            }
+
+            $data->bundles = $customList;
+
+            $data->price = $temp->price;
+            $data->totalMaxUsage = $temp->totalMaxUsage;
+            $data->maxUsagePerCustomer = $temp->maxUsagePerCustomer;
+
+        } elseif ($data->typeId == 4) {
+
+            $temp = DB::table('promotionMasters as pm')
+                ->join('promotionBasedSales as pb', 'pm.id', 'pb.promoMasterId')
+                ->join('promotionTypes as pt', 'pm.type', 'pt.id')
+                ->join('users as u', 'pm.userId', 'u.id')
+                ->select(
+                    'pm.id as id',
+                    'pm.name',
+                    'pm.type as typeId',
+                    'pt.typeName as type',
+                    DB::raw("DATE_FORMAT(pm.startDate, '%d/%m/%Y') as startDate"),
+                    DB::raw("DATE_FORMAT(pm.endDate, '%d/%m/%Y') as endDate"),
+                    DB::raw("CASE WHEN pm.status = 1 then 'Active' ELSE 'Inactive' END as status"),
+                    'u.firstName as createdBy',
+                    DB::raw("DATE_FORMAT(pm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
+                    'pb.minPurchase',
+                    'pb.maxPurchase',
+                    'pb.percentOrAmount',
+                    'pb.totalMaxUsage',
+                    'pb.maxUsagePerCustomer',
+                )
+                ->where('pm.id', '=', $request->id)
+                ->first();
+
+            if ($temp->percentOrAmount == 'percent') {
+
+                $temp_two = DB::table('promotionBasedSales as pb')
+                    ->select(
+                        'pb.percent'
+                    )
+                    ->where('pb.promoMasterId', '=', $request->id)
+                    ->first();
+
+                $temp->percent = $temp_two->percent;
+            } elseif ($temp->percentOrAmount == 'amount') {
+
+                $temp_two = DB::table('promotionBasedSales as pb')
+                    ->select(
+                        'pb.amount'
+                    )
+                    ->where('pb.promoMasterId', '=', $request->id)
+                    ->first();
+
+                $temp->amount = $temp_two->amount;
+            }
+
+            $data = $temp;
         }
 
         return response()->json($data, 200);
