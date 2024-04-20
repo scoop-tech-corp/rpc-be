@@ -464,6 +464,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/', [ServiceController::class, 'create']);
             Route::put('/', [ServiceController::class, 'update']);
             Route::delete('/', [ServiceController::class, 'destroy']);
+            Route::get('/location', [ServiceController::class, 'ListServiceWithLocation']);
         });
         Route::group(['prefix' => 'treatment'], function () {
             Route::get('/export', [TreatmentController::class, 'export']);
