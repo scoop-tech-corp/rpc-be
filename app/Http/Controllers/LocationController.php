@@ -15,6 +15,12 @@ use Validator;
 use DB;
 use File;
 use PDF;
+use App\Imports\Location\LocationImport;
+use App\Models\Location\LocationDetailAddress;
+use App\Models\Location\LocationEmail;
+use App\Models\Location\LocationOperational;
+use App\Models\Location\LocationTelephone;
+use Carbon\Carbon;
 
 class LocationController extends Controller
 {
@@ -23,6 +29,464 @@ class LocationController extends Controller
     {
 
         return Excel::download(new exportValue, 'Location.xlsx');
+    }
+
+    private function ValidateImportSheet1($value, $count_row)
+    {
+
+        if ($value['name'] == "") {
+            return 'There is any empty cell on column Nama at row ' . $count_row;
+        }
+
+        if ($value['status'] != 1 && $value['status'] != 0) {
+            return 'There is any empty cell on column Status at row ' . $count_row;
+        }
+
+        if ($value['monday_senin'] == "") {
+            return 'There is any empty cell on column Monday / Senin at row ' . $count_row;
+        }
+
+        if ($value['tuesday_selasa'] == "") {
+            return 'There is any empty cell on column Tuesday / Selasa at row ' . $count_row;
+        }
+
+        if ($value['wednesday_rabu'] == "") {
+            return 'There is any empty cell on column Wednesday / Rabu at row ' . $count_row;
+        }
+
+        if ($value['thursday_kamis'] == "") {
+            return 'There is any empty cell on column Thursday / Kamis at row ' . $count_row;
+        }
+
+        if ($value['friday_jumat'] == "") {
+            return 'There is any empty cell on column Friday / Jumat at row ' . $count_row;
+        }
+
+        if ($value['saturday_sabtu'] == "") {
+            return 'There is any empty cell on column Saturday / Sabtu at row ' . $count_row;
+        }
+
+        if ($value['sunday_minggu'] == "") {
+            return 'There is any empty cell on column Sunday / Minggu at row ' . $count_row;
+        }
+    }
+
+    private function ValidateImportSheet2($value, $count_row)
+    {
+
+        if ($value['id'] == "") {
+            return 'There is any empty cell on column Id at row ' . $count_row;
+        }
+
+        if ($value['street_address'] == "") {
+            return 'There is any empty cell on column Street_address at row ' . $count_row;
+        }
+
+        if ($value['country'] == "") {
+            return 'There is any empty cell on column Country at row ' . $count_row;
+        }
+
+        if ($value['province'] == "") {
+            return 'There is any empty cell on column Province at row ' . $count_row;
+        } else {
+            $find = DB::table('provinsi')
+                ->where('kodeProvinsi', '=', $value['province'])
+                ->first();
+
+            if (!$find) {
+                return 'There is any invalid Province at row ' . $count_row;
+            }
+        }
+
+        if ($value['city'] == "") {
+            return 'There is any empty cell on column City at row ' . $count_row;
+        } else {
+
+            $find = DB::table('kabupaten')
+                ->where('kodeKabupaten', '=', $value['city'])
+                ->first();
+
+            if (!$find) {
+                return 'There is any invalid City at row ' . $count_row;
+            }
+        }
+
+        if ($value['postal_code'] == "") {
+            return 'There is any empty cell on column Postal Code at row ' . $count_row;
+        }
+
+        if ($value['alamat_utama'] != 1 && $value['alamat_utama'] != 0) {
+            return 'There is any empty cell on column Alamat Utama at row ' . $count_row;
+        }
+    }
+
+    private function ValidateImportSheet3($value, $count_row)
+    {
+
+        if ($value['id'] == "") {
+            return 'There is any empty cell on column Id at row ' . $count_row;
+        }
+
+        if ($value['usage'] == "") {
+            return 'There is any empty cell on column Street_address at row ' . $count_row;
+        }
+
+        if ($value['nomor'] == "") {
+            return 'There is any empty cell on column Country at row ' . $count_row;
+        }
+
+        if ($value['type'] == "") {
+            return 'There is any empty cell on column Postal Code at row ' . $count_row;
+        }
+    }
+
+    private function ValidateImportSheet4($value, $count_row)
+    {
+
+        if ($value['id'] == "") {
+            return 'There is any empty cell on column Id at row ' . $count_row;
+        }
+
+        if ($value['usage'] == "") {
+            return 'There is any empty cell on column Street_address at row ' . $count_row;
+        }
+
+        if ($value['address'] == "") {
+            return 'There is any empty cell on column Country at row ' . $count_row;
+        }
+    }
+
+    private function processTime($time)
+    {
+        $array_time = explode('-', $time);
+
+        $time1 = Carbon::createFromFormat('H:i', trim($array_time[0]));
+        $timeFormatted1 = $time1->format('g:i A');
+
+        $time2 = Carbon::createFromFormat('H:i', trim($array_time[1]));
+        $timeFormatted2 = $time2->format('g:i A');
+
+        $timeString1 = (string) $timeFormatted1;
+        $timeString2 = (string) $timeFormatted2;
+
+        $timeString1 = str_replace(' ', '', $timeString1);
+        $timeString2 = str_replace(' ', '', $timeString2);
+
+        return  [$timeString1, $timeString2];
+    }
+
+    public function import(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => $errors,
+            ], 422);
+        }
+
+        $id = $request->user()->id;
+
+        $lastCodeLocation = DB::table('location')
+            ->select(
+                'codeLocation'
+            )
+            ->orderBy('id', 'desc')
+            ->first();
+
+            if (count($lastCodeLocation) == 0) {
+                $lastCodeLocation = 'ABC1';
+            }
+            else {
+                $lastCodeLocation = str_replace('ABC', '', $lastCodeLocation->codeLocation);
+            }
+
+
+
+        // return $lastCodeLocation;
+
+        $locationObj = [];
+        $locationOprObj = [];
+        $addressObj = [];
+        $phoneObj = [];
+        $emailObj = [];
+
+        $rows = Excel::toArray(new LocationImport($id), $request->file('file'));
+        $src = $rows[0];
+
+        $count_row = 1;
+
+        if ($src) {
+
+            foreach ($src as $value) {
+                if ($count_row != 1) {
+
+                    $res = $this->ValidateImportSheet1($value, $count_row);
+
+                    if ($res != "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => [$res],
+                        ], 422);
+                    } else {
+
+                        $newObject1 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'locationName' => $value['name'], 'status' => $value['status'], 'description' => ''];
+                        $locationObj[] = $newObject1;
+
+                        if ($value['monday_senin'][0] == 1) {
+
+                            $array = explode(';', $value['monday_senin']);
+
+                            if ($array[0] == 1) {
+
+                                [$time1, $time2] = $this->processTime($array[1]);
+
+                                $newObject2 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'dayName' => 'Monday', 'fromTime' => trim($time1), 'toTime' => trim($time2), 'allDay' => 1];
+                                $locationOprObj[] = $newObject2;
+                            }
+                        }
+
+                        if ($value['tuesday_selasa'][0] == 1) {
+
+                            $array = explode(';', $value['tuesday_selasa']);
+
+                            if ($array[0] == 1) {
+
+                                [$time1, $time2] = $this->processTime($array[1]);
+
+                                $newObject2 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'dayName' => 'Tuesday', 'fromTime' => trim($time1), 'toTime' => trim($time2), 'allDay' => 1];
+                                $locationOprObj[] = $newObject2;
+                            }
+                        }
+
+                        if ($value['wednesday_rabu'][0] == 1) {
+
+                            $array = explode(';', $value['wednesday_rabu']);
+
+                            if ($array[0] == 1) {
+
+                                [$time1, $time2] = $this->processTime($array[1]);
+
+                                $newObject2 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'dayName' => 'Wednesday', 'fromTime' => trim($time1), 'toTime' => trim($time2), 'allDay' => 1];
+                                $locationOprObj[] = $newObject2;
+                            }
+                        }
+
+                        if ($value['thursday_kamis'][0] == 1) {
+
+                            $array = explode(';', $value['thursday_kamis']);
+
+                            if ($array[0] == 1) {
+
+                                [$time1, $time2] = $this->processTime($array[1]);
+
+                                $newObject2 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'dayName' => 'Thursday', 'fromTime' => trim($time1), 'toTime' => trim($time2), 'allDay' => 1];
+                                $locationOprObj[] = $newObject2;
+                            }
+                        }
+
+                        if ($value['friday_jumat'][0] == 1) {
+
+                            $array = explode(';', $value['friday_jumat']);
+
+                            if ($array[0] == 1) {
+
+                                [$time1, $time2] = $this->processTime($array[1]);
+
+                                $newObject2 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'dayName' => 'Friday', 'fromTime' => trim($time1), 'toTime' => trim($time2), 'allDay' => 1];
+                                $locationOprObj[] = $newObject2;
+                            }
+                        }
+
+                        if ($value['saturday_sabtu'][0] == 1) {
+
+                            $array = explode(';', $value['saturday_sabtu']);
+
+                            if ($array[0] == 1) {
+
+                                [$time1, $time2] = $this->processTime($array[1]);
+
+                                $newObject2 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'dayName' => 'Saturday', 'fromTime' => trim($time1), 'toTime' => trim($time2), 'allDay' => 1];
+                                $locationOprObj[] = $newObject2;
+                            }
+                        }
+
+                        if ($value['sunday_minggu'][0] == 1) {
+
+                            $array = explode(';', $value['sunday_minggu']);
+
+                            if ($array[0] == 1) {
+
+                                [$time1, $time2] = $this->processTime($array[1]);
+
+                                $newObject2 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'dayName' => 'Sunday', 'fromTime' => trim($time1), 'toTime' => trim($time2), 'allDay' => 1];
+                                $locationOprObj[] = $newObject2;
+                            }
+                        }
+
+                        $lastCodeLocation++;
+                    }
+                }
+
+                $count_row++;
+            }
+        }
+
+        $src = $rows[1];
+
+        $count_row = 1;
+
+        if ($src) {
+
+            foreach ($src as $value) {
+                if ($count_row != 1) {
+
+                    $res = $this->ValidateImportSheet2($value, $count_row);
+
+                    if ($res != "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => [$res],
+                        ], 422);
+                    }
+
+                    $additionalInfo = '';
+                    if ($value['additional_info']) {
+
+                        $additionalInfo = $value['additional_info'];
+                    }
+
+                    $newObject3 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'addressName' => $value['street_address'], 'additionalInfo' => $additionalInfo, 'provinceCode' => $value['province'], 'cityCode' => $value['city'], 'postalCode' => $value['postal_code'], 'country' => $value['country'], 'isPrimary' => 1];
+                    $addressObj[] = $newObject3;
+                }
+
+                $count_row++;
+            }
+        }
+
+        $src = $rows[2];
+
+        $count_row = 1;
+
+        if ($src) {
+
+            foreach ($src as $value) {
+
+                $res = $this->ValidateImportSheet3($value, $count_row);
+
+                if ($res != "") {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => [$res],
+                    ], 422);
+                }
+
+                $number = $value['nomor'];
+
+                $number = substr_replace($number, '+62', 0, 1);
+
+                $newObject4 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'phoneNumber' => $number, 'type' => $value['type'], 'usage' => 'Utama'];
+                $phoneObj[] = $newObject4;
+
+                $count_row++;
+            }
+        }
+
+        $src = $rows[3];
+
+        $count_row = 1;
+
+        if ($src) {
+
+            foreach ($src as $value) {
+
+                $res = $this->ValidateImportSheet4($value, $count_row);
+
+                if ($res != "") {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => [$res],
+                    ], 422);
+                }
+
+                $newObject5 = (object)['codeLocation' => 'ABC' . $lastCodeLocation, 'username' => $value['address'], 'usage' => 'Utama'];
+                $emailObj[] = $newObject5;
+
+                $count_row++;
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($locationObj as $value) {
+
+                Location::create([
+                    'codeLocation' => $value->codeLocation,
+                    'locationName' => $value->locationName,
+                    'status' => $value->status,
+                    'description' => $value->description,
+                    'isDeleted' => 0,
+                ]);
+            }
+
+            foreach ($locationOprObj as $value) {
+
+                LocationOperational::create([
+                    'codeLocation' => $value->codeLocation,
+                    'dayName' => $value->dayName,
+                    'fromTime' => $value->fromTime,
+                    'toTime' => $value->toTime,
+                    'allDay' => 1,
+                    'isDeleted' => 0,
+                ]);
+            }
+
+            foreach ($addressObj as $value) {
+                LocationDetailAddress::create([
+                    'codeLocation' => $value->codeLocation,
+                    'addressName' => $value->addressName,
+                    'additionalInfo' => $value->additionalInfo,
+                    'provinceCode' => $value->provinceCode,
+                    'cityCode' => $value->cityCode,
+                    'postalCode' => $value->postalCode,
+                    'country' => $value->country,
+                    'isPrimary' => $value->isPrimary,
+                    'isDeleted' => 0,
+                ]);
+            }
+
+            foreach ($phoneObj as $value) {
+
+                LocationTelephone::create([
+                    'codeLocation' => $value->codeLocation,
+                    'phoneNumber' => $value->phoneNumber,
+                    'type' => $value->type,
+                    'usage' => $value->usage,
+                    'isDeleted' => 0,
+                ]);
+            }
+
+            foreach ($emailObj as $value) {
+
+                LocationEmail::create([
+                    'codeLocation' => $value->codeLocation,
+                    'username' => $value->username,
+                    'usage' => $value->usage,
+                    'isDeleted' => 0,
+                ]);
+            }
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
     }
 
     public function deleteLocation(Request $request)
@@ -132,7 +596,6 @@ class LocationController extends Controller
                 'result' => 'success',
                 'message' => 'Successfully deleted location',
             ]);
-
         } catch (Exception $e) {
 
             DB::rollback();
@@ -1823,11 +2286,10 @@ class LocationController extends Controller
         }
 
         $data = DB::table('location as l')
-        ->select('l.id as id','l.locationName')
-        ->where('l.id','!=',$request->locationId)
-        ->get();
+            ->select('l.id as id', 'l.locationName')
+            ->where('l.id', '!=', $request->locationId)
+            ->get();
 
         return responseList($data);
-
     }
 }

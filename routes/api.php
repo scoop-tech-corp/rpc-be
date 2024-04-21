@@ -54,6 +54,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         //location
         Route::get('/locationpdf', [LocationController::class, 'cetak_pdf']);
+        Route::post('/import', [LocationController::class, 'import']);
         Route::get('/locationImages', [LocationController::class, 'searchImageLocation']);
         Route::post('/', [LocationController::class, 'insertLocation']);
         Route::get('/', [LocationController::class, 'getLocationHeader']);
