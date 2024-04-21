@@ -81,6 +81,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/facility/facilityimages', [FacilityController::class, 'searchImageFacility']);
         Route::post('/facility/imagefacility', [FacilityController::class, 'uploadImageFacility']);
 
+        Route::post('/facility/import', [FacilityController::class, 'import']);
+
         Route::get('/facility/location', [FacilityController::class, 'listFacilityWithLocation']);
 
         //data static
