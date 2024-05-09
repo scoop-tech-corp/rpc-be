@@ -40,6 +40,8 @@ class PromotionController extends Controller
         }
 
         $ResultLocations = json_decode($request->locations, true);
+        $ResultLocations = $request->locations;
+        //json_decode($request->locations, true);
 
         if (!$ResultLocations) {
             return response()->json([
