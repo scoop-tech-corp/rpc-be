@@ -13,6 +13,15 @@ use Carbon\Carbon;
 use Validator;
 use File;
 use DB;
+use App\Imports\Staff\ImportStaff;
+use App\Models\Staff\JobTitle;
+use App\Models\Staff\UsersDetailAddresses;
+use App\Models\Staff\UsersEmails;
+use App\Models\Staff\UsersLocation;
+use App\Models\Staff\UsersMessengers;
+use App\Models\Staff\UsersRoles;
+use App\Models\Staff\UsersTelephones;
+use App\Models\User;
 
 class StaffController extends Controller
 {
@@ -1932,7 +1941,383 @@ class StaffController extends Controller
         }
     }
 
+    public function importStaff(Request $request)
+    {
+        try {
 
+            $validate = Validator::make($request->all(), [
+                'file' => 'required|mimes:xls,xlsx',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return response()->json([
+                    'errors' => 'The given data was invalid.',
+                    'message' => $errors,
+                ], 422);
+            }
+
+            $id = $request->user()->id;
+
+            $rows = Excel::toArray(new ImportStaff($id), $request->file('file'));
+            $src1 = $rows[0];
+            $src2 = $rows[1];
+            $src3 = $rows[2];
+            $src4 = $rows[3];
+            $src5 = $rows[4];
+            $src6 = $rows[5];
+
+            $count_row = 1;
+            $total_data = 0;
+
+            if (count($src1) > 2) {
+                foreach ($src1 as $value) {
+
+                    if ($value['nama_depan'] == null && $value['jenis_kelamin'] == null && $value['status'] == null) {
+                        break;
+                    }
+
+                    if ($value['nama_depan'] == "Wajib Diisi") {
+                        $count_row += 2;
+                        continue;
+                    }
+
+                    if ($value['id'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Id at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['nama_depan'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Nama Depan at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['jenis_kelamin'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Jenis Kelamin at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['jenis_kelamin'] != "P" && $value['jenis_kelamin'] != "W") {
+
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Jenis Kelamin at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['status'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['status'] != "0" && $value['status'] != "1") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['jabatan'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Jabatan at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $title = JobTitle::where('id', '=', $value['jabatan'])->first();
+
+                    if (!$title) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is no any Jabatan on system at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $codeLocation = explode(';', $value['lokasi']);
+
+                    if (count($codeLocation) !== count(array_unique($codeLocation))) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any duplicate Lokasi. Please check again at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    foreach ($codeLocation as $valcode) {
+
+                        $chk = DB::table('location')
+                            ->where('id', '=', $valcode)->where('isDeleted', '=', 0)->first();
+
+                        if (!$chk) {
+                            return response()->json([
+                                'errors' => 'The given data was invalid.',
+                                'message' => ['There is any invalid Kode Lokasi at row ' . $count_row],
+                            ], 422);
+                        }
+                    }
+
+                    $total_data += 1;
+                    $count_row += 1;
+                }
+            }
+
+            $count_row = 1;
+            $total_data = 0;
+
+            if (count($src2) > 2) {
+
+                foreach ($src2 as $value) {
+
+                    if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
+                        $count_row += 2;
+                        continue;
+                    }
+
+                    if ($value['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'] != "0" && $value['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'] != "1") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['terima_email_harian_yang_berisi_janji_temu_terjadwal_mereka'] != "0" && $value['terima_email_harian_yang_berisi_janji_temu_terjadwal_mereka'] != "1") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['izinkan_anggota_staff_ini_untuk_masuk_menggunakan_alamat_email_mereka'] != "0" && $value['izinkan_anggota_staff_ini_untuk_masuk_menggunakan_alamat_email_mereka'] != "1") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['pengingat_email'] != "0" && $value['pengingat_email'] != "1") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['pengingat_whatsapp'] != "0" && $value['pengingat_whatsapp'] != "1") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['grup_keamanan'] != "0" && $value['grup_keamanan'] != "1") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $total_data += 1;
+                    $count_row += 1;
+                }
+            }
+
+            $count_row = 1;
+            $total_data = 0;
+
+            if (count($src3) > 2) {
+
+                foreach ($src3 as $value) {
+
+                    if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
+                        $count_row += 2;
+                        continue;
+                    }
+
+                    if ($value['alamat_jalan'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Alamat Jalan at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['jadikan_sebagai_alamat_utama'] != "0" && $value['jadikan_sebagai_alamat_utama'] != "1") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $total_data += 1;
+                    $count_row += 1;
+                }
+            }
+
+            $count_row = 1;
+            $total_data = 0;
+
+            if (count($src4) > 2) {
+
+                foreach ($src4 as $value) {
+
+                    if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
+                        $count_row += 2;
+                        continue;
+                    }
+                    $total_data += 1;
+                    $count_row += 1;
+                }
+            }
+
+            $count_row = 1;
+            $total_data = 0;
+
+            if (count($src5) > 2) {
+
+                foreach ($src5 as $value) {
+
+                    if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
+                        $count_row += 2;
+                        continue;
+                    }
+                    $total_data += 1;
+                    $count_row += 1;
+                }
+            }
+
+            if (count($src6) > 2) {
+            }
+            // for ($i = 1; $i < count($res); $i++) {
+
+            //     $data = $data->orWhere($res[$i], 'like', '%' . $this->search . '%');
+            // }
+
+            //foreach ($src1 as $value) {
+            for ($i = 1; $i < count($src2); $i++) {
+
+                $gender = "female";
+                if ($src1[$i]['jenis_kelamin'] == "P") {
+                    $gender = "male";
+                }
+                info($src2[$i]['id']);
+                info($i);
+                $userId = DB::table('users')
+                ->insertGetId([
+                    'userName' => '',
+                    'firstName' => $src1[$i]['nama_depan'],
+                    'middleName' => $src1[$i]['nama_tengah'],
+                    'lastName' => $src1[$i]['nama_akhir'],
+                    'nickName' => $src1[$i]['nama_panggilan'],
+                    'gender' => $gender,
+                    'status' => 1,
+                    'jobTitleId' => $src1[$i]['jabatan'],
+                    'startDate' => '2024-08-01',
+                    'endDate' => '2025-08-01',
+                    'registrationNo' => $src1[$i]['nomor_registrasi'],
+                    'designation' => $src1[$i]['penunjukkan'],
+                    'annualSickAllowance' => $src1[$i]['tunjangan_sakit_tahunan'],
+                    'annualLeaveAllowance' => $src1[$i]['tunjangan_cuti_tahunan'],
+                    'annualSickAllowanceRemaining' => 0,
+                    'annualLeaveAllowanceRemaining' => 0,
+                    'payPeriodId' => $src1[$i]['durasi_pembayaran'],
+                    'payAmount' => $src1[$i]['nominal_pembayaran'],
+                    'typeId' => $src1[$i]['kartu_identitas'],
+                    'identificationNumber' => $src1[$i]['nomor_kartu_identitas'],
+                    'additionalInfo' => $src1[$i]['catatan_tambahan'],
+                    'generalCustomerCanSchedule' => $src2[$i]['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'],
+                    'generalCustomerReceiveDailyEmail' => $src2[$i]['terima_email_harian_yang_berisi_janji_temu_terjadwal_mereka'],
+                    'generalAllowMemberToLogUsingEmail' => $src2[$i]['izinkan_anggota_staff_ini_untuk_masuk_menggunakan_alamat_email_mereka'],
+                    'reminderEmail' => $src2[$i]['pengingat_email'],
+                    'reminderWhatsapp' => $src2[$i]['pengingat_whatsapp'],
+                    'roleId' => 1,
+                    'imageName' => '',
+                    'imagePath' => '',
+                    'password' => bcrypt($src1[$i]['password']),
+                    'email' => $src5[$i]['alamat_email'],
+                    'isDeleted' => 0,
+                    'createdBy' => 'admin',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                    'isLogin' => 0,
+                ]);
+
+                $userAddress = UsersDetailAddresses::create(
+                    [
+                        'usersid' => $userId,
+                        'addressName' => $src3[$i]['alamat_jalan'],
+                        'additionalInfo' => $src3[$i]['informasi_tambahan'],
+                        'provinceCode' => $src3[$i]['kode_provinsi'],
+                        'cityCode' => $src3[$i]['kode_kota'],
+                        'country' => 'Indonesia',
+                        'isPrimary' => $src3[$i]['jadikan_sebagai_alamat_utama'],
+                        'createdBy' => 'admin',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                        'isDeleted' => 0,
+                    ]
+                );
+
+                $userEmails = UsersEmails::create([
+                    'usersId' => $userId,
+                    'email' => $src5[$i]['alamat_email'],
+                    'email_verified_at' => now(),
+                    'usage' => 'Utama',
+                    'isDeleted' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $userLocation = UsersLocation::create([
+
+                    'usersId' => $userId,
+                    'locationId' => $src1[$i]['lokasi'],
+                    'isDeleted' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                if (count($src6) > 2) {
+                    $userMessenger = UsersMessengers::create([
+
+                        'usersId' => $userId,
+                        'messengerNumber' => $src3[$i]['alamat_email'],
+                        'type' => $userId,
+                        'usage' => $userId,
+                        'isDeleted' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+
+                $userRole = UsersTelephones::create([
+
+                    'usersId' => $userId,
+                    'phoneNumber' => $src4[$i]['nomor'],
+                    'type' => $src4[$i]['tipe'],
+                    'usage' => $src4[$i]['pemakaian'],
+                    'isDeleted' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            return responseSuccess($userId, 'Insert Data Successful!');
+        } catch (Exception $e) {
+            DB::rollback();
+
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $e,
+            ]);
+        }
+    }
 
     public function exportStaff(Request $request)
     {

@@ -313,6 +313,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/list/location', [StaffController::class, 'listStaffWithLocation']);
 
         Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
+        Route::post('/importstaff', [StaffController::class, 'importStaff']);
         Route::post('/sendEmail', [StaffController::class, 'sendEmailVerification']);
         Route::put('/statusStaff', [StaffController::class, 'updateStatusUsers']);
         Route::post('/holidaysdate', [StaffController::class, 'getAllHolidaysDate']);
