@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 use App\Models\PushNotifications\PushNotifications;
 use App\Exports\Facility\exportFacility;
 use App\Events\MessageCreated;
+use App\Imports\Facility\FacilityImport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\Facility\FacilityUnit;
 use App\Models\Facility\Facility;
@@ -1233,7 +1234,106 @@ class FacilityController extends Controller
         }
     }
 
+    private function ValidateImportSheetDetail($value, $count_row)
+    {
 
+        if ($value['kode_lokasi'] == "") {
+            return 'There is any empty cell on column Kode Lokasi at row ' . $count_row;
+        }
+
+        if ($value['nama'] == "") {
+            return 'There is any empty cell on column Nama at row ' . $count_row;
+        }
+
+        if ($value['status'] == "") {
+            return 'There is any empty cell on column Status at row ' . $count_row;
+        }
+
+        if ($value['jumlah'] == "") {
+            return 'There is any empty cell on column Jumlah at row ' . $count_row;
+        }
+
+        if ($value['total'] == "") {
+            return 'There is any empty cell on column Total at row ' . $count_row;
+        }
+    }
+
+    public function import(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'file' => 'required|mimes:xls,xlsx',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'errors' => 'The given data was invalid.',
+                'message' => $errors,
+            ], 422);
+        }
+
+        $id = $request->user()->id;
+
+        $facilityUnitObj = [];
+
+        $rows = Excel::toArray(new FacilityImport($id), $request->file('file'));
+        $src = $rows[0];
+
+        $count_row = 1;
+
+        if ($src) {
+
+            foreach ($src as $value) {
+                if ($count_row != 1) {
+
+                    // return $value;
+
+                    $res = $this->ValidateImportSheetDetail($value, $count_row);
+
+                    if ($res != "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => [$res],
+                        ], 422);
+                    }
+
+                    $notes = '';
+
+                    if ($value['keterangan']) {
+                        $notes = $value['keterangan'];
+                    }
+
+                    $newObject = (object)['locationId' => $value['kode_lokasi'], 'unitName' => $value['nama'], 'status' => $value['status'], 'capacity' => $value['jumlah'], 'amount' => $value['total'], 'notes' => $notes];
+                    $facilityUnitObj[] = $newObject;
+                }
+                $count_row++;
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+
+            foreach ($facilityUnitObj as $value) {
+
+                FacilityUnit::create([
+                    'locationId' => $value->locationId,
+                    'unitName' => $value->unitName,
+                    'status' => $value->status,
+                    'capacity' => $value->capacity,
+                    'amount' => $value->amount,
+                    'notes' => $value->notes,
+                    'isDeleted' => 0,
+                ]);
+            }
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
 
     public function facilityLocation(Request $request)
     {
@@ -1270,10 +1370,10 @@ class FacilityController extends Controller
     {
         $request->locationId = json_decode($request->locationId);
         $data = DB::table('facility_unit as f')
-        ->select('f.id', 'f.unitName')
-        ->whereIn('f.locationId', $request->locationId)
-        ->where('f.isDeleted', '=', 0)
-        ->get();
+            ->select('f.id', 'f.unitName')
+            ->whereIn('f.locationId', $request->locationId)
+            ->where('f.isDeleted', '=', 0)
+            ->get();
 
         return responseList($data);
     }

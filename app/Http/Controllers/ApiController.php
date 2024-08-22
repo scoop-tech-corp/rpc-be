@@ -430,6 +430,14 @@ class ApiController extends Controller
                         ->get();
                 }
 
+                $reportMenu = (object)[];
+
+                $reportMenu->items = DB::table('accessReportMenus')
+                    ->select('groupName', 'menuName', 'url', 'roleId', 'accessTypeId')
+                    ->where('roleId', '=', $users->roleId)
+                    ->where('isDeleted', '=', 0)
+                    ->get();
+
                 // broadcast(new \App\Events\UserLoggedIn($userId));
                 return response()->json([
                     'id' => $userId,
@@ -445,6 +453,7 @@ class ApiController extends Controller
                     "masterMenu" => $masterMenu,
                     'profileMenu' => $profileMenu,
                     'settingMenu' => $settingMenu,
+                    'reportMenu' => $reportMenu,
                     // "locations" => $locations,
                     // "menuLevel" => $data,
                     // "accessType" => $accessTypeMenu,

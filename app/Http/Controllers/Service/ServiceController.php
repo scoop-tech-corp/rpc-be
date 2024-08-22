@@ -33,7 +33,7 @@ class ServiceController extends Controller
             if ($request->type) {
                 $data = $data->where('sc.type', $request->type);
             }
-            
+
             $data = $data->join('users', 'sc.userId', '=', 'users.id');
 
             if ($request->search) {
@@ -94,13 +94,13 @@ class ServiceController extends Controller
             if($request->locationId){
                 $data = $data->join('servicesLocation as sl', 'services.id', '=', 'sl.service_id')
                             ->where('sl.isDeleted', 0)
-                            ->where('sl.location_id', $request->locationId);                
+                            ->where('sl.location_id', $request->locationId);
             }
 
             if ($request->type) {
                 $data = $data->where('services.type', $request->type);
             }
-            
+
             $data = $data->join('users', 'services.userId', '=', 'users.id');
 
             if ($request->search) {
@@ -138,7 +138,7 @@ class ServiceController extends Controller
 
         DB::beginTransaction();
         try {
-            
+
             $val = $request->all();
             $val = $request->except(['userUpdateId']);
             $val['optionPolicy1'] = $request->optionPolicy1 ? 1 : 0;
@@ -184,7 +184,7 @@ class ServiceController extends Controller
                     ]);
                 });
             }
-           
+
             if($request->productRequired){
                 $request->productRequired = json_decode($request->productRequired, true);
                 collect($request->productRequired)->map(function (array $productRequired) {
@@ -242,7 +242,7 @@ class ServiceController extends Controller
                         $name = $file->hashName();
                         $file->move(public_path() . '/ServiceListImages/', $name);
                         $fileName = "/ServiceListImages/" . $name;
-        
+
                         DB::table('servicesImages')->insert([
                             'service_id' => $this->createService->id,
                             'labelName' => $this->imagesName[$index]['name'],
@@ -254,7 +254,7 @@ class ServiceController extends Controller
                        }
                 });
             }
-            $result = Service::with(['categoryList', 'facilityList', 'staffList', 'productRequiredList', 'locationList', 'priceList', 'imageList'])    
+            $result = Service::with(['categoryList', 'facilityList', 'staffList', 'productRequiredList', 'locationList', 'priceList', 'imageList'])
             ->where('id', $this->createService->id)
             ->get();
             DB::commit();
@@ -291,7 +291,7 @@ class ServiceController extends Controller
         $src = $rows[0];
         $tempValue = [];
         $count_row = 1;
-        
+
         if ($src) {
             $count_row = $count_row + 2;
             foreach ($src as $value) {
@@ -336,7 +336,7 @@ class ServiceController extends Controller
                         }
                     }
                 }
-    
+
                 if (array_key_exists('followup', $value) && $value['followup'] !== "") {
                     $codeFollowup = explode(';', $value['followup']);
                     if ($codeFollowup && $value['followup'] != '') {
@@ -349,7 +349,7 @@ class ServiceController extends Controller
                         }
                     }
                 }
-    
+
                 // Check 'kategori' key before exploding
                 if (array_key_exists('kategori', $value) && $value['kategori'] !== "") {
                     $codeCategory = explode(';', $value['kategori']);
@@ -363,7 +363,7 @@ class ServiceController extends Controller
                         }
                     }
                 }
-    
+
 
                 $tempValue[] = [
                     'type' => $value['tipe'] == 'Pet Shop' ? 1 : ($value['tipe'] == 'Grooming' ? 2 : 3),
@@ -454,7 +454,7 @@ class ServiceController extends Controller
         $result = Service::with(['categoryList', 'followupList', 'facilityList', 'staffList', 'productRequiredList', 'locationList', 'priceList', 'imageList'])
         ->where('id', $request->id)
         ->get();
-        
+
         return responseSuccess($result, 'Service detail');
     }
     /**
@@ -476,9 +476,9 @@ class ServiceController extends Controller
         if (!$service) return responseErrorValidation('Service not found!');
         if ($validate->fails()) return responseErrorValidation($validate->errors()->all());
 
-        
+
         $request->merge(['userUpdateId' => $request->user()->id, 'surcharges' => $request->surcharges ? $request->surcharges : 0]);
-        
+
         // Hasil array setelah menghapus nilai null
         $val = array_filter($request->all(), function ($value) {
             return $value !== null && $value !== "null";
@@ -487,11 +487,11 @@ class ServiceController extends Controller
         $val['optionPolicy2'] = $request->optionPolicy2 ? 1 : 0;
         $val['optionPolicy3'] = $request->optionPolicy3 ? 1 : 0;
 
-        
+
         DB::beginTransaction();
         try {
             $service->update($val);
-            
+
             $this->updateService = Service::find($request->id);
             $this->userId = $request->user()->id;
             $request->categories = json_decode($request->categories, true);
@@ -544,7 +544,7 @@ class ServiceController extends Controller
                         'created_at' => Carbon::now(),
                     ]);
                 });
-           
+
             $request->facility = json_decode($request->facility, true);
                 $getId = DB::table('servicesFacility')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
                 $facilityWithCreatedAt = array_filter($request->facility, function ($value) {
@@ -711,7 +711,7 @@ class ServiceController extends Controller
                 $imageWithCreatedAt = array_filter($request->imagesName, function ($value) {
                     return isset($value['created_at']);
                 });
-                
+
                 foreach ($imageWithCreatedAt as $key => $value) {
                     if($value['status'] == 'del'){
                         DB::table('servicesImages')->where('id', $value)->update([
@@ -753,7 +753,7 @@ class ServiceController extends Controller
                     }
                 });
             DB::commit();
-            
+
             $result = Service::with(['categoryList', 'facilityList', 'staffList', 'productRequiredList', 'locationList', 'priceList', 'imageList'])->find( $request->id);
             return responseSuccess($result, 'Update Data Successful!');
         } catch (\Exception $e) {
@@ -792,5 +792,27 @@ class ServiceController extends Controller
         }
 
        return responseSuccess($request->id, 'Delete Data Successful!');
+    }
+
+    public function ListServiceWithLocation(Request $request) {
+        if (count($request->locationId) == 0) {
+
+            $data = DB::table('services as s')
+                ->join('servicesLocation as sl', 's.id', 'sl.service_id')
+                ->select('s.fullName')
+                ->where('s.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        } else {
+            $data = DB::table('services as s')
+                ->join('servicesLocation as sl', 's.id', 'sl.service_id')
+                ->select('s.fullName')
+                ->wherein('sl.location_id', $request->locationId)
+                ->where('s.isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        }
+
+        return responseList($data);
     }
 }

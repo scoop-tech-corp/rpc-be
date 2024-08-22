@@ -32,6 +32,8 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MenuManagementController;
+use App\Http\Controllers\Promotion\PromotionController;
+use App\Http\Controllers\ReportMenuManagementController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -52,6 +54,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         //location
         Route::get('/locationpdf', [LocationController::class, 'cetak_pdf']);
+        Route::post('/import', [LocationController::class, 'import']);
         Route::get('/locationImages', [LocationController::class, 'searchImageLocation']);
         Route::post('/', [LocationController::class, 'insertLocation']);
         Route::get('/', [LocationController::class, 'getLocationHeader']);
@@ -77,6 +80,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/facility/facilitydetail', [FacilityController::class, 'facilityDetail']);
         Route::get('/facility/facilityimages', [FacilityController::class, 'searchImageFacility']);
         Route::post('/facility/imagefacility', [FacilityController::class, 'uploadImageFacility']);
+
+        Route::post('/facility/import', [FacilityController::class, 'import']);
 
         Route::get('/facility/location', [FacilityController::class, 'listFacilityWithLocation']);
 
@@ -275,6 +280,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/datastatic', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
     });
 
+    Route::group(['prefix'=>'promotion'],function(){
+
+        Route::post('/', [PromotionController::class, 'create']);
+        Route::get('/', [PromotionController::class, 'index']);
+        Route::get('/export', [PromotionController::class, 'export']);
+        Route::get('/list-type', [PromotionController::class, 'listType']);
+        Route::get('/detail', [PromotionController::class, 'detail']);
+        Route::put('/', [PromotionController::class, 'update']);
+        Route::delete('/', [PromotionController::class, 'delete']);
+    });
 
     //STAFF
     Route::group(['prefix' => 'staff'], function () {
@@ -298,6 +313,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/list/location', [StaffController::class, 'listStaffWithLocation']);
 
         Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
+        Route::post('/importstaff', [StaffController::class, 'importStaff']);
         Route::post('/sendEmail', [StaffController::class, 'sendEmailVerification']);
         Route::put('/statusStaff', [StaffController::class, 'updateStatusUsers']);
         Route::post('/holidaysdate', [StaffController::class, 'getAllHolidaysDate']);
@@ -375,6 +391,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::group(['prefix' => 'absent'], function () {
         Route::post('/', [AbsentController::class, 'createAbsent']);
+        Route::get('/staff-list', [AbsentController::class, 'staffListAbsent']);
+        Route::get('/index', [AbsentController::class, 'Index']);
+        Route::get('/present-list', [AbsentController::class, 'presentStatusList']);
+        Route::get('/detail', [AbsentController::class, 'Detail']);
+        Route::get('/export', [AbsentController::class, 'Export']);
     });
 
     // Chat
@@ -420,6 +441,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/setting', [MenuManagementController::class, 'insertMenuSetting']);
         Route::put('/setting', [MenuManagementController::class, 'updateMenuSetting']);
         Route::delete('/setting', [MenuManagementController::class, 'deleteMenuSetting']);
+
+        Route::get('/menu-report', [ReportMenuManagementController::class, 'Index']);
+        Route::post('/menu-report', [ReportMenuManagementController::class, 'Insert']);
+        Route::get('/menu-report/detail', [ReportMenuManagementController::class, 'Detail']);
+        Route::put('/menu-report', [ReportMenuManagementController::class, 'Update']);
+        Route::delete('/menu-report', [ReportMenuManagementController::class, 'Delete']);
     });
 
     // Service
@@ -441,6 +468,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/', [ServiceController::class, 'create']);
             Route::put('/', [ServiceController::class, 'update']);
             Route::delete('/', [ServiceController::class, 'destroy']);
+            Route::get('/location', [ServiceController::class, 'ListServiceWithLocation']);
         });
         Route::group(['prefix' => 'treatment'], function () {
             Route::get('/export', [TreatmentController::class, 'export']);

@@ -665,9 +665,7 @@ class ProductController
 
     public function ListProductSellWithLocation(Request $request)
     {
-        $request->locationId = json_decode($request->locationId);
-
-        if ($request->locationId == 'all') {
+        if (count($request->locationId) == 0) {
 
             $data = DB::table('productSells as ps')
                 ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
@@ -690,8 +688,7 @@ class ProductController
 
     public function ListProductClinicWithLocation(Request $request)
     {
-        $request->locationId = json_decode($request->locationId);
-        if ($request->locationId == 'all') {
+        if (count($request->locationId) == 0) {
 
             $data = DB::table('productClinics as pc')
                 ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
