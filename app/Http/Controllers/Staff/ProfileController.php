@@ -352,6 +352,7 @@ class ProfileController extends Controller
             $validator = Validator::make($request->all(), [
                 'id' => 'required',
                 'image' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:5000',
+                'status' => 'nullable',
             ]);
 
             if ($validator->fails()) {
@@ -395,15 +396,28 @@ class ProfileController extends Controller
                 }
             }
 
-            User::where([['id', '=', $request->id]])->update([
-                'imageName' => $originalName,
-                'imagePath' => $path,
-                'updated_at' => now(),
-            ]);
+            if ($request->status == 'del') {
+
+                File::delete(public_path() . $user->imagePath);
+
+                User::where([['id', '=', $request->id]])->update([
+                    'imageName' => '',
+                    'imagePath' => '',
+                    'updated_at' => now(),
+                ]);
+                $path = '';
+
+            } else {
+
+                User::where([['id', '=', $request->id]])->update([
+                    'imageName' => $originalName,
+                    'imagePath' => $path,
+                    'updated_at' => now(),
+                ]);
+            }
 
             DB::commit();
-
-            return responseCreate();
+            return response()->json(['status' => $path], 200);
         } catch (Exception $e) {
 
             DB::rollback();
