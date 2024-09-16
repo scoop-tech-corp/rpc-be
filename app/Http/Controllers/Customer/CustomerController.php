@@ -82,7 +82,7 @@ class CustomerController extends Controller
             )->where([
                 ['isActive', '=', 1],
             ])
-                ->orderBy('a.created_at', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
             return responseList($getTypeId);
