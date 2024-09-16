@@ -417,7 +417,7 @@ class ProfileController extends Controller
             }
 
             DB::commit();
-            return response()->json(['status' => $path], 200);
+            return response()->json(['imagePath' => $path], 200);
         } catch (Exception $e) {
 
             DB::rollback();
