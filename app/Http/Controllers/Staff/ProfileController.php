@@ -351,7 +351,7 @@ class ProfileController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'id' => 'required',
-                'image' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:5000',
+                'image' => 'nullable|image|mimes:jpg,png,jpeg,gif,svg|max:5000',
                 'status' => 'nullable',
             ]);
 
