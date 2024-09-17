@@ -85,20 +85,25 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
         $locations = $this->locationId;
 
         if (count($locations) > 0) {
-            $data = $data->whereIn('l.id', $this->locationId);
+            if (!$locations[0] == null) {
+                $data = $data->whereIn('l.id', $this->locationId);
+            }
         }
 
         $staffs = $this->staff;
 
         if (count($staffs) > 0) {
-            $data = $data->whereIn('sa.userId', $this->staff);
+            if (!$staffs[0] == null) {
+                $data = $data->whereIn('sa.userId', $this->staff);
+            }
         }
 
         $statusPresents = $this->statusPresent;
 
         if (count($statusPresents) > 0) {
-
-            $data = $data->whereIn('sa.statusPresent', $this->statusPresent);
+            if (!$statusPresents[0] == null) {
+                $data = $data->whereIn('sa.statusPresent', $this->statusPresent);
+            }
         }
 
         if ($this->orderValue) {
@@ -134,9 +139,15 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
     {
         return [
             [
-                'No.', 'Nama', 'Hari', 'Jam Datang',
-                'Jam Pulang', 'Durasi',
-                'Status Kehadiran', 'Status Kepulangan', 'Lokasi Kehadiran',
+                'No.',
+                'Nama',
+                'Hari',
+                'Jam Datang',
+                'Jam Pulang',
+                'Durasi',
+                'Status Kehadiran',
+                'Status Kepulangan',
+                'Lokasi Kehadiran',
                 'Lokasi Kepulangan'
             ],
         ];
