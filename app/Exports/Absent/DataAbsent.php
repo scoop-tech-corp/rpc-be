@@ -82,16 +82,22 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             $data = $data->whereBetween('sa.presentTime', [$this->dateFrom, $this->dateTo]);
         }
 
-        if ($this->locationId) {
+        $locations = $this->locationId;
 
+        if (count($locations) > 0) {
             $data = $data->whereIn('l.id', $this->locationId);
         }
 
-        if ($this->staff) {
+        $staffs = $this->staff;
+
+        if (count($staffs) > 0) {
             $data = $data->whereIn('sa.userId', $this->staff);
         }
 
-        if ($this->statusPresent) {
+        $statusPresents = $this->statusPresent;
+
+        if (count($statusPresents) > 0) {
+
             $data = $data->whereIn('sa.statusPresent', $this->statusPresent);
         }
 

@@ -78,7 +78,26 @@ class AbsentController extends Controller
         }
 
         if ($request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+
+            if ($request->orderColumn == "name") {
+                $data = $data->orderBy('u.firstName', $request->orderValue);
+            } elseif ($request->orderColumn == "day") {
+                $data = $data->orderBy('sa.presentTime', $request->orderValue);
+            } elseif ($request->orderColumn == "presentTime") {
+                $data = $data->orderBy('sa.presentTime', $request->orderValue);
+            } elseif ($request->orderColumn == "homeTime") {
+                $data = $data->orderBy('sa.homeTime', $request->orderValue);
+            } elseif ($request->orderColumn == "presentStatus") {
+                $data = $data->orderBy('ps.statusName', $request->orderValue);
+            } elseif ($request->orderColumn == "homeStatus") {
+                $data = $data->orderBy('ps1.statusName', $request->orderValue);
+            } elseif ($request->orderColumn == "presentLocation") {
+                $data = $data->orderBy('sa.cityPresent', $request->orderValue);
+            } elseif ($request->orderColumn == "homeLocation") {
+                $data = $data->orderBy('sa.cityHome', $request->orderValue);
+            } else {
+                $data = $data->orderBy($request->orderColumn, $request->orderValue);
+            }
         }
 
         $data = $data->groupBy(
@@ -99,7 +118,10 @@ class AbsentController extends Controller
 
         $offset = ($page - 1) * $itemPerPage;
 
-        $count_data = $data->count();
+        $dataTemp = $data->get();
+
+        $count_data = $dataTemp->count();
+
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
@@ -276,7 +298,7 @@ class AbsentController extends Controller
             ]);
         }
 
-        $presentTime = date('Y-m-d H:i', strtotime($request->presentTime));
+        $presentTime = Carbon::createFromFormat('d/m/Y H:i', $request->presentTime);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
