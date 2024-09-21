@@ -311,13 +311,15 @@ class AbsentController extends Controller
             ->whereDate('created_at', Carbon::today())
             ->first();
 
-        if ($present && $request->status != 3) {
-            return responseInvalid(['You have already absent today!']);
+        if ($present) {
+            if ($present->statusPresent == 1 && $request->status == 1) {
+                return responseInvalid(['You have already absent today!']);
+            }
         }
 
         if ($request->status == 4) {
 
-            if (count($present) <= 0) {
+            if (!$present) {
                 return responseInvalid(['You can not absent home today! Cause you have not been absent present today!']);
             }
         }
@@ -381,8 +383,8 @@ class AbsentController extends Controller
             ]);
         } else {
 
-            $presentTime = Carbon::parse($present->presentTime);
-            $homeTime = Carbon::parse($request->presentTime);
+            $presentTime = $present->presentTime;
+            $homeTime = Carbon::createFromFormat('d/m/Y H:i', $request->presentTime);
             $totalDuration =  $homeTime->diffInSeconds($presentTime);
 
             $duration = gmdate('H:i:s', $totalDuration);
@@ -390,7 +392,7 @@ class AbsentController extends Controller
             StaffAbsents::where('id', '=', $present->id)
                 ->update(
                     [
-                        'homeTime' => $presentTime,
+                        'homeTime' => $homeTime,
                         'duration' => $duration,
                         'homeLongitude' => $request->longitude,
                         'homeLatitude' => $request->latitude,

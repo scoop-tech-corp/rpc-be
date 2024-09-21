@@ -17,3 +17,4 @@ composer.lock
 /public/ServiceListImages/*
 /public/chat/*
 /public/UserImages/*
+*.png
