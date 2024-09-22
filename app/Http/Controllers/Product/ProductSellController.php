@@ -7,14 +7,21 @@ use App\Exports\Product\TemplateUploadProductSell;
 use App\Imports\Product\ImportProductSell;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
-use App\Models\ProductSell;
-use App\Models\ProductSellCategory;
-use App\Models\ProductSellCustomerGroup;
-use App\Models\ProductSellImages;
-use App\Models\ProductSellLocation;
-use App\Models\ProductSellPriceLocation;
-use App\Models\ProductSellQuantity;
-use App\Models\ProductSellReminder;
+use App\Models\productCoreCategories;
+use App\Models\Product;
+use App\Models\ProductCoreCategory;
+use App\Models\ProductCustomerGroup;
+use App\Models\ProductCustomerGroups;
+use App\Models\ProductImages;
+use App\Models\ProductLocation;
+use App\Models\ProductLocations;
+use App\Models\ProductPriceLocation;
+use App\Models\ProductPriceLocations;
+use App\Models\ProductQuantitiess;
+use App\Models\ProductQuantity;
+use App\Models\ProductReminder;
+use App\Models\ProductReminders;
+use App\Models\Products;
 use App\Models\ProductSupplier;
 use Exception;
 use Illuminate\Http\Request;
@@ -33,8 +40,8 @@ class ProductSellController
 
         $page = $request->goToPage;
 
-        $data = DB::table('productSells as ps')
-            ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
+        $data = DB::table('products as ps')
+            ->join('productLocations as psl', 'psl.productId', 'ps.id')
             ->join('location as loc', 'loc.Id', 'psl.locationId')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
             ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
@@ -55,7 +62,8 @@ class ProductSellController
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->where('ps.isDeleted', '=', 0);
+            ->where('ps.isDeleted', '=', 0)
+            ->where('ps.category', '=', 'sell');
 
         if ($request->locationId) {
 
@@ -74,12 +82,12 @@ class ProductSellController
 
         if ($request->category) {
 
-            $cat = DB::table('productSellCategories as pc')
-                ->select('productSellId')
+            $cat = DB::table('productCategories as pc')
+                ->select('productId')
                 ->whereIn('productCategoryId', $request->category)
                 ->where('pc.isDeleted', '=', 0)
                 ->distinct()
-                ->pluck('productSellId');
+                ->pluck('productId');
 
             $data = $data->whereIn('ps.id', $cat);
         }
@@ -128,7 +136,7 @@ class ProductSellController
     {
         $temp_column = null;
 
-        $data = DB::table('productSells as ps')
+        $data = DB::table('products as ps')
             ->select(
                 'ps.fullName as fullName'
             )
@@ -185,7 +193,7 @@ class ProductSellController
 
     public function Detail(Request $request)
     {
-        $prodSell = DB::table('productSells as ps')
+        $prod = DB::table('products as ps')
             ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.id')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.Id')
             ->select(
@@ -209,7 +217,7 @@ class ProductSellController
             ->where('ps.id', '=', $request->id)
             ->first();
 
-        $prodSellDetails = DB::table('productSells as ps')
+        $prodDetails = DB::table('products as ps')
             ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.id')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
             ->select(
@@ -224,18 +232,18 @@ class ProductSellController
             ->first();
 
         $categories = DB::table('productCategories as pcat')
-            ->join('productSellCategories as psc', 'psc.productCategoryId', 'pcat.id')
-            ->join('productSells as pc', 'psc.productSellId', 'pc.id')
+            ->join('productCategories as psc', 'psc.productCategoryId', 'pcat.id')
+            ->join('products as pc', 'psc.productId', 'pc.id')
             ->select('pcat.id', 'pcat.categoryName')
             ->where('pc.id', '=', $request->id)
             ->where('psc.isDeleted', '=', 0)
             ->get();
 
-        $prodSellDetails->categories = $categories;
+        $prodDetails->categories = $categories;
 
-        $prodSell->details = $prodSellDetails;
+        $prod->details = $prodDetails;
 
-        $prodSellSetting = DB::table('productSells as ps')
+        $prodSetting = DB::table('products as ps')
             ->select(
                 'ps.isCustomerPurchase as isCustomerPurchase',
                 'ps.isCustomerPurchaseOnline as isCustomerPurchaseOnline',
@@ -248,9 +256,9 @@ class ProductSellController
             ->where('ps.id', '=', $request->id)
             ->first();
 
-        $prodSell->setting = $prodSellSetting;
+        $prod->setting = $prodSetting;
 
-        $location =  DB::table('productSellLocations as psl')
+        $location =  DB::table('productLocations as psl')
             ->join('location as l', 'l.Id', 'psl.locationId')
             ->select(
                 'psl.id',
@@ -261,15 +269,15 @@ class ProductSellController
                 'psl.reStockLimit',
                 DB::raw('(CASE WHEN psl.inStock = 0 THEN "NO STOCK" WHEN psl.inStock <= psl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
             )
-            ->where('psl.productSellId', '=', $request->id)
+            ->where('psl.productId', '=', $request->id)
             ->first();
 
-        $prodSell->location = $location;
+        $prod->location = $location;
 
-        if ($prodSell->pricingStatus == "CustomerGroups") {
+        if ($prod->pricingStatus == "CustomerGroups") {
 
-            $CustomerGroups = DB::table('productSellCustomerGroups as psc')
-                ->join('productSells as ps', 'psc.productSellId', 'ps.id')
+            $CustomerGroups = DB::table('productCustomerGroups as psc')
+                ->join('products as ps', 'psc.productId', 'ps.id')
                 ->join('customerGroups as cg', 'psc.customerGroupId', 'cg.id')
                 ->select(
                     'psc.id as id',
@@ -277,14 +285,14 @@ class ProductSellController
                     'cg.customerGroup',
                     DB::raw("TRIM(psc.price)+0 as price")
                 )
-                ->where('psc.productSellId', '=', $request->id)
+                ->where('psc.productId', '=', $request->id)
                 ->where('psc.isDeleted', '=', 0)
                 ->get();
 
-            $prodSell->customerGroups = $CustomerGroups;
-        } elseif ($prodSell->pricingStatus == "PriceLocations") {
-            $PriceLocations = DB::table('productSellPriceLocations as psp')
-                ->join('productSells as ps', 'psp.productSellId', 'ps.id')
+            $prod->customerGroups = $CustomerGroups;
+        } elseif ($prod->pricingStatus == "PriceLocations") {
+            $PriceLocations = DB::table('productPriceLocations as psp')
+                ->join('products as ps', 'psp.productId', 'ps.id')
                 ->join('location as l', 'psp.locationId', 'l.id')
                 ->select(
                     'psp.id as id',
@@ -292,54 +300,54 @@ class ProductSellController
                     'l.id as locationId',
                     DB::raw("TRIM(psp.price)+0 as price")
                 )
-                ->where('psp.productSellId', '=', $request->id)
+                ->where('psp.productId', '=', $request->id)
                 ->where('psp.isDeleted', '=', 0)
                 ->get();
 
-            $prodSell->priceLocations = $PriceLocations;
-        } else if ($prodSell->pricingStatus == "Quantities") {
+            $prod->priceLocations = $PriceLocations;
+        } else if ($prod->pricingStatus == "Quantities") {
 
-            $Quantities = DB::table('productSellQuantities as psq')
-                ->join('productSells as ps', 'psq.productSellId', 'ps.id')
+            $Quantities = DB::table('productQuantities as psq')
+                ->join('products as ps', 'psq.productId', 'ps.id')
                 ->select(
                     'psq.id as id',
                     'psq.fromQty',
                     'psq.toQty',
                     DB::raw("TRIM(psq.Price)+0 as price")
                 )
-                ->where('psq.ProductSellId', '=', $request->id)
+                ->where('psq.ProductId', '=', $request->id)
                 ->where('psq.isDeleted', '=', 0)
                 ->get();
 
-            $prodSell->quantities = $Quantities;
+            $prod->quantities = $Quantities;
         }
 
-        $prodSell->images = DB::table('productSellImages as psi')
-            ->join('productSells as ps', 'psi.productSellId', 'ps.id')
+        $prod->images = DB::table('productImages as psi')
+            ->join('products as ps', 'psi.productId', 'ps.id')
             ->select(
                 'psi.id as id',
                 'psi.labelName',
                 'psi.realImageName',
                 'psi.imagePath'
             )
-            ->where('psi.productSellId', '=', $request->id)
+            ->where('psi.productId', '=', $request->id)
             ->where('psi.isDeleted', '=', 0)
             ->get();
 
-        $prodSell->reminders = DB::table('productSellReminders as psr')
-            ->join('productSells as pc', 'psr.productSellId', 'pc.id')
+        $prod->reminders = DB::table('productReminders as psr')
+            ->join('products as pc', 'psr.productId', 'pc.id')
             ->select(
                 'psr.id',
                 'psr.unit',
                 'psr.timing',
                 'psr.status',
             )
-            ->where('psr.productSellId', '=', $request->id)
+            ->where('psr.productId', '=', $request->id)
             ->where('psr.isDeleted', '=', 0)
             ->get();
 
-        $prodSellLog = DB::table('productSells as ps')
-            ->join('productSellLogs as psl', 'psl.productSellId', 'ps.id')
+        $prodLog = DB::table('products as ps')
+            ->join('productLogs as psl', 'psl.productId', 'ps.id')
             ->join('users as u', 'u.id', 'psl.userId')
             ->select(
                 'psl.id',
@@ -353,10 +361,10 @@ class ProductSellController
             ->where('ps.id', '=', $request->id)
             ->get();
 
-        $prodSell->log = $prodSellLog;
+        $prod->log = $prodLog;
 
-        $productSellBatch = DB::table('productSellBatches as psb')
-            ->leftJoin('productSells as ps', 'psb.productId', 'ps.id')
+        $productBatch = DB::table('productBatches as psb')
+            ->leftJoin('products as ps', 'psb.productId', 'ps.id')
             ->leftJoin('productRestocks as pr', 'psb.productRestockId', 'pr.id')
             ->leftJoin('productRestockDetails as prd', 'psb.productRestockDetailId', 'prd.id')
             ->leftJoin('productTransfers as pt', 'psb.productTransferId', 'pt.id')
@@ -373,9 +381,9 @@ class ProductSellController
             ->where('psb.productId', '=', $request->id)
             ->get();
 
-        $prodSell->batches = $productSellBatch;
+        $prod->batches = $productBatch;
 
-        return response()->json($prodSell, 200);
+        return response()->json($prod, 200);
     }
 
     public function Create(Request $request)
@@ -470,8 +478,8 @@ class ProductSellController
 
         foreach ($ResultLocations as $Res) {
 
-            $CheckDataBranch = DB::table('productSells as ps')
-                ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
+            $CheckDataBranch = DB::table('products as ps')
+                ->join('productLocations as psl', 'psl.productId', 'ps.id')
                 ->join('location as loc', 'psl.locationId', 'loc.id')
                 ->select('ps.fullName as fullName', 'loc.locationName')
                 ->where('ps.fullName', '=', $request->fullName)
@@ -719,7 +727,8 @@ class ProductSellController
                     $height = $request->height;
                 }
 
-                $product = ProductSell::create([
+                $product = Products::create([
+                    'category' => 'sell',
                     'fullName' => $request->fullName,
                     'simpleName' => $request->simpleName,
                     'sku' => $request->sku,
@@ -750,8 +759,8 @@ class ProductSellController
                     'userId' => $request->user()->id,
                 ]);
 
-                ProductSellLocation::create([
-                    'productSellId' => $product->id,
+                ProductLocations::create([
+                    'productId' => $product->id,
                     'locationId' => $value['locationId'],
                     'inStock' => $value['inStock'],
                     'lowStock' => $value['lowStock'],
@@ -763,8 +772,8 @@ class ProductSellController
                 if ($ResultCategories) {
 
                     foreach ($ResultCategories as $valCat) {
-                        ProductSellCategory::create([
-                            'productSellId' => $product->id,
+                        productCoreCategories::create([
+                            'productId' => $product->id,
                             'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
                         ]);
@@ -785,12 +794,12 @@ class ProductSellController
 
                                 $name = $fil->hashName();
 
-                                $fil->move(public_path() . '/ProductSellImages/', $name);
+                                $fil->move(public_path() . '/ProductImages/', $name);
 
-                                $fileName = "/ProductSellImages/" . $name;
+                                $fileName = "/ProductImages/" . $name;
 
-                                $file = new ProductSellImages();
-                                $file->productSellId = $product->id;
+                                $file = new ProductImages();
+                                $file->productId = $product->id;
                                 $file->labelName = $ResImageDatas[$count]['name'];
                                 $file->realImageName = $fil->getClientOriginalName();
                                 $file->imagePath = $fileName;
@@ -808,8 +817,8 @@ class ProductSellController
                 } else {
 
                     foreach ($res_data as $res) {
-                        ProductSellImages::create([
-                            'productSellId' => $product->id,
+                        ProductImages::create([
+                            'productId' => $product->id,
                             'labelName' => $res['labelName'],
                             'realImageName' => $res['realImageName'],
                             'imagePath' => $res['imagePath'],
@@ -819,8 +828,8 @@ class ProductSellController
                 }
 
                 foreach ($ResultReminders as $RemVal) {
-                    ProductSellReminder::create([
-                        'productSellId' => $product->id,
+                    ProductReminders::create([
+                        'productId' => $product->id,
                         'unit' => $RemVal['unit'],
                         'timing' => $RemVal['timing'],
                         'status' => $RemVal['status'],
@@ -831,8 +840,8 @@ class ProductSellController
                 if ($request->pricingStatus == "CustomerGroups") {
 
                     foreach ($ResultCustomerGroups as $CustVal) {
-                        ProductSellCustomerGroup::create([
-                            'productSellId' => $product->id,
+                        ProductCustomerGroups::create([
+                            'productId' => $product->id,
                             'customerGroupId' => $CustVal['customerGroupId'],
                             'price' => $CustVal['price'],
                             'userId' => $request->user()->id,
@@ -841,8 +850,8 @@ class ProductSellController
                 } else if ($request->pricingStatus == "PriceLocations") {
 
                     foreach ($ResultPriceLocations as $PriceVal) {
-                        ProductSellPriceLocation::create([
-                            'productSellId' => $product->id,
+                        ProductPriceLocations::create([
+                            'productId' => $product->id,
                             'locationId' => $PriceVal['locationId'],
                             'price' => $PriceVal['price'],
                             'userId' => $request->user()->id,
@@ -851,8 +860,8 @@ class ProductSellController
                 } else if ($request->pricingStatus == "Quantities") {
 
                     foreach ($ResultQuantities as $QtyVal) {
-                        ProductSellQuantity::create([
-                            'productSellId' => $product->id,
+                        ProductQuantitiess::create([
+                            'productId' => $product->id,
                             'fromQty' => $QtyVal['fromQty'],
                             'toQty' => $QtyVal['toQty'],
                             'price' => $QtyVal['price'],
@@ -981,9 +990,9 @@ class ProductSellController
             ], 422);
         }
 
-        $prodSell = ProductSell::find($request->id);
+        $prod = Products::find($request->id);
 
-        if (!$prodSell) {
+        if (!$prod) {
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => ['Data not found!'],
@@ -1176,10 +1185,10 @@ class ProductSellController
 
         $location = $request->locations;
 
-        ProductSellLocation::updateOrCreate(
+        ProductLocations::updateOrCreate(
             ['id' => $location['id']],
             [
-                'productSellId' => $request->id,
+                'productId' => $request->id,
                 'locationId' => $location['locationId'],
                 'inStock' => $location['inStock'],
                 'lowStock' => $location['lowStock'],
@@ -1211,7 +1220,7 @@ class ProductSellController
                 $height = $request->height;
             }
 
-            $product = ProductSell::updateOrCreate(
+            $product = Products::updateOrCreate(
                 ['id' => $request->id],
                 [
                     'simpleName' => $request->simpleName,
@@ -1246,7 +1255,7 @@ class ProductSellController
                 ]
             );
 
-            ProductSellCategory::where('ProductSellId', '=', $request->id)
+            productCoreCategories::where('ProductId', '=', $request->id)
                 ->where('isDeleted', '=', 0)
                 ->update(
                     [
@@ -1259,9 +1268,9 @@ class ProductSellController
             if ($ResultCategories) {
 
                 foreach ($ResultCategories as $valCat) {
-                    ProductSellCategory::create(
+                    productCoreCategories::create(
                         [
-                            'productSellId' => $request->id,
+                            'productId' => $request->id,
                             'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
                         ]
@@ -1273,7 +1282,7 @@ class ProductSellController
 
                 if ($RemVal['statusData'] == 'del') {
 
-                    ProductSellReminder::where('id', '=', $RemVal['id'])
+                    ProductReminders::where('id', '=', $RemVal['id'])
                         ->where('isDeleted', '=', 0)
                         ->update(
                             [
@@ -1284,10 +1293,10 @@ class ProductSellController
                         );
                 } else {
 
-                    ProductSellReminder::updateOrCreate(
+                    ProductReminders::updateOrCreate(
                         ['id' => $RemVal['id']],
                         [
-                            'productSellId' => $product->id,
+                            'productId' => $product->id,
                             'unit' => $RemVal['unit'],
                             'timing' => $RemVal['timing'],
                             'status' => $RemVal['status'],
@@ -1303,7 +1312,7 @@ class ProductSellController
 
                     if ($CustVal['status'] == 'del') {
 
-                        ProductSellCustomerGroup::where('id', '=', $CustVal['id'])
+                        ProductCustomerGroups::where('id', '=', $CustVal['id'])
                             ->where('isDeleted', '=', 0)
                             ->update(
                                 [
@@ -1314,10 +1323,10 @@ class ProductSellController
                             );
                     } else {
 
-                        ProductSellCustomerGroup::updateOrCreate(
+                        ProductCustomerGroups::updateOrCreate(
                             ['id' => $CustVal['id']],
                             [
-                                'productSellId' => $product->id,
+                                'productId' => $product->id,
                                 'customerGroupId' => $CustVal['customerGroupId'],
                                 'price' => $CustVal['price'],
                                 'userId' => $request->user()->id,
@@ -1331,7 +1340,7 @@ class ProductSellController
 
                     if ($PriceVal['status'] == 'del') {
 
-                        ProductSellPriceLocation::where('id', '=', $PriceVal['id'])
+                        ProductPriceLocations::where('id', '=', $PriceVal['id'])
                             ->where('isDeleted', '=', 0)
                             ->update(
                                 [
@@ -1342,10 +1351,10 @@ class ProductSellController
                             );
                     } else {
 
-                        ProductSellPriceLocation::updateOrCreate(
+                        ProductPriceLocations::updateOrCreate(
                             ['id' => $PriceVal['id']],
                             [
-                                'productSellId' => $product->id,
+                                'productId' => $product->id,
                                 'locationId' => $PriceVal['locationId'],
                                 'price' => $PriceVal['price'],
                                 'userId' => $request->user()->id,
@@ -1358,7 +1367,7 @@ class ProductSellController
                 foreach ($ResultQuantities as $QtyVal) {
 
                     if ($QtyVal['status'] == 'del') {
-                        ProductSellQuantity::where('id', '=', $QtyVal['id'])
+                        ProductQuantitiess::where('id', '=', $QtyVal['id'])
                             ->where('isDeleted', '=', 0)
                             ->update(
                                 [
@@ -1368,10 +1377,10 @@ class ProductSellController
                                 ]
                             );
                     } else {
-                        ProductSellQuantity::updateOrCreate(
+                        ProductQuantitiess::updateOrCreate(
                             ['id' => $QtyVal['id']],
                             [
-                                'productSellId' => $product->id,
+                                'productId' => $product->id,
                                 'fromQty' => $QtyVal['fromQty'],
                                 'toQty' => $QtyVal['toQty'],
                                 'price' => $QtyVal['price'],
@@ -1406,7 +1415,7 @@ class ProductSellController
             ], 422);
         }
 
-        $product = ProductSell::find($request->id);
+        $product = Products::find($request->id);
 
         if (!$product) {
             return response()->json([
@@ -1427,12 +1436,12 @@ class ProductSellController
 
                     $name = $fil->hashName();
 
-                    $fil->move(public_path() . '/ProductSellImages/', $name);
+                    $fil->move(public_path() . '/ProductImages/', $name);
 
-                    $fileName = "/ProductSellImages/" . $name;
+                    $fileName = "/ProductImages/" . $name;
 
-                    $file = new ProductSellImages();
-                    $file->productSellId = 1;
+                    $file = new ProductImages();
+                    $file->productId = 1;
                     $file->labelName = "";
                     $file->realImageName = $fil->getClientOriginalName();
                     $file->imagePath = $fileName;
@@ -1449,8 +1458,8 @@ class ProductSellController
 
             if ($value['status'] == '' && $value['id'] == 0) {
 
-                ProductSellImages::create([
-                    'productSellId' => $request->id,
+                ProductImages::create([
+                    'productId' => $request->id,
                     'labelName' => $value['name'],
                     'realImageName' => $tmpImages[$count]['realImageName'],
                     'imagePath' => $tmpImages[$count]['imagePath'],
@@ -1460,17 +1469,17 @@ class ProductSellController
                 $count += 1;
             } else if ($value['status'] == 'del' && $value['id'] != 0) {
 
-                $ProdSell = ProductSellImages::find($value['id']);
-                $ProdSell->DeletedBy = $request->user()->id;
-                $ProdSell->isDeleted = true;
-                $ProdSell->DeletedAt = Carbon::now();
-                $ProdSell->save();
+                $Prod = ProductImages::find($value['id']);
+                $Prod->DeletedBy = $request->user()->id;
+                $Prod->isDeleted = true;
+                $Prod->DeletedAt = Carbon::now();
+                $Prod->save();
             } else if ($value['id'] != 0) {
 
-                ProductSellImages::updateorCreate(
+                ProductImages::updateorCreate(
                     ['id' => $value['id']],
                     [
-                        'productSellId' => $request->id,
+                        'productId' => $request->id,
                         'labelName' => $value['name'],
                         'userId' => $request->user()->id,
                     ]
@@ -1490,7 +1499,7 @@ class ProductSellController
     {
         //check product on DB
         foreach ($request->id as $va) {
-            $res = ProductSell::find($va);
+            $res = Products::find($va);
 
             if (!$res) {
                 return response()->json([
@@ -1503,13 +1512,13 @@ class ProductSellController
         //process delete data
         foreach ($request->id as $va) {
 
-            $ProdSell = ProductSell::find($va);
+            $Prod = Products::find($va);
 
-            $ProdSellLoc = ProductSellLocation::where('ProductSellId', '=', $ProdSell->id)->get();
+            $ProdLoc = ProductLocations::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdSellLoc) {
+            if ($ProdLoc) {
 
-                ProductSellLocation::where('ProductSellId', '=', $ProdSell->id)
+                ProductLocations::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1519,11 +1528,11 @@ class ProductSellController
                     );
             }
 
-            $ProdSellCat = ProductSellCategory::where('ProductSellId', '=', $ProdSell->id)->get();
+            $ProdCat = productCoreCategories::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdSellCat) {
+            if ($ProdCat) {
 
-                ProductSellCategory::where('ProductSellId', '=', $ProdSell->id)
+                productCoreCategories::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1532,16 +1541,16 @@ class ProductSellController
                         ]
                     );
 
-                $ProdSellCat->DeletedBy = $request->user()->id;
-                $ProdSellCat->isDeleted = true;
-                $ProdSellCat->DeletedAt = Carbon::now();
+                $ProdCat->DeletedBy = $request->user()->id;
+                $ProdCat->isDeleted = true;
+                $ProdCat->DeletedAt = Carbon::now();
             }
 
-            $ProdSellImg = ProductSellImages::where('ProductSellId', '=', $ProdSell->id)->get();
+            $ProdImg = ProductImages::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdSellImg) {
+            if ($ProdImg) {
 
-                ProductSellImages::where('ProductSellId', '=', $ProdSell->id)
+                ProductImages::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1551,10 +1560,10 @@ class ProductSellController
                     );
             }
 
-            $ProdCustGrp = ProductSellCustomerGroup::where('ProductSellId', '=', $ProdSell->id)->get();
+            $ProdCustGrp = ProductCustomerGroups::where('ProductId', '=', $Prod->id)->get();
             if ($ProdCustGrp) {
 
-                ProductSellCustomerGroup::where('ProductSellId', '=', $ProdSell->id)
+                ProductCustomerGroups::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1564,11 +1573,11 @@ class ProductSellController
                     );
             }
 
-            $ProdSellPrcLoc = ProductSellPriceLocation::where('ProductSellId', '=', $ProdSell->id)->get();
+            $ProdPrcLoc = ProductPriceLocations::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdSellPrcLoc) {
+            if ($ProdPrcLoc) {
 
-                ProductSellPriceLocation::where('ProductSellId', '=', $ProdSell->id)
+                ProductPriceLocations::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1578,11 +1587,11 @@ class ProductSellController
                     );
             }
 
-            $ProdSellQty = ProductSellQuantity::where('ProductSellId', '=', $ProdSell->id)->get();
+            $ProdQty = ProductQuantitiess::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdSellQty) {
+            if ($ProdQty) {
 
-                ProductSellQuantity::where('ProductSellId', '=', $ProdSell->id)
+                ProductQuantitiess::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1592,10 +1601,10 @@ class ProductSellController
                     );
             }
 
-            $ProdSellRem = ProductSellReminder::where('ProductSellId', '=', $ProdSell->id)->get();
-            if ($ProdSellRem) {
+            $ProdRem = ProductReminders::where('ProductId', '=', $Prod->id)->get();
+            if ($ProdRem) {
 
-                ProductSellReminder::where('ProductSellId', '=', $ProdSell->id)
+                ProductReminders::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1605,10 +1614,10 @@ class ProductSellController
                     );
             }
 
-            $ProdSell->DeletedBy = $request->user()->id;
-            $ProdSell->isDeleted = true;
-            $ProdSell->DeletedAt = Carbon::now();
-            $ProdSell->save();
+            $Prod->DeletedBy = $request->user()->id;
+            $Prod->isDeleted = true;
+            $Prod->DeletedAt = Carbon::now();
+            $Prod->save();
         }
 
         return response()->json([
@@ -1703,7 +1712,7 @@ class ProductSellController
                     ], 422);
                 }
 
-                $name = ProductSell::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
+                $name = Products::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
 
                 if ($name) {
                     return response()->json([
@@ -1929,7 +1938,8 @@ class ProductSellController
                 $count = 0;
                 foreach ($codeLocation as $locIns) {
 
-                    $product = ProductSell::create([
+                    $product = Products::create([
+                        'category' => 'sell',
                         'fullName' => $value['nama'],
                         'simpleName' => $value['nama_sederhana'],
                         'sku' => $value['sku'],
@@ -1960,8 +1970,8 @@ class ProductSellController
                         'userId' => $request->user()->id,
                     ]);
 
-                    ProductSellLocation::create([
-                        'productSellId' => $product->id,
+                    ProductLocations::create([
+                        'productId' => $product->id,
                         'locationId' => $locIns,
                         'inStock' => $inStock[$count],
                         'lowStock' => $lowStock[$count],
@@ -1973,8 +1983,8 @@ class ProductSellController
                     if ($productCategory) {
 
                         foreach ($productCategory as $valCat) {
-                            ProductSellCategory::create([
-                                'productSellId' => $product->id,
+                            productCoreCategories::create([
+                                'productId' => $product->id,
                                 'productCategoryId' => $valCat,
                                 'userId' => $request->user()->id,
                             ]);
@@ -2028,7 +2038,7 @@ class ProductSellController
             ], 422);
         }
 
-        $product = ProductSell::find($request->id);
+        $product = Products::find($request->id);
 
         if (!$product) {
             return response()->json([
@@ -2039,14 +2049,14 @@ class ProductSellController
 
         if ($request->fullName != "") {
 
-            $currentBranch = DB::table('productSells as ps')
-                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+            $currentBranch = DB::table('products as ps')
+                ->join('productLocations as psl', 'ps.id', 'psl.productId')
                 ->select('psl.locationId')
                 ->where('ps.id', '=', $request->id)
                 ->first();
 
-            $findDuplicate = DB::table('productSells as ps')
-                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+            $findDuplicate = DB::table('products as ps')
+                ->join('productLocations as psl', 'ps.id', 'psl.productId')
                 ->select('psl.locationId')
                 ->where('ps.fullName', '=', $request->fullName)
                 ->where('psl.locationId', '=', $currentBranch->locationId)
@@ -2063,7 +2073,7 @@ class ProductSellController
 
         if ($request->productSellId) {
 
-            $prodDest = ProductSell::find($request->productSellId);
+            $prodDest = Products::find($request->productSellId);
 
             if (!$prodDest) {
                 return response()->json([
@@ -2082,15 +2092,15 @@ class ProductSellController
             $newProduct->userId = $request->user()->id;
             $newProduct->save();
 
-            $categories = ProductSellCategory::where('productSellId', '=', $request->id)->get();
+            $categories = productCoreCategories::where('productId', '=', $request->id)->get();
 
             foreach ($categories as $res) {
 
-                $category = ProductSellCategory::find($res['id']);
+                $category = productCoreCategories::find($res['id']);
 
                 if ($category) {
                     $newCategory = $category->replicate();
-                    $newCategory->productSellId = $newProduct->id;
+                    $newCategory->productId = $newProduct->id;
                     $newCategory->created_at = Carbon::now();
                     $newCategory->updated_at = Carbon::now();
                     $newCategory->userId = $request->user()->id;
@@ -2098,93 +2108,93 @@ class ProductSellController
                 }
             }
 
-            $prodSellLoc = ProductSellLocation::find($request->id);
+            $prodLoc = ProductLocations::find($request->id);
 
-            $newProdSellLoc = $prodSellLoc->replicate();
-            $newProdSellLoc->productSellId = $newProduct->id;
-            $newProdSellLoc->inStock = $request->qtyIncrease;
-            $newProdSellLoc->diffStock = $request->qtyIncrease - $prodSellLoc->lowStock;
-            $newProdSellLoc->userId = $request->user()->id;
-            $newProdSellLoc->created_at = Carbon::now();
-            $newProdSellLoc->updated_at = Carbon::now();
-            $newProdSellLoc->save();
+            $newProdLoc = $prodLoc->replicate();
+            $newProdLoc->productId = $newProduct->id;
+            $newProdLoc->inStock = $request->qtyIncrease;
+            $newProdLoc->diffStock = $request->qtyIncrease - $prodLoc->lowStock;
+            $newProdLoc->userId = $request->user()->id;
+            $newProdLoc->created_at = Carbon::now();
+            $newProdLoc->updated_at = Carbon::now();
+            $newProdLoc->save();
 
             productSellLog($newProduct->id, "Create New Item", "", $request->qtyIncrease, $request->qtyIncrease, $request->user()->id);
 
             if ($product->pricingStatus == "CustomerGroups") {
 
-                $productCustomerGroups = ProductSellCustomerGroup::where('productSellId', '=', $request->id)->get();
+                $productCustomerGroups = ProductCustomerGroups::where('productId', '=', $request->id)->get();
 
                 foreach ($productCustomerGroups as $res) {
 
-                    $prod = ProductSellCustomerGroup::find($res['id']);
+                    $prod = ProductCustomerGroups::find($res['id']);
 
                     if ($prod) {
-                        $newProductSell = $prod->replicate();
-                        $newProductSell->productSellId = $newProduct->id;
-                        $newProductSell->created_at = Carbon::now();
-                        $newProductSell->updated_at = Carbon::now();
-                        $newProductSell->userId = $request->user()->id;
-                        $newProductSell->save();
+                        $newProduct = $prod->replicate();
+                        $newProduct->productId = $newProduct->id;
+                        $newProduct->created_at = Carbon::now();
+                        $newProduct->updated_at = Carbon::now();
+                        $newProduct->userId = $request->user()->id;
+                        $newProduct->save();
                     }
                 }
             }
 
             if ($product->pricingStatus == "PriceLocations") {
 
-                $prodSellPriceLoc = ProductSellPriceLocation::where('productSellId', '=', $request->id)->get();
+                $prodPriceLoc = ProductPriceLocations::where('productId', '=', $request->id)->get();
 
-                foreach ($prodSellPriceLoc as $res) {
+                foreach ($prodPriceLoc as $res) {
 
-                    $prodSellLoc = ProductSellPriceLocation::find($res['id']);
+                    $prodLoc = ProductPriceLocations::find($res['id']);
 
-                    if ($prodSellLoc) {
-                        $newProductSellLoc = $prodSellLoc->replicate();
-                        $newProductSellLoc->productSellId = $newProduct->id;
-                        $newProductSellLoc->created_at = Carbon::now();
-                        $newProductSellLoc->updated_at = Carbon::now();
-                        $newProductSellLoc->userId = $request->user()->id;
-                        $newProductSellLoc->save();
+                    if ($prodLoc) {
+                        $newProductLoc = $prodLoc->replicate();
+                        $newProductLoc->productId = $newProduct->id;
+                        $newProductLoc->created_at = Carbon::now();
+                        $newProductLoc->updated_at = Carbon::now();
+                        $newProductLoc->userId = $request->user()->id;
+                        $newProductLoc->save();
                     }
                 }
             }
 
             if ($product->pricingStatus == "Quantities") {
 
-                $prodQty = ProductSellQuantity::where('productSellId', '=', $request->id)->get();
+                $prodQty = ProductQuantitiess::where('productId', '=', $request->id)->get();
 
                 foreach ($prodQty as $res) {
 
-                    $prodSellQty = ProductSellQuantity::find($res['id']);
+                    $prodQty = ProductQuantitiess::find($res['id']);
 
-                    if ($prodSellQty) {
-                        $newProductSellQty = $prodSellQty->replicate();
-                        $newProductSellQty->productSellId = $newProduct->id;
-                        $newProductSellQty->created_at = Carbon::now();
-                        $newProductSellQty->updated_at = Carbon::now();
-                        $newProductSellQty->userId = $request->user()->id;
-                        $newProductSellQty->save();
+                    if ($prodQty) {
+                        $newProductQty = $prodQty->replicate();
+                        $newProductQty->productId = $newProduct->id;
+                        $newProductQty->created_at = Carbon::now();
+                        $newProductQty->updated_at = Carbon::now();
+                        $newProductQty->userId = $request->user()->id;
+                        $newProductQty->save();
                     }
                 }
             }
 
-            $prodReminder = ProductSellReminder::where('productSellId', '=', $request->id)->get();
+            $prodReminder = ProductReminders::where('productId', '=', $request->id)->get();
 
             foreach ($prodReminder as $res) {
 
-                $prodSellReminder = ProductSellReminder::find($res['id']);
+                $prodReminder = ProductReminders::find($res['id']);
 
-                if ($prodSellReminder) {
-                    $newProductSellReminder = $prodSellReminder->replicate();
-                    $newProductSellReminder->productSellId = $newProduct->id;
-                    $newProductSellReminder->created_at = Carbon::now();
-                    $newProductSellReminder->updated_at = Carbon::now();
-                    $newProductSellReminder->userId = $request->user()->id;
-                    $newProductSellReminder->save();
+                if ($prodReminder) {
+                    $newProductReminder = $prodReminder->replicate();
+                    $newProductReminder->productId = $newProduct->id;
+                    $newProductReminder->created_at = Carbon::now();
+                    $newProductReminder->updated_at = Carbon::now();
+                    $newProductReminder->userId = $request->user()->id;
+                    $newProductReminder->save();
                 }
             }
 
-            $oldProdLoc = ProductSellLocation::where('productSellId', '=', $request->id)->first();
+            $oldProdLoc = ProductLocations::where('productId', '=', $request->id)->first();
 
             $instock = $oldProdLoc->inStock;
             $lowstock = $oldProdLoc->lowStock;
@@ -2197,10 +2207,10 @@ class ProductSellController
             $product->updated_at = Carbon::now();
             $product->save();
             ProductSellLog($request->id, 'Split Product', 'Product Decrease', $request->qtyReduction, $instock - $request->qtyReduction, $request->user()->id);
-        } elseif ($request->productSellId) {
+        } elseif ($request->productId) {
 
 
-            $oldProdLoc = ProductSellLocation::where('productSellId', '=', $request->id)->first();
+            $oldProdLoc = ProductLocations::where('productId', '=', $request->id)->first();
 
             $instock = $oldProdLoc->inStock;
             $lowstock = $oldProdLoc->lowStock;
@@ -2213,22 +2223,22 @@ class ProductSellController
             ProductSellLog($request->id, 'Split Product', 'Product Decrease', $request->qtyReduction, $instock - $request->qtyReduction, $request->user()->id);
 
 
-            $prodSellLoc = ProductSellLocation::where('productSellId', '=', $request->productSellId)->first();
+            $prodLoc = ProductLocations::where('productId', '=', $request->productSellId)->first();
 
-            $instock = $prodSellLoc->inStock;
-            $lowstock = $prodSellLoc->lowStock;
+            $instock = $prodLoc->inStock;
+            $lowstock = $prodLoc->lowStock;
 
-            $prodSellLoc->inStock = $instock + $request->qtyIncrease;
-            $prodSellLoc->diffStock = ($instock + $request->qtyIncrease) - $lowstock;
-            $prodSellLoc->userId = $request->user()->id;
-            $prodSellLoc->updated_at = Carbon::now();
-            $prodSellLoc->save();
+            $prodLoc->inStock = $instock + $request->qtyIncrease;
+            $prodLoc->diffStock = ($instock + $request->qtyIncrease) - $lowstock;
+            $prodLoc->userId = $request->user()->id;
+            $prodLoc->updated_at = Carbon::now();
+            $prodLoc->save();
 
-            $prod = ProductSell::find($request->productSellId);
+            $prod = Products::find($request->productSellId);
             $prod->updated_at = Carbon::now();
             $prod->save();
 
-            $Oldprod = ProductSell::find($request->id);
+            $Oldprod = Products::find($request->id);
             $Oldprod->updated_at = Carbon::now();
             $Oldprod->save();
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Product;
 
 use App\Models\ProductClinic;
-use App\Models\ProductClinicCategory;
+use App\Models\productCoreCategories;
 use App\Models\ProductClinicCustomerGroup;
 use App\Models\ProductClinicDosage;
 use App\Models\ProductClinicImages;
@@ -12,6 +12,7 @@ use App\Models\ProductClinicPriceLocation;
 use App\Models\ProductClinicQuantity;
 use App\Models\ProductClinicReminder;
 use App\Exports\Product\ProductClinicReport;
+use App\Exports\Product\ProductSellReport;
 use App\Exports\Product\TemplateUploadProductClinic;
 use App\Imports\Product\ImportProductClinic;
 use Exception;
@@ -22,6 +23,9 @@ use Excel;
 use Validator;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
+use App\Models\ProductCustomerGroups;
+use App\Models\ProductPriceLocations;
+use App\Models\ProductQuantitiess;
 use App\Models\ProductSupplier;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -33,8 +37,8 @@ class ProductClinicController
 
         $page = $request->goToPage;
 
-        $data = DB::table('productClinics as pc')
-            ->join('productClinicLocations as pcl', 'pcl.productClinicId', 'pc.id')
+        $data = DB::table('products as pc')
+            ->join('productLocations as pcl', 'pcl.productId', 'pc.id')
             ->join('location as loc', 'loc.Id', 'pcl.locationId')
             ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
             ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
@@ -55,7 +59,8 @@ class ProductClinicController
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->where('pc.isDeleted', '=', 0);
+            ->where('pc.isDeleted', '=', 0)
+            ->where('pc.category','=','clinic');
 
         if ($request->locationId) {
 
@@ -74,12 +79,12 @@ class ProductClinicController
 
         if ($request->category) {
 
-            $cat = DB::table('productClinicCategories as pc')
-                ->select('productClinicId')
+            $cat = DB::table('productCategories as pc')
+                ->select('productId')
                 ->whereIn('productCategoryId', $request->category)
                 ->where('pc.isDeleted', '=', 0)
                 ->distinct()
-                ->pluck('productClinicId');
+                ->pluck('productId');
 
             $data = $data->whereIn('pc.id', $cat);
         }
@@ -132,7 +137,7 @@ class ProductClinicController
     {
         $temp_column = null;
 
-        $data = DB::table('productClinics as pc')
+        $data = DB::table('products as pc')
             ->select(
                 'pc.fullName as fullName'
             )
@@ -288,8 +293,8 @@ class ProductClinicController
 
         foreach ($ResultLocations as $Res) {
 
-            $CheckDataBranch = DB::table('productClinics as pc')
-                ->join('productClinicLocations as pcl', 'pcl.productClinicId', 'pc.id')
+            $CheckDataBranch = DB::table('products as pc')
+                ->join('productLocations as pcl', 'pcl.productId', 'pc.id')
                 ->join('location as loc', 'pcl.locationId', 'loc.id')
                 ->select('pc.fullName as fullName', 'loc.locationName')
                 ->where('pc.fullName', '=', $request->fullName)
@@ -588,7 +593,8 @@ class ProductClinicController
                     $height = $request->height;
                 }
 
-                $product = ProductClinic::create([
+                $product = Products::create([
+                    'category' => 'clinic',
                     'fullName' => $request->fullName,
                     'simpleName' => $request->simpleName,
                     'sku' => $request->sku,
@@ -619,8 +625,8 @@ class ProductClinicController
                     'userId' => $request->user()->id,
                 ]);
 
-                ProductClinicLocation::create([
-                    'productClinicId' => $product->id,
+                ProductLocations::create([
+                    'productId' => $product->id,
                     'locationId' => $value['locationId'],
                     'inStock' => $value['inStock'],
                     'lowStock' => $value['lowStock'],
@@ -632,8 +638,8 @@ class ProductClinicController
                 if ($ResultCategories) {
 
                     foreach ($ResultCategories as $valCat) {
-                        ProductClinicCategory::create([
-                            'productClinicId' => $product->id,
+                        productCoreCategories::create([
+                            'productId' => $product->id,
                             'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
                         ]);
@@ -653,12 +659,12 @@ class ProductClinicController
 
                                 $name = $fil->hashName();
 
-                                $fil->move(public_path() . '/ProductClinicImages/', $name);
+                                $fil->move(public_path() . '/ProductImages/', $name);
 
-                                $fileName = "/ProductClinicImages/" . $name;
+                                $fileName = "/ProductImages/" . $name;
 
-                                $file = new ProductClinicImages();
-                                $file->productClinicId = $product->id;
+                                $file = new ProductImages();
+                                $file->productId = $product->id;
                                 $file->labelName = $ResImageDatas[$count]['name'];
                                 $file->realImageName = $fil->getClientOriginalName();
                                 $file->imagePath = $fileName;
@@ -676,8 +682,8 @@ class ProductClinicController
                 } else {
 
                     foreach ($res_data as $res) {
-                        ProductClinicImages::create([
-                            'productClinicId' => $product->id,
+                        ProductImages::create([
+                            'productId' => $product->id,
                             'labelName' => $res['labelName'],
                             'realImageName' => $res['realImageName'],
                             'imagePath' => $res['imagePath'],
@@ -687,8 +693,8 @@ class ProductClinicController
                 }
 
                 foreach ($ResultReminders as $RemVal) {
-                    ProductClinicReminder::create([
-                        'productClinicId' => $product->id,
+                    ProductReminders::create([
+                        'productId' => $product->id,
                         'unit' => $RemVal['unit'],
                         'timing' => $RemVal['timing'],
                         'status' => $RemVal['status'],
@@ -697,8 +703,8 @@ class ProductClinicController
                 }
 
                 foreach ($ResultDosages as $dos) {
-                    ProductClinicDosage::create([
-                        'productClinicId' => $product->id,
+                    ProductDosage::create([
+                        'productId' => $product->id,
                         'from' => $dos['from'],
                         'to' => $dos['to'],
                         'dosage' => $dos['dosage'],
@@ -710,8 +716,8 @@ class ProductClinicController
                 if ($request->pricingStatus == "CustomerGroups") {
 
                     foreach ($ResultCustomerGroups as $CustVal) {
-                        ProductClinicCustomerGroup::create([
-                            'productClinicId' => $product->id,
+                        ProductCustomerGroups::create([
+                            'productId' => $product->id,
                             'customerGroupId' => $CustVal['customerGroupId'],
                             'price' => $CustVal['price'],
                             'userId' => $request->user()->id,
@@ -720,8 +726,8 @@ class ProductClinicController
                 } else if ($request->pricingStatus == "PriceLocations") {
 
                     foreach ($ResultPriceLocations as $PriceVal) {
-                        ProductClinicPriceLocation::create([
-                            'productClinicId' => $product->id,
+                        ProductPriceLocations::create([
+                            'productId' => $product->id,
                             'locationId' => $PriceVal['locationId'],
                             'price' => $PriceVal['price'],
                             'userId' => $request->user()->id,
@@ -730,8 +736,8 @@ class ProductClinicController
                 } else if ($request->pricingStatus == "Quantities") {
 
                     foreach ($ResultQuantities as $QtyVal) {
-                        ProductClinicQuantity::create([
-                            'productClinicId' => $product->id,
+                        ProductQuantitiess::create([
+                            'productId' => $product->id,
                             'fromQty' => $QtyVal['fromQty'],
                             'toQty' => $QtyVal['toQty'],
                             'price' => $QtyVal['price'],
@@ -820,7 +826,7 @@ class ProductClinicController
 
     public function detail(Request $request)
     {
-        $prodClinic = DB::table('productClinics as pc')
+        $prod = DB::table('products as pc')
             ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.id')
             ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.Id')
             ->select(
@@ -844,7 +850,7 @@ class ProductClinicController
             ->where('pc.id', '=', $request->id)
             ->first();
 
-        $prodClinicDetails = DB::table('productClinics as pc')
+        $prodDetails = DB::table('products as pc')
             ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.id')
             ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
             ->select(
@@ -859,19 +865,19 @@ class ProductClinicController
             ->first();
 
         $categories = DB::table('productCategories as pcat')
-            ->join('productClinicCategories as pcc', 'pcc.productCategoryId', 'pcat.id')
-            ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
+            ->join('productCategories as pcc', 'pcc.productCategoryId', 'pcat.id')
+            ->join('products as pc', 'pcc.productId', 'pc.id')
             ->select('pcat.id', 'pcat.categoryName')
             ->where('pc.id', '=', $request->id)
             ->where('pcc.isDeleted', '=', 0)
             ->get();
 
-        $prodClinicDetails->categories = $categories;
+        $prodDetails->categories = $categories;
 
-        $prodClinic->details = $prodClinicDetails;
+        $prod->details = $prodDetails;
 
 
-        $prodClinicSetting = DB::table('productClinics as pc')
+        $prodSetting = DB::table('products as pc')
             ->select(
                 'pc.isCustomerPurchase as isCustomerPurchase',
                 'pc.isCustomerPurchaseOnline as isCustomerPurchaseOnline',
@@ -884,9 +890,9 @@ class ProductClinicController
             ->where('pc.id', '=', $request->id)
             ->first();
 
-        $prodClinic->setting = $prodClinicSetting;
+        $prod->setting = $prodSetting;
 
-        $location =  DB::table('productClinicLocations as pcl')
+        $location =  DB::table('productLocations as pcl')
             ->join('location as l', 'l.Id', 'pcl.locationId')
             ->select(
                 'pcl.id',
@@ -898,16 +904,16 @@ class ProductClinicController
                 DB::raw('(CASE WHEN pcl.inStock = 0 THEN "NO STOCK" WHEN pcl.inStock <= pcl.lowStock THEN "LOW STOCK" ELSE "CLEAR" END) AS status')
             )
 
-            ->where('pcl.productClinicId', '=', $request->id)
+            ->where('pcl.productId', '=', $request->id)
             ->where('pcl.isDeleted', '=', 0)
             ->first();
 
-        $prodClinic->location = $location;
+        $prod->location = $location;
 
-        if ($prodClinic->pricingStatus == "CustomerGroups") {
+        if ($prod->pricingStatus == "CustomerGroups") {
 
-            $CustomerGroups = DB::table('productClinicCustomerGroups as pcc')
-                ->join('productClinics as pc', 'pcc.productClinicId', 'pc.id')
+            $CustomerGroups = DB::table('productCustomerGroups as pcc')
+                ->join('products as pc', 'pcc.productId', 'pc.id')
                 ->join('customerGroups as cg', 'pcc.customerGroupId', 'cg.id')
                 ->select(
                     'pcc.id',
@@ -915,14 +921,14 @@ class ProductClinicController
                     'cg.customerGroup',
                     DB::raw("TRIM(pcc.price)+0 as price")
                 )
-                ->where('pcc.productClinicId', '=', $request->id)
+                ->where('pcc.productId', '=', $request->id)
                 ->where('pcc.isDeleted', '=', 0)
                 ->get();
 
-            $prodClinic->customerGroups = $CustomerGroups;
-        } elseif ($prodClinic->pricingStatus == "PriceLocations") {
-            $PriceLocations = DB::table('productClinicPriceLocations as pcp')
-                ->join('productClinics as pc', 'pcp.productClinicId', 'pc.id')
+            $prod->customerGroups = $CustomerGroups;
+        } elseif ($prod->pricingStatus == "PriceLocations") {
+            $PriceLocations = DB::table('productPriceLocations as pcp')
+                ->join('products as pc', 'pcp.productId', 'pc.id')
                 ->join('location as l', 'pcp.locationId', 'l.id')
                 ->select(
                     'pcp.id',
@@ -930,42 +936,42 @@ class ProductClinicController
                     'l.id as locationId',
                     DB::raw("TRIM(pcp.price)+0 as price")
                 )
-                ->where('pcp.productClinicId', '=', $request->id)
+                ->where('pcp.productId', '=', $request->id)
                 ->where('pcp.isDeleted', '=', 0)
                 ->get();
 
-            $prodClinic->priceLocations = $PriceLocations;
-        } else if ($prodClinic->pricingStatus == "Quantities") {
+            $prod->priceLocations = $PriceLocations;
+        } else if ($prod->pricingStatus == "Quantities") {
 
-            $Quantities = DB::table('productClinicQuantities as pcq')
-                ->join('productClinics as pc', 'pcq.productClinicId', 'pc.id')
+            $Quantities = DB::table('productQuantities as pcq')
+                ->join('products as pc', 'pcq.productId', 'pc.id')
                 ->select(
                     'pcq.id',
                     'pcq.fromQty',
                     'pcq.toQty',
                     DB::raw("TRIM(pcq.price)+0 as price")
                 )
-                ->where('pcq.ProductClinicId', '=', $request->id)
+                ->where('pcq.ProductId', '=', $request->id)
                 ->where('pcq.isDeleted', '=', 0)
                 ->get();
 
-            $prodClinic->quantities = $Quantities;
+            $prod->quantities = $Quantities;
         }
 
-        $prodClinic->images = DB::table('productClinicImages as pci')
-            ->join('productClinics as pc', 'pci.productClinicId', 'pc.id')
+        $prod->images = DB::table('productImages as pci')
+            ->join('products as pc', 'pci.productId', 'pc.id')
             ->select(
                 'pci.id',
                 'pci.labelName',
                 'pci.realImageName',
                 'pci.imagePath'
             )
-            ->where('pci.productClinicId', '=', $request->id)
+            ->where('pci.productId', '=', $request->id)
             ->where('pci.isDeleted', '=', 0)
             ->get();
 
-        $prodClinic->dosages = DB::table('productClinicDosages as pcd')
-            ->join('productClinics as pc', 'pcd.productClinicId', 'pc.id')
+        $prod->dosages = DB::table('productDosages as pcd')
+            ->join('products as pc', 'pcd.productId', 'pc.id')
             ->select(
                 'pcd.id',
                 DB::raw("TRIM(pcd.from)+0 as fromWeight"),
@@ -973,24 +979,24 @@ class ProductClinicController
                 DB::raw("TRIM(pcd.dosage)+0 as dosage"),
                 'pcd.unit',
             )
-            ->where('pcd.productClinicId', '=', $request->id)
+            ->where('pcd.productId', '=', $request->id)
             ->where('pcd.isDeleted', '=', 0)
             ->get();
 
-        $prodClinic->reminders = DB::table('productClinicReminders as pcr')
-            ->join('productClinics as pc', 'pcr.productClinicId', 'pc.id')
+        $prod->reminders = DB::table('productReminders as pcr')
+            ->join('products as pc', 'pcr.productId', 'pc.id')
             ->select(
                 'pcr.id',
                 'pcr.unit',
                 'pcr.timing',
                 'pcr.status',
             )
-            ->where('pcr.productClinicId', '=', $request->id)
+            ->where('pcr.productId', '=', $request->id)
             ->where('pcr.isDeleted', '=', 0)
             ->get();
 
-        $prodClinicLog = DB::table('productClinics as ps')
-            ->join('productClinicLogs as psl', 'psl.productClinicId', 'ps.id')
+        $prodLog = DB::table('products as ps')
+            ->join('productLogs as psl', 'psl.productId', 'ps.id')
             ->join('users as u', 'u.id', 'psl.userId')
             ->select(
                 'psl.id',
@@ -1004,10 +1010,10 @@ class ProductClinicController
             ->where('ps.id', '=', $request->id)
             ->get();
 
-        $prodClinic->log = $prodClinicLog;
+        $prod->log = $prodLog;
 
-        $productClinicBatch = DB::table('productClinicBatches as psb')
-            ->leftJoin('productClinics as ps', 'psb.productId', 'ps.id')
+        $productBatch = DB::table('productBatches as psb')
+            ->leftJoin('products as ps', 'psb.productId', 'ps.id')
             ->leftJoin('productRestocks as pr', 'psb.productRestockId', 'pr.id')
             ->leftJoin('productRestockDetails as prd', 'psb.productRestockDetailId', 'prd.id')
             ->leftJoin('productTransfers as pt', 'psb.productTransferId', 'pt.id')
@@ -1023,9 +1029,9 @@ class ProductClinicController
             ->where('psb.productId', '=', $request->id)
             ->get();
 
-        $prodClinic->batches = $productClinicBatch;
+        $prod->batches = $productBatch;
 
-        return response()->json($prodClinic, 200);
+        return response()->json($prod, 200);
     }
 
     public function update(Request $request)
@@ -1069,9 +1075,9 @@ class ProductClinicController
             ], 422);
         }
 
-        $prodClinic = ProductClinic::find($request->id);
+        $prod = Products::find($request->id);
 
-        if (!$prodClinic) {
+        if (!$prod) {
             return response()->json([
                 'message' => 'The given data was invalid.',
                 'errors' => ['Data not found!'],
@@ -1268,7 +1274,7 @@ class ProductClinicController
 
         $location = $request->locations;
 
-        ProductClinicLocation::updateOrCreate(
+        ProductLocations::updateOrCreate(
             ['id' => $location['id']],
             [
                 'inStock' => $location['inStock'],
@@ -1300,7 +1306,7 @@ class ProductClinicController
             $height = $request->height;
         }
 
-        $product = ProductClinic::updateOrCreate(
+        $product = Products::updateOrCreate(
             ['id' => $request->id],
             [
                 'simpleName' => $request->simpleName,
@@ -1335,7 +1341,7 @@ class ProductClinicController
             ]
         );
 
-        ProductClinicCategory::where('ProductClinicId', '=', $request->id)
+        productCoreCategories::where('ProductId', '=', $request->id)
             ->where('isDeleted', '=', 0)
             ->update(
                 [
@@ -1348,9 +1354,9 @@ class ProductClinicController
         if ($ResultCategories) {
 
             foreach ($ResultCategories as $valCat) {
-                ProductClinicCategory::create(
+                productCoreCategories::create(
                     [
-                        'productClinicId' => $request->id,
+                        'productId' => $request->id,
                         'productCategoryId' => $valCat['id'],
                         'userId' => $request->user()->id,
                     ]
@@ -1362,7 +1368,7 @@ class ProductClinicController
 
             if ($RemVal['statusData'] == 'del') {
 
-                ProductClinicReminder::where('id', '=', $RemVal['id'])
+                ProductReminders::where('id', '=', $RemVal['id'])
                     ->where('isDeleted', '=', 0)
                     ->update(
                         [
@@ -1373,10 +1379,10 @@ class ProductClinicController
                     );
             } else {
 
-                ProductClinicReminder::updateOrCreate(
+                ProductReminders::updateOrCreate(
                     ['id' => $RemVal['id']],
                     [
-                        'productClinicId' => $product->id,
+                        'productId' => $product->id,
                         'unit' => $RemVal['unit'],
                         'timing' => $RemVal['timing'],
                         'status' => $RemVal['status'],
@@ -1391,7 +1397,7 @@ class ProductClinicController
             foreach ($ResultDosages as $val) {
 
                 if ($val['status'] == 'del') {
-                    ProductClinicDosage::where('id', '=', $val['id'])
+                    ProductDosage::where('id', '=', $val['id'])
                         ->where('isDeleted', '=', 0)
                         ->update(
                             [
@@ -1401,10 +1407,10 @@ class ProductClinicController
                             ]
                         );
                 } else {
-                    ProductClinicDosage::updateOrCreate(
+                    ProductDosage::updateOrCreate(
                         ['id' => $val['id']],
                         [
-                            'productClinicId' => $product->id,
+                            'productId' => $product->id,
                             'from' => $val['from'],
                             'to' => $val['to'],
                             'dosage' => $val['dosage'],
@@ -1422,7 +1428,7 @@ class ProductClinicController
 
                 if ($CustVal['status'] == 'del') {
 
-                    ProductClinicCustomerGroup::where('id', '=', $CustVal['id'])
+                    ProductCustomerGroups::where('id', '=', $CustVal['id'])
                         ->where('isDeleted', '=', 0)
                         ->update(
                             [
@@ -1433,10 +1439,10 @@ class ProductClinicController
                         );
                 } else {
 
-                    ProductClinicCustomerGroup::updateOrCreate(
+                    ProductCustomerGroups::updateOrCreate(
                         ['id' => $CustVal['id']],
                         [
-                            'productClinicId' => $product->id,
+                            'productId' => $product->id,
                             'customerGroupId' => $CustVal['customerGroupId'],
                             'price' => $CustVal['price'],
                             'userId' => $request->user()->id,
@@ -1450,7 +1456,7 @@ class ProductClinicController
 
                 if ($PriceVal['status'] == 'del') {
 
-                    ProductClinicPriceLocation::where('id', '=', $PriceVal['id'])
+                    ProductPriceLocations::where('id', '=', $PriceVal['id'])
                         ->where('isDeleted', '=', 0)
                         ->update(
                             [
@@ -1461,10 +1467,10 @@ class ProductClinicController
                         );
                 } else {
 
-                    ProductClinicPriceLocation::updateOrCreate(
+                    ProductPriceLocations::updateOrCreate(
                         ['id' => $PriceVal['id']],
                         [
-                            'productClinicId' => $product->id,
+                            'productId' => $product->id,
                             'locationId' => $PriceVal['locationId'],
                             'price' => $PriceVal['price'],
                             'userId' => $request->user()->id,
@@ -1477,7 +1483,7 @@ class ProductClinicController
             foreach ($ResultQuantities as $QtyVal) {
 
                 if ($QtyVal['status'] == 'del') {
-                    ProductClinicQuantity::where('id', '=', $QtyVal['id'])
+                    ProductQuantitiess::where('id', '=', $QtyVal['id'])
                         ->where('isDeleted', '=', 0)
                         ->update(
                             [
@@ -1487,10 +1493,10 @@ class ProductClinicController
                             ]
                         );
                 } else {
-                    ProductClinicQuantity::updateOrCreate(
+                    ProductQuantitiess::updateOrCreate(
                         ['id' => $QtyVal['id']],
                         [
-                            'productClinicId' => $product->id,
+                            'productId' => $product->id,
                             'fromQty' => $QtyVal['fromQty'],
                             'toQty' => $QtyVal['toQty'],
                             'price' => $QtyVal['price'],
@@ -1534,7 +1540,7 @@ class ProductClinicController
             ], 422);
         }
 
-        $product = ProductClinic::find($request->id);
+        $product = Products::find($request->id);
 
         if (!$product) {
             return response()->json([
@@ -1555,12 +1561,12 @@ class ProductClinicController
 
                     $name = $fil->hashName();
 
-                    $fil->move(public_path() . '/ProductClinicImages/', $name);
+                    $fil->move(public_path() . '/ProductImages/', $name);
 
-                    $fileName = "/ProductClinicImages/" . $name;
+                    $fileName = "/ProductImages/" . $name;
 
-                    $file = new ProductClinicImages();
-                    $file->productClinicId = 1;
+                    $file = new ProductImages();
+                    $file->productId = 1;
                     $file->labelName = "";
                     $file->realImageName = $fil->getClientOriginalName();
                     $file->imagePath = $fileName;
@@ -1577,8 +1583,8 @@ class ProductClinicController
 
             if ($value['status'] == '' && $value['id'] == 0) {
 
-                ProductClinicImages::create([
-                    'productClinicId' => $request->id,
+                ProductImages::create([
+                    'productId' => $request->id,
                     'labelName' => $value['name'],
                     'realImageName' => $tmpImages[$count]['realImageName'],
                     'imagePath' => $tmpImages[$count]['imagePath'],
@@ -1588,17 +1594,17 @@ class ProductClinicController
                 $count += 1;
             } else if ($value['status'] == 'del' && $value['id'] != 0) {
 
-                $prodClinicImg = ProductClinicImages::find($value['id']);
-                $prodClinicImg->DeletedBy = $request->user()->id;
-                $prodClinicImg->isDeleted = true;
-                $prodClinicImg->DeletedAt = Carbon::now();
-                $prodClinicImg->save();
+                $prodImg = ProductImages::find($value['id']);
+                $prodImg->DeletedBy = $request->user()->id;
+                $prodImg->isDeleted = true;
+                $prodImg->DeletedAt = Carbon::now();
+                $prodImg->save();
             } else if ($value['id'] != 0) {
 
-                ProductClinicImages::updateorCreate(
+                ProductImages::updateorCreate(
                     ['id' => $value['id']],
                     [
-                        'productClinicId' => $request->id,
+                        'productId' => $request->id,
                         'labelName' => $value['name'],
                         'userId' => $request->user()->id,
                     ]
@@ -1618,7 +1624,7 @@ class ProductClinicController
     {
         //check product on DB
         foreach ($request->id as $va) {
-            $res = ProductClinic::find($va);
+            $res = Products::find($va);
 
             if (!$res) {
                 return response()->json([
@@ -1631,13 +1637,13 @@ class ProductClinicController
         //process delete data
         foreach ($request->id as $va) {
 
-            $ProdClinic = ProductClinic::find($va);
+            $Prod = Products::find($va);
 
-            $ProdClinicLoc = ProductClinicLocation::where('ProductClinicId', '=', $ProdClinic->id)->get();
+            $ProdLoc = ProductLocations::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdClinicLoc) {
+            if ($ProdLoc) {
 
-                ProductClinicLocation::where('ProductClinicId', '=', $ProdClinic->id)
+                ProductLocations::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1647,11 +1653,11 @@ class ProductClinicController
                     );
             }
 
-            $ProdClinicCat = ProductClinicCategory::where('ProductClinicId', '=', $ProdClinic->id)->get();
+            $ProdCat = productCoreCategories::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdClinicCat) {
+            if ($ProdCat) {
 
-                ProductClinicCategory::where('ProductClinicId', '=', $ProdClinic->id)
+                productCoreCategories::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1660,16 +1666,16 @@ class ProductClinicController
                         ]
                     );
 
-                $ProdClinicCat->DeletedBy = $request->user()->id;
-                $ProdClinicCat->isDeleted = true;
-                $ProdClinicCat->DeletedAt = Carbon::now();
+                $ProdCat->DeletedBy = $request->user()->id;
+                $ProdCat->isDeleted = true;
+                $ProdCat->DeletedAt = Carbon::now();
             }
 
-            $ProdClinicImg = ProductClinicImages::where('ProductClinicId', '=', $ProdClinic->id)->get();
+            $ProdImg = ProductImages::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdClinicImg) {
+            if ($ProdImg) {
 
-                ProductClinicImages::where('ProductClinicId', '=', $ProdClinic->id)
+                ProductImages::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1679,10 +1685,10 @@ class ProductClinicController
                     );
             }
 
-            $ProdCustGrp = ProductClinicCustomerGroup::where('ProductClinicId', '=', $ProdClinic->id)->get();
+            $ProdCustGrp = ProductCustomerGroups::where('ProductId', '=', $Prod->id)->get();
             if ($ProdCustGrp) {
 
-                ProductClinicCustomerGroup::where('ProductClinicId', '=', $ProdClinic->id)
+                ProductCustomerGroups::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1692,11 +1698,11 @@ class ProductClinicController
                     );
             }
 
-            $ProdClinicPrcLoc = ProductClinicPriceLocation::where('ProductClinicId', '=', $ProdClinic->id)->get();
+            $ProdPrcLoc = ProductPriceLocations::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdClinicPrcLoc) {
+            if ($ProdPrcLoc) {
 
-                ProductClinicPriceLocation::where('ProductClinicId', '=', $ProdClinic->id)
+                ProductPriceLocation::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1706,11 +1712,11 @@ class ProductClinicController
                     );
             }
 
-            $ProdClinicQty = ProductClinicQuantity::where('ProductClinicId', '=', $ProdClinic->id)->get();
+            $ProdQty = ProductQuantitiess::where('ProductId', '=', $Prod->id)->get();
 
-            if ($ProdClinicQty) {
+            if ($ProdQty) {
 
-                ProductClinicQuantity::where('ProductClinicId', '=', $ProdClinic->id)
+                ProductQuantitiess::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1720,10 +1726,10 @@ class ProductClinicController
                     );
             }
 
-            $ProdClinicRem = ProductClinicReminder::where('ProductClinicId', '=', $ProdClinic->id)->get();
-            if ($ProdClinicRem) {
+            $ProdRem = ProductReminders::where('ProductId', '=', $Prod->id)->get();
+            if ($ProdRem) {
 
-                ProductClinicReminder::where('ProductClinicId', '=', $ProdClinic->id)
+                ProductReminders::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1733,10 +1739,10 @@ class ProductClinicController
                     );
             }
 
-            $ProdClinic->DeletedBy = $request->user()->id;
-            $ProdClinic->isDeleted = true;
-            $ProdClinic->DeletedAt = Carbon::now();
-            $ProdClinic->save();
+            $Prod->DeletedBy = $request->user()->id;
+            $Prod->isDeleted = true;
+            $Prod->DeletedAt = Carbon::now();
+            $Prod->save();
         }
 
         return response()->json([
@@ -1824,7 +1830,7 @@ class ProductClinicController
 
         $id = $request->user()->id;
 
-        $rows = Excel::toArray(new ImportProductClinic($id), $request->file('file'));
+        $rows = Excel::toArray(new ImportProduct($id), $request->file('file'));
         $src = $rows[0];
 
         $count_row = 1;
@@ -1838,7 +1844,7 @@ class ProductClinicController
                     ], 422);
                 }
 
-                $name = ProductClinic::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
+                $name = Products::where('fullName', '=', $value['nama'])->where('isDeleted', '=', 0)->first();
 
                 if ($name) {
                     return response()->json([
@@ -2065,7 +2071,8 @@ class ProductClinicController
 
                 foreach ($codeLocation as $locIns) {
 
-                    $product = ProductClinic::create([
+                    $product = Products::create([
+                        'category' => 'clinic',
                         'fullName' => $value['nama'],
                         'simpleName' => $value['nama_sederhana'],
                         'sku' => $value['sku'],
@@ -2096,8 +2103,8 @@ class ProductClinicController
                         'userId' => $request->user()->id,
                     ]);
 
-                    ProductClinicLocation::create([
-                        'productClinicId' => $product->id,
+                    ProductLocations::create([
+                        'productId' => $product->id,
                         'locationId' => $locIns,
                         'inStock' => $inStock[$count],
                         'lowStock' => $lowStock[$count],
@@ -2109,8 +2116,8 @@ class ProductClinicController
                     if ($productCategory) {
 
                         foreach ($productCategory as $valCat) {
-                            ProductClinicCategory::create([
-                                'productClinicId' => $product->id,
+                            productCoreCategories::create([
+                                'productId' => $product->id,
                                 'productCategoryId' => $valCat,
                                 'userId' => $request->user()->id,
                             ]);
