@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
 
-class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
+class DataRecapProductAll implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
 {
     use Exportable;
 
@@ -31,8 +31,8 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
 
     public function collection()
     {
-        $data = DB::table('productSells as ps')
-            ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
+        $data = DB::table('products as ps')
+            ->join('productLocations as psl', 'psl.productId', 'ps.id')
             ->join('location as loc', 'loc.Id', 'psl.locationId')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
             ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
@@ -50,7 +50,8 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
-            ->where('ps.isDeleted', '=', 0);
+            ->where('ps.isDeleted', '=', 0)
+            ->where('pc.category', '=', 'sell');
 
         $locations = $this->locationId;
 
@@ -97,7 +98,7 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
     {
         $temp_column = null;
 
-        $data = DB::table('productSells as ps')
+        $data = DB::table('products as ps')
             ->select(
                 'ps.fullName as fullName'
             )
@@ -114,7 +115,7 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
         }
         //------------------------
 
-        $data = DB::table('productSells as ps')
+        $data = DB::table('products as ps')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', 'psup.id')
             ->select(
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName")
@@ -132,7 +133,7 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
         }
         //------------------------
 
-        $data = DB::table('productSells as ps')
+        $data = DB::table('products as ps')
             ->leftjoin('productBrands as pb', 'ps.productBrandId', 'pb.Id')
             ->select(
                 DB::raw("IFNULL(pb.brandName,'') as brandName")
@@ -154,10 +155,17 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
     {
         return [
             [
-                'No.', 'Nama Barang', 'Merk', 'Supplier',
-                'Harga Jual', 'Jumlah Barang',
-                'Batas Stok Rendah', 'Limit Restok', 'Tanggal Kedaluwarsa',
-                'Lokasi', 'Dibuat Oleh',
+                'No.',
+                'Nama Barang',
+                'Merk',
+                'Supplier',
+                'Harga Jual',
+                'Jumlah Barang',
+                'Batas Stok Rendah',
+                'Limit Restok',
+                'Tanggal Kedaluwarsa',
+                'Lokasi',
+                'Dibuat Oleh',
                 'Tanggal Dibuat'
             ],
         ];

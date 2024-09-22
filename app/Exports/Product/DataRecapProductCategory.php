@@ -33,7 +33,7 @@ class DataRecapProductCategory implements FromCollection, ShouldAutoSize, WithHe
             ->select(
                 'categoryName',
                 'pc.expiredDay as expiredDay',
-                DB::raw("(select count(*) from productSellCategories where productCategoryId=pc.id) + (select count(*) from productClinicCategories where productCategoryId=pc.id) as totalProduct"),
+                DB::raw("(select count(*) from productCoreCategories where productCategoryId=pc.id) + (select count(*) from productClinicCategories where productCategoryId=pc.id) as totalProduct"),
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
             )
@@ -58,7 +58,12 @@ class DataRecapProductCategory implements FromCollection, ShouldAutoSize, WithHe
     {
         return [
             [
-                'No.', 'Nama Kategori', 'Hari Kedaluwarsa', 'Jumlah Produk', 'Dibuat Oleh', 'Tanggal Dibuat'
+                'No.',
+                'Nama Kategori',
+                'Hari Kedaluwarsa',
+                'Jumlah Produk',
+                'Dibuat Oleh',
+                'Tanggal Dibuat'
             ],
         ];
     }

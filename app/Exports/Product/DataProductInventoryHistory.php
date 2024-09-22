@@ -93,11 +93,9 @@ class DataProductInventoryHistory implements FromCollection, ShouldAutoSize, Wit
 
         foreach ($data as $value) {
 
-            if ($value->productType == 'productSell') {
-
-                $prodRes = DB::table('productInventoryLists as pi')
+            $prodRes = DB::table('productInventoryLists as pi')
                     ->join('productInventories as pin', 'pin.id', 'pi.productInventoryId')
-                    ->join('productSells as p', 'p.id', 'pi.productId')
+                    ->join('products as p', 'p.id', 'pi.productId')
                     ->join('usages as u', 'u.id', 'pi.usageId')
                     ->join('location as loc', 'loc.id', 'pin.locationId')
                     ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
@@ -106,7 +104,7 @@ class DataProductInventoryHistory implements FromCollection, ShouldAutoSize, Wit
                     ->select(
                         'pin.requirementName',
                         'loc.locationName',
-                        DB::raw("CASE WHEN pi.productType = 'productSell' THEN 'Produk Jual' WHEN pi.productType = 'productClinic' THEN 'Produk Klinik' END as productType"),
+                        DB::raw("CASE WHEN p.category = 'sell' THEN 'Produk Jual' WHEN p.category = 'clinic' THEN 'Produk Klinik' END as productType"),
                         'p.fullName as productName',
                         'u.usage',
                         'pi.quantity',
@@ -152,66 +150,70 @@ class DataProductInventoryHistory implements FromCollection, ShouldAutoSize, Wit
                     'createdAt' => $prodRes->createdAt,
                     'createdBy' => $prodRes->createdBy,
                 );
-            } elseif ($value->productType == 'productClinic') {
 
-                $prodRes = DB::table('productInventoryLists as pi')
-                    ->join('productInventories as pin', 'pin.id', 'pi.productInventoryId')
-                    ->join('productClinics as p', 'p.id', 'pi.productId')
-                    ->join('usages as u', 'u.id', 'pi.usageId')
-                    ->join('location as loc', 'loc.id', 'pin.locationId')
-                    ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
-                    ->leftJoin('users as uAdm', 'pi.userApproveAdminId', 'uAdm.id')
-                    ->leftJoin('users as uCre', 'pi.userId', 'uCre.id')
-                    ->select(
-                        'pin.requirementName',
-                        'loc.locationName',
-                        DB::raw("CASE WHEN pi.productType = 'productSell' THEN 'Produk Jual' WHEN pi.productType = 'productClinic' THEN 'Produk Klinik' END as productType"),
-                        'p.fullName as productName',
-                        'u.usage',
-                        'pi.quantity',
+            // if ($value->productType == 'productSell') {
 
-                        'pi.isApprovedOffice',
-                        DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
-                        DB::raw("IFNULL(DATE_FORMAT(pi.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
-                        DB::raw("IFNULL(pi.reasonOffice,'') as reasonOffice"),
 
-                        'pi.isApprovedAdmin',
-                        DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
-                        DB::raw("IFNULL(DATE_FORMAT(pi.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
-                        DB::raw("IFNULL(pi.reasonAdmin,'') as reasonAdmin"),
+            // } elseif ($value->productType == 'productClinic') {
 
-                        DB::raw("IFNULL(DATE_FORMAT(pi.dateCondition, '%d/%m/%Y'),'') as dateCondition"),
-                        DB::raw("IFNULL(pi.itemCondition,'') as itemCondition"),
+            //     $prodRes = DB::table('productInventoryLists as pi')
+            //         ->join('productInventories as pin', 'pin.id', 'pi.productInventoryId')
+            //         ->join('productClinics as p', 'p.id', 'pi.productId')
+            //         ->join('usages as u', 'u.id', 'pi.usageId')
+            //         ->join('location as loc', 'loc.id', 'pin.locationId')
+            //         ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
+            //         ->leftJoin('users as uAdm', 'pi.userApproveAdminId', 'uAdm.id')
+            //         ->leftJoin('users as uCre', 'pi.userId', 'uCre.id')
+            //         ->select(
+            //             'pin.requirementName',
+            //             'loc.locationName',
+            //             DB::raw("CASE WHEN pi.productType = 'productSell' THEN 'Produk Jual' WHEN pi.productType = 'productClinic' THEN 'Produk Klinik' END as productType"),
+            //             'p.fullName as productName',
+            //             'u.usage',
+            //             'pi.quantity',
 
-                        DB::raw("IFNULL(DATE_FORMAT(pi.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
-                        DB::raw("IFNULL(uCre.firstName,'') as createdBy"),
-                    )
-                    ->where('pi.id', '=', $value->id)
-                    ->orderBy('pi.id', 'desc')
-                    ->first();
+            //             'pi.isApprovedOffice',
+            //             DB::raw("IFNULL(uOff.firstName,'') as officeApprovedBy"),
+            //             DB::raw("IFNULL(DATE_FORMAT(pi.userApproveOfficeAt, '%d/%m/%Y %H:%i:%s'),'') as officeApprovedAt"),
+            //             DB::raw("IFNULL(pi.reasonOffice,'') as reasonOffice"),
 
-                $result[] = array(
-                    'number' => $number,
-                    'requirementName' => $prodRes->requirementName,
-                    'locationName' => $prodRes->locationName,
-                    'productType' => $prodRes->productType,
-                    'productName' => $prodRes->productName,
-                    'usage' => $prodRes->usage,
-                    'quantity' => $prodRes->quantity,
-                    'isApprovedOffice' => $prodRes->isApprovedOffice,
-                    'officeApprovedBy' => $prodRes->officeApprovedBy,
-                    'officeApprovedAt' => $prodRes->officeApprovedAt,
-                    'reasonOffice' => $prodRes->reasonOffice,
-                    'isApprovedAdmin' => $prodRes->isApprovedAdmin,
-                    'adminApprovedBy' => $prodRes->adminApprovedBy,
-                    'adminApprovedAt' => $prodRes->adminApprovedAt,
-                    'reasonAdmin' => $prodRes->reasonAdmin,
-                    'dateCondition' => $prodRes->dateCondition,
-                    'itemCondition' => $prodRes->itemCondition,
-                    'createdAt' => $prodRes->createdAt,
-                    'createdBy' => $prodRes->createdBy,
-                );
-            }
+            //             'pi.isApprovedAdmin',
+            //             DB::raw("IFNULL(uAdm.firstName,'') as adminApprovedBy"),
+            //             DB::raw("IFNULL(DATE_FORMAT(pi.userApproveAdminAt, '%d/%m/%Y %H:%i:%s'),'') as adminApprovedAt"),
+            //             DB::raw("IFNULL(pi.reasonAdmin,'') as reasonAdmin"),
+
+            //             DB::raw("IFNULL(DATE_FORMAT(pi.dateCondition, '%d/%m/%Y'),'') as dateCondition"),
+            //             DB::raw("IFNULL(pi.itemCondition,'') as itemCondition"),
+
+            //             DB::raw("IFNULL(DATE_FORMAT(pi.created_at, '%d/%m/%Y %H:%i:%s'),'') as createdAt"),
+            //             DB::raw("IFNULL(uCre.firstName,'') as createdBy"),
+            //         )
+            //         ->where('pi.id', '=', $value->id)
+            //         ->orderBy('pi.id', 'desc')
+            //         ->first();
+
+            //     $result[] = array(
+            //         'number' => $number,
+            //         'requirementName' => $prodRes->requirementName,
+            //         'locationName' => $prodRes->locationName,
+            //         'productType' => $prodRes->productType,
+            //         'productName' => $prodRes->productName,
+            //         'usage' => $prodRes->usage,
+            //         'quantity' => $prodRes->quantity,
+            //         'isApprovedOffice' => $prodRes->isApprovedOffice,
+            //         'officeApprovedBy' => $prodRes->officeApprovedBy,
+            //         'officeApprovedAt' => $prodRes->officeApprovedAt,
+            //         'reasonOffice' => $prodRes->reasonOffice,
+            //         'isApprovedAdmin' => $prodRes->isApprovedAdmin,
+            //         'adminApprovedBy' => $prodRes->adminApprovedBy,
+            //         'adminApprovedAt' => $prodRes->adminApprovedAt,
+            //         'reasonAdmin' => $prodRes->reasonAdmin,
+            //         'dateCondition' => $prodRes->dateCondition,
+            //         'itemCondition' => $prodRes->itemCondition,
+            //         'createdAt' => $prodRes->createdAt,
+            //         'createdBy' => $prodRes->createdBy,
+            //     );
+            // }
 
             $number++;
         }

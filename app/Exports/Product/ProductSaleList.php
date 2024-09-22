@@ -13,9 +13,9 @@ class ProductSaleList implements FromCollection, ShouldAutoSize, WithHeadings, W
 {
     public function collection()
     {
-        $data = DB::table('productSells as ps')
+        $data = DB::table('products as ps')
             ->join('productBrands as pb', 'pb.id', 'ps.productBrandId')
-            ->join('productSellLocations as psl', 'psl.productSellId', 'ps.id')
+            ->join('productLocations as psl', 'psl.productId', 'ps.id')
             ->join('location as l', 'l.id', 'psl.locationId')
             ->select(
                 'ps.id',
@@ -26,6 +26,7 @@ class ProductSaleList implements FromCollection, ShouldAutoSize, WithHeadings, W
                 DB::RAW('(CASE WHEN ps.isOfficeApproval = 0 THEN "Tidak" WHEN ps.isOfficeApproval = 1 THEN "Ya" END) as isOfficeApproval')
             )
             ->where('ps.isDeleted', '=', 0)
+            ->where('ps.category', '=', 'sell')
             ->orderBy('ps.id', 'desc')
             ->get();
 

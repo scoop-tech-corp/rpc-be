@@ -7,6 +7,7 @@
  */
 
 use App\Models\ProductClinicLog;
+use App\Models\ProductLog;
 use App\Models\productRestockLog;
 use App\Models\ProductTransferLog;
 use App\Models\ProductSellLog;
@@ -165,8 +166,8 @@ if (!function_exists('convertTrueFalse')) {
 if (!function_exists('productSellLog')) {
     function productSellLog($productId, $transaction, $remark, $quantity, $balance, $userId)
     {
-        ProductSellLog::create([
-            'productSellId' => $productId,
+        ProductLog::create([
+            'productId' => $productId,
             'transaction' => $transaction,
             'remark' => $remark,
             'quantity' => $quantity,
@@ -179,8 +180,8 @@ if (!function_exists('productSellLog')) {
 if (!function_exists('productClinicLog')) {
     function productClinicLog($productId, $transaction, $remark, $quantity, $balance, $userId)
     {
-        ProductClinicLog::create([
-            'productClinicId' => $productId,
+        ProductLog::create([
+            'productId' => $productId,
             'transaction' => $transaction,
             'remark' => $remark,
             'quantity' => $quantity,
