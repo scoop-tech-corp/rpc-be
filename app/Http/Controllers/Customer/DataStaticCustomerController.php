@@ -80,7 +80,7 @@ class DataStaticCustomerController extends Controller
 
             $dataTypeIdGroup = TypeIdCustomer::select(
                 'id',
-                DB::raw("'Type Id' as value"),
+                DB::raw("'ID Type' as value"),
                 'typeName as name',
             )->where('isActive', '=', 1)->get();
 
