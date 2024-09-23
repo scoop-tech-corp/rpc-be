@@ -33,21 +33,16 @@ class PromotionController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+
+            responseInvalid($errors);
         }
 
-        $ResultLocations = json_decode($request->locations, true);
         $ResultLocations = $request->locations;
         //json_decode($request->locations, true);
 
         if (!$ResultLocations) {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Location cannot be empty!'],
-            ], 422);
+
+            responseInvalid(['Location cannot be empty!']);
         }
 
         $ResultCustGroup = json_decode($request->customerGroups, true);
@@ -91,10 +86,7 @@ class PromotionController extends Controller
             if ($validateLocation->fails()) {
                 $errors = $validateLocation->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
+                responseInvalid([$errors]);
             }
         } elseif ($request->type == 2) {
 
@@ -133,10 +125,7 @@ class PromotionController extends Controller
             if ($validateLocation->fails()) {
                 $errors = $validateLocation->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
+                responseInvalid([$errors]);
             }
         } elseif ($request->type == 3) {
 
@@ -161,10 +150,7 @@ class PromotionController extends Controller
             if ($validateBundle->fails()) {
                 $errors = $validateBundle->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
+                responseInvalid([$errors]);
             }
 
             $ResultBundleDetails = json_decode($request->bundleDetails, true);
@@ -193,10 +179,7 @@ class PromotionController extends Controller
             if ($validateBundleDetails->fails()) {
                 $errors = $validateBundleDetails->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
+                responseInvalid([$errors]);
             }
         } elseif ($request->type == 4) {
 
@@ -232,10 +215,7 @@ class PromotionController extends Controller
             if ($validateLocation->fails()) {
                 $errors = $validateLocation->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
+                responseInvalid([$errors]);
             }
         }
 
@@ -272,37 +252,40 @@ class PromotionController extends Controller
 
                 foreach ($ResultLocations as $value) {
 
-                    if ($ResultFreeItem['productBuyType'] == 'Sell') {
-                        $dataProdBuyId = DB::table('productSells as ps')
-                            ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                            ->select('ps.id')
-                            ->where('ps.fullName', '=', $ResultFreeItem['productBuyName'])
-                            ->where('psl.locationId', '=', $value)
-                            ->first();
-                    } elseif ($ResultFreeItem['productBuyType'] == 'Clinic') {
-                        $dataProdBuyId = DB::table('productClinics as ps')
-                            ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                            ->select('ps.id')
-                            ->where('ps.fullName', '=', $ResultFreeItem['productBuyName'])
-                            ->where('psl.locationId', '=', $value)
-                            ->first();
-                    }
+                    // if ($ResultFreeItem['productBuyType'] == 'Sell') {
+                    // } elseif ($ResultFreeItem['productBuyType'] == 'Clinic') {
+                    //     $dataProdBuyId = DB::table('productClinics as ps')
+                    //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                    //         ->select('ps.id')
+                    //         ->where('ps.fullName', '=', $ResultFreeItem['productBuyName'])
+                    //         ->where('psl.locationId', '=', $value)
+                    //         ->first();
+                    // }
 
-                    if ($ResultFreeItem['productFreeType'] == 'Sell') {
-                        $dataProdFreeId = DB::table('productSells as ps')
-                            ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                            ->select('ps.id')
-                            ->where('ps.fullName', '=', $ResultFreeItem['productFreeName'])
-                            ->where('psl.locationId', '=', $value)
-                            ->first();
-                    } elseif ($ResultFreeItem['productFreeType'] == 'Clinic') {
-                        $dataProdFreeId = DB::table('productClinics as ps')
-                            ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                            ->select('ps.id')
-                            ->where('ps.fullName', '=', $ResultFreeItem['productFreeName'])
-                            ->where('psl.locationId', '=', $value)
-                            ->first();
-                    }
+                    $dataProdBuyId = DB::table('products as ps')
+                        ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                        ->select('ps.id')
+                        ->where('ps.fullName', '=', $ResultFreeItem['productBuyName'])
+                        ->where('psl.locationId', '=', $value)
+                        ->first();
+
+                    $dataProdFreeId = DB::table('products as ps')
+                        ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                        ->select('ps.id')
+                        ->where('ps.fullName', '=', $ResultFreeItem['productFreeName'])
+                        ->where('psl.locationId', '=', $value)
+                        ->first();
+
+                    // if ($ResultFreeItem['productFreeType'] == 'Sell') {
+
+                    // } elseif ($ResultFreeItem['productFreeType'] == 'Clinic') {
+                    //     $dataProdFreeId = DB::table('productClinics as ps')
+                    //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                    //         ->select('ps.id')
+                    //         ->where('ps.fullName', '=', $ResultFreeItem['productFreeName'])
+                    //         ->where('psl.locationId', '=', $value)
+                    //         ->first();
+                    // }
 
                     PromotionFreeItem::create([
                         'promoMasterId' => $idPromo->id,
@@ -321,21 +304,23 @@ class PromotionController extends Controller
 
                 foreach ($ResultLocations as $value) {
 
-                    if ($ResultDiscount['productType'] == 'Sell') {
-                        $dataProdId = DB::table('productSells as ps')
-                            ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                            ->select('ps.id')
-                            ->where('ps.fullName', '=', $ResultDiscount['productName'])
-                            ->where('psl.locationId', '=', $value)
-                            ->first();
-                    } elseif ($ResultDiscount['productType'] == 'Clinic') {
-                        $dataProdId = DB::table('productClinics as ps')
-                            ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                            ->select('ps.id')
-                            ->where('ps.fullName', '=', $ResultDiscount['productName'])
-                            ->where('psl.locationId', '=', $value)
-                            ->first();
-                    }
+                    $dataProdId = DB::table('products as ps')
+                        ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                        ->select('ps.id')
+                        ->where('ps.fullName', '=', $ResultDiscount['productName'])
+                        ->where('psl.locationId', '=', $value)
+                        ->first();
+
+                    // if ($ResultDiscount['productType'] == 'Sell') {
+
+                    // } elseif ($ResultDiscount['productType'] == 'Clinic') {
+                    //     $dataProdId = DB::table('productClinics as ps')
+                    //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                    //         ->select('ps.id')
+                    //         ->where('ps.fullName', '=', $ResultDiscount['productName'])
+                    //         ->where('psl.locationId', '=', $value)
+                    //         ->first();
+                    // }
 
                     PromotionDiscount::create([
                         'promoMasterId' => $idPromo->id,
@@ -365,21 +350,23 @@ class PromotionController extends Controller
 
                     foreach ($ResultLocations as $value) {
 
-                        if ($res['productType'] == 'Sell') {
-                            $dataProdId = DB::table('productSells as ps')
-                                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                                ->select('ps.id')
-                                ->where('ps.fullName', '=', $res['productName'])
-                                ->where('psl.locationId', '=', $value)
-                                ->first();
-                        } elseif ($res['productType'] == 'Clinic') {
-                            $dataProdId = DB::table('productClinics as ps')
-                                ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                                ->select('ps.id')
-                                ->where('ps.fullName', '=', $res['productName'])
-                                ->where('psl.locationId', '=', $value)
-                                ->first();
-                        }
+                        $dataProdId = DB::table('products as ps')
+                            ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                            ->select('ps.id')
+                            ->where('ps.fullName', '=', $res['productName'])
+                            ->where('psl.locationId', '=', $value)
+                            ->first();
+
+                        // if ($res['productType'] == 'Sell') {
+
+                        // } elseif ($res['productType'] == 'Clinic') {
+                        //     $dataProdId = DB::table('productClinics as ps')
+                        //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                        //         ->select('ps.id')
+                        //         ->where('ps.fullName', '=', $res['productName'])
+                        //         ->where('psl.locationId', '=', $value)
+                        //         ->first();
+                        // }
 
                         PromotionBundleDetail::create([
                             'promoBundleId' => $idBundle->id,
@@ -581,32 +568,36 @@ class PromotionController extends Controller
                 ->where('pf.promoMasterId', '=', $request->id)
                 ->first();
 
-            if ($temp->productBuyType == 'Sell') {
-                $dataProdBuy = DB::table('productSells as p')
-                    ->select('p.fullName')
-                    ->where('id', '=', $temp->productBuyId)
-                    ->first();
-            } elseif ($temp->productBuyType == 'Clinic') {
+            $dataProdBuy = DB::table('products as p')
+                ->select('p.fullName')
+                ->where('id', '=', $temp->productBuyId)
+                ->first();
 
-                $dataProdBuy = DB::table('productClinics as p')
-                    ->select('p.fullName')
-                    ->where('id', '=', $temp->productBuyId)
-                    ->first();
-            }
+            // if ($temp->productBuyType == 'Sell') {
+
+            // } elseif ($temp->productBuyType == 'Clinic') {
+
+            //     $dataProdBuy = DB::table('productClinics as p')
+            //         ->select('p.fullName')
+            //         ->where('id', '=', $temp->productBuyId)
+            //         ->first();
+            // }
 
 
-            if ($temp->productFreeType == 'Sell') {
-                $dataProdFree = DB::table('productSells as p')
-                    ->select('p.fullName')
-                    ->where('id', '=', $temp->productFreeId)
-                    ->first();
-            } elseif ($temp->productFreeType == 'Clinic') {
 
-                $dataProdFree = DB::table('productClinics as p')
-                    ->select('p.fullName')
-                    ->where('id', '=', $temp->productFreeId)
-                    ->first();
-            }
+            $dataProdFree = DB::table('products as p')
+                ->select('p.fullName')
+                ->where('id', '=', $temp->productFreeId)
+                ->first();
+            // if ($temp->productFreeType == 'Sell') {
+
+            // } elseif ($temp->productFreeType == 'Clinic') {
+
+            //     $dataProdFree = DB::table('productClinics as p')
+            //         ->select('p.fullName')
+            //         ->where('id', '=', $temp->productFreeId)
+            //         ->first();
+            // }
 
             $data->quantityBuyItem = $temp->quantityBuyItem;
             $data->productBuyType = $temp->productBuyType;
@@ -627,18 +618,20 @@ class PromotionController extends Controller
 
             if ($temp->productOrService == 'product') {
 
-                if ($temp->productType == 'Sell') {
-                    $dataProd = DB::table('productSells as p')
-                        ->select('p.fullName')
-                        ->where('id', '=', $temp->productId)
-                        ->first();
-                } elseif ($temp->productType == 'Clinic') {
+                $dataProd = DB::table('products as p')
+                    ->select('p.fullName')
+                    ->where('id', '=', $temp->productId)
+                    ->first();
 
-                    $dataProd = DB::table('productClinics as p')
-                        ->select('p.fullName')
-                        ->where('id', '=', $temp->productId)
-                        ->first();
-                }
+                // if ($temp->productType == 'Sell') {
+
+                // } elseif ($temp->productType == 'Clinic') {
+
+                //     $dataProd = DB::table('productClinics as p')
+                //         ->select('p.fullName')
+                //         ->where('id', '=', $temp->productId)
+                //         ->first();
+                // }
 
                 $data->productId = $temp->productId;
                 $data->productName = $dataProd->fullName;
@@ -679,17 +672,19 @@ class PromotionController extends Controller
 
                 if ($value->productOrService == 'product') {
 
-                    if ($value->productType == 'Sell') {
-                        $dataProd = DB::table('productSells as p')
-                            ->select('p.fullName')
-                            ->where('id', '=', $value->productId)
-                            ->first();
-                    } elseif ($value->productType == 'Clinic') {
-                        $dataProd = DB::table('productClinics as p')
-                            ->select('p.fullName')
-                            ->where('id', '=', $value->productId)
-                            ->first();
-                    }
+                    $dataProd = DB::table('products as p')
+                        ->select('p.fullName')
+                        ->where('id', '=', $value->productId)
+                        ->first();
+
+                    // if ($value->productType == 'Sell') {
+
+                    // } elseif ($value->productType == 'Clinic') {
+                    //     $dataProd = DB::table('productClinics as p')
+                    //         ->select('p.fullName')
+                    //         ->where('id', '=', $value->productId)
+                    //         ->first();
+                    // }
 
                     $tempList = [
                         'productOrService' => $value->productOrService,
@@ -721,7 +716,6 @@ class PromotionController extends Controller
             $data->price = $temp->price;
             $data->totalMaxUsage = $temp->totalMaxUsage;
             $data->maxUsagePerCustomer = $temp->maxUsagePerCustomer;
-
         } elseif ($data->typeId == 4) {
 
             $temp = DB::table('promotionMasters as pm')
@@ -783,12 +777,8 @@ class PromotionController extends Controller
     {
         foreach ($request->id as $va) {
             $res = PromotionMaster::find($va);
-
             if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
+                responseInvalid(['There is any Data not found!']);
             }
         }
 
