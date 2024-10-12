@@ -18,4 +18,3 @@ composer.lock
 /public/chat/*
 /public/UserImages/*
 *.png
-/public/template_download
