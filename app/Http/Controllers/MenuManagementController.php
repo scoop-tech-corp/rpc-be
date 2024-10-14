@@ -308,6 +308,7 @@ class MenuManagementController extends Controller
             ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
                 'cmg.id',
+                'cmg.childrenId',
                 'cm.menuName as childrenMenuName',
                 'cmg.menuName',
                 'cmg.orderMenu',
@@ -865,6 +866,7 @@ class MenuManagementController extends Controller
             'title' => 'required|string',
             'type' => 'required|string',
             'url' => 'required|string',
+            'icon' => 'required|string',
             'orderMenu' => 'required|integer',
         ]);
 
@@ -901,6 +903,7 @@ class MenuManagementController extends Controller
                 'title' => $request->title,
                 'type' => $request->type,
                 'url' => $request->url,
+                'icon' => $request->icon,
                 'isActive' => $request->isActive,
                 'userId' => $request->user()->id,
             ]);
