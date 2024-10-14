@@ -1109,6 +1109,7 @@ class MenuManagementController extends Controller
             'title' => 'required|string',
             'type' => 'required|string',
             'url' => 'required|string',
+            'icon' => 'required|string',
             'orderMenu' => 'required|integer',
         ]);
 
@@ -1132,6 +1133,7 @@ class MenuManagementController extends Controller
         $menu->title = $request->title;
         $menu->type = $request->type;
         $menu->url = $request->url;
+        $menu->icon = $request->icon;
         $menu->isActive = $request->isActive;
         $menu->orderMenu = $request->orderMenu;
         $menu->userUpdateId = $request->user()->id;
