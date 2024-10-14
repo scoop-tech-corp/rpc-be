@@ -14,7 +14,16 @@ class grandChildrenMenuGroups extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'childrenId', 'orderMenu', 'menuName',
-        'identify', 'title', 'type', 'isActive', 'url', 'userId', 'userUpdateId'
+        'childrenId',
+        'orderMenu',
+        'menuName',
+        'identify',
+        'title',
+        'type',
+        'icon',
+        'isActive',
+        'url',
+        'userId',
+        'userUpdateId'
     ];
 }
