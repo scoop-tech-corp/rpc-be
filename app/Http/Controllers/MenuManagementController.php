@@ -311,6 +311,7 @@ class MenuManagementController extends Controller
                 'cmg.childrenId',
                 'cm.menuName as childrenMenuName',
                 'cmg.menuName',
+                'cmg.icon',
                 'cmg.orderMenu',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(cmg.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
