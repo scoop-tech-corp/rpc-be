@@ -23,6 +23,7 @@ use App\Models\Staff\UsersRoles;
 use App\Models\Staff\UsersTelephones;
 use App\Models\User;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class StaffController extends Controller
 {
@@ -1944,6 +1945,7 @@ class StaffController extends Controller
 
     public function importStaff(Request $request)
     {
+        DB::beginTransaction();
         try {
 
             $validate = Validator::make($request->all(), [
@@ -2085,42 +2087,44 @@ class StaffController extends Controller
                     if ($value['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'] != "0" && $value['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'] != "1") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                            'message' => ['There is any invalid input on column Pelanggan Dapat Menjadwalkan Anggota Staff ini Secara Online at row ' . $count_row],
                         ], 422);
                     }
 
                     if ($value['terima_email_harian_yang_berisi_janji_temu_terjadwal_mereka'] != "0" && $value['terima_email_harian_yang_berisi_janji_temu_terjadwal_mereka'] != "1") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                            'message' => ['There is any invalid input on column Terima Email Harian at row ' . $count_row],
                         ], 422);
                     }
 
                     if ($value['izinkan_anggota_staff_ini_untuk_masuk_menggunakan_alamat_email_mereka'] != "0" && $value['izinkan_anggota_staff_ini_untuk_masuk_menggunakan_alamat_email_mereka'] != "1") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                            'message' => ['There is any invalid input on column Izinkan Anggota Staff ini untuk Masuk Menggunakan Alamat Email at row ' . $count_row],
                         ], 422);
                     }
 
                     if ($value['pengingat_email'] != "0" && $value['pengingat_email'] != "1") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                            'message' => ['There is any invalid input on column Pengingat Email at row ' . $count_row],
                         ], 422);
                     }
 
                     if ($value['pengingat_whatsapp'] != "0" && $value['pengingat_whatsapp'] != "1") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                            'message' => ['There is any invalid input on column Pengingat Whatsapp at row ' . $count_row],
                         ], 422);
                     }
 
-                    if ($value['grup_keamanan'] != "0" && $value['grup_keamanan'] != "1") {
+                    $role = UsersRoles::where('id', '=', $value['grup_keamanan'])->first();
+
+                    if (!$role) {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                            'message' => ['There is no any Grup Keamanan on system at row ' . $count_row],
                         ], 422);
                     }
 
@@ -2194,20 +2198,20 @@ class StaffController extends Controller
 
             if (count($src6) > 2) {
             }
-            // for ($i = 1; $i < count($res); $i++) {
 
-            //     $data = $data->orWhere($res[$i], 'like', '%' . $this->search . '%');
-            // }
-
-            //foreach ($src1 as $value) {
             for ($i = 1; $i < count($src2); $i++) {
 
                 $gender = "female";
                 if ($src1[$i]['jenis_kelamin'] == "P") {
                     $gender = "male";
                 }
-                info($src2[$i]['id']);
-                info($i);
+
+                $startDate = Date::excelToDateTimeObject($src1[$i]['tanggal_mulai']);
+                $endDate = Date::excelToDateTimeObject($src1[$i]['tanggal_berakhir']);
+
+                $startDateFormatted = $startDate->format('Y-m-d'); // Change format as needed
+                $endDateFormatted = $endDate->format('Y-m-d'); // Change format as needed
+
                 $userId = DB::table('users')
                     ->insertGetId([
                         'userName' => '',
@@ -2216,10 +2220,10 @@ class StaffController extends Controller
                         'lastName' => $src1[$i]['nama_akhir'],
                         'nickName' => $src1[$i]['nama_panggilan'],
                         'gender' => $gender,
-                        'status' => 1,
+                        'status' => $src1[$i]['status'],
                         'jobTitleId' => $src1[$i]['jabatan'],
-                        'startDate' => '2024-08-01',
-                        'endDate' => '2025-08-01',
+                        'startDate' => $startDateFormatted,
+                        'endDate' => $endDateFormatted,
                         'registrationNo' => $src1[$i]['nomor_registrasi'],
                         'designation' => $src1[$i]['penunjukkan'],
                         'annualSickAllowance' => $src1[$i]['tunjangan_sakit_tahunan'],
@@ -2236,7 +2240,7 @@ class StaffController extends Controller
                         'generalAllowMemberToLogUsingEmail' => $src2[$i]['izinkan_anggota_staff_ini_untuk_masuk_menggunakan_alamat_email_mereka'],
                         'reminderEmail' => $src2[$i]['pengingat_email'],
                         'reminderWhatsapp' => $src2[$i]['pengingat_whatsapp'],
-                        'roleId' => 1,
+                        'roleId' => $src2[$i]['grup_keamanan'],
                         'imageName' => '',
                         'imagePath' => '',
                         'password' => bcrypt($src1[$i]['password']),
@@ -2308,6 +2312,8 @@ class StaffController extends Controller
                     'updated_at' => now(),
                 ]);
             }
+
+            DB::commit();
 
             return responseSuccess($userId, 'Insert Data Successful!');
         } catch (Exception $e) {
