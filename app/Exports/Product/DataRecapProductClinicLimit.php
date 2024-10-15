@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
 
-class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
+class DataRecapProductLimit implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
 {
     use Exportable;
 
@@ -31,8 +31,8 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
 
     public function collection()
     {
-        $data = DB::table('productClinics as pc')
-            ->join('productClinicLocations as pcl', 'pcl.productClinicId', 'pc.id')
+        $data = DB::table('products as pc')
+            ->join('productLocations as pcl', 'pcl.productId', 'pc.id')
             ->join('location as loc', 'loc.Id', 'pcl.locationId')
             ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
             ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
@@ -51,7 +51,8 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
                 DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('pc.isDeleted', '=', 0)
-            ->where('pcl.diffStock', '<=', 0);
+            ->where('pcl.diffStock', '<=', 0)
+            ->where('pc.category', '=', 'clinic');
 
         $locations = $this->locationId;
 
@@ -98,7 +99,7 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
     {
         $temp_column = null;
 
-        $data = DB::table('productClinics as pc')
+        $data = DB::table('products as pc')
             ->select(
                 'pc.fullName as fullName'
             )
@@ -115,7 +116,7 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
         }
         //------------------------
 
-        $data = DB::table('productClinics as pc')
+        $data = DB::table('products as pc')
             ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.id')
             ->select(
                 DB::raw("IFNULL(psup.supplierName,'') as supplierName")
@@ -133,7 +134,7 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
         }
         //------------------------
 
-        $data = DB::table('productClinics as pc')
+        $data = DB::table('products as pc')
             ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.Id')
             ->select(
                 DB::raw("IFNULL(pb.brandName,'') as brandName")
@@ -155,10 +156,17 @@ class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, Wit
     {
         return [
             [
-                'No.', 'Nama Barang', 'Merk', 'Supplier',
-                'Harga Jual', 'Jumlah Barang',
-                'Batas Stok Rendah', 'Limit Restok', 'Tanggal Kedaluwarsa',
-                'Lokasi', 'Dibuat Oleh',
+                'No.',
+                'Nama Barang',
+                'Merk',
+                'Supplier',
+                'Harga Jual',
+                'Jumlah Barang',
+                'Batas Stok Rendah',
+                'Limit Restok',
+                'Tanggal Kedaluwarsa',
+                'Lokasi',
+                'Dibuat Oleh',
                 'Tanggal Dibuat'
             ],
         ];

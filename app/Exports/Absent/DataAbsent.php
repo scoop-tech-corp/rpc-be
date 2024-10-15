@@ -82,17 +82,28 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             $data = $data->whereBetween('sa.presentTime', [$this->dateFrom, $this->dateTo]);
         }
 
-        if ($this->locationId) {
+        $locations = $this->locationId;
 
-            $data = $data->whereIn('l.id', $this->locationId);
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $data = $data->whereIn('l.id', $this->locationId);
+            }
         }
 
-        if ($this->staff) {
-            $data = $data->whereIn('sa.userId', $this->staff);
+        $staffs = $this->staff;
+
+        if (count($staffs) > 0) {
+            if (!$staffs[0] == null) {
+                $data = $data->whereIn('sa.userId', $this->staff);
+            }
         }
 
-        if ($this->statusPresent) {
-            $data = $data->whereIn('sa.statusPresent', $this->statusPresent);
+        $statusPresents = $this->statusPresent;
+
+        if (count($statusPresents) > 0) {
+            if (!$statusPresents[0] == null) {
+                $data = $data->whereIn('sa.statusPresent', $this->statusPresent);
+            }
         }
 
         if ($this->orderValue) {
@@ -128,9 +139,15 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
     {
         return [
             [
-                'No.', 'Nama', 'Hari', 'Jam Datang',
-                'Jam Pulang', 'Durasi',
-                'Status Kehadiran', 'Status Kepulangan', 'Lokasi Kehadiran',
+                'No.',
+                'Nama',
+                'Hari',
+                'Jam Datang',
+                'Jam Pulang',
+                'Durasi',
+                'Status Kehadiran',
+                'Status Kepulangan',
+                'Lokasi Kehadiran',
                 'Lokasi Kepulangan'
             ],
         ];

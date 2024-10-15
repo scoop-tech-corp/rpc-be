@@ -13,9 +13,9 @@ class ProductClinicList implements FromCollection, ShouldAutoSize, WithHeadings,
 {
     public function collection()
     {
-        $data = DB::table('productClinics as pc')
+        $data = DB::table('products as pc')
             ->join('productBrands as pb', 'pb.id', 'pc.productBrandId')
-            ->join('productClinicLocations as pcl', 'pcl.productClinicId', 'pc.id')
+            ->join('productLocations as pcl', 'pcl.productId', 'pc.id')
             ->join('location as l', 'l.id', 'pcl.locationId')
             ->select(
                 'pc.id',
@@ -26,6 +26,7 @@ class ProductClinicList implements FromCollection, ShouldAutoSize, WithHeadings,
                 DB::RAW('(CASE WHEN pc.isOfficeApproval = 0 THEN "Tidak" WHEN pc.isOfficeApproval = 1 THEN "Ya" END) as isOfficeApproval')
             )
             ->where('pc.isDeleted', '=', 0)
+            ->where('pc.category', '=', 'clinic')
             ->orderBy('pc.id', 'desc')
             ->get();
 

@@ -78,7 +78,26 @@ class AbsentController extends Controller
         }
 
         if ($request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+
+            if ($request->orderColumn == "name") {
+                $data = $data->orderBy('u.firstName', $request->orderValue);
+            } elseif ($request->orderColumn == "day") {
+                $data = $data->orderBy('sa.presentTime', $request->orderValue);
+            } elseif ($request->orderColumn == "presentTime") {
+                $data = $data->orderBy('sa.presentTime', $request->orderValue);
+            } elseif ($request->orderColumn == "homeTime") {
+                $data = $data->orderBy('sa.homeTime', $request->orderValue);
+            } elseif ($request->orderColumn == "presentStatus") {
+                $data = $data->orderBy('ps.statusName', $request->orderValue);
+            } elseif ($request->orderColumn == "homeStatus") {
+                $data = $data->orderBy('ps1.statusName', $request->orderValue);
+            } elseif ($request->orderColumn == "presentLocation") {
+                $data = $data->orderBy('sa.cityPresent', $request->orderValue);
+            } elseif ($request->orderColumn == "homeLocation") {
+                $data = $data->orderBy('sa.cityHome', $request->orderValue);
+            } else {
+                $data = $data->orderBy($request->orderColumn, $request->orderValue);
+            }
         }
 
         $data = $data->groupBy(
@@ -99,7 +118,10 @@ class AbsentController extends Controller
 
         $offset = ($page - 1) * $itemPerPage;
 
-        $count_data = $data->count();
+        $dataTemp = $data->get();
+
+        $count_data = $dataTemp->count();
+
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
@@ -276,7 +298,7 @@ class AbsentController extends Controller
             ]);
         }
 
-        $presentTime = date('Y-m-d H:i', strtotime($request->presentTime));
+        $presentTime = Carbon::createFromFormat('d/m/Y H:i', $request->presentTime);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
@@ -289,13 +311,15 @@ class AbsentController extends Controller
             ->whereDate('created_at', Carbon::today())
             ->first();
 
-        if ($present && $request->status != 3) {
-            return responseInvalid(['You have already absent today!']);
+        if ($present) {
+            if ($present->statusPresent == 1 && $request->status == 1) {
+                return responseInvalid(['You have already absent today!']);
+            }
         }
 
         if ($request->status == 4) {
 
-            if (count($present) <= 0) {
+            if (!$present) {
                 return responseInvalid(['You can not absent home today! Cause you have not been absent present today!']);
             }
         }
@@ -359,8 +383,8 @@ class AbsentController extends Controller
             ]);
         } else {
 
-            $presentTime = Carbon::parse($present->presentTime);
-            $homeTime = Carbon::parse($request->presentTime);
+            $presentTime = $present->presentTime;
+            $homeTime = Carbon::createFromFormat('d/m/Y H:i', $request->presentTime);
             $totalDuration =  $homeTime->diffInSeconds($presentTime);
 
             $duration = gmdate('H:i:s', $totalDuration);
@@ -368,7 +392,7 @@ class AbsentController extends Controller
             StaffAbsents::where('id', '=', $present->id)
                 ->update(
                     [
-                        'homeTime' => $presentTime,
+                        'homeTime' => $homeTime,
                         'duration' => $duration,
                         'homeLongitude' => $request->longitude,
                         'homeLatitude' => $request->latitude,

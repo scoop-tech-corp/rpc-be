@@ -5,10 +5,20 @@ namespace App\Http\Controllers\Product;
 use App\Exports\Product\ProductTransferReport;
 use App\Models\ProductClinic;
 use App\Models\ProductClinicLocation;
-use App\Models\ProductSell;
-use App\Models\ProductSellLocation;
+use App\Models\Product;
+use App\Models\productBatch;
+use App\Models\ProductBatches;
+use App\Models\ProductCoreCategories;
+use App\Models\ProductCustomerGroups;
+use App\Models\ProductLocation;
+use App\Models\ProductLocations;
+use App\Models\ProductPriceLocations;
+use App\Models\ProductQuantitiess;
+use App\Models\ProductReminders;
+use App\Models\Products;
 use App\Models\ProductTransfer;
 use App\Models\productTransferDetails;
+use App\Models\productTransferReceiveImages;
 use App\Models\productTransferSentImages;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -78,42 +88,44 @@ class TransferProductController
             }
 
             //find product id destination
-            if ($request->productType == 'productSell') {
+            // if ($request->productType == 'productSell') {
 
-                $prodOrigin = ProductSell::find($request->productId);
 
-                if ($prodOrigin) {
+            // } elseif ($request->productType == 'productClinic') {
 
-                    $prodDest = DB::table('productSells as ps')
-                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                        ->select('ps.*', 'psl.diffStock')
-                        ->where('psl.locationId', '=', $request->locationId)
-                        ->where('ps.fullName', '=', $prodOrigin->fullName)
-                        ->first();
-                } else {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Product does not exist!'],
-                    ], 422);
-                }
-            } elseif ($request->productType == 'productClinic') {
+            //     $prodOrigin = ProductClinic::find($request->productId);
 
-                $prodOrigin = ProductClinic::find($request->productId);
+            //     if ($prodOrigin) {
 
-                if ($prodOrigin) {
+            //         $prodDest = DB::table('productClinics as pc')
+            //             ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+            //             ->select('pc.*', 'pcl.diffStock')
+            //             ->where('pcl.locationId', '=', $request->locationId)
+            //             ->where('pc.fullName', '=', $prodOrigin->fullName)
+            //             ->first();
+            //     } else {
+            //         return response()->json([
+            //             'message' => 'The given data was invalid.',
+            //             'errors' => ['Product does not exist!'],
+            //         ], 422);
+            //     }
+            // }
 
-                    $prodDest = DB::table('productClinics as pc')
-                        ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
-                        ->select('pc.*', 'pcl.diffStock')
-                        ->where('pcl.locationId', '=', $request->locationId)
-                        ->where('pc.fullName', '=', $prodOrigin->fullName)
-                        ->first();
-                } else {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Product does not exist!'],
-                    ], 422);
-                }
+            $prodOrigin = Product::find($request->productId);
+
+            if ($prodOrigin) {
+
+                $prodDest = DB::table('products as ps')
+                    ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                    ->select('ps.*', 'psl.diffStock')
+                    ->where('psl.locationId', '=', $request->locationId)
+                    ->where('ps.fullName', '=', $prodOrigin->fullName)
+                    ->first();
+            } else {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Product does not exist!'],
+                ], 422);
             }
 
             $checkAdminApproval = false;
@@ -292,66 +304,68 @@ class TransferProductController
             foreach ($datas as $value) {
                 $checkAdminApproval = false;
 
-                if ($value['productType'] == 'productSell') {
+                // if ($value['productType'] == 'productSell') {
 
-                    $dataProductOr = DB::table('productSells as ps')
-                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                        ->select('ps.fullName', 'psl.diffStock')
-                        ->where('psl.locationId', '=', $request->locationIdOrigin)
-                        ->where('ps.id', '=', $value['productId'])
-                        ->first();
 
-                    if (!$dataProductOr) {
-                        return responseInvalid(['Location Origin with Product Id is not exists in our data']);
-                    }
+                // } elseif ($value['productType'] == 'productClinic') {
 
-                    $data = DB::table('productSells as ps')
-                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                        ->select('ps.*')
-                        ->where('psl.locationId', '=', $request->locationIdDestination)
-                        ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
-                        ->first();
+                //     $dataProductOr = DB::table('productClinics as ps')
+                //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                //         ->select('ps.fullName', 'psl.diffStock')
+                //         ->where('psl.locationId', '=', $request->locationIdOrigin)
+                //         ->where('ps.id', '=', $value['productId'])
+                //         ->first();
 
-                    if (!$data) {
-                        $productIdDestination = 0;
-                    } else {
-                        $productIdDestination = $data->id;
-                    }
+                //     if (!$dataProductOr) {
+                //         return responseInvalid(['Location Origin with Product Id is not exists in our data']);
+                //     }
 
-                    if ($dataProductOr->diffStock <= 0) {
-                        $adminApprovalMaster = true;
-                        $checkAdminApproval = true;
-                    }
-                } elseif ($value['productType'] == 'productClinic') {
+                //     $data = DB::table('productClinics as ps')
+                //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                //         ->select('ps.*')
+                //         ->where('psl.locationId', '=', $request->locationIdDestination)
+                //         ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                //         ->first();
 
-                    $dataProductOr = DB::table('productClinics as ps')
-                        ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                        ->select('ps.fullName', 'psl.diffStock')
-                        ->where('psl.locationId', '=', $request->locationIdOrigin)
-                        ->where('ps.id', '=', $value['productId'])
-                        ->first();
+                //     if (!$data) {
+                //         $productIdDestination = 0;
+                //     } else {
+                //         $productIdDestination = $data->id;
+                //     }
 
-                    if (!$dataProductOr) {
-                        return responseInvalid(['Location Origin with Product Id is not exists in our data']);
-                    }
+                //     if ($dataProductOr->diffStock <= 0) {
+                //         $adminApprovalMaster = true;
+                //         $checkAdminApproval = true;
+                //     }
+                // }
 
-                    $data = DB::table('productClinics as ps')
-                        ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                        ->select('ps.*')
-                        ->where('psl.locationId', '=', $request->locationIdDestination)
-                        ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
-                        ->first();
+                $dataProductOr = DB::table('products as ps')
+                    ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                    ->select('ps.fullName', 'psl.diffStock')
+                    ->where('psl.locationId', '=', $request->locationIdOrigin)
+                    ->where('ps.id', '=', $value['productId'])
+                    ->first();
 
-                    if (!$data) {
-                        $productIdDestination = 0;
-                    } else {
-                        $productIdDestination = $data->id;
-                    }
+                if (!$dataProductOr) {
+                    return responseInvalid(['Location Origin with Product Id is not exists in our data']);
+                }
 
-                    if ($dataProductOr->diffStock <= 0) {
-                        $adminApprovalMaster = true;
-                        $checkAdminApproval = true;
-                    }
+                $data = DB::table('products as ps')
+                    ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                    ->select('ps.*')
+                    ->where('psl.locationId', '=', $request->locationIdDestination)
+                    ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                    ->first();
+
+                if (!$data) {
+                    $productIdDestination = 0;
+                } else {
+                    $productIdDestination = $data->id;
+                }
+
+                if ($dataProductOr->diffStock <= 0) {
+                    $adminApprovalMaster = true;
+                    $checkAdminApproval = true;
                 }
 
                 $detail = productTransferDetails::create([
@@ -692,18 +706,6 @@ class TransferProductController
                 $totalProduct += $value['quantity'];
             }
 
-            // if(!$tourist->wasRecentlyCreated && $tourist->wasChanged()){
-            //     // updateOrCreate performed an update
-            // }
-
-            // if(!$tourist->wasRecentlyCreated && !$tourist->wasChanged()){
-            //     // updateOrCreate performed nothing, row did not change
-            // }
-
-            // if($tourist->wasRecentlyCreated){
-            //    // updateOrCreate performed create
-            // }
-
             $master = ProductTransfer::updateOrCreate(
                 ['id' => $request->id],
                 [
@@ -732,67 +734,67 @@ class TransferProductController
 
                 $checkAdminApproval = false;
 
-                if ($value['productType'] == 'productSell') {
+                // if ($value['productType'] == 'productSell') {
 
-                    $dataProductOr = DB::table('productSells as ps')
-                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                        ->select('ps.fullName', 'psl.diffStock')
-                        ->where('psl.locationId', '=', $request->locationIdOrigin)
-                        ->where('ps.id', '=', $value['productId'])
-                        ->first();
 
-                    if (!$dataProductOr) {
-                        return responseInvalid(['Location Origin with Product Id is not exists in our data']);
-                    }
+                // } elseif ($value['productType'] == 'productClinic') {
 
-                    $data = DB::table('productSells as ps')
-                        ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
-                        ->select('ps.*')
-                        ->where('psl.locationId', '=', $request->locationIdDestination)
-                        ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
-                        ->first();
+                //     $dataProductOr = DB::table('productClinics as ps')
+                //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                //         ->select('ps.fullName', 'psl.diffStock')
+                //         ->where('psl.locationId', '=', $request->locationIdOrigin)
+                //         ->where('ps.id', '=', $value['productId'])
+                //         ->first();
 
-                    if (!$data) {
-                        $productIdDestination = 0;
-                    } else {
-                        $productIdDestination = $data->id;
-                    }
+                //     if (!$dataProductOr) {
+                //         return responseInvalid(['Location Origin with Product Id is not exists in our data']);
+                //     }
 
-                    // $productIdDestination = $data->id;
+                //     $data = DB::table('productClinics as ps')
+                //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
+                //         ->select('ps.*')
+                //         ->where('psl.locationId', '=', $request->locationIdDestination)
+                //         ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                //         ->first();
 
-                    if ($dataProductOr->diffStock <= 0) {
-                        $checkAdminApproval = true;
-                    }
-                } elseif ($value['productType'] == 'productClinic') {
+                //     if (!$data) {
+                //         $productIdDestination = 0;
+                //     } else {
+                //         $productIdDestination = $data->id;
+                //     }
 
-                    $dataProductOr = DB::table('productClinics as ps')
-                        ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                        ->select('ps.fullName', 'psl.diffStock')
-                        ->where('psl.locationId', '=', $request->locationIdOrigin)
-                        ->where('ps.id', '=', $value['productId'])
-                        ->first();
+                //     if ($dataProductOr->diffStock <= 0) {
+                //         $checkAdminApproval = true;
+                //         $adminApprovalMaster = true;
+                //     }
+                // }
 
-                    if (!$dataProductOr) {
-                        return responseInvalid(['Location Origin with Product Id is not exists in our data']);
-                    }
+                $dataProductOr = DB::table('products as ps')
+                    ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                    ->select('ps.fullName', 'psl.diffStock')
+                    ->where('psl.locationId', '=', $request->locationIdOrigin)
+                    ->where('ps.id', '=', $value['productId'])
+                    ->first();
 
-                    $data = DB::table('productClinics as ps')
-                        ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                        ->select('ps.*')
-                        ->where('psl.locationId', '=', $request->locationIdDestination)
-                        ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
-                        ->first();
+                if (!$dataProductOr) {
+                    return responseInvalid(['Location Origin with Product Id is not exists in our data']);
+                }
 
-                    if (!$data) {
-                        $productIdDestination = 0;
-                    } else {
-                        $productIdDestination = $data->id;
-                    }
+                $data = DB::table('products as ps')
+                    ->join('productLocations as psl', 'ps.id', 'psl.productId')
+                    ->select('ps.*')
+                    ->where('psl.locationId', '=', $request->locationIdDestination)
+                    ->where('ps.fullName', 'like', '%' . $dataProductOr->fullName . '%')
+                    ->first();
 
-                    if ($dataProductOr->diffStock <= 0) {
-                        $checkAdminApproval = true;
-                        $adminApprovalMaster = true;
-                    }
+                if (!$data) {
+                    $productIdDestination = 0;
+                } else {
+                    $productIdDestination = $data->id;
+                }
+
+                if ($dataProductOr->diffStock <= 0) {
+                    $checkAdminApproval = true;
                 }
 
                 if ($value['status'] === 'del') {
@@ -805,6 +807,19 @@ class TransferProductController
                         $res->save();
 
                         $images = productTransferSentImages::where('productTransferDetailId', '=', $value['id'])->get();
+
+                        // if ($res->productType == 'productSell') {
+
+
+                        // } elseif ($res->productType == 'productClinic') {
+
+                        //     $prod = ProductClinic::find($res->productIdOrigin);
+                        //     productTransferLog($request->id, "Deleted Product in Transfer", "Product " . $prod->fullName . " has already Deleted", $request->user()->id);
+                        // }
+
+                        $prod = Products::find($res->productIdOrigin);
+
+                        productTransferLog($request->id, "Deleted Product in Transfer", "Product " . $prod->fullName . " has already Deleted", $request->user()->id);
 
                         if ($images) {
                             foreach ($images as $vaDetail) {
@@ -820,20 +835,91 @@ class TransferProductController
                         }
                     }
                 } else {
-                    $detail = productTransferDetails::updateOrCreate(
-                        ['id' => $value['id']],
-                        [
-                            'productTransferId' => $master->id,
-                            'productIdOrigin' => $value['productId'],
-                            'productIdDestination' => $productIdDestination,
-                            'productType' => $value['productType'],
-                            'quantity' => $value['quantity'],
-                            'remark' => $value['remark'],
-                            'isAdminApproval' => $checkAdminApproval,
-                            'additionalCost' => $value['additionalCost'],
-                            'userId' => $request->user()->id,
-                        ]
-                    );
+
+                    $detail = productTransferDetails::find($value['id']);
+
+                    $tmp_cost = $detail->additionalCost;
+                    $tmp_qty = $detail->quantity;
+                    $tmp_remark = $detail->remark;
+
+                    $detail->productTransferId = $master->id;
+                    $detail->productIdOrigin = $value['productId'];
+                    $detail->productIdDestination = $productIdDestination;
+                    $detail->productType = $value['productType'];
+                    $detail->quantity = $value['quantity'];
+                    $detail->remark = $value['remark'];
+                    $detail->isAdminApproval = $checkAdminApproval;
+                    $detail->additionalCost = $value['additionalCost'];
+                    $detail->userId = $request->user()->id;
+                    $detail->save();
+
+                    $check = false;
+
+                    if ($detail->wasChanged('quantity') || $detail->wasChanged('remark') || ($detail->additionalCost != $tmp_cost)) {
+                        $check = true;
+                    }
+
+                    if ($check == true) {
+                        $textQuantity = "";
+                        $textRemark = "";
+                        $textAdditionalCost = "";
+
+                        // if ($value['productType'] == 'productSell') {
+
+
+                        // } elseif ($value['productType'] == 'productClinic') {
+
+                        //     $prod = ProductClinic::find($value['productId']);
+
+                        //     if ($detail->wasChanged('quantity')) {
+                        //         $textQuantity = "Quantity Product " . $prod->fullName . " change from " . $tmp_qty  . " to " . $value['quantity'];
+                        //         productTransferLog($request->id, "Update in " . $prod->fullName, $textQuantity, $request->user()->id);
+                        //     }
+
+                        //     if ($detail->additionalCost != $tmp_cost) {
+                        //         $textAdditionalCost = "Additional Cost Product " . $prod->fullName . " change from " . $tmp_cost  . " to " . $value['additionalCost'];
+                        //         productTransferLog($request->id, "Update in " . $prod->fullName, $textAdditionalCost, $request->user()->id);
+                        //     }
+
+                        //     if ($detail->wasChanged('remark')) {
+                        //         $textRemark = "Remark Product " . $prod->fullName . " change from " . $tmp_remark . " to " .  $value['remark'];
+                        //         productTransferLog($request->id, "Update in " . $prod->fullName, $textRemark, $request->user()->id);
+                        //     }
+                        // }
+
+                        $prod = Products::find($value['productId']);
+
+                        if ($detail->wasChanged('quantity')) {
+                            $textQuantity = "Quantity Product " . $prod->fullName . " change from " . $tmp_qty  . " to " . $value['quantity'];
+                            productTransferLog($request->id, "Update in " . $prod->fullName, $textQuantity, $request->user()->id);
+                        }
+
+                        if ($detail->additionalCost != $tmp_cost) {
+                            $textAdditionalCost = "Additional Cost Product " . $prod->fullName . " change from " . $tmp_cost  . " to " . $value['additionalCost'];
+                            productTransferLog($request->id, "Update in " . $prod->fullName, $textAdditionalCost, $request->user()->id);
+                        }
+
+                        if ($detail->wasChanged('remark')) {
+                            $textRemark = "Remark Product " . $prod->fullName . " change from " . $tmp_remark . " to " .  $value['remark'];
+                            productTransferLog($request->id, "Update in " . $prod->fullName, $textRemark, $request->user()->id);
+                        }
+                    }
+
+                    if (is_null($value['id']) || empty($value['id'])) {
+                        // if ($value['productType'] == 'productSell') {
+
+
+                        // } elseif ($value['productType'] == 'productClinic') {
+
+                        //     $prod = ProductClinic::find($value['productId']);
+
+                        //     productTransferLog($request->id, "Add Product " . $prod->fullName, "Product " . $prod->fullName . " has already added", $request->user()->id);
+                        // }
+
+                        $prod = Products::find($value['productId']);
+
+                        productTransferLog($request->id, "Add Product " . $prod->fullName, "Product " . $prod->fullName . " has already added", $request->user()->id);
+                    }
                 }
 
                 if (is_null($value['id'])) {
@@ -1017,37 +1103,39 @@ class TransferProductController
                 $detail = productTransferDetails::where('productTransferId', '=', $request->id)->get();
 
                 foreach ($detail as $value) {
-                    if ($value->productType == 'productSell') {
-                        $prd = DB::table('productSells as ps')
-                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
-                            ->select(
-                                'ptd.id',
-                                'ps.id as productId',
-                                'ps.fullName',
-                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
-                                'ptd.remark',
-                                'ptd.productType',
-                                'ptd.quantity',
-                            )
-                            ->where('ptd.id', '=', $value->id)
-                            ->where('ptd.isDeleted', '=', 0)
-                            ->first();
-                    } elseif ($value->productType == 'productClinic') {
-                        $prd = DB::table('productClinics as ps')
-                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
-                            ->select(
-                                'ptd.id',
-                                'ps.id as productId',
-                                'ps.fullName',
-                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
-                                'ptd.remark',
-                                'ptd.productType',
-                                'ptd.quantity',
-                            )
-                            ->where('ptd.id', '=', $value->id)
-                            ->where('ptd.isDeleted', '=', 0)
-                            ->first();
-                    }
+                    // if ($value->productType == 'productSell') {
+
+                    // } elseif ($value->productType == 'productClinic') {
+                    //     $prd = DB::table('productClinics as ps')
+                    //         ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                    //         ->select(
+                    //             'ptd.id',
+                    //             'ps.id as productId',
+                    //             'ps.fullName',
+                    //             DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                    //             'ptd.remark',
+                    //             'ptd.productType',
+                    //             'ptd.quantity',
+                    //         )
+                    //         ->where('ptd.id', '=', $value->id)
+                    //         ->where('ptd.isDeleted', '=', 0)
+                    //         ->first();
+                    // }
+
+                    $prd = DB::table('products as ps')
+                        ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                        ->select(
+                            'ptd.id',
+                            'ps.id as productId',
+                            'ps.fullName',
+                            DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                            'ptd.remark',
+                            'ptd.productType',
+                            'ptd.quantity',
+                        )
+                        ->where('ptd.id', '=', $value->id)
+                        ->where('ptd.isDeleted', '=', 0)
+                        ->first();
 
                     if ($prd) {
                         $images = DB::table('productTransferSentImages as pti')
@@ -1103,33 +1191,35 @@ class TransferProductController
                 $detail = productTransferDetails::where('productTransferId', '=', $request->id)->get();
                 //tinggal gambarnya belom
                 foreach ($detail as $value) {
-                    if ($value->productType == 'productSell') {
-                        $prd = DB::table('productSells as ps')
-                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
-                            ->select(
-                                'ptd.id',
-                                'ps.fullName',
-                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
-                                'ptd.remark',
-                                'ptd.productType',
-                                'ptd.quantity',
-                            )
-                            ->where('ptd.id', '=', $value->id)
-                            ->first();
-                    } elseif ($value->productType == 'productClinic') {
-                        $prd = DB::table('productClinics as ps')
-                            ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
-                            ->select(
-                                'ptd.id',
-                                'ps.fullName',
-                                DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
-                                'ptd.remark',
-                                'ptd.productType',
-                                'ptd.quantity',
-                            )
-                            ->where('ptd.id', '=', $value->id)
-                            ->first();
-                    }
+                    // if ($value->productType == 'productSell') {
+
+                    // } elseif ($value->productType == 'productClinic') {
+                    //     $prd = DB::table('productClinics as ps')
+                    //         ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                    //         ->select(
+                    //             'ptd.id',
+                    //             'ps.fullName',
+                    //             DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                    //             'ptd.remark',
+                    //             'ptd.productType',
+                    //             'ptd.quantity',
+                    //         )
+                    //         ->where('ptd.id', '=', $value->id)
+                    //         ->first();
+                    // }
+
+                    $prd = DB::table('products as ps')
+                        ->join('productTransferDetails as ptd', 'ps.id', 'ptd.productIdOrigin')
+                        ->select(
+                            'ptd.id',
+                            'ps.fullName',
+                            DB::raw("TRIM(ptd.additionalCost)+0 as additionalCost"),
+                            'ptd.remark',
+                            'ptd.productType',
+                            'ptd.quantity',
+                        )
+                        ->where('ptd.id', '=', $value->id)
+                        ->first();
 
                     $images = DB::table('productTransferSentImages as pti')
                         ->join('productTransferDetails as ptd', 'pti.productTransferDetailId', 'ptd.id')
@@ -1576,158 +1666,308 @@ class TransferProductController
     public function receive(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'id' => 'required|integer',
-            'reference' => 'required|string|max:255',
+            'isFinished' => 'required|integer|in:0,1',
+            'productTransferId' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
 
             $errors = $validate->errors()->all();
-
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $errors,
-            ], 422);
+            return responseInvalid([$errors]);
         }
 
-        //validation
-        $trf = ProductTransfer::find($request->id);
+        $master = ProductTransfer::find($request->productTransferId);
 
-        if ($trf) {
+        if (!$master) {
+            return responseInvalid(['Product Transfer are not found!']);
+        }
 
-            if ($trf->isAdminApproval == 1) {
-                if ($trf->isApprovedAdmin == 0) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['The Item has not been approved by the Admin, contact the Admin to approve the Item'],
-                    ], 422);
-                } elseif ($trf->isApprovedAdmin == 2) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Item has been rejected'],
-                    ], 422);
-                }
+        $datas = json_decode($request->productTranfers, true);
+
+        $validate = Validator::make(
+            $datas,
+            [
+                '*.productTransferDetailId' => 'required|integer',
+                '*.accepted' => 'required|integer',
+                '*.received' => 'required|integer',
+                '*.canceled' => 'required|integer',
+                '*.expiredDate' => 'required|date',
+                '*.reference' => 'required|string|max:255',
+            ],
+            [
+                '*.productTransferDetailId.required' => 'Product Transfer Detail Id Should be Required!',
+                '*.productTransferDetailId.integer' => 'Product Transfer Detail Id Should be Integer!',
+                '*.received.required' => 'Received Should be Required!',
+                '*.received.integer' => 'Received Should be Integer!',
+                '*.accepted.required' => 'Accepted Should be Required!',
+                '*.accepted.integer' => 'Accepted Should be Integer!',
+                '*.expiredDate.required' => 'Expired Date Should be Required!',
+                '*.expiredDate.date' => 'Expired Date Should be Date!',
+                '*.reference.required' => 'Reference Should be Required!',
+                '*.reference.string' => 'Reference Should be String!',
+            ]
+        );
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->first();
+
+            return responseInvalid([$errors]);
+        }
+
+        foreach ($datas as $value) {
+
+            $dtl = productTransferDetails::find($value['productTransferDetailId']);
+
+            if ($value['accepted'] != ($value['received'] + $value['canceled'])) {
+                // if ($dtl->productType == 'productSell') {
+
+                // } elseif ($dtl->productType == 'productClinic') {
+                //     $find = ProductClinic::find($dtl->productIdOrigin);
+                // }
+
+                $find = Products::find($dtl->productIdOrigin);
+
+                return responseInvalid(['Total accepted not same with received and canceled at product ' . $find->fullName]);
             }
 
-            if ($trf->isApprovedOffice == 0) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['The Item has not been approved by the Office, contact the Office to approve the Item'],
-                ], 422);
-            } elseif ($trf->isApprovedOffice == 2) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Item has been rejected'],
-                ], 422);
+            if ($dtl->accepted != $value['accepted']) {
+                // if ($dtl->productType == 'productSell') {
+
+                // } elseif ($dtl->productType == 'productClinic') {
+                //     $find = ProductClinic::find($dtl->productIdOrigin);
+                // }
+
+                $find = Products::find($dtl->productIdOrigin);
+                return responseInvalid(['Total accepted not same with system at product ' . $find->fullName]);
             }
+        }
 
-            if ($trf->isUserReceived == 1) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Item has already received'],
-                ], 422);
-            }
+        foreach ($datas as $value) {
+            $dtl = productTransferDetails::find($value['productTransferDetailId']);
 
-            $imagePath = "";
-            $realImageName = "";
+            $dtl->received = $value['received'];
+            $dtl->canceled = $value['canceled'];
+            $dtl->reasonCancel = $value['reasonCancel'];
+            $dtl->userId = $request->user()->id;
+            $dtl->updated_at = Carbon::now();
+            $dtl->save();
 
-            if ($request->hasfile('image')) {
-                $file = $request->file('image');
+            $img = $value['imagePath'];
 
-                $name = $file->hashName();
+            list($type, $img) = explode(';', $img);
+            list(, $img)      = explode(',', $img);
+            $img = base64_decode($img);
 
-                $file->move(public_path() . '/ProductTransfer/', $name);
+            $image = str_replace('data:image/', '', $value['imagePath']);
+            $image = explode(';base64,', $image);
+            $imageName = Str::random(40) . '.' . $image[0];
 
-                $imagePath = "/ProductTransfer/" . $name;
+            file_put_contents(public_path() . '/ProductTransferReceiveImages/' . $imageName, $img);
 
-                $realImageName = $file->getClientOriginalName();
-            }
-
-            ProductTransfer::where('id', '=', $request->id)
-                ->update(
-                    [
-                        'groupData' => 'history',
-                        'reference' => $request->reference,
-                        'isUserReceived' => 1,
-                        'imagePath' => $imagePath,
-                        'realImageName' => $realImageName,
-                        'status' => 3,
-                        'receivedAt' => Carbon::now()
-                    ]
-                );
-
-            //move product item and add log
-            if ($trf->productType == 'Product Sell') {
-
-                $prodOrig = ProductSell::find($trf->productIdOrigin);
-                $prodDest = ProductSell::find($trf->productIdDestination);
-
-                $locOrig = ProductSellLocation::where('productSellId', '=', $prodOrig->id)->first();
-
-                $inStockOrig = $locOrig->inStock;
-                $lowStock = $locOrig->lowStock;
-
-                $locOrig->inStock = $inStockOrig - $trf->totalItem;
-                $locOrig->diffStock = ($inStockOrig - $trf->totalItem) - $lowStock;
-                $locOrig->updated_at = Carbon::now();
-                $locOrig->save();
-                $finalStockOrig = $inStockOrig - $trf->totalItem;
-
-                $locDest = ProductSellLocation::where('productSellId', '=', $prodDest->id)->first();
-
-                $inStockDest = $locDest->inStock;
-                $lowStock = $locDest->lowStock;
-
-                $locDest->inStock = $inStockDest + $trf->totalItem;
-                $locDest->diffStock = ($inStockDest + $trf->totalItem) - $lowStock;
-                $locDest->updated_at = Carbon::now();
-                $locDest->save();
-                $finalStockDest = $inStockDest + $trf->totalItem;
-
-                productSellLog($prodOrig->id, 'Transfer Item', 'Reduced item to be transferred', $trf->totalItem, $finalStockOrig, $trf->userId);
-                productSellLog($prodDest->id, 'Transfer Item', 'Added item from transfer product', $trf->totalItem, $finalStockDest, $trf->userId);
-            } elseif ($trf->productType == 'Product Clinic') {
-                $prodOrig = ProductClinic::find($trf->productIdOrigin);
-                $prodDest = ProductClinic::find($trf->productIdDestination);
-
-                $locOrig = ProductClinicLocation::where('productClinicId', '=', $prodOrig->id)->first();
-
-                $inStockOrig = $locOrig->inStock;
-                $lowStock = $locOrig->lowStock;
-
-                $locOrig->inStock = $inStockOrig - $trf->totalItem;
-                $locOrig->diffStock = ($inStockOrig - $trf->totalItem) - $lowStock;
-                $locOrig->updated_at = Carbon::now();
-                $locOrig->save();
-                $finalStockOrig = $inStockOrig - $trf->totalItem;
-
-                $locDest = ProductClinicLocation::where('productClinicId', '=', $prodDest->id)->first();
-
-                $inStockDest = $locDest->inStock;
-                $lowStock = $locDest->lowStock;
-
-                $locDest->inStock = $inStockDest + $trf->totalItem;
-                $locDest->diffStock = ($inStockDest + $trf->totalItem) - $lowStock;
-                $locDest->updated_at = Carbon::now();
-                $locDest->save();
-                $finalStockDest = $inStockDest + $trf->totalItem;
-
-                productClinicLog($prodOrig->id, 'Transfer Item', 'Reduced item to be transferred', $trf->totalItem, $finalStockOrig, $trf->userId);
-                productClinicLog($prodDest->id, 'Transfer Item', 'Added item from transfer product', $trf->totalItem, $finalStockDest, $trf->userId);
-            }
-
-            return response()->json(
+            productTransferReceiveImages::create(
                 [
-                    'message' => 'Receive Item Successful!',
-                ],
-                200
+                    'productTransferDetailId' => $value['productTransferDetailId'],
+                    'realImageName' => $value['originalName'],
+                    'imagePath' => '/ProductTransferReceiveImages' . '/' . $imageName,
+                    'label' => '',
+                    'userId' => $request->user()->id,
+                ]
             );
-        } else {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['Product does not exist!'],
-            ], 422);
+
+            if ($request->isFinished) {
+
+                $detail = productTransferDetails::find($value['productTransferDetailId']);
+
+                // if ($detail->productType == 'productSell') {
+
+                // } elseif ($detail->productType == 'productClinic') {
+
+
+                // }
+                $product = Products::find($detail->productIdOrigin);
+                    $LocOrig = ProductLocations::where('productId', '=', $detail->productIdOrigin)
+                        ->first();
+
+                    $LocDest = ProductLocations::where('productId', '=', $detail->productIdDestination)
+                        ->first();
+
+                    if (!$LocDest) {
+
+                        $newProduct = $product->replicate();
+                        $newProduct->created_at = Carbon::now();
+                        $newProduct->updated_at = Carbon::now();
+                        $newProduct->userId = $request->user()->id;
+                        $newProduct->save();
+
+                        $categories = ProductCoreCategories::where('productId', '=', $detail->productIdOrigin)->get();
+
+                        foreach ($categories as $res) {
+
+                            $category = ProductCoreCategories::find($res['id']);
+
+                            if ($category) {
+                                $newCategory = $category->replicate();
+                                $newCategory->productId = $newProduct->id;
+                                $newCategory->created_at = Carbon::now();
+                                $newCategory->updated_at = Carbon::now();
+                                $newCategory->userId = $request->user()->id;
+                                $newCategory->save();
+                            }
+                        }
+
+                        $prodLoc = ProductLocations::find($LocOrig->id);
+
+                        $newProdLoc = $prodLoc->replicate();
+                        $newProdLoc->productId = $newProduct->id;
+                        $newProdLoc->locationId = $newProduct->id;
+                        $newProdLoc->inStock = $value['received'];
+                        $newProdLoc->diffStock = $value['received'] - $prodLoc->lowStock;
+                        $newProdLoc->userId = $request->user()->id;
+                        $newProdLoc->created_at = Carbon::now();
+                        $newProdLoc->updated_at = Carbon::now();
+                        $newProdLoc->save();
+
+                        productClinicLog($newProduct->id, "Create New Item", "", $value['received'], $value['received'], $request->user()->id);
+
+                        if ($product->pricingStatus == "CustomerGroups") {
+
+                            $productCustomerGroups = ProductCustomerGroups::where('productId', '=', $detail->productIdOrigin)->get();
+
+                            foreach ($productCustomerGroups as $res) {
+
+                                $prod = ProductCustomerGroups::find($res['id']);
+
+                                if ($prod) {
+                                    $newProduct = $prod->replicate();
+                                    $newProduct->productId = $newProduct->id;
+                                    $newProduct->created_at = Carbon::now();
+                                    $newProduct->updated_at = Carbon::now();
+                                    $newProduct->userId = $request->user()->id;
+                                    $newProduct->save();
+                                }
+                            }
+                        }
+
+                        if ($product->pricingStatus == "PriceLocations") {
+
+                            $prodPriceLoc = ProductPriceLocations::where('productId', '=', $detail->productIdOrigin)->get();
+
+                            foreach ($prodPriceLoc as $res) {
+
+                                $prodLoc = ProductPriceLocations::find($res['id']);
+
+                                if ($prodLoc) {
+                                    $newProductLoc = $prodLoc->replicate();
+                                    $newProductLoc->productId = $newProduct->id;
+                                    $newProductLoc->created_at = Carbon::now();
+                                    $newProductLoc->updated_at = Carbon::now();
+                                    $newProductLoc->userId = $request->user()->id;
+                                    $newProductLoc->save();
+                                }
+                            }
+                        }
+
+                        if ($product->pricingStatus == "Quantities") {
+
+                            $prodQty = ProductQuantitiess::where('productId', '=', $detail->productIdOrigin)->get();
+
+                            foreach ($prodQty as $res) {
+
+                                $prodQty = ProductQuantitiess::find($res['id']);
+
+                                if ($prodQty) {
+                                    $newProductQty = $prodQty->replicate();
+                                    $newProductQty->productId = $newProduct->id;
+                                    $newProductQty->created_at = Carbon::now();
+                                    $newProductQty->updated_at = Carbon::now();
+                                    $newProductQty->userId = $request->user()->id;
+                                    $newProductQty->save();
+                                }
+                            }
+                        }
+
+                        $prodReminder = ProductReminders::where('productId', '=', $detail->productIdOrigin)->get();
+
+                        foreach ($prodReminder as $res) {
+
+                            $prodReminder = ProductReminder::find($res['id']);
+
+                            if ($prodReminder) {
+                                $newProductReminder = $prodReminder->replicate();
+                                $newProductReminder->productId = $newProduct->id;
+                                $newProductReminder->created_at = Carbon::now();
+                                $newProductReminder->updated_at = Carbon::now();
+                                $newProductReminder->userId = $request->user()->id;
+                                $newProductReminder->save();
+                            }
+                        }
+
+                        $oldProdLoc = ProductLocations::where('productId', '=', $detail->productIdOrigin)->first();
+
+                        $instock = $oldProdLoc->inStock;
+                        $lowstock = $oldProdLoc->lowStock;
+
+                        $oldProdLoc->inStock = $instock - $value['received'];
+                        $oldProdLoc->diffStock = ($instock - $value['received']) - $lowstock;
+                        $oldProdLoc->updated_at = Carbon::now();
+                        $oldProdLoc->save();
+
+                        $product->updated_at = Carbon::now();
+                        $product->save();
+                        ProductClinicLog($detail->productIdOrigin, 'Transfer Product', 'Product Decrease', $value['received'], $instock - $value['received'], $request->user()->id);
+                    } else {
+
+                        $instock = $LocDest->inStock;
+                        $lowstock = $LocDest->lowStock;
+
+                        $LocDest->inStock = $instock + $value['received'];
+                        $LocDest->diffStock = ($instock + $value['received']) - $lowstock;
+                        $LocDest->updated_at = Carbon::now();
+                        $LocDest->save();
+                        ProductClinicLog($detail->productIdDestination, 'Transfer Product', 'Product Increase', $value['received'], $instock + $value['received'], $request->user()->id);
+
+
+                        $instock = $LocOrig->inStock;
+                        $lowstock = $LocOrig->lowStock;
+
+                        $LocOrig->inStock = $instock - $value['received'];
+                        $LocOrig->diffStock = ($instock - $value['received']) - $lowstock;
+                        $LocOrig->updated_at = Carbon::now();
+                        $LocOrig->save();
+                        ProductClinicLog($detail->productIdOrigin, 'Transfer Product', 'Product Decrease', $value['received'], $instock - $value['received'], $request->user()->id);
+                    }
+
+                    $findBatch = ProductBatches::where('productId', '=', $detail->productIdDestination)->count();
+
+                    $number = "";
+
+                    if ($findBatch == 0) {
+                        $number = Carbon::today();
+                        $number = 'BC-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+                    } else {
+                        $number = Carbon::today();
+                        $number = 'BC-' . $number->format('Ymd') . str_pad($findBatch + 1, 5, 0, STR_PAD_LEFT);
+                    }
+
+                    ProductBatches::create([
+                        'batchNumber' => $number,
+                        'productId' => $detail->productIdDestination,
+                        'productRestockId' => 0,
+                        'productTransferId' => $master->id,
+                        'productTransferDetailId' => $request->productTransferDetailId,
+                        'transferNumber' => $master->transferNumber,
+                        'productRestockDetailId' => 0,
+                        'purchaseRequestNumber' => '',
+                        'purchaseOrderNumber' => '',
+                        'expiredDate' => $value['expiredDate'],
+                        'sku' => $value['sku'],
+                        'userId' => $request->user()->id,
+                    ]);
+
+            }
         }
+
+        return responseUpdate();
     }
 
     function productListWithTwoBranch(Request $request)
@@ -1750,19 +1990,21 @@ class TransferProductController
             ], 422);
         }
 
-        if ($request->productType == 'productSell') {
-            $data = DB::table('productSellLocations as psl')
-                ->join('productSells as ps', 'psl.productSellId', 'ps.id')
+        // if ($request->productType == 'productSell') {
+
+        // } else if ($request->productType == 'productClinic') {
+        //     $data = DB::table('productClinicLocations as psl')
+        //         ->join('productClinics as ps', 'psl.productClinicId', 'ps.id')
+        //         ->select('ps.id', 'ps.fullName')
+        //         ->where('psl.locationId', '=', $request->branchOrigin)
+        //         ->get();
+        // }
+
+        $data = DB::table('productLocations as psl')
+                ->join('products as ps', 'psl.productId', 'ps.id')
                 ->select('ps.id', 'ps.fullName')
                 ->where('psl.locationId', '=', $request->branchOrigin)
                 ->get();
-        } else if ($request->productType == 'productClinic') {
-            $data = DB::table('productClinicLocations as psl')
-                ->join('productClinics as ps', 'psl.productClinicId', 'ps.id')
-                ->select('ps.id', 'ps.fullName')
-                ->where('psl.locationId', '=', $request->branchOrigin)
-                ->get();
-        }
 
         return response()->json($data, 200);
     }

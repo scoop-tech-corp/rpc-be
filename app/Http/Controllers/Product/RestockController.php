@@ -12,9 +12,12 @@ use App\Models\productRestockImageReceive;
 use App\Models\productRestockImages;
 use App\Models\productRestocks;
 use App\Models\productRestockTracking;
-use App\Models\ProductSell;
-use App\Models\productSellBatch;
-use App\Models\ProductSellLocation;
+use App\Models\Product;
+use App\Models\productBatch;
+use App\Models\ProductBatches;
+use App\Models\ProductLocation;
+use App\Models\ProductLocations;
+use App\Models\Products;
 use App\Models\ProductSupplier;
 use Illuminate\Http\Request;
 use Validator;
@@ -153,48 +156,50 @@ class RestockController extends Controller
         $suppName = '';
         $currentStock = 0;
 
-        if ($request->productType == 'productSell') {
+        // if ($request->productType == 'productSell') {
 
-            $prodType = "productSell";
 
-            $prod = ProductSell::find($request->productId);
+        // } else {
+        //     $prodType = "productClinic";
 
-            if (!$prod) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Product does not exist!'],
-                ], 422);
-            }
+        //     $prod = ProductClinic::find($request->productId);
 
-            $supp = ProductSupplier::find($prod->productSupplierId);
+        //     if (!$prod) {
+        //         return response()->json([
+        //             'message' => 'The given data was invalid.',
+        //             'errors' => ['Product does not exist!'],
+        //         ], 422);
+        //     }
 
-            $suppName = $supp->supplierName;
+        //     $supp = ProductSupplier::find($prod->productSupplierId);
 
-            $stockProd = ProductSellLocation::where('productSellId', '=', $request->productId)->first();
+        //     $suppName = $supp->supplierName;
 
-            $locationId = $stockProd->locationId;
-            $currentStock = $stockProd->inStock;
-        } else {
-            $prodType = "productClinic";
+        //     $stockProd = ProductClinicLocation::where('productClinicId', '=', $request->productId)->first();
 
-            $prod = ProductClinic::find($request->productId);
+        //     $locationId = $stockProd->locationId;
+        //     $currentStock = $stockProd->inStock;
+        // }
+        $prodType = "productSell";
 
-            if (!$prod) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Product does not exist!'],
-                ], 422);
-            }
+        $prod = Products::find($request->productId);
 
-            $supp = ProductSupplier::find($prod->productSupplierId);
-
-            $suppName = $supp->supplierName;
-
-            $stockProd = ProductClinicLocation::where('productClinicId', '=', $request->productId)->first();
-
-            $locationId = $stockProd->locationId;
-            $currentStock = $stockProd->inStock;
+        if (!$prod) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['Product does not exist!'],
+            ], 422);
         }
+
+        $supp = ProductSupplier::find($prod->productSupplierId);
+
+        $suppName = $supp->supplierName;
+
+        $stockProd = ProductLocations::where('productId', '=', $request->productId)->first();
+
+        $locationId = $stockProd->locationId;
+        $currentStock = $stockProd->inStock;
+
 
         if ($stockProd->reStockLimit < $request->reStockQuantity) {
             return response()->json([
@@ -394,32 +399,34 @@ class RestockController extends Controller
 
         foreach ($datas as $value) {
 
-            if ($value['productType'] === 'productSell') {
+            // if ($value['productType'] === 'productSell') {
 
-                $findProd = ProductSell::find($value['productId']);
+            //     $findProd = ProductSell::find($value['productId']);
 
-                $find = ProductSellLocation::where('productSellId', '=', $value['productId'])->first();
+            //     $find = ProductSellLocation::where('productSellId', '=', $value['productId'])->first();
 
-                if ($find) {
-                    if ($value['restockQuantity'] > $find->reStockLimit) {
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
-                        ], 422);
-                    }
-                }
-            } elseif ($value['productType'] === 'productClinic') {
-                $findProd = ProductClinic::find($value['productId']);
+            //     if ($find) {
+            //         if ($value['restockQuantity'] > $find->reStockLimit) {
+            //             return response()->json([
+            //                 'message' => 'The given data was invalid.',
+            //                 'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+            //             ], 422);
+            //         }
+            //     }
+            // } elseif ($value['productType'] === 'productClinic') {
 
-                $find = ProductClinicLocation::where('productClinicId', '=', $value['productId'])->first();
+            // }
 
-                if ($find) {
-                    if ($value['restockQuantity'] > $find->reStockLimit) {
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
-                        ], 422);
-                    }
+            $findProd = Products::find($value['productId']);
+
+            $find = ProductLocations::where('productId', '=', $value['productId'])->first();
+
+            if ($find) {
+                if ($value['restockQuantity'] > $find->reStockLimit) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+                    ], 422);
                 }
             }
 
@@ -511,15 +518,17 @@ class RestockController extends Controller
                 }
             }
 
-            if ($val['productType'] === 'productSell') {
+            // if ($val['productType'] === 'productSell') {
 
-                $find = ProductSellLocation::where('productSellId', '=', $val['productId'])->first();
-                $diffStock = $find->diffStock;
-            } elseif ($val['productType'] === 'productClinic') {
+            //     $find = ProductSellLocation::where('productSellId', '=', $val['productId'])->first();
+            //     $diffStock = $find->diffStock;
+            // } elseif ($val['productType'] === 'productClinic') {
 
-                $find = ProductClinicLocation::where('productClinicId', '=', $val['productId'])->first();
-                $diffStock = $find->diffStock;
-            }
+
+            // }
+
+            $find = ProductLocations::where('productId', '=', $val['productId'])->first();
+            $diffStock = $find->diffStock;
 
             if ($diffStock > 0) {
                 $checkAdminApproval = true;
@@ -662,12 +671,12 @@ class RestockController extends Controller
 
             $chk = DB::table('productRestockDetails as pr')
                 ->join('productSuppliers as sup', 'sup.Id', 'pr.supplierId')
+                ->join('products as p', 'p.Id', 'pr.productId')
                 ->select(
                     'pr.id',
                     'pr.productId',
                     'pr.productType',
-                    DB::raw('CASE WHEN pr.productType = "productSell" THEN (select fullName from productSells where id=pr.productId)
-                    WHEN pr.productType = "productClinic" THEN (select fullName from productClinics where id=pr.productId) END as productName'),
+                    'p.fullName',
                     'pr.supplierId',
                     'sup.supplierName',
                     'pr.requireDate',
@@ -743,33 +752,35 @@ class RestockController extends Controller
             foreach ($prodList as $value) {
 
                 // if ($value->reStockQuantity != $value->rejected) {
-                if ($value->productType == 'productSell') {
-                    $prd = DB::table('productSells as ps')
-                        ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                        ->select(
-                            'prd.id',
-                            'prd.purchaseRequestNumber',
-                            'ps.fullName',
-                            DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
-                            'prd.reStockQuantity',
-                            'prd.id'
-                        )
-                        ->where('prd.id', '=', $value->id)
-                        ->first();
-                } elseif ($value->productType == 'productClinic') {
-                    $prd = DB::table('productClinics as pc')
-                        ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
-                        ->select(
-                            'prd.id',
-                            'prd.purchaseRequestNumber',
-                            'pc.fullName',
-                            DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
-                            'prd.reStockQuantity',
-                            'prd.id'
-                        )
-                        ->where('prd.id', '=', $value->id)
-                        ->first();
-                }
+                // if ($value->productType == 'productSell') {
+
+                // } elseif ($value->productType == 'productClinic') {
+                //     $prd = DB::table('productClinics as pc')
+                //         ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
+                //         ->select(
+                //             'prd.id',
+                //             'prd.purchaseRequestNumber',
+                //             'pc.fullName',
+                //             DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
+                //             'prd.reStockQuantity',
+                //             'prd.id'
+                //         )
+                //         ->where('prd.id', '=', $value->id)
+                //         ->first();
+                // }
+
+                $prd = DB::table('products as ps')
+                    ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                    ->select(
+                        'prd.id',
+                        'prd.purchaseRequestNumber',
+                        'ps.fullName',
+                        DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
+                        'prd.reStockQuantity',
+                        'prd.id'
+                    )
+                    ->where('prd.id', '=', $value->id)
+                    ->first();
 
                 $data[] = array(
                     'id' => $prd->id,
@@ -778,7 +789,6 @@ class RestockController extends Controller
                     'unitCost' => $prd->costPerItem,
                     'orderQuantity' => $prd->reStockQuantity,
                 );
-                // }
             }
 
             return responseList($data);
@@ -847,21 +857,22 @@ class RestockController extends Controller
                     ->count();
 
                 foreach ($prodList as $list) {
-                    if ($list->productType == 'productSell') {
-                        $prd = DB::table('productSells as ps')
-                            ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                            ->select('prd.id', 'ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
-                            ->where('ps.id', '=', $list->productId)
-                            ->where('prd.productType', '=', 'productSell')
-                            ->first();
-                    } elseif ($list->productType == 'productClinic') {
-                        $prd = DB::table('productClinics as pc')
-                            ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
-                            ->select('prd.id', 'pc.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
-                            ->where('pc.id', '=', $list->productId)
-                            ->where('prd.productType', '=', 'productClinic')
-                            ->first();
-                    }
+                    // if ($list->productType == 'productSell') {
+
+                    // } elseif ($list->productType == 'productClinic') {
+                    //     $prd = DB::table('productClinics as pc')
+                    //         ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
+                    //         ->select('prd.id', 'pc.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
+                    //         ->where('pc.id', '=', $list->productId)
+                    //         ->where('prd.productType', '=', 'productClinic')
+                    //         ->first();
+                    // }
+
+                    $prd = DB::table('products as ps')
+                        ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                        ->select('prd.id', 'ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
+                        ->where('ps.id', '=', $list->productId)
+                        ->first();
 
                     $image = DB::table('productRestockImages as pri')
                         ->select('pri.id', 'pri.labelName', 'pri.realImageName', 'pri.imagePath')
@@ -1007,39 +1018,40 @@ class RestockController extends Controller
 
             foreach ($supp as $value) {
 
-                if ($value->productType == 'productSell') {
-                    $prd = DB::table('productSells as ps')
-                        ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                        ->select(
-                            'prd.purchaseRequestNumber',
-                            'prd.purchaseOrderNumber',
-                            'ps.fullName',
-                            'prd.reStockQuantity as quantity',
-                            'prd.costPerItem',
-                            'prd.total'
-                        )
-                        ->where('ps.id', '=', $value->productId)
-                        ->where('prd.productRestockId', '=', $request->id)
-                        ->where('prd.supplierId', '=', $valSup)
-                        ->where('prd.productType', '=', 'productSell')
-                        ->first();
-                } elseif ($value->productType == 'productClinic') {
-                    $prd = DB::table('productClinics as pc')
-                        ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
-                        ->select(
-                            'prd.purchaseRequestNumber',
-                            'prd.purchaseOrderNumber',
-                            'pc.fullName',
-                            'prd.reStockQuantity as quantity',
-                            'prd.costPerItem',
-                            'prd.total'
-                        )
-                        ->where('pc.id', '=', $value->productId)
-                        ->where('prd.productRestockId', '=', $request->id)
-                        ->where('prd.supplierId', '=', $valSup)
-                        ->where('prd.productType', '=', 'productClinic')
-                        ->first();
-                }
+                // if ($value->productType == 'productSell') {
+
+                // } elseif ($value->productType == 'productClinic') {
+                //     $prd = DB::table('productClinics as pc')
+                //         ->join('productRestockDetails as prd', 'pc.id', 'prd.productId')
+                //         ->select(
+                //             'prd.purchaseRequestNumber',
+                //             'prd.purchaseOrderNumber',
+                //             'pc.fullName',
+                //             'prd.reStockQuantity as quantity',
+                //             'prd.costPerItem',
+                //             'prd.total'
+                //         )
+                //         ->where('pc.id', '=', $value->productId)
+                //         ->where('prd.productRestockId', '=', $request->id)
+                //         ->where('prd.supplierId', '=', $valSup)
+                //         ->where('prd.productType', '=', 'productClinic')
+                //         ->first();
+                // }
+
+                $prd = DB::table('products as ps')
+                    ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                    ->select(
+                        'prd.purchaseRequestNumber',
+                        'prd.purchaseOrderNumber',
+                        'ps.fullName',
+                        'prd.reStockQuantity as quantity',
+                        'prd.costPerItem',
+                        'prd.total'
+                    )
+                    ->where('ps.id', '=', $value->productId)
+                    ->where('prd.productRestockId', '=', $request->id)
+                    ->where('prd.supplierId', '=', $valSup)
+                    ->first();
 
                 $data[] = array(
                     'purchaseRequestNumber' => $prd->purchaseRequestNumber,
@@ -1251,32 +1263,33 @@ class RestockController extends Controller
 
         foreach ($datas as $value) {
 
-            if ($value['productType'] === 'productSell') {
+            // if ($value['productType'] === 'productSell') {
 
-                $findProd = ProductSell::find($value['productId']);
+            // } elseif ($value['productType'] === 'productClinic') {
+            //     $findProd = ProductClinic::find($value['productId']);
 
-                $find = ProductSellLocation::where('productSellId', '=', $value['productId'])->first();
+            //     $find = ProductClinicLocation::where('productClinicId', '=', $value['productId'])->first();
 
-                if ($find) {
-                    if ($value['restockQuantity'] > $find->reStockLimit) {
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
-                        ], 422);
-                    }
-                }
-            } elseif ($value['productType'] === 'productClinic') {
-                $findProd = ProductClinic::find($value['productId']);
+            //     if ($find) {
+            //         if ($value['restockQuantity'] > $find->reStockLimit) {
+            //             return response()->json([
+            //                 'message' => 'The given data was invalid.',
+            //                 'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+            //             ], 422);
+            //         }
+            //     }
+            // }
 
-                $find = ProductClinicLocation::where('productClinicId', '=', $value['productId'])->first();
+            $findProd = Products::find($value['productId']);
 
-                if ($find) {
-                    if ($value['restockQuantity'] > $find->reStockLimit) {
-                        return response()->json([
-                            'message' => 'The given data was invalid.',
-                            'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
-                        ], 422);
-                    }
+            $find = ProductLocations::where('productId', '=', $value['productId'])->first();
+
+            if ($find) {
+                if ($value['restockQuantity'] > $find->reStockLimit) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+                    ], 422);
                 }
             }
 
@@ -1345,15 +1358,17 @@ class RestockController extends Controller
         foreach ($datas as $val) {
             $checkAdminApproval = false;
 
-            if ($val['productType'] === 'productSell') {
+            // if ($val['productType'] === 'productSell') {
 
-                $find = ProductSellLocation::where('productSellId', '=', $val['productId'])->first();
-                $diffStock = $find->diffStock;
-            } elseif ($val['productType'] === 'productClinic') {
 
-                $find = ProductClinicLocation::where('productClinicId', '=', $val['productId'])->first();
-                $diffStock = $find->diffStock;
-            }
+            // } elseif ($val['productType'] === 'productClinic') {
+
+            //     $find = ProductClinicLocation::where('productClinicId', '=', $val['productId'])->first();
+            //     $diffStock = $find->diffStock;
+            // }
+
+            $find = ProductLocations::where('productId', '=', $val['productId'])->first();
+            $diffStock = $find->diffStock;
 
             if ($diffStock > 0) {
                 $checkAdminApproval = true;
@@ -1984,20 +1999,25 @@ class RestockController extends Controller
             }
 
             if ($value['accepted'] != ($value['received'] + $value['canceled'])) {
-                if ($dtl->productType == 'productSell') {
-                    $find = ProductSell::find($dtl->productId);
-                } elseif ($dtl->productType == 'productClinic') {
-                    $find = ProductClinic::find($dtl->productId);
-                }
+                // if ($dtl->productType == 'productSell') {
+
+                // } elseif ($dtl->productType == 'productClinic') {
+                //     $find = ProductClinic::find($dtl->productId);
+                // }
+
+                $find = Products::find($dtl->productId);
+
                 return responseInvalid(['Total accepted not same with received and canceled at product ' . $find->fullName]);
             }
 
             if ($dtl->accepted != $value['accepted']) {
-                if ($dtl->productType == 'productSell') {
-                    $find = ProductSell::find($dtl->productId);
-                } elseif ($dtl->productType == 'productClinic') {
-                    $find = ProductClinic::find($dtl->productId);
-                }
+                // if ($dtl->productType == 'productSell') {
+
+                // } elseif ($dtl->productType == 'productClinic') {
+                //     $find = ProductClinic::find($dtl->productId);
+                // }
+
+                $find = Products::find($dtl->productId);
                 return responseInvalid(['Total accepted not same with system at product ' . $find->fullName]);
             }
         }
@@ -2056,71 +2076,73 @@ class RestockController extends Controller
 
                 $detail = productRestockDetails::find($value['productRestockDetailId']);
 
-                if ($detail->productType == 'productSell') {
-                    $find = ProductSell::find($detail->productId);
-                    $sellLoc = ProductSellLocation::where('productSellId', '=', $detail->productId)
-                        ->first();
+                // if ($detail->productType == 'productSell') {
 
-                    //ngecek ke category untuk tanggal expirednya
-                    //masukin ke product log
-                    productSellBatch::create([
-                        'batchNumber' => '123',
-                        'productId' => $detail->productId,
-                        'productRestockId' => $request->productRestockId,
-                        'productTransferId' => 0,
-                        'transferNumber' => '',
-                        'productRestockDetailId' => $detail->id,
-                        'purchaseRequestNumber' => $detail->purchaseRequestNumber,
-                        'purchaseOrderNumber' => $detail->purchaseOrderNumber,
-                        'expiredDate' => $value['expiredDate'],
-                        'sku' => $value['sku'],
-                        'userId' => $request->user()->id,
+                // } elseif ($detail->productType == 'productClinic') {
+                //     $find = ProductClinic::find($detail->productId);
+                //     $clinicLoc = ProductClinicLocation::where('productClinicId', '=', $detail->productId)
+                //         ->first();
 
-                    ]);
+                //     productClinicBatch::create([
+                //         'batchNumber' => '123',
+                //         'productId' => $detail->productId,
+                //         'productRestockId' => $request->productRestockId,
+                //         'productTransferId' => 0,
+                //         'transferNumber' => '',
+                //         'productRestockDetailId' => $detail->id,
+                //         'purchaseRequestNumber' => $detail->purchaseRequestNumber,
+                //         'purchaseOrderNumber' => $detail->purchaseOrderNumber,
+                //         'expiredDate' => $value['expiredDate'],
+                //         'sku' => $value['sku'],
+                //         'userId' => $request->user()->id,
 
-                    $inStock = $sellLoc->inStock;
-                    $diffStock = $sellLoc->diffStock;
+                //     ]);
 
-                    $newStock =  $value['received'];
+                //     $inStock = $clinicLoc->inStock;
+                //     $diffStock = $clinicLoc->diffStock;
 
-                    productSellLog($dtl->productId, 'Restock Product', 'Add New Stock', $newStock, ($inStock + $newStock), $request->user()->id);
+                //     $newStock =  $value['received'];
 
-                    $prodLoc = ProductSellLocation::find($sellLoc->id);
-                    $prodLoc->inStock = $inStock + $newStock;
-                    $prodLoc->diffStock = $diffStock + $newStock;
-                    $prodLoc->save();
-                } elseif ($detail->productType == 'productClinic') {
-                    $find = ProductClinic::find($detail->productId);
-                    $clinicLoc = ProductClinicLocation::where('productClinicId', '=', $detail->productId)
-                        ->first();
+                //     productClinicLog($dtl->productId, 'Restock Product', 'Add New Stock', $newStock, ($inStock + $newStock), $request->user()->id);
 
-                    productClinicBatch::create([
-                        'batchNumber' => '123',
-                        'productId' => $detail->productId,
-                        'productRestockId' => $request->productRestockId,
-                        'productTransferId' => 0,
-                        'transferNumber' => '',
-                        'productRestockDetailId' => $detail->id,
-                        'purchaseRequestNumber' => $detail->purchaseRequestNumber,
-                        'purchaseOrderNumber' => $detail->purchaseOrderNumber,
-                        'expiredDate' => $value['expiredDate'],
-                        'sku' => $value['sku'],
-                        'userId' => $request->user()->id,
+                //     $prodLoc = ProductClinicLocation::find($clinicLoc->id);
+                //     $prodLoc->inStock = $inStock + $newStock;
+                //     $prodLoc->diffStock = $diffStock + $newStock;
+                //     $prodLoc->save();
+                // }
 
-                    ]);
+                $find = Products::find($detail->productId);
+                $sellLoc = ProductLocations::where('productId', '=', $detail->productId)
+                    ->first();
 
-                    $inStock = $clinicLoc->inStock;
-                    $diffStock = $clinicLoc->diffStock;
+                //ngecek ke category untuk tanggal expirednya
+                //masukin ke product log
+                ProductBatches::create([
+                    'batchNumber' => '123',
+                    'productId' => $detail->productId,
+                    'productRestockId' => $request->productRestockId,
+                    'productTransferId' => 0,
+                    'transferNumber' => '',
+                    'productRestockDetailId' => $detail->id,
+                    'purchaseRequestNumber' => $detail->purchaseRequestNumber,
+                    'purchaseOrderNumber' => $detail->purchaseOrderNumber,
+                    'expiredDate' => $value['expiredDate'],
+                    'sku' => $value['sku'],
+                    'userId' => $request->user()->id,
 
-                    $newStock =  $value['received'];
+                ]);
 
-                    productClinicLog($dtl->productId, 'Restock Product', 'Add New Stock', $newStock, ($inStock + $newStock), $request->user()->id);
+                $inStock = $sellLoc->inStock;
+                $diffStock = $sellLoc->diffStock;
 
-                    $prodLoc = ProductClinicLocation::find($clinicLoc->id);
-                    $prodLoc->inStock = $inStock + $newStock;
-                    $prodLoc->diffStock = $diffStock + $newStock;
-                    $prodLoc->save();
-                }
+                $newStock =  $value['received'];
+
+                productSellLog($dtl->productId, 'Restock Product', 'Add New Stock', $newStock, ($inStock + $newStock), $request->user()->id);
+
+                $prodLoc = ProductLocations::find($sellLoc->id);
+                $prodLoc->inStock = $inStock + $newStock;
+                $prodLoc->diffStock = $diffStock + $newStock;
+                $prodLoc->save();
             }
         }
 

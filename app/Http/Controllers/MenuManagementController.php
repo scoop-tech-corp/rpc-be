@@ -308,8 +308,10 @@ class MenuManagementController extends Controller
             ->join('users as u', 'cmg.userId', 'u.id')
             ->select(
                 'cmg.id',
+                'cmg.childrenId',
                 'cm.menuName as childrenMenuName',
                 'cmg.menuName',
+                'cmg.icon',
                 'cmg.orderMenu',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(cmg.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
@@ -865,6 +867,7 @@ class MenuManagementController extends Controller
             'title' => 'required|string',
             'type' => 'required|string',
             'url' => 'required|string',
+            'icon' => 'required|string',
             'orderMenu' => 'required|integer',
         ]);
 
@@ -901,6 +904,7 @@ class MenuManagementController extends Controller
                 'title' => $request->title,
                 'type' => $request->type,
                 'url' => $request->url,
+                'icon' => $request->icon,
                 'isActive' => $request->isActive,
                 'userId' => $request->user()->id,
             ]);
@@ -1106,6 +1110,7 @@ class MenuManagementController extends Controller
             'title' => 'required|string',
             'type' => 'required|string',
             'url' => 'required|string',
+            'icon' => 'required|string',
             'orderMenu' => 'required|integer',
         ]);
 
@@ -1129,6 +1134,7 @@ class MenuManagementController extends Controller
         $menu->title = $request->title;
         $menu->type = $request->type;
         $menu->url = $request->url;
+        $menu->icon = $request->icon;
         $menu->isActive = $request->isActive;
         $menu->orderMenu = $request->orderMenu;
         $menu->userUpdateId = $request->user()->id;

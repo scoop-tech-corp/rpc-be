@@ -311,7 +311,7 @@ class ApiController extends Controller
                         $grandChilds = DB::table('grandChildrenMenuGroups as gcm')
                             ->join('accessControl as ac', 'ac.menuListId', 'gcm.id')
                             ->join('childrenMenuGroups as cm', 'gcm.childrenId', 'cm.id')
-                            ->select('gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'cm.icon', 'accessTypeId as accessType')
+                            ->select('gcm.orderMenu', 'gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'gcm.icon', 'accessTypeId as accessType')
                             ->where('gcm.childrenId', '=', $tempChildren[0]->idNum)
                             ->where('ac.roleId', '=', $users->roleId)
                             ->where('gcm.isDeleted', '=', 0)
@@ -323,7 +323,7 @@ class ApiController extends Controller
                             $grandChilds = DB::table('grandChildrenMenuGroups as gcm')
                                 ->join('accessControl as ac', 'ac.menuListId', 'gcm.id')
                                 ->join('childrenMenuGroups as cm', 'gcm.childrenId', 'cm.id')
-                                ->select('gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'cm.icon', 'accessTypeId as accessType')
+                                ->select('gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'gcm.icon', 'accessTypeId as accessType')
                                 ->where('gcm.childrenId', '=', $tempChildren[0]->idNum)
                                 ->where('ac.roleId', '=', $users->roleId)
                                 ->where('gcm.isDeleted', '=', 0)
@@ -365,7 +365,7 @@ class ApiController extends Controller
                                 $grandChilds = DB::table('grandChildrenMenuGroups as gcm')
                                     ->join('accessControl as ac', 'ac.menuListId', 'gcm.id')
                                     ->join('childrenMenuGroups as cm', 'gcm.childrenId', 'cm.id')
-                                    ->select('gcm.id as idNum', 'gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'cm.icon', 'ac.accessTypeId as accessType')
+                                    ->select('gcm.id as idNum', 'gcm.identify as id', 'gcm.title', 'gcm.type', 'gcm.url', 'gcm.icon', 'ac.accessTypeId as accessType')
                                     ->where('gcm.childrenId', '=', $valueChild->idNum)
                                     ->where('ac.roleId', '=', $users->roleId)
                                     ->where('gcm.isDeleted', '=', 0)
@@ -387,7 +387,6 @@ class ApiController extends Controller
                                     'title' => $grandChilds[0]->title,
                                     'type' => $grandChilds[0]->type,
                                     'url' => $grandChilds[0]->url,
-                                    'icon' => $valueChild->icon,
                                     'children' => $grandChildsNew,
                                 );
                                 $valueRes = $resChild;

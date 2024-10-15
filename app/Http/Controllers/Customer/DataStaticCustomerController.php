@@ -407,7 +407,7 @@ class DataStaticCustomerController extends Controller
 
         $dataStaticTypeId = TypeIdCustomer::select(
             'id',
-            DB::raw("'Type id' as type"),
+            DB::raw("'ID Type' as type"),
             'typeName as typeName',
         )->where('isActive', '=', 1);
 
