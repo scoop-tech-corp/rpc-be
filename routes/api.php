@@ -32,6 +32,7 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\MenuManagementController;
+use App\Http\Controllers\Promotion\PartnerController;
 use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\ReportMenuManagementController;
 
@@ -289,6 +290,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/detail', [PromotionController::class, 'detail']);
         Route::put('/', [PromotionController::class, 'update']);
         Route::delete('/', [PromotionController::class, 'delete']);
+    });
+
+    Route::group(['prefix'=>'partner'],function(){
+
+        Route::post('/', [PartnerController::class, 'create']);
+        Route::get('/', [PartnerController::class, 'index']);
+        Route::get('/export', [PartnerController::class, 'export']);
+        Route::get('/detail', [PartnerController::class, 'detail']);
+        Route::put('/', [PartnerController::class, 'update']);
+        Route::delete('/', [PartnerController::class, 'delete']);
     });
 
     //STAFF
