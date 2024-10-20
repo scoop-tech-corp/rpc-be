@@ -446,6 +446,7 @@ class ApiController extends Controller
                     "userName" => $users->name,
                     "emailAddress" => $emailaddress,
                     "jobName" => $users->jobName,
+                    "roleId" => $users->roleId,
                     "role" => $users->roleName,
                     'imagePath' => $users->imagePath,
                     "isAbsent" => $isAbsent,

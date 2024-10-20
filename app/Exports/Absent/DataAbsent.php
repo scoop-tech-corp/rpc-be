@@ -25,7 +25,7 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
     protected $staff;
     protected $statusPresent;
 
-    public function __construct($orderValue, $orderColumn, $dateFrom, $dateTo, $locationId, $staff, $statusPresent)
+    public function __construct($orderValue, $orderColumn, $dateFrom, $dateTo, $locationId, $staff, $statusPresent, $role, $id)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
@@ -34,6 +34,8 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
         $this->locationId = $locationId;
         $this->staff = $staff;
         $this->statusPresent = $statusPresent;
+        $this->role = $role;
+        $this->id = $id;
     }
 
     public function collection()
@@ -76,6 +78,10 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
                 DB::raw("CASE WHEN sa.cityHome is null THEN '' ELSE sa.cityHome END as homeLocation"),
             )
             ->where('sa.isDeleted', '=', 0);
+
+        if ($this->role <> 1 && $this->role <> 6) {
+            $data = $data->where('sa.userId', '=', $this->id);
+        }
 
         if ($this->dateFrom && $this->dateTo) {
 
