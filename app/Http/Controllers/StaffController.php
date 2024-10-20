@@ -15,6 +15,7 @@ use File;
 use DB;
 use App\Imports\Staff\ImportStaff;
 use App\Models\Staff\JobTitle;
+use App\Models\Staff\PayPeriod;
 use App\Models\Staff\UsersDetailAddresses;
 use App\Models\Staff\UsersEmails;
 use App\Models\Staff\UsersLocation;
@@ -2067,6 +2068,52 @@ class StaffController extends Controller
                         }
                     }
 
+                    if ($value['durasi_pembayaran'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Durasi Pembayaran at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $payPeriod = PayPeriod::where('id', '=', $value['durasi_pembayaran'])->first();
+
+                    if (!$payPeriod) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is no any Durasi Pembayaran on system at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['kartu_identitas'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Kartu Identitas at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $typeId = TypeId::where('id', '=', $value['kartu_identitas'])->first();
+
+                    if (!$typeId) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is no any Type Kartu Identitas on system at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['nomor_kartu_identitas'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Nomor Kartu Identitas at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['password'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Password at row ' . $count_row],
+                        ], 422);
+                    }
+
                     $total_data += 1;
                     $count_row += 1;
                 }
@@ -2215,17 +2262,17 @@ class StaffController extends Controller
                 $userId = DB::table('users')
                     ->insertGetId([
                         'userName' => '',
-                        'firstName' => $src1[$i]['nama_depan'],
-                        'middleName' => $src1[$i]['nama_tengah'],
-                        'lastName' => $src1[$i]['nama_akhir'],
-                        'nickName' => $src1[$i]['nama_panggilan'],
+                        'firstName' => trim($src1[$i]['nama_depan']),
+                        'middleName' => trim($src1[$i]['nama_tengah']),
+                        'lastName' => trim($src1[$i]['nama_akhir']),
+                        'nickName' => trim($src1[$i]['nama_panggilan']),
                         'gender' => $gender,
                         'status' => $src1[$i]['status'],
                         'jobTitleId' => $src1[$i]['jabatan'],
                         'startDate' => $startDateFormatted,
                         'endDate' => $endDateFormatted,
-                        'registrationNo' => $src1[$i]['nomor_registrasi'],
-                        'designation' => $src1[$i]['penunjukkan'],
+                        'registrationNo' => trim($src1[$i]['nomor_registrasi']),
+                        'designation' => trim($src1[$i]['penunjukkan']),
                         'annualSickAllowance' => $src1[$i]['tunjangan_sakit_tahunan'],
                         'annualLeaveAllowance' => $src1[$i]['tunjangan_cuti_tahunan'],
                         'annualSickAllowanceRemaining' => 0,
@@ -2233,8 +2280,8 @@ class StaffController extends Controller
                         'payPeriodId' => $src1[$i]['durasi_pembayaran'],
                         'payAmount' => $src1[$i]['nominal_pembayaran'],
                         'typeId' => $src1[$i]['kartu_identitas'],
-                        'identificationNumber' => $src1[$i]['nomor_kartu_identitas'],
-                        'additionalInfo' => $src1[$i]['catatan_tambahan'],
+                        'identificationNumber' => trim($src1[$i]['nomor_kartu_identitas']),
+                        'additionalInfo' => trim($src1[$i]['catatan_tambahan']),
                         'generalCustomerCanSchedule' => $src2[$i]['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'],
                         'generalCustomerReceiveDailyEmail' => $src2[$i]['terima_email_harian_yang_berisi_janji_temu_terjadwal_mereka'],
                         'generalAllowMemberToLogUsingEmail' => $src2[$i]['izinkan_anggota_staff_ini_untuk_masuk_menggunakan_alamat_email_mereka'],
@@ -2243,8 +2290,8 @@ class StaffController extends Controller
                         'roleId' => $src2[$i]['grup_keamanan'],
                         'imageName' => '',
                         'imagePath' => '',
-                        'password' => bcrypt($src1[$i]['password']),
-                        'email' => $src5[$i]['alamat_email'],
+                        'password' => bcrypt(trim($src1[$i]['password'])),
+                        'email' => trim($src5[$i]['alamat_email']),
                         'isDeleted' => 0,
                         'createdBy' => 'admin',
                         'created_at' => now(),
@@ -2255,8 +2302,8 @@ class StaffController extends Controller
                 $userAddress = UsersDetailAddresses::create(
                     [
                         'usersid' => $userId,
-                        'addressName' => $src3[$i]['alamat_jalan'],
-                        'additionalInfo' => $src3[$i]['informasi_tambahan'],
+                        'addressName' => trim($src3[$i]['alamat_jalan']),
+                        'additionalInfo' => trim($src3[$i]['informasi_tambahan']),
                         'provinceCode' => $src3[$i]['kode_provinsi'],
                         'cityCode' => $src3[$i]['kode_kota'],
                         'country' => 'Indonesia',
@@ -2270,7 +2317,7 @@ class StaffController extends Controller
 
                 $userEmails = UsersEmails::create([
                     'usersId' => $userId,
-                    'email' => $src5[$i]['alamat_email'],
+                    'email' => trim($src5[$i]['alamat_email']),
                     'email_verified_at' => now(),
                     'usage' => 'Utama',
                     'isDeleted' => 0,
@@ -2291,7 +2338,7 @@ class StaffController extends Controller
                     $userMessenger = UsersMessengers::create([
 
                         'usersId' => $userId,
-                        'messengerNumber' => $src3[$i]['alamat_email'],
+                        'messengerNumber' => trim($src3[$i]['alamat_email']),
                         'type' => $userId,
                         'usage' => $userId,
                         'isDeleted' => 0,
@@ -2447,6 +2494,21 @@ class StaffController extends Controller
         $row = 2;
         $sheet = $spreadsheet->getSheet(10);
 
+        $role = DB::table('usersRoles')
+            ->select('id', 'roleName')
+            ->get();
+
+        foreach ($role as $item) {
+            // Adjust according to your data structure
+            $sheet->setCellValue("A{$row}", $item->id);
+            $sheet->setCellValue("B{$row}", $item->roleName);
+            // Add more columns as needed
+            $row++;
+        }
+
+        $row = 2;
+        $sheet = $spreadsheet->getSheet(11);
+
         $provinsi = DB::table('provinsi')
             ->select('id', 'namaProvinsi')
             ->get();
@@ -2460,7 +2522,7 @@ class StaffController extends Controller
         }
 
         $row = 2;
-        $sheet = $spreadsheet->getSheet(11);
+        $sheet = $spreadsheet->getSheet(12);
 
         $kabupaten = DB::table('kabupaten')
             ->select('kodeKabupaten', 'kodeProvinsi', 'namaKabupaten')
