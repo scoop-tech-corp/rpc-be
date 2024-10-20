@@ -7,6 +7,7 @@ use App\Models\grandChildrenMenuGroups;
 use App\Models\menuGroup;
 use App\Models\menuProfile;
 use App\Models\menuSettings;
+use App\Models\AccessControl\AccessControl;
 use Illuminate\Http\Request;
 use DB;
 use Validator;
@@ -912,10 +913,10 @@ class MenuManagementController extends Controller
 
             foreach ($roles as $val) {
 
-                accessControl::create(
+                AccessControl::create(
                     [
                         'menuListId' => $idChild->id,
-                        'roleId' => $val['id'],
+                        'roleId' => $val->id,
                         'accessTypeId' => 1,
                         'isDeleted' => 0,
                         'created_at' => now(),
