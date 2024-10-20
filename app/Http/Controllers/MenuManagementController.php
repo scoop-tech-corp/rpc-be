@@ -58,13 +58,11 @@ class MenuManagementController extends Controller
         return responseList($data);
     }
 
-    public function listChildrenMenu(Request $request)
+    public function listChildrenMenu()
     {
-        $data = DB::table('grandChildrenMenuGroups')
-            ->select('id', 'menuName')
-            ->where('childrenId', '=', $request->id)
-            ->where('isDeleted', '=', 0)
-            ->orderBy('orderMenu', 'asc')
+        $data = DB::table('childrenMenuGroups as cmg')
+            ->select('cmg.id', 'cmg.menuName')
+            ->orderBy('cmg.orderMenu', 'asc')
             ->get();
 
         return responseList($data);
@@ -955,7 +953,7 @@ class MenuManagementController extends Controller
         }
 
         $data = DB::table('grandChildrenMenuGroups')
-            ->select('id', 'childrenId', 'orderMenu', 'menuName', 'identify', 'title', 'type', 'url')
+            ->select('id', 'childrenId', 'orderMenu', 'menuName', 'identify', 'title', 'type', 'url', 'icon')
             ->where('id', '=', $request->id)
             ->first();
 
