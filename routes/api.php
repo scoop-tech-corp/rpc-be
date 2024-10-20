@@ -282,15 +282,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/datastatic', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
     });
 
-    Route::group(['prefix'=>'promotion'],function(){
+    Route::group(['prefix' => 'promotion'], function () {
 
-        Route::post('/', [PromotionController::class, 'create']);
-        Route::get('/', [PromotionController::class, 'index']);
-        Route::get('/export', [PromotionController::class, 'export']);
-        Route::get('/list-type', [PromotionController::class, 'listType']);
-        Route::get('/detail', [PromotionController::class, 'detail']);
-        Route::put('/', [PromotionController::class, 'update']);
-        Route::delete('/', [PromotionController::class, 'delete']);
+        Route::group(['prefix' => 'discount'], function () {
+            Route::post('/', [PromotionController::class, 'create']);
+            Route::get('/', [PromotionController::class, 'index']);
+            Route::get('/export', [PromotionController::class, 'export']);
+            Route::get('/list-type', [PromotionController::class, 'listType']);
+            Route::get('/detail', [PromotionController::class, 'detail']);
+            Route::put('/', [PromotionController::class, 'update']);
+            Route::delete('/', [PromotionController::class, 'delete']);
+        });
+
 
         Route::get('/datastatic', [PromotionDataStaticController::class, 'index']);
         Route::delete('/datastatic', [PromotionDataStaticController::class, 'delete']);
@@ -300,16 +303,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::post('/datastatic/usage', [PromotionDataStaticController::class, 'insertUsage']);
         Route::get('/datastatic/usage', [PromotionDataStaticController::class, 'listUsage']);
-    });
 
-    Route::group(['prefix'=>'partner'],function(){
+        Route::group(['prefix' => 'partner'], function () {
 
-        Route::post('/', [PartnerController::class, 'create']);
-        Route::get('/', [PartnerController::class, 'index']);
-        Route::get('/export', [PartnerController::class, 'export']);
-        Route::get('/detail', [PartnerController::class, 'detail']);
-        Route::put('/', [PartnerController::class, 'update']);
-        Route::delete('/', [PartnerController::class, 'delete']);
+            Route::post('/', [PartnerController::class, 'create']);
+            Route::get('/', [PartnerController::class, 'index']);
+            Route::get('/export', [PartnerController::class, 'export']);
+            Route::get('/detail', [PartnerController::class, 'detail']);
+            Route::put('/', [PartnerController::class, 'update']);
+            Route::delete('/', [PartnerController::class, 'delete']);
+        });
     });
 
     //STAFF
