@@ -894,7 +894,7 @@ class MenuManagementController extends Controller
 
         DB::beginTransaction();
         try {
-            grandChildrenMenuGroups::create([
+            $idChild = grandChildrenMenuGroups::create([
                 'childrenId' => $request->childrenId,
                 'orderMenu' => $request->orderMenu,
                 'menuName' => $request->menuName,
@@ -906,6 +906,23 @@ class MenuManagementController extends Controller
                 'isActive' => $request->isActive,
                 'userId' => $request->user()->id,
             ]);
+
+            $roles = DB::table('usersRoles')
+                ->get();
+
+            foreach ($roles as $val) {
+
+                accessControl::create(
+                    [
+                        'menuListId' => $idChild->id,
+                        'roleId' => $val['id'],
+                        'accessTypeId' => 1,
+                        'isDeleted' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
 
             DB::commit();
 
