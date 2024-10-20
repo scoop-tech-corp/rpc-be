@@ -379,7 +379,97 @@ class PartnerController extends Controller
         }
     }
 
-    function update(Request $request) {}
+    function update(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'name' => 'required|string|min:3|max:30',
+            'status' => 'required|bool',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+        $errorPhones = $this->ValidatePhones($request->phones);
+
+        if ($errorPhones != '') {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errorPhones],
+            ], 422);
+        }
+
+        $resPhone = json_decode($request->phones, true);
+
+        $errorEmails = $this->ValidateEmails($request->emails);
+
+        if ($errorEmails != '') {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errorEmails],
+            ], 422);
+        }
+
+        $resEmail = json_decode($request->emails, true);
+
+        $errorMessengers = $this->ValidateMessengers($request->messengers);
+
+        if ($errorMessengers != '') {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errorMessengers],
+            ], 422);
+        }
+
+        $resMsg = json_decode($request->messengers, true);
+
+        DB::beginTransaction();
+
+    }
+
+    function detail(Request $request)
+    {
+        $data = DB::table('partnerMasters')
+            ->select('id', 'name', 'status')
+            ->where('id', '=', $request->id)
+            ->first();
+
+        $dataPhone = DB::table('partnerPhones as pp')
+            ->join('usageIdPromotions as up', 'pp.usageId', 'up.id')
+            ->join('typeIdPromotions as tp', 'pp.typeId', 'tp.id')
+            ->select('pp.id', 'pp.phoneNumber', 'pp.typeId', 'tp.typeName', 'pp.usageId', 'up.usage')
+            ->where('pp.partnerMasterId', '=', $request->id)
+            ->where('pp.isDeleted', '=', 0)
+            ->get();
+
+        $dataEmail = DB::table('partnerEmails as pp')
+            ->join('usageIdPromotions as up', 'pp.usageId', 'up.id')
+            ->select('pp.id', 'pp.email', 'pp.usageId', 'up.usage')
+            ->where('pp.partnerMasterId', '=', $request->id)
+            ->where('pp.isDeleted', '=', 0)
+            ->get();
+
+        $dataMessenger = DB::table('partnerMessengers as pp')
+            ->join('usageIdPromotions as up', 'pp.usageId', 'up.id')
+            ->join('typeIdPromotions as tp', 'pp.typeId', 'tp.id')
+            ->select('pp.id', 'pp.messengerName', 'pp.typeId', 'tp.typeName', 'pp.usageId', 'up.usage')
+            ->where('pp.partnerMasterId', '=', $request->id)
+            ->where('pp.isDeleted', '=', 0)
+            ->get();
+
+        $data->phones = $dataPhone;
+        $data->emails = $dataEmail;
+        $data->messengers = $dataMessenger;
+
+        return responseList($data);
+    }
 
     function delete(Request $request)
     {
