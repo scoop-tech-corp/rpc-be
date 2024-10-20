@@ -23,7 +23,7 @@ class DataStaticController extends Controller
             ->select(
                 'tp.id',
                 'tp.typeName',
-                DB::raw("'Type' as type"),
+                DB::raw("'type' as type"),
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(tp.created_at, '%d/%m/%Y') as createdAt")
             )
@@ -34,7 +34,7 @@ class DataStaticController extends Controller
             ->select(
                 'tp.id',
                 'tp.usage as typeName',
-                DB::raw("'Usage' as type"),
+                DB::raw("'usage' as type"),
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(tp.created_at, '%d/%m/%Y') as createdAt")
             )
