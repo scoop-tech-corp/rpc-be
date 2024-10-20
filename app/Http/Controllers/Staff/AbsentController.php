@@ -59,6 +59,10 @@ class AbsentController extends Controller
             )
             ->where('sa.isDeleted', '=', 0);
 
+        if ($request->user()->roleId <> 1 && $request->user()->roleId <> 6) {
+            $data = $data->where('sa.userId', '=', $request->user()->id);
+        }
+
         if ($request->dateFrom && $request->dateTo) {
 
             $data = $data->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
@@ -234,7 +238,9 @@ class AbsentController extends Controller
                 $request->dateTo,
                 $request->locationId,
                 $request->staff,
-                $request->statusPresent
+                $request->statusPresent,
+                $request->user()->roleId,
+                $request->user()->id
             ),
             $fileName
         );

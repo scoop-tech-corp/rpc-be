@@ -20,7 +20,7 @@ class AbsentReport implements WithMultipleSheets
     protected $staff;
     protected $statusPresent;
 
-    public function __construct($orderValue, $orderColumn, $dateFrom, $dateTo, $locationId, $staff, $statusPresent)
+    public function __construct($orderValue, $orderColumn, $dateFrom, $dateTo, $locationId, $staff, $statusPresent, $role,$id)
     {
         $this->orderValue = $orderValue;
         $this->orderColumn = $orderColumn;
@@ -29,6 +29,8 @@ class AbsentReport implements WithMultipleSheets
         $this->locationId = $locationId;
         $this->staff = $staff;
         $this->statusPresent = $statusPresent;
+        $this->role = $role;
+        $this->id = $id;
     }
 
     function array(): array
@@ -48,7 +50,9 @@ class AbsentReport implements WithMultipleSheets
                 $this->dateTo,
                 $this->locationId,
                 $this->staff,
-                $this->statusPresent
+                $this->statusPresent,
+                $this->role,
+                $this->id,
             ),
         ];
 
