@@ -8,6 +8,7 @@ use App\Models\UsageIdPromotion;
 use Illuminate\Http\Request;
 use DB;
 use Validator;
+use Illuminate\Support\Carbon;
 
 class DataStaticController extends Controller
 {
@@ -261,7 +262,7 @@ class DataStaticController extends Controller
         foreach ($request->datas as $value) {
             if ($value['type'] == 'type') {
 
-                typeIdPromotions::where('id', '=', $value['id'])
+                TypeIdPromotion::where('id', '=', $value['id'])
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -270,7 +271,7 @@ class DataStaticController extends Controller
                         ]
                     );
             } elseif ($value['type'] == 'usage') {
-                usageIdPromotions::where('id', '=', $value['id'])
+                UsageIdPromotion::where('id', '=', $value['id'])
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
