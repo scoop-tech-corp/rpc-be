@@ -298,8 +298,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/datastatic', [PromotionDataStaticController::class, 'index']);
         Route::delete('/datastatic', [PromotionDataStaticController::class, 'delete']);
 
-        Route::post('/datastatic/type', [PromotionDataStaticController::class, 'insertType']);
-        Route::get('/datastatic/type', [PromotionDataStaticController::class, 'listType']);
+        Route::post('/datastatic/typephone', [PromotionDataStaticController::class, 'insertTypePhone']);
+        Route::get('/datastatic/typephone', [PromotionDataStaticController::class, 'listTypePhone']);
+
+        Route::post('/datastatic/typemessenger', [PromotionDataStaticController::class, 'insertTypeMessenger']);
+        Route::get('/datastatic/typemessenger', [PromotionDataStaticController::class, 'listTypeMessenger']);
 
         Route::post('/datastatic/usage', [PromotionDataStaticController::class, 'insertUsage']);
         Route::get('/datastatic/usage', [PromotionDataStaticController::class, 'listUsage']);
