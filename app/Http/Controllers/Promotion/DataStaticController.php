@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Promotion;
 
 use App\Http\Controllers\Controller;
 use App\Models\TypeIdPromotion;
+use App\Models\TypeMessengerPromotion;
+use App\Models\TypePhonePromotion;
 use App\Models\UsageIdPromotion;
+use App\Models\UsagePromotions;
 use Illuminate\Http\Request;
 use DB;
 use Validator;
@@ -18,18 +21,29 @@ class DataStaticController extends Controller
 
         $page = $request->goToPage;
 
-        $dataType = DB::table('typeIdPromotions as tp')
+        $dataTypePhone = DB::table('typePhonePromotions as tp')
             ->join('users as u', 'tp.userId', 'u.id')
             ->select(
                 'tp.id',
-                'tp.typeName',
-                DB::raw("'type' as type"),
+                'tp.name as typeName',
+                DB::raw("'phone' as type"),
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(tp.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('tp.isDeleted', '=', 0);
 
-        $dataUsage = DB::table('usageIdPromotions as tp')
+        $dataTypeMes = DB::table('typeMessengerPromotions as tp')
+            ->join('users as u', 'tp.userId', 'u.id')
+            ->select(
+                'tp.id',
+                'tp.name as typeName',
+                DB::raw("'messenger' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(tp.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('tp.isDeleted', '=', 0);
+
+        $dataUsage = DB::table('usagePromotions as tp')
             ->join('users as u', 'tp.userId', 'u.id')
             ->select(
                 'tp.id',
@@ -40,13 +54,14 @@ class DataStaticController extends Controller
             )
             ->where('tp.isDeleted', '=', 0);
 
-        $dataType = $dataType
+        $dataTypePhone = $dataTypePhone
+            ->union($dataTypeMes)
             ->union($dataUsage);
 
-        $data = DB::query()->fromSub($dataType, 'p_pn')
+        $data = DB::query()->fromSub($dataTypePhone, 'p_pn')
             ->select('id', 'typeName', 'type', 'createdBy', 'createdAt');
 
-        $dataTemp = DB::query()->fromSub($dataType, 'p_pn')
+        $dataTemp = DB::query()->fromSub($dataTypePhone, 'p_pn')
             ->select('id', 'typeName', 'type', 'createdBy', 'createdAt');
 
         $temp_column = null;
@@ -59,7 +74,7 @@ class DataStaticController extends Controller
                 $temp_column[] = 'typeName';
             }
 
-            $dataTemp = DB::query()->fromSub($dataType, 'p_pn')
+            $dataTemp = DB::query()->fromSub($dataTypePhone, 'p_pn')
                 ->select('id', 'typeName', 'type', 'createdBy', 'createdAt');
 
             $data2 = $dataTemp->where('type', 'like', '%' . $request->search . '%')->get();
@@ -68,7 +83,7 @@ class DataStaticController extends Controller
                 $temp_column[] = 'type';
             }
 
-            $dataTemp = DB::query()->fromSub($dataType, 'p_pn')
+            $dataTemp = DB::query()->fromSub($dataTypePhone, 'p_pn')
                 ->select('id', 'typeName', 'type', 'createdBy', 'createdAt');
 
             $data3 = $dataTemp->where('createdBy', 'like', '%' . $request->search . '%')->get();
@@ -113,10 +128,19 @@ class DataStaticController extends Controller
         return responseIndex(ceil($totalPaging), $data);
     }
 
-    function listType()
+    function listTypeMessenger()
     {
-        $data = DB::table('typeIdPromotions')
-            ->select('id', 'typeName')
+        $data = DB::table('typeMessengerPromotions')
+            ->select('id', 'name')
+            ->get();
+
+        return responseList($data);
+    }
+
+    function listTypePhone()
+    {
+        $data = DB::table('typePhonePromotions')
+            ->select('id', 'name')
             ->get();
 
         return responseList($data);
@@ -124,14 +148,14 @@ class DataStaticController extends Controller
 
     function listUsage()
     {
-        $data = DB::table('usageIdPromotions')
+        $data = DB::table('usagePromotions')
             ->select('id', 'usage')
             ->get();
 
         return responseList($data);
     }
 
-    function insertType(Request $request)
+    function insertTypePhone(Request $request)
     {
         try {
 
@@ -148,14 +172,64 @@ class DataStaticController extends Controller
                 ], 422);
             }
 
-            $checkIfValueExits = DB::table('typeIdPromotions')
-                ->where('typeName', '=', $request->typeName)
+            $checkIfValueExits = DB::table('typePhonePromotions')
+                ->where('name', '=', $request->typeName)
                 ->first();
 
             if ($checkIfValueExits === null) {
 
-                TypeIdPromotion::create([
-                    'typeName' => $request->typeName,
+                TypePhonePromotion::create([
+                    'name' => $request->typeName,
+                    'userId' => $request->user()->id,
+                ]);
+
+
+                return responseSuccess();
+            } else {
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Type Name already exists, please try different name!'],
+                ], 422);
+            }
+        } catch (Exception $e) {
+
+            DB::rollback();
+
+            return response()->json(
+                [
+                    'message' => $e,
+                ],
+                500
+            );
+        }
+    }
+
+    function insertTypeMessenger(Request $request)
+    {
+        try {
+
+            $validate = Validator::make($request->all(), [
+                'typeName' => 'required',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => $errors,
+                ], 422);
+            }
+
+            $checkIfValueExits = DB::table('typeMessengerPromotions')
+                ->where('name', '=', $request->typeName)
+                ->first();
+
+            if ($checkIfValueExits === null) {
+
+                TypeMessengerPromotion::create([
+                    'name' => $request->typeName,
                     'userId' => $request->user()->id,
                 ]);
 
@@ -198,13 +272,13 @@ class DataStaticController extends Controller
                 ], 422);
             }
 
-            $checkIfValueExits = DB::table('usageIdPromotions')
+            $checkIfValueExits = DB::table('usagePromotions')
                 ->where('usage', '=', $request->usage)
                 ->first();
 
             if ($checkIfValueExits === null) {
 
-                UsageIdPromotion::create([
+                UsagePromotions::create([
                     'usage' => $request->usage,
                     'userId' => $request->user()->id,
                 ]);
