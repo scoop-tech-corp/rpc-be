@@ -1048,6 +1048,7 @@ class CustomerController extends Controller
             $validate = Validator::make(
                 $request->all(),
                 [
+                    'memberNo' => 'required|string|max:100',
                     'firstName' => 'required|string|max:100',
                     'middleName' => 'nullable|string|max:100',
                     'lastName' => 'nullable|string|max:100',
@@ -1672,6 +1673,7 @@ class CustomerController extends Controller
             // // INSERT
 
             $customer = new Customer();
+            $customer->memberNo =  $request->memberNo;
             $customer->firstName =  $request->firstName;
             $customer->middleName = $request->middleName;
             $customer->lastName = $request->lastName;
