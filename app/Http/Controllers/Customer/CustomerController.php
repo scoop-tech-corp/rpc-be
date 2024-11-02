@@ -224,6 +224,7 @@ class CustomerController extends Controller
 
                 $listOrder = array(
                     'id',
+                    'memberNo',
                     'customerName',
                     'totalPet',
                     'location',
@@ -260,6 +261,7 @@ class CustomerController extends Controller
                 $data = DB::table($data)
                     ->select(
                         'id',
+                        'memberNo',
                         'customerName',
                         'totalPet',
                         'location',
@@ -277,6 +279,7 @@ class CustomerController extends Controller
                 $data = DB::table($data)
                     ->select(
                         'id',
+                        'memberNo',
                         'customerName',
                         'totalPet',
                         'location',
