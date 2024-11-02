@@ -116,6 +116,7 @@ class CustomerController extends Controller
                 ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
                 ->select(
                     'a.id as id',
+                    'a.memberNo',
                     DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                     DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                     'd.locationName as location',
@@ -154,6 +155,7 @@ class CustomerController extends Controller
             $data = DB::table($data)
                 ->select(
                     'id',
+                    'memberNo',
                     'customerName',
                     'totalPet',
                     'location',
@@ -171,7 +173,11 @@ class CustomerController extends Controller
 
                 if ($res) {
 
-                    if ($res == "customerName") {
+                    if ($res == "memberNo") {
+
+                        $data = $data->where('memberNo', 'like', '%' . $request->search . '%');
+                    }
+                    else if ($res == "customerName") {
 
                         $data = $data->where('customerName', 'like', '%' . $request->search . '%');
                     } else if ($res == "totalPet") {
