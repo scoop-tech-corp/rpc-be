@@ -31,6 +31,8 @@ use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\Customer\ImportCustomerController;
+use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Promotion\PartnerController;
@@ -274,12 +276,29 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::put('/pet', [CustomerController::class, 'updatePetAge']);
 
+        Route::group(['prefix' => 'merge'], function () {
+            Route::get('/', [CustomerController::class, 'getSourceCustomer']);
+        });
 
+        Route::group(['prefix' => 'template'], function () {
 
-        Route::post('/datastatic', [DataStaticCustomerController::class, 'insertDataStaticCustomer']);
-        Route::get('/datastatic/customer', [DataStaticCustomerController::class, 'getDataStaticCustomer']);
-        Route::get('/datastatic', [DataStaticCustomerController::class, 'indexDataStaticCustomer']);
-        Route::delete('/datastatic', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
+            Route::get('/', [TemplateCustomerController::class, 'index']);
+            Route::get('/download', [TemplateCustomerController::class, 'download']);
+        });
+
+        Route::group(['prefix' => 'import'], function () {
+
+            Route::get('/', [ImportCustomerController::class, 'index']);
+            Route::post('/', [ImportCustomerController::class, 'import']);
+        });
+
+        Route::group(['prefix' => 'datastatic'], function () {
+
+            Route::post('/', [DataStaticCustomerController::class, 'insertDataStaticCustomer']);
+            Route::get('/customer', [DataStaticCustomerController::class, 'getDataStaticCustomer']);
+            Route::get('/', [DataStaticCustomerController::class, 'indexDataStaticCustomer']);
+            Route::delete('/', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
+        });
     });
 
     Route::group(['prefix' => 'promotion'], function () {
