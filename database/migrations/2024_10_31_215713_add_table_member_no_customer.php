@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('customer', function (Blueprint $table) {
-            $table->integer('memberNo')->after('id');
+            $table->string('memberNo')->after('id');
         });
     }
 
