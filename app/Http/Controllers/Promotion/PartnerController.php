@@ -599,24 +599,24 @@ class PartnerController extends Controller
             ->first();
 
         $dataPhone = DB::table('partnerPhones as pp')
-            ->join('usageIdPromotions as up', 'pp.usageId', 'up.id')
-            ->join('typeIdPromotions as tp', 'pp.typeId', 'tp.id')
-            ->select('pp.id', 'pp.phoneNumber', 'pp.typeId', 'tp.typeName', 'pp.usageId', 'up.usage')
+            ->join('usagePromotions as up', 'pp.usageId', 'up.id')
+            ->join('typePhonePromotions as tp', 'pp.typeId', 'tp.id')
+            ->select('pp.id', 'pp.phoneNumber', 'pp.typeId', 'tp.name as typeName', 'pp.usageId', 'up.usage')
             ->where('pp.partnerMasterId', '=', $request->id)
             ->where('pp.isDeleted', '=', 0)
             ->get();
 
         $dataEmail = DB::table('partnerEmails as pp')
-            ->join('usageIdPromotions as up', 'pp.usageId', 'up.id')
+            ->join('usagePromotions as up', 'pp.usageId', 'up.id')
             ->select('pp.id', 'pp.email', 'pp.usageId', 'up.usage')
             ->where('pp.partnerMasterId', '=', $request->id)
             ->where('pp.isDeleted', '=', 0)
             ->get();
 
         $dataMessenger = DB::table('partnerMessengers as pp')
-            ->join('usageIdPromotions as up', 'pp.usageId', 'up.id')
-            ->join('typeIdPromotions as tp', 'pp.typeId', 'tp.id')
-            ->select('pp.id', 'pp.messengerName', 'pp.typeId', 'tp.typeName', 'pp.usageId', 'up.usage')
+            ->join('usagePromotions as up', 'pp.usageId', 'up.id')
+            ->join('typeMessengerPromotions as tp', 'pp.typeId', 'tp.id')
+            ->select('pp.id', 'pp.messengerName', 'pp.typeId', 'tp.name as typeName', 'pp.usageId', 'up.usage')
             ->where('pp.partnerMasterId', '=', $request->id)
             ->where('pp.isDeleted', '=', 0)
             ->get();
