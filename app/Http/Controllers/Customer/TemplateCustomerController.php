@@ -119,7 +119,7 @@ class TemplateCustomerController extends Controller
 
             $spreadsheet = IOFactory::load(public_path() . '/template/' . 'Template_Input_Customer.xlsx');
 
-            $sheet = $spreadsheet->getSheet(5);
+            $sheet = $spreadsheet->getSheet(6);
 
             $titles = DB::table('titleCustomer')
                 ->select('id', 'titleName')
@@ -136,7 +136,7 @@ class TemplateCustomerController extends Controller
             }
 
             $row = 2;
-            $sheet = $spreadsheet->getSheet(6);
+            $sheet = $spreadsheet->getSheet(7);
 
             $customerGroups = DB::table('customerGroups')
                 ->select('id', 'customerGroup')
@@ -152,7 +152,7 @@ class TemplateCustomerController extends Controller
             }
 
             $row = 2;
-            $sheet = $spreadsheet->getSheet(7);
+            $sheet = $spreadsheet->getSheet(8);
 
             $locations = DB::table('location')
                 ->select('id', 'locationName')
@@ -168,7 +168,7 @@ class TemplateCustomerController extends Controller
             }
 
             $row = 2;
-            $sheet = $spreadsheet->getSheet(8);
+            $sheet = $spreadsheet->getSheet(9);
 
             $typeIdCustomers = DB::table('typeIdCustomer')
                 ->select('id', 'typeName')
@@ -184,7 +184,7 @@ class TemplateCustomerController extends Controller
             }
 
             $row = 2;
-            $sheet = $spreadsheet->getSheet(9);
+            $sheet = $spreadsheet->getSheet(10);
 
             $customerOccupations = DB::table('customerOccupation')
                 ->select('id', 'occupationName')
@@ -200,7 +200,7 @@ class TemplateCustomerController extends Controller
             }
 
             $row = 2;
-            $sheet = $spreadsheet->getSheet(10);
+            $sheet = $spreadsheet->getSheet(11);
 
             $referenceCustomers = DB::table('referenceCustomer')
                 ->select('id', 'referenceName')
@@ -216,7 +216,7 @@ class TemplateCustomerController extends Controller
             }
 
             $row = 2;
-            $sheet = $spreadsheet->getSheet(11);
+            $sheet = $spreadsheet->getSheet(12);
 
             $petCategories = DB::table('petCategory')
                 ->select('id', 'petCategoryName')
@@ -232,7 +232,7 @@ class TemplateCustomerController extends Controller
             }
 
             $row = 2;
-            $sheet = $spreadsheet->getSheet(12);
+            $sheet = $spreadsheet->getSheet(13);
 
             $provinsi = DB::table('provinsi')
                 ->select('id', 'namaProvinsi')
@@ -247,7 +247,7 @@ class TemplateCustomerController extends Controller
             }
 
             $row = 2;
-            $sheet = $spreadsheet->getSheet(13);
+            $sheet = $spreadsheet->getSheet(14);
 
             $kabupaten = DB::table('kabupaten')
                 ->select('kodeKabupaten', 'kodeProvinsi', 'namaKabupaten')
@@ -258,6 +258,61 @@ class TemplateCustomerController extends Controller
                 $sheet->setCellValue("A{$row}", $item->kodeKabupaten);
                 $sheet->setCellValue("B{$row}", $item->kodeProvinsi);
                 $sheet->setCellValue("C{$row}", $item->namaKabupaten);
+                // Add more columns as needed
+                $row++;
+            }
+
+            //usage
+            $row = 2;
+            $sheet = $spreadsheet->getSheet(15);
+
+            $staticUsage = DB::table('dataStaticCustomer')
+                ->select('id', 'name')
+                ->where('isDeleted', '=', '0')
+                ->where('value', '=', 'Usage')
+                ->get();
+
+            foreach ($staticUsage as $item) {
+                // Adjust according to your data structure
+                $sheet->setCellValue("A{$row}", $item->id);
+                $sheet->setCellValue("B{$row}", $item->name);
+                // Add more columns as needed
+                $row++;
+            }
+
+            //tipe telepon
+
+            $row = 2;
+            $sheet = $spreadsheet->getSheet(16);
+
+            $staticTelp = DB::table('dataStaticCustomer')
+                ->select('id', 'name')
+                ->where('isDeleted', '=', '0')
+                ->where('value', '=', 'Telephone')
+                ->get();
+
+            foreach ($staticTelp as $item) {
+                // Adjust according to your data structure
+                $sheet->setCellValue("A{$row}", $item->id);
+                $sheet->setCellValue("B{$row}", $item->name);
+                // Add more columns as needed
+                $row++;
+            }
+
+            //tipe messenger
+            $row = 2;
+            $sheet = $spreadsheet->getSheet(17);
+
+            $staticMes = DB::table('dataStaticCustomer')
+                ->select('id', 'name')
+                ->where('isDeleted', '=', '0')
+                ->where('value', '=', 'Messenger')
+                ->get();
+
+            foreach ($staticMes as $item) {
+                // Adjust according to your data structure
+                $sheet->setCellValue("A{$row}", $item->id);
+                $sheet->setCellValue("B{$row}", $item->name);
                 // Add more columns as needed
                 $row++;
             }
