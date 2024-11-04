@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Validator;
 use DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Support\Carbon;
 
 class PartnerController extends Controller
 {
@@ -204,7 +205,7 @@ class PartnerController extends Controller
                 'errors' => $errors,
             ], 422);
         }
-        $errorPhones = $this->ValidatePhones($request->phones);
+        $errorPhones = $this->ValidatePhones($request->phones, 'create');
 
         if ($errorPhones != '') {
 
@@ -216,7 +217,7 @@ class PartnerController extends Controller
 
         $resPhone = json_decode($request->phones, true);
 
-        $errorEmails = $this->ValidateEmails($request->emails);
+        $errorEmails = $this->ValidateEmails($request->emails, 'create');
 
         if ($errorEmails != '') {
 
@@ -228,7 +229,7 @@ class PartnerController extends Controller
 
         $resEmail = json_decode($request->emails, true);
 
-        $errorMessengers = $this->ValidateMessengers($request->messengers);
+        $errorMessengers = $this->ValidateMessengers($request->messengers, 'create');
 
         if ($errorMessengers != '') {
 
@@ -289,9 +290,13 @@ class PartnerController extends Controller
         }
     }
 
-    private function ValidateEmails($request)
+    private function ValidateEmails($request, $type)
     {
-        $emails = json_decode($request, true);
+        if ($type == 'create') {
+            $emails = json_decode($request, true);
+        } else {
+            $emails = $request;
+        }
 
         if (count($emails) > 0) {
             $validateEmails = Validator::make(
@@ -319,9 +324,13 @@ class PartnerController extends Controller
         }
     }
 
-    private function ValidatePhones($request)
+    private function ValidatePhones($request, $type)
     {
-        $phones = json_decode($request, true);
+        if ($type == 'create') {
+            $phones = json_decode($request, true);
+        } else {
+            $phones = $request;
+        }
 
         if (count($phones) > 0) {
             $validatePhones = Validator::make(
@@ -350,9 +359,13 @@ class PartnerController extends Controller
         }
     }
 
-    private function ValidateMessengers($request)
+    private function ValidateMessengers($request, $type)
     {
-        $messengers = json_decode($request, true);
+        if ($type == 'create') {
+            $messengers = json_decode($request, true);
+        } else {
+            $messengers = $request;
+        }
 
         if (count($messengers) > 0) {
             $validateMessengers = Validator::make(
@@ -379,7 +392,241 @@ class PartnerController extends Controller
         }
     }
 
-    function update(Request $request) {}
+    function update(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'name' => 'required|string|min:3|max:30',
+            'status' => 'required|bool',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => $errors,
+            ], 422);
+        }
+        $errorPhones = $this->ValidatePhones($request->phones, 'update');
+
+        if ($errorPhones != '') {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errorPhones],
+            ], 422);
+        }
+
+        $resPhone = $request->phones;
+
+        $errorEmails = $this->ValidateEmails($request->emails, 'update');
+
+        if ($errorEmails != '') {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errorEmails],
+            ], 422);
+        }
+
+        $resEmail = $request->emails;
+
+        $errorMessengers = $this->ValidateMessengers($request->messengers, 'update');
+
+        if ($errorMessengers != '') {
+
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errorMessengers],
+            ], 422);
+        }
+
+        $resMsg = $request->messengers;
+
+        DB::beginTransaction();
+
+        $partner = PartnerMaster::find($request->id);
+
+        if (!$partner) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['There is any Data not found!'],
+            ], 422);
+        }
+
+        if ($partner->name != $request->name) {
+            $partnerValid = PartnerMaster::where('name', '=', $request->name)
+                ->where('isDeleted', '=', 0)
+                ->first();
+
+            if ($partnerValid) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Partner Name has already exists!'],
+                ], 422);
+            }
+        }
+
+        if ($request->phones) {
+            $phones = $request->phones;
+        }
+
+        try {
+            if ($request->phones) {
+                foreach ($phones as $val) {
+
+                    if (isset($val['status']) && $val['status'] == 'new') {
+
+                        PartnerPhone::create([
+                            'partnerMasterId' => $partner->id,
+                            'phoneNumber' => $val['phoneNumber'],
+                            'typeId' => $val['typeId'],
+                            'usageId' => $val['usageId'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    } elseif (isset($val['status']) && $val['status'] == 'delete') {
+
+                        PartnerPhone::where('id', '=', $val['id'])
+                            ->update(
+                                [
+                                    'deletedBy' => $request->user()->id,
+                                    'isDeleted' => 1,
+                                    'deletedAt' => Carbon::now()
+                                ]
+                            );
+                    } elseif (isset($val['status']) && $val['status'] == 'update') {
+
+                        $p = PartnerPhone::find($val['id']);
+
+                        $p->phoneNumber = $val['phoneNumber'];
+                        $p->typeId = $val['typeId'];
+                        $p->usageId = $val['usageId'];
+                        $p->userUpdateId = $request->user()->id;
+                        $p->updated_at = \Carbon\Carbon::now();
+                        $p->save();
+                    }
+                }
+            }
+
+            if ($resEmail) {
+                foreach ($resEmail as $value) {
+                    if ($value['status'] == 'new') {
+
+                        PartnerEmail::create([
+                            'partnerMasterId' => $partner->id,
+                            'email' => $value['email'],
+                            'usageId' => $value['usageId'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    } elseif ($value['status'] == 'delete') {
+
+                        PartnerEmail::where('id', '=', $value['id'])
+                            ->update(
+                                [
+                                    'deletedBy' => $request->user()->id,
+                                    'isDeleted' => 1,
+                                    'deletedAt' => Carbon::now()
+                                ]
+                            );
+                    } elseif ($value['status'] == 'update') {
+
+                        $p = PartnerEmail::find($value['id']);
+
+                        $p->email = $value['email'];
+                        $p->usageId = $value['usageId'];
+                        $p->userUpdateId = $request->user()->id;
+                        $p->updated_at = \Carbon\Carbon::now();
+                        $p->save();
+                    }
+                }
+            }
+
+            if ($resMsg) {
+                foreach ($resMsg as $value) {
+                    if ($value['status'] == 'new') {
+
+                        PartnerMessenger::create([
+                            'partnerMasterId' => $partner->id,
+                            'messengerName' => $value['messengerName'],
+                            'typeId' => $value['typeId'],
+                            'usageId' => $value['usageId'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    } elseif ($value['status'] == 'delete') {
+
+                        PartnerMessenger::where('id', '=', $value['id'])
+                            ->update(
+                                [
+                                    'deletedBy' => $request->user()->id,
+                                    'isDeleted' => 1,
+                                    'deletedAt' => Carbon::now()
+                                ]
+                            );
+                    } elseif ($value['status'] == 'update') {
+
+                        $p = PartnerMessenger::find($value['id']);
+
+                        $p->messengerName = $value['messengerName'];
+                        $p->typeId = $value['typeId'];
+                        $p->usageId = $value['usageId'];
+                        $p->userUpdateId = $request->user()->id;
+                        $p->updated_at = \Carbon\Carbon::now();
+                        $p->save();
+                    }
+                }
+            }
+
+            $partner->name = $request->name;
+            $partner->status = $request->status;
+            $partner->userUpdateId = $request->user()->id;
+            $partner->updated_at = \Carbon\Carbon::now();
+            $partner->save();
+
+            DB::commit();
+            return responseUpdate();
+        } catch (\Throwable $e) {
+            DB::rollback();
+            return responseInvalid([$e->getMessage()]);
+        }
+    }
+
+    function detail(Request $request)
+    {
+        $data = DB::table('partnerMasters')
+            ->select('id', 'name', 'status')
+            ->where('id', '=', $request->id)
+            ->first();
+
+        $dataPhone = DB::table('partnerPhones as pp')
+            ->join('usagePromotions as up', 'pp.usageId', 'up.id')
+            ->join('typePhonePromotions as tp', 'pp.typeId', 'tp.id')
+            ->select('pp.id', 'pp.phoneNumber', 'pp.typeId', 'tp.name as typeName', 'pp.usageId', 'up.usage')
+            ->where('pp.partnerMasterId', '=', $request->id)
+            ->where('pp.isDeleted', '=', 0)
+            ->get();
+
+        $dataEmail = DB::table('partnerEmails as pp')
+            ->join('usagePromotions as up', 'pp.usageId', 'up.id')
+            ->select('pp.id', 'pp.email', 'pp.usageId', 'up.usage')
+            ->where('pp.partnerMasterId', '=', $request->id)
+            ->where('pp.isDeleted', '=', 0)
+            ->get();
+
+        $dataMessenger = DB::table('partnerMessengers as pp')
+            ->join('usagePromotions as up', 'pp.usageId', 'up.id')
+            ->join('typeMessengerPromotions as tp', 'pp.typeId', 'tp.id')
+            ->select('pp.id', 'pp.messengerName', 'pp.typeId', 'tp.name as typeName', 'pp.usageId', 'up.usage')
+            ->where('pp.partnerMasterId', '=', $request->id)
+            ->where('pp.isDeleted', '=', 0)
+            ->get();
+
+        $data->phones = $dataPhone;
+        $data->emails = $dataEmail;
+        $data->messengers = $dataMessenger;
+
+        return responseList($data);
+    }
 
     function delete(Request $request)
     {

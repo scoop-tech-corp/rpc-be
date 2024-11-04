@@ -7,6 +7,7 @@ use App\Models\grandChildrenMenuGroups;
 use App\Models\menuGroup;
 use App\Models\menuProfile;
 use App\Models\menuSettings;
+use App\Models\AccessControl\AccessControl;
 use Illuminate\Http\Request;
 use DB;
 use Validator;
@@ -894,7 +895,7 @@ class MenuManagementController extends Controller
 
         DB::beginTransaction();
         try {
-            grandChildrenMenuGroups::create([
+            $idChild = grandChildrenMenuGroups::create([
                 'childrenId' => $request->childrenId,
                 'orderMenu' => $request->orderMenu,
                 'menuName' => $request->menuName,
@@ -906,6 +907,23 @@ class MenuManagementController extends Controller
                 'isActive' => $request->isActive,
                 'userId' => $request->user()->id,
             ]);
+
+            $roles = DB::table('usersRoles')
+                ->get();
+
+            foreach ($roles as $val) {
+
+                AccessControl::create(
+                    [
+                        'menuListId' => $idChild->id,
+                        'roleId' => $val->id,
+                        'accessTypeId' => 1,
+                        'isDeleted' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+            }
 
             DB::commit();
 

@@ -31,6 +31,8 @@ use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\Customer\ImportCustomerController;
+use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Promotion\PartnerController;
@@ -274,42 +276,65 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::put('/pet', [CustomerController::class, 'updatePetAge']);
 
+        Route::group(['prefix' => 'merge'], function () {
+            Route::get('/', [CustomerController::class, 'getSourceCustomer']);
+        });
 
+        Route::group(['prefix' => 'template'], function () {
 
-        Route::post('/datastatic', [DataStaticCustomerController::class, 'insertDataStaticCustomer']);
-        Route::get('/datastatic/customer', [DataStaticCustomerController::class, 'getDataStaticCustomer']);
-        Route::get('/datastatic', [DataStaticCustomerController::class, 'indexDataStaticCustomer']);
-        Route::delete('/datastatic', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
+            Route::get('/', [TemplateCustomerController::class, 'index']);
+            Route::get('/download', [TemplateCustomerController::class, 'download']);
+        });
+
+        Route::group(['prefix' => 'import'], function () {
+
+            Route::get('/', [ImportCustomerController::class, 'index']);
+            Route::post('/', [ImportCustomerController::class, 'import']);
+        });
+
+        Route::group(['prefix' => 'datastatic'], function () {
+
+            Route::post('/', [DataStaticCustomerController::class, 'insertDataStaticCustomer']);
+            Route::get('/customer', [DataStaticCustomerController::class, 'getDataStaticCustomer']);
+            Route::get('/', [DataStaticCustomerController::class, 'indexDataStaticCustomer']);
+            Route::delete('/', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
+        });
     });
 
-    Route::group(['prefix'=>'promotion'],function(){
+    Route::group(['prefix' => 'promotion'], function () {
 
-        Route::post('/', [PromotionController::class, 'create']);
-        Route::get('/', [PromotionController::class, 'index']);
-        Route::get('/export', [PromotionController::class, 'export']);
-        Route::get('/list-type', [PromotionController::class, 'listType']);
-        Route::get('/detail', [PromotionController::class, 'detail']);
-        Route::put('/', [PromotionController::class, 'update']);
-        Route::delete('/', [PromotionController::class, 'delete']);
+        Route::group(['prefix' => 'discount'], function () {
+            Route::post('/', [PromotionController::class, 'create']);
+            Route::get('/', [PromotionController::class, 'index']);
+            Route::get('/export', [PromotionController::class, 'export']);
+            Route::get('/list-type', [PromotionController::class, 'listType']);
+            Route::get('/detail', [PromotionController::class, 'detail']);
+            Route::put('/', [PromotionController::class, 'update']);
+            Route::delete('/', [PromotionController::class, 'delete']);
+        });
+
 
         Route::get('/datastatic', [PromotionDataStaticController::class, 'index']);
         Route::delete('/datastatic', [PromotionDataStaticController::class, 'delete']);
 
-        Route::post('/datastatic/type', [PromotionDataStaticController::class, 'insertType']);
-        Route::get('/datastatic/type', [PromotionDataStaticController::class, 'listType']);
+        Route::post('/datastatic/typephone', [PromotionDataStaticController::class, 'insertTypePhone']);
+        Route::get('/datastatic/typephone', [PromotionDataStaticController::class, 'listTypePhone']);
+
+        Route::post('/datastatic/typemessenger', [PromotionDataStaticController::class, 'insertTypeMessenger']);
+        Route::get('/datastatic/typemessenger', [PromotionDataStaticController::class, 'listTypeMessenger']);
 
         Route::post('/datastatic/usage', [PromotionDataStaticController::class, 'insertUsage']);
         Route::get('/datastatic/usage', [PromotionDataStaticController::class, 'listUsage']);
-    });
 
-    Route::group(['prefix'=>'partner'],function(){
+        Route::group(['prefix' => 'partner'], function () {
 
-        Route::post('/', [PartnerController::class, 'create']);
-        Route::get('/', [PartnerController::class, 'index']);
-        Route::get('/export', [PartnerController::class, 'export']);
-        Route::get('/detail', [PartnerController::class, 'detail']);
-        Route::put('/', [PartnerController::class, 'update']);
-        Route::delete('/', [PartnerController::class, 'delete']);
+            Route::post('/', [PartnerController::class, 'create']);
+            Route::get('/', [PartnerController::class, 'index']);
+            Route::get('/export', [PartnerController::class, 'export']);
+            Route::get('/detail', [PartnerController::class, 'detail']);
+            Route::put('/', [PartnerController::class, 'update']);
+            Route::delete('/', [PartnerController::class, 'delete']);
+        });
     });
 
     //STAFF

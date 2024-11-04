@@ -18,6 +18,7 @@ class Customer extends Model
     public $timestamps = true;
 
     protected $fillable = [
+        'memberNo',
         'firstName',
         'middleName',
         'lastName',
@@ -39,7 +40,7 @@ class Customer extends Model
         'deletedBy',
         'deletedAt',
         'createdBy',
-        'created_at', 
+        'created_at',
         'updated_at'
     ];
 }

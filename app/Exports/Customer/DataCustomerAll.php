@@ -57,6 +57,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
             ->select(
                 'a.id as id',
+                'a.memberNo',
                 DB::raw("CONCAT(IFNULL(a.firstName,'') ,' ', IFNULL(a.middleName,'') ,' ', IFNULL(a.lastName,'') ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
@@ -97,6 +98,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
 
             $listOrder = array(
                 'id',
+                'memberNo',
                 'customerName',
                 'totalPet',
                 'location',
@@ -133,6 +135,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             $data = DB::table($data)
                 ->select(
                     'id',
+                    'memberNo',
                     'customerName',
                     'totalPet',
                     'location',
@@ -151,6 +154,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
             $data = DB::table($data)
                 ->select(
                     'id',
+                    'memberNo',
                     'customerName',
                     'totalPet',
                     'location',
@@ -179,6 +183,7 @@ class DataCustomerAll implements FromCollection, ShouldAutoSize, WithHeadings, W
         return [
             [
                 'No.',
+                'Nomor Member',
                 'Nama Customer',
                 'Jumlah Pet',
                 'Lokasi',

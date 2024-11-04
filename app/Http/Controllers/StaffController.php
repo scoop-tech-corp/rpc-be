@@ -2202,7 +2202,7 @@ class StaffController extends Controller
                     if ($value['jadikan_sebagai_alamat_utama'] != "0" && $value['jadikan_sebagai_alamat_utama'] != "1") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is any invalid input on column Status at row ' . $count_row],
+                            'message' => ['There is any invalid input on column Jadikan Sebagai Alamat Utama at row ' . $count_row],
                         ], 422);
                     }
 

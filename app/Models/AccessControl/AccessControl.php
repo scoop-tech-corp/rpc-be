@@ -18,7 +18,11 @@ class AccessControl extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'menuListId', 'roleId', 'accessTypeId', 'accessLimitId', 'isDeleted', 'created_at', 'updated_at'
+        'menuListId',
+        'roleId',
+        'accessTypeId',
+        'isDeleted',
+        'created_at',
+        'updated_at'
     ];
-
 }
