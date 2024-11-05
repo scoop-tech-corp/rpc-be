@@ -985,7 +985,7 @@ class DiscountController extends Controller
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Rekap Partner.xlsx"',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
 }
