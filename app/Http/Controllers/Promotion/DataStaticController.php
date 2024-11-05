@@ -334,9 +334,19 @@ class DataStaticController extends Controller
         }
 
         foreach ($request->datas as $value) {
-            if ($value['type'] == 'type') {
 
-                TypeIdPromotion::where('id', '=', $value['id'])
+            if ($value['type'] == 'phone') {
+                TypePhonePromotion::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } elseif ($value['type'] == 'messenger') {
+
+                TypeMessengerPromotion::where('id', '=', $value['id'])
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -345,7 +355,7 @@ class DataStaticController extends Controller
                         ]
                     );
             } elseif ($value['type'] == 'usage') {
-                UsageIdPromotion::where('id', '=', $value['id'])
+                UsagePromotions::where('id', '=', $value['id'])
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
