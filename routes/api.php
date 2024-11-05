@@ -35,6 +35,7 @@ use App\Http\Controllers\Customer\ImportCustomerController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
+use App\Http\Controllers\Promotion\DiscountController;
 use App\Http\Controllers\Promotion\PartnerController;
 use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\ReportMenuManagementController;
@@ -304,13 +305,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::group(['prefix' => 'promotion'], function () {
 
         Route::group(['prefix' => 'discount'], function () {
-            Route::post('/', [PromotionController::class, 'create']);
-            Route::get('/', [PromotionController::class, 'index']);
-            Route::get('/export', [PromotionController::class, 'export']);
-            Route::get('/list-type', [PromotionController::class, 'listType']);
-            Route::get('/detail', [PromotionController::class, 'detail']);
-            Route::put('/', [PromotionController::class, 'update']);
-            Route::delete('/', [PromotionController::class, 'delete']);
+            Route::post('/', [DiscountController::class, 'create']);
+            Route::get('/', [DiscountController::class, 'index']);
+            Route::get('/export', [DiscountController::class, 'export']);
+            Route::get('/list-type', [DiscountController::class, 'listType']);
+            Route::get('/detail', [DiscountController::class, 'detail']);
+            Route::put('/', [DiscountController::class, 'update']);
+            Route::delete('/', [DiscountController::class, 'delete']);
         });
 
 
