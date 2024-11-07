@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Promotion;
 
-use App\Exports\Promotion\PromoReport;
+
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Exports\Promotion\PromoReport;
 use App\Models\PromotionBasedSales;
 use App\Models\PromotionBundle;
 use App\Models\PromotionBundleDetail;
@@ -12,15 +15,12 @@ use App\Models\PromotionDiscount;
 use App\Models\PromotionFreeItem;
 use App\Models\PromotionLocation;
 use App\Models\PromotionMaster;
-use Illuminate\Http\Request;
 use Validator;
 use DB;
-use Excel;
 use Illuminate\Support\Carbon;
 
-class PromotionController extends Controller
+class DiscountController extends Controller
 {
-
     public function create(Request $request)
     {
         //type => 1 = Free Item, 2 = Discount, 3 = Bundle, 4 = Based Sales
@@ -772,6 +772,19 @@ class PromotionController extends Controller
 
     public function update(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+            'type' => 'required|integer|in:1,2,3,4',
+            'name' => 'required|string',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date',
+            'status' => 'required|bool',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            responseInvalid($errors);
+        }
     }
 
     public function delete(Request $request)
@@ -864,43 +877,123 @@ class PromotionController extends Controller
 
     function export(Request $request)
     {
+        $spreadsheet = IOFactory::load(public_path() . '/template/' . 'Template_Export_Discount.xlsx');
+
+        $sheet = $spreadsheet->getSheet(0);
+
+        $data = DB::table('promotionMasters as pm')
+            ->join('promotionTypes as pt', 'pm.type', 'pt.id')
+            ->join('promotionLocations as pl', 'pl.promoMasterId', 'pm.id')
+            ->join('users as u', 'pm.userId', 'u.id')
+            ->select(
+                'pm.id as id',
+                'pm.name',
+                'pt.typeName as type',
+                DB::raw("DATE_FORMAT(pm.startDate, '%d/%m/%Y') as startDate"),
+                DB::raw("DATE_FORMAT(pm.endDate, '%d/%m/%Y') as endDate"),
+                DB::raw("CASE WHEN pm.status = 1 then 'Active' ELSE 'Inactive' END as status"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(pm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+            )
+            ->where('pm.isDeleted', '=', 0);
+
+        $locations = $request->locationId;
+
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $data = $data->whereIn('pl.locationId', $locations);
+            }
+        }
+
+        $types = $request->type;
+
+        if (count($types) > 0) {
+            if (!$types[0] == null) {
+                $data = $data->whereIn('pm.type', $types);
+            }
+        }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->groupBy(
+            'pm.id',
+            'pm.name',
+            'pt.typeName',
+            'pm.startDate',
+            'pm.endDate',
+            'pm.status',
+            'pm.created_at',
+            'u.firstName',
+        );
+
+        $data = $data->orderBy('pm.updated_at', 'desc')->get();
+
+        $row = 2;
+        $cnt = 1;
+        foreach ($data as $item) {
+            // Adjust according to your data structure
+            $sheet->setCellValue("A{$row}", $cnt);
+            $sheet->setCellValue("B{$row}", $item->name);
+            $sheet->setCellValue("C{$row}", $item->type);
+            $sheet->setCellValue("D{$row}", $item->startDate);
+            $sheet->setCellValue("E{$row}", $item->endDate);
+            $sheet->setCellValue("F{$row}", $item->status);
+            $sheet->setCellValue("G{$row}", $item->createdBy);
+            $sheet->setCellValue("H{$row}", $item->createdAt);
+            // Add more columns as needed
+            $cnt++;
+            $row++;
+        }
+
         $fileName = "";
         $location = "";
         $type = "";
 
-        if ($request->locationId) {
-            $dataLocation = DB::table('location as l')
-                ->select(DB::raw("GROUP_CONCAT(l.locationName SEPARATOR ', ') as location"))
-                ->whereIn('l.id', $request->locationId)
-                ->distinct()
-                ->pluck('location')
-                ->first();
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $dataLocation = DB::table('location as l')
+                    ->select(DB::raw("GROUP_CONCAT(l.locationName SEPARATOR ', ') as location"))
+                    ->whereIn('l.id', $request->locationId)
+                    ->distinct()
+                    ->pluck('location')
+                    ->first();
 
-            $location = " " . $dataLocation;
+                $location = " " . $dataLocation;
+            }
         }
 
-        if ($request->type) {
+        if (count($types) > 0) {
+            if (!$types[0] == null) {
 
-            $dataType = DB::table('promotionTypes')
-                ->select(DB::raw("GROUP_CONCAT(typeName SEPARATOR ', ') as typeName"))
-                ->whereIn('id', $request->locationId)
-                ->distinct()
-                ->pluck('typeName')
-                ->first();
+                $dataType = DB::table('promotionTypes')
+                    ->select(DB::raw("GROUP_CONCAT(typeName SEPARATOR ', ') as typeName"))
+                    ->whereIn('id', $request->locationId)
+                    ->distinct()
+                    ->pluck('typeName')
+                    ->first();
 
-            $type = " " . $dataType;
+                $type = " " . $dataType;
+            }
         }
 
-        $fileName = "Rekap Promo" . $location . $type . ".xlsx";
+        //buat ini karena terdapat _ di akhir filename saat didownload di server
+        if ($location == "" && $type == "") {
+            $fileName = "Rekap Diskon.xlsx";
+        } else {
+            $fileName = "Rekap Diskon" . $location . $type . ".xlsx";
+        }
 
-        return Excel::download(
-            new PromoReport(
-                $request->orderValue,
-                $request->orderColumn,
-                $request->locationId,
-                $request->type
-            ),
-            $fileName
-        );
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
+        $writer->save($newFilePath);
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
     }
 }

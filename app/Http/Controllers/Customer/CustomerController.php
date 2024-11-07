@@ -110,10 +110,10 @@ class CustomerController extends Controller
                         $join->on('b.customerId', '=', 'a.id');
                     }
                 )
-                ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+                //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
                 ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-                ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-                ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+                //->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
+                //->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
                 ->select(
                     'a.id as id',
                     'a.memberNo',
@@ -121,22 +121,30 @@ class CustomerController extends Controller
                     DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                     'd.locationName as location',
                     'a.locationId as locationId',
-                    DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                    DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                    'f.email as emailAddress',
+                    DB::raw("CASE WHEN (select count(*) from customerTelephones a where customerId=a.id and a.usage='Utama' and isDeleted=0) = 0 then '' else
+                    (select phoneNumber from customerTelephones a where customerId=a.id and a.usage='Utama' limit 1) END as phoneNumber"),
+
+                    DB::raw("CASE WHEN (select count(*) from customerTelephones a where customerId=a.id and type='Whatsapp' and a.usage='Utama' and isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                    DB::raw("CASE WHEN (select count(*) from customerEmails a where customerId=a.id and a.usage='Utama' and isDeleted=0) = 0 THEN '' ELSE
+                    (select email from customerEmails a where customerId=a.id and a.usage='Utama' and isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                    // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                    // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                    //'f.email as emailAddress',
                     'a.createdBy as createdBy',
                     DB::raw('a.created_at as createdAt'),
                     'a.updated_at'
                 )
                 ->where([
                     ['a.isDeleted', '=', '0'],
-                    ['c.isDeleted', '=', '0'],
-                    ['c.isPrimary', '=', '1'],
+                    //['c.isDeleted', '=', '0'],
+                    //['c.isPrimary', '=', '1'],
                     ['d.isDeleted', '=', '0'],
-                    ['e.isDeleted', '=', '0'],
-                    ['e.usage', '=', 'Utama'],
-                    ['f.isDeleted', '=', '0'],
-                    ['f.usage', '=', 'Utama'],
+                    // ['e.isDeleted', '=', '0'],
+                    // ['e.usage', '=', 'Utama'],
+                    // ['f.isDeleted', '=', '0'],
+                    // ['f.usage', '=', 'Utama'],
                 ]);
 
             if ($request->locationId) {
@@ -398,7 +406,7 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
             ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
@@ -417,8 +425,8 @@ class CustomerController extends Controller
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
+                //['c.isDeleted', '=', '0'],
+                //['c.isPrimary', '=', '1'],
                 ['d.isDeleted', '=', '0'],
                 ['e.isDeleted', '=', '0'],
                 ['e.usage', '=', 'Utama'],
@@ -484,7 +492,7 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
             ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
@@ -504,8 +512,8 @@ class CustomerController extends Controller
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
+                //['c.isDeleted', '=', '0'],
+                //['c.isPrimary', '=', '1'],
                 ['d.isDeleted', '=', '0'],
                 ['e.isDeleted', '=', '0'],
                 ['e.usage', '=', 'Utama'],
@@ -569,7 +577,7 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
             ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
@@ -589,8 +597,8 @@ class CustomerController extends Controller
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
+                // ['c.isDeleted', '=', '0'],
+                // ['c.isPrimary', '=', '1'],
                 ['d.isDeleted', '=', '0'],
                 ['e.isDeleted', '=', '0'],
                 ['e.usage', '=', 'Utama'],
@@ -651,7 +659,7 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
             ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
@@ -671,8 +679,8 @@ class CustomerController extends Controller
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
+                // ['c.isDeleted', '=', '0'],
+                // ['c.isPrimary', '=', '1'],
                 ['d.isDeleted', '=', '0'],
                 ['e.isDeleted', '=', '0'],
                 ['e.usage', '=', 'Utama'],
@@ -733,7 +741,7 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
             ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
@@ -753,8 +761,8 @@ class CustomerController extends Controller
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
+                // ['c.isDeleted', '=', '0'],
+                // ['c.isPrimary', '=', '1'],
                 ['d.isDeleted', '=', '0'],
                 ['e.isDeleted', '=', '0'],
                 ['e.usage', '=', 'Utama'],
@@ -812,7 +820,7 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
             ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
@@ -832,8 +840,8 @@ class CustomerController extends Controller
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
+                // ['c.isDeleted', '=', '0'],
+                // ['c.isPrimary', '=', '1'],
                 ['d.isDeleted', '=', '0'],
                 ['e.isDeleted', '=', '0'],
                 ['e.usage', '=', 'Utama'],
@@ -890,7 +898,7 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
             ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
@@ -910,8 +918,8 @@ class CustomerController extends Controller
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
+                // ['c.isDeleted', '=', '0'],
+                // ['c.isPrimary', '=', '1'],
                 ['d.isDeleted', '=', '0'],
                 ['e.isDeleted', '=', '0'],
                 ['e.usage', '=', 'Utama'],
@@ -969,7 +977,7 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            ->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
+            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
             ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
             ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
@@ -989,8 +997,8 @@ class CustomerController extends Controller
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                ['c.isDeleted', '=', '0'],
-                ['c.isPrimary', '=', '1'],
+                // ['c.isDeleted', '=', '0'],
+                // ['c.isPrimary', '=', '1'],
                 ['d.isDeleted', '=', '0'],
                 ['e.isDeleted', '=', '0'],
                 ['e.usage', '=', 'Utama'],
