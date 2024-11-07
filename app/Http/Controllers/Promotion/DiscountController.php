@@ -924,13 +924,6 @@ class DiscountController extends Controller
 
         $data = $data->orderBy('pm.updated_at', 'desc')->get();
 
-        $val = 1;
-        foreach ($data as $key) {
-            $key->number = $val;
-            $val++;
-        }
-
-
         $row = 2;
         $cnt = 1;
         foreach ($data as $item) {
@@ -975,7 +968,12 @@ class DiscountController extends Controller
             $type = " " . $dataType;
         }
 
-        $fileName = "Rekap Diskon" . $location . $type . ".xlsx";
+        //buat ini karena terdapat _ di akhir filename saat didownload di server
+        if ($location == "" && $type == "") {
+            $fileName = "Rekap Diskon.xlsx";
+        } else {
+            $fileName = "Rekap Diskon" . $location . $type . ".xlsx";
+        }
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
