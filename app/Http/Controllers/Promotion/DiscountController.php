@@ -897,18 +897,28 @@ class DiscountController extends Controller
             )
             ->where('pm.isDeleted', '=', 0);
 
-        if ($request->locationId) {
+        $locations = $request->locationId;
 
-            $data = $data->whereIn('pl.locationId', $request->locationId);
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $data = $data->whereIn('pl.locationId', $locations);
+            }
         }
 
-        if ($request->type) {
+        $types = $request->type;
 
-            $data = $data->whereIn('pm.type', $request->type);
+        if (count($types) > 0) {
+            if (!$types[0] == null) {
+                $data = $data->whereIn('pm.type', $types);
+            }
         }
 
-        if ($request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        $orderValues = $request->orderValue;
+
+        if (count($orderValues) > 0) {
+            if (!$orderValues[0] == null) {
+                $data = $data->orderBy($request->orderColumn, $request->orderValue);
+            }
         }
 
         $data = $data->groupBy(
@@ -945,27 +955,31 @@ class DiscountController extends Controller
         $location = "";
         $type = "";
 
-        if ($request->locationId) {
-            $dataLocation = DB::table('location as l')
-                ->select(DB::raw("GROUP_CONCAT(l.locationName SEPARATOR ', ') as location"))
-                ->whereIn('l.id', $request->locationId)
-                ->distinct()
-                ->pluck('location')
-                ->first();
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $dataLocation = DB::table('location as l')
+                    ->select(DB::raw("GROUP_CONCAT(l.locationName SEPARATOR ', ') as location"))
+                    ->whereIn('l.id', $request->locationId)
+                    ->distinct()
+                    ->pluck('location')
+                    ->first();
 
-            $location = " " . $dataLocation;
+                $location = " " . $dataLocation;
+            }
         }
 
-        if ($request->type) {
+        if (count($types) > 0) {
+            if (!$types[0] == null) {
 
-            $dataType = DB::table('promotionTypes')
-                ->select(DB::raw("GROUP_CONCAT(typeName SEPARATOR ', ') as typeName"))
-                ->whereIn('id', $request->locationId)
-                ->distinct()
-                ->pluck('typeName')
-                ->first();
+                $dataType = DB::table('promotionTypes')
+                    ->select(DB::raw("GROUP_CONCAT(typeName SEPARATOR ', ') as typeName"))
+                    ->whereIn('id', $request->locationId)
+                    ->distinct()
+                    ->pluck('typeName')
+                    ->first();
 
-            $type = " " . $dataType;
+                $type = " " . $dataType;
+            }
         }
 
         //buat ini karena terdapat _ di akhir filename saat didownload di server
