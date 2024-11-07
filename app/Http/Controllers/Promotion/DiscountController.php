@@ -913,12 +913,8 @@ class DiscountController extends Controller
             }
         }
 
-        $orderValues = $request->orderValue;
-
-        if (count($orderValues) > 0) {
-            if (!$orderValues[0] == null) {
-                $data = $data->orderBy($request->orderColumn, $request->orderValue);
-            }
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
         }
 
         $data = $data->groupBy(
