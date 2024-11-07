@@ -975,7 +975,7 @@ class DiscountController extends Controller
             $type = " " . $dataType;
         }
 
-        $fileName = "Rekap Promo" . $location . $type . ".xlsx";
+        $fileName = "Rekap Diskon" . $location . $type . ".xlsx";
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
