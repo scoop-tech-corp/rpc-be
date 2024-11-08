@@ -22,21 +22,26 @@ class PartnerController extends Controller
         $page = $request->goToPage;
 
         $data = DB::table('partnerMasters as pm')
-            ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
-            ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
+            // ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
+            // ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
             ->join('users as u', 'pm.userId', 'u.id')
             ->select(
                 'pm.id',
                 'pm.name',
                 'pm.status',
-                'pp.phoneNumber',
-                'pe.email',
+                DB::raw("CASE WHEN (select count(*) from partnerPhones a where partnerMasterId=pm.id and a.usageId=1 and isDeleted=0) = 0 then '' else
+                    (select phoneNumber from partnerPhones a where partnerMasterId=pm.id and a.usageId=1 and isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from partnerEmails a where partnerMasterId=pm.id and a.usageId=1 and isDeleted=0) = 0 then '' else
+                    (select email from partnerEmails a where partnerMasterId=pm.id and a.usageId=1 and isDeleted=0 limit 1) END as email"),
+                //'pp.phoneNumber',
+                //'pe.email',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
-            ->where('pm.isDeleted', '=', 0)
-            ->where('pp.usageId', '=', 1)
-            ->where('pe.usageId', '=', 1);
+            ->where('pm.isDeleted', '=', 0);
+        //->where('pp.usageId', '=', 1)
+        //->where('pe.usageId', '=', 1);
 
         if ($request->search) {
             $res = $this->Search($request);
@@ -83,15 +88,13 @@ class PartnerController extends Controller
         $temp_column = null;
 
         $data = DB::table('partnerMasters as pm')
-            ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
-            ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
+            // ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
+            // ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
             ->join('users as u', 'pm.userId', 'u.id')
             ->select(
                 'pm.name'
             )
-            ->where('pm.isDeleted', '=', 0)
-            ->where('pp.usageId', '=', 1)
-            ->where('pe.usageId', '=', 1);
+            ->where('pm.isDeleted', '=', 0);
 
         if ($request->search) {
             $data = $data->where('pm.name', 'like', '%' . $request->search . '%');
@@ -103,47 +106,47 @@ class PartnerController extends Controller
             $temp_column[] = 'pm.name';
         }
 
-        $data = DB::table('partnerMasters as pm')
-            ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
-            ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
-            ->join('users as u', 'pm.userId', 'u.id')
-            ->select(
-                'pp.phoneNumber'
-            )
-            ->where('pm.isDeleted', '=', 0)
-            ->where('pp.usageId', '=', 1)
-            ->where('pe.usageId', '=', 1);
+        // $data = DB::table('partnerMasters as pm')
+        //     ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
+        //     ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
+        //     ->join('users as u', 'pm.userId', 'u.id')
+        //     ->select(
+        //         'pp.phoneNumber'
+        //     )
+        //     ->where('pm.isDeleted', '=', 0)
+        //     ->where('pp.usageId', '=', 1)
+        //     ->where('pe.usageId', '=', 1);
 
-        if ($request->search) {
-            $data = $data->where('pp.phoneNumber', 'like', '%' . $request->search . '%');
-        }
+        // if ($request->search) {
+        //     $data = $data->where('pp.phoneNumber', 'like', '%' . $request->search . '%');
+        // }
 
-        $data = $data->get();
+        // $data = $data->get();
 
-        if (count($data)) {
-            $temp_column[] = 'pp.phoneNumber';
-        }
+        // if (count($data)) {
+        //     $temp_column[] = 'pp.phoneNumber';
+        // }
 
-        $data = DB::table('partnerMasters as pm')
-            ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
-            ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
-            ->join('users as u', 'pm.userId', 'u.id')
-            ->select(
-                'pe.email'
-            )
-            ->where('pm.isDeleted', '=', 0)
-            ->where('pp.usageId', '=', 1)
-            ->where('pe.usageId', '=', 1);
+        // $data = DB::table('partnerMasters as pm')
+        //     ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
+        //     ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
+        //     ->join('users as u', 'pm.userId', 'u.id')
+        //     ->select(
+        //         'pe.email'
+        //     )
+        //     ->where('pm.isDeleted', '=', 0)
+        //     ->where('pp.usageId', '=', 1)
+        //     ->where('pe.usageId', '=', 1);
 
-        if ($request->search) {
-            $data = $data->where('pe.email', 'like', '%' . $request->search . '%');
-        }
+        // if ($request->search) {
+        //     $data = $data->where('pe.email', 'like', '%' . $request->search . '%');
+        // }
 
-        $data = $data->get();
+        // $data = $data->get();
 
-        if (count($data)) {
-            $temp_column[] = 'pe.email';
-        }
+        // if (count($data)) {
+        //     $temp_column[] = 'pe.email';
+        // }
 
         $data = DB::table('partnerMasters as pm')
             ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
