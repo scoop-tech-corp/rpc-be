@@ -2261,7 +2261,7 @@ class StaffController extends Controller
                         continue;
                     }
 
-                    if ($value['id'] == null && $value['id_pemakaian'] == null && $value['nomor'] == null && $value['id_tipe'] == null) {
+                    if ($value['id'] == null && $value['id_kegunaan'] == null && $value['nomor'] == null && $value['id_tipe'] == null) {
                         break;
                     }
 
@@ -2272,7 +2272,7 @@ class StaffController extends Controller
                         ], 422);
                     }
 
-                    if ($value['id_pemakaian'] == "") {
+                    if ($value['id_kegunaan'] == "") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
                             'message' => ['There is any empty cell on column Id Pemakaian at sheet Telepon at row ' . $count_row],
@@ -2309,11 +2309,11 @@ class StaffController extends Controller
                         continue;
                     }
 
-                    if ($value['id'] == null && $value['id_pemakaian'] == null && $value['alamat_email'] == null) {
+                    if ($value['id'] == null && $value['id_kegunaan'] == null && $value['alamat_email'] == null) {
                         break;
                     }
 
-                    if ($value['id_pemakaian'] == "") {
+                    if ($value['id_kegunaan'] == "") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
                             'message' => ['There is any empty cell on column Id Pemakaian at sheet Email at row ' . $count_row],
@@ -2342,7 +2342,7 @@ class StaffController extends Controller
                         continue;
                     }
 
-                    if ($value['id'] == null && $value['id_pemakaian'] == null && $value['nama_pengguna'] == null && $value['id_tipe'] == null) {
+                    if ($value['id'] == null && $value['id_kegunaan'] == null && $value['nama_pengguna'] == null && $value['id_tipe'] == null) {
                         break;
                     }
 
@@ -2353,7 +2353,7 @@ class StaffController extends Controller
                         ], 422);
                     }
 
-                    if ($value['id_pemakaian'] == "") {
+                    if ($value['id_kegunaan'] == "") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
                             'message' => ['There is any empty cell on column Id Pemakaian at sheet Messenger at row ' . $count_row],
@@ -2392,7 +2392,7 @@ class StaffController extends Controller
                 $endDateFormatted = $endDate->format('Y-m-d'); // Change format as needed
 
                 $masterEmail = collect($src5)->where('id', $src1[$i]['id'])
-                    ->where('id_pemakaian', 1);
+                    ->where('id_kegunaan', 1);
 
                 if (!$masterEmail) {
                     return response()->json([
@@ -2496,7 +2496,7 @@ class StaffController extends Controller
                             'usersId' => $userId,
                             'phoneNumber' => $value['nomor_telepon'],
                             'type' => $value['id_tipe'],
-                            'usage' => $value['id_pemakaian'],
+                            'usage' => $value['id_kegunaan'],
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -2514,7 +2514,7 @@ class StaffController extends Controller
                             'usersId' => $userId,
                             'messengerNumber' => trim($value['nama_pengguna']),
                             'type' => $value['id_tipe'],
-                            'usage' => $value['id_pemakaian'],
+                            'usage' => $value['id_kegunaan'],
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
