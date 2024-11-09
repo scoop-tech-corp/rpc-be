@@ -729,12 +729,12 @@ class PartnerController extends Controller
         foreach ($data as $item) {
             // Adjust according to your data structure
             $sheet->setCellValue("A{$row}", $no);
-            $sheet->setCellValue("A{$row}", $item->name);
-            $sheet->setCellValue("B{$row}", $item->status);
-            $sheet->setCellValue("C{$row}", $item->phoneNumber);
-            $sheet->setCellValue("D{$row}", $item->email);
-            $sheet->setCellValue("E{$row}", $item->createdBy);
-            $sheet->setCellValue("F{$row}", $item->createdAt);
+            $sheet->setCellValue("B{$row}", $item->name);
+            $sheet->setCellValue("C{$row}", $item->status);
+            $sheet->setCellValue("D{$row}", $item->phoneNumber);
+            $sheet->setCellValue("E{$row}", $item->email);
+            $sheet->setCellValue("F{$row}", $item->createdBy);
+            $sheet->setCellValue("G{$row}", $item->createdAt);
             // Add more columns as needed
             $no++;
             $row++;
