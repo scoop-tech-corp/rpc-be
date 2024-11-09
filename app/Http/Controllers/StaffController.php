@@ -2046,6 +2046,40 @@ class StaffController extends Controller
                         ], 422);
                     }
 
+                    $checkSerial = $this->isExcelSerialDate($value['tanggal_mulai']);
+                    $status = false;
+
+                    if (!$this->isValidDate($value['tanggal_mulai'])) {
+                        $status = true;
+                    } elseif ($checkSerial) {
+                        $status = true;
+                    }
+
+                    if (!$status) {
+
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is invalid date format Tanggal Lahir on sheet Vet at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $checkSerial = $this->isExcelSerialDate($value['tanggal_berakhir']);
+                    $status = false;
+
+                    if (!$this->isValidDate($value['tanggal_berakhir'])) {
+                        $status = true;
+                    } elseif ($checkSerial) {
+                        $status = true;
+                    }
+
+                    if (!$status) {
+
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is invalid date format Tanggal Lahir on sheet Vet at row ' . $count_row],
+                        ], 422);
+                    }
+
                     $codeLocation = explode(';', $value['lokasi']);
 
                     if (count($codeLocation) !== count(array_unique($codeLocation))) {
@@ -2120,7 +2154,6 @@ class StaffController extends Controller
             }
 
             $count_row = 1;
-            $total_data = 0;
 
             if (count($src2) > 2) {
 
@@ -2129,6 +2162,10 @@ class StaffController extends Controller
                     if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
                         $count_row += 2;
                         continue;
+                    }
+
+                    if ($value['id'] == null && $value['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'] == null && $value['terima_email_harian_yang_berisi_janji_temu_terjadwal_mereka'] == null && $value['izinkan_anggota_staff_ini_untuk_masuk_menggunakan_alamat_email_mereka'] == null) {
+                        break;
                     }
 
                     if ($value['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'] != "0" && $value['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'] != "1") {
@@ -2175,13 +2212,11 @@ class StaffController extends Controller
                         ], 422);
                     }
 
-                    $total_data += 1;
                     $count_row += 1;
                 }
             }
 
             $count_row = 1;
-            $total_data = 0;
 
             if (count($src3) > 2) {
 
@@ -2190,6 +2225,10 @@ class StaffController extends Controller
                     if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
                         $count_row += 2;
                         continue;
+                    }
+
+                    if ($value['id'] == null && $value['alamat_jalan'] == null && $value['jadikan_sebagai_alamat_utama'] == null) {
+                        break;
                     }
 
                     if ($value['alamat_jalan'] == "") {
@@ -2206,14 +2245,13 @@ class StaffController extends Controller
                         ], 422);
                     }
 
-                    $total_data += 1;
                     $count_row += 1;
                 }
             }
 
             $count_row = 1;
-            $total_data = 0;
 
+            //telepon
             if (count($src4) > 2) {
 
                 foreach ($src4 as $value) {
@@ -2222,14 +2260,46 @@ class StaffController extends Controller
                         $count_row += 2;
                         continue;
                     }
-                    $total_data += 1;
+
+                    if ($value['id'] == null && $value['id_pemakaian'] == null && $value['nomor'] == null && $value['id_tipe'] == null) {
+                        break;
+                    }
+
+                    if ($value['id'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Id at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['id_pemakaian'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Id Pemakaian at sheet Telepon at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['nomor_telepon'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Nama Pengguna at sheet Telepon at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['id_tipe'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column ID Tipe at sheet Telepon at row ' . $count_row],
+                        ], 422);
+                    }
+
                     $count_row += 1;
                 }
             }
 
             $count_row = 1;
-            $total_data = 0;
 
+            //email
             if (count($src5) > 2) {
 
                 foreach ($src5 as $value) {
@@ -2238,15 +2308,77 @@ class StaffController extends Controller
                         $count_row += 2;
                         continue;
                     }
-                    $total_data += 1;
+
+                    if ($value['id'] == null && $value['id_pemakaian'] == null && $value['alamat_email'] == null) {
+                        break;
+                    }
+
+                    if ($value['id_pemakaian'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Id Pemakaian at sheet Email at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['alamat_email'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Nama Pengguna at sheet Email at row ' . $count_row],
+                        ], 422);
+                    }
+
                     $count_row += 1;
                 }
             }
 
+            $count_row = 1;
+
+            //messenger
             if (count($src6) > 2) {
+                foreach ($src6 as $value) {
+
+                    if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
+                        $count_row += 2;
+                        continue;
+                    }
+
+                    if ($value['id'] == null && $value['id_pemakaian'] == null && $value['nama_pengguna'] == null && $value['id_tipe'] == null) {
+                        break;
+                    }
+
+                    if ($value['id'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Id at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['id_pemakaian'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Id Pemakaian at sheet Messenger at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['nama_pengguna'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Nama Pengguna at sheet Messenger at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    if ($value['id_tipe'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column ID Tipe at sheet Messenger at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $count_row += 1;
+                }
             }
 
-            for ($i = 1; $i < count($src2); $i++) {
+            for ($i = 1; $i < count($src1); $i++) {
 
                 $gender = "female";
                 if ($src1[$i]['jenis_kelamin'] == "P") {
@@ -2258,6 +2390,20 @@ class StaffController extends Controller
 
                 $startDateFormatted = $startDate->format('Y-m-d'); // Change format as needed
                 $endDateFormatted = $endDate->format('Y-m-d'); // Change format as needed
+
+                $masterEmail = collect($src5)->where('id', $src1[$i]['id'])
+                    ->where('id_pemakaian', 1);
+
+                if (!$masterEmail) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['There is no any email address with usage Utama with Id ' . $src1[$i]['id']],
+                    ], 422);
+                }
+
+                foreach ($masterEmail as $value) {
+                    $resEmail = $value['alamat_email'];
+                }
 
                 $userId = DB::table('users')
                     ->insertGetId([
@@ -2291,78 +2437,95 @@ class StaffController extends Controller
                         'imageName' => '',
                         'imagePath' => '',
                         'password' => bcrypt(trim($src1[$i]['password'])),
-                        'email' => trim($src5[$i]['alamat_email']),
+                        'email' => trim($resEmail),
                         'isDeleted' => 0,
-                        'createdBy' => 'admin',
+                        'createdBy' => $request->user()->id,
                         'created_at' => now(),
                         'updated_at' => now(),
                         'isLogin' => 0,
                     ]);
 
-                $userAddress = UsersDetailAddresses::create(
-                    [
-                        'usersid' => $userId,
-                        'addressName' => trim($src3[$i]['alamat_jalan']),
-                        'additionalInfo' => trim($src3[$i]['informasi_tambahan']),
-                        'provinceCode' => $src3[$i]['kode_provinsi'],
-                        'cityCode' => $src3[$i]['kode_kota'],
-                        'country' => 'Indonesia',
-                        'isPrimary' => $src3[$i]['jadikan_sebagai_alamat_utama'],
-                        'createdBy' => 'admin',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                        'isDeleted' => 0,
-                    ]
-                );
+                $resultAddress = collect($src3)->where('id', $src1[$i]['id']);
 
-                $userEmails = UsersEmails::create([
-                    'usersId' => $userId,
-                    'email' => trim($src5[$i]['alamat_email']),
-                    'email_verified_at' => now(),
-                    'usage' => 'Utama',
-                    'isDeleted' => 0,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                if ($resultAddress) {
+                    foreach ($resultAddress as $value) {
 
-                $userLocation = UsersLocation::create([
 
-                    'usersId' => $userId,
-                    'locationId' => $src1[$i]['lokasi'],
-                    'isDeleted' => 0,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                if (count($src6) > 2) {
-                    $userMessenger = UsersMessengers::create([
-
-                        'usersId' => $userId,
-                        'messengerNumber' => trim($src3[$i]['alamat_email']),
-                        'type' => $userId,
-                        'usage' => $userId,
-                        'isDeleted' => 0,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                        UsersDetailAddresses::create(
+                            [
+                                'usersid' => $userId,
+                                'addressName' => trim($value['alamat_jalan']),
+                                'additionalInfo' => trim($value['informasi_tambahan']),
+                                'provinceCode' => $value['kode_provinsi'],
+                                'cityCode' => $value['kode_kota'],
+                                'country' => 'Indonesia',
+                                'isPrimary' => $value['jadikan_sebagai_alamat_utama'],
+                                'createdBy' => $request->user()->id,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                                'isDeleted' => 0,
+                            ]
+                        );
+                    }
                 }
 
+                $resulEmail = collect($src5)->where('id', $src1[$i]['id']);
 
-                $userRole = UsersTelephones::create([
+                if ($resulEmail) {
+                    foreach ($resulEmail as $value) {
 
-                    'usersId' => $userId,
-                    'phoneNumber' => $src4[$i]['nomor'],
-                    'type' => $src4[$i]['tipe'],
-                    'usage' => $src4[$i]['pemakaian'],
-                    'isDeleted' => 0,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                        UsersEmails::create([
+                            'usersId' => $userId,
+                            'email' => trim($value['alamat_email']),
+                            'email_verified_at' => now(),
+                            'usage' => 'Utama',
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+
+                $resultTelp = collect($src4)->where('id', $src1[$i]['id']);
+
+                if ($resultTelp) {
+                    foreach ($resultTelp as $value) {
+
+                        UsersTelephones::create([
+
+                            'usersId' => $userId,
+                            'phoneNumber' => $value['nomor_telepon'],
+                            'type' => $value['id_tipe'],
+                            'usage' => $value['id_pemakaian'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+
+                $resultMess = collect($src6)->where('id', $src1[$i]['id']);
+
+                if ($resultMess) {
+                    foreach ($resultMess as $value) {
+
+                        UsersMessengers::create([
+
+                            'usersId' => $userId,
+                            'messengerNumber' => trim($value['nama_pengguna']),
+                            'type' => $value['id_tipe'],
+                            'usage' => $value['id_pemakaian'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
             }
 
             DB::commit();
 
-            return responseSuccess($userId, 'Insert Data Successful!');
+            return responseSuccess(count($src1) - 1, 'Insert Data Successful!');
         } catch (Exception $e) {
             DB::rollback();
 
@@ -2421,6 +2584,24 @@ class StaffController extends Controller
                 'errors' => $e,
             ]);
         }
+    }
+
+    private function isExcelSerialDate($value)
+    {
+        // Ensure the value is numeric and not a decimal (for dates without time)
+        if (is_numeric($value)) {
+            // Check if it's an integer and within the valid Excel serial date range
+            if ($value >= 1 && $value <= 2958465 && $value == floor($value)) {
+                return true; // It's a valid Excel serial date
+            }
+        }
+        return false; // Not a valid Excel serial date
+    }
+
+    private function isValidDate($date)
+    {
+        $d = \DateTime::createFromFormat('Y-m-d', $date);
+        return $d && $d->format('Y-m-d') === $date;
     }
 
     public function template()
@@ -2533,6 +2714,61 @@ class StaffController extends Controller
             $sheet->setCellValue("A{$row}", $item->kodeKabupaten);
             $sheet->setCellValue("B{$row}", $item->kodeProvinsi);
             $sheet->setCellValue("C{$row}", $item->namaKabupaten);
+            // Add more columns as needed
+            $row++;
+        }
+
+        //usage
+        $row = 2;
+        $sheet = $spreadsheet->getSheet(13);
+
+        $staticUsage = DB::table('dataStaticStaff')
+            ->select('id', 'name')
+            ->where('isDeleted', '=', '0')
+            ->where('value', '=', 'Usage')
+            ->get();
+
+        foreach ($staticUsage as $item) {
+            // Adjust according to your data structure
+            $sheet->setCellValue("A{$row}", $item->id);
+            $sheet->setCellValue("B{$row}", $item->name);
+            // Add more columns as needed
+            $row++;
+        }
+
+        //tipe telepon
+
+        $row = 2;
+        $sheet = $spreadsheet->getSheet(14);
+
+        $staticTelp = DB::table('dataStaticStaff')
+            ->select('id', 'name')
+            ->where('isDeleted', '=', '0')
+            ->where('value', '=', 'Telephone')
+            ->get();
+
+        foreach ($staticTelp as $item) {
+            // Adjust according to your data structure
+            $sheet->setCellValue("A{$row}", $item->id);
+            $sheet->setCellValue("B{$row}", $item->name);
+            // Add more columns as needed
+            $row++;
+        }
+
+        //tipe messenger
+        $row = 2;
+        $sheet = $spreadsheet->getSheet(15);
+
+        $staticMes = DB::table('dataStaticStaff')
+            ->select('id', 'name')
+            ->where('isDeleted', '=', '0')
+            ->where('value', '=', 'Messenger')
+            ->get();
+
+        foreach ($staticMes as $item) {
+            // Adjust according to your data structure
+            $sheet->setCellValue("A{$row}", $item->id);
+            $sheet->setCellValue("B{$row}", $item->name);
             // Add more columns as needed
             $row++;
         }
