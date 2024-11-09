@@ -122,7 +122,7 @@ class CustomerController extends Controller
                     'd.locationName as location',
                     'a.locationId as locationId',
                     DB::raw("CASE WHEN (select count(*) from customerTelephones a where customerId=a.id and a.usage='Utama' and isDeleted=0) = 0 then '' else
-                    (select phoneNumber from customerTelephones a where customerId=a.id and a.usage='Utama' limit 1) END as phoneNumber"),
+                    (select phoneNumber from customerTelephones a where customerId=a.id and a.usage='Utama' and isDeleted=0 limit 1) END as phoneNumber"),
 
                     DB::raw("CASE WHEN (select count(*) from customerTelephones a where customerId=a.id and type='Whatsapp' and a.usage='Utama' and isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
 
