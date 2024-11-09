@@ -701,26 +701,34 @@ class PartnerController extends Controller
         $sheet = $spreadsheet->getSheet(0);
 
         $data = DB::table('partnerMasters as pm')
-            ->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
-            ->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
+            //->join('partnerPhones as pp', 'pm.id', 'pp.partnerMasterId')
+            //->join('partnerEmails as pe', 'pm.id', 'pe.partnerMasterId')
             ->join('users as u', 'pm.userId', 'u.id')
             ->select(
+                'pm.id',
                 'pm.name',
-                DB::raw("CASE WHEN pm.status=1 then 'Active' else 'Non Active' end as status"),
-                'pp.phoneNumber',
-                'pe.email',
+                'pm.status',
+                DB::raw("CASE WHEN (select count(*) from partnerPhones a where partnerMasterId=pm.id and a.usageId=1 and isDeleted=0) = 0 then '' else
+                    (select phoneNumber from partnerPhones a where partnerMasterId=pm.id and a.usageId=1 and isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from partnerEmails a where partnerMasterId=pm.id and a.usageId=1 and isDeleted=0) = 0 then '' else
+                    (select email from partnerEmails a where partnerMasterId=pm.id and a.usageId=1 and isDeleted=0 limit 1) END as email"),
+                //'pp.phoneNumber',
+                //'pe.email',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('pm.isDeleted', '=', 0)
-            ->where('pp.usageId', '=', 1)
-            ->where('pe.usageId', '=', 1)
+            //->where('pp.usageId', '=', 1)
+            //->where('pe.usageId', '=', 1)
             ->orderBy('pm.updated_at', 'desc')
             ->get();
 
         $row = 2;
+        $no = 1;
         foreach ($data as $item) {
             // Adjust according to your data structure
+            $sheet->setCellValue("A{$row}", $no);
             $sheet->setCellValue("A{$row}", $item->name);
             $sheet->setCellValue("B{$row}", $item->status);
             $sheet->setCellValue("C{$row}", $item->phoneNumber);
@@ -728,6 +736,7 @@ class PartnerController extends Controller
             $sheet->setCellValue("E{$row}", $item->createdBy);
             $sheet->setCellValue("F{$row}", $item->createdAt);
             // Add more columns as needed
+            $no++;
             $row++;
         }
 
