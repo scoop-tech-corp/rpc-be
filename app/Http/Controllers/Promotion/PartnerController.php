@@ -522,7 +522,7 @@ class PartnerController extends Controller
                             'usageId' => $value['usageId'],
                             'userId' => $request->user()->id,
                         ]);
-                    } elseif ($value['status'] == 'delete') {
+                    } elseif ($value['status'] == 'del') {
 
                         PartnerEmail::where('id', '=', $value['id'])
                             ->update(
