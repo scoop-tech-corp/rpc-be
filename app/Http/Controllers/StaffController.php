@@ -2378,7 +2378,7 @@ class StaffController extends Controller
                 }
             }
 
-            for ($i = 1; $i < count($src1); $i++) {
+            for ($i = 1; $i < count($src1) - 1; $i++) {
 
                 $gender = "female";
                 if ($src1[$i]['jenis_kelamin'] == "P") {
@@ -2525,7 +2525,7 @@ class StaffController extends Controller
 
             DB::commit();
 
-            return responseSuccess(count($src1) - 1, 'Insert Data Successful!');
+            return responseSuccess(count($src1) - 2, 'Insert Data Successful!');
         } catch (Exception $e) {
             DB::rollback();
 
