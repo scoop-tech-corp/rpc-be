@@ -2261,7 +2261,7 @@ class StaffController extends Controller
                         continue;
                     }
 
-                    if ($value['id'] == null && $value['id_kegunaan'] == null && $value['nomor'] == null && $value['id_tipe'] == null) {
+                    if ($value['id'] == null && $value['id_kegunaan'] == null && $value['nomor_telepon'] == null && $value['id_tipe'] == null) {
                         break;
                     }
 
