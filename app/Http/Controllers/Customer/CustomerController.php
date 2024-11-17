@@ -112,11 +112,13 @@ class CustomerController extends Controller
                 )
                 //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
                 ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+                ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
                 //->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
                 //->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
                 ->select(
                     'a.id as id',
                     'a.memberNo',
+                    DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                     DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                     DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                     'd.locationName as location',
@@ -140,7 +142,7 @@ class CustomerController extends Controller
                     ['a.isDeleted', '=', '0'],
                     //['c.isDeleted', '=', '0'],
                     //['c.isPrimary', '=', '1'],
-                    ['d.isDeleted', '=', '0'],
+                    //['d.isDeleted', '=', '0'],
                     // ['e.isDeleted', '=', '0'],
                     // ['e.usage', '=', 'Utama'],
                     // ['f.isDeleted', '=', '0'],
@@ -164,6 +166,7 @@ class CustomerController extends Controller
                 ->select(
                     'id',
                     'memberNo',
+                    'customerGroup',
                     'customerName',
                     'totalPet',
                     'location',
@@ -184,8 +187,7 @@ class CustomerController extends Controller
                     if ($res == "memberNo") {
 
                         $data = $data->where('memberNo', 'like', '%' . $request->search . '%');
-                    }
-                    else if ($res == "customerName") {
+                    } else if ($res == "customerName") {
 
                         $data = $data->where('customerName', 'like', '%' . $request->search . '%');
                     } else if ($res == "totalPet") {
@@ -233,6 +235,7 @@ class CustomerController extends Controller
                 $listOrder = array(
                     'id',
                     'memberNo',
+                    'customerGroup',
                     'customerName',
                     'totalPet',
                     'location',
@@ -270,6 +273,7 @@ class CustomerController extends Controller
                     ->select(
                         'id',
                         'memberNo',
+                        'customerGroup',
                         'customerName',
                         'totalPet',
                         'location',
@@ -288,6 +292,7 @@ class CustomerController extends Controller
                     ->select(
                         'id',
                         'memberNo',
+                        'customerGroup',
                         'customerName',
                         'totalPet',
                         'location',
@@ -1065,7 +1070,7 @@ class CustomerController extends Controller
             $validate = Validator::make(
                 $request->all(),
                 [
-                    'memberNo' => 'required|string|max:100',
+                    'memberNo' => 'nullable|string|max:100',
                     'firstName' => 'required|string|max:100',
                     'middleName' => 'nullable|string|max:100',
                     'lastName' => 'nullable|string|max:100',
@@ -1076,8 +1081,8 @@ class CustomerController extends Controller
                     'notes' => 'nullable|string',
                     'joinDate' => 'required|date',
                     'typeId' => 'nullable|integer',
-                    'numberId' => 'required|string|max:50',
-                    'gender' => 'required|in:P,W',
+                    'numberId' => 'nullable|string|max:50',
+                    'gender' => 'nullable|string',
                     'occupationId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
                     'referenceCustomerId' => 'nullable|integer',
@@ -2033,6 +2038,8 @@ class CustomerController extends Controller
             $validate = Validator::make(
                 $request->all(),
                 [
+                    'customerId' => 'required|integer',
+                    'memberNo' => 'nullable|string|max:100',
                     'firstName' => 'required|string|max:100',
                     'middleName' => 'nullable|string|max:100',
                     'lastName' => 'nullable|string|max:100',
@@ -2043,8 +2050,8 @@ class CustomerController extends Controller
                     'notes' => 'nullable|string',
                     'joinDate' => 'required|date',
                     'typeId' => 'nullable|integer',
-                    'numberId' => 'required|string|max:50',
-                    'gender' => 'required|in:P,W',
+                    'numberId' => 'nullable|string|max:50',
+                    'gender' => 'nullable|string',
                     'occupationId' => 'nullable|integer',
                     'birthDate' => 'nullable|date',
                     'referenceCustomerId' => 'nullable|integer',
@@ -2404,12 +2411,12 @@ class CustomerController extends Controller
                             }
                         }
 
-                        if (strtolower($key['type']) == "whatshapp") {
+                        if (strtolower($key['type']) == "whatsapp") {
 
                             if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
                                 return response()->json([
                                     'message' => 'Inputed data is not valid',
-                                    'errors' => 'Please check your phone number, for type whatshapp must start with 62',
+                                    'errors' => 'Please check your phone number, for type Whatsapp must start with 62',
                                 ], 422);
                             }
                         }
@@ -2575,6 +2582,7 @@ class CustomerController extends Controller
             Customer::where('id', '=', $request->input('customerId'))
                 ->update([
                     'firstName' => $request->firstName,
+                    'memberNo' => $request->memberNo,
                     'middleName' => $request->middleName,
                     'lastName' => $request->lastName,
                     'nickName' => $request->nickName,
@@ -2882,16 +2890,11 @@ class CustomerController extends Controller
             ], 422);
         }
 
-
-
-
-
         if ($request->input('type') == "") {
             $checkIfValueExits = Customer::where([
                 ['id', '=', $request->input('customerId')],
                 ['isDeleted', '=', '0']
-            ])
-                ->first();
+            ])->first();
 
             if ($checkIfValueExits === null) {
 
@@ -2904,12 +2907,13 @@ class CustomerController extends Controller
 
                 $param_customer = DB::table('customer')
                     ->select(
-                        'id as customerId',
+                        'id',
+                        'memberNo',
                         'firstName',
                         'middleName',
                         'lastName',
                         'nickName',
-                        'gender',
+                        DB::raw("CASE WHEN gender = 'P' then 'Male' else 'Female' end as gender"),
                         'titleCustomerId',
                         'customerGroupId',
                         'locationId',
@@ -2918,7 +2922,7 @@ class CustomerController extends Controller
                         'typeId',
                         'numberId',
                         'occupationId',
-                        DB::raw("DATE_FORMAT(birthDate, '%Y-%m-%d') as birthDate"),
+                        DB::raw("IFNULL(DATE_FORMAT(birthDate, '%Y-%m-%d'),'') as birthDate"),
                         'referenceCustomerId',
                         'isReminderBooking',
                         'isReminderPayment'
@@ -2934,12 +2938,12 @@ class CustomerController extends Controller
                         'races',
                         'condition',
                         'color',
+                        DB::raw("CASE WHEN dateOfBirth is null then 'Month and Year' else 'Birth Date' end as isbirthDate"),
                         'petMonth',
                         'petYear',
-                        DB::raw("DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth"),
-                        'petGender',
-                        'isSteril',
-                        DB::raw("'' as command")
+                        DB::raw("IFNULL(DATE_FORMAT(dateOfBirth, '%Y-%m-%d'),'') as dateOfBirth"),
+                        DB::raw("CASE WHEN petGender = 'J' then 'Jantan' else 'Betina' end as petGender"),
+                        'isSteril'
                     )
                     ->where([
                         ['customerId', '=', $customerId],
