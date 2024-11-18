@@ -341,6 +341,8 @@ class StaffController extends Controller
                         ])
                         ->first();
 
+                        //di prod di comment
+
                     if ($checkIfEmailExists) {
                         array_push($checkEmail, 'Email : ' . $val['email'] . ' already exists, please try different email address');
                     }
@@ -667,7 +669,8 @@ class StaffController extends Controller
                     'usersId' => $sendEmailPrimary->usersId,
                 ];
 
-                Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
+                // di prod di comment
+                //Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
 
                 DB::commit();
 
@@ -2378,8 +2381,14 @@ class StaffController extends Controller
                 }
             }
 
-            for ($i = 1; $i < count($src1); $i++) {
+            $countRealData = 0;
 
+            for ($i = 1; $i < count($src1); $i++) {
+                if ($src1[$i]['nama_depan'] == null && $src1[$i]['id'] == null) {
+                    break;
+                }
+
+                $countRealData++;
                 $gender = "female";
                 if ($src1[$i]['jenis_kelamin'] == "P") {
                     $gender = "male";
@@ -2540,7 +2549,7 @@ class StaffController extends Controller
 
             DB::commit();
 
-            return responseSuccess(count($src1) - 1, 'Insert Data Successful!');
+            return responseSuccess($countRealData, 'Insert Data Successful!');
         } catch (Exception $e) {
             DB::rollback();
 
@@ -3411,7 +3420,8 @@ class StaffController extends Controller
                         'usersId' => $request->id,
                     ];
 
-                    Mail::to($insertEmailUsers)->send(new SendEmail($data));
+                    // di prod di comment
+                    //Mail::to($insertEmailUsers)->send(new SendEmail($data));
 
                     DB::commit();
 
