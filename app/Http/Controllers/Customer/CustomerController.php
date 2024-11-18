@@ -2913,7 +2913,7 @@ class CustomerController extends Controller
                         'middleName',
                         'lastName',
                         'nickName',
-                        DB::raw("CASE WHEN gender = 'P' then 'Male' else 'Female' end as gender"),
+                        'gender',
                         'titleCustomerId',
                         'customerGroupId',
                         'locationId',
