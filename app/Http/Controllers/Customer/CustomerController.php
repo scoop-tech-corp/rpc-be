@@ -2942,7 +2942,7 @@ class CustomerController extends Controller
                         'petMonth',
                         'petYear',
                         DB::raw("IFNULL(DATE_FORMAT(dateOfBirth, '%Y-%m-%d'),'') as dateOfBirth"),
-                        DB::raw("CASE WHEN petGender = 'J' then 'Jantan' else 'Betina' end as petGender"),
+                        'petGender',
                         'isSteril'
                     )
                     ->where([
