@@ -341,7 +341,7 @@ class StaffController extends Controller
                         ])
                         ->first();
 
-                        //di prod di comment
+                    //di prod di comment
 
                     if ($checkIfEmailExists) {
                         array_push($checkEmail, 'Email : ' . $val['email'] . ' already exists, please try different email address');
@@ -2052,9 +2052,7 @@ class StaffController extends Controller
                     $checkSerial = $this->isExcelSerialDate($value['tanggal_mulai']);
                     $status = false;
 
-                    if (!$this->isValidDate($value['tanggal_mulai'])) {
-                        $status = true;
-                    } elseif ($checkSerial) {
+                    if ($checkSerial) {
                         $status = true;
                     }
 
@@ -2062,16 +2060,14 @@ class StaffController extends Controller
 
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is invalid date format Tanggal Lahir on sheet Vet at row ' . $count_row],
+                            'message' => ['There is invalid date format Tanggal Mulai on sheet Detail at row ' . $count_row],
                         ], 422);
                     }
 
                     $checkSerial = $this->isExcelSerialDate($value['tanggal_berakhir']);
                     $status = false;
 
-                    if (!$this->isValidDate($value['tanggal_berakhir'])) {
-                        $status = true;
-                    } elseif ($checkSerial) {
+                    if ($checkSerial) {
                         $status = true;
                     }
 
@@ -2079,7 +2075,7 @@ class StaffController extends Controller
 
                         return response()->json([
                             'errors' => 'The given data was invalid.',
-                            'message' => ['There is invalid date format Tanggal Lahir on sheet Vet at row ' . $count_row],
+                            'message' => ['There is invalid date format Tanggal Berakhir on sheet Detail at row ' . $count_row],
                         ], 422);
                     }
 
@@ -2620,12 +2616,6 @@ class StaffController extends Controller
             }
         }
         return false; // Not a valid Excel serial date
-    }
-
-    private function isValidDate($date)
-    {
-        $d = \DateTime::createFromFormat('Y-m-d', $date);
-        return $d && $d->format('Y-m-d') === $date;
     }
 
     public function template()
