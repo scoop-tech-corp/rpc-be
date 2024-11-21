@@ -24,6 +24,7 @@ class AbsentController extends Controller
             ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
             ->leftJoin('presentStatuses as ps1', 'sa.statusHome', 'ps1.id')
             ->join('users as u', 'sa.userId', 'u.id')
+            ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
             ->join('usersLocation as ul', 'ul.usersId', 'u.id')
             ->join('location as l', 'ul.locationId', 'l.id')
             ->select(
@@ -31,6 +32,7 @@ class AbsentController extends Controller
                 DB::raw("TRIM(CONCAT(CASE WHEN u.firstName = '' or u.firstName is null THEN '' ELSE CONCAT(u.firstName,' ') END
                 ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
                 case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
+                'j.jobName',
                 DB::raw("
                 CONCAT(
                     CASE DAYOFWEEK(sa.presentTime)
@@ -109,6 +111,7 @@ class AbsentController extends Controller
             'u.firstName',
             'u.middleName',
             'u.lastName',
+            'j.jobName',
             'sa.presentTime',
             'sa.homeTime',
             'sa.duration',
@@ -145,11 +148,13 @@ class AbsentController extends Controller
             ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
             ->leftJoin('presentStatuses as ps1', 'sa.statusHome', 'ps1.id')
             ->join('users as u', 'sa.userId', 'u.id')
+            ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
             ->join('usersLocation as ul', 'ul.usersId', 'u.id')
             ->join('location as l', 'ul.locationId', 'l.id')
             ->select(
                 'sa.id',
                 'u.id as userId',
+                'j.jobName',
                 DB::raw("TRIM(CONCAT(CASE WHEN u.firstName = '' or u.firstName is null THEN '' ELSE CONCAT(u.firstName,' ') END
                 ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
                 case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
