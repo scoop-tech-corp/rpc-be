@@ -44,6 +44,7 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
             ->leftJoin('presentStatuses as ps1', 'sa.statusHome', 'ps1.id')
             ->join('users as u', 'sa.userId', 'u.id')
+            ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
             ->join('usersLocation as ul', 'ul.usersId', 'u.id')
             ->join('location as l', 'ul.locationId', 'l.id')
             ->select(
@@ -51,6 +52,7 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
                 DB::raw("TRIM(CONCAT(CASE WHEN u.firstName = '' or u.firstName is null THEN '' ELSE CONCAT(u.firstName,' ') END
                 ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
                 case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
+                'j.jobName',
                 DB::raw("
                 CONCAT(
                     CASE DAYOFWEEK(sa.presentTime)
@@ -121,6 +123,7 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             'u.firstName',
             'u.middleName',
             'u.lastName',
+            'j.jobName',
             'sa.presentTime',
             'sa.homeTime',
             'sa.duration',
@@ -147,6 +150,7 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             [
                 'No.',
                 'Nama',
+                'Jabatan',
                 'Hari',
                 'Jam Datang',
                 'Jam Pulang',
@@ -170,6 +174,7 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             [
                 $item->number,
                 $item->name,
+                $item->jobName,
                 $item->day,
                 $item->presentTime,
                 $item->homeTime,
