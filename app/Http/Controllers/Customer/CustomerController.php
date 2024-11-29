@@ -1325,9 +1325,9 @@ class CustomerController extends Controller
 
             $data_item = [];
 
-            if ($request->detailAddresses) {
+            $arrayDetailAddress = json_decode($request->detailAddresses, true);
 
-                $arrayDetailAddress = json_decode($request->detailAddresses, true);
+            if (count($arrayDetailAddress) > 0) {
 
                 $primaryCount = 0;
                 foreach ($arrayDetailAddress as $item) {
