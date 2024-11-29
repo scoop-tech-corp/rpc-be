@@ -2494,11 +2494,18 @@ class StaffController extends Controller
                 if ($resulEmail) {
                     foreach ($resulEmail as $value) {
 
+                        $staticUsage = DB::table('dataStaticStaff')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Usage')
+                            ->where('id', '=', $value['id_kegunaan'])
+                            ->first();
+
                         UsersEmails::create([
                             'usersId' => $userId,
                             'email' => trim($value['alamat_email']),
                             'email_verified_at' => now(),
-                            'usage' => 'Utama',
+                            'usage' => $staticUsage->name,
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -2511,12 +2518,26 @@ class StaffController extends Controller
                 if ($resultTelp) {
                     foreach ($resultTelp as $value) {
 
+                        $staticTelp = DB::table('dataStaticStaff')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Telephone')
+                            ->where('id', '=', $value['id_tipe'])
+                            ->first();
+
+                        $staticUsage = DB::table('dataStaticStaff')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Usage')
+                            ->where('id', '=', $value['id_kegunaan'])
+                            ->first();
+
                         UsersTelephones::create([
 
                             'usersId' => $userId,
                             'phoneNumber' => $value['nomor_telepon'],
-                            'type' => $value['id_tipe'],
-                            'usage' => $value['id_kegunaan'],
+                            'type' => $staticTelp->name,
+                            'usage' => $staticUsage->name,
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -2529,12 +2550,26 @@ class StaffController extends Controller
                 if ($resultMess) {
                     foreach ($resultMess as $value) {
 
+                        $staticMes = DB::table('dataStaticStaff')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Messenger')
+                            ->where('id', '=', $value['id_tipe'])
+                            ->first();
+
+                        $staticUsage = DB::table('dataStaticStaff')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Usage')
+                            ->where('id', '=', $value['id_kegunaan'])
+                            ->first();
+
                         UsersMessengers::create([
 
                             'usersId' => $userId,
                             'messengerNumber' => trim($value['nama_pengguna']),
-                            'type' => $value['id_tipe'],
-                            'usage' => $value['id_kegunaan'],
+                            'type' => $staticMes->name,
+                            'usage' => $staticUsage->name,
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
