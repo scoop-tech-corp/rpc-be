@@ -1325,9 +1325,9 @@ class CustomerController extends Controller
 
             $data_item = [];
 
-            if ($request->detailAddresses) {
+            $arrayDetailAddress = json_decode($request->detailAddresses, true);
 
-                $arrayDetailAddress = json_decode($request->detailAddresses, true);
+            if (count($arrayDetailAddress) > 0) {
 
                 $primaryCount = 0;
                 foreach ($arrayDetailAddress as $item) {
@@ -1380,8 +1380,6 @@ class CustomerController extends Controller
                     }
                 }
 
-
-
                 if ($data_item) {
 
                     return response()->json([
@@ -1389,21 +1387,13 @@ class CustomerController extends Controller
                         'errors' => $data_item,
                     ], 422);
                 }
-            } else {
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' =>  ['Detail address can not be empty!'],
-                ], 422);
             }
-
-
 
             $data_error_telephone = [];
 
-            if ($request->telephones) {
+            $arraytelephone = json_decode($request->telephones, true);
 
-                $arraytelephone = json_decode($request->telephones, true);
+            if (count($arraytelephone) > 0) {
 
                 $messagePhone = [
                     'phoneNumber.required' => 'Phone Number on tab telephone is required',
@@ -1435,7 +1425,6 @@ class CustomerController extends Controller
                             'errors' =>  'Telephone have 2 primary number, please check again',
                         ], 422);
                     }
-
 
                     foreach ($arraytelephone as $key) {
 
@@ -1486,9 +1475,9 @@ class CustomerController extends Controller
 
             $data_error_email = [];
 
-            if ($request->emails) {
+            $arrayemail = json_decode($request->emails, true);
 
-                $arrayemail = json_decode($request->emails, true);
+            if (count($arrayemail) > 0) {
 
                 $messageEmail = [
                     'email.required' => 'Email on tab email is required',
@@ -1555,10 +1544,10 @@ class CustomerController extends Controller
 
 
             $data_error_messengers = [];
-            if ($request->messengers) {
 
-                $arraymessenger = json_decode($request->messengers, true);
+            $arraymessenger = json_decode($request->messengers, true);
 
+            if (count($arraymessenger) > 0) {
 
                 if (!empty($arraymessenger)) {
                     $primaryMessenger = 0;
@@ -1694,13 +1683,26 @@ class CustomerController extends Controller
 
             // // INSERT
 
+            if ($request->memberNo) {
+                $memberNo = $request->memberNo;
+            } else {
+                $memberNo = "";
+            }
+
+            if ($request->gender) {
+                $gender = $request->gender;
+            } else {
+                $gender = "";
+            }
+
+
             $customer = new Customer();
-            $customer->memberNo =  $request->memberNo;
+            $customer->memberNo =  $memberNo;
             $customer->firstName =  $request->firstName;
             $customer->middleName = $request->middleName;
             $customer->lastName = $request->lastName;
             $customer->nickName = $request->nickName;
-            $customer->gender = $request->gender;
+            $customer->gender = $gender;
             $customer->titleCustomerId =  $request->titleCustomerId;
             $customer->customerGroupId = $request->customerGroupId;
             $customer->locationId = $request->locationId;
@@ -2033,8 +2035,6 @@ class CustomerController extends Controller
 
         try {
 
-
-
             $validate = Validator::make(
                 $request->all(),
                 [
@@ -2339,21 +2339,11 @@ class CustomerController extends Controller
                         'errors' => $data_item,
                     ], 422);
                 }
-            } else {
-
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Detail address can not be empty!'],
-                ], 422);
             }
-
 
             $data_error_telephone = [];
 
             if ($request->telephones) {
-
-
 
                 $messagePhone = [
                     'phoneNumber.required' => 'Phone Number on tab telephone is required',
@@ -2386,8 +2376,6 @@ class CustomerController extends Controller
 
 
                     foreach ($request->telephones as $key) {
-
-
 
                         $telephoneDetail = Validator::make(
                             $key,
@@ -2442,8 +2430,6 @@ class CustomerController extends Controller
                     'email.required' => 'email on tab email is required',
                     'usage.required' => 'Usage on tab email is required',
                 ];
-
-
 
                 $primaryEmail = 0;
 
@@ -2566,8 +2552,6 @@ class CustomerController extends Controller
                         }
                     }
 
-
-
                     if ($data_error_messengers) {
                         return response()->json([
                             'message' => 'The given data was invalid.',
@@ -2579,14 +2563,26 @@ class CustomerController extends Controller
 
             // Update
 
+            if ($request->memberNo) {
+                $memberNo = $request->memberNo;
+            } else {
+                $memberNo = "";
+            }
+
+            if ($request->gender) {
+                $gender = $request->gender;
+            } else {
+                $gender = "";
+            }
+
             Customer::where('id', '=', $request->input('customerId'))
                 ->update([
                     'firstName' => $request->firstName,
-                    'memberNo' => $request->memberNo,
+                    'memberNo' => $memberNo,
                     'middleName' => $request->middleName,
                     'lastName' => $request->lastName,
                     'nickName' => $request->nickName,
-                    'gender' => $request->gender,
+                    'gender' => $gender,
                     'titleCustomerId' => $request->titleCustomerId,
                     'customerGroupId' => $request->customerGroupId,
                     'locationId' => $request->locationId,
