@@ -38,6 +38,8 @@ use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticCo
 use App\Http\Controllers\Promotion\DiscountController;
 use App\Http\Controllers\Promotion\PartnerController;
 use App\Http\Controllers\Promotion\PromotionController;
+use App\Http\Controllers\Report\BookingController;
+use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\ReportMenuManagementController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -548,6 +550,50 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         });
     });
 
+    Route::group(['prefix' => 'report'], function () {
+
+        Route::group(['prefix' => 'booking'], function () {
+            Route::get('/location', [BookingController::class, 'index']);
+            Route::get('/status', [BookingController::class, 'index']);
+            Route::get('/cancellationreason', [BookingController::class, 'index']);
+            Route::get('/list', [BookingController::class, 'index']);
+            Route::get('/diagnose', [BookingController::class, 'index']);
+            Route::get('/diagnosespecies', [BookingController::class, 'index']);
+        });
+
+        Route::group(['prefix' => 'customer'], function () {
+
+            Route::get('/growth', [ReportCustomerController::class, 'index']);
+            Route::get('/growthgroup', [ReportCustomerController::class, 'index']);
+            Route::get('/total', [ReportCustomerController::class, 'index']);
+            Route::get('/leaving', [ReportCustomerController::class, 'index']);
+            Route::get('/list', [ReportCustomerController::class, 'index']);
+        });
+
+        Route::group(['prefix' => 'deposit'], function () {
+
+        });
+
+        Route::group(['prefix' => 'expenses'], function () {
+
+        });
+
+        Route::group(['prefix' => 'products'], function () {
+
+        });
+
+        Route::group(['prefix' => 'sales'], function () {
+
+        });
+
+        Route::group(['prefix' => 'service'], function () {
+
+        });
+
+        Route::group(['prefix' => 'staff'], function () {
+
+        });
+    });
 
     //GLOBAL VARIABLE
     Route::get('kabupaten', [GlobalVariableController::class, 'getKabupaten']);
