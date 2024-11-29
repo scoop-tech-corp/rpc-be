@@ -1684,10 +1684,17 @@ class CustomerController extends Controller
             // // INSERT
 
             if ($request->memberNo) {
-                $request->memberNo;
+                $memberNo = $request->memberNo;
             } else {
                 $memberNo = "";
             }
+
+            if ($request->gender) {
+                $gender = $request->gender;
+            } else {
+                $gender = "";
+            }
+
 
             $customer = new Customer();
             $customer->memberNo =  $memberNo;
@@ -1695,7 +1702,7 @@ class CustomerController extends Controller
             $customer->middleName = $request->middleName;
             $customer->lastName = $request->lastName;
             $customer->nickName = $request->nickName;
-            $customer->gender = $request->gender;
+            $customer->gender = $gender;
             $customer->titleCustomerId =  $request->titleCustomerId;
             $customer->customerGroupId = $request->customerGroupId;
             $customer->locationId = $request->locationId;
