@@ -1683,8 +1683,14 @@ class CustomerController extends Controller
 
             // // INSERT
 
+            if ($request->memberNo) {
+                $request->memberNo;
+            } else {
+                $memberNo = "";
+            }
+
             $customer = new Customer();
-            $customer->memberNo =  $request->memberNo;
+            $customer->memberNo =  $memberNo;
             $customer->firstName =  $request->firstName;
             $customer->middleName = $request->middleName;
             $customer->lastName = $request->lastName;
