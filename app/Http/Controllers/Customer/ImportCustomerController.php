@@ -709,6 +709,12 @@ class ImportCustomerController extends Controller
                     $id_referensi = $src1[$i]['id_referensi'];
                 }
 
+                if (empty($value['id_tipe_identitas'])) {
+                    $id_tipe_identitas = 0;
+                } else {
+                    $id_tipe_identitas = $src1[$i]['id_tipe_identitas'];
+                }
+
 
                 $customerId = DB::table('customer')
                     ->insertGetId([
@@ -723,7 +729,7 @@ class ImportCustomerController extends Controller
                         'locationId' => trim($src1[$i]['id_lokasi']),
                         'notes' => trim($src1[$i]['catatan_tambahan']),
                         'joinDate' => $joinDateFormatted,
-                        'typeId' => trim($src1[$i]['id_tipe_identitas']),
+                        'typeId' => trim($id_tipe_identitas),
                         'numberId' => trim($src1[$i]['nomor_kartu_identitas']),
                         'occupationId' => trim($id_pekerjaan),
                         'birthDate' => $birthDateFormatted,
