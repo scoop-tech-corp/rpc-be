@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Product;
 
 use App\Models\ProductClinic;
-use App\Models\productCoreCategories;
 use App\Models\ProductClinicCustomerGroup;
 use App\Models\ProductClinicDosage;
 use App\Models\ProductClinicImages;
@@ -23,6 +22,7 @@ use Excel;
 use Validator;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
+use App\Models\ProductCoreCategories;
 use App\Models\ProductCustomerGroups;
 use App\Models\ProductPriceLocations;
 use App\Models\ProductQuantitiess;
@@ -638,7 +638,7 @@ class ProductClinicController
                 if ($ResultCategories) {
 
                     foreach ($ResultCategories as $valCat) {
-                        productCoreCategories::create([
+                        ProductCoreCategories::create([
                             'productId' => $product->id,
                             'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
@@ -865,7 +865,7 @@ class ProductClinicController
             ->first();
 
         $categories = DB::table('productCategories as pcat')
-            ->join('productCategories as pcc', 'pcc.productCategoryId', 'pcat.id')
+            ->join('productCoreCategories as pcc', 'pcc.productCategoryId', 'pcat.id')
             ->join('products as pc', 'pcc.productId', 'pc.id')
             ->select('pcat.id', 'pcat.categoryName')
             ->where('pc.id', '=', $request->id)
@@ -1341,7 +1341,7 @@ class ProductClinicController
             ]
         );
 
-        productCoreCategories::where('ProductId', '=', $request->id)
+        ProductCoreCategories::where('ProductId', '=', $request->id)
             ->where('isDeleted', '=', 0)
             ->update(
                 [
@@ -1354,7 +1354,7 @@ class ProductClinicController
         if ($ResultCategories) {
 
             foreach ($ResultCategories as $valCat) {
-                productCoreCategories::create(
+                ProductCoreCategories::create(
                     [
                         'productId' => $request->id,
                         'productCategoryId' => $valCat['id'],
@@ -1653,11 +1653,11 @@ class ProductClinicController
                     );
             }
 
-            $ProdCat = productCoreCategories::where('ProductId', '=', $Prod->id)->get();
+            $ProdCat = ProductCoreCategories::where('ProductId', '=', $Prod->id)->get();
 
             if ($ProdCat) {
 
-                productCoreCategories::where('ProductId', '=', $Prod->id)
+                ProductCoreCategories::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -2116,7 +2116,7 @@ class ProductClinicController
                     if ($productCategory) {
 
                         foreach ($productCategory as $valCat) {
-                            productCoreCategories::create([
+                            ProductCoreCategories::create([
                                 'productId' => $product->id,
                                 'productCategoryId' => $valCat,
                                 'userId' => $request->user()->id,
