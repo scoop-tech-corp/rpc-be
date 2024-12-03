@@ -7,8 +7,8 @@ use App\Exports\Product\TemplateUploadProductSell;
 use App\Imports\Product\ImportProductSell;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
-use App\Models\productCoreCategories;
 use App\Models\Product;
+use App\Models\ProductCoreCategories;
 use App\Models\ProductCoreCategory;
 use App\Models\ProductCustomerGroup;
 use App\Models\ProductCustomerGroups;
@@ -772,7 +772,7 @@ class ProductSellController
                 if ($ResultCategories) {
 
                     foreach ($ResultCategories as $valCat) {
-                        productCoreCategories::create([
+                        ProductCoreCategories::create([
                             'productId' => $product->id,
                             'productCategoryId' => $valCat['id'],
                             'userId' => $request->user()->id,
@@ -1255,7 +1255,7 @@ class ProductSellController
                 ]
             );
 
-            productCoreCategories::where('ProductId', '=', $request->id)
+            ProductCoreCategories::where('ProductId', '=', $request->id)
                 ->where('isDeleted', '=', 0)
                 ->update(
                     [
@@ -1268,7 +1268,7 @@ class ProductSellController
             if ($ResultCategories) {
 
                 foreach ($ResultCategories as $valCat) {
-                    productCoreCategories::create(
+                    ProductCoreCategories::create(
                         [
                             'productId' => $request->id,
                             'productCategoryId' => $valCat['id'],
@@ -1528,11 +1528,11 @@ class ProductSellController
                     );
             }
 
-            $ProdCat = productCoreCategories::where('ProductId', '=', $Prod->id)->get();
+            $ProdCat = ProductCoreCategories::where('ProductId', '=', $Prod->id)->get();
 
             if ($ProdCat) {
 
-                productCoreCategories::where('ProductId', '=', $Prod->id)
+                ProductCoreCategories::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
                             'deletedBy' => $request->user()->id,
@@ -1983,7 +1983,7 @@ class ProductSellController
                     if ($productCategory) {
 
                         foreach ($productCategory as $valCat) {
-                            productCoreCategories::create([
+                            ProductCoreCategories::create([
                                 'productId' => $product->id,
                                 'productCategoryId' => $valCat,
                                 'userId' => $request->user()->id,
@@ -2092,11 +2092,11 @@ class ProductSellController
             $newProduct->userId = $request->user()->id;
             $newProduct->save();
 
-            $categories = productCoreCategories::where('productId', '=', $request->id)->get();
+            $categories = ProductCoreCategories::where('productId', '=', $request->id)->get();
 
             foreach ($categories as $res) {
 
-                $category = productCoreCategories::find($res['id']);
+                $category = ProductCoreCategories::find($res['id']);
 
                 if ($category) {
                     $newCategory = $category->replicate();
