@@ -55,7 +55,7 @@ class TreatmentController extends Controller
                 $orderByColumn = $request->orderColumn == 'createdAt' ? 'tm.created_at' : $request->orderColumn;
                 $data = $data->orderBy($orderByColumn, $request->orderValue);
             } else {
-                $data = $data->orderBy('tm.created_at', 'detm');
+                $data = $data->orderBy('tm.created_at', 'desc');
             }
 
             return $data->select('tm.id', 'tm.name as treatmentName', 'tm.column', 'd.name as diagnoseName', 'l.locationName', 'tm.status', 'tm.created_at', 'tm.updated_at', DB::raw("DATE_FORMAT(tm.created_at, '%d/%m/%Y') as createdAt"), 'users.firstName as createdBy');
