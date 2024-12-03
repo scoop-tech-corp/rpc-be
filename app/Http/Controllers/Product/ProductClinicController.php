@@ -865,7 +865,7 @@ class ProductClinicController
             ->first();
 
         $categories = DB::table('productCategories as pcat')
-            ->join('productCategories as pcc', 'pcc.productCategoryId', 'pcat.id')
+            ->join('productCoreCategories as pcc', 'pcc.productCategoryId', 'pcat.id')
             ->join('products as pc', 'pcc.productId', 'pc.id')
             ->select('pcat.id', 'pcat.categoryName')
             ->where('pc.id', '=', $request->id)
