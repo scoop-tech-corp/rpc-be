@@ -232,7 +232,7 @@ class ProductSellController
             ->first();
 
         $categories = DB::table('productCategories as pcat')
-            ->join('productCategories as psc', 'psc.productCategoryId', 'pcat.id')
+            ->join('productCoreCategories as psc', 'psc.productCategoryId', 'pcat.id')
             ->join('products as pc', 'psc.productId', 'pc.id')
             ->select('pcat.id', 'pcat.categoryName')
             ->where('pc.id', '=', $request->id)
