@@ -228,7 +228,10 @@ class ImportCustomerController extends Controller
                     ], 422);
                 }
 
-                $loc = Location::where('id', '=', $value['id_lokasi'])->first();
+                // $loc = Location::where('id', '=', $value['id_lokasi'])->first();
+                $loc = DB::table('location')
+                    ->where('id', '=', $value['id_lokasi'])
+                    ->where('isDeleted', '=', 0)->first();
 
                 if (!$loc) {
                     return response()->json([
