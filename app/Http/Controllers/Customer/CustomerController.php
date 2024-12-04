@@ -113,6 +113,7 @@ class CustomerController extends Controller
                 //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
                 ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
                 ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+                ->join('users as u', 'a.createdBy', 'u.id')
                 //->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
                 //->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
                 ->select(
@@ -134,7 +135,7 @@ class CustomerController extends Controller
                     // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                     // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
                     //'f.email as emailAddress',
-                    'a.createdBy as createdBy',
+                    'u.firstName as createdBy',
                     DB::raw('a.created_at as createdAt'),
                     'a.updated_at'
                 )
@@ -1716,7 +1717,7 @@ class CustomerController extends Controller
             $customer->isReminderBooking =  $request->isReminderBooking;
             $customer->isReminderPayment =  $request->isReminderPayment;
             $customer->isDeleted = 0;
-            $customer->createdBy = $request->user()->firstName;
+            $customer->createdBy = $request->user()->id;
             $customer->save();
 
             $lastInsertedID = $customer->id;
