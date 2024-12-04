@@ -123,13 +123,13 @@ class CustomerController extends Controller
                     DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                     'd.locationName as location',
                     'a.locationId as locationId',
-                    DB::raw("CASE WHEN (select count(*) from customerTelephones a where customerId=a.id and a.usage='Utama' and isDeleted=0) = 0 then '' else
-                    (select phoneNumber from customerTelephones a where customerId=a.id and a.usage='Utama' and isDeleted=0 limit 1) END as phoneNumber"),
+                    DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
 
-                    DB::raw("CASE WHEN (select count(*) from customerTelephones a where customerId=a.id and type='Whatsapp' and a.usage='Utama' and isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+                    DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
 
-                    DB::raw("CASE WHEN (select count(*) from customerEmails a where customerId=a.id and a.usage='Utama' and isDeleted=0) = 0 THEN '' ELSE
-                    (select email from customerEmails a where customerId=a.id and a.usage='Utama' and isDeleted=0 LIMIT 1) END AS emailAddress"),
+                    DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
 
                     // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
                     // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
