@@ -27,6 +27,10 @@ class ProductInventoryController
 {
     public function index(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
 
         $itemPerPage = $request->rowPerPage;
 
@@ -134,6 +138,11 @@ class ProductInventoryController
 
     public function indexHistory(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
@@ -215,6 +224,11 @@ class ProductInventoryController
 
     public function exportHistory(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $tmp = "";
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
@@ -292,6 +306,11 @@ class ProductInventoryController
 
     public function indexApproval(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
@@ -376,6 +395,11 @@ class ProductInventoryController
 
     public function exportApproval(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $tmp = "";
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
@@ -450,6 +474,11 @@ class ProductInventoryController
 
     public function detail(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $prod = ProductInventory::find($request->id);
 
         if (!$prod) {
@@ -752,6 +781,11 @@ class ProductInventoryController
 
     public function update(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer|',
             'requirementName' => 'required|string|max:30',
@@ -895,6 +929,11 @@ class ProductInventoryController
 
     public function updateApproval(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $prod = ProductInventoryList::find($request->id);
 
         if (!$prod) {
@@ -1036,6 +1075,11 @@ class ProductInventoryController
 
     public function delete(Request $request)
     {
+        if (!checkAccessDelete('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $userId = $request->user()->id;
 
         foreach ($request->id as $va) {
@@ -1108,6 +1152,11 @@ class ProductInventoryController
 
     public function exportInventory(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $tmp = "";
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
@@ -1147,11 +1196,21 @@ class ProductInventoryController
 
     public function downloadTemplate(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         return (new TemplateUploadProductInventory())->download('Template Upload Produk Inventori.xlsx');
     }
 
     public function Import(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'file' => 'required|mimes:xls,xlsx',
         ]);
