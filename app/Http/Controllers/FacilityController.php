@@ -29,11 +29,9 @@ class FacilityController extends Controller
         DB::beginTransaction();
 
         try {
-            if (!adminAccess($request->user()->id)) {
-                return response()->json([
-                    'message' => 'The user role was invalid.',
-                    'errors' => ['User Access not Authorize!'],
-                ], 403);
+            if (!checkAccessModify('Facilities', $request->user()->roleId)) {
+
+                return responseUnauthorize();
             }
 
             $validate = Validator::make($request->all(), [
@@ -342,15 +340,10 @@ class FacilityController extends Controller
 
     public function deleteFacility(Request $request)
     {
+        if (!checkAccessDelete('Facilities', $request->user()->roleId)) {
 
-
-        if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+            return responseUnauthorize();
         }
-
 
         DB::beginTransaction();
 
@@ -369,8 +362,6 @@ class FacilityController extends Controller
         }
 
         try {
-
-
             $data_item = [];
 
             foreach ($request->locationId as $val) {
@@ -429,6 +420,10 @@ class FacilityController extends Controller
 
     public function facilityDetail(Request $request)
     {
+        if (!checkAccessIndex('Facilities', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
 
         $validate = Validator::make($request->all(), [
             'locationId' => 'required',
@@ -458,9 +453,6 @@ class FacilityController extends Controller
                 'message' => "Data not exists, please try another location id",
             ]);
         } else {
-
-
-
 
             $facility = Facility::from('facility as facility')
                 ->join('location', 'location.id', '=', 'facility.locationId')
@@ -589,11 +581,9 @@ class FacilityController extends Controller
     public function updateFacility(Request $request)
     {
 
-        if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+        if (!checkAccessModify('Facilities', $request->user()->roleId)) {
+
+            return responseUnauthorize();
         }
 
         DB::beginTransaction();
@@ -874,6 +864,10 @@ class FacilityController extends Controller
 
     public function facilityMenuHeader(Request $request)
     {
+        if (!checkAccessIndex('Facilities', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
 
         $defaultRowPerPage = 5;
         $defaultOrderBy = "asc";
@@ -1185,6 +1179,10 @@ class FacilityController extends Controller
 
     public function facilityExport(Request $request)
     {
+        if (!checkAccessIndex('Facilities', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
 
         try {
 
@@ -1260,6 +1258,11 @@ class FacilityController extends Controller
 
     public function import(Request $request)
     {
+        if (!checkAccessModify('Facilities', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'file' => 'required|mimes:xls,xlsx',
         ]);
@@ -1337,8 +1340,6 @@ class FacilityController extends Controller
 
     public function facilityLocation(Request $request)
     {
-
-
         try {
 
             $getLocationFasilitas = location::leftJoin(
