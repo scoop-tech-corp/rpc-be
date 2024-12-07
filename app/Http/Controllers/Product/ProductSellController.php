@@ -35,6 +35,10 @@ class ProductSellController
 {
     public function Index(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
 
         $itemPerPage = $request->rowPerPage;
 
@@ -388,6 +392,11 @@ class ProductSellController
 
     public function Create(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'fullName' => 'required|string|max:30',
             'simpleName' => 'nullable|string',
@@ -951,6 +960,11 @@ class ProductSellController
 
     public function Update(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
             'simpleName' => 'nullable|string',
@@ -1402,6 +1416,11 @@ class ProductSellController
 
     public function updateImages(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validator = Validator::make($request->all(), [
             'id' => 'required',
         ]);
@@ -1497,6 +1516,11 @@ class ProductSellController
 
     public function Delete(Request $request)
     {
+        if (!checkAccessDelete('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         //check product on DB
         foreach ($request->id as $va) {
             $res = Products::find($va);
@@ -1627,6 +1651,11 @@ class ProductSellController
 
     public function Export(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $tmp = "";
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
@@ -1677,11 +1706,21 @@ class ProductSellController
 
     public function downloadTemplate(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         return (new TemplateUploadProductSell())->download('Template Upload Produk Jual.xlsx');
     }
 
     public function Import(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'file' => 'required|mimes:xls,xlsx',
         ]);
@@ -2013,6 +2052,11 @@ class ProductSellController
 
     public function Split(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
             'fullName' => 'nullable|string',

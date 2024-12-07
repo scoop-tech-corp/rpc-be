@@ -26,6 +26,7 @@ use App\Models\ProductCoreCategories;
 use App\Models\ProductCustomerGroups;
 use App\Models\ProductPriceLocations;
 use App\Models\ProductQuantitiess;
+use App\Models\Products;
 use App\Models\ProductSupplier;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -33,6 +34,11 @@ class ProductClinicController
 {
     public function index(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
@@ -60,7 +66,7 @@ class ProductClinicController
                 DB::raw("DATE_FORMAT(pc.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('pc.isDeleted', '=', 0)
-            ->where('pc.category','=','clinic');
+            ->where('pc.category', '=', 'clinic');
 
         if ($request->locationId) {
 
@@ -194,6 +200,12 @@ class ProductClinicController
 
     public function create(Request $request)
     {
+
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         if (!adminAccess($request->user()->id)) {
             return response()->json([
                 'message' => 'The user role was invalid.',
@@ -826,6 +838,11 @@ class ProductClinicController
 
     public function detail(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $prod = DB::table('products as pc')
             ->leftjoin('productBrands as pb', 'pc.productBrandId', 'pb.id')
             ->leftjoin('productSuppliers as psup', 'pc.productSupplierId', 'psup.Id')
@@ -1036,6 +1053,11 @@ class ProductClinicController
 
     public function update(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
             'simpleName' => 'nullable|string',
@@ -1527,6 +1549,11 @@ class ProductClinicController
 
     public function updateImages(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validator = Validator::make($request->all(), [
             'id' => 'required',
         ]);
@@ -1622,6 +1649,10 @@ class ProductClinicController
 
     public function delete(Request $request)
     {
+        if (!checkAccessDelete('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
         //check product on DB
         foreach ($request->id as $va) {
             $res = Products::find($va);
@@ -1752,6 +1783,11 @@ class ProductClinicController
 
     public function export(Request $request)
     {
+        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $tmp = "";
         $fileName = "";
         $date = Carbon::now()->format('d-m-y');
@@ -1802,19 +1838,21 @@ class ProductClinicController
 
     public function downloadTemplate(Request $request)
     {
-        // return role($request->user()->id);
-        // if (role($request->user()->id) == 'Office' || role($request->user()->id) == 'Administrator') {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         return (new TemplateUploadProductClinic())->download('Template Upload Produk Klinik.xlsx');
-        // } else {
-        // return response()->json([
-        //     'message' => 'The user role was invalid.',
-        //     'errors' => ['User Access not Authorize!'],
-        // ], 403);
-        // }
     }
 
     public function import(Request $request)
     {
+        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'file' => 'required|mimes:xls,xlsx',
         ]);

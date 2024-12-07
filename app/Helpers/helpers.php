@@ -342,6 +342,105 @@ if (!function_exists('responseError')) {
     }
 }
 
+if (!function_exists('responseUnauthorize')) {
+    function responseUnauthorize($errors = 'User Access not Authorize!', $msg = 'The given data was invalid.')
+    {
+        return response()->json(
+            [
+                'message' => $msg,
+                'errors' => [$errors],
+            ],
+            403
+        );
+    }
+}
+
+if (!function_exists('checkAccessIndex')) {
+    function checkAccessIndex($menuName, $roleId)
+    {
+        $menuId = 0;
+
+        $data = DB::table('grandChildrenMenuGroups as gc')
+            ->select('gc.id', 'gc.menuName')
+            ->where('gc.menuName', 'like', '%' . $menuName . '%')
+            ->first();
+
+        if ($data) {
+            $menuId = $data->id;
+        }
+
+        $res = true;
+
+        $data = DB::table('accessControl as ac')
+            ->where('ac.menuListId', '=', $menuId)
+            ->where('ac.roleId', '=', $roleId)
+            ->first();
+
+        if ($data->accessTypeId == 3) {
+            $res = false;
+        }
+
+        return $res;
+    }
+}
+
+if (!function_exists('checkAccessModify')) {
+    function checkAccessModify($menuName, $roleId)
+    {
+        $menuId = 0;
+
+        $data = DB::table('grandChildrenMenuGroups as gc')
+            ->select('gc.id', 'gc.menuName')
+            ->where('gc.menuName', 'like', '%' . $menuName . '%')
+            ->first();
+
+        if ($data) {
+            $menuId = $data->id;
+        }
+
+        $res = true;
+
+        $data = DB::table('accessControl as ac')
+            ->where('ac.menuListId', '=', $menuId)
+            ->where('ac.roleId', '=', $roleId)
+            ->first();
+
+        if ($data->accessTypeId == 1 || $data->accessTypeId == 3) {
+            $res = false;
+        }
+
+        return $res;
+    }
+}
+
+if (!function_exists('checkAccessDelete')) {
+    function checkAccessDelete($menuName, $roleId)
+    {
+        $menuId = 0;
+
+        $data = DB::table('grandChildrenMenuGroups as gc')
+            ->select('gc.id', 'gc.menuName')
+            ->where('gc.menuName', 'like', '%' . $menuName . '%')
+            ->first();
+
+        if ($data) {
+            $menuId = $data->id;
+        }
+
+        $res = true;
+
+        $data = DB::table('accessControl as ac')
+            ->where('ac.menuListId', '=', $menuId)
+            ->where('ac.roleId', '=', $roleId)
+            ->first();
+
+        if ($data->accessTypeId == 1 || $data->accessTypeId == 3 || $data->accessTypeId == 2) {
+            $res = false;
+        }
+
+        return $res;
+    }
+}
 //add by danny wahyudi
 // if (!function_exists('securityGroupAdmin')) {
 //     function securityGroupAdmin($id)
