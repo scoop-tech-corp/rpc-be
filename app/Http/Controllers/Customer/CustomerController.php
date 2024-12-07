@@ -245,6 +245,7 @@ class CustomerController extends Controller
                     'emailAddress',
                     'createdBy',
                     'createdAt',
+                    'updated_at'
                 );
 
                 if (!in_array($request->orderColumn, $listOrder)) {
@@ -402,6 +403,7 @@ class CustomerController extends Controller
     private function Search($request)
     {
 
+        //customer name
         $data = DB::table('customer as a')
             ->leftjoin(
                 DB::raw('(
@@ -412,35 +414,35 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
             ->select(
                 'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                 DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.email as emailAddress',
-                'a.createdBy as createdBy',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
-                ['a.isDeleted', '=', '0'],
-                //['c.isDeleted', '=', '0'],
-                //['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
+                ['a.isDeleted', '=', '0']
             ]);
-
-
 
         if ($request->locationId) {
 
@@ -454,11 +456,10 @@ class CustomerController extends Controller
             }
         }
 
-
-
         $data = DB::table($data)
             ->select(
                 'id',
+                'memberNo',
                 'customerName',
                 'totalPet',
                 'location',
@@ -487,6 +488,91 @@ class CustomerController extends Controller
             return $temp_column;
         }
 
+        //member no
+        $data = DB::table('customer as a')
+            ->leftjoin(
+                DB::raw('(
+					select count(id)as jumlah,customerId from `customerPets` where isDeleted=0
+					GROUP by customerId
+				) as b'),
+                function ($join) {
+                    $join->on('b.customerId', '=', 'a.id');
+                }
+            )
+            ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
+            ->select(
+                'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
+                DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
+                DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
+                'd.locationName as location',
+                'a.locationId as locationId',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
+                DB::raw('a.created_at as createdAt'),
+                'a.updated_at'
+            )
+            ->where([
+                ['a.isDeleted', '=', '0']
+            ]);
+
+        if ($request->locationId) {
+
+            $val = [];
+            foreach ($request->locationId as $temp) {
+                $val = $temp;
+            }
+
+            if ($val) {
+                $data = $data->whereIn('a.locationid', $request->locationId);
+            }
+        }
+
+        $data = DB::table($data)
+            ->select(
+                'id',
+                'memberNo',
+                'customerName',
+                'totalPet',
+                'location',
+                'locationId',
+                'phoneNumber',
+                'isWhatsapp',
+                'emailAddress',
+                'createdBy',
+                'createdAt',
+                'updated_at'
+            );
+
+
+
+
+        if ($request->search) {
+
+            $data = $data->where('memberNo', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column = 'memberNo';
+            return $temp_column;
+        }
+
+        //total pet
         $data = DB::table('customer as a')
 
             ->leftjoin(
@@ -498,33 +584,35 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
 
             ->select(
                 'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                 DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.email as emailAddress',
-                'a.createdBy as createdBy',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                //['c.isDeleted', '=', '0'],
-                //['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
             ]);
 
 
@@ -544,6 +632,7 @@ class CustomerController extends Controller
         $data = DB::table($data)
             ->select(
                 'id',
+                'memberNo',
                 'customerName',
                 'totalPet',
                 'location',
@@ -572,6 +661,7 @@ class CustomerController extends Controller
         }
 
 
+        //location
         $data = DB::table('customer as a')
 
             ->leftjoin(
@@ -583,33 +673,35 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
 
             ->select(
                 'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                 DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.email as emailAddress',
-                'a.createdBy as createdBy',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                // ['c.isDeleted', '=', '0'],
-                // ['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
             ]);
 
 
@@ -628,6 +720,7 @@ class CustomerController extends Controller
         $data = DB::table($data)
             ->select(
                 'id',
+                'memberNo',
                 'customerName',
                 'totalPet',
                 'location',
@@ -665,33 +758,35 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
 
             ->select(
                 'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                 DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.email as emailAddress',
-                'a.createdBy as createdBy',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
-                ['a.isDeleted', '=', '0'],
-                // ['c.isDeleted', '=', '0'],
-                // ['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
+                ['a.isDeleted', '=', '0']
             ]);
 
 
@@ -711,6 +806,7 @@ class CustomerController extends Controller
         $data = DB::table($data)
             ->select(
                 'id',
+                'memberNo',
                 'customerName',
                 'totalPet',
                 'location',
@@ -747,33 +843,35 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
 
             ->select(
                 'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                 DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.email as emailAddress',
-                'a.createdBy as createdBy',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
-                ['a.isDeleted', '=', '0'],
-                // ['c.isDeleted', '=', '0'],
-                // ['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
+                ['a.isDeleted', '=', '0']
             ]);
 
         if ($request->locationId) {
@@ -791,6 +889,7 @@ class CustomerController extends Controller
         $data = DB::table($data)
             ->select(
                 'id',
+                'memberNo',
                 'customerName',
                 'totalPet',
                 'location',
@@ -826,33 +925,35 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
 
             ->select(
                 'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                 DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.email as emailAddress',
-                'a.createdBy as createdBy',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                // ['c.isDeleted', '=', '0'],
-                // ['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
             ]);
 
         if ($request->locationId) {
@@ -869,6 +970,7 @@ class CustomerController extends Controller
         $data = DB::table($data)
             ->select(
                 'id',
+                'memberNo',
                 'customerName',
                 'totalPet',
                 'location',
@@ -904,33 +1006,35 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
 
             ->select(
                 'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                 DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.email as emailAddress',
-                'a.createdBy as createdBy',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                // ['c.isDeleted', '=', '0'],
-                // ['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
             ]);
 
         if ($request->locationId) {
@@ -948,6 +1052,7 @@ class CustomerController extends Controller
         $data = DB::table($data)
             ->select(
                 'id',
+                'memberNo',
                 'customerName',
                 'totalPet',
                 'location',
@@ -983,33 +1088,35 @@ class CustomerController extends Controller
                     $join->on('b.customerId', '=', 'a.id');
                 }
             )
-            //->leftjoin('customerAddresses as c', 'c.customerId', '=', 'a.id')
             ->leftjoin('location as d', 'd.id', '=', 'a.locationId')
-            ->leftjoin('customerTelephones as e', 'e.customerId', '=', 'a.id')
-            ->leftjoin('customerEmails as f', 'f.customerId', '=', 'a.id')
+            ->leftjoin('customerGroups as cg', 'cg.id', '=', 'a.customerGroupId')
+            ->join('users as u', 'a.createdBy', 'u.id')
 
             ->select(
                 'a.id as id',
+                'a.memberNo',
+                DB::raw("IFNULL ((cg.customerGroup),'') as customerGroup"),
                 DB::raw("CONCAT(IFNULL(a.firstName,''), case when a.middleName is null then '' else ' ' end , IFNULL(a.middleName,'') ,case when a.lastName is null then '' else ' ' end, case when a.lastName is null then '' else a.lastName end ) as customerName"),
                 DB::raw("IFNULL ((b.jumlah),0) as totalPet"),
                 'd.locationName as location',
                 'a.locationId as locationId',
-                DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
-                DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
-                'f.email as emailAddress',
-                'a.createdBy as createdBy',
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0) = 0 then '' else
+                    (select ct.phoneNumber from customerTelephones ct where ct.customerId=a.id and ct.usage='Utama' and ct.isDeleted=0 limit 1) END as phoneNumber"),
+
+                DB::raw("CASE WHEN (select count(*) from customerTelephones ct where ct.customerId=a.id and ct.type='Whatsapp' and ct.usage='Utama' and ct.isDeleted=0) > 0 THEN true ELSE false END AS isWhatsapp"),
+
+                DB::raw("CASE WHEN (select count(*) from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0) = 0 THEN '' ELSE
+                    (select ce.email from customerEmails ce where ce.customerId=a.id and ce.usage='Utama' and ce.isDeleted=0 LIMIT 1) END AS emailAddress"),
+
+                // DB::raw("CONCAT(e.phoneNumber) as phoneNumber"),
+                // DB::raw("CASE WHEN lower(e.type)='whatshapp' then true else false end as isWhatsapp"),
+                //'f.email as emailAddress',
+                'u.firstName as createdBy',
                 DB::raw('a.created_at as createdAt'),
                 'a.updated_at'
             )
             ->where([
                 ['a.isDeleted', '=', '0'],
-                // ['c.isDeleted', '=', '0'],
-                // ['c.isPrimary', '=', '1'],
-                ['d.isDeleted', '=', '0'],
-                ['e.isDeleted', '=', '0'],
-                ['e.usage', '=', 'Utama'],
-                ['f.isDeleted', '=', '0'],
-                ['f.usage', '=', 'Utama'],
             ]);
 
         if ($request->locationId) {
