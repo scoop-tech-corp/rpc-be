@@ -24,8 +24,11 @@ use App\Models\ProductBrand;
 use App\Models\ProductCategories;
 use App\Models\ProductCoreCategories;
 use App\Models\ProductCustomerGroups;
+use App\Models\ProductImages;
+use App\Models\ProductLocations;
 use App\Models\ProductPriceLocations;
 use App\Models\ProductQuantitiess;
+use App\Models\ProductReminders;
 use App\Models\Products;
 use App\Models\ProductSupplier;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
@@ -1306,7 +1309,7 @@ class ProductClinicController
             ]
         );
 
-        //try {
+        try {
 
         $weight = 0;
         if (!is_null($request->weight)) {
@@ -1528,8 +1531,8 @@ class ProductClinicController
                 }
             }
         }
-        // }
-        // DB::commit();
+        //}
+        DB::commit();
 
         return response()->json(
             [
@@ -1537,14 +1540,14 @@ class ProductClinicController
             ],
             200
         );
-        // } catch (Exception $th) {
-        //     DB::rollback();
+        } catch (Exception $th) {
+            DB::rollback();
 
-        //     return response()->json([
-        //         'message' => 'Insert Failed',
-        //         'errors' => [$th],
-        //     ], 422);
-        // }
+            return response()->json([
+                'message' => 'Insert Failed',
+                'errors' => [$th],
+            ], 422);
+        }
     }
 
     public function updateImages(Request $request)
