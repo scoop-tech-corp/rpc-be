@@ -13,6 +13,7 @@ use App\Models\AccessControl\MenuList;
 use App\Models\AccessControl\MenuMasters;
 use App\Models\StaffAbsents;
 use App\Models\menuGroup;
+use App\Models\Staff\StaffLogin;
 use Carbon\Carbon;
 use Carbon\Doctrine\CarbonDoctrineType;
 use Illuminate\Support\Facades\DB as FacadesDB;
@@ -436,6 +437,14 @@ class ApiController extends Controller
                     ->where('roleId', '=', $users->roleId)
                     ->where('isDeleted', '=', 0)
                     ->get();
+
+                StaffLogin::create([
+                    'staffId' => $userId,
+                    'date' => Carbon::now(),
+                    'ipAddress' => $request->ip(),
+                    'device' => $request->header('User-Agent'),
+
+                ]);
 
                 // broadcast(new \App\Events\UserLoggedIn($userId));
                 return response()->json([
