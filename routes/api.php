@@ -33,6 +33,7 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Customer\ImportCustomerController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Promotion\DiscountController;
@@ -56,6 +57,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::post('logout', [ApiController::class, 'logout']);
 
+    Route::group(['prefix' => 'dashboard'], function () {
+        Route::get('/overview', [DashboardController::class, 'overview']);
+        Route::get('/upbookinpatient', [DashboardController::class, 'upcomingBookInpatien']);
+        Route::get('/upbookoutpatient', [DashboardController::class, 'upcomingBookOutpatien']);
+        Route::get('/activity', [DashboardController::class, 'recentActivity']);
+    });
 
     Route::group(['prefix' => 'location'], function () {
 
