@@ -560,46 +560,51 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::group(['prefix' => 'report'], function () {
 
         Route::group(['prefix' => 'booking'], function () {
-            Route::get('/location', [BookingController::class, 'index']);
-            Route::get('/status', [BookingController::class, 'index']);
-            Route::get('/cancellationreason', [BookingController::class, 'index']);
-            Route::get('/list', [BookingController::class, 'index']);
-            Route::get('/diagnose', [BookingController::class, 'index']);
-            Route::get('/diagnosespecies', [BookingController::class, 'index']);
+            Route::get('/location', [BookingController::class, 'indexLocation']);
+            Route::get('/status', [BookingController::class, 'indexStatus']);
+            Route::get('/cancellationreason', [BookingController::class, 'indexCancel']);
+            Route::get('/list', [BookingController::class, 'indexList']);
+            Route::get('/diagnose', [BookingController::class, 'indexDiagnose']);
+            Route::get('/diagnosespecies', [BookingController::class, 'indexSpecies']);
+
+            Route::get('/location/export', [BookingController::class, 'exportLocation']);
+            Route::get('/status/export', [BookingController::class, 'exportStatus']);
+            Route::get('/cancellationreason/export', [BookingController::class, 'exportCancel']);
+            Route::get('/list/export', [BookingController::class, 'exportList']);
+            Route::get('/diagnose/export', [BookingController::class, 'exportDiagnose']);
+            Route::get('/diagnosespecies/export', [BookingController::class, 'exportSpecies']);
         });
 
         Route::group(['prefix' => 'customer'], function () {
 
-            Route::get('/growth', [ReportCustomerController::class, 'index']);
-            Route::get('/growthgroup', [ReportCustomerController::class, 'index']);
-            Route::get('/total', [ReportCustomerController::class, 'index']);
-            Route::get('/leaving', [ReportCustomerController::class, 'index']);
-            Route::get('/list', [ReportCustomerController::class, 'index']);
+            Route::get('/growth', [ReportCustomerController::class, 'indexGrowth']);
+            Route::get('/growthgroup', [ReportCustomerController::class, 'indexGrowthByGroup']);
+            Route::get('/total', [ReportCustomerController::class, 'indexTotal']);
+            Route::get('/leaving', [ReportCustomerController::class, 'indexLeaving']);
+            Route::get('/list', [ReportCustomerController::class, 'indexList']);
+            Route::get('/refspend', [ReportCustomerController::class, 'indexRefSpend']);
+            Route::get('/subaccount', [ReportCustomerController::class, 'indexSubAccount']);
+
+            Route::get('/growth/export', [ReportCustomerController::class, 'exportGrowth']);
+            Route::get('/growthgroup/export', [ReportCustomerController::class, 'exportGrowthByGroup']);
+            Route::get('/total/export', [ReportCustomerController::class, 'exportTotal']);
+            Route::get('/leaving/export', [ReportCustomerController::class, 'exportLeaving']);
+            Route::get('/list/export', [ReportCustomerController::class, 'exportList']);
+            Route::get('/refspend/export', [ReportCustomerController::class, 'exportRefSpend']);
+            Route::get('/subaccount/export', [ReportCustomerController::class, 'exportSubAccount']);
         });
 
-        Route::group(['prefix' => 'deposit'], function () {
+        Route::group(['prefix' => 'deposit'], function () {});
 
-        });
+        Route::group(['prefix' => 'expenses'], function () {});
 
-        Route::group(['prefix' => 'expenses'], function () {
+        Route::group(['prefix' => 'products'], function () {});
 
-        });
+        Route::group(['prefix' => 'sales'], function () {});
 
-        Route::group(['prefix' => 'products'], function () {
+        Route::group(['prefix' => 'service'], function () {});
 
-        });
-
-        Route::group(['prefix' => 'sales'], function () {
-
-        });
-
-        Route::group(['prefix' => 'service'], function () {
-
-        });
-
-        Route::group(['prefix' => 'staff'], function () {
-
-        });
+        Route::group(['prefix' => 'staff'], function () {});
     });
 
     //GLOBAL VARIABLE
