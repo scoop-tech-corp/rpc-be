@@ -526,6 +526,20 @@ class ImportCustomerController extends Controller
                     ], 422);
                 }
 
+                if (strlen(trim($value['alamat_jalan'])) > 254) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['The number of characters on column Alamat Jalan is more than 254 characters at row ' . $count_row],
+                    ], 422);
+                }
+
+                if (strlen(trim($value['informasi_tambahan'])) > 254) {
+                    return response()->json([
+                        'errors' => 'The given data was invalid.',
+                        'message' => ['The number of characters on column Informasi Tambahan is more than 254 characters at row ' . $count_row],
+                    ], 422);
+                }
+
                 if ($value['jadikan_sebagai_alamat_utama'] != "0" && $value['jadikan_sebagai_alamat_utama'] != "1") {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
