@@ -822,7 +822,6 @@ class ImportCustomerController extends Controller
                                 'isDeleted' => 0, // or another value based on your logic
                                 'deletedBy' => null, // or fill as necessary
                                 'deletedAt' => null, // or fill as necessary
-                                //'createdBy' => $request->user()->id, // Adjust as necessary
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
@@ -835,17 +834,28 @@ class ImportCustomerController extends Controller
                 if ($resultTelp) {
                     foreach ($resultTelp as $value) {
 
+                        $staticTelp = DB::table('dataStaticCustomer')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Telephone')
+                            ->where('id', '=', trim($value['id_tipe']))
+                            ->first();
+
+                        $staticUsage = DB::table('dataStaticCustomer')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Usage')
+                            ->where('id', '=', trim($value['id_pemakaian']))
+                            ->first();
+
                         DB::table('customerTelephones')
                             ->insertGetId([
 
                                 'customerId' => $customerId,
                                 'phoneNumber' => trim($value['nomor']),
-                                'type' => trim($value['id_tipe']),
-                                'usage' => trim($value['id_pemakaian']),
+                                'type' => $staticTelp->name,
+                                'usage' => $staticUsage->name,
                                 'isDeleted' => 0, // or another value based on your logic
-                                //'deletedBy' => null, // or fill as necessary
-                                //'deletedAt' => null, // or fill as necessary
-                                //'createdBy' => $request->user()->id, // Adjust as necessary
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
@@ -857,16 +867,20 @@ class ImportCustomerController extends Controller
                 if ($resultEmail) {
                     foreach ($resultEmail as $value) {
 
+                        $staticUsage = DB::table('dataStaticCustomer')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Usage')
+                            ->where('id', '=', $value['id_pemakaian'])
+                            ->first();
+
                         DB::table('customerEmails')
                             ->insertGetId([
 
                                 'customerId' => $customerId,
                                 'email' => trim($value['alamat_email']),
-                                'usage' => trim($value['id_pemakaian']),
+                                'usage' => $staticUsage->name,
                                 'isDeleted' => 0, // or another value based on your logic
-                                //'deletedBy' => null, // or fill as necessary
-                                //'deletedAt' => null, // or fill as necessary
-                                //'createdBy' => $request->user()->id, // Adjust as necessary
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
@@ -878,17 +892,28 @@ class ImportCustomerController extends Controller
                 if ($resultMess) {
                     foreach ($resultMess as $value) {
 
+                        $staticMes = DB::table('dataStaticCustomer')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Messenger')
+                            ->where('id', '=', trim($value['id_tipe']))
+                            ->first();
+
+                        $staticUsage = DB::table('dataStaticCustomer')
+                            ->select('id', 'name')
+                            ->where('isDeleted', '=', '0')
+                            ->where('value', '=', 'Usage')
+                            ->where('id', '=', trim($value['id_pemakaian']))
+                            ->first();
+
                         DB::table('customerMessengers')
                             ->insertGetId([
 
                                 'customerId' => $customerId,
                                 'messengerNumber' => trim($value['nama_akun']),
-                                'type' => trim($value['id_tipe']),
-                                'usage' => trim($value['id_pemakaian']),
+                                'type' => $staticMes->name,
+                                'usage' => $staticUsage->name,
                                 'isDeleted' => 0, // or another value based on your logic
-                                //'deletedBy' => null, // or fill as necessary
-                                //'deletedAt' => null, // or fill as necessary
-                                //'createdBy' => $request->user()->id, // Adjust as necessary
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
