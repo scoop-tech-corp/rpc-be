@@ -37,7 +37,7 @@ class ProductClinicController
 {
     public function index(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -204,7 +204,7 @@ class ProductClinicController
     public function create(Request $request)
     {
 
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -841,7 +841,7 @@ class ProductClinicController
 
     public function detail(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1056,7 +1056,7 @@ class ProductClinicController
 
     public function update(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1552,7 +1552,7 @@ class ProductClinicController
 
     public function updateImages(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1652,7 +1652,7 @@ class ProductClinicController
 
     public function delete(Request $request)
     {
-        if (!checkAccessDelete('Product List', $request->user()->roleId)) {
+        if (!checkAccessDelete('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1786,7 +1786,7 @@ class ProductClinicController
 
     public function export(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1841,7 +1841,7 @@ class ProductClinicController
 
     public function downloadTemplate(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1851,7 +1851,7 @@ class ProductClinicController
 
     public function import(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }

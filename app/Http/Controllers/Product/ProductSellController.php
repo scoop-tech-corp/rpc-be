@@ -35,7 +35,7 @@ class ProductSellController
 {
     public function Index(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -392,7 +392,7 @@ class ProductSellController
 
     public function Create(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -960,7 +960,7 @@ class ProductSellController
 
     public function Update(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1416,7 +1416,7 @@ class ProductSellController
 
     public function updateImages(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1516,7 +1516,7 @@ class ProductSellController
 
     public function Delete(Request $request)
     {
-        if (!checkAccessDelete('Product List', $request->user()->roleId)) {
+        if (!checkAccessDelete('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1651,7 +1651,7 @@ class ProductSellController
 
     public function Export(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1706,7 +1706,7 @@ class ProductSellController
 
     public function downloadTemplate(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1716,7 +1716,7 @@ class ProductSellController
 
     public function Import(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -2052,7 +2052,7 @@ class ProductSellController
 
     public function Split(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }

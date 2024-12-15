@@ -27,7 +27,7 @@ class ProductInventoryController
 {
     public function index(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -138,7 +138,7 @@ class ProductInventoryController
 
     public function indexHistory(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -224,7 +224,7 @@ class ProductInventoryController
 
     public function exportHistory(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -306,7 +306,7 @@ class ProductInventoryController
 
     public function indexApproval(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -395,7 +395,7 @@ class ProductInventoryController
 
     public function exportApproval(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -474,7 +474,7 @@ class ProductInventoryController
 
     public function detail(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -781,7 +781,7 @@ class ProductInventoryController
 
     public function update(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -929,7 +929,7 @@ class ProductInventoryController
 
     public function updateApproval(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1075,7 +1075,7 @@ class ProductInventoryController
 
     public function delete(Request $request)
     {
-        if (!checkAccessDelete('Product List', $request->user()->roleId)) {
+        if (!checkAccessDelete('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1152,7 +1152,7 @@ class ProductInventoryController
 
     public function exportInventory(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1196,7 +1196,7 @@ class ProductInventoryController
 
     public function downloadTemplate(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1206,7 +1206,7 @@ class ProductInventoryController
 
     public function Import(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }

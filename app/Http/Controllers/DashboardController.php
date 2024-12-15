@@ -8,6 +8,10 @@ class DashboardController extends Controller
 {
     public function overview(Request $request)
     {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $data = [
             'chartsBookingCategory' => [
                 'labels' => ['Layanan Kesehatan Hewan', 'Pet Salon', 'Rawat Inap Zona', 'Penitipan Vet', 'Vaksinasi', 'Other'],
@@ -54,6 +58,9 @@ class DashboardController extends Controller
 
     public function upcomingBookInpatien(Request $request)
     {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $data = [
             'totalPagination' => 1,
@@ -121,6 +128,9 @@ class DashboardController extends Controller
 
     public function upcomingBookOutpatien(Request $request)
     {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $data = [
             'totalPagination' => 1,
@@ -188,6 +198,9 @@ class DashboardController extends Controller
 
     public function recentActivity(Request $request)
     {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $data = [
             'totalPagination' => 1,
