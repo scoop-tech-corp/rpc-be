@@ -18,27 +18,33 @@ class DashboardController extends Controller
                 'series' => [44, 55, 13],
             ],
             'bookings' => [
-                'total' => '75.35%',
+                'percentage' => '75.35%',
+                'total' => '100',
                 'isLoss' => 1
             ],
             'totalSaleValue' => [
-                'total' => '27.5%',
+                'percentage' => '27.5%',
+                'total' => '250',
                 'isLoss' => 0
             ],
             'newCustomer' => [
-                'total' => '48.8%',
+                'percentage' => '48.8%',
+                'total' => '300',
                 'isLoss' => 0
             ],
             'rebookRate' => [
-                'total' => '22.5%',
+                'percentage' => '22.5%',
+                'total' => '200',
                 'isLoss' => 0
             ],
             'customerRetention' => [
-                'total' => '40%',
+                'percentage' => '40%',
+                'total' => '400',
                 'isLoss' => 1
             ],
             'avgSaleValue' => [
-                'total' => '68%',
+                'percentage' => '68%',
+                'total' => '1,400',
                 'isLoss' => 0
             ],
         ];
