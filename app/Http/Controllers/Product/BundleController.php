@@ -15,6 +15,10 @@ class BundleController
 {
     public function index(Request $request)
     {
+        if (!checkAccessIndex('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
@@ -144,6 +148,10 @@ class BundleController
 
     public function create(Request $request)
     {
+        if (!checkAccessModify('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'name' => 'required|string|min:3|max:30',
             'locationId' => 'required|integer',
@@ -382,6 +390,9 @@ class BundleController
 
     public function detail(Request $request)
     {
+        if (!checkAccessIndex('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $prod = ProductBundle::find($request->id);
 
@@ -454,6 +465,9 @@ class BundleController
 
     public function update(Request $request)
     {
+        if (!checkAccessModify('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
@@ -594,6 +608,10 @@ class BundleController
 
     public function delete(Request $request)
     {
+        if (!checkAccessDelete('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         foreach ($request->id as $va) {
             $res = ProductBundle::find($va);
 

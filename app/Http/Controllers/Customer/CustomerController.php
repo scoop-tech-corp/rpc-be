@@ -31,7 +31,6 @@ class CustomerController extends Controller
 
     public function insertTypeIdCustomer(Request $request)
     {
-
         $request->validate([
             'typeName' => 'required|string',
         ]);
@@ -69,8 +68,6 @@ class CustomerController extends Controller
         }
     }
 
-
-
     public function getTypeIdCustomer()
     {
 
@@ -94,6 +91,9 @@ class CustomerController extends Controller
 
     public function indexCustomer(Request $request)
     {
+        if (!checkAccessIndex('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         try {
 
@@ -341,6 +341,10 @@ class CustomerController extends Controller
 
     public function exportCustomer(Request $request)
     {
+        if (!checkAccessIndex('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $tmp = "";
         $fileName = "";
         $date = Carbon::now()->format('d-m-Y');
@@ -1163,6 +1167,10 @@ class CustomerController extends Controller
 
     public function createCustomer(Request $request)
     {
+
+        if (!checkAccessModify('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
@@ -2131,12 +2139,8 @@ class CustomerController extends Controller
 
     public function updateCustomer(Request $request)
     {
-
-        if (adminAccess($request->user()->id) != 1) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+        if (!checkAccessModify('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
         }
 
         DB::beginTransaction();
@@ -3285,15 +3289,9 @@ class CustomerController extends Controller
     public function deleteCustomer(Request $request)
     {
 
-        if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+        if (!checkAccessDelete('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
         }
-
-
-
 
         $validate = Validator::make($request->all(), [
             'customerId' => 'required',

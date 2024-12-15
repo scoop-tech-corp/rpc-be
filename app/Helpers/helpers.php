@@ -356,13 +356,13 @@ if (!function_exists('responseUnauthorize')) {
 }
 
 if (!function_exists('checkAccessIndex')) {
-    function checkAccessIndex($menuName, $roleId)
+    function checkAccessIndex($identify, $roleId)
     {
         $menuId = 0;
 
         $data = DB::table('grandChildrenMenuGroups as gc')
-            ->select('gc.id', 'gc.menuName')
-            ->where('gc.menuName', 'like', '%' . $menuName . '%')
+            ->select('gc.id', 'gc.identify')
+            ->where('gc.identify', 'like', '%' . $identify . '%')
             ->first();
 
         if ($data) {
@@ -385,13 +385,13 @@ if (!function_exists('checkAccessIndex')) {
 }
 
 if (!function_exists('checkAccessModify')) {
-    function checkAccessModify($menuName, $roleId)
+    function checkAccessModify($identify, $roleId)
     {
         $menuId = 0;
 
         $data = DB::table('grandChildrenMenuGroups as gc')
-            ->select('gc.id', 'gc.menuName')
-            ->where('gc.menuName', 'like', '%' . $menuName . '%')
+            ->select('gc.id', 'gc.identify')
+            ->where('gc.identify', 'like', '%' . $identify . '%')
             ->first();
 
         if ($data) {
@@ -414,13 +414,13 @@ if (!function_exists('checkAccessModify')) {
 }
 
 if (!function_exists('checkAccessDelete')) {
-    function checkAccessDelete($menuName, $roleId)
+    function checkAccessDelete($identify, $roleId)
     {
         $menuId = 0;
 
         $data = DB::table('grandChildrenMenuGroups as gc')
-            ->select('gc.id', 'gc.menuName')
-            ->where('gc.menuName', 'like', '%' . $menuName . '%')
+            ->select('gc.id', 'gc.identify')
+            ->where('gc.identify', 'like', '%' . $identify . '%')
             ->first();
 
         if ($data) {
