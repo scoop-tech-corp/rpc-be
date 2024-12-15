@@ -160,35 +160,37 @@ class ReportCustomerController extends Controller
                 'labels' => ['VIP', 'Cat Community', 'Cat Lover'],
                 'series' => [150, 40, 60],
             ],
-            'data' => [
-                [
-                    'reportingGroup' => 'VIP',
-                    'total' => 150,
-                    'new' => 5,
-                    'inactive' => 5,
-                    'deleted' => 5,
+            'table' => [
+                'data' => [
+                    [
+                        'reportingGroup' => 'VIP',
+                        'total' => 150,
+                        'new' => 5,
+                        'inactive' => 5,
+                        'deleted' => 5,
+                    ],
+                    [
+                        'reportingGroup' => 'Cat Community',
+                        'total' => 40,
+                        'new' => 13,
+                        'inactive' => 10,
+                        'deleted' => 5,
+                    ],
+                    [
+                        'reportingGroup' => 'Cat Lover',
+                        'total' => 60,
+                        'new' => 10,
+                        'inactive' => 0,
+                        'deleted' => 5,
+                    ]
                 ],
-                [
-                    'reportingGroup' => 'Cat Community',
-                    'total' => 40,
-                    'new' => 13,
-                    'inactive' => 10,
-                    'deleted' => 5,
+                'totalData' => [
+                    'total' => 250,
+                    'new' => 28,
+                    'inactive' => 15,
+                    'deleted' => 15,
                 ],
-                [
-                    'reportingGroup' => 'Cat Lover',
-                    'total' => 60,
-                    'new' => 10,
-                    'inactive' => 0,
-                    'deleted' => 5,
-                ]
-            ],
-            'totalData' => [
-                'total' => 250,
-                'new' => 28,
-                'inactive' => 15,
-                'deleted' => 15,
-            ],
+            ]
         ];
 
         return response()->json($data);
@@ -292,19 +294,21 @@ class ReportCustomerController extends Controller
                 ],
                 'categories' => $last10Days,
             ],
-            'data' => [
-                [
-                    'location' => 'RPC Condet',
-                    'total' => 300,
+            'table' => [
+                'data' => [
+                    [
+                        'location' => 'RPC Condet',
+                        'total' => 300,
+                    ],
+                    [
+                        'location' => 'RPC Hankam',
+                        'total' => 300,
+                    ],
                 ],
-                [
-                    'location' => 'RPC Hankam',
-                    'total' => 300,
+                'totalData' => [
+                    'total' => 600,
                 ],
-            ],
-            'totalData' => [
-                'total' => 600,
-            ],
+            ]
         ];
 
         return response()->json($data);
