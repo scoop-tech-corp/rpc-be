@@ -94,11 +94,11 @@ class ApiController extends Controller
                 ])
                 ->first();
 
-            if ($users->password == null) {
+            if ($users == null) {
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Email address is not verified, Please check your email to verify your account and set the password',
+                    'message' => 'Email address is not found or has already deleted in our system, Please try different email address to Login!',
                 ], 400);
             } else {
 
