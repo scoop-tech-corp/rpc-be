@@ -4001,4 +4001,27 @@ class StaffController extends Controller
 
         return response()->json($data, 200);
     }
+
+    public function listStaffDoctorWithLocation(Request $request)
+    {
+        $data = DB::table('users as u')
+            ->join('usersLocation as ul', 'u.id', 'ul.usersId')
+            ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
+            ->select(
+                'u.firstName',
+                'j.jobName'
+            );
+
+        if ($request->locationId) {
+            $data = $data->whereIn('ul.locationId', $request->locationId);
+        }
+
+        $data = $data->where('j.id', '=', 17)   //id job title dokter hewan
+            ->where('u.isDeleted', '=', 0)
+            ->groupBy('firstName')
+            ->groupBy('j.jobName')
+            ->get();
+
+        return response()->json($data, 200);
+    }
 }

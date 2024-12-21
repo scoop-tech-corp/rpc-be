@@ -42,6 +42,7 @@ use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Report\BookingController;
 use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\ReportMenuManagementController;
+use App\Http\Controllers\Transaction\TransactionController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -286,6 +287,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::put('/pet', [CustomerController::class, 'updatePetAge']);
 
+        Route::get('/list', [CustomerController::class, 'customerListWithLocation']);
+        Route::get('/petlist', [CustomerController::class, 'petListWithCustomer']);
+
         Route::group(['prefix' => 'merge'], function () {
             Route::get('/', [CustomerController::class, 'getSourceCustomer']);
         });
@@ -366,6 +370,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [StaffController::class, 'index']);
 
         Route::get('/list', [StaffController::class, 'listStaff']);
+        Route::get('/list/location/doctor', [StaffController::class, 'listStaffDoctorWithLocation']);
         Route::get('/list/location', [StaffController::class, 'listStaffWithLocation']);
 
         Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
@@ -504,6 +509,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/menu-report/detail', [ReportMenuManagementController::class, 'Detail']);
         Route::put('/menu-report', [ReportMenuManagementController::class, 'Update']);
         Route::delete('/menu-report', [ReportMenuManagementController::class, 'Delete']);
+    });
+
+    // Transaction
+    Route::group(['prefix' => 'transaction'], function () {
+        Route::get('/category', [TransactionController::class, 'TransactionCategory']);
+
     });
 
     // Service
