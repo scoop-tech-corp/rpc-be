@@ -19,12 +19,24 @@ class ReportCustomerController extends Controller
             'charts' => [
                 'series' => [
                     [
-                        'name' => 'RPC Bandung',
+                        'name' => 'RPC Condet',
                         'data' => [10, 10, 10, 10, 30, 20, 15, 20, 18, 29],
                     ],
                     [
-                        'name' => 'RPC Condet',
+                        'name' => 'RPC Hankam',
                         'data' => [20, 40, 20, 10, 80, 30, 15, 20, 18, 29],
+                    ],
+                    [
+                        'name' => 'RPC Tanjung Duren',
+                        'data' => [20, 40, 20, 10, 80, 30, 15, 20, 18, 29],
+                    ],
+                    [
+                        'name' => 'RPC Sawangan',
+                        'data' => [30, 20, 60, 5, 20, 10, 12, 78, 54, 34],
+                    ],
+                    [
+                        'name' => 'RPC Palembang',
+                        'data' => [60, 20, 10, 17, 23, 65, 48, 34, 12, 29],
                     ],
                 ],
                 'categories' => $last10Days,
