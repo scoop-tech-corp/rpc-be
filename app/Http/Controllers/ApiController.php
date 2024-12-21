@@ -14,6 +14,7 @@ use App\Models\AccessControl\MenuMasters;
 use App\Models\StaffAbsents;
 use App\Models\menuGroup;
 use App\Models\Staff\StaffLogin;
+use App\Models\Staff\UsersLocation;
 use Carbon\Carbon;
 use Carbon\Doctrine\CarbonDoctrineType;
 use Illuminate\Support\Facades\DB as FacadesDB;
@@ -149,11 +150,13 @@ class ApiController extends Controller
                     ->where([['a.roleId', '=', $users->roleId],])
                     ->get();
 
-                $locations = DB::table('usersLocation as ul')
-                    ->join('location as l', 'ul.locationId', 'l.id')
-                    ->select('l.id', 'l.locationName')
-                    ->where('ul.usersId', '=', $userId)
-                    ->get();
+                $locations = UsersLocation::select('id')->where('usersId', $userId)->get()->pluck('id')->toArray();
+
+                // $locations = DB::table('usersLocation as ul')
+                //     ->join('location as l', 'ul.locationId', 'l.id')
+                //     ->select('l.id')
+                //     ->where('ul.usersId', '=', $userId)
+                //     ->get();
 
                 $menuMastersData = MenuMasters::select('id', 'masterName as module')->where([
                     ['isDeleted', '=', 0],
@@ -457,6 +460,7 @@ class ApiController extends Controller
                     "jobName" => $users->jobName,
                     "roleId" => $users->roleId,
                     "role" => $users->roleName,
+                    "locations" => $locations,
                     'imagePath' => $users->imagePath,
                     "isAbsent" => $isAbsent,
                     "masterMenu" => $masterMenu,

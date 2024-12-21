@@ -3814,4 +3814,30 @@ class CustomerController extends Controller
             ], 422);
         }
     }
+
+    public function customerListWithLocation(Request $request)
+    {
+        $data = Customer::select('id', 'memberNo', 'firstName');
+
+        if ($request->locationId) {
+            $data = $data->whereIn('locationId', $request->locationId);
+        }
+
+        $data = $data->where('isDeleted', '=', 0)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function petListWithCustomer(Request $request)
+    {
+        $data = CustomerPets::select('id', 'petName')
+            ->where('customerId', '=', $request->customerId)
+            ->where('isDeleted', '=', 0)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($data, 200);
+    }
 }
