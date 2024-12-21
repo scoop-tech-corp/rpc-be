@@ -14,6 +14,7 @@ class ReportCustomerController extends Controller
         $last10Days = collect(range(0, 9))->map(function ($daysAgo) {
             return Carbon::today()->subDays($daysAgo)->format('j M');
         });
+        //fixing
 
         $data = [
             'charts' => [
