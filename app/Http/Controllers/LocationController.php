@@ -20,6 +20,7 @@ use App\Models\Location\LocationDetailAddress;
 use App\Models\Location\LocationEmail;
 use App\Models\Location\LocationOperational;
 use App\Models\Location\LocationTelephone;
+use App\Models\Staff\UsersLocation;
 use Carbon\Carbon;
 
 class LocationController extends Controller
@@ -199,12 +200,11 @@ class LocationController extends Controller
             ->orderBy('id', 'desc')
             ->first();
 
-            if (count($lastCodeLocation) == 0) {
-                $lastCodeLocation = 'ABC1';
-            }
-            else {
-                $lastCodeLocation = str_replace('ABC', '', $lastCodeLocation->codeLocation);
-            }
+        if (count($lastCodeLocation) == 0) {
+            $lastCodeLocation = 'ABC1';
+        } else {
+            $lastCodeLocation = str_replace('ABC', '', $lastCodeLocation->codeLocation);
+        }
 
 
 
@@ -607,9 +607,7 @@ class LocationController extends Controller
         }
     }
 
-    public function uploadexceltest(Request $request)
-    {
-    }
+    public function uploadexceltest(Request $request) {}
 
     public function uploadImageLocation(Request $request)
     {
@@ -2219,6 +2217,20 @@ class LocationController extends Controller
         $Data = DB::table('location')
             ->select('id', 'locationName')
             ->where('isDeleted', '=', 0)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($Data, 200);
+    }
+
+    public function locationListTransaction(Request $request)
+    {
+        $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
+
+        $Data = DB::table('location')
+            ->select('id', 'locationName')
+            ->where('isDeleted', '=', 0)
+            ->wherein('id', $locations)
             ->orderBy('created_at', 'desc')
             ->get();
 

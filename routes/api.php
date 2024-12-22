@@ -80,6 +80,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/exportlocation', [LocationController::class, 'exportLocation']);
         Route::delete('/', [LocationController::class, "deleteLocation"]);
         Route::get('/list', [LocationController::class, 'locationList']);
+        Route::get('/list/transaction', [LocationController::class, 'locationListTransaction']);
         Route::put('/', [LocationController::class, 'updateLocation']);
         Route::post('/uploadexceltest', [LocationController::class, 'uploadexceltest']);
         Route::post('/datastatic', [LocationController::class, 'insertdatastatic']);

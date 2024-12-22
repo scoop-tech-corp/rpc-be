@@ -4013,7 +4013,7 @@ class StaffController extends Controller
             );
 
         if ($request->locationId) {
-            $data = $data->whereIn('ul.locationId', $request->locationId);
+            $data = $data->where('ul.locationId', '=', $request->locationId);
         }
 
         $data = $data->where('j.id', '=', 17)   //id job title dokter hewan
