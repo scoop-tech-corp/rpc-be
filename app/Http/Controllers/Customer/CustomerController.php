@@ -3820,7 +3820,7 @@ class CustomerController extends Controller
         $data = Customer::select('id', 'memberNo', 'firstName');
 
         if ($request->locationId) {
-            $data = $data->whereIn('locationId', $request->locationId);
+            $data = $data->where('locationId', '=', $request->locationId);
         }
 
         $data = $data->where('isDeleted', '=', 0)
