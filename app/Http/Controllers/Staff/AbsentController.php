@@ -309,7 +309,31 @@ class AbsentController extends Controller
             ]);
         }
 
-        $presentTime = Carbon::createFromFormat('d/m/Y H:i', $request->presentTime);
+        $users = DB::table('users')
+            ->leftjoin('usersRoles', 'usersRoles.id', '=', 'users.roleId')
+            ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
+            ->select(
+                'users.id',
+                'users.imagePath',
+                'users.roleId',
+                DB::raw("IF(usersRoles.roleName IS NULL, '', usersRoles.roleName) as roleName"),
+                DB::raw("IF(jobTitle.jobName IS NULL,'', jobTitle.jobName) as jobName"),
+                DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.lastName,'')) as name"),
+            )
+            ->where([
+                ['users.id', '=', $request->user()->id]
+            ])
+            ->first();
+
+        if ($users->jobName == 'Dokter Hewan') {
+            $validate = Validator::make($request->all(), [
+                'shift' => 'required|integer|in:1,2',
+            ]);
+        }
+
+        $currentDate = Carbon::now();
+        $presentTime = $currentDate->format('d/m/Y H:i');
+        $presentTime2 = $currentDate->format('Y-m-d H:i');
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
@@ -379,9 +403,42 @@ class AbsentController extends Controller
             $reason = $request->reason;
         }
 
+        $status = "";
+        $shift = $request->shift;
+
+        if ($users->jobName == 'Dokter Hewan') {
+            if ($shift == 1) {
+                $time2 = Carbon::parse('08:45');
+            } elseif ($shift == 2) {
+                $time2 = Carbon::parse('14:00');
+            }
+        } else if ($users->jobName == 'Paramedis') {
+            $time2 = Carbon::parse('08:45');
+        } else if ($users->jobName == 'Kasir') {
+            $time2 = Carbon::parse('08:30');
+        } else if ($users->jobName == 'Vetnurse') {
+            $time2 = Carbon::parse('08:30');
+        } else {
+            //if ($request->user()->jobName == 6) {
+            $time2 = Carbon::parse('12:30');
+        }
+
+        $time1 = Carbon::now(); // Jam dan menit pertama
+        $minutes1 = $time1->hour * 60 + ($time1->minute + 5);
+        $minutes2 = $time2->hour * 60 + $time2->minute;
+
+        if ($minutes1 < $minutes2) {
+            $status = "Tepat Waktu";
+        } elseif ($minutes1 > $minutes2) {
+            $status = "Terlambat";
+        } else {
+            $status = "Tepat Waktu";
+        }
+
         if (!$present) {
+
             StaffAbsents::create([
-                'presentTime' => $presentTime,
+                'presentTime' => $presentTime2,
                 'presentLongitude' => $request->longitude,
                 'presentLatitude' => $request->latitude,
                 'statusPresent' => $request->status,
@@ -390,13 +447,22 @@ class AbsentController extends Controller
                 'imagePathPresent' =>  $path,
                 'cityPresent' => $city,
                 'provincePresent' => $province,
+                'shift' => $province,
+                'status' => $status,
                 'userId' => $request->user()->id,
             ]);
         } else {
 
+            $currentDate = Carbon::now();
+
             $presentTime = $present->presentTime;
-            $homeTime = Carbon::createFromFormat('d/m/Y H:i', $request->presentTime);
-            $totalDuration =  $homeTime->diffInSeconds($presentTime);
+            $homeTime = $currentDate->format('Y-m-d H:i:s');
+
+            // Convert strings to Carbon instances
+            $carbonDatePresent = Carbon::parse($presentTime);
+            $carbonDateHome = Carbon::parse($homeTime);
+
+            $totalDuration =  $carbonDateHome->diffInSeconds($carbonDatePresent);
 
             $duration = gmdate('H:i:s', $totalDuration);
 
