@@ -20,9 +20,9 @@ class Treatment extends Model
         'userUpdateId',
         'deletedBy'
     ];
-    // status: 
-        // ACTIVE = 1;
-        // DRAFT = 2;
-        // INACTIVE = 3;
+    // status:
+    // ACTIVE = 1;
+    // DRAFT = 2;
+    // INACTIVE = 3;
 
 }
