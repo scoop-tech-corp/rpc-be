@@ -516,6 +516,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::group(['prefix' => 'transaction'], function () {
         Route::get('/category', [TransactionController::class, 'TransactionCategory']);
 
+        Route::post('/', [TransactionController::class, 'create']);
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::delete('/', [TransactionController::class, 'delete']);
+
     });
 
     // Service
