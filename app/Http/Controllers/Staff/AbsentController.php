@@ -404,12 +404,13 @@ class AbsentController extends Controller
         }
 
         $status = "";
-        $shift = $request->shift;
+        $shift = "";
 
         if ($users->jobName == 'Dokter Hewan') {
-            if ($shift == 1) {
+            $shift = 'Shift ' . $request->shift;
+            if ($request->shift == 1) {
                 $time2 = Carbon::parse('08:45');
-            } elseif ($shift == 2) {
+            } elseif ($request->shift == 2) {
                 $time2 = Carbon::parse('14:00');
             }
         } else if ($users->jobName == 'Paramedis') {
