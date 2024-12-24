@@ -447,7 +447,7 @@ class AbsentController extends Controller
                 'imagePathPresent' =>  $path,
                 'cityPresent' => $city,
                 'provincePresent' => $province,
-                'shift' => $province,
+                'shift' => $shift,
                 'status' => $status,
                 'userId' => $request->user()->id,
             ]);
