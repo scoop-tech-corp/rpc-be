@@ -162,6 +162,18 @@ class CustomerController extends Controller
                 }
             }
 
+            if ($request->customerGroupId) {
+
+                $val = [];
+                foreach ($request->customerGroupId as $temp) {
+                    $val = $temp;
+                }
+
+                if ($val) {
+                    $data = $data->whereIn('a.customerGroupId', $request->customerGroupId);
+                }
+            }
+
 
             $data = DB::table($data)
                 ->select(
