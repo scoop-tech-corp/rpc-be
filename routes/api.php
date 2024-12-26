@@ -519,7 +519,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/', [TransactionController::class, 'create']);
         Route::get('/', [TransactionController::class, 'index']);
         Route::delete('/', [TransactionController::class, 'delete']);
+        Route::put('/', [TransactionController::class, 'update']);
 
+        Route::get('/export', [TransactionController::class, 'export']);
     });
 
     // Service

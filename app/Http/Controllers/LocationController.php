@@ -2225,16 +2225,18 @@ class LocationController extends Controller
 
     public function locationListTransaction(Request $request)
     {
-        $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
-
-        $Data = DB::table('location')
+        $data = DB::table('location')
             ->select('id', 'locationName')
-            ->where('isDeleted', '=', 0)
-            ->wherein('id', $locations)
-            ->orderBy('created_at', 'desc')
+            ->where('isDeleted', '=', 0);
+
+        if (!$request->user()->roleId == 1 || !$request->user()->roleId == 2) {
+            $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
+            $data = $data->wherein('id', $locations);
+        }
+        $data = $data->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json($Data, 200);
+        return response()->json($data, 200);
     }
 
     public function locationTransferProduct(Request $request)
