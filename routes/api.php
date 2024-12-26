@@ -28,7 +28,7 @@ use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Staff\ProfileController;
 
-use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
+use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Customer\ImportCustomerController;
@@ -526,6 +526,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     // Service
     Route::group(['prefix' => 'service'], function () {
+
+        Route::group(['prefix' => 'dashboard'], function () {
+            Route::get('/', [ServiceDashboardController::class, 'index']);
+        });
+
         Route::group(['prefix' => 'category'], function () {
             Route::get('/export', [ServiceCategoryController::class, 'export']);
             Route::get('/', [ServiceCategoryController::class, 'index']);
