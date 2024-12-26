@@ -4008,8 +4008,8 @@ class StaffController extends Controller
             ->join('usersLocation as ul', 'u.id', 'ul.usersId')
             ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
             ->select(
+                'u.id',
                 'u.firstName',
-                'j.jobName'
             );
 
         if ($request->locationId) {
@@ -4018,8 +4018,8 @@ class StaffController extends Controller
 
         $data = $data->where('j.id', '=', 17)   //id job title dokter hewan
             ->where('u.isDeleted', '=', 0)
-            ->groupBy('firstName')
-            ->groupBy('j.jobName')
+            ->groupBy('u.firstName')
+            ->groupBy('u.id')
             ->get();
 
         return response()->json($data, 200);
