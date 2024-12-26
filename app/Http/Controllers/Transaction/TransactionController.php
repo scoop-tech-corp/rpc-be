@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class TransactionController extends Controller
 {
@@ -49,9 +50,15 @@ class TransactionController extends Controller
             $data = $data->whereIn('t.status', ['Selesai', 'Batal']);
         }
 
-        if ($request->locationId) {
+        if (!$request->user()->roleId == 1 || !$request->user()->roleId == 2) {
+            $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
+            $data = $data->whereIn('l.id', $locations);
+        } else {
 
-            $data = $data->whereIn('l.id', $request->locationId);
+            if ($request->locationId) {
+
+                $data = $data->whereIn('l.id', $request->locationId);
+            }
         }
 
         if ($request->customerGroupId) {
@@ -369,7 +376,73 @@ class TransactionController extends Controller
         return responseDelete();
     }
 
-    public function export(Request $request) {}
+    public function export(Request $request)
+    {
+
+        $data = DB::table('transactions as t')
+            ->join('location as l', 'l.id', 't.locationId')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->join('customerPets as cp', 'cp.id', 't.PetId')
+            ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
+            ->join('users as u', 'u.id', 't.doctorId')
+            ->join('users as uc', 'uc.id', 't.userId')
+            ->select(
+                't.registrationNo',
+                'l.locationName',
+                'c.firstName',
+                DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
+                't.serviceCategory',
+                DB::raw("IFNULL(t.startDate,'') as startDate"),
+                DB::raw("IFNULL(t.endDate,'') as endDate"),
+                't.status',
+                'u.firstName as picDoctor',
+                'uc.firstName as createdBy',
+                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
+            )
+            ->where('t.isDeleted', '=', 0);
+
+        if ($request->status == 'ongoing') {
+            $data = $data->whereNotIn('t.status', ['Selesai', 'Batal']);
+        } elseif ($request->status == 'finished') {
+            $data = $data->whereIn('t.status', ['Selesai', 'Batal']);
+        }
+
+        $data = $data->orderBy('t.updated_at', 'desc')->get();
+
+        $spreadsheet = IOFactory::load(public_path() . '/template/transaction/' . 'Template_Export_Transaction.xlsx');
+
+        $sheet = $spreadsheet->getSheet(0);
+
+        $row = 2;
+        foreach ($data as $item) {
+
+            $sheet->setCellValue("A{$row}", $row - 1);
+            $sheet->setCellValue("B{$row}", $item->registrationNo);
+            $sheet->setCellValue("C{$row}", $item->locationName);
+            $sheet->setCellValue("D{$row}", $item->firstName);
+            $sheet->setCellValue("E{$row}", $item->customerGroup);
+            $sheet->setCellValue("F{$row}", $item->serviceCategory);
+            $sheet->setCellValue("G{$row}", $item->startDate);
+            $sheet->setCellValue("H{$row}", $item->endDate);
+            $sheet->setCellValue("I{$row}", $item->status);
+            $sheet->setCellValue("J{$row}", $item->picDoctor);
+            $sheet->setCellValue("K{$row}", $item->createdBy);
+            $sheet->setCellValue("L{$row}", $item->createdAt);
+
+            $row++;
+        }
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . 'Export Transaction.xlsx'; // Set the desired path
+        $writer->save($newFilePath);
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export Transaction.xlsx"',
+        ]);
+    }
 
     public function TransactionCategory()
     {
