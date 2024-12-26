@@ -43,6 +43,12 @@ class TransactionController extends Controller
             )
             ->where('t.isDeleted', '=', 0);
 
+        if ($request->status == 'ongoing') {
+            $data = $data->whereNotIn('t.status', ['Selesai', 'Batal']);
+        } elseif ($request->status == 'finished') {
+            $data = $data->whereIn('t.status', ['Selesai', 'Batal']);
+        }
+
         if ($request->locationId) {
 
             $data = $data->whereIn('l.id', $request->locationId);
@@ -96,6 +102,67 @@ class TransactionController extends Controller
         $totalPaging = $count_data / $itemPerPage;
 
         return responseIndex(ceil($totalPaging), $data);
+    }
+
+    private function Search($request)
+    {
+        $temp_column = null;
+
+        $data = DB::table('transactions as t')
+            ->select(
+                't.registrationNo'
+            )
+            ->where('t.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('t.registrationNo', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 't.registrationNo';
+        }
+        //------------------------
+
+        $data = DB::table('transactions as t')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->select(
+                'c.firstName'
+            )
+            ->where('t.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('c.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'c.firstName';
+        }
+        //------------------------
+
+        $data = DB::table('transactions as t')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->join('users as u', 'u.id', 't.doctorId')
+            ->select(
+                'u.firstName',
+            )
+            ->where('t.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'u.firstName';
+        }
+        //------------------------
+
+        return $temp_column;
     }
 
     public function create(Request $request)
@@ -275,7 +342,8 @@ class TransactionController extends Controller
 
     public function update(Request $request) {}
 
-    public function delete(Request $request) {
+    public function delete(Request $request)
+    {
 
         foreach ($request->id as $va) {
             $res = Transaction::find($va);
@@ -300,6 +368,8 @@ class TransactionController extends Controller
 
         return responseDelete();
     }
+
+    public function export(Request $request) {}
 
     public function TransactionCategory()
     {
