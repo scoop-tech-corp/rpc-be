@@ -49,9 +49,10 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             ->join('location as l', 'ul.locationId', 'l.id')
             ->select(
                 'sa.id',
-                DB::raw("TRIM(CONCAT(CASE WHEN u.firstName = '' or u.firstName is null THEN '' ELSE CONCAT(u.firstName,' ') END
-                ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
-                case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
+                'u.firstName as name',
+                // DB::raw("TRIM(CONCAT(CASE WHEN u.firstName = '' or u.firstName is null THEN '' ELSE CONCAT(u.firstName,' ') END
+                // ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
+                // case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
                 'j.jobName',
                 'sa.shift',
                 'sa.status',
@@ -123,8 +124,8 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
         $data = $data->groupBy(
             'sa.id',
             'u.firstName',
-            'u.middleName',
-            'u.lastName',
+            // 'u.middleName',
+            // 'u.lastName',
             'j.jobName',
             'sa.shift',
             'sa.status',
