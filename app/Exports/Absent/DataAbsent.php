@@ -53,6 +53,8 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
                 ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
                 case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
                 'j.jobName',
+                'sa.shift',
+                'sa.status',
                 DB::raw("
                 CONCAT(
                     CASE DAYOFWEEK(sa.presentTime)
@@ -124,6 +126,8 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
             'u.middleName',
             'u.lastName',
             'j.jobName',
+            'sa.shift',
+            'sa.status',
             'sa.presentTime',
             'sa.homeTime',
             'sa.duration',
@@ -151,6 +155,8 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
                 'No.',
                 'Nama',
                 'Jabatan',
+                'Shift',
+                'Status',
                 'Hari',
                 'Jam Datang',
                 'Jam Pulang',
@@ -175,6 +181,8 @@ class DataAbsent implements FromCollection, ShouldAutoSize, WithHeadings, WithTi
                 $item->number,
                 $item->name,
                 $item->jobName,
+                $item->shift,
+                $item->status,
                 $item->day,
                 $item->presentTime,
                 $item->homeTime,

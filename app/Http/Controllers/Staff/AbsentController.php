@@ -33,6 +33,8 @@ class AbsentController extends Controller
                 ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
                 case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
                 'j.jobName',
+                'sa.shift',
+                'sa.status',
                 DB::raw("
                 CONCAT(
                     CASE DAYOFWEEK(sa.presentTime)
