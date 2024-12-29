@@ -11,6 +11,7 @@ use App\Models\ProductLog;
 use App\Models\productRestockLog;
 use App\Models\ProductTransferLog;
 use App\Models\ProductSellLog;
+use App\Models\recentActivity;
 use App\Models\TransactionLog;
 
 if (!function_exists('adminAccess')) {
@@ -227,6 +228,19 @@ if (!function_exists('transactionLog')) {
         ]);
     }
 }
+
+if (!function_exists('recentActivities')) {
+    function recentActivities($module, $event, $detail, $userId)
+    {
+        recentActivity::create([
+            'module' => $module,
+            'event' => $event,
+            'detail' => $detail,
+            'userId' => $userId,
+        ]);
+    }
+}
+
 if (!function_exists('responseInvalid')) {
     function responseInvalid($errors)
     {
