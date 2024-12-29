@@ -796,7 +796,7 @@ class ImportCustomerController extends Controller
                                 'isDeleted' => 0, // or another value based on your logic
                                 'deletedBy' => null, // or fill as necessary
                                 'deletedAt' => null, // or fill as necessary
-                                //'createdBy' => $request->user()->id, // Adjust as necessary
+                                'createdBy' => $request->user()->id, // Adjust as necessary
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
