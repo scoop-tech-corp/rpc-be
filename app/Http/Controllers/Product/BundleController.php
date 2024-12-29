@@ -6,6 +6,7 @@ use App\Models\ProductBundle;
 use App\Models\ProductBundleDetail;
 use App\Models\ProductBundleLog;
 use App\Models\ProductClinic;
+use App\Models\Products;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
@@ -424,7 +425,7 @@ class BundleController
             ->first();
 
         $prodDetail = DB::table('productBundleDetails as pbd')
-            ->join('productClinics as pc', 'pc.id', 'pbd.productId')
+            ->join('products as pc', 'pc.id', 'pbd.productId')
             ->join('users as u', 'pbd.userId', 'u.id')
             ->select(
                 'pbd.id',
@@ -439,6 +440,7 @@ class BundleController
             )
             ->where('pbd.productBundleId', '=', $request->id)
             ->where('pbd.isDeleted', '=', 0)
+            ->where('pc.category', '=', 'clinic')
             ->get();
 
         $history = DB::table('productBundleLogs as pbl')
@@ -572,7 +574,7 @@ class BundleController
                     $p->save();
                 }
 
-                $pClinic = ProductClinic::find($value['productId']);
+                $pClinic = Products::find($value['productId']);
 
                 $this->AddLog($request, $request->id, 'Updated', $value['status'], $pClinic->fullName);
             }
