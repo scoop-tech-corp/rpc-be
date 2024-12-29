@@ -250,6 +250,7 @@ class TransactionController extends Controller
                         'memberNo' => '',
                         'gender' => '',
                         'joinDate' => Carbon::now(),
+                        'createdBy' => $request->user()->id
                     ]
                 );
 
@@ -267,6 +268,7 @@ class TransactionController extends Controller
                             'dateOfBirth' => $request->birthDate,
                             'petGender' => $request->petGender,
                             'isSteril' => $request->isSterile,
+                            'createdBy' => $request->user()->id
                         ]
                     );
                 }
@@ -322,7 +324,7 @@ class TransactionController extends Controller
 
             $regisNo = 'RPC.TRX.' . $request->locationId . '.' . str_pad($trx + 1, 8, 0, STR_PAD_LEFT);
 
-            Transaction::create([
+            $tran = Transaction::create([
                 'registrationNo' => $regisNo,
                 'status' => 'Menunggu Dokter',
                 'isNewCustomer' => $request->isNewCustomer,
@@ -339,6 +341,8 @@ class TransactionController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
+            transactionLog($tran->id, 'New Transaction', '', $request->user()->id);
+
             DB::commit();
             return responseCreate();
         } catch (Exception $th) {
@@ -347,7 +351,153 @@ class TransactionController extends Controller
         }
     }
 
-    public function update(Request $request) {}
+    public function detail(Request $request)
+    {
+        $detail = DB::table('transactions as t')
+            ->join('location as l', 'l.id', 't.locationId')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->join('customerPets as cp', 'cp.id', 't.PetId')
+            ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
+            ->join('users as u', 'u.id', 't.doctorId')
+            ->join('users as uc', 'uc.id', 't.userId')
+            ->select(
+                't.id',
+                't.registrationNo',
+                'l.locationName',
+                'c.firstName',
+                DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
+                't.serviceCategory',
+                DB::raw("IFNULL(t.startDate,'') as startDate"),
+                DB::raw("IFNULL(t.endDate,'') as endDate"),
+                't.status',
+                'u.firstName as picDoctor',
+                'uc.firstName as createdBy',
+                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
+            )
+            ->where('t.id', '=', $request->id)
+            ->first();
+
+        $log = DB::table('transactionLogs as tl')
+            ->join('transactions as t', 't.id', 'tl.transactionId')
+            ->join('users as u', 'u.id', 'tl.userId')
+            ->select(
+                'tl.id',
+                'tl.activity',
+                'tl.remark',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(tl.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
+            )
+            ->get();
+
+        $data = ['detail' => $detail, 'transactionLogs' => $log];
+
+        return response()->json($data, 200);
+    }
+
+    public function update(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        if ($request->isNewCustomer == true) {
+            $validate = Validator::make($request->all(), [
+                'isNewCustomer' => 'required|bool',
+                'locationId' => 'required|integer',
+                //'customerId' => 'nullable|integer',
+                'customerName' => 'nullable|string',
+                //'registrant' => 'nullable|string',
+                //'petId' => 'nullable|integer',
+                'petName' => 'required|string',
+                'petCategory' => 'required|integer',
+                'condition' => 'required|string',
+                'petGender' => 'required|string|in:J,B',
+                'isSterile' => 'required|bool',
+                'serviceCategory' => 'required|string|in:Pet Clinic,Pet Hotel,Pet Salon,Pacak',
+                'doctorId' => 'required|int',
+                'notes' => 'nullable|string',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
+        } else {
+            $validate = Validator::make($request->all(), [
+                'isNewCustomer' => 'required|bool',
+                'locationId' => 'required|integer',
+                'customerId' => 'nullable|integer',
+                //'customerName' => 'nullable|string',
+                'registrant' => 'nullable|string',
+                'petId' => 'nullable|integer',
+                //'petName' => 'required|string',
+                //'petCategory' => 'required|integer',
+                //'condition' => 'required|string',
+                //'petGender' => 'required|string|in:J,B',
+                //'isSterile' => 'required|bool',
+                'serviceCategory' => 'required|string|in:Pet Clinic,Pet Hotel,Pet Salon,Pacak',
+                'doctorId' => 'required|int',
+                'notes' => 'nullable|string',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
+        }
+
+        if ($request->serviceCategory == 'Pet Hotel') {
+            $validate = Validator::make($request->all(), [
+                'startDate' => 'required|date',
+                'endDate' => 'required|date',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
+
+            if ($request->startDate > $request->endDate || $request->startDate == $request->endDate) {
+                return responseInvalid(['Start Date must be less than End Date']);
+            }
+        }
+
+        DB::beginTransaction();
+
+        try {
+            Transaction::updateOrCreate(
+                ['id' => $request->id],
+                [
+                    'registrationNo' => $request->registrationNo,
+                    'isNewCustomer' => $request->isNewCustomer,
+                    'isNewPet' => $request->isNewPet,
+                    'locationId' => $request->locationId,
+                    'customerId' => $request->customerId,
+                    'petId' => $request->petId,
+                    'registrant' => $request->registrant,
+                    'serviceCategory' => $request->serviceCategory,
+                    'startDate' => $request->startDate,
+                    'endDate' => $request->endDate,
+                    'doctorId' => $request->doctorId,
+                    'note' => $request->note,
+                    'userUpdatedId' => $request->user()->id,
+                ]
+            );
+
+            transactionLog($request->id, 'Update Transaction', '', $request->user()->id);
+
+            DB::commit();
+            return responseUpdate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
 
     public function delete(Request $request)
     {
@@ -371,6 +521,8 @@ class TransactionController extends Controller
             $tran->isDeleted = true;
             $tran->DeletedAt = Carbon::now();
             $tran->save();
+
+            transactionLog($va, 'Transaction Deleted', '', $request->user()->id);
         }
 
         return responseDelete();

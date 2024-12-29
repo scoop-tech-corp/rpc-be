@@ -11,6 +11,7 @@ use App\Models\ProductLog;
 use App\Models\productRestockLog;
 use App\Models\ProductTransferLog;
 use App\Models\ProductSellLog;
+use App\Models\TransactionLog;
 
 if (!function_exists('adminAccess')) {
     function adminAccess($id)
@@ -215,6 +216,17 @@ if (!function_exists('productTransferLog')) {
     }
 }
 
+if (!function_exists('transactionLog')) {
+    function transactionLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
 if (!function_exists('responseInvalid')) {
     function responseInvalid($errors)
     {

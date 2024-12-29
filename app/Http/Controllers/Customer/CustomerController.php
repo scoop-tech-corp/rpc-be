@@ -1888,6 +1888,7 @@ class CustomerController extends Controller
                     $customerPets->dateOfBirth = $valueDate;
                     $customerPets->petGender = $val['petGender'];
                     $customerPets->isSteril = $val['isSteril'];
+                    $customerPets->createdBy = $request->user()->id;
                     $customerPets->save();
                 }
             }
@@ -2762,6 +2763,7 @@ class CustomerController extends Controller
                     $customerPets->dateOfBirth = $valueDate;
                     $customerPets->petGender = $val['petGender'];
                     $customerPets->isSteril = $val['isSteril'];
+                    $customerPets->createdBy = $request->user()->id;
                     $customerPets->save();
                 } else {
 

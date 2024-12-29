@@ -33,12 +33,7 @@ class CustomerPets extends Model
         'deletedBy',
         'deletedAt',
         'created_at',
+        'createdBy',
         'updated_at',
     ];
 }
-
-
-
-
-
-
