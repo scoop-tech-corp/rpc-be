@@ -114,6 +114,8 @@ class AbsentController extends Controller
             'u.middleName',
             'u.lastName',
             'j.jobName',
+            'sa.shift',
+            'sa.status',
             'sa.presentTime',
             'sa.homeTime',
             'sa.duration',
