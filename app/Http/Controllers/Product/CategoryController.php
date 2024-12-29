@@ -69,7 +69,7 @@ class CategoryController extends Controller
                 'pc.id',
                 'categoryName',
                 'pc.expiredDay as expiredDay',
-                DB::raw("(select count(*) from productSellCategories where productCategoryId=pc.id) + (select count(*) from productClinicCategories where productCategoryId=pc.id) as totalProduct"),
+                DB::raw("(select count(*) from productCoreCategories where productCategoryId=pc.id) + (select count(*) from productCoreCategories where productCategoryId=pc.id) as totalProduct"),
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pc.updated_at, '%d/%m/%Y') as createdAt")
             )
@@ -196,12 +196,13 @@ class CategoryController extends Controller
 
         $page = $request->goToPage;
 
-        $data = DB::table('productSells as ps')
-            ->join('productSellCategories as pc', 'ps.id', 'pc.productSellId')
-            ->join('productSellLocations as pl', 'ps.id', 'pl.productSellId')
+        $data = DB::table('products as ps')
+            ->join('productCoreCategories as pc', 'ps.id', 'pc.productId')
+            ->join('productLocations as pl', 'ps.id', 'pl.productId')
             ->join('location as l', 'l.id', 'pl.locationId')
             ->select('ps.id', 'ps.fullName', 'ps.expiredDate', 'l.locationName')
             ->where('pc.productCategoryId', '=', $request->id)
+            ->where('ps.category', '=', 'sell')
             ->where('ps.isDeleted', '=', 0);
 
         if ($request->locationId) {
@@ -249,12 +250,13 @@ class CategoryController extends Controller
 
         $page = $request->goToPage;
 
-        $data = DB::table('productClinics as ps')
-            ->join('productClinicCategories as pc', 'ps.id', 'pc.productClinicId')
-            ->join('productClinicLocations as pl', 'ps.id', 'pl.productClinicId')
+        $data = DB::table('products as ps')
+            ->join('productCoreCategories as pc', 'ps.id', 'pc.productId')
+            ->join('productLocations as pl', 'ps.id', 'pl.productId')
             ->join('location as l', 'l.id', 'pl.locationId')
             ->select('ps.id', 'ps.fullName', 'ps.expiredDate', 'l.locationName')
             ->where('pc.productCategoryId', '=', $request->id)
+            ->where('ps.category', '=', 'clinic')
             ->where('ps.isDeleted', '=', 0);
 
         if ($request->locationId) {
