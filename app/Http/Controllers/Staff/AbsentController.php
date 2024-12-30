@@ -331,11 +331,12 @@ class AbsentController extends Controller
             ])
             ->first();
 
-        if ($users->jobName == 'Dokter Hewan') {
-            $validate = Validator::make($request->all(), [
-                'shift' => 'required|integer|in:1,2',
-            ]);
-        }
+
+        // if ($users->jobName == 'Dokter Hewan') {
+        //     $validate = Validator::make($request->all(), [
+        //         'shift' => 'required|integer|in:1,2',
+        //     ]);
+        // }
 
         $currentDate = Carbon::now();
         $presentTime = $currentDate->format('d/m/Y H:i');
@@ -413,12 +414,13 @@ class AbsentController extends Controller
         $shift = "";
 
         if ($users->jobName == 'Dokter Hewan') {
-            $shift = 'Shift ' . $request->shift;
-            if ($request->shift == 1) {
-                $time2 = Carbon::parse('08:45');
-            } elseif ($request->shift == 2) {
-                $time2 = Carbon::parse('14:00');
-            }
+            // $shift = 'Shift ' . $request->shift;
+            // if ($request->shift == 1) {
+            //     $time2 = Carbon::parse('08:45');
+            // } elseif ($request->shift == 2) {
+            //     $time2 = Carbon::parse('14:00');
+            // }
+            $time2 = Carbon::parse('08:45');
         } else if ($users->jobName == 'Paramedis') {
             $time2 = Carbon::parse('08:45');
         } else if ($users->jobName == 'Kasir') {
@@ -454,7 +456,8 @@ class AbsentController extends Controller
                 'imagePathPresent' =>  $path,
                 'cityPresent' => $city,
                 'provincePresent' => $province,
-                'shift' => $shift,
+                //'shift' => $shift,
+                'shift' => 0,
                 'status' => $status,
                 'userId' => $request->user()->id,
             ]);
