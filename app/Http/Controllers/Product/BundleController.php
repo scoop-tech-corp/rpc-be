@@ -6,6 +6,7 @@ use App\Models\ProductBundle;
 use App\Models\ProductBundleDetail;
 use App\Models\ProductBundleLog;
 use App\Models\ProductClinic;
+use App\Models\Products;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
@@ -15,6 +16,10 @@ class BundleController
 {
     public function index(Request $request)
     {
+        if (!checkAccessIndex('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
@@ -144,6 +149,10 @@ class BundleController
 
     public function create(Request $request)
     {
+        if (!checkAccessModify('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $validate = Validator::make($request->all(), [
             'name' => 'required|string|min:3|max:30',
             'locationId' => 'required|integer',
@@ -382,6 +391,9 @@ class BundleController
 
     public function detail(Request $request)
     {
+        if (!checkAccessIndex('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $prod = ProductBundle::find($request->id);
 
@@ -413,7 +425,7 @@ class BundleController
             ->first();
 
         $prodDetail = DB::table('productBundleDetails as pbd')
-            ->join('productClinics as pc', 'pc.id', 'pbd.productId')
+            ->join('products as pc', 'pc.id', 'pbd.productId')
             ->join('users as u', 'pbd.userId', 'u.id')
             ->select(
                 'pbd.id',
@@ -428,6 +440,7 @@ class BundleController
             )
             ->where('pbd.productBundleId', '=', $request->id)
             ->where('pbd.isDeleted', '=', 0)
+            ->where('pc.category', '=', 'clinic')
             ->get();
 
         $history = DB::table('productBundleLogs as pbl')
@@ -454,6 +467,9 @@ class BundleController
 
     public function update(Request $request)
     {
+        if (!checkAccessModify('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
@@ -558,7 +574,7 @@ class BundleController
                     $p->save();
                 }
 
-                $pClinic = ProductClinic::find($value['productId']);
+                $pClinic = Products::find($value['productId']);
 
                 $this->AddLog($request, $request->id, 'Updated', $value['status'], $pClinic->fullName);
             }
@@ -594,6 +610,10 @@ class BundleController
 
     public function delete(Request $request)
     {
+        if (!checkAccessDelete('product-bundle', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         foreach ($request->id as $va) {
             $res = ProductBundle::find($va);
 

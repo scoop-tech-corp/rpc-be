@@ -14,17 +14,30 @@ class ReportCustomerController extends Controller
         $last10Days = collect(range(0, 9))->map(function ($daysAgo) {
             return Carbon::today()->subDays($daysAgo)->format('j M');
         });
+        //fixing
 
         $data = [
             'charts' => [
                 'series' => [
                     [
-                        'name' => 'RPC Bandung',
+                        'name' => 'RPC Condet',
                         'data' => [10, 10, 10, 10, 30, 20, 15, 20, 18, 29],
                     ],
                     [
-                        'name' => 'RPC Condet',
+                        'name' => 'RPC Hankam',
                         'data' => [20, 40, 20, 10, 80, 30, 15, 20, 18, 29],
+                    ],
+                    [
+                        'name' => 'RPC Tanjung Duren',
+                        'data' => [20, 40, 20, 10, 80, 30, 15, 20, 18, 29],
+                    ],
+                    [
+                        'name' => 'RPC Sawangan',
+                        'data' => [30, 20, 60, 5, 20, 10, 12, 78, 54, 34],
+                    ],
+                    [
+                        'name' => 'RPC Palembang',
+                        'data' => [60, 20, 10, 17, 23, 65, 48, 34, 12, 29],
                     ],
                 ],
                 'categories' => $last10Days,
@@ -160,35 +173,37 @@ class ReportCustomerController extends Controller
                 'labels' => ['VIP', 'Cat Community', 'Cat Lover'],
                 'series' => [150, 40, 60],
             ],
-            'data' => [
-                [
-                    'reportingGroup' => 'VIP',
-                    'total' => 150,
-                    'new' => 5,
-                    'inactive' => 5,
-                    'deleted' => 5,
+            'table' => [
+                'data' => [
+                    [
+                        'reportingGroup' => 'VIP',
+                        'total' => 150,
+                        'new' => 5,
+                        'inactive' => 5,
+                        'deleted' => 5,
+                    ],
+                    [
+                        'reportingGroup' => 'Cat Community',
+                        'total' => 40,
+                        'new' => 13,
+                        'inactive' => 10,
+                        'deleted' => 5,
+                    ],
+                    [
+                        'reportingGroup' => 'Cat Lover',
+                        'total' => 60,
+                        'new' => 10,
+                        'inactive' => 0,
+                        'deleted' => 5,
+                    ]
                 ],
-                [
-                    'reportingGroup' => 'Cat Community',
-                    'total' => 40,
-                    'new' => 13,
-                    'inactive' => 10,
-                    'deleted' => 5,
+                'totalData' => [
+                    'total' => 250,
+                    'new' => 28,
+                    'inactive' => 15,
+                    'deleted' => 15,
                 ],
-                [
-                    'reportingGroup' => 'Cat Lover',
-                    'total' => 60,
-                    'new' => 10,
-                    'inactive' => 0,
-                    'deleted' => 5,
-                ]
-            ],
-            'totalData' => [
-                'total' => 250,
-                'new' => 28,
-                'inactive' => 15,
-                'deleted' => 15,
-            ],
+            ]
         ];
 
         return response()->json($data);
@@ -292,19 +307,21 @@ class ReportCustomerController extends Controller
                 ],
                 'categories' => $last10Days,
             ],
-            'data' => [
-                [
-                    'location' => 'RPC Condet',
-                    'total' => 300,
+            'table' => [
+                'data' => [
+                    [
+                        'location' => 'RPC Condet',
+                        'total' => 300,
+                    ],
+                    [
+                        'location' => 'RPC Hankam',
+                        'total' => 300,
+                    ],
                 ],
-                [
-                    'location' => 'RPC Hankam',
-                    'total' => 300,
+                'totalData' => [
+                    'total' => 600,
                 ],
-            ],
-            'totalData' => [
-                'total' => 600,
-            ],
+            ]
         ];
 
         return response()->json($data);

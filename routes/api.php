@@ -28,7 +28,7 @@ use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Staff\ProfileController;
 
-use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController};
+use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\Customer\ImportCustomerController;
@@ -42,6 +42,7 @@ use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Report\BookingController;
 use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\ReportMenuManagementController;
+use App\Http\Controllers\Transaction\TransactionController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -79,6 +80,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/exportlocation', [LocationController::class, 'exportLocation']);
         Route::delete('/', [LocationController::class, "deleteLocation"]);
         Route::get('/list', [LocationController::class, 'locationList']);
+        Route::get('/list/transaction', [LocationController::class, 'locationListTransaction']);
         Route::put('/', [LocationController::class, 'updateLocation']);
         Route::post('/uploadexceltest', [LocationController::class, 'uploadexceltest']);
         Route::post('/datastatic', [LocationController::class, 'insertdatastatic']);
@@ -286,6 +288,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::put('/pet', [CustomerController::class, 'updatePetAge']);
 
+        Route::get('/list', [CustomerController::class, 'customerListWithLocation']);
+        Route::get('/petlist', [CustomerController::class, 'petListWithCustomer']);
+
         Route::group(['prefix' => 'merge'], function () {
             Route::get('/', [CustomerController::class, 'getSourceCustomer']);
         });
@@ -366,6 +371,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [StaffController::class, 'index']);
 
         Route::get('/list', [StaffController::class, 'listStaff']);
+        Route::get('/list/location/doctor', [StaffController::class, 'listStaffDoctorWithLocation']);
         Route::get('/list/location', [StaffController::class, 'listStaffWithLocation']);
 
         Route::get('/exportstaff', [StaffController::class, 'exportStaff']);
@@ -506,8 +512,26 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/menu-report', [ReportMenuManagementController::class, 'Delete']);
     });
 
+    // Transaction
+    Route::group(['prefix' => 'transaction'], function () {
+        Route::get('/category', [TransactionController::class, 'TransactionCategory']);
+
+        Route::post('/', [TransactionController::class, 'create']);
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::get('/detail', [TransactionController::class, 'detail']);
+        Route::delete('/', [TransactionController::class, 'delete']);
+        Route::put('/', [TransactionController::class, 'update']);
+
+        Route::get('/export', [TransactionController::class, 'export']);
+    });
+
     // Service
     Route::group(['prefix' => 'service'], function () {
+
+        Route::group(['prefix' => 'dashboard'], function () {
+            Route::get('/', [ServiceDashboardController::class, 'index']);
+        });
+
         Route::group(['prefix' => 'category'], function () {
             Route::get('/export', [ServiceCategoryController::class, 'export']);
             Route::get('/', [ServiceCategoryController::class, 'index']);

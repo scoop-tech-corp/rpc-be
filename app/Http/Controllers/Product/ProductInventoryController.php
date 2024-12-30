@@ -12,6 +12,7 @@ use App\Models\ProductClinicLocation;
 use App\Models\ProductInventory;
 use App\Models\ProductInventoryList;
 use App\Models\ProductInventoryListImages;
+use App\Models\Products;
 use App\Models\ProductSell;
 use App\Models\ProductSellLocation;
 use App\Models\usages;
@@ -27,7 +28,7 @@ class ProductInventoryController
 {
     public function index(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -138,7 +139,7 @@ class ProductInventoryController
 
     public function indexHistory(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -224,7 +225,7 @@ class ProductInventoryController
 
     public function exportHistory(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -306,7 +307,7 @@ class ProductInventoryController
 
     public function indexApproval(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -395,7 +396,7 @@ class ProductInventoryController
 
     public function exportApproval(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -474,7 +475,7 @@ class ProductInventoryController
 
     public function detail(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -509,7 +510,7 @@ class ProductInventoryController
             if ($value['productType'] == 'productSell') {
 
                 $prodRes = DB::table('productInventoryLists as pi')
-                    ->join('productSells as p', 'p.id', 'pi.productId')
+                    ->join('products as p', 'p.id', 'pi.productId')
                     ->join('usages as u', 'u.id', 'pi.usageId')
                     ->leftJoin('users as uOff', 'pi.userApproveOfficeId', 'uOff.id')
                     ->leftJoin('users as uAdm', 'pi.userApproveAdminId', 'uAdm.id')
@@ -672,7 +673,9 @@ class ProductInventoryController
 
             if ($value['productType'] == 'productSell') {
 
-                $findProduct = ProductSell::find($value['productId']);
+                $findProduct = Products::select('isAdminApproval', 'isOfficeApproval')->where('id', $value['productId'])->where('category', 'sell')->first();
+
+                //$findProduct = ProductSell::find($value['productId']);
 
                 if ($findProduct->isAdminApproval == 1) {
                     $approvalAdmin = 1;
@@ -683,7 +686,9 @@ class ProductInventoryController
                 }
             } elseif ($value['productType'] == 'productClinic') {
 
-                $findProduct = ProductClinic::find($value['productId']);
+                //$findProduct = ProductClinic::find($value['productId']);
+
+                $findProduct = Products::select('isAdminApproval', 'isOfficeApproval')->where('id', $value['productId'])->where('category', 'clinic')->first();
 
                 if ($findProduct->isAdminApproval == 1) {
                     $approvalAdmin = 1;
@@ -781,7 +786,7 @@ class ProductInventoryController
 
     public function update(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -865,7 +870,8 @@ class ProductInventoryController
 
             if ($value['productType'] == 'productSell') {
 
-                $findProduct = ProductSell::find($value['productId']);
+                //$findProduct = ProductSell::find($value['productId']);
+                $findProduct = Products::select('isAdminApproval', 'isOfficeApproval')->where('id', $value['productId'])->where('category', 'sell')->first();
 
                 if ($findProduct->isAdminApproval == 1) {
                     $approvalAdmin = 1;
@@ -876,7 +882,9 @@ class ProductInventoryController
                 }
             } elseif ($value['productType'] == 'productClinic') {
 
-                $findProduct = ProductClinic::find($value['productId']);
+                // $findProduct = ProductClinic::find($value['productId']);
+
+                $findProduct = Products::select('isAdminApproval', 'isOfficeApproval')->where('id', $value['productId'])->where('category', 'clinic')->first();
 
                 if ($findProduct->isAdminApproval == 1) {
                     $approvalAdmin = 1;
@@ -929,7 +937,7 @@ class ProductInventoryController
 
     public function updateApproval(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1075,7 +1083,7 @@ class ProductInventoryController
 
     public function delete(Request $request)
     {
-        if (!checkAccessDelete('Product List', $request->user()->roleId)) {
+        if (!checkAccessDelete('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1152,7 +1160,7 @@ class ProductInventoryController
 
     public function exportInventory(Request $request)
     {
-        if (!checkAccessIndex('Product List', $request->user()->roleId)) {
+        if (!checkAccessIndex('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1196,7 +1204,7 @@ class ProductInventoryController
 
     public function downloadTemplate(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }
@@ -1206,7 +1214,7 @@ class ProductInventoryController
 
     public function Import(Request $request)
     {
-        if (!checkAccessModify('Product List', $request->user()->roleId)) {
+        if (!checkAccessModify('product-list', $request->user()->roleId)) {
 
             return responseUnauthorize();
         }

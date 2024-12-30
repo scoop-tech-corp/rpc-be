@@ -31,7 +31,6 @@ class CustomerController extends Controller
 
     public function insertTypeIdCustomer(Request $request)
     {
-
         $request->validate([
             'typeName' => 'required|string',
         ]);
@@ -69,8 +68,6 @@ class CustomerController extends Controller
         }
     }
 
-
-
     public function getTypeIdCustomer()
     {
 
@@ -94,6 +91,9 @@ class CustomerController extends Controller
 
     public function indexCustomer(Request $request)
     {
+        if (!checkAccessIndex('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         try {
 
@@ -159,6 +159,18 @@ class CustomerController extends Controller
 
                 if ($val) {
                     $data = $data->whereIn('a.locationid', $request->locationId);
+                }
+            }
+
+            if ($request->customerGroupId) {
+
+                $val = [];
+                foreach ($request->customerGroupId as $temp) {
+                    $val = $temp;
+                }
+
+                if ($val) {
+                    $data = $data->whereIn('a.customerGroupId', $request->customerGroupId);
                 }
             }
 
@@ -341,6 +353,10 @@ class CustomerController extends Controller
 
     public function exportCustomer(Request $request)
     {
+        if (!checkAccessIndex('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $tmp = "";
         $fileName = "";
         $date = Carbon::now()->format('d-m-Y');
@@ -1164,6 +1180,10 @@ class CustomerController extends Controller
     public function createCustomer(Request $request)
     {
 
+        if (!checkAccessModify('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         if (adminAccess($request->user()->id) != 1) {
             return response()->json([
                 'message' => 'The given data was invalid.',
@@ -1868,6 +1888,7 @@ class CustomerController extends Controller
                     $customerPets->dateOfBirth = $valueDate;
                     $customerPets->petGender = $val['petGender'];
                     $customerPets->isSteril = $val['isSteril'];
+                    $customerPets->createdBy = $request->user()->id;
                     $customerPets->save();
                 }
             }
@@ -2131,12 +2152,8 @@ class CustomerController extends Controller
 
     public function updateCustomer(Request $request)
     {
-
-        if (adminAccess($request->user()->id) != 1) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+        if (!checkAccessModify('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
         }
 
         DB::beginTransaction();
@@ -2746,6 +2763,7 @@ class CustomerController extends Controller
                     $customerPets->dateOfBirth = $valueDate;
                     $customerPets->petGender = $val['petGender'];
                     $customerPets->isSteril = $val['isSteril'];
+                    $customerPets->createdBy = $request->user()->id;
                     $customerPets->save();
                 } else {
 
@@ -3285,15 +3303,9 @@ class CustomerController extends Controller
     public function deleteCustomer(Request $request)
     {
 
-        if (!adminAccess($request->user()->id)) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+        if (!checkAccessDelete('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
         }
-
-
-
 
         $validate = Validator::make($request->all(), [
             'customerId' => 'required',
@@ -3815,5 +3827,31 @@ class CustomerController extends Controller
                 'errors' => ['Customer Group name already exists!'],
             ], 422);
         }
+    }
+
+    public function customerListWithLocation(Request $request)
+    {
+        $data = Customer::select('id', 'memberNo', 'firstName');
+
+        if ($request->locationId) {
+            $data = $data->where('locationId', '=', $request->locationId);
+        }
+
+        $data = $data->where('isDeleted', '=', 0)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function petListWithCustomer(Request $request)
+    {
+        $data = CustomerPets::select('id', 'petName')
+            ->where('customerId', '=', $request->customerId)
+            ->where('isDeleted', '=', 0)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($data, 200);
     }
 }

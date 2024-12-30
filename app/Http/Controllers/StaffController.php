@@ -35,13 +35,8 @@ class StaffController extends Controller
 
     public function insertStaff(Request $request)
     {
-
-        if (adminAccess($request->user()->id) != 1) {
-
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => 'User Access not Authorize!',
-            ], 403);
+        if (!checkAccessModify('staff-list', $request->user()->roleId)) {
+            return responseUnauthorize();
         }
         DB::beginTransaction();
 
@@ -1115,6 +1110,9 @@ class StaffController extends Controller
 
     public function index(Request $request)
     {
+        if (!checkAccessIndex('staff-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         try {
 
@@ -1949,6 +1947,10 @@ class StaffController extends Controller
 
     public function importStaff(Request $request)
     {
+        if (!checkAccessModify('staff-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         DB::beginTransaction();
         try {
 
@@ -2593,6 +2595,9 @@ class StaffController extends Controller
 
     public function exportStaff(Request $request)
     {
+        if (!checkAccessIndex('staff-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         try {
 
@@ -2653,8 +2658,12 @@ class StaffController extends Controller
         return false; // Not a valid Excel serial date
     }
 
-    public function template()
+    public function template(Request $request)
     {
+        if (!checkAccessIndex('staff-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $spreadsheet = IOFactory::load(public_path() . '/template/' . 'Template_Input_Staff.xlsx');
 
         $sheet = $spreadsheet->getSheet(6);
@@ -2838,13 +2847,8 @@ class StaffController extends Controller
 
     public function updateStaff(Request $request)
     {
-
-
-        if (adminAccess($request->user()->id) != 1) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+        if (!checkAccessModify('staff-list', $request->user()->roleId)) {
+            return responseUnauthorize();
         }
 
         DB::beginTransaction();
@@ -3841,12 +3845,8 @@ class StaffController extends Controller
 
     public function deleteStaff(Request $request)
     {
-
-        if (adminAccess($request->user()->id) != 1) {
-            return response()->json([
-                'message' => 'The user role was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
+        if (!checkAccessDelete('staff-list', $request->user()->roleId)) {
+            return responseUnauthorize();
         }
 
         $validate = Validator::make($request->all(), [
@@ -3997,6 +3997,29 @@ class StaffController extends Controller
             ->where('u.isDeleted', '=', 0)
             ->groupBy('fullName')
             ->groupBy('j.jobName')
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function listStaffDoctorWithLocation(Request $request)
+    {
+        $data = DB::table('users as u')
+            ->join('usersLocation as ul', 'u.id', 'ul.usersId')
+            ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
+            ->select(
+                'u.id',
+                'u.firstName',
+            );
+
+        if ($request->locationId) {
+            $data = $data->where('ul.locationId', '=', $request->locationId);
+        }
+
+        $data = $data->where('j.id', '=', 17)   //id job title dokter hewan
+            ->where('u.isDeleted', '=', 0)
+            ->groupBy('u.firstName')
+            ->groupBy('u.id')
             ->get();
 
         return response()->json($data, 200);

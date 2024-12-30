@@ -8,6 +8,10 @@ class DashboardController extends Controller
 {
     public function overview(Request $request)
     {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
         $data = [
             'chartsBookingCategory' => [
                 'labels' => ['Layanan Kesehatan Hewan', 'Pet Salon', 'Rawat Inap Zona', 'Penitipan Vet', 'Vaksinasi', 'Other'],
@@ -18,28 +22,34 @@ class DashboardController extends Controller
                 'series' => [44, 55, 13],
             ],
             'bookings' => [
-                'total' => '25,000',
+                'percentage' => '75.35',
+                'total' => '100',
                 'isLoss' => 1
             ],
             'totalSaleValue' => [
-                'total' => '35,000',
+                'percentage' => '27.5',
+                'total' => '250',
                 'isLoss' => 0
             ],
             'newCustomer' => [
-                'total' => '127',
+                'percentage' => '48.8',
+                'total' => '300',
                 'isLoss' => 0
             ],
             'rebookRate' => [
-                'total' => '2,250',
+                'percentage' => '22.5',
+                'total' => '200',
                 'isLoss' => 0
             ],
             'customerRetention' => [
-                'total' => '40',
+                'percentage' => '40',
+                'total' => '400',
                 'isLoss' => 1
             ],
             'avgSaleValue' => [
-                'total' => '761',
-                'isLoss' => 1
+                'percentage' => '68',
+                'total' => '1,400',
+                'isLoss' => 0
             ],
         ];
 
@@ -48,6 +58,9 @@ class DashboardController extends Controller
 
     public function upcomingBookInpatien(Request $request)
     {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $data = [
             'totalPagination' => 1,
@@ -115,6 +128,9 @@ class DashboardController extends Controller
 
     public function upcomingBookOutpatien(Request $request)
     {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $data = [
             'totalPagination' => 1,
@@ -182,6 +198,9 @@ class DashboardController extends Controller
 
     public function recentActivity(Request $request)
     {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
 
         $data = [
             'totalPagination' => 1,

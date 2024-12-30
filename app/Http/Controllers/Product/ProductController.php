@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Product;
 
+use App\Models\Product;
 use App\Models\ProductAdjustment;
 use App\Models\ProductBrand;
 use App\Models\ProductCategories;
@@ -9,6 +10,8 @@ use App\Models\ProductSellLocation;
 use App\Models\ProductClinicLocation;
 use App\Models\ProductSell;
 use App\Models\ProductClinic;
+use App\Models\ProductLocations;
+use App\Models\Products;
 use App\Models\productSupplierTypeMessenger;
 use App\Models\productSupplierTypePhone;
 use App\Models\productSupplierUsage;
@@ -88,8 +91,8 @@ class ProductController
     {
         if ($request->locationId) {
 
-            $data = DB::table('productSells as ps')
-                ->join('productSellLocations as pl', 'ps.id', 'pl.productSellId')
+            $data = DB::table('products as ps')
+                ->join('productLocations as pl', 'ps.id', 'pl.productId')
                 ->select(
                     'ps.id',
                     'ps.fullName',
@@ -99,6 +102,7 @@ class ProductController
                 )
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.status', '=', 1)
+                ->where('ps.category', '=', 'sell')
                 ->where('pl.locationId', '=', $request->locationId);
 
             if ($request->brandId || $request->brandId != '') {
@@ -122,8 +126,8 @@ class ProductController
 
         if ($request->locationId) {
 
-            $data = DB::table('productClinics as p')
-                ->join('productClinicLocations as pl', 'p.id', 'pl.productClinicId')
+            $data = DB::table('products as p')
+                ->join('productLocations as pl', 'p.id', 'pl.productId')
                 ->select(
                     'p.id',
                     'p.fullName',
@@ -133,6 +137,7 @@ class ProductController
                 )
                 ->where('p.isDeleted', '=', 0)
                 ->where('p.status', '=', 1)
+                ->where('p.category', '=', 'clinic')
                 ->where('pl.locationId', '=', $request->locationId);
 
             if ($request->brandId || $request->brandId != '') {
@@ -207,8 +212,8 @@ class ProductController
     {
         if ($request->locationId && $request->productSellId) {
 
-            $product = DB::table('productSells as ps')
-                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+            $product = DB::table('products as ps')
+                ->join('productLocations as psl', 'ps.id', 'psl.productId')
                 ->select('ps.id', 'ps.fullName')
                 ->where('ps.isDeleted', '=', 0)
                 ->where('psl.locationId', '=', $request->locationId)
@@ -242,7 +247,7 @@ class ProductController
 
         if ($request->productType == 'productSell') {
 
-            $prod = ProductSell::find($request->productId);
+            $prod = Products::find($request->productId);
 
             if (!$prod) {
                 return response()->json([
@@ -262,7 +267,7 @@ class ProductController
             //     $transaction = 'Stock Adjustment Decrease';
             // }
 
-            $prodStock = ProductSellLocation::where('productSellId', '=', $request->productId)->first();
+            $prodStock = ProductLocations::where('productId', '=', $request->productId)->first();
 
             if (!$prodStock) {
                 return response()->json([
@@ -303,7 +308,7 @@ class ProductController
             ProductSellLog($request->productId, $transaction, $request->remark, $request->totalAdjustment, $request->totalAdjustment, $request->user()->id);
         } elseif ($request->productType == 'productClinic') {
 
-            $prod = ProductClinic::find($request->productId);
+            $prod = Products::find($request->productId);
 
             if (!$prod) {
                 return response()->json([
@@ -323,7 +328,7 @@ class ProductController
                 $transaction = 'Stock Adjustment Decrease';
             }
 
-            $prodStock = ProductClinicLocation::where('productClinicId', '=', $request->productId)->first();
+            $prodStock = ProductLocations::where('productId', '=', $request->productId)->first();
 
             if (!$prodStock) {
                 return response()->json([
@@ -369,10 +374,10 @@ class ProductController
 
         if ($request->productType == 'productSell') {
 
-            $data = DB::table('productSells as ps')
-                ->join('productSellLogs as psl', 'psl.productSellId', 'ps.id')
+            $data = DB::table('products as ps')
+                ->join('productLogs as psl', 'psl.productId', 'ps.id')
                 ->join('users as u', 'u.id', 'psl.userId')
-                ->join('productSellLocations as pLoc', 'ps.id', 'pLoc.productSellId')
+                ->join('productLocations as pLoc', 'ps.id', 'pLoc.productId')
                 ->select(
                     'psl.id',
                     'psl.transaction',
@@ -423,10 +428,10 @@ class ProductController
             ], 200);
         } elseif ($request->productType == 'productClinic') {
 
-            $data = DB::table('productClinics as pc')
-                ->join('productClinicLogs as pcl', 'pcl.productClinicId', 'pc.id')
+            $data = DB::table('products as pc')
+                ->join('productLogs as pcl', 'pcl.productId', 'pc.id')
                 ->join('users as u', 'u.id', 'pcl.userId')
-                ->join('productClinicLocations as pLoc', 'pc.id', 'pLoc.productClinicId')
+                ->join('productLocations as pLoc', 'pc.id', 'pLoc.productId')
                 ->select(
                     'pcl.id',
                     'pcl.transaction',
@@ -665,20 +670,24 @@ class ProductController
 
     public function ListProductSellWithLocation(Request $request)
     {
-        if (count($request->locationId) == 0) {
+        $arr = json_decode($request->locationId, true);
 
-            $data = DB::table('productSells as ps')
-                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+        if (count($arr) == 0) {
+
+            $data = DB::table('products as ps')
+                ->join('productLocations as psl', 'ps.id', 'psl.productId')
                 ->select('ps.fullName')
                 ->where('ps.isDeleted', '=', 0)
+                ->where('ps.category', '=', 'sell')
                 ->distinct()
                 ->get();
         } else {
-            $data = DB::table('productSells as ps')
-                ->join('productSellLocations as psl', 'ps.id', 'psl.productSellId')
+            $data = DB::table('products as ps')
+                ->join('productLocations as psl', 'ps.id', 'psl.productId')
                 ->select('ps.fullName')
-                ->wherein('psl.locationId', $request->locationId)
+                ->wherein('psl.locationId', $arr)
                 ->where('ps.isDeleted', '=', 0)
+                ->where('ps.category', '=', 'sell')
                 ->distinct()
                 ->get();
         }
@@ -688,20 +697,24 @@ class ProductController
 
     public function ListProductClinicWithLocation(Request $request)
     {
-        if (count($request->locationId) == 0) {
+        $arr = json_decode($request->locationId, true);
 
-            $data = DB::table('productClinics as pc')
-                ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+        if (count($arr) == 0) {
+
+            $data = DB::table('products as pc')
+                ->join('productLocations as pcl', 'pc.id', 'pcl.productId')
                 ->select('pc.fullName')
                 ->where('pc.isDeleted', '=', 0)
+                ->where('pc.category', '=', 'clinic')
                 ->distinct()
                 ->get();
         } else {
-            $data = DB::table('productClinics as pc')
-                ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
+            $data = DB::table('products as pc')
+                ->join('productLocations as pcl', 'pc.id', 'pcl.productId')
                 ->select('pc.fullName')
-                ->wherein('pcl.locationId', $request->locationId)
+                ->wherein('pcl.locationId', $arr)
                 ->where('pc.isDeleted', '=', 0)
+                ->where('pc.category', '=', 'clinic')
                 ->distinct()
                 ->get();
         }
