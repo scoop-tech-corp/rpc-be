@@ -331,11 +331,12 @@ class AbsentController extends Controller
             ])
             ->first();
 
-        if ($users->jobName == 'Dokter Hewan') {
-            $validate = Validator::make($request->all(), [
-                'shift' => 'required|integer|in:1,2',
-            ]);
-        }
+
+        // if ($users->jobName == 'Dokter Hewan') {
+        //     $validate = Validator::make($request->all(), [
+        //         'shift' => 'required|integer|in:1,2',
+        //     ]);
+        // }
 
         $currentDate = Carbon::now();
         $presentTime = $currentDate->format('d/m/Y H:i');
