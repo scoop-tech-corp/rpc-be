@@ -503,6 +503,7 @@ class StaffController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                     'password' => null,
+                    'isLogin' => 0,
                 ]);
 
             $locationId = json_decode($request->locationId, true);
