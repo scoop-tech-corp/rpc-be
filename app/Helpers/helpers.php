@@ -24,7 +24,7 @@ if (!function_exists('adminAccess')) {
             ->where('u.id', '=', $id)
             ->first();
 
-        if ($user->roleName != "Administrator") {
+        if ($user->roleName != "Administrator" || $user->roleName != "Manager") {
             return false;
         } else {
             return true;
