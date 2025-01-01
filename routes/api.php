@@ -371,6 +371,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [StaffController::class, 'index']);
 
         Route::get('/list', [StaffController::class, 'listStaff']);
+        Route::get('/listmanager', [StaffController::class, 'listStaffManagerAdmin']);
+
         Route::get('/list/location/doctor', [StaffController::class, 'listStaffDoctorWithLocation']);
         Route::get('/list/location', [StaffController::class, 'listStaffWithLocation']);
 
