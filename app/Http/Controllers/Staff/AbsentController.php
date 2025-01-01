@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use DB;
 use Symfony\Component\HttpFoundation\Response;
 use Excel;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class AbsentController extends Controller
 {
@@ -231,7 +232,6 @@ class AbsentController extends Controller
             $location = " " . $dataLocation;
         }
 
-
         if ($request->dateFrom && $request->dateTo) {
             $fromDate = Carbon::parse($request->dateFrom);
             $toDate = Carbon::parse($request->dateTo);
@@ -241,20 +241,161 @@ class AbsentController extends Controller
 
         $fileName = "Rekap Absensi" . $location . $date . ".xlsx";
 
-        return Excel::download(
-            new AbsentReport(
-                $request->orderValue,
-                $request->orderColumn,
-                $request->dateFrom,
-                $request->dateTo,
-                $request->locationId,
-                $request->staff,
-                $request->statusPresent,
-                $request->user()->roleId,
-                $request->user()->id
-            ),
-            $fileName
+        //-----------------------------
+        $data = DB::table('staffAbsents as sa')
+            ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
+            ->leftJoin('presentStatuses as ps1', 'sa.statusHome', 'ps1.id')
+            ->join('users as u', 'sa.userId', 'u.id')
+            ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
+            ->join('usersLocation as ul', 'ul.usersId', 'u.id')
+            ->join('location as l', 'ul.locationId', 'l.id')
+            ->select(
+                'sa.id',
+                'u.firstName as name',
+                // DB::raw("TRIM(CONCAT(CASE WHEN u.firstName = '' or u.firstName is null THEN '' ELSE CONCAT(u.firstName,' ') END
+                // ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
+                // case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
+                'j.jobName',
+                'sa.shift',
+                'sa.status',
+                DB::raw("
+                CONCAT(
+                    CASE DAYOFWEEK(sa.presentTime)
+                        WHEN 1 THEN 'Minggu'
+                        WHEN 2 THEN 'Senin'
+                        WHEN 3 THEN 'Selasa'
+                        WHEN 4 THEN 'Rabu'
+                        WHEN 5 THEN 'Kamis'
+                        WHEN 6 THEN 'Jumat'
+                        WHEN 7 THEN 'Sabtu'
+                    END,
+                    ', ',
+                    DATE_FORMAT(sa.presentTime, '%e %b %Y')
+                ) AS day
+                "),
+                DB::raw("TIME_FORMAT(sa.presentTime, '%H:%i') AS presentTime"),
+                DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H.%i') END AS homeTime"),
+                DB::raw("CASE WHEN sa.duration is null THEN '' ELSE CONCAT(
+                    HOUR(sa.duration), ' jam ',
+                    MINUTE(sa.duration), ' menit'
+                ) END AS duration"),
+                'ps.statusName as presentStatus',
+                DB::raw("CASE WHEN ps1.statusName is null THEN '' ELSE ps1.statusName END as homeStatus"),
+                'sa.cityPresent as presentLocation',
+                DB::raw("CASE WHEN sa.cityHome is null THEN '' ELSE sa.cityHome END as homeLocation"),
+            )
+            ->where('sa.isDeleted', '=', 0);
+
+        if ($request->role <> 1 && $request->role <> 6) {
+            $data = $data->where('sa.userId', '=', $request->user()->id);
+        }
+
+        if ($request->dateFrom && $request->dateTo) {
+
+            $data = $data->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
+        }
+
+        $locations = $request->locationId;
+
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $data = $data->whereIn('l.id', $request->locationId);
+            }
+        }
+
+        $staffs = $request->staff;
+
+        if (count($staffs) > 0) {
+            if (!$staffs[0] == null) {
+                $data = $data->whereIn('sa.userId', $request->staff);
+            }
+        }
+
+        $statusPresents = $request->statusPresent;
+
+        if (count($statusPresents) > 0) {
+            if (!$statusPresents[0] == null) {
+                $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+            }
+        }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->groupBy(
+            'sa.id',
+            'u.firstName',
+            'j.jobName',
+            'sa.shift',
+            'sa.status',
+            'sa.presentTime',
+            'sa.homeTime',
+            'sa.duration',
+            'ps.statusName',
+            'ps1.statusName',
+            'sa.cityPresent',
+            'sa.cityHome'
         );
+
+        $data = $data->orderBy('sa.updated_at', 'desc')->get();
+
+        $spreadsheet = IOFactory::load(public_path() . '/template/absen/' . 'Template_Export_Absen.xlsx');
+
+        $sheet = $spreadsheet->getSheet(0);
+
+        $row = 2;
+        foreach ($data as $item) {
+
+            $sheet->setCellValue("A{$row}", $row - 1);
+            $sheet->setCellValue("B{$row}", $item->name);
+            $sheet->setCellValue("C{$row}", $item->jobName);
+            $sheet->setCellValue("D{$row}", $item->shift);
+
+            if ($item->status == 'Terlambat') {
+                $sheet->getStyle("E{$row}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => [
+                            'rgb' => 'FF0000', // Red background color
+                        ],
+                    ],
+                ]);
+            } else if ($item->status == 'Tepat Waktu') {
+
+                $sheet->getStyle("E{$row}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => [
+                            'rgb' => '00FF00', // Green background color
+                        ],
+                    ],
+                ]);
+            }
+
+            $sheet->setCellValue("E{$row}", $item->status);
+            $sheet->setCellValue("F{$row}", $item->day);
+            $sheet->setCellValue("G{$row}", $item->presentTime);
+            $sheet->setCellValue("H{$row}", $item->homeTime);
+            $sheet->setCellValue("I{$row}", $item->duration);
+            $sheet->setCellValue("J{$row}", $item->presentStatus);
+            $sheet->setCellValue("K{$row}", $item->homeStatus);
+            $sheet->setCellValue("L{$row}", $item->presentLocation);
+            $sheet->setCellValue("M{$row}", $item->homeLocation);
+
+            $row++;
+        }
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
+        $writer->save($newFilePath);
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
     }
 
     public function presentStatusList()
@@ -273,16 +414,17 @@ class AbsentController extends Controller
             $data = DB::table('users')
                 ->select(
                     'id',
-                    DB::raw("TRIM(CONCAT(CASE WHEN firstName = '' or firstName is null THEN '' ELSE CONCAT(firstName,' ') END
-                ,CASE WHEN middleName = '' or middleName is null THEN '' ELSE CONCAT(middleName,' ') END,
-                case when lastName = '' or lastName is null then '' else lastName end)) as fullName")
+                    'firstName as fullName',
+                    //     DB::raw("TRIM(CONCAT(CASE WHEN firstName = '' or firstName is null THEN '' ELSE CONCAT(firstName,' ') END
+                    // ,CASE WHEN middleName = '' or middleName is null THEN '' ELSE CONCAT(middleName,' ') END,
+                    // case when lastName = '' or lastName is null then '' else lastName end)) as fullName")
                 )
                 ->where('isDeleted', '=', 0)
                 ->get();
 
             return response()->json($data, 200);
         } else {
-            return response()->json(['error' => 'Unauthorized access!'], Response::HTTP_FORBIDDEN);
+            return responseUnauthorize();
         }
     }
 
