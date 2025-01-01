@@ -41,6 +41,7 @@ use App\Http\Controllers\Promotion\PartnerController;
 use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Report\BookingController;
 use App\Http\Controllers\Report\ReportCustomerController;
+use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\ReportMenuManagementController;
 use App\Http\Controllers\Transaction\TransactionController;
 
@@ -630,7 +631,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::group(['prefix' => 'service'], function () {});
 
-        Route::group(['prefix' => 'staff'], function () {});
+        Route::group(['prefix' => 'staff'], function () {
+
+            Route::get('/login', [ReportStaffController::class, 'indexStaffLogin']);
+
+            Route::get('/login/export', [ReportStaffController::class, 'exportStaffLogin']);
+
+        });
     });
 
     //GLOBAL VARIABLE

@@ -363,14 +363,19 @@ class TransactionController extends Controller
             ->select(
                 't.id',
                 't.registrationNo',
+                't.isNewCustomer',
+                't.registrant',
                 'l.locationName',
-                'c.firstName',
+                'c.firstName as customerName',
                 DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
                 't.serviceCategory',
                 DB::raw("IFNULL(t.startDate,'') as startDate"),
                 DB::raw("IFNULL(t.endDate,'') as endDate"),
                 't.status',
                 'u.firstName as picDoctor',
+                't.note',
+                //
+                'cp.petName',
                 'uc.firstName as createdBy',
                 DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
             )
