@@ -17,6 +17,7 @@ use App\Models\TransactionLog;
 if (!function_exists('adminAccess')) {
     function adminAccess($id)
     {
+        $status = false;
 
         $user = DB::table('users as u')
             ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
@@ -24,11 +25,11 @@ if (!function_exists('adminAccess')) {
             ->where('u.id', '=', $id)
             ->first();
 
-        if ($user->roleName != "Administrator" || $user->roleName != "Manager") {
-            return false;
-        } else {
-            return true;
+        if ($user->roleName == "Administrator" || $user->roleName == "Manager") {
+            $status = true;
         }
+
+        return $status;
     }
 }
 
