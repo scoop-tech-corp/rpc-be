@@ -51,6 +51,7 @@ class StaffController extends Controller
                     'nickName' => 'max:20|min:3|nullable',
                     'gender' => 'string|nullable',
                     'status' => 'required|integer',
+                    'lineManagerId' => 'required|integer',
                     'jobTitleId' => 'required|integer',
                     'startDate' => 'required|date',
                     'endDate' => 'required|date|after:startDate',
@@ -61,8 +62,8 @@ class StaffController extends Controller
                     'annualLeaveAllowance' => 'integer|nullable',
                     'payPeriodId' => 'required|integer',
                     'payAmount' => 'numeric|nullable',
-                    'typeId' => 'required',
-                    'identificationNumber' => 'string|nullable|max:30',
+                    //'typeId' => 'required',
+                    //'identificationNumber' => 'string|nullable|max:30',
                     'additionalInfo' => 'string|nullable|max:100',
                     'generalCustomerCanSchedule' => 'integer|nullable',
                     'generalCustomerReceiveDailyEmail' => 'integer|nullable',
@@ -73,29 +74,6 @@ class StaffController extends Controller
                 ]
             );
 
-
-
-            $getTypeIDName = TypeId::where([
-                ['id', '=', $request->typeId],
-                ['isActive', '=', '1']
-            ])->first();
-
-            if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
-
-                if ((is_numeric($request->identificationNumber))) {
-                    return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
-                }
-            } else {
-                if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
-                    return responseInvalid(["Identification number must be integer!"]);
-                }
-            }
-
-
-
-            $start = Carbon::parse($request->startDate);
-            $end = Carbon::parse($request->endDate);
-
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
 
@@ -104,6 +82,27 @@ class StaffController extends Controller
                     'errors' => $errors,
                 ], 422);
             }
+
+            // $getTypeIDName = TypeId::where([
+            //     ['id', '=', $request->typeId],
+            //     ['isActive', '=', '1']
+            // ])->first();
+
+            // if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
+
+            //     if ((is_numeric($request->identificationNumber))) {
+            //         return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
+            //     }
+            // } else {
+            //     if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
+            //         return responseInvalid(["Identification number must be integer!"]);
+            //     }
+            // }
+
+            //$ResImageDatas = json_decode($request->imageIdentifications, true);
+
+            $start = Carbon::parse($request->startDate);
+            $end = Carbon::parse($request->endDate);
 
 
             $data_item = [];
@@ -464,11 +463,6 @@ class StaffController extends Controller
                 }
             }
 
-
-
-
-
-
             $lastInsertedID = DB::table('users')
                 ->insertGetId([
                     'firstName' => $request->firstName,
@@ -477,6 +471,7 @@ class StaffController extends Controller
                     'nickName' => $request->nickName,
                     'gender' => $request->gender,
                     'status' => $request->status,
+                    'lineManagerId' => $request->lineManagerId,
                     'jobTitleId' => $request->jobTitleId,
                     'startDate' =>  $start,
                     'endDate' => $end,
@@ -488,8 +483,8 @@ class StaffController extends Controller
                     'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
                     'payPeriodId' => $request->payPeriodId,
                     'payAmount' => $request->payAmount,
-                    'typeId' => $request->typeId,
-                    'identificationNumber' => $request->identificationNumber,
+                    'typeId' => 0,
+                    'identificationNumber' => '',
                     'additionalInfo' => $request->additionalInfo,
                     'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
                     'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
@@ -545,23 +540,61 @@ class StaffController extends Controller
             }
 
 
-            if ($request->hasfile('image')) {
+            $identify = json_decode($request->typeIdentifications, true);
 
-                $files = $request->file('image');
+            $flag = false;
+            $res_data = [];
+            $files[] = $request->file('imageIdentifications');
+            $count = 0;
 
-                $name = $files->hashName();
-                $files->move(public_path() . '/UsersImages/', $name);
+            if ($flag == false) {
 
-                $fileName = "/UsersImages/" . $name;
+                if ($request->hasfile('imageIdentifications')) {
 
-                DB::table('usersImages')
-                    ->insert([
-                        'usersId' => $lastInsertedID,
-                        'imagePath' => $fileName,
-                        'isDeleted' => 0,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                    foreach ($files as $file) {
+
+                        foreach ($file as $fil) {
+
+                            $name = $fil->hashName();
+
+                            $fil->move(public_path() . '/UsersIdentificationImages/', $name);
+
+                            $fileName = "/UsersIdentificationImages/" . $name;
+
+                            DB::table('usersIdentifications')
+                                ->insert([
+                                    'usersId' => $lastInsertedID,
+                                    'typeId' => $identify[$count]['typeId'],
+                                    'identification' => $identify[$count]['identificationNumber'],
+                                    'imagePath' => $fileName,
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+
+                            array_push($res_data, $file);
+
+                            $count += 1;
+                        }
+                    }
+
+                    $flag = true;
+                }
+            } else {
+
+                foreach ($res_data as $res) {
+
+                    DB::table('usersIdentifications')
+                        ->insert([
+                            'usersId' => $lastInsertedID,
+                            'typeId' => $identify[$count]['typeId'],
+                            'identification' => $identify[$count]['identificationNumber'],
+                            'imagePath' => $res['imagePath'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
             }
 
             if ($request->messenger) {
@@ -1708,7 +1741,7 @@ class StaffController extends Controller
             ], 406);
         } else {
 
-            $checkImages = DB::table('usersImages')
+            $checkImages = DB::table('usersIdentifications')
                 ->where([
                     ['usersId', '=', $request->id],
                     ['isDeleted', '=', 0],
@@ -1720,41 +1753,77 @@ class StaffController extends Controller
 
                 File::delete(public_path() . $checkImages->imagePath);
 
-                DB::table('usersImages')->where([
+                DB::table('usersIdentifications')->where([
                     ['usersId', '=', $request->id],
                 ])->delete();
             }
 
+            $flag = false;
+            $res_data = [];
+            $files[] = $request->file('imageIdentifications');
+            $count = 0;
 
+            $identify = json_decode($request->typeIdentifications, true);
+            //return $request->imageIdentifications;
+            //return 'ts';
+            if ($flag == false) {
 
-            if ($request->hasfile('image')) {
+                if ($request->hasfile('imageIdentifications')) {
+                    //return 'mask';
+                    foreach ($files as $file) {
 
-                $files = $request->file('image');
+                        foreach ($file as $fil) {
 
-                $name = $files->hashName();
-                $files->move(public_path() . '/UsersImages/', $name);
+                            $name = $fil->hashName();
 
-                $fileName = "/UsersImages/" . $name;
+                            $fil->move(public_path() . '/UsersIdentificationImages/', $name);
 
-                DB::table('usersImages')
-                    ->insert([
-                        'usersId' => $request->id,
-                        'imagePath' => $fileName,
-                        'isDeleted' => 0,
-                        'created_at' => now(),
-                    ]);
+                            $fileName = "/UsersIdentificationImages/" . $name;
 
-                DB::commit();
+                            DB::table('usersIdentifications')
+                                ->insert([
+                                    'usersId' => $request->id,
+                                    'typeId' => $identify[$count]['typeId'],
+                                    'identification' => $identify[$count]['identificationNumber'],
+                                    'imagePath' => $fileName,
+                                    'isDeleted' => 0,
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
 
-                return response()->json(
-                    [
-                        'result' => 'success',
-                        'message' => 'Upload image users Success!',
-                    ],
-                    200
-                );
+                            array_push($res_data, $file);
+
+                            $count += 1;
+                        }
+                    }
+
+                    $flag = true;
+                }
+            } else {
+
+                foreach ($res_data as $res) {
+
+                    DB::table('usersIdentifications')
+                        ->insert([
+                            'usersId' => $request->id,
+                            'typeId' => $identify[$count]['typeId'],
+                            'identification' => $identify[$count]['identificationNumber'],
+                            'imagePath' => $res['imagePath'],
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
             }
         }
+
+        return response()->json(
+            [
+                'result' => 'success',
+                'message' => 'Upload image users Success!',
+            ],
+            200
+        );
     }
 
 
@@ -1798,10 +1867,10 @@ class StaffController extends Controller
                         $join->on('c.id', '=', 'a.jobTitleId')
                             ->where('c.isActive', '=', 1);
                     })
-                    ->leftJoin('typeId as d', function ($join) {
-                        $join->on('d.id', '=', 'a.typeId')
-                            ->where('d.isActive', '=', 1);
-                    })
+                    // ->leftJoin('typeId as d', function ($join) {
+                    //     $join->on('d.id', '=', 'a.typeId')
+                    //         ->where('d.isActive', '=', 1);
+                    // })
                     ->leftJoin('payPeriod as e', function ($join) {
                         $join->on('e.id', '=', 'a.payPeriodId')
                             ->where('e.isActive', '=', 1);
@@ -1814,6 +1883,7 @@ class StaffController extends Controller
                         'a.nickName',
                         'a.gender',
                         'a.status',
+                        'a.lineManagerId',
                         DB::raw("IF(c.id  IS NULL, '',c.id ) as jobTitleId"),
                         DB::raw("IF(c.jobName  IS NULL, '',c.jobName ) as jobName"),
                         'a.startDate',
@@ -1825,9 +1895,9 @@ class StaffController extends Controller
                         'a.payPeriodId',
                         DB::raw("IF(e.periodName IS NULL, '', e.periodName) as periodName"),
                         'a.payAmount',
-                        DB::raw("IF(d.id  IS NULL, '',d.id ) as typeId"),
-                        DB::raw("IF(d.typeName  IS NULL, '',d.typeName ) as typeName"),
-                        'a.identificationNumber',
+                        //DB::raw("IF(d.id  IS NULL, '',d.id ) as typeId"),
+                        //DB::raw("IF(d.typeName  IS NULL, '',d.typeName ) as typeName"),
+                        //'a.identificationNumber',
                         'a.additionalInfo',
 
                         'a.generalCustomerCanSchedule',
@@ -1844,10 +1914,16 @@ class StaffController extends Controller
                     ])
                     ->first();
 
-                $usersimages = DB::table('usersImages as a')
+                $usersIdentify = DB::table('usersIdentifications as a')
+                    ->leftJoin('typeId as d', function ($join) {
+                        $join->on('d.id', '=', 'a.typeId');
+                    })
                     ->select(
                         'a.id as id',
                         'a.usersId as usersId',
+                        'a.typeId',
+                        DB::raw("IF(d.typeName  IS NULL, '',d.typeName ) as typeName"),
+                        'a.identification',
                         'a.imagePath as imagePath',
                     )
                     ->where([
@@ -1856,7 +1932,7 @@ class StaffController extends Controller
                     ])
                     ->get();
 
-                $users->images = $usersimages;
+                $users->identify = $usersIdentify;
 
                 $locationId = DB::table('usersLocation as a')
                     ->leftjoin('location as b', 'b.id', '=', 'a.locationId')
@@ -2866,6 +2942,7 @@ class StaffController extends Controller
                     'nickName' => 'max:20|min:3|nullable',
                     'gender' => 'string|nullable',
                     'status' => 'required|integer',
+                    'lineManagerId' => 'required|integer',
                     'jobTitleId' => 'required|integer',
                     'startDate' => 'required|date',
                     'endDate' => 'required|date|after:startDate',
@@ -2876,8 +2953,8 @@ class StaffController extends Controller
                     'annualLeaveAllowance' => 'integer|nullable',
                     'payPeriodId' => 'required|integer',
                     'payAmount' => 'numeric|nullable',
-                    'typeId' => 'required|integer',
-                    'identificationNumber' => 'string|nullable|max:30',
+                    //'typeId' => 'required|integer',
+                    //'identificationNumber' => 'string|nullable|max:30',
                     'additionalInfo' => 'string|nullable|max:100',
                     'generalCustomerCanSchedule' => 'integer|nullable',
                     'generalCustomerReceiveDailyEmail' => 'integer|nullable',
@@ -2911,21 +2988,21 @@ class StaffController extends Controller
             }
 
 
-            $getTypeIDName = TypeId::where([
-                ['id', '=', $request->typeId],
-                ['isActive', '=', '1']
-            ])->first();
+            // $getTypeIDName = TypeId::where([
+            //     ['id', '=', $request->typeId],
+            //     ['isActive', '=', '1']
+            // ])->first();
 
-            if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
+            // if (str_contains(strtolower($getTypeIDName->typeName), 'paspor') || str_contains(strtolower($getTypeIDName->typeName), 'passpor')) {
 
-                if ((is_numeric($request->identificationNumber))) {
-                    return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
-                }
-            } else {
-                if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
-                    return responseInvalid(["Identification number must be integer!"]);
-                }
-            }
+            //     if ((is_numeric($request->identificationNumber))) {
+            //         return responseInvalid(["Identification number must be alpanumeric if identification type is passport!"]);
+            //     }
+            // } else {
+            //     if (!is_numeric($request->identificationNumber) && is_int((int)$request->identificationNumber)) {
+            //         return responseInvalid(["Identification number must be integer!"]);
+            //     }
+            // }
 
 
             $data_error_detailaddress = [];
@@ -3301,6 +3378,7 @@ class StaffController extends Controller
                         'nickName' => $request->nickName,
                         'gender' => $request->gender,
                         'status' => $request->status,
+                        'lineManagerId' => $request->lineManagerId,
                         'jobTitleId' => $request->jobTitleId,
                         'startDate' => $start,
                         'endDate' => $end,
@@ -3312,8 +3390,8 @@ class StaffController extends Controller
                         'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
                         'payPeriodId' => $request->payPeriodId,
                         'payAmount' => $request->payAmount,
-                        'typeId' => $request->typeId,
-                        'identificationNumber' => $request->identificationNumber,
+                        //'typeId' => $request->typeId,
+                        //'identificationNumber' => $request->identificationNumber,
                         'additionalInfo' => $request->additionalInfo,
                         'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
                         'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
@@ -3472,6 +3550,7 @@ class StaffController extends Controller
                         'nickName' => $request->nickName,
                         'gender' => $request->gender,
                         'status' => $request->status,
+                        'lineManagerId' => $request->lineManagerId,
                         'jobTitleId' => $request->jobTitleId,
                         'startDate' => $start,
                         'endDate' => $end,
@@ -3902,7 +3981,7 @@ class StaffController extends Controller
                     ->where('usersId', '=', $val)
                     ->update(['isDeleted' => 1]);
 
-                DB::table('usersImages')
+                DB::table('usersIdentifications')
                     ->where('usersId', '=', $val)
                     ->update(['isDeleted' => 1]);
 
@@ -3911,7 +3990,7 @@ class StaffController extends Controller
                     ->update(['isDeleted' => 1]);
 
 
-                $checkImages = DB::table('usersImages')
+                $checkImages = DB::table('usersIdentifications')
                     ->where([
                         ['usersId', '=', $val]
                     ])
@@ -4021,6 +4100,21 @@ class StaffController extends Controller
             ->where('u.isDeleted', '=', 0)
             ->groupBy('u.firstName')
             ->groupBy('u.id')
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function listStaffManagerAdmin()
+    {
+        $data = DB::table('users as u')
+            ->join('usersRoles as ur', 'ur.id', 'u.roleId')
+            ->select(
+                'u.id',
+                'u.firstName as name',
+            )
+            ->whereIn('u.roleId', [1, 2])
+            ->where('u.isDeleted', '=', 0)
             ->get();
 
         return response()->json($data, 200);
