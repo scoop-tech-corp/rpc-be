@@ -1184,13 +1184,6 @@ class CustomerController extends Controller
             return responseUnauthorize();
         }
 
-        if (adminAccess($request->user()->id) != 1) {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['User Access not Authorize!'],
-            ], 403);
-        }
-
         DB::beginTransaction();
 
         try {
