@@ -138,7 +138,7 @@ class AbsentController extends Controller
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->tosql();
+            $data = $data->offset(0)->limit($itemPerPage)->get();
         } else {
             $data = $data->offset($offset)->limit($itemPerPage)->get();
         }
