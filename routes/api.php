@@ -634,8 +634,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::group(['prefix' => 'staff'], function () {
 
             Route::get('/login', [ReportStaffController::class, 'indexStaffLogin']);
+            Route::get('/late', [ReportStaffController::class, 'indexStaffLate']);
 
             Route::get('/login/export', [ReportStaffController::class, 'exportStaffLogin']);
+            Route::get('/late/export', [ReportStaffController::class, 'exportStaffLate']);
 
         });
     });
