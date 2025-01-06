@@ -263,7 +263,7 @@ class StaffController extends Controller
                     ],
                     [
                         'name' => 'RPC Hankam',
-                        'data' => [20, 40, 20, 10, 80, 30, 15, 20, 18, 29],
+                        'data' => [25, 100, 120, 90, 77, 63, 22, 95, 45, 31],
                     ],
                     [
                         'name' => 'RPC Tanjung Duren',
@@ -487,7 +487,7 @@ class StaffController extends Controller
                     ],
                     [
                         'name' => 'RPC Hankam',
-                        'data' => [20, 40, 20, 10, 80, 30, 15, 20, 18, 29],
+                        'data' => [25, 100, 120, 90, 77, 63, 22, 95, 45, 31],
                     ],
                     [
                         'name' => 'RPC Tanjung Duren',
