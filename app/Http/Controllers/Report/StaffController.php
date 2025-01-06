@@ -26,7 +26,8 @@ class StaffController extends Controller
                 DB::raw("TIME_FORMAT(s.created_at, '%H:%i %p') AS time"),
                 's.ipAddress as ipAddress',
                 's.device as device',
-            );
+            )
+            ->where('ul.isMainLocation', '=', 1);
 
         if ($request->dateFrom && $request->dateTo) {
 
