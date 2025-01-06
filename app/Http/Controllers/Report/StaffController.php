@@ -338,11 +338,11 @@ class StaffController extends Controller
             }
         }
 
-        $staffs = $request->staff;
+        $staffs = $request->staffId;
 
         if (count($staffs) > 0) {
             if (!$staffs[0] == null) {
-                $data = $data->whereIn('sa.userId', $request->staff);
+                $data = $data->whereIn('sa.userId', $request->staffId);
             }
         }
 
@@ -553,11 +553,11 @@ class StaffController extends Controller
             }
         }
 
-        $staffs = $request->staff;
+        $staffs = $request->staffId;
 
         if (count($staffs) > 0) {
             if (!$staffs[0] == null) {
-                $data = $data->whereIn('u.id', $request->staff);
+                $data = $data->whereIn('u.id', $request->staffId);
             }
         }
 
