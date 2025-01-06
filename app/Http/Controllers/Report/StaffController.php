@@ -94,15 +94,31 @@ class StaffController extends Controller
             $data = $data->whereBetween(DB::raw('DATE(s.created_at)'), [$request->dateFrom, $request->dateTo]);
         }
 
-        if ($request->locationId) {
+        $locations = $request->locationId;
 
-            $data = $data->whereIn('ul.locationId', $request->locationId);
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $data = $data->whereIn('ul.locationId', $request->locationId);
+            }
         }
 
-        if ($request->staffId) {
+        $staffs = $request->staffId;
 
-            $data = $data->whereIn('u.id', $request->staffId);
+        if (count($staffs) > 0) {
+            if (!$staffs[0] == null) {
+                $data = $data->whereIn('u.id', $request->staffId);
+            }
         }
+
+        // if ($request->locationId) {
+
+        //     $data = $data->whereIn('ul.locationId', $request->locationId);
+        // }
+
+        // if ($request->staffId) {
+
+        //     $data = $data->whereIn('u.id', $request->staffId);
+        // }
 
         $data = $data->orderBy('s.updated_at', 'desc')->get();
 
