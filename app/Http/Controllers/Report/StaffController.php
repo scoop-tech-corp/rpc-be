@@ -330,14 +330,30 @@ class StaffController extends Controller
             $data = $data->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
         }
 
-        if ($request->locationId) {
+        $locations = $request->locationId;
 
-            $data = $data->whereIn('l.id', $request->locationId);
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $data = $data->whereIn('l.id', $request->locationId);
+            }
         }
 
-        if ($request->staff) {
-            $data = $data->whereIn('sa.userId', $request->staff);
+        $staffs = $request->staff;
+
+        if (count($staffs) > 0) {
+            if (!$staffs[0] == null) {
+                $data = $data->whereIn('sa.userId', $request->staff);
+            }
         }
+
+        // if ($request->locationId) {
+
+        //     $data = $data->whereIn('l.id', $request->locationId);
+        // }
+
+        // if ($request->staff) {
+        //     $data = $data->whereIn('sa.userId', $request->staff);
+        // }
 
         $data = $data->groupBy(
             'sa.id',
@@ -521,18 +537,41 @@ class StaffController extends Controller
             $data = $data->whereBetween('lr.fromDate', [$request->dateFrom, $request->dateTo]);
         }
 
-        if ($request->locationId) {
+        // if ($request->locationId) {
 
-            $data = $data->whereIn('l.id', $request->locationId);
+        //     $data = $data->whereIn('l.id', $request->locationId);
+        // }
+
+        // if ($request->staff) {
+        //     $data = $data->whereIn('u.id', $request->staff);
+        // }
+        $locations = $request->locationId;
+
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $data = $data->whereIn('l.id', $request->locationId);
+            }
         }
 
-        if ($request->staff) {
-            $data = $data->whereIn('u.id', $request->staff);
+        $staffs = $request->staff;
+
+        if (count($staffs) > 0) {
+            if (!$staffs[0] == null) {
+                $data = $data->whereIn('u.id', $request->staff);
+            }
         }
 
-        if ($request->leaveType) {
-            $data = $data->whereIn('lr.leaveType', $request->leaveType);
+        $leaveTypes = $request->leaveType;
+
+        if (count($leaveTypes) > 0) {
+            if (!$leaveTypes[0] == null) {
+                $data = $data->whereIn('lr.leaveType', $request->leaveType);
+            }
         }
+
+        // if ($request->leaveType) {
+        //     $data = $data->whereIn('lr.leaveType', $request->leaveType);
+        // }
 
         $data = $data->orderBy('lr.updated_at', 'desc')->get();
 
