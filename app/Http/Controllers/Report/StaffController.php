@@ -605,4 +605,220 @@ class StaffController extends Controller
             'Content-Disposition' => 'attachment; filename="Export Report Staff Leave.xlsx"',
         ]);
     }
+
+    public function indexStaffPeformance(Request $request)
+    {
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'name' => 'Budi',
+                    'booking' => 2,
+                    'services' => 5,
+                    'bookingDuration' => 12,
+                    'bookingValue' => 2,
+                    'classes' => 6,
+                    'attendees' => 9,
+                    'classDuration' => 12,
+                    'classValue' => 10,
+                    'totalDuration' => 7,
+                    'totalAnnualLeave' => 1,
+                    'totalSickLeave' => 3,
+                    'totalLeaveRemaining' => 13,
+                    'totalLate' => 1,
+                ],
+                [
+                    'name' => 'Susi',
+                    'booking' => 2,
+                    'services' => 5,
+                    'bookingDuration' => 12,
+                    'bookingValue' => 2,
+                    'classes' => 6,
+                    'attendees' => 9,
+                    'classDuration' => 12,
+                    'classValue' => 10,
+                    'totalDuration' => 7,
+                    'totalAnnualLeave' => 1,
+                    'totalSickLeave' => 3,
+                    'totalLeaveRemaining' => 13,
+                    'totalLate' => 1,
+                ],
+                [
+                    'name' => 'Agus',
+                    'booking' => 2,
+                    'services' => 5,
+                    'bookingDuration' => 12,
+                    'bookingValue' => 2,
+                    'classes' => 6,
+                    'attendees' => 9,
+                    'classDuration' => 12,
+                    'classValue' => 10,
+                    'totalDuration' => 7,
+                    'totalAnnualLeave' => 1,
+                    'totalSickLeave' => 3,
+                    'totalLeaveRemaining' => 13,
+                    'totalLate' => 1,
+                ],
+                [
+                    'name' => 'Raka',
+                    'booking' => 2,
+                    'services' => 5,
+                    'bookingDuration' => 12,
+                    'bookingValue' => 2,
+                    'classes' => 6,
+                    'attendees' => 9,
+                    'classDuration' => 12,
+                    'classValue' => 10,
+                    'totalDuration' => 7,
+                    'totalAnnualLeave' => 1,
+                    'totalSickLeave' => 3,
+                    'totalLeaveRemaining' => 13,
+                    'totalLate' => 1,
+                ],
+                [
+                    'name' => 'Erik',
+                    'booking' => 2,
+                    'services' => 5,
+                    'bookingDuration' => 12,
+                    'bookingValue' => 2,
+                    'classes' => 6,
+                    'attendees' => 9,
+                    'classDuration' => 12,
+                    'classValue' => 10,
+                    'totalDuration' => 7,
+                    'totalAnnualLeave' => 1,
+                    'totalSickLeave' => 3,
+                    'totalLeaveRemaining' => 13,
+                    'totalLate' => 1,
+                ],
+            ],
+        ];
+
+        return response()->json($data);
+    }
+
+    public function exportStaffPeformance(Request $request)
+    {
+        $data = [
+
+            [
+                'name' => 'Budi',
+                'booking' => 2,
+                'services' => 5,
+                'bookingDuration' => 12,
+                'bookingValue' => 2,
+                'classes' => 6,
+                'attendees' => 9,
+                'classDuration' => 12,
+                'classValue' => 10,
+                'totalDuration' => 7,
+                'totalAnnualLeave' => 1,
+                'totalSickLeave' => 3,
+                'totalLeaveRemaining' => 13,
+                'totalLate' => 1,
+            ],
+            [
+                'name' => 'Susi',
+                'booking' => 2,
+                'services' => 5,
+                'bookingDuration' => 12,
+                'bookingValue' => 2,
+                'classes' => 6,
+                'attendees' => 9,
+                'classDuration' => 12,
+                'classValue' => 10,
+                'totalDuration' => 7,
+                'totalAnnualLeave' => 1,
+                'totalSickLeave' => 3,
+                'totalLeaveRemaining' => 13,
+                'totalLate' => 1,
+            ],
+            [
+                'name' => 'Agus',
+                'booking' => 2,
+                'services' => 5,
+                'bookingDuration' => 12,
+                'bookingValue' => 2,
+                'classes' => 6,
+                'attendees' => 9,
+                'classDuration' => 12,
+                'classValue' => 10,
+                'totalDuration' => 7,
+                'totalAnnualLeave' => 1,
+                'totalSickLeave' => 3,
+                'totalLeaveRemaining' => 13,
+                'totalLate' => 1,
+            ],
+            [
+                'name' => 'Raka',
+                'booking' => 2,
+                'services' => 5,
+                'bookingDuration' => 12,
+                'bookingValue' => 2,
+                'classes' => 6,
+                'attendees' => 9,
+                'classDuration' => 12,
+                'classValue' => 10,
+                'totalDuration' => 7,
+                'totalAnnualLeave' => 1,
+                'totalSickLeave' => 3,
+                'totalLeaveRemaining' => 13,
+                'totalLate' => 1,
+            ],
+            [
+                'name' => 'Erik',
+                'booking' => 2,
+                'services' => 5,
+                'bookingDuration' => 12,
+                'bookingValue' => 2,
+                'classes' => 6,
+                'attendees' => 9,
+                'classDuration' => 12,
+                'classValue' => 10,
+                'totalDuration' => 7,
+                'totalAnnualLeave' => 1,
+                'totalSickLeave' => 3,
+                'totalLeaveRemaining' => 13,
+                'totalLate' => 1,
+            ],
+
+        ];
+
+        $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Staff_Peformance.xlsx');
+
+        $sheet = $spreadsheet->getSheet(0);
+
+        $row = 2;
+        foreach ($data as $item) {
+
+            $sheet->setCellValue("A{$row}", $item['name']);
+            $sheet->setCellValue("B{$row}", $item['booking']);
+            $sheet->setCellValue("C{$row}", $item['services']);
+            $sheet->setCellValue("D{$row}", $item['bookingDuration']);
+            $sheet->setCellValue("E{$row}", $item['bookingValue']);
+            $sheet->setCellValue("F{$row}", $item['classes']);
+            $sheet->setCellValue("G{$row}", $item['attendees']);
+            $sheet->setCellValue("H{$row}", $item['classDuration']);
+            $sheet->setCellValue("I{$row}", $item['classValue']);
+            $sheet->setCellValue("J{$row}", $item['totalDuration']);
+            $sheet->setCellValue("K{$row}", $item['totalAnnualLeave']);
+            $sheet->setCellValue("L{$row}", $item['totalSickLeave']);
+            $sheet->setCellValue("M{$row}", $item['totalLeaveRemaining']);
+            $sheet->setCellValue("N{$row}", $item['totalLate']);
+
+            $row++;
+        }
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . 'Export Report Staff Peformance.xlsx'; // Set the desired path
+        $writer->save($newFilePath);
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export Report Staff Peformance.xlsx"',
+        ]);
+    }
 }
