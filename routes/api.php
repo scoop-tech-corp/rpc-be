@@ -41,6 +41,7 @@ use App\Http\Controllers\Promotion\PartnerController;
 use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Report\BookingController;
 use App\Http\Controllers\Report\ReportCustomerController;
+use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\ReportMenuManagementController;
 use App\Http\Controllers\Transaction\TransactionController;
 
@@ -371,6 +372,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [StaffController::class, 'index']);
 
         Route::get('/list', [StaffController::class, 'listStaff']);
+        Route::get('/listmanager', [StaffController::class, 'listStaffManagerAdmin']);
+
         Route::get('/list/location/doctor', [StaffController::class, 'listStaffDoctorWithLocation']);
         Route::get('/list/location', [StaffController::class, 'listStaffWithLocation']);
 
@@ -628,7 +631,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::group(['prefix' => 'service'], function () {});
 
-        Route::group(['prefix' => 'staff'], function () {});
+        Route::group(['prefix' => 'staff'], function () {
+
+            Route::get('/login', [ReportStaffController::class, 'indexStaffLogin']);
+            Route::get('/late', [ReportStaffController::class, 'indexStaffLate']);
+            Route::get('/leave', [ReportStaffController::class, 'indexStaffLeave']);
+            Route::get('/peformance', [ReportStaffController::class, 'indexStaffPeformance']);
+
+            Route::get('/login/export', [ReportStaffController::class, 'exportStaffLogin']);
+            Route::get('/late/export', [ReportStaffController::class, 'exportStaffLate']);
+            Route::get('/leave/export', [ReportStaffController::class, 'exportStaffLeave']);
+            Route::get('/peformance/export', [ReportStaffController::class, 'exportStaffPeformance']);
+        });
     });
 
     //GLOBAL VARIABLE
