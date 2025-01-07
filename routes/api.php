@@ -636,10 +636,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/login', [ReportStaffController::class, 'indexStaffLogin']);
             Route::get('/late', [ReportStaffController::class, 'indexStaffLate']);
             Route::get('/leave', [ReportStaffController::class, 'indexStaffLeave']);
+            Route::get('/peformance', [ReportStaffController::class, 'indexStaffPeformance']);
 
             Route::get('/login/export', [ReportStaffController::class, 'exportStaffLogin']);
             Route::get('/late/export', [ReportStaffController::class, 'exportStaffLate']);
             Route::get('/leave/export', [ReportStaffController::class, 'exportStaffLeave']);
+            Route::get('/peformance/export', [ReportStaffController::class, 'exportStaffPeformance']);
         });
     });
 
