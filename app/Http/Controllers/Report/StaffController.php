@@ -172,11 +172,11 @@ class StaffController extends Controller
             }
         } else {
 
-            $rangeDate = collect(range(0, 9))->map(function ($daysAgo) {
+            $rangeDate = collect(range(9, 0))->map(function ($daysAgo) {
                 return Carbon::today()->subDays($daysAgo)->format('j M');
             });
 
-            $rangeDateFormat = collect(range(0, 9))->map(function ($daysAgo) {
+            $rangeDateFormat = collect(range(9, 0))->map(function ($daysAgo) {
                 return Carbon::today()->subDays($daysAgo)->format('Y-m-d');
             });
         }
@@ -221,17 +221,13 @@ class StaffController extends Controller
         if ($request->dateFrom && $request->dateTo) {
 
             $table = $table->whereBetween('sa.created_at', [$request->dateFrom, $request->dateTo]);
-        }
-        else {
-            // Get today's date (start of the day)
+        } else {
             $todayStart = Carbon::now();
 
             $nineDaysAgo = Carbon::now()->subDays(9);
 
-            //return $nineDaysAgo;
-
             $table = $table->whereDate('sa.created_at', '>=', $nineDaysAgo)
-            ->whereDate('sa.created_at', '<=', $todayStart);
+                ->whereDate('sa.created_at', '<=', $todayStart);
         }
 
         if ($request->locationId) {
@@ -301,7 +297,6 @@ class StaffController extends Controller
                     ->join('users as u', 'sa.userId', 'u.id')
                     ->join('usersLocation as ul', 'ul.usersId', 'u.id')
                     ->join('location as l', 'ul.locationId', 'l.id')
-                    //->select('sa.id')
                     ->where('ul.locationId', '=', $item->id)
                     ->where('sa.isDeleted', '=', 0)
                     ->where('sa.status', '=', 'Terlambat')
