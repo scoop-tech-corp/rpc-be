@@ -152,10 +152,34 @@ class StaffController extends Controller
 
     public function indexStaffLate(Request $request)
     {
+        if ($request->dateFrom && $request->dateTo) {
+            $startDate = $request->dateFrom;
+            $endDate = $request->dateTo;
 
-        $last10Days = collect(range(0, 9))->map(function ($daysAgo) {
-            return Carbon::today()->subDays($daysAgo)->format('j M');
-        });
+            $start = Carbon::createFromFormat('Y-m-d', $startDate);
+            $end = Carbon::createFromFormat('Y-m-d', $endDate);
+
+
+            $rangeDate = [];
+            $rangeDateFormat = [];
+            while ($start <= $end) {
+                // Add the formatted date to the array
+                $rangeDate[] = $start->format('j M');
+                $rangeDateFormat[] = $start->format('Y-m-d');
+
+                // Move to the next day (you can change this to add weeks or months, etc.)
+                $start->addDay();
+            }
+        } else {
+
+            $rangeDate = collect(range(9, 0))->map(function ($daysAgo) {
+                return Carbon::today()->subDays($daysAgo)->format('j M');
+            });
+
+            $rangeDateFormat = collect(range(9, 0))->map(function ($daysAgo) {
+                return Carbon::today()->subDays($daysAgo)->format('Y-m-d');
+            });
+        }
 
         $itemPerPage = $request->rowPerPage;
 
@@ -163,7 +187,6 @@ class StaffController extends Controller
 
         $table = DB::table('staffAbsents as sa')
             ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
-            ->leftJoin('presentStatuses as ps1', 'sa.statusHome', 'ps1.id')
             ->join('users as u', 'sa.userId', 'u.id')
             ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
             ->join('usersLocation as ul', 'ul.usersId', 'u.id')
@@ -192,11 +215,19 @@ class StaffController extends Controller
                 DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H:%i') END AS homecomingTime"),
             )
             ->where('sa.isDeleted', '=', 0)
+            ->where('ps.id', '=', 1)
             ->where('sa.status', '=', 'Terlambat');
 
         if ($request->dateFrom && $request->dateTo) {
 
-            $table = $table->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
+            $table = $table->whereBetween('sa.created_at', [$request->dateFrom, $request->dateTo]);
+        } else {
+            $todayStart = Carbon::now();
+
+            $nineDaysAgo = Carbon::now()->subDays(9);
+
+            $table = $table->whereDate('sa.created_at', '>=', $nineDaysAgo)
+                ->whereDate('sa.created_at', '<=', $todayStart);
         }
 
         if ($request->locationId) {
@@ -231,7 +262,6 @@ class StaffController extends Controller
             'sa.homeTime',
             'sa.duration',
             'ps.statusName',
-            'ps1.statusName',
             'sa.cityPresent',
             'sa.cityHome'
         );
@@ -254,31 +284,41 @@ class StaffController extends Controller
 
         $totalPaging = $count_data / $itemPerPage;
 
+        $graph = DB::table('location')
+            ->select('id', 'locationName')
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        foreach ($graph as $item) {
+
+            foreach ($rangeDateFormat as $valueDate) {
+
+                $dat = DB::table('staffAbsents as sa')
+                    ->join('users as u', 'sa.userId', 'u.id')
+                    ->join('usersLocation as ul', 'ul.usersId', 'u.id')
+                    ->join('location as l', 'ul.locationId', 'l.id')
+                    ->where('ul.locationId', '=', $item->id)
+                    ->where('sa.isDeleted', '=', 0)
+                    ->where('sa.status', '=', 'Terlambat')
+                    ->whereDate('sa.created_at', '=', $valueDate)
+                    ->where('ul.isMainLocation', '=', 1)
+                    ->count();
+
+                $arr_total[] = $dat;
+            }
+
+            $series[] = [
+                'name' => $item->locationName,
+                'data' => $arr_total,
+            ];
+
+            unset($arr_total);
+        }
+
         $data = [
             'charts' => [
-                'series' => [
-                    [
-                        'name' => 'RPC Condet',
-                        'data' => [10, 10, 10, 10, 30, 20, 15, 20, 18, 29],
-                    ],
-                    [
-                        'name' => 'RPC Hankam',
-                        'data' => [25, 100, 120, 90, 77, 63, 22, 95, 45, 31],
-                    ],
-                    [
-                        'name' => 'RPC Tanjung Duren',
-                        'data' => [20, 40, 20, 10, 80, 30, 15, 20, 18, 29],
-                    ],
-                    [
-                        'name' => 'RPC Sawangan',
-                        'data' => [30, 20, 60, 5, 20, 10, 12, 78, 54, 34],
-                    ],
-                    [
-                        'name' => 'RPC Palembang',
-                        'data' => [60, 20, 10, 17, 23, 65, 48, 34, 12, 29],
-                    ],
-                ],
-                'categories' => $last10Days,
+                'series' => $series,
+                'categories' => $rangeDate,
             ],
             'table' => [
                 'totalPagination' => ceil($totalPaging),
