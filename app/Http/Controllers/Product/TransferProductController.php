@@ -969,8 +969,8 @@ class TransferProductController
                     'id.*' => 'required|integer',
                 ],
                 [
-                    'id.*.required' => 'Product Type Should be Required!',
-                    'id.*.integer' => 'Product Type Should be Integer!',
+                    'id.*.required' => 'Id Should be Required!',
+                    'id.*.integer' => 'Id Should be Integer!',
                 ]
             );
 
@@ -1019,7 +1019,7 @@ class TransferProductController
                 }
 
                 if ($tmp_num != '') {
-                    return responseInvalid(['Transfer with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited, has already sent or has already received!']);
+                    return responseInvalid(['Transfer with ID Number ' . rtrim($tmp_num, ', ') . ' cannot be deleted. Becasue has already submited, has already sent, or has already received!']);
                 }
             }
 
@@ -1785,185 +1785,184 @@ class TransferProductController
 
                 // }
                 $product = Products::find($detail->productIdOrigin);
-                    $LocOrig = ProductLocations::where('productId', '=', $detail->productIdOrigin)
-                        ->first();
+                $LocOrig = ProductLocations::where('productId', '=', $detail->productIdOrigin)
+                    ->first();
 
-                    $LocDest = ProductLocations::where('productId', '=', $detail->productIdDestination)
-                        ->first();
+                $LocDest = ProductLocations::where('productId', '=', $detail->productIdDestination)
+                    ->first();
 
-                    if (!$LocDest) {
+                if (!$LocDest) {
 
-                        $newProduct = $product->replicate();
-                        $newProduct->created_at = Carbon::now();
-                        $newProduct->updated_at = Carbon::now();
-                        $newProduct->userId = $request->user()->id;
-                        $newProduct->save();
+                    $newProduct = $product->replicate();
+                    $newProduct->created_at = Carbon::now();
+                    $newProduct->updated_at = Carbon::now();
+                    $newProduct->userId = $request->user()->id;
+                    $newProduct->save();
 
-                        $categories = ProductCoreCategories::where('productId', '=', $detail->productIdOrigin)->get();
+                    $categories = ProductCoreCategories::where('productId', '=', $detail->productIdOrigin)->get();
 
-                        foreach ($categories as $res) {
+                    foreach ($categories as $res) {
 
-                            $category = ProductCoreCategories::find($res['id']);
+                        $category = ProductCoreCategories::find($res['id']);
 
-                            if ($category) {
-                                $newCategory = $category->replicate();
-                                $newCategory->productId = $newProduct->id;
-                                $newCategory->created_at = Carbon::now();
-                                $newCategory->updated_at = Carbon::now();
-                                $newCategory->userId = $request->user()->id;
-                                $newCategory->save();
-                            }
+                        if ($category) {
+                            $newCategory = $category->replicate();
+                            $newCategory->productId = $newProduct->id;
+                            $newCategory->created_at = Carbon::now();
+                            $newCategory->updated_at = Carbon::now();
+                            $newCategory->userId = $request->user()->id;
+                            $newCategory->save();
                         }
-
-                        $prodLoc = ProductLocations::find($LocOrig->id);
-
-                        $newProdLoc = $prodLoc->replicate();
-                        $newProdLoc->productId = $newProduct->id;
-                        $newProdLoc->locationId = $newProduct->id;
-                        $newProdLoc->inStock = $value['received'];
-                        $newProdLoc->diffStock = $value['received'] - $prodLoc->lowStock;
-                        $newProdLoc->userId = $request->user()->id;
-                        $newProdLoc->created_at = Carbon::now();
-                        $newProdLoc->updated_at = Carbon::now();
-                        $newProdLoc->save();
-
-                        productClinicLog($newProduct->id, "Create New Item", "", $value['received'], $value['received'], $request->user()->id);
-
-                        if ($product->pricingStatus == "CustomerGroups") {
-
-                            $productCustomerGroups = ProductCustomerGroups::where('productId', '=', $detail->productIdOrigin)->get();
-
-                            foreach ($productCustomerGroups as $res) {
-
-                                $prod = ProductCustomerGroups::find($res['id']);
-
-                                if ($prod) {
-                                    $newProduct = $prod->replicate();
-                                    $newProduct->productId = $newProduct->id;
-                                    $newProduct->created_at = Carbon::now();
-                                    $newProduct->updated_at = Carbon::now();
-                                    $newProduct->userId = $request->user()->id;
-                                    $newProduct->save();
-                                }
-                            }
-                        }
-
-                        if ($product->pricingStatus == "PriceLocations") {
-
-                            $prodPriceLoc = ProductPriceLocations::where('productId', '=', $detail->productIdOrigin)->get();
-
-                            foreach ($prodPriceLoc as $res) {
-
-                                $prodLoc = ProductPriceLocations::find($res['id']);
-
-                                if ($prodLoc) {
-                                    $newProductLoc = $prodLoc->replicate();
-                                    $newProductLoc->productId = $newProduct->id;
-                                    $newProductLoc->created_at = Carbon::now();
-                                    $newProductLoc->updated_at = Carbon::now();
-                                    $newProductLoc->userId = $request->user()->id;
-                                    $newProductLoc->save();
-                                }
-                            }
-                        }
-
-                        if ($product->pricingStatus == "Quantities") {
-
-                            $prodQty = ProductQuantitiess::where('productId', '=', $detail->productIdOrigin)->get();
-
-                            foreach ($prodQty as $res) {
-
-                                $prodQty = ProductQuantitiess::find($res['id']);
-
-                                if ($prodQty) {
-                                    $newProductQty = $prodQty->replicate();
-                                    $newProductQty->productId = $newProduct->id;
-                                    $newProductQty->created_at = Carbon::now();
-                                    $newProductQty->updated_at = Carbon::now();
-                                    $newProductQty->userId = $request->user()->id;
-                                    $newProductQty->save();
-                                }
-                            }
-                        }
-
-                        $prodReminder = ProductReminders::where('productId', '=', $detail->productIdOrigin)->get();
-
-                        foreach ($prodReminder as $res) {
-
-                            $prodReminder = ProductReminder::find($res['id']);
-
-                            if ($prodReminder) {
-                                $newProductReminder = $prodReminder->replicate();
-                                $newProductReminder->productId = $newProduct->id;
-                                $newProductReminder->created_at = Carbon::now();
-                                $newProductReminder->updated_at = Carbon::now();
-                                $newProductReminder->userId = $request->user()->id;
-                                $newProductReminder->save();
-                            }
-                        }
-
-                        $oldProdLoc = ProductLocations::where('productId', '=', $detail->productIdOrigin)->first();
-
-                        $instock = $oldProdLoc->inStock;
-                        $lowstock = $oldProdLoc->lowStock;
-
-                        $oldProdLoc->inStock = $instock - $value['received'];
-                        $oldProdLoc->diffStock = ($instock - $value['received']) - $lowstock;
-                        $oldProdLoc->updated_at = Carbon::now();
-                        $oldProdLoc->save();
-
-                        $product->updated_at = Carbon::now();
-                        $product->save();
-                        ProductClinicLog($detail->productIdOrigin, 'Transfer Product', 'Product Decrease', $value['received'], $instock - $value['received'], $request->user()->id);
-                    } else {
-
-                        $instock = $LocDest->inStock;
-                        $lowstock = $LocDest->lowStock;
-
-                        $LocDest->inStock = $instock + $value['received'];
-                        $LocDest->diffStock = ($instock + $value['received']) - $lowstock;
-                        $LocDest->updated_at = Carbon::now();
-                        $LocDest->save();
-                        ProductClinicLog($detail->productIdDestination, 'Transfer Product', 'Product Increase', $value['received'], $instock + $value['received'], $request->user()->id);
-
-
-                        $instock = $LocOrig->inStock;
-                        $lowstock = $LocOrig->lowStock;
-
-                        $LocOrig->inStock = $instock - $value['received'];
-                        $LocOrig->diffStock = ($instock - $value['received']) - $lowstock;
-                        $LocOrig->updated_at = Carbon::now();
-                        $LocOrig->save();
-                        ProductClinicLog($detail->productIdOrigin, 'Transfer Product', 'Product Decrease', $value['received'], $instock - $value['received'], $request->user()->id);
                     }
 
-                    $findBatch = ProductBatches::where('productId', '=', $detail->productIdDestination)->count();
+                    $prodLoc = ProductLocations::find($LocOrig->id);
 
-                    $number = "";
+                    $newProdLoc = $prodLoc->replicate();
+                    $newProdLoc->productId = $newProduct->id;
+                    $newProdLoc->locationId = $newProduct->id;
+                    $newProdLoc->inStock = $value['received'];
+                    $newProdLoc->diffStock = $value['received'] - $prodLoc->lowStock;
+                    $newProdLoc->userId = $request->user()->id;
+                    $newProdLoc->created_at = Carbon::now();
+                    $newProdLoc->updated_at = Carbon::now();
+                    $newProdLoc->save();
 
-                    if ($findBatch == 0) {
-                        $number = Carbon::today();
-                        $number = 'BC-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
-                    } else {
-                        $number = Carbon::today();
-                        $number = 'BC-' . $number->format('Ymd') . str_pad($findBatch + 1, 5, 0, STR_PAD_LEFT);
+                    productClinicLog($newProduct->id, "Create New Item", "", $value['received'], $value['received'], $request->user()->id);
+
+                    if ($product->pricingStatus == "CustomerGroups") {
+
+                        $productCustomerGroups = ProductCustomerGroups::where('productId', '=', $detail->productIdOrigin)->get();
+
+                        foreach ($productCustomerGroups as $res) {
+
+                            $prod = ProductCustomerGroups::find($res['id']);
+
+                            if ($prod) {
+                                $newProduct = $prod->replicate();
+                                $newProduct->productId = $newProduct->id;
+                                $newProduct->created_at = Carbon::now();
+                                $newProduct->updated_at = Carbon::now();
+                                $newProduct->userId = $request->user()->id;
+                                $newProduct->save();
+                            }
+                        }
                     }
 
-                    ProductBatches::create([
-                        'batchNumber' => $number,
-                        'productId' => $detail->productIdDestination,
-                        'productRestockId' => 0,
-                        'productTransferId' => $master->id,
-                        'productTransferDetailId' => $request->productTransferDetailId,
-                        'transferNumber' => $master->transferNumber,
-                        'productRestockDetailId' => 0,
-                        'purchaseRequestNumber' => '',
-                        'purchaseOrderNumber' => '',
-                        'expiredDate' => $value['expiredDate'],
-                        'sku' => $value['sku'],
-                        'userId' => $request->user()->id,
-                    ]);
+                    if ($product->pricingStatus == "PriceLocations") {
 
+                        $prodPriceLoc = ProductPriceLocations::where('productId', '=', $detail->productIdOrigin)->get();
+
+                        foreach ($prodPriceLoc as $res) {
+
+                            $prodLoc = ProductPriceLocations::find($res['id']);
+
+                            if ($prodLoc) {
+                                $newProductLoc = $prodLoc->replicate();
+                                $newProductLoc->productId = $newProduct->id;
+                                $newProductLoc->created_at = Carbon::now();
+                                $newProductLoc->updated_at = Carbon::now();
+                                $newProductLoc->userId = $request->user()->id;
+                                $newProductLoc->save();
+                            }
+                        }
+                    }
+
+                    if ($product->pricingStatus == "Quantities") {
+
+                        $prodQty = ProductQuantitiess::where('productId', '=', $detail->productIdOrigin)->get();
+
+                        foreach ($prodQty as $res) {
+
+                            $prodQty = ProductQuantitiess::find($res['id']);
+
+                            if ($prodQty) {
+                                $newProductQty = $prodQty->replicate();
+                                $newProductQty->productId = $newProduct->id;
+                                $newProductQty->created_at = Carbon::now();
+                                $newProductQty->updated_at = Carbon::now();
+                                $newProductQty->userId = $request->user()->id;
+                                $newProductQty->save();
+                            }
+                        }
+                    }
+
+                    $prodReminder = ProductReminders::where('productId', '=', $detail->productIdOrigin)->get();
+
+                    foreach ($prodReminder as $res) {
+
+                        $prodReminder = ProductReminder::find($res['id']);
+
+                        if ($prodReminder) {
+                            $newProductReminder = $prodReminder->replicate();
+                            $newProductReminder->productId = $newProduct->id;
+                            $newProductReminder->created_at = Carbon::now();
+                            $newProductReminder->updated_at = Carbon::now();
+                            $newProductReminder->userId = $request->user()->id;
+                            $newProductReminder->save();
+                        }
+                    }
+
+                    $oldProdLoc = ProductLocations::where('productId', '=', $detail->productIdOrigin)->first();
+
+                    $instock = $oldProdLoc->inStock;
+                    $lowstock = $oldProdLoc->lowStock;
+
+                    $oldProdLoc->inStock = $instock - $value['received'];
+                    $oldProdLoc->diffStock = ($instock - $value['received']) - $lowstock;
+                    $oldProdLoc->updated_at = Carbon::now();
+                    $oldProdLoc->save();
+
+                    $product->updated_at = Carbon::now();
+                    $product->save();
+                    ProductClinicLog($detail->productIdOrigin, 'Transfer Product', 'Product Decrease', $value['received'], $instock - $value['received'], $request->user()->id);
+                } else {
+
+                    $instock = $LocDest->inStock;
+                    $lowstock = $LocDest->lowStock;
+
+                    $LocDest->inStock = $instock + $value['received'];
+                    $LocDest->diffStock = ($instock + $value['received']) - $lowstock;
+                    $LocDest->updated_at = Carbon::now();
+                    $LocDest->save();
+                    ProductClinicLog($detail->productIdDestination, 'Transfer Product', 'Product Increase', $value['received'], $instock + $value['received'], $request->user()->id);
+
+
+                    $instock = $LocOrig->inStock;
+                    $lowstock = $LocOrig->lowStock;
+
+                    $LocOrig->inStock = $instock - $value['received'];
+                    $LocOrig->diffStock = ($instock - $value['received']) - $lowstock;
+                    $LocOrig->updated_at = Carbon::now();
+                    $LocOrig->save();
+                    ProductClinicLog($detail->productIdOrigin, 'Transfer Product', 'Product Decrease', $value['received'], $instock - $value['received'], $request->user()->id);
+                }
+
+                $findBatch = ProductBatches::where('productId', '=', $detail->productIdDestination)->count();
+
+                $number = "";
+
+                if ($findBatch == 0) {
+                    $number = Carbon::today();
+                    $number = 'BC-' . $number->format('Ymd') . str_pad(0 + 1, 5, 0, STR_PAD_LEFT);
+                } else {
+                    $number = Carbon::today();
+                    $number = 'BC-' . $number->format('Ymd') . str_pad($findBatch + 1, 5, 0, STR_PAD_LEFT);
+                }
+
+                ProductBatches::create([
+                    'batchNumber' => $number,
+                    'productId' => $detail->productIdDestination,
+                    'productRestockId' => 0,
+                    'productTransferId' => $master->id,
+                    'productTransferDetailId' => $request->productTransferDetailId,
+                    'transferNumber' => $master->transferNumber,
+                    'productRestockDetailId' => 0,
+                    'purchaseRequestNumber' => '',
+                    'purchaseOrderNumber' => '',
+                    'expiredDate' => $value['expiredDate'],
+                    'sku' => $value['sku'],
+                    'userId' => $request->user()->id,
+                ]);
             }
         }
 
@@ -2001,10 +2000,10 @@ class TransferProductController
         // }
 
         $data = DB::table('productLocations as psl')
-                ->join('products as ps', 'psl.productId', 'ps.id')
-                ->select('ps.id', 'ps.fullName')
-                ->where('psl.locationId', '=', $request->branchOrigin)
-                ->get();
+            ->join('products as ps', 'psl.productId', 'ps.id')
+            ->select('ps.id', 'ps.fullName')
+            ->where('psl.locationId', '=', $request->branchOrigin)
+            ->get();
 
         return response()->json($data, 200);
     }
