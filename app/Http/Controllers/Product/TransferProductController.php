@@ -1043,13 +1043,22 @@ class TransferProductController
                             'DeletedAt' => Carbon::now()
                         ]);
                 }
-                DB::table('ProductTransferDetails')
-                    ->where('productTransferId', '=', $va)
-                    ->update([
+
+                productTransferDetails::updateOrCreate(
+                    ['productTransferId' => $va],
+                    [
                         'isDeleted' => true,
                         'DeletedBy' => $request->user()->id,
                         'DeletedAt' => Carbon::now()
-                    ]);
+                    ]
+                );
+                // DB::table('productTransferDetails')
+                //     ->where('productTransferId', '=', $va)
+                //     ->update([
+                //         'isDeleted' => true,
+                //         'DeletedBy' => $request->user()->id,
+                //         'DeletedAt' => Carbon::now()
+                //     ]);
             }
             DB::commit();
             return responseDelete();
