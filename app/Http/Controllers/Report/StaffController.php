@@ -285,8 +285,14 @@ class StaffController extends Controller
         $totalPaging = $count_data / $itemPerPage;
 
         $graph = DB::table('location')
-            ->select('id', 'locationName')
-            ->where('isDeleted', '=', 0)
+            ->select('id', 'locationName');
+
+        if ($request->locationId) {
+
+            $graph = $graph->whereIn('id', $request->locationId);
+        }
+
+        $graph = $graph->where('isDeleted', '=', 0)
             ->get();
 
         foreach ($graph as $item) {
