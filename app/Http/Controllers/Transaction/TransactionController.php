@@ -392,6 +392,7 @@ class TransactionController extends Controller
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(tl.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
             )
+            ->where('tl.transactionId', '=', $request->id)
             ->get();
 
         $data = ['detail' => $detail, 'transactionLogs' => $log];
