@@ -34,6 +34,7 @@ class CustomerPets extends Model
         'deletedAt',
         'created_at',
         'createdBy',
+        'userUpdateId',
         'updated_at',
     ];
 }

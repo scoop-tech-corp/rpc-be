@@ -269,7 +269,8 @@ class TransactionController extends Controller
                             'dateOfBirth' => $request->birthDate,
                             'petGender' => $request->petGender,
                             'isSteril' => $request->isSterile,
-                            'createdBy' => $request->user()->id
+                            'createdBy' => $request->user()->id,
+                            'userUpdateId' => $request->user()->id
                         ]
                     );
                 }
@@ -295,6 +296,8 @@ class TransactionController extends Controller
                             'dateOfBirth' => $request->birthDate,
                             'petGender' => $request->petGender,
                             'isSteril' => $request->isSterile,
+                            'createdBy' => $request->user()->id,
+                            'userUpdateId' => $request->user()->id
                         ]
                     );
                 } else {
