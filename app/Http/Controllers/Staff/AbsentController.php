@@ -28,6 +28,7 @@ class AbsentController extends Controller
             ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
             ->join('usersLocation as ul', 'ul.usersId', 'u.id')
             ->join('location as l', 'ul.locationId', 'l.id')
+            ->join('jobTitle as jt', 'u.jobTitleId', 'jt.id')
             ->select(
                 'sa.id',
                 'u.firstName as name',
@@ -85,6 +86,10 @@ class AbsentController extends Controller
 
         if ($request->statusPresent) {
             $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+        }
+
+        if ($request->staffJob) {
+            $data = $data->whereIn('jt.id', $request->staffJob);
         }
 
         if ($request->orderValue) {
