@@ -250,7 +250,8 @@ class TransactionController extends Controller
                         'memberNo' => '',
                         'gender' => '',
                         'joinDate' => Carbon::now(),
-                        'createdBy' => $request->user()->id
+                        'createdBy' => $request->user()->id,
+                        'userUpdateId' => $request->user()->id
                     ]
                 );
 
@@ -268,7 +269,8 @@ class TransactionController extends Controller
                             'dateOfBirth' => $request->birthDate,
                             'petGender' => $request->petGender,
                             'isSteril' => $request->isSterile,
-                            'createdBy' => $request->user()->id
+                            'createdBy' => $request->user()->id,
+                            'userUpdateId' => $request->user()->id
                         ]
                     );
                 }
@@ -294,6 +296,8 @@ class TransactionController extends Controller
                             'dateOfBirth' => $request->birthDate,
                             'petGender' => $request->petGender,
                             'isSteril' => $request->isSterile,
+                            'createdBy' => $request->user()->id,
+                            'userUpdateId' => $request->user()->id
                         ]
                     );
                 } else {
@@ -392,6 +396,7 @@ class TransactionController extends Controller
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(tl.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
             )
+            ->where('tl.transactionId', '=', $request->id)
             ->get();
 
         $data = ['detail' => $detail, 'transactionLogs' => $log];

@@ -40,6 +40,7 @@ class Customer extends Model
         'deletedBy',
         'deletedAt',
         'createdBy',
+        'userUpdateId',
         'created_at',
         'updated_at'
     ];

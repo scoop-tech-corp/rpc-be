@@ -300,9 +300,11 @@ class StaffController extends Controller
             foreach ($rangeDateFormat as $valueDate) {
 
                 $dat = DB::table('staffAbsents as sa')
+                    ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
                     ->join('users as u', 'sa.userId', 'u.id')
                     ->join('usersLocation as ul', 'ul.usersId', 'u.id')
                     ->join('location as l', 'ul.locationId', 'l.id')
+                    ->where('ps.id', '=', 1)
                     ->where('ul.locationId', '=', $item->id)
                     ->where('sa.isDeleted', '=', 0)
                     ->where('sa.status', '=', 'Terlambat')

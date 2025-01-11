@@ -1838,6 +1838,7 @@ class CustomerController extends Controller
             $customer->isReminderPayment =  $request->isReminderPayment;
             $customer->isDeleted = 0;
             $customer->createdBy = $request->user()->id;
+            $customer->userUpdateId = $request->user()->id;
             $customer->save();
 
             $lastInsertedID = $customer->id;
