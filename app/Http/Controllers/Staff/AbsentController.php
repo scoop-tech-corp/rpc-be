@@ -240,7 +240,6 @@ class AbsentController extends Controller
         }
 
         $fileName = "Rekap Absensi" . $location . $date . ".xlsx";
-
         //-----------------------------
         $data = DB::table('staffAbsents as sa')
             ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
@@ -286,7 +285,7 @@ class AbsentController extends Controller
             )
             ->where('sa.isDeleted', '=', 0);
 
-        if ($request->role <> 1 && $request->role <> 6) {
+        if (role($request->user()->id) != 'Office' && role($request->user()->id) != 'Administrator' && role($request->user()->id) != 'Manager') {
             $data = $data->where('sa.userId', '=', $request->user()->id);
         }
 
