@@ -250,7 +250,8 @@ class TransactionController extends Controller
                         'memberNo' => '',
                         'gender' => '',
                         'joinDate' => Carbon::now(),
-                        'createdBy' => $request->user()->id
+                        'createdBy' => $request->user()->id,
+                        'userUpdateId' => $request->user()->id
                     ]
                 );
 
