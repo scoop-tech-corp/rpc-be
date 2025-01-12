@@ -361,6 +361,7 @@ class TransactionController extends Controller
             ->join('location as l', 'l.id', 't.locationId')
             ->join('customer as c', 'c.id', 't.customerId')
             ->join('customerPets as cp', 'cp.id', 't.PetId')
+            ->join('petCategory as pc', 'pc.id', 'cp.petCategoryId')
             ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
             ->join('users as u', 'u.id', 't.doctorId')
             ->join('users as uc', 'uc.id', 't.userId')
@@ -369,6 +370,7 @@ class TransactionController extends Controller
                 't.registrationNo',
                 't.isNewCustomer',
                 't.registrant',
+                'l.id as locationId',
                 'l.locationName',
                 'c.firstName as customerName',
                 DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
@@ -376,10 +378,21 @@ class TransactionController extends Controller
                 DB::raw("IFNULL(t.startDate,'') as startDate"),
                 DB::raw("IFNULL(t.endDate,'') as endDate"),
                 't.status',
+                'u.id as doctorId',
                 'u.firstName as picDoctor',
                 't.note',
-                //
+
+                'cp.id as petId',
                 'cp.petName',
+                'cp.petCategoryId',
+                'pc.petCategoryName',
+                'cp.condition',
+                'cp.petGender',
+                'cp.isSteril as petSterile',
+                'cp.petMonth',
+                'cp.petYear',
+                'cp.dateOfBirth',
+
                 'uc.firstName as createdBy',
                 DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
             )
