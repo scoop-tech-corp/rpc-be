@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Transaction;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
@@ -625,5 +626,50 @@ class TransactionController extends Controller
         $data = ['Pet Clinic', 'Pet Hotel', 'Pet Salon', 'Pacak'];
 
         return responseList($data);
+    }
+
+    public function acceptionTransaction(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'status' => 'required|bool',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $doctor = User::where([['id', '=', $request->user()->id]])->first();
+
+        if ($request->status == 1) {
+            Transaction::where('id', '=', $request->transactionId)
+                ->update([
+                    'status' => 'Cek Kondisi Pet',
+                ]);
+
+            transactionLog($request->transactionId, 'Pengecekan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+        } else {
+
+            $validate = Validator::make($request->all(), [
+                'reason' => 'required|string',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
+
+            Transaction::where('id', '=', $request->transactionId)
+                ->update([
+                    'status' => 'Ditolak Dokter',
+                ]);
+
+                return 'dhd';
+
+            transactionLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+        }
+
+        return responseCreate();
     }
 }
