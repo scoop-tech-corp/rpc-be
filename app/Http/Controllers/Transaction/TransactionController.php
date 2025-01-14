@@ -372,6 +372,7 @@ class TransactionController extends Controller
                 't.registrant',
                 'l.id as locationId',
                 'l.locationName',
+                'c.id as customerId',
                 'c.firstName as customerName',
                 DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
                 't.serviceCategory',
