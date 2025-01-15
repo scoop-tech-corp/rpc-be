@@ -665,10 +665,34 @@ class TransactionController extends Controller
                     'status' => 'Ditolak Dokter',
                 ]);
 
-                return 'dhd';
-
             transactionLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
         }
+
+        return responseCreate();
+    }
+
+    public function reassignDoctor(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'doctorId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $doctor = User::where([['id', '=', $request->doctorId]])->first();
+
+        $user = User::where([['id', '=', $request->user()->id]])->first();
+
+        Transaction::where('id', '=', $request->transactionId)
+            ->update([
+                'status' => 'Menunggu Dokter',
+            ]);
+
+        transactionLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
 
         return responseCreate();
     }
