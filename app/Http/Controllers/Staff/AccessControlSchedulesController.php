@@ -264,13 +264,25 @@ class AccessControlSchedulesController extends Controller
                         }
                     }
 
-                    $checkIfMasterExits = childrenMenuGroups::where([['id', '=', $key['masterMenuId']], ['isDeleted', '=', '0']])->first();
+                    $checkIfMasterExits = DB::table('childrenMenuGroups')
+                        ->where('id', '=', $key['masterMenuId'])
+                        ->where('isDeleted', '=', 0)
+                        ->first();
+
+                    //$checkIfMasterExits = childrenMenuGroups::where([['id', '=', $key['masterMenuId']], ['isDeleted', '=', '0']])->first();
 
                     if ($checkIfMasterExits == null) {
 
                         return responseInvalid(['Master id not found! please try different id']);
                     }
-                    $checkIfMenuListExits = grandChildrenMenuGroups::where([['id', '=', $key['listMenuId']],  ['childrenId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
+
+                    $checkIfMenuListExits = DB::table('grandChildrenMenuGroups')
+                        ->where('id', '=', $key['listMenuId'])
+                        ->where('childrenId', '=', $key['masterMenuId'])
+                        ->where('isActive', '=', 1)
+                        ->first();
+
+                    //$checkIfMenuListExits = grandChildrenMenuGroups::where([['id', '=', $key['listMenuId']],  ['childrenId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
 
 
                     if ($checkIfMenuListExits == null) {
