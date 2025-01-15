@@ -1668,7 +1668,7 @@ class AccessControlSchedulesController extends Controller
                 return responseInvalid($errors);
             }
 
-            $checkIfMasterExists = MenuMasters::where([
+            $checkIfMasterExists = childrenMenuGroups::where([
                 ['isDeleted', '=', 0],
                 ['id', '=', $request->masterId],
             ])->first();
@@ -1685,7 +1685,9 @@ class AccessControlSchedulesController extends Controller
                 )->where([
                     ['isActive', '=', 1],
                     ['childrenId', '=', $request->masterId]
-                ])->get();
+                ])
+                    ->orderby('orderMenu', 'asc')
+                    ->get();
 
                 return responseList($dataMenuList);
             }
