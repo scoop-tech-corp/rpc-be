@@ -31,6 +31,7 @@ class TransactionController extends Controller
             ->join('users as uc', 'uc.id', 't.userId')
             ->select(
                 't.id',
+                'l.id as locationId',
                 't.registrationNo',
                 'l.locationName',
                 'c.firstName',
