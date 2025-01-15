@@ -1219,13 +1219,13 @@ class AccessControlSchedulesController extends Controller
                         ])->first();
 
                     $shedules = AccessControlScheduleDetails::from('accessControlSchedulesDetail as a')
-                        ->leftJoin('menuMaster as b', 'b.id', '=', 'a.masterMenuId')
-                        ->leftJoin('menuList as c', 'c.id', '=', 'a.listMenuId')
+                        ->leftJoin('childrenMenuGroups as b', 'b.id', '=', 'a.masterMenuId')
+                        ->leftJoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.listMenuId')
                         ->leftJoin('accessType as d', 'd.id', '=', 'a.accessTypeId')
                         ->leftJoin('statusSchedules as e', 'e.id', '=', 'a.status')
                         ->select(
                             DB::raw('CAST((a.id) AS SIGNED) as detailId'),
-                            'b.masterName',
+                            'b.menuName as masterName',
                             'c.menuName',
                             'd.accessType',
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
@@ -1270,8 +1270,8 @@ class AccessControlSchedulesController extends Controller
                         ])->first();
 
                     $shedules = AccessControlScheduleDetails::from('accessControlSchedulesDetail as a')
-                        ->leftJoin('menuMaster as b', 'b.id', '=', 'a.masterMenuId')
-                        ->leftJoin('menuList as c', 'c.id', '=', 'a.listMenuId')
+                        ->leftJoin('childrenMenuGroups as b', 'b.id', '=', 'a.masterMenuId')
+                        ->leftJoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.listMenuId')
                         ->leftJoin('accessType as d', 'd.id', '=', 'a.accessTypeId')
                         ->leftJoin('statusSchedules as e', 'e.id', '=', 'a.status')
                         ->select(
