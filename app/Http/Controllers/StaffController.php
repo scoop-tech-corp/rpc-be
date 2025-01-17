@@ -510,6 +510,7 @@ class StaffController extends Controller
                         ->insert([
                             'usersId' => $lastInsertedID,
                             'locationId' => $val,
+                            'isMainLocation' => 1,
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -2112,6 +2113,24 @@ class StaffController extends Controller
                         ], 422);
                     }
 
+                    if ($value['line_manager'] == "") {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any empty cell on column Line Manager at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    $lineManager =  DB::table('users')
+                        ->where('id', '=', $value['line_manager'])->where('isDeleted', '=', 0)->first();
+
+                    if (!$lineManager) {
+                        return 'msk';
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is no any Line Manager at system at row ' . $count_row],
+                        ], 422);
+                    }
+
                     if ($value['jabatan'] == "") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
@@ -2203,20 +2222,34 @@ class StaffController extends Controller
                         ], 422);
                     }
 
-                    $typeId = TypeId::where('id', '=', $value['kartu_identitas'])->first();
-
-                    if (!$typeId) {
-                        return response()->json([
-                            'errors' => 'The given data was invalid.',
-                            'message' => ['There is no any Type Kartu Identitas on system at row ' . $count_row],
-                        ], 422);
-                    }
-
                     if ($value['nomor_kartu_identitas'] == "") {
                         return response()->json([
                             'errors' => 'The given data was invalid.',
                             'message' => ['There is any empty cell on column Nomor Kartu Identitas at row ' . $count_row],
                         ], 422);
+                    }
+
+                    $cardIden = explode(';', $value['kartu_identitas']);
+                    $noCardIden = explode(';', $value['nomor_kartu_identitas']);
+
+                    if (count($cardIden) !== count($noCardIden)) {
+                        return response()->json([
+                            'errors' => 'The given data was invalid.',
+                            'message' => ['There is any different total data Kartu Identitas and Nomor Kartu Identitas. Please check again at row ' . $count_row],
+                        ], 422);
+                    }
+
+                    foreach ($cardIden as $valcode) {
+
+                        $chk = DB::table('typeId')
+                            ->where('id', '=', $valcode)->where('isActive', '=', 1)->first();
+
+                        if (!$chk) {
+                            return response()->json([
+                                'errors' => 'The given data was invalid.',
+                                'message' => ['There is any invalid Kartu Identitas at row ' . $count_row],
+                            ], 422);
+                        }
                     }
 
                     if ($value['password'] == "") {
@@ -2498,6 +2531,7 @@ class StaffController extends Controller
                         'nickName' => trim($src1[$i]['nama_panggilan']),
                         'gender' => $gender,
                         'status' => $src1[$i]['status'],
+                        'lineManagerId' => $src1[$i]['line_manager'],
                         'jobTitleId' => $src1[$i]['jabatan'],
                         'startDate' => $startDateFormatted,
                         'endDate' => $endDateFormatted,
@@ -2509,8 +2543,8 @@ class StaffController extends Controller
                         'annualLeaveAllowanceRemaining' => 0,
                         'payPeriodId' => $src1[$i]['durasi_pembayaran'],
                         'payAmount' => $src1[$i]['nominal_pembayaran'],
-                        'typeId' => $src1[$i]['kartu_identitas'],
-                        'identificationNumber' => trim($src1[$i]['nomor_kartu_identitas']),
+                        'typeId' => 0, //$src1[$i]['kartu_identitas'],
+                        'identificationNumber' => '', //trim($src1[$i]['nomor_kartu_identitas']),
                         'additionalInfo' => trim($src1[$i]['catatan_tambahan']),
                         'generalCustomerCanSchedule' => $src2[$i]['pelanggan_dapat_menjadwalkan_anggota_staff_ini_secara_online'],
                         'generalCustomerReceiveDailyEmail' => $src2[$i]['terima_email_harian_yang_berisi_janji_temu_terjadwal_mereka'],
@@ -2529,6 +2563,23 @@ class StaffController extends Controller
                         'isLogin' => 0,
                     ]);
 
+                $cardIdentity = explode(';', trim($src1[$i]['kartu_identitas']));
+                $noCardIdentity = explode(';', trim($src1[$i]['nomor_kartu_identitas']));
+
+                for ($j = 0; $j < count($cardIdentity); $j++) {
+
+                    DB::table('usersIdentifications')
+                        ->insert([
+                            'usersId' => $userId,
+                            'typeId' => $cardIdentity[$j],
+                            'identification' => $noCardIdentity[$j],
+                            'imagePath' => '',
+                            'isDeleted' => 0,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                }
+
                 $codeLocation = explode(';', trim($src1[$i]['lokasi']));
 
                 foreach ($codeLocation as $valcode) {
@@ -2537,6 +2588,7 @@ class StaffController extends Controller
                         [
                             'usersId' => $userId,
                             'locationId' => $valcode,
+                            'isMainLocation' => 1,
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -2743,14 +2795,37 @@ class StaffController extends Controller
 
         $spreadsheet = IOFactory::load(public_path() . '/template/' . 'Template_Input_Staff.xlsx');
 
+        $row = 2;
         $sheet = $spreadsheet->getSheet(6);
+
+        $lineManagers = DB::table('users as u')
+            ->join('usersRoles as ur', 'ur.id', 'u.roleId')
+            ->select(
+                'u.id',
+                'u.firstName as name',
+            )
+            ->whereIn('u.roleId', [1, 2])
+            ->where('u.isDeleted', '=', 0)
+            ->get();
+
+
+        foreach ($lineManagers as $item) {
+            // Adjust according to your data structure
+            $sheet->setCellValue("A{$row}", $item->id);
+            $sheet->setCellValue("B{$row}", $item->name);
+            // Add more columns as needed
+            $row++;
+        }
+
+        $row = 2;
+        $sheet = $spreadsheet->getSheet(7);
 
         $jobTitles = DB::table('jobTitle')
             ->select('id', 'jobName')
             ->where('isActive', '=', 1)
             ->get();
 
-        $row = 2;
+
         foreach ($jobTitles as $item) {
             // Adjust according to your data structure
             $sheet->setCellValue("A{$row}", $item->id);
@@ -2760,7 +2835,7 @@ class StaffController extends Controller
         }
 
         $row = 2;
-        $sheet = $spreadsheet->getSheet(7);
+        $sheet = $spreadsheet->getSheet(8);
 
         $locations = DB::table('location')
             ->select('id', 'locationName')
@@ -2776,7 +2851,7 @@ class StaffController extends Controller
         }
 
         $row = 2;
-        $sheet = $spreadsheet->getSheet(8);
+        $sheet = $spreadsheet->getSheet(9);
 
         $payPeriods = DB::table('payPeriod')
             ->select('id', 'periodName')
@@ -2792,7 +2867,7 @@ class StaffController extends Controller
         }
 
         $row = 2;
-        $sheet = $spreadsheet->getSheet(9);
+        $sheet = $spreadsheet->getSheet(10);
 
         $typeIds = DB::table('typeId')
             ->select('id', 'typeName')
@@ -2808,7 +2883,7 @@ class StaffController extends Controller
         }
 
         $row = 2;
-        $sheet = $spreadsheet->getSheet(10);
+        $sheet = $spreadsheet->getSheet(11);
 
         $role = DB::table('usersRoles')
             ->select('id', 'roleName')
@@ -2823,7 +2898,7 @@ class StaffController extends Controller
         }
 
         $row = 2;
-        $sheet = $spreadsheet->getSheet(11);
+        $sheet = $spreadsheet->getSheet(12);
 
         $provinsi = DB::table('provinsi')
             ->select('id', 'namaProvinsi')
@@ -2838,7 +2913,7 @@ class StaffController extends Controller
         }
 
         $row = 2;
-        $sheet = $spreadsheet->getSheet(12);
+        $sheet = $spreadsheet->getSheet(13);
 
         $kabupaten = DB::table('kabupaten')
             ->select('kodeKabupaten', 'kodeProvinsi', 'namaKabupaten')
@@ -2855,7 +2930,7 @@ class StaffController extends Controller
 
         //usage
         $row = 2;
-        $sheet = $spreadsheet->getSheet(13);
+        $sheet = $spreadsheet->getSheet(14);
 
         $staticUsage = DB::table('dataStaticStaff')
             ->select('id', 'name')
@@ -2874,7 +2949,7 @@ class StaffController extends Controller
         //tipe telepon
 
         $row = 2;
-        $sheet = $spreadsheet->getSheet(14);
+        $sheet = $spreadsheet->getSheet(15);
 
         $staticTelp = DB::table('dataStaticStaff')
             ->select('id', 'name')
@@ -2892,7 +2967,7 @@ class StaffController extends Controller
 
         //tipe messenger
         $row = 2;
-        $sheet = $spreadsheet->getSheet(15);
+        $sheet = $spreadsheet->getSheet(16);
 
         $staticMes = DB::table('dataStaticStaff')
             ->select('id', 'name')
@@ -3417,6 +3492,7 @@ class StaffController extends Controller
                             ->insert([
                                 'usersId' => $request->id,
                                 'locationId' => $val,
+                                'isMainLocation' => 1,
                                 'isDeleted' => 0,
                                 'created_at' => now(),
                                 'updated_at' => now(),
@@ -3587,6 +3663,7 @@ class StaffController extends Controller
                             ->insert([
                                 'usersId' => $request->id,
                                 'locationId' => $val,
+                                'isMainLocation' => 1,
                                 'isDeleted' => 0,
                                 'created_at' => now(),
                                 'updated_at' => now(),
