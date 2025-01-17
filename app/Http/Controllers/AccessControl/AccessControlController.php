@@ -778,7 +778,9 @@ class AccessControlController extends Controller
 
             $menuMastersData = childrenMenuGroups::select('id', 'menuName as masterName')->where([
                 ['isDeleted', '=', 0],
-            ])->get();
+            ])
+            ->orderby('orderMenu','asc')
+            ->get();
 
             return responseList($menuMastersData);
         } catch (Exception $e) {

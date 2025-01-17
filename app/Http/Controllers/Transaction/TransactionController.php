@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Transaction;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Validator;
@@ -30,6 +31,7 @@ class TransactionController extends Controller
             ->join('users as uc', 'uc.id', 't.userId')
             ->select(
                 't.id',
+                'l.id as locationId',
                 't.registrationNo',
                 'l.locationName',
                 'c.firstName',
@@ -361,6 +363,7 @@ class TransactionController extends Controller
             ->join('location as l', 'l.id', 't.locationId')
             ->join('customer as c', 'c.id', 't.customerId')
             ->join('customerPets as cp', 'cp.id', 't.PetId')
+            ->join('petCategory as pc', 'pc.id', 'cp.petCategoryId')
             ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
             ->join('users as u', 'u.id', 't.doctorId')
             ->join('users as uc', 'uc.id', 't.userId')
@@ -369,17 +372,30 @@ class TransactionController extends Controller
                 't.registrationNo',
                 't.isNewCustomer',
                 't.registrant',
+                'l.id as locationId',
                 'l.locationName',
+                'c.id as customerId',
                 'c.firstName as customerName',
                 DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
                 't.serviceCategory',
                 DB::raw("IFNULL(t.startDate,'') as startDate"),
                 DB::raw("IFNULL(t.endDate,'') as endDate"),
                 't.status',
+                'u.id as doctorId',
                 'u.firstName as picDoctor',
                 't.note',
-                //
+
+                'cp.id as petId',
                 'cp.petName',
+                'cp.petCategoryId',
+                'pc.petCategoryName',
+                'cp.condition',
+                'cp.petGender',
+                'cp.isSteril as petSterile',
+                'cp.petMonth',
+                'cp.petYear',
+                'cp.dateOfBirth',
+
                 'uc.firstName as createdBy',
                 DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
             )
@@ -611,5 +627,74 @@ class TransactionController extends Controller
         $data = ['Pet Clinic', 'Pet Hotel', 'Pet Salon', 'Pacak'];
 
         return responseList($data);
+    }
+
+    public function acceptionTransaction(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'status' => 'required|bool',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $doctor = User::where([['id', '=', $request->user()->id]])->first();
+
+        if ($request->status == 1) {
+            Transaction::where('id', '=', $request->transactionId)
+                ->update([
+                    'status' => 'Cek Kondisi Pet',
+                ]);
+
+            transactionLog($request->transactionId, 'Pengecekan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+        } else {
+
+            $validate = Validator::make($request->all(), [
+                'reason' => 'required|string',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
+
+            Transaction::where('id', '=', $request->transactionId)
+                ->update([
+                    'status' => 'Ditolak Dokter',
+                ]);
+
+            transactionLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+        }
+
+        return responseCreate();
+    }
+
+    public function reassignDoctor(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'doctorId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $doctor = User::where([['id', '=', $request->doctorId]])->first();
+
+        $user = User::where([['id', '=', $request->user()->id]])->first();
+
+        Transaction::where('id', '=', $request->transactionId)
+            ->update([
+                'status' => 'Menunggu Dokter',
+            ]);
+
+        transactionLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
+
+        return responseCreate();
     }
 }

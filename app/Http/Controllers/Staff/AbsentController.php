@@ -28,6 +28,7 @@ class AbsentController extends Controller
             ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
             ->join('usersLocation as ul', 'ul.usersId', 'u.id')
             ->join('location as l', 'ul.locationId', 'l.id')
+            ->join('jobTitle as jt', 'u.jobTitleId', 'jt.id')
             ->select(
                 'sa.id',
                 'u.firstName as name',
@@ -53,7 +54,7 @@ class AbsentController extends Controller
                 ) AS day
                 "),
                 DB::raw("TIME_FORMAT(sa.presentTime, '%H:%i') AS presentTime"),
-                DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H.%i') END AS homeTime"),
+                DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H:%i') END AS homeTime"),
                 DB::raw("CASE WHEN sa.duration is null THEN '' ELSE CONCAT(
                     HOUR(sa.duration), ' jam ',
                     MINUTE(sa.duration), ' menit'
@@ -85,6 +86,10 @@ class AbsentController extends Controller
 
         if ($request->statusPresent) {
             $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+        }
+
+        if ($request->staffJob) {
+            $data = $data->whereIn('jt.id', $request->staffJob);
         }
 
         if ($request->orderValue) {
@@ -180,8 +185,8 @@ class AbsentController extends Controller
                 DATE_FORMAT(sa.presentTime, '%e %M %Y')
             ) AS day
             "),
-                DB::raw("TIME_FORMAT(sa.presentTime, '%H.%i') AS attendanceTime"),
-                DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H.%i') END AS homecomingTime"),
+                DB::raw("TIME_FORMAT(sa.presentTime, '%H:%i') AS attendanceTime"),
+                DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H:%i') END AS homecomingTime"),
                 DB::raw("CASE WHEN sa.duration is null THEN '' ELSE CONCAT(
                 HOUR(sa.duration), ' jam ',
                 MINUTE(sa.duration), ' menit'
@@ -251,6 +256,7 @@ class AbsentController extends Controller
             ->select(
                 'sa.id',
                 'u.firstName as name',
+                'l.locationName',
                 // DB::raw("TRIM(CONCAT(CASE WHEN u.firstName = '' or u.firstName is null THEN '' ELSE CONCAT(u.firstName,' ') END
                 // ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
                 // case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
@@ -273,7 +279,7 @@ class AbsentController extends Controller
                 ) AS day
                 "),
                 DB::raw("TIME_FORMAT(sa.presentTime, '%H:%i') AS presentTime"),
-                DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H.%i') END AS homeTime"),
+                DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H:%i') END AS homeTime"),
                 DB::raw("CASE WHEN sa.duration is null THEN '' ELSE CONCAT(
                     HOUR(sa.duration), ' jam ',
                     MINUTE(sa.duration), ' menit'
@@ -283,7 +289,8 @@ class AbsentController extends Controller
                 'sa.cityPresent as presentLocation',
                 DB::raw("CASE WHEN sa.cityHome is null THEN '' ELSE sa.cityHome END as homeLocation"),
             )
-            ->where('sa.isDeleted', '=', 0);
+            ->where('sa.isDeleted', '=', 0)
+            ->where('ul.isMainLocation', '=', 1);
 
         if (role($request->user()->id) != 'Office' && role($request->user()->id) != 'Administrator' && role($request->user()->id) != 'Manager') {
             $data = $data->where('sa.userId', '=', $request->user()->id);
@@ -325,6 +332,7 @@ class AbsentController extends Controller
         $data = $data->groupBy(
             'sa.id',
             'u.firstName',
+            'l.locationName',
             'j.jobName',
             'sa.shift',
             'sa.status',
@@ -348,11 +356,12 @@ class AbsentController extends Controller
 
             $sheet->setCellValue("A{$row}", $row - 1);
             $sheet->setCellValue("B{$row}", $item->name);
-            $sheet->setCellValue("C{$row}", $item->jobName);
-            $sheet->setCellValue("D{$row}", $item->shift);
+            $sheet->setCellValue("C{$row}", $item->locationName);
+            $sheet->setCellValue("D{$row}", $item->jobName);
+            $sheet->setCellValue("E{$row}", $item->shift);
 
             if ($item->status == 'Terlambat') {
-                $sheet->getStyle("E{$row}")->applyFromArray([
+                $sheet->getStyle("F{$row}")->applyFromArray([
                     'fill' => [
                         'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                         'startColor' => [
@@ -362,7 +371,7 @@ class AbsentController extends Controller
                 ]);
             } else if ($item->status == 'Tepat Waktu') {
 
-                $sheet->getStyle("E{$row}")->applyFromArray([
+                $sheet->getStyle("F{$row}")->applyFromArray([
                     'fill' => [
                         'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                         'startColor' => [
@@ -372,15 +381,15 @@ class AbsentController extends Controller
                 ]);
             }
 
-            $sheet->setCellValue("E{$row}", $item->status);
-            $sheet->setCellValue("F{$row}", $item->day);
-            $sheet->setCellValue("G{$row}", $item->presentTime);
-            $sheet->setCellValue("H{$row}", $item->homeTime);
-            $sheet->setCellValue("I{$row}", $item->duration);
-            $sheet->setCellValue("J{$row}", $item->presentStatus);
-            $sheet->setCellValue("K{$row}", $item->homeStatus);
-            $sheet->setCellValue("L{$row}", $item->presentLocation);
-            $sheet->setCellValue("M{$row}", $item->homeLocation);
+            $sheet->setCellValue("F{$row}", $item->status);
+            $sheet->setCellValue("G{$row}", $item->day);
+            $sheet->setCellValue("H{$row}", $item->presentTime);
+            $sheet->setCellValue("I{$row}", $item->homeTime);
+            $sheet->setCellValue("J{$row}", $item->duration);
+            $sheet->setCellValue("K{$row}", $item->presentStatus);
+            $sheet->setCellValue("L{$row}", $item->homeStatus);
+            $sheet->setCellValue("M{$row}", $item->presentLocation);
+            $sheet->setCellValue("N{$row}", $item->homeLocation);
 
             $row++;
         }

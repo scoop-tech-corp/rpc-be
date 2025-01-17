@@ -15,6 +15,7 @@ use App\Models\location;
 use App\Models\AccessControl\AccessType;
 use App\Models\AccessControl\MenuList;
 use App\Models\AccessControl\MenuMasters;
+use App\Models\childrenMenuGroups;
 use App\Models\grandChildrenMenuGroups;
 use App\Models\Staff\UsersLocation;
 use App\Models\Staff\AccessControlScheduleMaster;
@@ -263,13 +264,25 @@ class AccessControlSchedulesController extends Controller
                         }
                     }
 
-                    $checkIfMasterExits = MenuMasters::where([['id', '=', $key['masterMenuId']], ['isDeleted', '=', '0']])->first();
+                    $checkIfMasterExits = DB::table('childrenMenuGroups')
+                        ->where('id', '=', $key['masterMenuId'])
+                        ->where('isDeleted', '=', 0)
+                        ->first();
+
+                    //$checkIfMasterExits = childrenMenuGroups::where([['id', '=', $key['masterMenuId']], ['isDeleted', '=', '0']])->first();
 
                     if ($checkIfMasterExits == null) {
 
                         return responseInvalid(['Master id not found! please try different id']);
                     }
-                    $checkIfMenuListExits = MenuList::where([['id', '=', $key['listMenuId']],  ['masterId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
+
+                    $checkIfMenuListExits = DB::table('grandChildrenMenuGroups')
+                        ->where('id', '=', $key['listMenuId'])
+                        ->where('childrenId', '=', $key['masterMenuId'])
+                        ->where('isActive', '=', 1)
+                        ->first();
+
+                    //$checkIfMenuListExits = grandChildrenMenuGroups::where([['id', '=', $key['listMenuId']],  ['childrenId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
 
 
                     if ($checkIfMenuListExits == null) {
@@ -1206,13 +1219,13 @@ class AccessControlSchedulesController extends Controller
                         ])->first();
 
                     $shedules = AccessControlScheduleDetails::from('accessControlSchedulesDetail as a')
-                        ->leftJoin('menuMaster as b', 'b.id', '=', 'a.masterMenuId')
-                        ->leftJoin('menuList as c', 'c.id', '=', 'a.listMenuId')
+                        ->leftJoin('childrenMenuGroups as b', 'b.id', '=', 'a.masterMenuId')
+                        ->leftJoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.listMenuId')
                         ->leftJoin('accessType as d', 'd.id', '=', 'a.accessTypeId')
                         ->leftJoin('statusSchedules as e', 'e.id', '=', 'a.status')
                         ->select(
                             DB::raw('CAST((a.id) AS SIGNED) as detailId'),
-                            'b.masterName',
+                            'b.menuName as masterName',
                             'c.menuName',
                             'd.accessType',
                             DB::raw('DATE_FORMAT(a.startTime, "%d/%m/%Y %H:%i") as startTime'),
@@ -1257,8 +1270,8 @@ class AccessControlSchedulesController extends Controller
                         ])->first();
 
                     $shedules = AccessControlScheduleDetails::from('accessControlSchedulesDetail as a')
-                        ->leftJoin('menuMaster as b', 'b.id', '=', 'a.masterMenuId')
-                        ->leftJoin('menuList as c', 'c.id', '=', 'a.listMenuId')
+                        ->leftJoin('childrenMenuGroups as b', 'b.id', '=', 'a.masterMenuId')
+                        ->leftJoin('grandChildrenMenuGroups as c', 'c.id', '=', 'a.listMenuId')
                         ->leftJoin('accessType as d', 'd.id', '=', 'a.accessTypeId')
                         ->leftJoin('statusSchedules as e', 'e.id', '=', 'a.status')
                         ->select(
@@ -1450,14 +1463,26 @@ class AccessControlSchedulesController extends Controller
                         }
                     }
 
-                    $checkIfMasterExits = MenuMasters::where([['id', '=', $key['masterMenuId']], ['isDeleted', '=', '0']])->first();
+                    $checkIfMasterExits = DB::table('childrenMenuGroups')
+                        ->where('id', '=', $key['masterMenuId'])
+                        ->where('isDeleted', '=', 0)
+                        ->first();
+
+                    //$checkIfMasterExits = childrenMenuGroups::where([['id', '=', $key['masterMenuId']], ['isDeleted', '=', '0']])->first();
 
                     if ($checkIfMasterExits == null) {
 
                         return responseInvalid(['Master id not found! please try different id']);
                     }
 
-                    $checkIfMenuListExits = MenuList::where([['id', '=', $key['listMenuId']],  ['masterId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
+                    $checkIfMenuListExits = DB::table('grandChildrenMenuGroups')
+                        ->where('id', '=', $key['listMenuId'])
+                        ->where('childrenId', '=', $key['masterMenuId'])
+                        ->where('isActive', '=', 1)
+                        ->first();
+
+                    //$checkIfMenuListExits = grandChildrenMenuGroups::where([['id', '=', $key['listMenuId']],  ['childrenId', '=', $key['masterMenuId']], ['isActive', '=', '1']])->first();
+
 
                     if ($checkIfMenuListExits == null) {
 
@@ -1668,7 +1693,7 @@ class AccessControlSchedulesController extends Controller
                 return responseInvalid($errors);
             }
 
-            $checkIfMasterExists = MenuMasters::where([
+            $checkIfMasterExists = childrenMenuGroups::where([
                 ['isDeleted', '=', 0],
                 ['id', '=', $request->masterId],
             ])->first();
@@ -1685,7 +1710,9 @@ class AccessControlSchedulesController extends Controller
                 )->where([
                     ['isActive', '=', 1],
                     ['childrenId', '=', $request->masterId]
-                ])->get();
+                ])
+                    ->orderby('orderMenu', 'asc')
+                    ->get();
 
                 return responseList($dataMenuList);
             }
