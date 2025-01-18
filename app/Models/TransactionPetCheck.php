@@ -23,10 +23,13 @@ class TransactionPetCheck extends Model
         'noteFungusFree',
         'isPregnant',
         'estimateDateofBirth',
+        'isRecomendInpatient',
+        'noteInpatient',
         'isParent',
         'isBreastfeeding',
         'numberofChildren',
         'isAcceptToProcess',
+        'reasonReject',
         'userId',
         'userUpdateId'
     ];
