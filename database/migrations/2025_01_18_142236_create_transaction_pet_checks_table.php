@@ -24,10 +24,13 @@ return new class extends Migration
             $table->string('noteFungusFree')->nullable();
             $table->boolean('isPregnant');
             $table->date('estimateDateofBirth')->nullable();
+            $table->boolean('isRecomendInpatient')->nullable();
+            $table->string('noteInpatient')->nullable();
             $table->boolean('isParent');
-            $table->boolean('isBreastfeeding');
-            $table->integer('numberofChildren');
+            $table->boolean('isBreastfeeding')->nullable();
+            $table->integer('numberofChildren')->nullable();
             $table->boolean('isAcceptToProcess');
+            $table->string('reasonReject')->nullable();
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');

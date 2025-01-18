@@ -18,10 +18,24 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-
         $itemPerPage = $request->rowPerPage;
 
         $page = $request->goToPage;
+
+        $doctorId = DB::table('users as u')
+            ->join('usersLocation as ul', 'u.id', 'ul.usersId')
+            ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
+            ->select(
+                'u.id',
+            )->where('j.id', '=', 17)   //id job title dokter hewan
+            ->where('u.isDeleted', '=', 0)
+            ->where('u.id', '=', $request->user()->id)
+            ->first();
+
+        $statusDoc = 0;
+        if ($doctorId) {
+            $statusDoc = 1;
+        }
 
         $data = DB::table('transactions as t')
             ->join('location as l', 'l.id', 't.locationId')
@@ -43,7 +57,8 @@ class TransactionController extends Controller
                 't.status',
                 'u.firstName as picDoctor',
                 'uc.firstName as createdBy',
-                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
+                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt"),
+                DB::raw('CASE WHEN ' . $statusDoc . '=1 and u.id=' . $request->user()->id . ' THEN 1 ELSE 0 END as isPetCheck')
             )
             ->where('t.isDeleted', '=', 0);
 
@@ -691,6 +706,41 @@ class TransactionController extends Controller
         return responseCreate();
     }
 
+    public function HPLCheck(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'estimateDateofBirth' => 'required|date_format:Y-m-d',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $tran = Transaction::where('id', '=', $request->transactionId)->first();
+
+        //tanggal start rawat inap
+        $date1 = Carbon::parse($tran->startDate);
+
+        //tanggal HPL
+        $date2 = Carbon::parse($request->estimateDateofBirth);
+
+        $diffInDays = $date1->diffInDays($date2) * ($date1 > $date2 ? 1 : -1);
+
+        $status = "";
+
+        if ($diffInDays <= 5) {
+            $status = 'HPL Sudah Dekat';
+        } else {
+            $status = 'HPL Masih Jauh';
+        }
+
+        return response()->json([
+            'status' => $status,
+        ]);
+    }
+
     public function petCheck(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -702,15 +752,28 @@ class TransactionController extends Controller
             'noteFungusFree' => 'nullable|string',
             'isPregnant' => 'required|bool',
             'estimateDateofBirth' => 'nullable|date_format:Y-m-d',
+            'isRecomendInpatient' => 'nullable|bool',
+            'noteInpatient' => 'nullable|string',
             'isParent' => 'required|bool',
-            'isBreastfeeding' => 'required|bool',
-            'numberofChildren' => 'required|integer',
+            'isBreastfeeding' => 'nullable|bool',
+            'numberofChildren' => 'nullable|integer',
             'isAcceptToProcess' => 'required|bool',
         ]);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
             return responseInvalid($errors);
+        }
+
+        if (!$request->isAcceptToProcess) {
+            $validate = Validator::make($request->all(), [
+                'reasonReject' => 'required|string',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
         }
 
         TransactionPetCheck::create([
@@ -722,20 +785,29 @@ class TransactionController extends Controller
             'noteFungusFree' => $request->noteFungusFree,
             'isPregnant' => $request->isPregnant,
             'estimateDateofBirth' => $request->estimateDateofBirth,
+            'isRecomendInpatient' => $request->isRecomendInpatient,
+            'noteInpatient' => $request->noteInpatient,
             'isParent' => $request->isParent,
             'isBreastfeeding' => $request->isBreastfeeding,
             'numberofChildren' => $request->numberofChildren,
             'isAcceptToProcess' => $request->isAcceptToProcess,
+            'reasonReject' => $request->reasonReject,
             'userId' => $request->user()->id,
         ]);
 
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
 
         if ($request->isAcceptToProcess) {
-            transactionLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
-            statusTransaction($request->transactionId, 'Pet diterima masuk Pet Hotel');
+
+            if ($request->isRecomendInpatient) {
+                transactionLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet dipindahkan ke Pet Clinic', $request->user()->id);
+                statusTransaction($request->transactionId, 'Pet dipindahkan ke Pet Clinic');
+            } else {
+                transactionLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
+                statusTransaction($request->transactionId, 'Pet diterima masuk Pet Hotel');
+            }
         } else {
-            transactionLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel', $request->user()->id);
+            transactionLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel karena ' . $request->reasonReject, $request->user()->id);
             statusTransaction($request->transactionId, 'Pet ditolak Pet Hotel');
         }
 
