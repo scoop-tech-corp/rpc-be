@@ -570,7 +570,6 @@ class AbsentController extends Controller
             } elseif ($request->shift == 2) {
                 $time2 = Carbon::parse('14:00');
             }
-            $time2 = Carbon::parse('08:45');
         } else if ($users->jobName == 'Paramedis') {
             $time2 = Carbon::parse('08:45');
         } else if ($users->jobName == 'Kasir') {

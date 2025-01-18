@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Transaction;
+use App\Models\TransactionPetCheck;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -644,10 +645,8 @@ class TransactionController extends Controller
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
 
         if ($request->status == 1) {
-            Transaction::where('id', '=', $request->transactionId)
-                ->update([
-                    'status' => 'Cek Kondisi Pet',
-                ]);
+
+            statusTransaction($request->transactionId, 'Cek Kondisi Pet');
 
             transactionLog($request->transactionId, 'Pengecekan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
         } else {
@@ -661,10 +660,7 @@ class TransactionController extends Controller
                 return responseInvalid($errors);
             }
 
-            Transaction::where('id', '=', $request->transactionId)
-                ->update([
-                    'status' => 'Ditolak Dokter',
-                ]);
+            statusTransaction($request->transactionId, 'Ditolak Dokter');
 
             transactionLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
         }
@@ -688,12 +684,60 @@ class TransactionController extends Controller
 
         $user = User::where([['id', '=', $request->user()->id]])->first();
 
-        Transaction::where('id', '=', $request->transactionId)
-            ->update([
-                'status' => 'Menunggu Dokter',
-            ]);
+        statusTransaction($request->transactionId, 'Menunggu Dokter');
 
         transactionLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
+
+        return responseCreate();
+    }
+
+    public function petCheck(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'numberVaccines' => 'required|integer',
+            'isLiceFree' => 'required|bool',
+            'noteLiceFree' => 'nullable|string',
+            'isFungusFree' => 'required|bool',
+            'noteFungusFree' => 'nullable|string',
+            'isPregnant' => 'required|bool',
+            'estimateDateofBirth' => 'nullable|date_format:Y-m-d',
+            'isParent' => 'required|bool',
+            'isBreastfeeding' => 'required|bool',
+            'numberofChildren' => 'required|integer',
+            'isAcceptToProcess' => 'required|bool',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        TransactionPetCheck::create([
+            'transactionId' => $request->transactionId,
+            'numberVaccines' => $request->numberVaccines,
+            'isLiceFree' => $request->isLiceFree,
+            'noteLiceFree' => $request->noteLiceFree,
+            'isFungusFree' => $request->isFungusFree,
+            'noteFungusFree' => $request->noteFungusFree,
+            'isPregnant' => $request->isPregnant,
+            'estimateDateofBirth' => $request->estimateDateofBirth,
+            'isParent' => $request->isParent,
+            'isBreastfeeding' => $request->isBreastfeeding,
+            'numberofChildren' => $request->numberofChildren,
+            'isAcceptToProcess' => $request->isAcceptToProcess,
+            'userId' => $request->user()->id,
+        ]);
+
+        $doctor = User::where([['id', '=', $request->user()->id]])->first();
+
+        if ($request->isAcceptToProcess) {
+            transactionLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
+            statusTransaction($request->transactionId, 'Pet diterima masuk Pet Hotel');
+        } else {
+            transactionLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel', $request->user()->id);
+            statusTransaction($request->transactionId, 'Pet ditolak Pet Hotel');
+        }
 
         return responseCreate();
     }
