@@ -12,6 +12,7 @@ use App\Models\productRestockLog;
 use App\Models\ProductTransferLog;
 use App\Models\ProductSellLog;
 use App\Models\recentActivity;
+use App\Models\Transaction;
 use App\Models\TransactionLog;
 
 if (!function_exists('adminAccess')) {
@@ -227,6 +228,16 @@ if (!function_exists('transactionLog')) {
             'remark' => $remark,
             'userId' => $userId,
         ]);
+    }
+}
+
+if (!function_exists('statusTransaction')) {
+    function statusTransaction($transactionId, $status)
+    {
+        Transaction::where('id', '=', $transactionId)
+            ->update([
+                'status' => $status,
+            ]);
     }
 }
 
