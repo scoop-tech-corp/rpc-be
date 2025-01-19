@@ -58,7 +58,7 @@ class TransactionController extends Controller
                 'u.firstName as picDoctor',
                 'uc.firstName as createdBy',
                 DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt"),
-                DB::raw('CASE WHEN ' . $statusDoc . '=1 and u.id=' . $request->user()->id . ' THEN 1 ELSE 0 END as isPetCheck')
+                DB::raw('CASE WHEN ' . $statusDoc . '=1 and u.id=' . $request->user()->id . ' and t.status="Cek Kondisi Pet" THEN 1 ELSE 0 END as isPetCheck')
             )
             ->where('t.isDeleted', '=', 0);
 
