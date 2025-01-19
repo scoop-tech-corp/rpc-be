@@ -530,6 +530,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::post('/accept', [TransactionController::class, 'acceptionTransaction']);
         Route::post('/reassign', [TransactionController::class, 'reassignDoctor']);
+        Route::post('/hplcheck', [TransactionController::class, 'HPLCheck']);
+        Route::post('/petcheck', [TransactionController::class, 'petCheck']);
 
         Route::get('/export', [TransactionController::class, 'export']);
     });
