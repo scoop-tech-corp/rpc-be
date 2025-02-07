@@ -20,3 +20,4 @@ composer.lock
 *.png
 /public/template_download
 composer.lock
+*.jpg
