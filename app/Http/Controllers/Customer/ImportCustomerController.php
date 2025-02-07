@@ -759,6 +759,7 @@ class ImportCustomerController extends Controller
                         'createdBy' => $request->user()->id, // Adjust as necessary
                         'created_at' => now(),
                         'updated_at' => now(),
+                        'userUpdateId' => $request->user()->id,
                     ]);
 
                 $resultVet = collect($src2)->where('id', $src1[$i]['id']);
