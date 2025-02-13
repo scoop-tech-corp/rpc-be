@@ -691,8 +691,15 @@ class ImportCustomerController extends Controller
 
         //process insert
         DB::beginTransaction();
+        $countTotal = 0;
         try {
             for ($i = 1; $i < count($src1); $i++) {
+
+                if (trim($src1[$i]['id']) == null && trim($src1[$i]['id_lokasi']) == null && trim($src1[$i]['nama_depan']) == null) {
+                    break;
+                }
+
+                $countTotal++;
 
                 $joinDateFormatted = null;
                 $birthDateFormatted = null;
@@ -922,6 +929,8 @@ class ImportCustomerController extends Controller
                 }
             }
 
+            DB::commit();
+
             ModelsImportCustomer::create([
                 'fileName' => $filename,
                 'totalData' => count($src1) - 1,
@@ -933,10 +942,7 @@ class ImportCustomerController extends Controller
                 'updated_at' => now(),
                 'userId' => $request->user()->id,
             ]);
-
-            DB::commit();
-
-            return responseSuccess(count($src1) - 1, 'Insert Data Successful!');
+            return responseSuccess($countTotal, 'Insert Data Successful!');
         } catch (\Throwable $th) {
             DB::rollback();
 
