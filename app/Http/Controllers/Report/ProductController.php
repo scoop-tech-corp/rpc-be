@@ -14,7 +14,10 @@ class ProductController extends Controller
 {
     public function indexStockCount(Request $request)
     {
-        $data = DB::table('products as ps')
+        $itemPerPage = $request->rowPerPage;
+        $page = $request->goToPage;
+
+        $query = DB::table('products as ps')
             ->join('productLocations as pl', 'ps.id', '=', 'pl.productId')
             ->join('location as l', 'pl.locationId', '=', 'l.id')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', '=', 'psup.id')
@@ -25,18 +28,49 @@ class ProductController extends Controller
                 DB::raw("IFNULL(psup.supplierName, '') as supplierName"),
                 'l.locationName',
                 'pl.inStock',
+                'ps.created_at'
             )
-            ->where('ps.isDeleted', '=', 0)
-            ->get();
+            ->where('ps.isDeleted', '=', 0);
+
+        if ($request->dateFrom && $request->dateTo) {
+            $query = $query->whereBetween(DB::raw('DATE(ps.created_at)'), [$request->dateFrom, $request->dateTo]);
+        }
+
+        if ($request->has('locationId') && !empty($request->locationId)) {
+            $query = $query->whereIn('pl.locationId', (array) $request->locationId);
+        }
+
+        if ($request->orderValue) {
+            if ($request->orderColumn == 'name') {
+                $query = $query->orderBy('ps.fullName', $request->orderValue);
+            } elseif ($request->orderValue == 'date' || $request->orderValue == 'time') {
+                $query = $query->orderBy('ps.created_at', $request->orderValue);
+            } else {
+                $query = $query->orderBy($request->orderColumn, $request->orderValue);
+            }
+        }
+
+        $count_data = $query->count();
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $query->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $query->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPagination = ceil($count_data / $itemPerPage);
 
         $responseData = [
-            'totalPagination' => ceil($data->count() / 10),
+            'totalPagination' => $totalPagination,
             'data' => $data
         ];
 
         return response()->json($responseData);
     }
-
     public function exportStockCount(Request $request)
     {
         $data = DB::table('products as ps')
@@ -93,10 +127,14 @@ class ProductController extends Controller
             'Content-Disposition' => 'attachment; filename="Export Report Product Stock Count.xlsx"',
         ]);
     }
-
     public function indexLowStock(Request $request)
     {
-        $data = DB::table('products as ps')
+
+        $itemPerPage = $request->rowPerPage;
+        $page = $request->goToPage;
+
+
+        $query = DB::table('products as ps')
             ->join('productLocations as pl', 'ps.id', '=', 'pl.productId')
             ->join('location as l', 'pl.locationId', '=', 'l.id')
             ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', '=', 'psup.id')
@@ -108,11 +146,38 @@ class ProductController extends Controller
                 'l.locationName',
                 'pl.lowStock',
             )
-            ->where('ps.isDeleted', '=', 0)
-            ->get();
+            ->where('ps.isDeleted', '=', 0);
+
+
+        if ($request->has('locationId') && !empty($request->locationId)) {
+            $query = $query->whereIn('pl.locationId', (array) $request->locationId);
+        }
+
+
+        if ($request->dateFrom && $request->dateTo) {
+            $query = $query->whereBetween(DB::raw('DATE(ps.created_at)'), [$request->dateFrom, $request->dateTo]);
+        }
+
+        if ($request->orderValue) {
+            if ($request->orderColumn == 'name') {
+                $query = $query->orderBy('ps.fullName', $request->orderValue);
+            } elseif ($request->orderValue == 'date' || $request->orderValue == 'time') {
+                $query = $query->orderBy('ps.created_at', $request->orderValue);
+            } else {
+                $query = $query->orderBy($request->orderColumn, $request->orderValue);
+            }
+        }
+
+        $count_data = $query->count();
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $data = $query->offset($offset)->limit($itemPerPage)->get();
+
+        $totalPagination = ceil($count_data / $itemPerPage);
 
         $responseData = [
-            'totalPagination' => ceil($data->count() / 10),
+            'totalPagination' => $totalPagination,
             'data' => $data
         ];
 
@@ -175,7 +240,6 @@ class ProductController extends Controller
             'Content-Disposition' => 'attachment; filename="Export Report Product Low Stock.xlsx"',
         ]);
     }
-
     public function indexCost(Request $request)
     {
 
@@ -310,7 +374,6 @@ class ProductController extends Controller
 
         return response()->json($data);
     }
-
     public function exportCost(Request $request)
     {
 
