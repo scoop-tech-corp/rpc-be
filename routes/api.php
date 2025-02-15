@@ -638,6 +638,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/stockcount/export', [ProductController::class, 'exportStockCount']);
             Route::get('/lowstock', [ProductController::class, 'indexLowStock']);
             Route::get('/lowstock/export', [ProductController::class, 'exportLowStock']);
+            Route::get('/cost', [ProductController::class, 'indexCost']);
+            Route::get('/cost/export', [ProductController::class, 'exportCost']);
         });
 
         Route::group(['prefix' => 'sales'], function () {});
