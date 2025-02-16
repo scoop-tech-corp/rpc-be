@@ -10,7 +10,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-class ProductController extends Controller
+class ReportProductController extends Controller
 {
     public function indexStockCount(Request $request)
     {
@@ -71,6 +71,7 @@ class ProductController extends Controller
 
         return response()->json($responseData);
     }
+
     public function exportStockCount(Request $request)
     {
         $data = DB::table('products as ps')
@@ -247,7 +248,10 @@ class ProductController extends Controller
             'totalPagination' => 1,
             'data' => [
                 [
-                    'productName' => 'Zoletil Inj (1 ml)',
+                    'product' => [
+                        'id' => 123,
+                        'name' => 'Zoletil Inj (1 ml)',
+                    ],
                     'brandName' => 'KLN',
                     'supplierName' => 'PT Emvi Indonesia',
                     'averagePrice' => 0,
@@ -288,7 +292,10 @@ class ProductController extends Controller
                     ]
                 ],
                 [
-                    'productName' => 'Zentonil Advance (SAme) Kapsul (1 Kapsul)',
+                    'product' => [
+                        'id' => 124,
+                        'name' => 'Zentonil Advance (SAme) Kapsul (1 Kapsul)',
+                    ],
                     'brandName' => 'KLN',
                     'supplierName' => 'Online',
                     'averagePrice' => 0,
@@ -329,7 +336,10 @@ class ProductController extends Controller
                     ]
                 ],
                 [
-                    'productName' => 'Yummy Raw Food Turkey 500gr',
+                    'product' => [
+                        'id' => 125,
+                        'name' => 'Yummy Raw Food Turkey 500gr',
+                    ],
                     'brandName' => 'PTS',
                     'supplierName' => 'Online',
                     'averagePrice' => 80500,

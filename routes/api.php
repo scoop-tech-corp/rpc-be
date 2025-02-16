@@ -15,7 +15,7 @@ use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\Product\BundleController;
 use App\Http\Controllers\Report\BookingController;
-use App\Http\Controllers\Report\ProductController;
+use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\RestockController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Product\SupplierController;
@@ -26,10 +26,11 @@ use App\Http\Controllers\Promotion\DiscountController;
 use App\Http\Controllers\Product\ProductSellController;
 use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Staff\SecurityGroupController;
+use App\Http\Controllers\Report\ReportProductController;
+
 use App\Http\Controllers\ReportMenuManagementController;
 
 use App\Http\Controllers\Product\ProductClinicController;
-
 use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\Staff\DataStaticStaffController;
 use App\Http\Controllers\VerifyUserandPasswordController;
@@ -634,12 +635,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::group(['prefix' => 'expenses'], function () {});
 
         Route::group(['prefix' => 'products'], function () {
-            Route::get('/stockcount', [ProductController::class, 'indexStockCount']);
-            Route::get('/stockcount/export', [ProductController::class, 'exportStockCount']);
-            Route::get('/lowstock', [ProductController::class, 'indexLowStock']);
-            Route::get('/lowstock/export', [ProductController::class, 'exportLowStock']);
-            Route::get('/cost', [ProductController::class, 'indexCost']);
-            Route::get('/cost/export', [ProductController::class, 'exportCost']);
+            Route::get('/stockcount', [ReportProductController::class, 'indexStockCount']);
+            Route::get('/stockcount/export', [ReportProductController::class, 'exportStockCount']);
+            Route::get('/lowstock', [ReportProductController::class, 'indexLowStock']);
+            Route::get('/lowstock/export', [ReportProductController::class, 'exportLowStock']);
+            Route::get('/cost', [ReportProductController::class, 'indexCost']);
+            Route::get('/cost/export', [ReportProductController::class, 'exportCost']);
         });
 
         Route::group(['prefix' => 'sales'], function () {});
