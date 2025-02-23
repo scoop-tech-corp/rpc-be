@@ -566,29 +566,34 @@ class AbsentController extends Controller
         if ($users->jobName == 'Dokter Hewan') {
             $shift = 'Shift ' . $request->shift;
             if ($request->shift == 1) {
-                $time2 = Carbon::parse('08:45');
+                $time2 = Carbon::createFromFormat('H:i', '15:45', 'Asia/Jakarta')->setTimezone('UTC');
+                //$time2 = Carbon::createFromFormat('H:i', '08:45');
             } elseif ($request->shift == 2) {
-                $time2 = Carbon::parse('14:00');
+                $time2 = Carbon::createFromFormat('H:i', '21:00', 'Asia/Jakarta')->setTimezone('UTC');
+                //$time2 = Carbon::createFromFormat('H:i', '14:00');
             }
         } else if ($users->jobName == 'Paramedis') {
-            $time2 = Carbon::parse('08:45');
+            $time2 = Carbon::createFromFormat('H:i', '15:45', 'Asia/Jakarta')->setTimezone('UTC');
+            // $time2 = Carbon::parse('08:45');
         } else if ($users->jobName == 'Kasir') {
-            $time2 = Carbon::parse('08:30');
+            $time2 = Carbon::createFromFormat('H:i', '15:30', 'Asia/Jakarta')->setTimezone('UTC');
+            // $time2 = Carbon::parse('08:30');
         } else if ($users->jobName == 'Vetnurse') {
-            $time2 = Carbon::parse('08:30');
+            $time2 = Carbon::createFromFormat('H:i', '15:30', 'Asia/Jakarta')->setTimezone('UTC');
+            // $time2 = Carbon::parse('08:30');
         } else {
             //if ($request->user()->jobName == 6) {
-            $time2 = Carbon::parse('12:30');
+            $time2 = Carbon::createFromFormat('H:i', '19:30', 'Asia/Jakarta')->setTimezone('UTC');
+            // $time2 = Carbon::parse('12:30');
         }
 
-        $time1 = Carbon::now(); // Jam dan menit pertama
-        $minutes1 = $time1->hour * 60 + ($time1->minute + 5);
-        $minutes2 = $time2->hour * 60 + $time2->minute;
 
-        if ($minutes1 < $minutes2) {
-            $status = "Tepat Waktu";
-        } elseif ($minutes1 > $minutes2) {
+        $time1 = Carbon::now()->addHour(7); // Jam dan menit pertama
+
+        if ($time1->greaterThan($time2)) {
             $status = "Terlambat";
+        } elseif ($time1->lessThan($time2)) {
+            $status = "Tepat Waktu";
         } else {
             $status = "Tepat Waktu";
         }
@@ -624,9 +629,16 @@ class AbsentController extends Controller
 
             $duration = gmdate('H:i:s', $totalDuration);
 
+            if ($totalDuration <= 28800) {
+                $status = 'Terlambat';
+            } else {
+                $status = 'Tepat Waktu';
+            }
+
             StaffAbsents::where('id', '=', $present->id)
                 ->update(
                     [
+                        'status' => $status,
                         'homeTime' => $homeTime,
                         'duration' => $duration,
                         'homeLongitude' => $request->longitude,
