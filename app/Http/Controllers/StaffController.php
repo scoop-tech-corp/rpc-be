@@ -700,7 +700,7 @@ class StaffController extends Controller
                 ];
 
                 // di prod di comment
-                //Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
+                Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
 
                 DB::commit();
 
@@ -3465,8 +3465,8 @@ class StaffController extends Controller
                         'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
                         'payPeriodId' => $request->payPeriodId,
                         'payAmount' => $request->payAmount,
-                        //'typeId' => $request->typeId,
-                        //'identificationNumber' => $request->identificationNumber,
+                        'typeId' => 0,
+                        'identificationNumber' => '',
                         'additionalInfo' => $request->additionalInfo,
                         'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
                         'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
@@ -3605,7 +3605,7 @@ class StaffController extends Controller
                     ];
 
                     // di prod di comment
-                    //Mail::to($insertEmailUsers)->send(new SendEmail($data));
+                    Mail::to($insertEmailUsers)->send(new SendEmail($data));
 
                     DB::commit();
 
@@ -3638,8 +3638,8 @@ class StaffController extends Controller
                         'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
                         'payPeriodId' => $request->payPeriodId,
                         'payAmount' => $request->payAmount,
-                        'typeId' => $request->typeId,
-                        'identificationNumber' => $request->identificationNumber,
+                        'typeId' => 0,
+                        'identificationNumber' => '',
                         'additionalInfo' => $request->additionalInfo,
                         'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
                         'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
