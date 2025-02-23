@@ -15,6 +15,7 @@ use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\Product\BundleController;
 use App\Http\Controllers\Report\BookingController;
+use App\Http\Controllers\Report\DepositController;
 use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\RestockController;
 use App\Http\Controllers\Product\CategoryController;
@@ -26,10 +27,10 @@ use App\Http\Controllers\Promotion\DiscountController;
 use App\Http\Controllers\Product\ProductSellController;
 use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Staff\SecurityGroupController;
+
 use App\Http\Controllers\Report\ReportProductController;
 
 use App\Http\Controllers\ReportMenuManagementController;
-
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\Staff\DataStaticStaffController;
@@ -630,7 +631,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/subaccount/export', [ReportCustomerController::class, 'exportSubAccount']);
         });
 
-        Route::group(['prefix' => 'deposit'], function () {});
+        Route::group(['prefix' => 'deposit'], function () {
+            Route::get('/list', [DepositController::class,'indexList']);
+            Route::get('/list/export', [DepositController::class,'exportList']);
+            Route::get('/summary', [DepositController::class,'indexSummary']);
+            Route::get('/summary/export', [DepositController::class,'exportSummary']);
+        });
 
         Route::group(['prefix' => 'expenses'], function () {});
 
@@ -641,6 +647,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/lowstock/export', [ReportProductController::class, 'exportLowStock']);
             Route::get('/cost', [ReportProductController::class, 'indexCost']);
             Route::get('/cost/export', [ReportProductController::class, 'exportCost']);
+            Route::get('/nostock', [ReportProductController::class, 'indexNoStock']);
+            Route::get('/nostock/export', [ReportProductController::class, 'exportNoStock']);
         });
 
         Route::group(['prefix' => 'sales'], function () {});

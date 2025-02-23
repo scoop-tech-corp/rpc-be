@@ -20,7 +20,7 @@ class ReportProductController extends Controller
         $query = DB::table('products as ps')
             ->join('productLocations as pl', 'ps.id', '=', 'pl.productId')
             ->join('location as l', 'pl.locationId', '=', 'l.id')
-            ->leftjoin('productSuppliers as psup', 'ps.productSupplierId', '=', 'psup.id')
+            ->leftJoin('productSuppliers as psup', 'ps.productSupplierId', '=', 'psup.id')
             ->select(
                 'ps.fullName',
                 'ps.category',
@@ -51,13 +51,12 @@ class ReportProductController extends Controller
         }
 
         $count_data = $query->count();
-
         $offset = ($page - 1) * $itemPerPage;
 
         $count_result = $count_data - $offset;
 
-        if ($count_result < 0) {
-            $data = $query->offset(0)->limit($itemPerPage)->get();
+        if ($count_result <= 0) {
+            $data = $query->limit($itemPerPage)->get();
         } else {
             $data = $query->offset($offset)->limit($itemPerPage)->get();
         }
@@ -71,7 +70,6 @@ class ReportProductController extends Controller
 
         return response()->json($responseData);
     }
-
     public function exportStockCount(Request $request)
     {
         $data = DB::table('products as ps')
@@ -476,6 +474,143 @@ class ReportProductController extends Controller
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="Export Product Cost.xlsx"',
+        ]);
+    }
+
+    public function indexNoStock(Request $request)
+    {
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'fullName' => 'Whiskas WetFood',
+                    'category' => 'sell',
+                    'sku' => '123456',
+                    'supplierName' => 'PT. Whiskas Indonesia',
+                    'locationName' => "RPC Condet",
+                    'noStock' => true,
+                ],
+                [
+                    'fullName' => 'Royal Canin WetFood',
+                    'category' => 'sell',
+                    'sku' => '123456',
+                    'supplierName' => 'PT. Royal Canin Indonesia',
+                    'locationName' => "RPC Hankam",
+                    'noStock' => true,
+                ],
+                [
+                    'fullName' => 'Crystal WetFood',
+                    'category' => 'sell',
+                    'sku' => '123456',
+                    'supplierName' => 'PT. Crystal Indonesia',
+                    'locationName' => "RPC Pulogebang",
+                    'noStock' => true,
+                ],
+                [
+                    'fullName' => 'Me-Oh WetFood',
+                    'category' => 'sell',
+                    'sku' => '123456',
+                    'supplierName' => 'PT. Me-Oh Indonesia',
+                    'locationName' => "RPC Cikarang",
+                    'noStock' => true,
+                ],
+            ]
+        ];
+
+        return response()->json($data);
+    }
+
+    public function exportNoStock(Request $request)
+    {
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'fullName' => 'Whiskas WetFood',
+                    'category' => 'sell',
+                    'sku' => '123456',
+                    'supplierName' => 'PT. Whiskas Indonesia',
+                    'locationName' => "RPC Condet",
+                    'noStock' => true,
+                ],
+                [
+                    'fullName' => 'Royal Canin WetFood',
+                    'category' => 'sell',
+                    'sku' => '123456',
+                    'supplierName' => 'PT. Royal Canin Indonesia',
+                    'locationName' => "RPC Hankam",
+                    'noStock' => true,
+                ],
+                [
+                    'fullName' => 'Crystal WetFood',
+                    'category' => 'sell',
+                    'sku' => '123456',
+                    'supplierName' => 'PT. Crystal Indonesia',
+                    'locationName' => "RPC Pulogebang",
+                    'noStock' => true,
+                ],
+                [
+                    'fullName' => 'Me-Oh WetFood',
+                    'category' => 'sell',
+                    'sku' => '123456',
+                    'supplierName' => 'PT. Me-Oh Indonesia',
+                    'locationName' => "RPC Cikarang",
+                    'noStock' => true,
+                ],
+            ]
+        ];
+
+
+        $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Product_No_Stock.xlsx');
+        $sheet = $spreadsheet->getSheet(0);
+
+
+        $sheet->setCellValue('A1', 'Product Name');
+        $sheet->setCellValue('B1', 'Category');
+        $sheet->setCellValue('C1', 'SKU');
+        $sheet->setCellValue('D1', 'Supplier Name');
+        $sheet->setCellValue('E1', 'Location');
+        $sheet->setCellValue('F1', 'No Stock');
+
+        // Apply bold font style to header row
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:F1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        // Initialize row for data population
+        $row = 2;
+        foreach ($data['data'] as $item) {
+            // Fill cells with data
+            $sheet->setCellValue("A{$row}", $item['fullName']);
+            $sheet->setCellValue("B{$row}", $item['category']);
+            $sheet->setCellValue("C{$row}", $item['sku']);
+            $sheet->setCellValue("D{$row}", $item['supplierName']);
+            $sheet->setCellValue("E{$row}", $item['locationName']);
+            $sheet->setCellValue("F{$row}", $item['noStock'] ? 'Yes' : 'No'); // Display Yes or No for noStock
+
+            // Apply borders for each row of data
+            $sheet->getStyle("A{$row}:F{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            $row++;
+        }
+
+        // Set auto column width for all columns
+        foreach (range('A', 'F') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . 'Export Product No Stock.xlsx';
+        $writer->save($newFilePath);
+
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export Product No Stock.xlsx"',
         ]);
     }
 }
