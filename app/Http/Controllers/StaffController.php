@@ -700,7 +700,7 @@ class StaffController extends Controller
                 ];
 
                 // di prod di comment
-                //Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
+                Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
 
                 DB::commit();
 
@@ -3605,7 +3605,7 @@ class StaffController extends Controller
                     ];
 
                     // di prod di comment
-                    //Mail::to($insertEmailUsers)->send(new SendEmail($data));
+                    Mail::to($insertEmailUsers)->send(new SendEmail($data));
 
                     DB::commit();
 
