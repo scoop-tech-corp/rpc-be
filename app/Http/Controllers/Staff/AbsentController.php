@@ -312,11 +312,12 @@ class AbsentController extends Controller
             }
         }
 
-        $statusPresents = $request->statusPresent;
-
-        if (count($statusPresents) > 0) {
-            if (!$statusPresents[0] == null) {
-                $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+        if ($request->statusPresent) {
+            $statusPresents = $request->statusPresent;
+            if (count($statusPresents) > 0) {
+                if (!$statusPresents[0] == null) {
+                    $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+                }
             }
         }
 
