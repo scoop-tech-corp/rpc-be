@@ -312,19 +312,22 @@ class AbsentController extends Controller
             }
         }
 
-        $statusPresents = $request->statusPresent;
-
-        if (count($statusPresents) > 0) {
-            if (!$statusPresents[0] == null) {
-                $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+        if ($request->statusPresent) {
+            $statusPresents = $request->statusPresent;
+            if (count($statusPresents) > 0) {
+                if (!$statusPresents[0] == null) {
+                    $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+                }
             }
         }
 
-        $staffJobs = $request->staffJob;
+        if ($request->staffJob) {
+            $staffJobs = $request->staffJob;
 
-        if (count($staffJobs) > 0) {
-            if (!$staffJobs[0] == null) {
-                $data = $data->whereIn('j.id', $request->staffJob);
+            if (count($staffJobs) > 0) {
+                if (!$staffJobs[0] == null) {
+                    $data = $data->whereIn('j.id', $request->staffJob);
+                }
             }
         }
 
