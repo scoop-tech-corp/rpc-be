@@ -44,6 +44,7 @@ use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
+use App\Http\Controllers\Report\SalesController as ReportSalesController;
 use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 
@@ -649,9 +650,28 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/cost/export', [ReportProductController::class, 'exportCost']);
             Route::get('/nostock', [ReportProductController::class, 'indexNoStock']);
             Route::get('/nostock/export', [ReportProductController::class, 'exportNoStock']);
+            // Route::get('/detail', [ReportProductController::class, 'detail']);
+            Route::get('/reminders', [ReportProductController::class, 'indexReminders']);
+            Route::get('/reminders/export', [ReportProductController::class, 'exportReminders']);
         });
 
-        Route::group(['prefix' => 'sales'], function () {});
+        Route::group(['prefix' => 'sales'], function () {
+            Route::get('/items', [ReportSalesController::class, 'indexItems']);
+            Route::get('/items/export', [ReportSalesController::class, 'exportItems']);
+            Route::get('/summary', [ReportSalesController::class, 'indexSummary']);
+            Route::get('/summary/export', [ReportSalesController::class, 'exportSummary']);
+            Route::get('/salesbyservice', [ReportSalesController::class, 'indexSalesByService']);
+            Route::get('/salesbyservice/export', [ReportSalesController::class, 'exportSalesByService']);
+            Route::get('/salesbyproduct', [ReportSalesController::class, 'indexSalesByProduct']);
+            Route::get('/salesbyproduct/export', [ReportSalesController::class, 'exportSalesByProduct']);
+            Route::get('/paymentlist', [ReportSalesController::class, 'indexPaymentList']);
+            Route::get('/paymentlist/export', [ReportSalesController::class, 'exportPaymentList']);
+            Route::get('/details', [ReportSalesController::class, 'indexDetails']);
+            Route::get('/details/export', [ReportSalesController::class, 'exportDetails']);
+            Route::get('/unpaid', [ReportSalesController::class, 'indexUnpaid']);
+            Route::get('/unpaid/export', [ReportSalesController::class, 'exportUnpaid']);
+
+        });
 
         Route::group(['prefix' => 'service'], function () {});
 

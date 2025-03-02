@@ -67,7 +67,6 @@ class DepositController extends Controller
 
         return response()->json($data);
     }
-
     public function exportList(Request $request)
     {
 
@@ -185,7 +184,6 @@ class DepositController extends Controller
             'Content-Disposition' => 'attachment; filename="Export Deposit List.xlsx"',
         ]);
     }
-
     public function indexSummary(Request $request)
     {
 
@@ -222,7 +220,6 @@ class DepositController extends Controller
 
         return response()->json($data);
     }
-
     public function exportSummary(Request $request)
     {
 

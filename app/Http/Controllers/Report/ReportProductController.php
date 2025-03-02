@@ -70,6 +70,7 @@ class ReportProductController extends Controller
 
         return response()->json($responseData);
     }
+    
     public function exportStockCount(Request $request)
     {
         $data = DB::table('products as ps')
@@ -126,6 +127,7 @@ class ReportProductController extends Controller
             'Content-Disposition' => 'attachment; filename="Export Report Product Stock Count.xlsx"',
         ]);
     }
+
     public function indexLowStock(Request $request)
     {
 
@@ -239,6 +241,7 @@ class ReportProductController extends Controller
             'Content-Disposition' => 'attachment; filename="Export Report Product Low Stock.xlsx"',
         ]);
     }
+
     public function indexCost(Request $request)
     {
 
@@ -382,6 +385,7 @@ class ReportProductController extends Controller
 
         return response()->json($data);
     }
+
     public function exportCost(Request $request)
     {
 
@@ -574,28 +578,24 @@ class ReportProductController extends Controller
         $sheet->setCellValue('E1', 'Location');
         $sheet->setCellValue('F1', 'No Stock');
 
-        // Apply bold font style to header row
         $sheet->getStyle('A1:F1')->getFont()->setBold(true);
         $sheet->getStyle('A1:F1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
-        // Initialize row for data population
         $row = 2;
         foreach ($data['data'] as $item) {
-            // Fill cells with data
+
             $sheet->setCellValue("A{$row}", $item['fullName']);
             $sheet->setCellValue("B{$row}", $item['category']);
             $sheet->setCellValue("C{$row}", $item['sku']);
             $sheet->setCellValue("D{$row}", $item['supplierName']);
             $sheet->setCellValue("E{$row}", $item['locationName']);
-            $sheet->setCellValue("F{$row}", $item['noStock'] ? 'Yes' : 'No'); // Display Yes or No for noStock
+            $sheet->setCellValue("F{$row}", $item['noStock'] ? 'Yes' : 'No');
 
-            // Apply borders for each row of data
             $sheet->getStyle("A{$row}:F{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
             $row++;
         }
 
-        // Set auto column width for all columns
         foreach (range('A', 'F') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
@@ -611,6 +611,193 @@ class ReportProductController extends Controller
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="Export Product No Stock.xlsx"',
+        ]);
+    }
+
+    public function detail(Request $request)
+    {
+        $data = [
+            'data' => [
+                [
+                    'customerName' => "1",
+                    'supplierName' => 'Supplier 1',
+                    'sku' => '123456',
+                    'brandName' => 'Whiskas 500 g',
+                    'categoryName' => "RPC Condet",
+                ],
+                [
+                    'status' => "1",
+                    'supplierName' => 'sell',
+                    'sku' => '123456',
+                    'brandName' => 'PT. Whiskas Indonesia',
+                    'categoryName' => "RPC Condet",
+                ],
+                [
+                    'status' => "1",
+                    'supplierName' => 'sell',
+                    'sku' => '123456',
+                    'brandName' => 'PT. Whiskas Indonesia',
+                    'categoryName' => "RPC Condet",
+                ],
+                [
+                    'status' => "1",
+                    'supplierName' => 'sell',
+                    'sku' => '123456',
+                    'brandName' => 'PT. Whiskas Indonesia',
+                    'categoryName' => "RPC Condet",
+                ]
+            ]
+        ];
+        return response()->json($data);
+    }
+
+    public function indexReminders(Request $request)
+    {
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Belia',
+                    'subAccount' => 'Pino',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62812299338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+            ]
+        ];
+
+        return response()->json($data);
+    }
+     
+    public function exportReminders(Request $request)
+    {
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Belia',
+                    'subAccount' => 'Pino',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62812299338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+                [
+                    'customerName' => 'Fariez Tachsin',
+                    'subAccount' => 'Kimi',
+                    'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
+                    'phoneNumber' => '62811999338',
+                    'dueDate' => '2022-05-31',
+                ],
+            ]
+        ];
+
+        $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Product_Reminders.xlsx');
+        $sheet = $spreadsheet->getSheet(0);
+
+        $sheet->setCellValue('A1', 'Customer');
+        $sheet->setCellValue('B1', 'Sub Account');
+        $sheet->setCellValue('C1', 'Product');
+        $sheet->setCellValue('D1', 'Phone');
+        $sheet->setCellValue('E1', 'Due Date');
+
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:E1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $row = 2;
+        foreach ($data['data'] as $item) {
+            
+            $dueDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['dueDate'])->locale('en')->isoFormat('D MMMM YYYY');
+
+            $sheet->setCellValue("A{$row}", $item['customerName']);
+            $sheet->setCellValue("B{$row}", $item['subAccount']);
+            $sheet->setCellValue("C{$row}", $item['productName']);
+            $sheet->setCellValue("D{$row}", $item['phoneNumber']);
+            $sheet->setCellValue("E{$row}", $dueDate);
+
+            $sheet->getStyle("A{$row}:E{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            $row++;
+        }
+
+
+        foreach (range('A', 'E') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . 'Export Product Reminders.xlsx';
+        $writer->save($newFilePath);
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export Product Reminders.xlsx"',
         ]);
     }
 }
