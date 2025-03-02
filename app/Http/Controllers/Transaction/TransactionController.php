@@ -813,4 +813,9 @@ class TransactionController extends Controller
 
         return responseCreate();
     }
+
+    public function Treatment()
+    {
+
+    }
 }
