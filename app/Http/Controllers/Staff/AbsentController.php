@@ -321,11 +321,13 @@ class AbsentController extends Controller
             }
         }
 
-        $staffJobs = $request->staffJob;
+        if ($request->staffJob) {
+            $staffJobs = $request->staffJob;
 
-        if (count($staffJobs) > 0) {
-            if (!$staffJobs[0] == null) {
-                $data = $data->whereIn('j.id', $request->staffJob);
+            if (count($staffJobs) > 0) {
+                if (!$staffJobs[0] == null) {
+                    $data = $data->whereIn('j.id', $request->staffJob);
+                }
             }
         }
 
