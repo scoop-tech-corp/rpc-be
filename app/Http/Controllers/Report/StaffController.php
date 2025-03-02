@@ -239,6 +239,10 @@ class StaffController extends Controller
             $table = $table->whereIn('sa.userId', $request->staff);
         }
 
+        if ($request->staffJob) {
+            $table = $table->whereIn('j.id', $request->staffJob);
+        }
+
         if ($request->orderValue) {
 
             if ($request->orderColumn == "name") {
@@ -383,6 +387,14 @@ class StaffController extends Controller
         if (count($locations) > 0) {
             if (!$locations[0] == null) {
                 $data = $data->whereIn('l.id', $request->locationId);
+            }
+        }
+
+        $staffJobs = $request->staffJob;
+
+        if (count($staffJobs) > 0) {
+            if (!$staffJobs[0] == null) {
+                $data = $data->whereIn('j.id', $request->staffJob);
             }
         }
 
