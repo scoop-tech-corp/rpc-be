@@ -15,7 +15,7 @@ class DepositController extends Controller
             'totalPagination' => 1,
             'data' => [
                 [
-                    'referenceNo' => '006076',
+                    'referenceNo' => '#006076',
                     'customerName' => 'Kuki',
                     'date' => "2025-02-20",
                     'locationName' => "RPC Duren",
@@ -27,37 +27,37 @@ class DepositController extends Controller
                     'invoiceNo' => "INV-58032",
                 ],
                 [
-                    'referenceNo' => '006076',
+                    'referenceNo' => '#006076',
                     'customerName' => 'Bubu',
                     'date' => "2025-02-20",
                     'locationName' => "RPC Duren",
                     'paymentMethod' => "debit",
                     'receivedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'returnedAmount' => 80000,
                     'remainingAmount' => 80000,
                     'invoiceNo' => "INV-58032",
                 ],
                 [
-                    'referenceNo' => '006076',
+                    'referenceNo' => '#006076',
                     'customerName' => 'Lilo',
                     'date' => "2025-02-20",
                     'locationName' => "RPC Duren",
                     'paymentMethod' => "debit",
                     'receivedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'returnedAmount' => 80000,
                     'remainingAmount' => 80000,
                     'invoiceNo' => "INV-58032",
                 ],
                 [
-                    'referenceNo' => '006076',
+                    'referenceNo' => '#006076',
                     'customerName' => 'Ucil',
                     'date' => "2025-02-20",
                     'locationName' => "RPC Duren",
                     'paymentMethod' => "debit",
                     'receivedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'returnedAmount' => 80000,
                     'remainingAmount' => 80000,
                     'invoiceNo' => "INV-58032",
@@ -74,7 +74,7 @@ class DepositController extends Controller
             'totalPagination' => 1,
             'data' => [
                 [
-                    'referenceNo' => '006076',
+                    'referenceNo' => '#006076',
                     'customerName' => 'Kuki',
                     'date' => "2025-02-20",
                     'locationName' => "RPC Duren",
@@ -86,37 +86,37 @@ class DepositController extends Controller
                     'invoiceNo' => "INV-58032",
                 ],
                 [
-                    'referenceNo' => '006076',
+                    'referenceNo' => '#006076',
                     'customerName' => 'Bubu',
                     'date' => "2025-02-20",
                     'locationName' => "RPC Duren",
                     'paymentMethod' => "debit",
                     'receivedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'returnedAmount' => 80000,
                     'remainingAmount' => 80000,
                     'invoiceNo' => "INV-58032",
                 ],
                 [
-                    'referenceNo' => '006076',
+                    'referenceNo' => '#006076',
                     'customerName' => 'Lilo',
                     'date' => "2025-02-20",
                     'locationName' => "RPC Duren",
                     'paymentMethod' => "debit",
                     'receivedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'returnedAmount' => 80000,
                     'remainingAmount' => 80000,
                     'invoiceNo' => "INV-58032",
                 ],
                 [
-                    'referenceNo' => '006076',
+                    'referenceNo' => '#006076',
                     'customerName' => 'Ucil',
                     'date' => "2025-02-20",
                     'locationName' => "RPC Duren",
                     'paymentMethod' => "debit",
                     'receivedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'returnedAmount' => 80000,
                     'remainingAmount' => 80000,
                     'invoiceNo' => "INV-58032",
@@ -149,7 +149,7 @@ class DepositController extends Controller
 
         $row = 2;
         foreach ($data['data'] as $item) {
-    
+
             $sheet->setCellValue("A{$row}", $item['referenceNo']);
             $sheet->setCellValue("B{$row}", $item['customerName']);
             $sheet->setCellValue("C{$row}", $item['date']);
@@ -160,7 +160,7 @@ class DepositController extends Controller
             $sheet->setCellValue("H{$row}", $item['returnedAmount']);
             $sheet->setCellValue("I{$row}", $item['remainingAmount']);
             $sheet->setCellValue("J{$row}", $item['invoiceNo']);
-    
+
             $sheet->getStyle("A{$row}:J{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
             $row++;
@@ -228,26 +228,26 @@ class DepositController extends Controller
             'data' => [
                 [
                     'locationName' => "RPC Buaran",
-                    'usedAmount' => 0,
                     'returnedAmount' => 80000,
+                    'usedAmount' => 0,
                     'remainingAmount' => 80000,
                 ],
                 [
                     'locationName' => "RPC Condet",
-                    'usedAmount' => 0,
                     'returnedAmount' => 80000,
+                    'usedAmount' => 0,
                     'remainingAmount' => 80000,
                 ],
                 [
                     'locationName' => "RPC Hankam",
-                    'usedAmount' => 0,
                     'returnedAmount' => 80000,
+                    'usedAmount' => 0,
                     'remainingAmount' => 80000,
                 ],
                 [
                     'locationName' => "RPC Pondok Gede",
-                    'usedAmount' => 0,
                     'returnedAmount' => 80000,
+                    'usedAmount' => 0,
                     'remainingAmount' => 80000,
                 ],
 
@@ -271,12 +271,12 @@ class DepositController extends Controller
 
         $row = 2;
         foreach ($data['data'] as $item) {
-            
+
             $sheet->setCellValue("A{$row}", $item['locationName']);
-            $sheet->setCellValue("B{$row}", $item['usedAmount']);
-            $sheet->setCellValue("C{$row}", $item['returnedAmount']);
+            $sheet->setCellValue("B{$row}", $item['returnedAmount']);
+            $sheet->setCellValue("C{$row}", $item['usedAmount']);
             $sheet->setCellValue("D{$row}", $item['remainingAmount']);
-            
+
             $sheet->getStyle("A{$row}:D{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
             $row++;

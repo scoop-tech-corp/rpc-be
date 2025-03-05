@@ -821,7 +821,7 @@ class SalesController extends Controller
 
         $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Sales_Details.xlsx');
         $sheet = $spreadsheet->getSheet(0);
-    
+
         $sheet->setCellValue('A1', 'Sale');
         $sheet->setCellValue('B1', 'Reference');
         $sheet->setCellValue('C1', 'Location');
@@ -831,46 +831,46 @@ class SalesController extends Controller
         $sheet->setCellValue('G1', 'Total (Rp)');
         $sheet->setCellValue('H1', 'Payments (Rp)');
         $sheet->setCellValue('I1', 'Payment (Rp)');
-    
-    
+
+
         $sheet->getStyle('A1:I1')->getFont()->setBold(true);
         $sheet->getStyle('A1:I1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('A1:I1')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-    
+
         $row = 2;
         foreach ($data['data'] as $item) {
-        
+
             $saleDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['saleDate'])->locale('en')->isoFormat('D MMMM YYYY');
-        
+
             $itemsString = implode(', ', $item['items']);
-    
+
             $paymentMethodString = $item['paymentMethod']['amount'] . ' (' . $item['paymentMethod']['method'] . ') on ' . $item['paymentMethod']['date'];
-    
+
             $sheet->setCellValue("A{$row}", $item['saleId']);
             $sheet->setCellValue("B{$row}", $item['refNumber']);
             $sheet->setCellValue("C{$row}", $item['location']);
-            $sheet->setCellValue("D{$row}", $saleDate); 
+            $sheet->setCellValue("D{$row}", $saleDate);
             $sheet->setCellValue("E{$row}", $item['status']);
             $sheet->setCellValue("F{$row}", $itemsString);
             $sheet->setCellValue("G{$row}", $item['totalAmount']);
-            $sheet->setCellValue("H{$row}", $paymentMethodString); 
+            $sheet->setCellValue("H{$row}", $paymentMethodString);
             $sheet->setCellValue("I{$row}", $item['payment']);
-    
-        
+
+
             $sheet->getStyle("A{$row}:I{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-    
+
             $row++;
         }
-    
+
 
         foreach (range('A', 'I') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
-    
+
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Details.xlsx';
         $writer->save($newFilePath);
-    
+
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
@@ -998,7 +998,7 @@ class SalesController extends Controller
 
         $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Sales_Unpaid.xlsx');
         $sheet = $spreadsheet->getSheet(0);
-    
+
         $sheet->setCellValue('A1', 'Sale ID');
         $sheet->setCellValue('B1', 'Location');
         $sheet->setCellValue('C1', 'Due Date');
@@ -1009,45 +1009,194 @@ class SalesController extends Controller
         $sheet->setCellValue('H1', 'Paid (Rp)');
         $sheet->setCellValue('I1', 'Outstanding (Rp)');
         $sheet->setCellValue('J1', 'Reference');
-    
-    
+
+
         $sheet->getStyle('A1:J1')->getFont()->setBold(true);
         $sheet->getStyle('A1:J1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('A1:J1')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-    
+
         $row = 2;
         foreach ($data['data'] as $item) {
-    
+
             $sheet->setCellValue("A{$row}", $item['saleId']);
             $sheet->setCellValue("B{$row}", $item['location']);
             $sheet->setCellValue("C{$row}", $item['dueDate']);
-            $sheet->setCellValue("D{$row}", $item['overDue']); 
+            $sheet->setCellValue("D{$row}", $item['overDue']);
             $sheet->setCellValue("E{$row}", $item['customerName']);
             $sheet->setCellValue("F{$row}", $item['phoneNo']);
             $sheet->setCellValue("G{$row}", $item['totalAmount']);
-            $sheet->setCellValue("H{$row}", $item['paidAmount']); 
+            $sheet->setCellValue("H{$row}", $item['paidAmount']);
             $sheet->setCellValue("I{$row}", $item['outstandingAmount']);
             $sheet->setCellValue("J{$row}", $item['refNum']);
-    
-        
+
+
             $sheet->getStyle("A{$row}:J{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
-    
+
             $row++;
         }
-    
+
         foreach (range('A', 'J') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
-    
+
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Unpaid.xlsx';
         $writer->save($newFilePath);
-    
+
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="Export_Sales_Unpaid.xlsx"',
         ]);
+    }
+
+    public function indexDiscountSummary(Request $request)
+    {
+
+        $data = [
+
+            "charts" => [
+                "series" => [
+                    [
+                        "name" => "Previous",
+                        "data" => [2000000, 4000000, 6000000, 8000000, 10000000, 12000000, 4000000, 6000000, 8000000, 10000000, 12000000, 2000000, 6000000]
+                    ],
+                    [
+                        "name" => "Current",
+                        "data" => [3000000, 5000000, 7000000, 9000000, 11000000, 2000000, 5000000, 7000000, 9000000, 11000000, 3000000, 5000000, 9000000]
+                    ]
+                ],
+                "categories" => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+            ],
+
+            'totalDiscount' => [
+                'percentage' => 14.01,
+                'total' => 76872119.50,
+                'isLoss' => 0
+            ],
+
+            'itemsDicounted' => [
+                'percentage' => 0,
+                'total' => 0,
+                'isLoss' => null
+            ],
+
+            'salesDiscounted' => [
+                'percentage' => 2,
+                'total' => 17,
+                'isLoss' => 1
+            ],
+
+            'chartsDiscountValueByStaff' => [
+                'labels' => [
+                    'Not Set',
+                    'Drh. Olivionita Julina Paxy',
+                    'Drh. Laili Nadhilah Pradyane',
+                    'Drh. Shinta Ayu Phinnaka Purnama Dewi',
+                    'Drh. Jihaan Haajidah',
+                    'Drh. Dita Ardiah Napitupulu',
+                    'Other'
+                ],
+                'series' => [
+                    25,
+                    5,
+                    7,
+                    5,
+                    5,
+                    5,
+                    48
+                ]
+            ]
+        ];
+
+        return response()->json($data);
+    }
+
+    public function indexPaymentSummary(Request $request)
+    {
+
+        $data = [
+
+            'totalPayments' => [
+                'percentage' => 15.51,
+                'total' => 1459162649.50,
+                'isLoss' => 0
+            ],
+
+            'totalRefunds' => [
+                'percentage' => 34.50,
+                'total' => 1373500.00,
+                'isLoss' => 0
+            ],
+
+            'netPayments' => [
+                'percentage' => 15.59,
+                'total' => 1457789149.00,
+                'isLoss' => 0
+            ],
+
+            'chartsDiscountValueByStaff' => [
+                'labels' => [
+                    'Debit Card',
+                    'Cash',
+                    'Bank Transfer',
+                    'Credit Card',
+                    'Customer Credit',
+                    'Customer Package'
+                ],
+                'series' => [
+                    50,
+                    15,
+                    15,
+                    20,
+                    0,
+                    0
+                ]
+            ],
+
+            'table' => [
+                'data' => [
+                    [
+                        'method' => 'Debit Card',
+                        'totalAmount' => 723603483.30,
+                        'refundAmount' => 70000.00,
+                        'netAmount' => 723533483.30,
+                    ],
+                    [
+                        'method' => 'Cash',
+                        'totalAmount' => 434766400.70,
+                        'refundAmount' => 1303500.00,
+                        'netAmount' => 433462900.70,
+                    ],
+                    [
+                        'method' => 'Bank Transfer',
+                        'totalAmount' => 272410986.00,
+                        'refundAmount' => 0,
+                        'netAmount' => 272410986.00,
+                    ],
+                    [
+                        'method' => 'Credit Card',
+                        'totalAmount' => 28381779.00,
+                        'refundAmount' => 0,
+                        'netAmount' => 28381779.00,
+                    ],
+                    [
+                        'method' => 'Customer Credit',
+                        'totalAmount' => 0,
+                        'refundAmount' => 0,
+                        'netAmount' => 0,
+                    ],
+                    [
+                        'method' => 'Customer Package',
+                        'totalAmount' => 0,
+                        'refundAmount' => 0,
+                        'netAmount' => 0,
+                    ],
+                ],
+            ]
+        ];
+
+        return response()->json($data);
     }
 }

@@ -470,14 +470,14 @@ class ReportProductController extends Controller
         $sheet->getStyle("E{$row}")->getFont()->setBold(true);
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export Product Cost.xlsx';
+        $newFilePath = public_path() . '/template_download/' . 'Export Report Product Cost.xlsx';
         $writer->save($newFilePath);
 
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export Product Cost.xlsx"',
+            'Content-Disposition' => 'attachment; filename="Export Report Product Cost.xlsx"',
         ]);
     }
 
