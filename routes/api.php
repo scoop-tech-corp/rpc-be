@@ -42,6 +42,7 @@ use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
+use App\Http\Controllers\OtpController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
@@ -50,6 +51,10 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
+
+Route::post('/send-otp', [OtpController::class, 'sendOtp']);
+Route::post('/verify-otp', [OtpController::class, 'verifyOtp']);
+Route::post('/change-password', [OtpController::class, 'changePassword']);
 
 Route::put('user/{user}/online', [ApiController::class, 'online']);
 // Route::post('/realtime/auth', function(){
@@ -633,10 +638,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         });
 
         Route::group(['prefix' => 'deposit'], function () {
-            Route::get('/list', [DepositController::class,'indexList']);
-            Route::get('/list/export', [DepositController::class,'exportList']);
-            Route::get('/summary', [DepositController::class,'indexSummary']);
-            Route::get('/summary/export', [DepositController::class,'exportSummary']);
+            Route::get('/list', [DepositController::class, 'indexList']);
+            Route::get('/list/export', [DepositController::class, 'exportList']);
+            Route::get('/summary', [DepositController::class, 'indexSummary']);
+            Route::get('/summary/export', [DepositController::class, 'exportSummary']);
         });
 
         Route::group(['prefix' => 'expenses'], function () {});
@@ -672,7 +677,6 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/unpaid/export', [ReportSalesController::class, 'exportUnpaid']);
             Route::get('/discountsummary', [ReportSalesController::class, 'indexDiscountSummary']);
             Route::get('/paymentsummary', [ReportSalesController::class, 'indexPaymentSummary']);
-
         });
 
         Route::group(['prefix' => 'service'], function () {});
