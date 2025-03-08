@@ -15,7 +15,8 @@ use App\Http\Controllers\GlobalVariableController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\Product\BundleController;
 use App\Http\Controllers\Report\BookingController;
-use App\Http\Controllers\Report\ProductController;
+use App\Http\Controllers\Report\DepositController;
+use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\RestockController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Product\SupplierController;
@@ -26,10 +27,11 @@ use App\Http\Controllers\Promotion\DiscountController;
 use App\Http\Controllers\Product\ProductSellController;
 use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Staff\SecurityGroupController;
+
+use App\Http\Controllers\Report\ReportProductController;
+
 use App\Http\Controllers\ReportMenuManagementController;
-
 use App\Http\Controllers\Product\ProductClinicController;
-
 use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\Staff\DataStaticStaffController;
 use App\Http\Controllers\VerifyUserandPasswordController;
@@ -40,13 +42,19 @@ use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
+use App\Http\Controllers\OtpController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
+use App\Http\Controllers\Report\SalesController as ReportSalesController;
 use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
+
+Route::post('/send-otp', [OtpController::class, 'sendOtp']);
+Route::post('/verify-otp', [OtpController::class, 'verifyOtp']);
+Route::post('/change-password', [OtpController::class, 'changePassword']);
 
 Route::put('user/{user}/online', [ApiController::class, 'online']);
 // Route::post('/realtime/auth', function(){
@@ -629,20 +637,47 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/subaccount/export', [ReportCustomerController::class, 'exportSubAccount']);
         });
 
-        Route::group(['prefix' => 'deposit'], function () {});
+        Route::group(['prefix' => 'deposit'], function () {
+            Route::get('/list', [DepositController::class, 'indexList']);
+            Route::get('/list/export', [DepositController::class, 'exportList']);
+            Route::get('/summary', [DepositController::class, 'indexSummary']);
+            Route::get('/summary/export', [DepositController::class, 'exportSummary']);
+        });
 
         Route::group(['prefix' => 'expenses'], function () {});
 
         Route::group(['prefix' => 'products'], function () {
-            Route::get('/stockcount', [ProductController::class, 'indexStockCount']);
-            Route::get('/stockcount/export', [ProductController::class, 'exportStockCount']);
-            Route::get('/lowstock', [ProductController::class, 'indexLowStock']);
-            Route::get('/lowstock/export', [ProductController::class, 'exportLowStock']);
-            Route::get('/cost', [ProductController::class, 'indexCost']);
-            Route::get('/cost/export', [ProductController::class, 'exportCost']);
+            Route::get('/stockcount', [ReportProductController::class, 'indexStockCount']);
+            Route::get('/stockcount/export', [ReportProductController::class, 'exportStockCount']);
+            Route::get('/lowstock', [ReportProductController::class, 'indexLowStock']);
+            Route::get('/lowstock/export', [ReportProductController::class, 'exportLowStock']);
+            Route::get('/cost', [ReportProductController::class, 'indexCost']);
+            Route::get('/cost/export', [ReportProductController::class, 'exportCost']);
+            Route::get('/nostock', [ReportProductController::class, 'indexNoStock']);
+            Route::get('/nostock/export', [ReportProductController::class, 'exportNoStock']);
+            // Route::get('/detail', [ReportProductController::class, 'detail']);
+            Route::get('/reminders', [ReportProductController::class, 'indexReminders']);
+            Route::get('/reminders/export', [ReportProductController::class, 'exportReminders']);
         });
 
-        Route::group(['prefix' => 'sales'], function () {});
+        Route::group(['prefix' => 'sales'], function () {
+            Route::get('/items', [ReportSalesController::class, 'indexItems']);
+            Route::get('/items/export', [ReportSalesController::class, 'exportItems']);
+            Route::get('/summary', [ReportSalesController::class, 'indexSummary']);
+            Route::get('/summary/export', [ReportSalesController::class, 'exportSummary']);
+            Route::get('/salesbyservice', [ReportSalesController::class, 'indexSalesByService']);
+            Route::get('/salesbyservice/export', [ReportSalesController::class, 'exportSalesByService']);
+            Route::get('/salesbyproduct', [ReportSalesController::class, 'indexSalesByProduct']);
+            Route::get('/salesbyproduct/export', [ReportSalesController::class, 'exportSalesByProduct']);
+            Route::get('/paymentlist', [ReportSalesController::class, 'indexPaymentList']);
+            Route::get('/paymentlist/export', [ReportSalesController::class, 'exportPaymentList']);
+            Route::get('/details', [ReportSalesController::class, 'indexDetails']);
+            Route::get('/details/export', [ReportSalesController::class, 'exportDetails']);
+            Route::get('/unpaid', [ReportSalesController::class, 'indexUnpaid']);
+            Route::get('/unpaid/export', [ReportSalesController::class, 'exportUnpaid']);
+            Route::get('/discountsummary', [ReportSalesController::class, 'indexDiscountSummary']);
+            Route::get('/paymentsummary', [ReportSalesController::class, 'indexPaymentSummary']);
+        });
 
         Route::group(['prefix' => 'service'], function () {});
 

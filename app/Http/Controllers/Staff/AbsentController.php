@@ -225,6 +225,7 @@ class AbsentController extends Controller
         $fileName = "";
         $date = "";
         $location = "";
+        $jobName = "";
 
         if ($request->locationId) {
             $dataLocation = DB::table('location as l')
@@ -237,6 +238,17 @@ class AbsentController extends Controller
             $location = " " . $dataLocation;
         }
 
+        if ($request->staffJob) {
+            $dataJob = DB::table('jobTitle')
+                ->select(DB::raw("GROUP_CONCAT(jobName SEPARATOR ', ') as jobName"))
+                ->whereIn('id', $request->staffJob)
+                ->distinct()
+                ->pluck('jobName')
+                ->first();
+
+            $jobName = " " . $dataJob;
+        }
+
         if ($request->dateFrom && $request->dateTo) {
             $fromDate = Carbon::parse($request->dateFrom);
             $toDate = Carbon::parse($request->dateTo);
@@ -244,7 +256,7 @@ class AbsentController extends Controller
             $date = " " . $fromDate->format('dmy') . "-" . $toDate->format('dmy');
         }
 
-        $fileName = "Rekap Absensi" . $location . $date . ".xlsx";
+        $fileName = "Rekap Absensi" . $jobName . $location . $date . ".xlsx";
         //-----------------------------
         $data = DB::table('staffAbsents as sa')
             ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
@@ -257,27 +269,10 @@ class AbsentController extends Controller
                 'sa.id',
                 'u.firstName as name',
                 'l.locationName',
-                // DB::raw("TRIM(CONCAT(CASE WHEN u.firstName = '' or u.firstName is null THEN '' ELSE CONCAT(u.firstName,' ') END
-                // ,CASE WHEN u.middleName = '' or u.middleName is null THEN '' ELSE CONCAT(u.middleName,' ') END,
-                // case when u.lastName = '' or u.lastName is null then '' else u.lastName end)) as name"),
                 'j.jobName',
                 'sa.shift',
                 'sa.status',
-                DB::raw("
-                CONCAT(
-                    CASE DAYOFWEEK(sa.presentTime)
-                        WHEN 1 THEN 'Minggu'
-                        WHEN 2 THEN 'Senin'
-                        WHEN 3 THEN 'Selasa'
-                        WHEN 4 THEN 'Rabu'
-                        WHEN 5 THEN 'Kamis'
-                        WHEN 6 THEN 'Jumat'
-                        WHEN 7 THEN 'Sabtu'
-                    END,
-                    ', ',
-                    DATE_FORMAT(sa.presentTime, '%e %b %Y')
-                ) AS day
-                "),
+                DB::raw("DATE_FORMAT(sa.presentTime, '%Y-%m-%d') AS day"),
                 DB::raw("TIME_FORMAT(sa.presentTime, '%H:%i') AS presentTime"),
                 DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H:%i') END AS homeTime"),
                 DB::raw("CASE WHEN sa.duration is null THEN '' ELSE CONCAT(
@@ -317,16 +312,23 @@ class AbsentController extends Controller
             }
         }
 
-        $statusPresents = $request->statusPresent;
-
-        if (count($statusPresents) > 0) {
-            if (!$statusPresents[0] == null) {
-                $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+        if ($request->statusPresent) {
+            $statusPresents = $request->statusPresent;
+            if (count($statusPresents) > 0) {
+                if (!$statusPresents[0] == null) {
+                    $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
+                }
             }
         }
 
-        if ($request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        if ($request->staffJob) {
+            $staffJobs = $request->staffJob;
+
+            if (count($staffJobs) > 0) {
+                if (!$staffJobs[0] == null) {
+                    $data = $data->whereIn('j.id', $request->staffJob);
+                }
+            }
         }
 
         $data = $data->groupBy(
