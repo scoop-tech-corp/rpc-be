@@ -343,7 +343,6 @@ class StaffController extends Controller
 
     public function exportStaffLate(Request $request)
     {
-
         $data = DB::table('staffAbsents as sa')
             ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
             ->leftJoin('presentStatuses as ps1', 'sa.statusHome', 'ps1.id')
@@ -379,7 +378,14 @@ class StaffController extends Controller
 
         if ($request->dateFrom && $request->dateTo) {
 
-            $data = $data->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
+            $data = $data->whereBetween('sa.created_at', [$request->dateFrom, $request->dateTo]);
+        } else {
+            $todayStart = Carbon::now();
+
+            $nineDaysAgo = Carbon::now()->subDays(9);
+
+            $data = $data->whereDate('sa.created_at', '>=', $nineDaysAgo)
+                ->whereDate('sa.created_at', '<=', $todayStart);
         }
 
         $locations = $request->locationId;
