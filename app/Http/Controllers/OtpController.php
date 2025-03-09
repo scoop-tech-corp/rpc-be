@@ -29,7 +29,7 @@ class OtpController extends Controller
         }
 
         $otp = rand(100000, 999999);
-        $expiresAt = Carbon::now()->addMinutes(10);
+        $expiresAt = Carbon::now()->addMinutes(1);
 
         Otp::updateOrCreate(
             ['email' => $request->email],
@@ -74,10 +74,12 @@ class OtpController extends Controller
                     'password' => [
                         'required',
                         'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/',
-                    ]
+                    ],
+                    'confirmPassword' => 'required|same:password',
                 ],
                 [
                     'password.regex' => 'The new password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character!',
+                    'confirmPassword.same' => 'The confirm password must match the password!',
                 ]
             );
 

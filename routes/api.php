@@ -48,6 +48,7 @@ use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
 use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
+use App\Http\Controllers\TimeKeeperController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -489,6 +490,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/last-order-menu-group', [MenuManagementController::class, 'lastOrderMenuGroup']);
         Route::get('/last-order-child-menu-group', [MenuManagementController::class, 'lastOrderChildMenu']);
         Route::get('/last-order-grand-child-menu-group', [MenuManagementController::class, 'lastOrderGrandChildMenu']);
+
+        Route::get('/timekeeper', [TimeKeeperController::class, 'index']);
+        Route::post('/timekeeper', [TimeKeeperController::class, 'insert']);
+        Route::put('/timekeeper', [TimeKeeperController::class, 'update']);
+        Route::delete('/timekeeper', [TimeKeeperController::class, 'delete']);
 
         Route::get('/list-menu-group', [MenuManagementController::class, 'listMenuGroup']);
         Route::get('/menu-group', [MenuManagementController::class, 'indexMenuGroup']);
