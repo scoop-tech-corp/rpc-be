@@ -15,6 +15,7 @@ use App\Models\StaffAbsents;
 use App\Models\menuGroup;
 use App\Models\Staff\StaffLogin;
 use App\Models\Staff\UsersLocation;
+use App\Models\Timekeeper;
 use Carbon\Carbon;
 use Carbon\Doctrine\CarbonDoctrineType;
 use Illuminate\Support\Facades\DB as FacadesDB;
@@ -130,6 +131,7 @@ class ApiController extends Controller
                         'users.id',
                         'users.imagePath',
                         'users.roleId',
+                        'users.jobTitleId',
                         DB::raw("IF(usersRoles.roleName IS NULL, '', usersRoles.roleName) as roleName"),
                         DB::raw("IF(jobTitle.jobName IS NULL,'', jobTitle.jobName) as jobName"),
                         DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.lastName,'')) as name"),
@@ -449,6 +451,12 @@ class ApiController extends Controller
 
                 ]);
 
+                $shift = Timekeeper::where('jobtitleId', '=', $users->jobTitleId)->get();
+                $isShift = 0;
+                if (count($shift) > 1) {
+                    $isShift = 1;
+                }
+
                 // broadcast(new \App\Events\UserLoggedIn($userId));
                 return response()->json([
                     'id' => $userId,
@@ -463,6 +471,7 @@ class ApiController extends Controller
                     "locations" => $locations,
                     'imagePath' => $users->imagePath,
                     "isAbsent" => $isAbsent,
+                    "isShift" => $isShift,
                     "masterMenu" => $masterMenu,
                     'profileMenu' => $profileMenu,
                     'settingMenu' => $settingMenu,
