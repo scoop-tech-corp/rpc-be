@@ -235,19 +235,19 @@ class DepositController extends Controller
                 [
                     'locationName' => "RPC Condet",
                     'returnedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'remainingAmount' => 80000,
                 ],
                 [
                     'locationName' => "RPC Hankam",
                     'returnedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'remainingAmount' => 80000,
                 ],
                 [
                     'locationName' => "RPC Pondok Gede",
                     'returnedAmount' => 80000,
-                    'usedAmount' => 0,
+                    'usedAmount' => 80000,
                     'remainingAmount' => 80000,
                 ],
 
@@ -260,9 +260,9 @@ class DepositController extends Controller
 
 
         $sheet->setCellValue('A1', 'Location');
-        $sheet->setCellValue('B1', 'Return');
-        $sheet->setCellValue('C1', 'Used');
-        $sheet->setCellValue('D1', 'Remaining');
+        $sheet->setCellValue('B1', 'Return (Rp)');
+        $sheet->setCellValue('C1', 'Used (Rp)');
+        $sheet->setCellValue('D1', 'Remaining (Rp)');
 
         $sheet->getStyle('A1:D1')->getFont()->setBold(true);
         $sheet->getStyle('A1:D1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
