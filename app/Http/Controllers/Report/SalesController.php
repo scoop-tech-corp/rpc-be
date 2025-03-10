@@ -105,12 +105,13 @@ class SalesController extends Controller
         $sheet->setCellValue('D1', 'Status');
         $sheet->setCellValue('E1', 'Items');
         $sheet->setCellValue('F1', 'Quantity');
-        $sheet->setCellValue('C1', 'Unit Price (Rp)');
+        $sheet->setCellValue('G1', 'Unit Price (Rp)');
         $sheet->setCellValue('H1', 'Total (Rp)');
         $sheet->setCellValue('I1', 'Payment');
 
         $sheet->getStyle('A1:I1')->getFont()->setBold(true);
         $sheet->getStyle('A1:I1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:I1')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
         $row = 2;
         foreach ($data['data'] as $item) {
@@ -118,8 +119,8 @@ class SalesController extends Controller
             $saleDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['saleDate'])->locale('en')->isoFormat('D MMMM YYYY');
 
             $sheet->setCellValue("A{$row}", $item['saleId']);
-            $sheet->setCellValue("C{$row}", $item['location']);
-            $sheet->setCellValue("B{$row}", $saleDate);
+            $sheet->setCellValue("B{$row}", $item['location']);
+            $sheet->setCellValue("C{$row}", $saleDate);
             $sheet->setCellValue("D{$row}", $item['status']);
             $sheet->setCellValue("E{$row}", $item['items']);
             $sheet->setCellValue("F{$row}", $item['quantity']);
@@ -544,36 +545,36 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12',
+                    'paidAt' => '2022-05-12 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12',
+                    'createdAt' => '2022-05-12 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12',
+                    'paidAt' => '2022-05-12 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12',
+                    'createdAt' => '2022-05-12 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12',
+                    'paidAt' => '2022-05-12 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12',
+                    'createdAt' => '2022-05-12 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12',
+                    'paidAt' => '2022-05-12 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12',
+                    'createdAt' => '2022-05-12 11:55 PM',
                     'totalAmount' => 29000,
                 ],
             ]
@@ -592,36 +593,36 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12',
+                    'paidAt' => '2022-05-12 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12',
+                    'createdAt' => '2022-05-12 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12',
+                    'paidAt' => '2022-05-12 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12',
+                    'createdAt' => '2022-05-12 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12',
+                    'paidAt' => '2022-05-12 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12',
+                    'createdAt' => '2022-05-12 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12',
+                    'paidAt' => '2022-05-12 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12',
+                    'createdAt' => '2022-05-12 11:55 PM',
                     'totalAmount' => 29000,
                 ],
             ]
@@ -645,8 +646,14 @@ class SalesController extends Controller
         $row = 2;
         foreach ($data['data'] as $item) {
 
-            $paidAt = \Carbon\Carbon::createFromFormat('Y-m-d', $item['paidAt'])->locale('en')->isoFormat('D MMMM YYYY');
-            $createdAt = \Carbon\Carbon::createFromFormat('Y-m-d', $item['createdAt'])->locale('en')->isoFormat('D MMMM YYYY');
+            $paidAt = \Carbon\Carbon::createFromFormat('Y-m-d h:i A', $item['paidAt'])
+                ->locale('en')
+                ->isoFormat('D MMMM YYYY h:mm A');
+
+            $createdAt = \Carbon\Carbon::createFromFormat('Y-m-d h:i A', $item['createdAt'])
+                ->locale('en')
+                ->isoFormat('D MMMM YYYY h:mm A');
+
 
             $sheet->setCellValue("A{$row}", $item['saleId']);
             $sheet->setCellValue("B{$row}", $item['location']);
@@ -844,7 +851,11 @@ class SalesController extends Controller
 
             $itemsString = implode(', ', $item['items']);
 
-            $paymentMethodString = $item['paymentMethod']['amount'] . ' (' . $item['paymentMethod']['method'] . ') on ' . $item['paymentMethod']['date'];
+            $paymentDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['paymentMethod']['date'])
+                ->format('j/n/Y'); 
+
+            $paymentMethodString = $item['paymentMethod']['amount'] . ' (' . $item['paymentMethod']['method'] . ') ' . $paymentDate;
+
 
             $sheet->setCellValue("A{$row}", $item['saleId']);
             $sheet->setCellValue("B{$row}", $item['refNumber']);
@@ -889,7 +900,7 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'dueDate' => '2024-05-12',
-                    'overDue' => '1212',
+                    'overDue' => 'Active',
                     'customerName' => 'Miao',
                     'phoneNo' => '081298557575',
                     'totalAmount' => 29000,
@@ -901,7 +912,7 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'dueDate' => '2024-05-12',
-                    'overDue' => '1212',
+                    'overDue' => 'Active',
                     'customerName' => 'Miao',
                     'phoneNo' => '081298557575',
                     'totalAmount' => 29000,
@@ -913,7 +924,7 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'dueDate' => '2024-05-12',
-                    'overDue' => '1212',
+                    'overDue' => 'Active',
                     'customerName' => 'Miao',
                     'phoneNo' => '081298557575',
                     'totalAmount' => 29000,
@@ -925,7 +936,7 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'dueDate' => '2024-05-12',
-                    'overDue' => '1212',
+                    'overDue' => 'Active',
                     'customerName' => 'Miao',
                     'phoneNo' => '081298557575',
                     'totalAmount' => 29000,
@@ -949,7 +960,7 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'dueDate' => '2024-05-12',
-                    'overDue' => '1212',
+                    'overDue' => 'Active',
                     'customerName' => 'Miao',
                     'phoneNo' => '081298557575',
                     'totalAmount' => 29000,
@@ -961,7 +972,7 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'dueDate' => '2024-05-12',
-                    'overDue' => '1212',
+                    'overDue' => 'Active',
                     'customerName' => 'Miao',
                     'phoneNo' => '081298557575',
                     'totalAmount' => 29000,
@@ -973,7 +984,7 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'dueDate' => '2024-05-12',
-                    'overDue' => '1212',
+                    'overDue' => 'Active',
                     'customerName' => 'Miao',
                     'phoneNo' => '081298557575',
                     'totalAmount' => 29000,
@@ -985,7 +996,7 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'dueDate' => '2024-05-12',
-                    'overDue' => '1212',
+                    'overDue' => 'Active',
                     'customerName' => 'Miao',
                     'phoneNo' => '081298557575',
                     'totalAmount' => 29000,
@@ -1018,9 +1029,11 @@ class SalesController extends Controller
         $row = 2;
         foreach ($data['data'] as $item) {
 
+            $dueDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['dueDate'])->locale('en')->isoFormat('D MMMM YYYY');
+
             $sheet->setCellValue("A{$row}", $item['saleId']);
             $sheet->setCellValue("B{$row}", $item['location']);
-            $sheet->setCellValue("C{$row}", $item['dueDate']);
+            $sheet->setCellValue("C{$row}", $dueDate);
             $sheet->setCellValue("D{$row}", $item['overDue']);
             $sheet->setCellValue("E{$row}", $item['customerName']);
             $sheet->setCellValue("F{$row}", $item['phoneNo']);
@@ -1162,6 +1175,92 @@ class SalesController extends Controller
                         'totalAmount' => 723603483.30,
                         'refundAmount' => 70000.00,
                         'netAmount' => 723533483.30,
+                    ],
+                    [
+                        'method' => 'Cash',
+                        'totalAmount' => 434766400.70,
+                        'refundAmount' => 1303500.00,
+                        'netAmount' => 433462900.70,
+                    ],
+                    [
+                        'method' => 'Bank Transfer',
+                        'totalAmount' => 272410986.00,
+                        'refundAmount' => 0,
+                        'netAmount' => 272410986.00,
+                    ],
+                    [
+                        'method' => 'Credit Card',
+                        'totalAmount' => 28381779.00,
+                        'refundAmount' => 0,
+                        'netAmount' => 28381779.00,
+                    ],
+                    [
+                        'method' => 'Customer Credit',
+                        'totalAmount' => 0,
+                        'refundAmount' => 0,
+                        'netAmount' => 0,
+                    ],
+                    [
+                        'method' => 'Customer Package',
+                        'totalAmount' => 0,
+                        'refundAmount' => 0,
+                        'netAmount' => 0,
+                    ],
+                ],
+            ]
+        ];
+
+        return response()->json($data);
+    }
+
+    public function indexNetIncome(Request $request)
+    {
+
+        $data = [
+
+            'totalRevenue' => [
+                'total' => 12954384408.30,
+            ],
+
+            'totalExpenses' => [
+                'total' => 260888263.00,
+            ],
+
+            'netIncome' => [
+                'total' => 12693496145.30,
+            ],
+
+            "chartsRevenueAndExpenses" => [
+                "series" => [
+                    [
+                        "name" => "Revenue",
+                        "data" => [2300000000, 2700000000, 3300000000, 3200000000, 10000000, 1500000000]
+                    ],
+                    [
+                        "name" => "Expenses",
+                        "data" => [0, 100000000, 200000000, 200000000, 200000000, 0]
+                    ]
+                ],
+                "categories" => ["Jan", "Feb", "Mar", "Apr". "May"]
+            ],
+
+            "chartsNetIncome" => [
+                "series" => [
+                    [
+                        "name" => "Net Income",
+                        "data" => [2300000000, 2700000000, 3300000000, 3200000000, 10000000, 1500000000]
+                    ]
+                ],
+                "categories" => ["Jan", "Feb", "Mar", "Apr". "May"]
+            ],
+
+            'table' => [
+                'data' => [
+                    [
+                        'period' => 'Debit Card',
+                        'revenueAmount' => 2278977407.95,
+                        'expensesAmount' => 70000.00,
+                        'netIncome' => 2278977407.95,
                     ],
                     [
                         'method' => 'Cash',

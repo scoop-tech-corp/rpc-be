@@ -192,26 +192,26 @@ class DepositController extends Controller
             'data' => [
                 [
                     'locationName' => "RPC Buaran",
-                    'usedAmount' => 0,
                     'returnedAmount' => 80000,
+                    'usedAmount' => 0,
                     'remainingAmount' => 80000,
                 ],
                 [
                     'locationName' => "RPC Condet",
-                    'usedAmount' => 0,
                     'returnedAmount' => 80000,
+                    'usedAmount' => 80000,
                     'remainingAmount' => 80000,
                 ],
                 [
                     'locationName' => "RPC Hankam",
-                    'usedAmount' => 0,
                     'returnedAmount' => 80000,
+                    'usedAmount' => 80000,
                     'remainingAmount' => 80000,
                 ],
                 [
                     'locationName' => "RPC Pondok Gede",
-                    'usedAmount' => 0,
                     'returnedAmount' => 80000,
+                    'usedAmount' => 80000,
                     'remainingAmount' => 80000,
                 ],
 
