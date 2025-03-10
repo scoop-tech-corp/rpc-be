@@ -43,6 +43,7 @@ use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
@@ -128,6 +129,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //MODULE PRODUCT
     //list produk
     Route::group(['prefix' => 'product'], function () {
+
+        Route::get('/dashboard', [ProductDashboardController::class, 'index']);
 
         Route::post('/supplier', [SupplierController::class, 'create']);
         Route::delete('/supplier', [SupplierController::class, 'delete']);
