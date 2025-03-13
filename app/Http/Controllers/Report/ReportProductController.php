@@ -202,16 +202,19 @@ class ReportProductController extends Controller
             ->get();
 
         $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Product_Low_Stock.xlsx');
-        $sheet = $spreadsheet->getActiveSheet();
+        $sheet = $spreadsheet->getSheet(0);
 
         $sheet->setCellValue('A1', 'Product Name');
         $sheet->setCellValue('B1', 'Category');
         $sheet->setCellValue('C1', 'SKU');
         $sheet->setCellValue('D1', 'Supplier Name');
         $sheet->setCellValue('E1', 'Location');
-        $sheet->setCellValue('F1', 'Low Stock');
+        $sheet->setCellValue('F1', 'In-Stock');
 
         $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:F1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $sheet->getStyle('A1:F1')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
         $row = 2;
         foreach ($data as $item) {
@@ -221,6 +224,8 @@ class ReportProductController extends Controller
             $sheet->setCellValue("D{$row}", $item->supplierName);
             $sheet->setCellValue("E{$row}", $item->locationName);
             $sheet->setCellValue("F{$row}", $item->lowStock);
+
+            $sheet->getStyle("A{$row}:F{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
             $row++;
         }

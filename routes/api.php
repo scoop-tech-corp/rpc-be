@@ -686,6 +686,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/unpaid/export', [ReportSalesController::class, 'exportUnpaid']);
             Route::get('/discountsummary', [ReportSalesController::class, 'indexDiscountSummary']);
             Route::get('/paymentsummary', [ReportSalesController::class, 'indexPaymentSummary']);
+            Route::get('/dailyaudit', [ReportSalesController::class, 'indexDailyAudit']);
+            Route::get('/dailyaudit/export', [ReportSalesController::class, 'exportDailyAudit']);
         });
 
         Route::group(['prefix' => 'service'], function () {});
