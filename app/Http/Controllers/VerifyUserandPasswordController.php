@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use DB;
+use Validator;
 
 class VerifyUserandPasswordController extends Controller
 {
@@ -62,10 +63,31 @@ class VerifyUserandPasswordController extends Controller
 
         try {
 
-            $request->validate([
-                'new_password' => 'required|string|min:3|same:confirm_password',
-                'confirm_password' => 'required',
-            ]);
+            // $request->validate([
+            //     'new_password' => 'required|string|min:3|same:confirm_password',
+            //     'confirm_password' => 'required',
+            // ]);
+            $validate = Validator::make(
+                $request->all(),
+                [
+                    'new_password' => [
+                        'required',
+                        'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/',
+                    ],
+                    'confirm_password' => 'required|same:new_password',
+                ],
+                [
+                    'new_password.regex' => 'The password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character!',
+                    'confirm_password.same' => 'The confirm password must match the password!',
+                ]
+            );
+
+            if ($validate->fails()) {
+
+                $errors = $validate->errors()->all();
+
+                return responseInvalid($errors);
+            }
 
             DB::table('usersEmails')
                 ->where('usersId', '=', $request->hiddenId)
