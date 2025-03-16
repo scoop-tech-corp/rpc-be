@@ -78,38 +78,40 @@ class TimeKeeperController extends Controller
     {
         $temp_column = null;
 
-        $data = DB::table('menuGroups as mg')
-            ->join('users as u', 'mg.userId', 'u.id')
+        $data = DB::table('timekeepers as t')
+            ->join('users as u', 't.userId', 'u.id')
+            ->join('jobTitle as jt', 't.jobtitleId', 'jt.id')
             ->select(
-                'mg.groupName',
+                'jt.jobName',
             )
-            ->where('mg.isDeleted', '=', 0);
+            ->where('t.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('mg.groupName', 'like', '%' . $request->search . '%');
+            $data = $data->where('jt.jobName', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'mg.groupName';
+            $temp_column[] = 'jt.jobName';
         }
 
-        $data = DB::table('menuGroups as mg')
-            ->join('users as u', 'mg.userId', 'u.id')
+        $data = DB::table('timekeepers as t')
+            ->join('users as u', 't.userId', 'u.id')
+            ->join('jobTitle as jt', 't.jobtitleId', 'jt.id')
             ->select(
-                'u.firstName',
+                't.time',
             )
-            ->where('mg.isDeleted', '=', 0);
+            ->where('t.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+            $data = $data->where('t.time', 'like', '%' . $request->search . '%');
         }
 
         $data = $data->get();
 
         if (count($data)) {
-            $temp_column[] = 'u.firstName';
+            $temp_column[] = 't.time';
         }
 
         return $temp_column;
@@ -130,7 +132,7 @@ class TimeKeeperController extends Controller
         }
 
         $title = Timekeeper::where('jobTitleId', '=', $request->jobTitleId)
-            ->where('shiftId','=',$request->shiftId)
+            ->where('shiftId', '=', $request->shiftId)
             ->where('isDeleted', '=', 0)
             ->first();
 
@@ -177,7 +179,7 @@ class TimeKeeperController extends Controller
 
         $jobCheck = Timekeeper::where('jobTitleId', '=', $request->jobTitleId)
             ->where('id', '!=', $request->id)
-            ->where('shiftId','=',$request->shiftId)
+            ->where('shiftId', '=', $request->shiftId)
             ->where('isDeleted', '=', 0)
             ->first();
 
