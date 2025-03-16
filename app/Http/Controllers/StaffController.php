@@ -333,8 +333,6 @@ class StaffController extends Controller
                         ])
                         ->first();
 
-                    //di prod di comment
-
                     if ($checkIfEmailExists) {
                         array_push($checkEmail, 'Email : ' . $val['email'] . ' already exists, please try different email address');
                     }
@@ -697,7 +695,6 @@ class StaffController extends Controller
                     'usersId' => $sendEmailPrimary->usersId,
                 ];
 
-                // di prod di comment
                 Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
 
                 DB::commit();
@@ -2250,13 +2247,6 @@ class StaffController extends Controller
                         }
                     }
 
-                    if ($value['password'] == "") {
-                        return response()->json([
-                            'errors' => 'The given data was invalid.',
-                            'message' => ['There is any empty cell on column Password at row ' . $count_row],
-                        ], 422);
-                    }
-
                     $total_data += 1;
                     $count_row += 1;
                 }
@@ -2552,7 +2542,7 @@ class StaffController extends Controller
                         'roleId' => $src2[$i]['grup_keamanan'],
                         'imageName' => '',
                         'imagePath' => '',
-                        'password' => bcrypt(trim($src1[$i]['password'])),
+                        'password' => '',
                         'email' => trim($resEmail),
                         'isDeleted' => 0,
                         'createdBy' => $request->user()->id,
@@ -2560,6 +2550,21 @@ class StaffController extends Controller
                         'updated_at' => now(),
                         'isLogin' => 0,
                     ]);
+
+                $jobtitleName = JobTitle::where('id', '=', $src1[$i]['jabatan'])->first();
+
+                //send email
+                $dataSendEmail = [
+                    'subject' => 'Radhiyan Pet and Care',
+                    'body' => 'Please verify your account',
+                    'isi' => 'This e-mail was sent from a notification-only address that cannot accept incoming e-mails. Please do not reply to this message.',
+                    'name' => trim($src1[$i]['nama_depan']),
+                    'email' =>  trim($resEmail),
+                    'jobTitle' => $jobtitleName->jobName,
+                    'usersId' => $userId,
+                ];
+
+                Mail::to(trim($resEmail))->send(new SendEmail($dataSendEmail));
 
                 $cardIdentity = explode(';', trim($src1[$i]['kartu_identitas']));
                 $noCardIdentity = explode(';', trim($src1[$i]['nomor_kartu_identitas']));
@@ -3602,7 +3607,6 @@ class StaffController extends Controller
                         'usersId' => $request->id,
                     ];
 
-                    // di prod di comment
                     Mail::to($insertEmailUsers)->send(new SendEmail($data));
 
                     DB::commit();
