@@ -28,7 +28,7 @@ class TimeKeeperController extends Controller
                 CASE
                     WHEN t.shiftId = 1 THEN 'Shift 1'
                     WHEN t.shiftId = 2 THEN 'Shift 2'
-                    WHEN t.shiftId = 3 THEN 'Tidak ada Shift'
+                    WHEN t.shiftId = 0 THEN 'Tidak ada Shift'
                     ELSE 'Unknown'
                 END as shift
             "),
