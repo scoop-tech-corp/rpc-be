@@ -116,11 +116,9 @@ class SalesController extends Controller
         $row = 2;
         foreach ($data['data'] as $item) {
 
-            $saleDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['saleDate'])->locale('en')->isoFormat('D MMMM YYYY');
-
             $sheet->setCellValue("A{$row}", $item['saleId']);
             $sheet->setCellValue("B{$row}", $item['location']);
-            $sheet->setCellValue("C{$row}", $saleDate);
+            $sheet->setCellValue("C{$row}", $item['saleDate']);
             $sheet->setCellValue("D{$row}", $item['status']);
             $sheet->setCellValue("E{$row}", $item['items']);
             $sheet->setCellValue("F{$row}", $item['quantity']);
@@ -251,7 +249,7 @@ class SalesController extends Controller
         $sheet->setCellValue('D1', 'Net Amount (Rp)');
         $sheet->setCellValue('E1', 'Taxes (Rp)');
         $sheet->setCellValue('F1', 'Charges (Rp)');
-        $sheet->setCellValue('C1', 'Total (Rp)');
+        $sheet->setCellValue('G1', 'Total (Rp)');
 
         $sheet->getStyle('A1:G1')->getFont()->setBold(true);
         $sheet->getStyle('A1:G1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
@@ -545,36 +543,36 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12 11:55 PM',
+                    'paidAt' => '12 May 2022 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12 11:55 PM',
+                    'createdAt' => '12 May 2022 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12 11:55 PM',
+                    'paidAt' => '12 May 2022 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12 11:55 PM',
+                    'createdAt' => '12 May 2022 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12 11:55 PM',
+                    'paidAt' => '12 May 2022 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12 11:55 PM',
+                    'createdAt' => '12 May 2022 11:55 PM',
                     'totalAmount' => 29000,
                 ],
                 [
                     'saleId' => 'INV-12345',
                     'location' => 'RPC Duren',
                     'paymentMethod' => 'Transfer',
-                    'paidAt' => '2022-05-12 11:55 PM',
+                    'paidAt' => '12 May 2022 11:55 PM',
                     'createdBy' => 'Agus',
-                    'createdAt' => '2022-05-12 11:55 PM',
+                    'createdAt' => '12 May 2022 11:55 PM',
                     'totalAmount' => 29000,
                 ],
             ]
@@ -693,31 +691,40 @@ class SalesController extends Controller
             'data' => [
                 [
                     'saleId' => 'INV-12345',
-                    'refNumber' => '1212',
+                    'refNumber' => '1213',
                     'location' => 'RPC Duren',
-                    'saleDate' => '2022-05-12',
+                    'saleDate' => '12 May 2024',
                     'status' => 'Active',
                     'items' => ['Proplan Sachet', 'Aboket'],
                     'totalAmount' => 0,
                     'paymentMethod' => [
-                        'amount' => 47000,
-                        'method' => 'Cash',
-                        'date' => '2022-05-12'
+                        [
+                            'amount' => 47000,
+                            'method' => 'Cash',
+                            'date' => '12/5/2022'
+                        ]
                     ],
                     'payment' => 'Paid',
                 ],
                 [
                     'saleId' => 'INV-12345',
-                    'refNumber' => '1213',
+                    'refNumber' => '1212',
                     'location' => 'RPC Duren',
-                    'saleDate' => '2022-05-12',
+                    'saleDate' => '12 May 2024',
                     'status' => 'Active',
                     'items' => ['Proplan Sachet', 'Aboket'],
                     'totalAmount' => 0,
                     'paymentMethod' => [
-                        'amount' => 47000,
-                        'method' => 'Cash',
-                        'date' => '2022-05-12'
+                        [
+                            'amount' => 47000,
+                            'method' => 'Cash',
+                            'date' => '12/5/2022'
+                        ],
+                        [
+                            'amount' => 20000,
+                            'method' => 'Debit',
+                            'date' => '12/5/2022'
+                        ]
                     ],
                     'payment' => 'Paid',
                 ],
@@ -725,14 +732,16 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'refNumber' => '1211',
                     'location' => 'RPC Duren',
-                    'saleDate' => '2022-05-12',
+                    'saleDate' => '12 May 2024',
                     'status' => 'Active',
                     'items' => ['Proplan Sachet', 'Aboket'],
                     'totalAmount' => 0,
                     'paymentMethod' => [
-                        'amount' => 47000,
-                        'method' => 'Cash',
-                        'date' => '2022-05-12'
+                        [
+                            'amount' => 47000,
+                            'method' => 'Bank Transfer',
+                            'date' => '12/5/2022'
+                        ]
                     ],
                     'payment' => 'Paid',
                 ],
@@ -740,14 +749,16 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'refNumber' => '1223',
                     'location' => 'RPC Duren',
-                    'saleDate' => '2022-05-12',
+                    'saleDate' => '12 May 2024',
                     'status' => 'Active',
                     'items' => ['Proplan Sachet', 'Aboket'],
                     'totalAmount' => 0,
                     'paymentMethod' => [
-                        'amount' => 47000,
-                        'method' => 'Cash',
-                        'date' => '2022-05-12'
+                        [
+                            'amount' => 47000,
+                            'method' => 'Bank Transfer',
+                            'date' => '12/5/2022'
+                        ]
                     ],
                     'payment' => 'Paid',
                 ],
@@ -765,31 +776,40 @@ class SalesController extends Controller
             'data' => [
                 [
                     'saleId' => 'INV-12345',
-                    'refNumber' => '1212',
+                    'refNumber' => '1213',
                     'location' => 'RPC Duren',
-                    'saleDate' => '2022-05-12',
+                    'saleDate' => '12 May 2024',
                     'status' => 'Active',
                     'items' => ['Proplan Sachet', 'Aboket'],
                     'totalAmount' => 0,
                     'paymentMethod' => [
-                        'amount' => 47000,
-                        'method' => 'Cash',
-                        'date' => '2022-05-12'
+                        [
+                            'amount' => 47000,
+                            'method' => 'Cash',
+                            'date' => '12/5/2022'
+                        ]
                     ],
                     'payment' => 'Paid',
                 ],
                 [
                     'saleId' => 'INV-12345',
-                    'refNumber' => '1213',
+                    'refNumber' => '1212',
                     'location' => 'RPC Duren',
-                    'saleDate' => '2022-05-12',
+                    'saleDate' => '12 May 2024',
                     'status' => 'Active',
                     'items' => ['Proplan Sachet', 'Aboket'],
                     'totalAmount' => 0,
                     'paymentMethod' => [
-                        'amount' => 47000,
-                        'method' => 'Cash',
-                        'date' => '2022-05-12'
+                        [
+                            'amount' => 47000,
+                            'method' => 'Cash',
+                            'date' => '12/5/2022'
+                        ],
+                        [
+                            'amount' => 20000,
+                            'method' => 'Debit',
+                            'date' => '12/5/2022'
+                        ]
                     ],
                     'payment' => 'Paid',
                 ],
@@ -797,14 +817,16 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'refNumber' => '1211',
                     'location' => 'RPC Duren',
-                    'saleDate' => '2022-05-12',
+                    'saleDate' => '12 May 2024',
                     'status' => 'Active',
                     'items' => ['Proplan Sachet', 'Aboket'],
                     'totalAmount' => 0,
                     'paymentMethod' => [
-                        'amount' => 47000,
-                        'method' => 'Cash',
-                        'date' => '2022-05-12'
+                        [
+                            'amount' => 47000,
+                            'method' => 'Bank Transfer',
+                            'date' => '12/5/2022'
+                        ]
                     ],
                     'payment' => 'Paid',
                 ],
@@ -812,14 +834,16 @@ class SalesController extends Controller
                     'saleId' => 'INV-12345',
                     'refNumber' => '1223',
                     'location' => 'RPC Duren',
-                    'saleDate' => '2022-05-12',
+                    'saleDate' => '12 May 2024',
                     'status' => 'Active',
                     'items' => ['Proplan Sachet', 'Aboket'],
                     'totalAmount' => 0,
                     'paymentMethod' => [
-                        'amount' => 47000,
-                        'method' => 'Cash',
-                        'date' => '2022-05-12'
+                        [
+                            'amount' => 47000,
+                            'method' => 'Bank Transfer',
+                            'date' => '12/5/2022'
+                        ]
                     ],
                     'payment' => 'Paid',
                 ],
@@ -847,20 +871,18 @@ class SalesController extends Controller
         $row = 2;
         foreach ($data['data'] as $item) {
 
-            $saleDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['saleDate'])->locale('en')->isoFormat('D MMMM YYYY');
-
             $itemsString = implode(', ', $item['items']);
 
-            $paymentDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['paymentMethod']['date'])
-                ->format('j/n/Y'); 
-
-            $paymentMethodString = $item['paymentMethod']['amount'] . ' (' . $item['paymentMethod']['method'] . ') ' . $paymentDate;
-
+            $paymentMethodStrings = [];
+            foreach ($item['paymentMethod'] as $payment) {
+                $paymentMethodStrings[] = $payment['method'] . ' (' . number_format($payment['amount'], 0, ',', '.') . ' Rp) - ' . $payment['date'];
+            }
+            $paymentMethodString = implode(', ', $paymentMethodStrings);
 
             $sheet->setCellValue("A{$row}", $item['saleId']);
             $sheet->setCellValue("B{$row}", $item['refNumber']);
             $sheet->setCellValue("C{$row}", $item['location']);
-            $sheet->setCellValue("D{$row}", $saleDate);
+            $sheet->setCellValue("D{$row}", $item['saleDate']);
             $sheet->setCellValue("E{$row}", $item['status']);
             $sheet->setCellValue("F{$row}", $itemsString);
             $sheet->setCellValue("G{$row}", $item['totalAmount']);
@@ -1241,7 +1263,7 @@ class SalesController extends Controller
                         "data" => [0, 100000000, 200000000, 200000000, 200000000, 0]
                     ]
                 ],
-                "categories" => ["Jan", "Feb", "Mar", "Apr". "May"]
+                "categories" => ["Jan", "Feb", "Mar", "Apr" . "May"]
             ],
 
             "chartsNetIncome" => [
@@ -1251,51 +1273,225 @@ class SalesController extends Controller
                         "data" => [2300000000, 2700000000, 3300000000, 3200000000, 10000000, 1500000000]
                     ]
                 ],
-                "categories" => ["Jan", "Feb", "Mar", "Apr". "May"]
+                "categories" => ["Jan", "Feb", "Mar", "Apr" . "May"]
             ],
 
             'table' => [
                 'data' => [
                     [
-                        'period' => 'Debit Card',
+                        'period' => 'Jan',
                         'revenueAmount' => 2278977407.95,
                         'expensesAmount' => 70000.00,
                         'netIncome' => 2278977407.95,
                     ],
                     [
-                        'method' => 'Cash',
-                        'totalAmount' => 434766400.70,
-                        'refundAmount' => 1303500.00,
-                        'netAmount' => 433462900.70,
+                        'period' => 'Feb',
+                        'revenueAmount' => 2737031819.70,
+                        'expensesAmount' => 70000.00,
+                        'netIncome' => 2278977407.95,
                     ],
                     [
-                        'method' => 'Bank Transfer',
-                        'totalAmount' => 272410986.00,
-                        'refundAmount' => 0,
-                        'netAmount' => 272410986.00,
+                        'period' => 'Mar',
+                        'revenueAmount' => 3271008567.00,
+                        'expensesAmount' => 70000.00,
+                        'netIncome' => 2278977407.95,
                     ],
                     [
-                        'method' => 'Credit Card',
-                        'totalAmount' => 28381779.00,
-                        'refundAmount' => 0,
-                        'netAmount' => 28381779.00,
+                        'period' => 'Apr',
+                        'revenueAmount' => 3148391525.15,
+                        'expensesAmount' => 70000.00,
+                        'netIncome' => 2278977407.95,
                     ],
                     [
-                        'method' => 'Customer Credit',
-                        'totalAmount' => 0,
-                        'refundAmount' => 0,
-                        'netAmount' => 0,
+                        'period' => 'May',
+                        'revenueAmount' => 1498196588.50,
+                        'expensesAmount' => 70000.00,
+                        'netIncome' => 2278977407.95,
+                    ]
+                ],
+            ]
+        ];
+
+        return response()->json($data);
+    }
+
+    public function indexDailyAudit(Request $request)
+    {
+
+        $data = [
+
+            'table' => [
+                'data' => [
+                    [
+                        'day' => 1,
+                        'date' => '1/5/2022',
+                        'salesSummary' => [
+                            'salesValue' => 4343239.50,
+                            'discounts' => 189260.50
+                        ],
+                        'paymentSummary' => [
+                            'cash' => 2404500.00,
+                            'creditCard' => 0.00,
+                            'bankTransfer' => 1904750.00,
+                            'debitCard' => 2752989.50,
+                            'totalAmount' => 7062239.50
+                        ],
                     ],
                     [
-                        'method' => 'Customer Package',
-                        'totalAmount' => 0,
-                        'refundAmount' => 0,
-                        'netAmount' => 0,
+                        'day' => 2,
+                        'date' => '2/5/2022',
+                        'salesSummary' => [
+                            'salesValue' => 4343239.50,
+                            'discounts' => 189260.50
+                        ],
+                        'paymentSummary' => [
+                            'cash' => 2404500.00,
+                            'creditCard' => 0.00,
+                            'bankTransfer' => 1904750.00,
+                            'debitCard' => 2752989.50,
+                            'totalAmount' => 7062239.50
+                        ],
+                    ],
+                    [
+                        'day' => 3,
+                        'date' => '3/5/2022',
+                        'salesSummary' => [
+                            'salesValue' => 4343239.50,
+                            'discounts' => 189260.50
+                        ],
+                        'paymentSummary' => [
+                            'cash' => 2404500.00,
+                            'creditCard' => 0.00,
+                            'bankTransfer' => 1904750.00,
+                            'debitCard' => 2752989.50,
+                            'totalAmount' => 7062239.50
+                        ],
                     ],
                 ],
             ]
         ];
 
         return response()->json($data);
+    }
+
+    public function exportDailyAudit(Request $request)
+    {
+        $data = [
+            'table' => [
+                'data' => [
+                    [
+                        'day' => 1,
+                        'date' => '1/5/2022',
+                        'salesSummary' => [
+                            'salesValue' => 4343239.50,
+                            'discounts' => 189260.50
+                        ],
+                        'paymentSummary' => [
+                            'cash' => 2404500.00,
+                            'creditCard' => 0.00,
+                            'bankTransfer' => 1904750.00,
+                            'debitCard' => 2752989.50,
+                            'totalAmount' => 7062239.50
+                        ],
+                    ],
+                    [
+                        'day' => 2,
+                        'date' => '2/5/2022',
+                        'salesSummary' => [
+                            'salesValue' => 4343239.50,
+                            'discounts' => 189260.50
+                        ],
+                        'paymentSummary' => [
+                            'cash' => 2404500.00,
+                            'creditCard' => 0.00,
+                            'bankTransfer' => 1904750.00,
+                            'debitCard' => 2752989.50,
+                            'totalAmount' => 7062239.50
+                        ],
+                    ],
+                    [
+                        'day' => 3,
+                        'date' => '3/5/2022',
+                        'salesSummary' => [
+                            'salesValue' => 4343239.50,
+                            'discounts' => 189260.50
+                        ],
+                        'paymentSummary' => [
+                            'cash' => 2404500.00,
+                            'creditCard' => 0.00,
+                            'bankTransfer' => 1904750.00,
+                            'debitCard' => 2752989.50,
+                            'totalAmount' => 7062239.50
+                        ],
+                    ],
+                ],
+            ]
+        ];
+
+        // Memuat template Excel (jika ada), atau buat spreadsheet baru
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Menulis header kolom pada baris 1 dan 2
+        $sheet->setCellValue('A1', 'Day');
+        $sheet->setCellValue('B1', 'Date');
+        $sheet->setCellValue('C1', 'Sales Summary');
+        $sheet->setCellValue('D1', 'Payment Summary');
+
+        // Menggabungkan kolom Day dan Date
+        $sheet->mergeCells('A1:B1');
+        $sheet->mergeCells('C1:C2');
+        $sheet->mergeCells('D1:I1');
+
+        // Menulis sub-header untuk Sales Summary dan Payment Summary
+        $sheet->setCellValue('C2', 'Sales Value (Rp)');
+        $sheet->setCellValue('D2', 'Discounts (Rp)');
+        $sheet->setCellValue('E2', 'Cash (Rp)');
+        $sheet->setCellValue('F2', 'Credit Card (Rp)');
+        $sheet->setCellValue('G2', 'Bank Transfer (Rp)');
+        $sheet->setCellValue('H2', 'Debit Card (Rp)');
+        $sheet->setCellValue('I2', 'Total Amount (Rp)');
+
+        // Menambahkan style pada header
+        $sheet->getStyle('A1:I2')->getFont()->setBold(true);
+        $sheet->getStyle('A1:I2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:I2')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+        // Menulis data dari $data
+        $row = 3;  // Data mulai dari baris ke-3
+        foreach ($data['table']['data'] as $item) {
+            $sheet->setCellValue("A{$row}", $item['day']);
+            $sheet->setCellValue("B{$row}", $item['date']);
+            $sheet->setCellValue("C{$row}", $item['salesSummary']['salesValue']);
+            $sheet->setCellValue("D{$row}", $item['salesSummary']['discounts']);
+            $sheet->setCellValue("E{$row}", $item['paymentSummary']['cash']);
+            $sheet->setCellValue("F{$row}", $item['paymentSummary']['creditCard']);
+            $sheet->setCellValue("G{$row}", $item['paymentSummary']['bankTransfer']);
+            $sheet->setCellValue("H{$row}", $item['paymentSummary']['debitCard']);
+            $sheet->setCellValue("I{$row}", $item['paymentSummary']['totalAmount']);
+
+            // Menambahkan border untuk setiap baris data
+            $sheet->getStyle("A{$row}:I{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            $row++;
+        }
+
+        // Menyesuaikan ukuran kolom agar otomatis sesuai dengan kontennya
+        foreach (range('A', 'I') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        // Menulis dan menyimpan file Excel
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Daily_Audit.xlsx';
+        $writer->save($newFilePath);
+
+        // Mengirim file Excel untuk diunduh oleh pengguna
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export_Sales_Daily_Audit.xlsx"',
+        ]);
     }
 }
