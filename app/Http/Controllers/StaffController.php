@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Mail;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\Staff\exportStaff;
-use App\Models\Staff\TypeId;
 use Illuminate\Http\Request;
 use App\Mail\SendEmail;
 use GuzzleHttp\Client;
@@ -22,7 +21,6 @@ use App\Models\Staff\UsersLocation;
 use App\Models\Staff\UsersMessengers;
 use App\Models\Staff\UsersRoles;
 use App\Models\Staff\UsersTelephones;
-use App\Models\User;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
