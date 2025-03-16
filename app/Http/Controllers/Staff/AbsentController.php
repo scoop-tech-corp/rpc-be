@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Exports\Absent\AbsentReport;
 use App\Http\Controllers\Controller;
 use App\Models\StaffAbsents;
+use App\Models\Timekeeper;
 use Illuminate\Http\Request;
 use Validator;
 use Illuminate\Support\Carbon;
@@ -475,6 +476,7 @@ class AbsentController extends Controller
                 'users.imagePath',
                 'users.roleId',
                 DB::raw("IF(usersRoles.roleName IS NULL, '', usersRoles.roleName) as roleName"),
+                'jobTitle.id as jobTitleId',
                 DB::raw("IF(jobTitle.jobName IS NULL,'', jobTitle.jobName) as jobName"),
                 DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.lastName,'')) as name"),
             )
@@ -483,22 +485,22 @@ class AbsentController extends Controller
             ])
             ->first();
 
+        $keeper = Timekeeper::where('jobtitleId', '=', $users->jobTitleId)->get();
 
-        if ($users->jobName == 'Dokter Hewan') {
+        if (count($keeper) > 1) {
             $validate = Validator::make($request->all(), [
                 'shift' => 'required|integer|in:1,2',
             ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid([$errors]);
+            }
         }
 
         $currentDate = Carbon::now();
         $presentTime = $currentDate->format('d/m/Y H:i');
         $presentTime2 = $currentDate->format('Y-m-d H:i');
-
-        if ($validate->fails()) {
-            $errors = $validate->errors()->all();
-
-            return responseInvalid([$errors]);
-        }
 
         $present = DB::table('staffAbsents')
             ->where('userId', '=', $request->user()->id)
@@ -565,32 +567,17 @@ class AbsentController extends Controller
         $status = "";
         $shift = "";
 
-        if ($users->jobName == 'Dokter Hewan') {
+        $keeperRes = Timekeeper::where('jobtitleId', '=', $users->jobTitleId);
+
+        if (count($keeper) > 1) {
+            $keeperRes = $keeperRes->where('shiftId', '=', $request->shift);
             $shift = 'Shift ' . $request->shift;
-            if ($request->shift == 1) {
-                $time2 = Carbon::createFromFormat('H:i', '15:45', 'Asia/Jakarta')->setTimezone('UTC');
-                //$time2 = Carbon::createFromFormat('H:i', '08:45');
-            } elseif ($request->shift == 2) {
-                $time2 = Carbon::createFromFormat('H:i', '21:00', 'Asia/Jakarta')->setTimezone('UTC');
-                //$time2 = Carbon::createFromFormat('H:i', '14:00');
-            }
-        } else if ($users->jobName == 'Paramedis') {
-            $time2 = Carbon::createFromFormat('H:i', '15:45', 'Asia/Jakarta')->setTimezone('UTC');
-            // $time2 = Carbon::parse('08:45');
-        } else if ($users->jobName == 'Kasir') {
-            $time2 = Carbon::createFromFormat('H:i', '15:30', 'Asia/Jakarta')->setTimezone('UTC');
-            // $time2 = Carbon::parse('08:30');
-        } else if ($users->jobName == 'Vetnurse') {
-            $time2 = Carbon::createFromFormat('H:i', '15:30', 'Asia/Jakarta')->setTimezone('UTC');
-            // $time2 = Carbon::parse('08:30');
-        } else {
-            //if ($request->user()->jobName == 6) {
-            $time2 = Carbon::createFromFormat('H:i', '19:30', 'Asia/Jakarta')->setTimezone('UTC');
-            // $time2 = Carbon::parse('12:30');
         }
 
+        $keeperRes = $keeperRes->first();
 
-        $time1 = Carbon::now()->addHour(7); // Jam dan menit pertama
+        $time2 = $keeperRes->time;
+        $time1 = Carbon::now();
 
         if ($time1->greaterThan($time2)) {
             $status = "Terlambat";
@@ -599,6 +586,41 @@ class AbsentController extends Controller
         } else {
             $status = "Tepat Waktu";
         }
+
+        // if ($users->jobName == 'Dokter Hewan') {
+        //     $shift = 'Shift ' . $request->shift;
+        //     if ($request->shift == 1) {
+        //         $time2 = Carbon::createFromFormat('H:i', '15:45', 'Asia/Jakarta')->setTimezone('UTC');
+        //         //$time2 = Carbon::createFromFormat('H:i', '08:45');
+        //     } elseif ($request->shift == 2) {
+        //         $time2 = Carbon::createFromFormat('H:i', '21:00', 'Asia/Jakarta')->setTimezone('UTC');
+        //         //$time2 = Carbon::createFromFormat('H:i', '14:00');
+        //     }
+        // } else if ($users->jobName == 'Paramedis') {
+        //     $time2 = Carbon::createFromFormat('H:i', '15:45', 'Asia/Jakarta')->setTimezone('UTC');
+        //     // $time2 = Carbon::parse('08:45');
+        // } else if ($users->jobName == 'Kasir') {
+        //     $time2 = Carbon::createFromFormat('H:i', '15:30', 'Asia/Jakarta')->setTimezone('UTC');
+        //     // $time2 = Carbon::parse('08:30');
+        // } else if ($users->jobName == 'Vetnurse') {
+        //     $time2 = Carbon::createFromFormat('H:i', '15:30', 'Asia/Jakarta')->setTimezone('UTC');
+        //     // $time2 = Carbon::parse('08:30');
+        // } else {
+        //     //if ($request->user()->jobName == 6) {
+        //     $time2 = Carbon::createFromFormat('H:i', '19:30', 'Asia/Jakarta')->setTimezone('UTC');
+        //     // $time2 = Carbon::parse('12:30');
+        // }
+
+
+        // $time1 = Carbon::now()->addHour(7); // Jam dan menit pertama
+
+        // if ($time1->greaterThan($time2)) {
+        //     $status = "Terlambat";
+        // } elseif ($time1->lessThan($time2)) {
+        //     $status = "Tepat Waktu";
+        // } else {
+        //     $status = "Tepat Waktu";
+        // }
 
         if (!$present) {
 

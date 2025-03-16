@@ -43,11 +43,13 @@ use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
 use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
+use App\Http\Controllers\TimeKeeperController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -127,6 +129,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //MODULE PRODUCT
     //list produk
     Route::group(['prefix' => 'product'], function () {
+
+        Route::get('/dashboard', [ProductDashboardController::class, 'index']);
 
         Route::post('/supplier', [SupplierController::class, 'create']);
         Route::delete('/supplier', [SupplierController::class, 'delete']);
@@ -490,6 +494,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/last-order-child-menu-group', [MenuManagementController::class, 'lastOrderChildMenu']);
         Route::get('/last-order-grand-child-menu-group', [MenuManagementController::class, 'lastOrderGrandChildMenu']);
 
+        Route::get('/timekeeper', [TimeKeeperController::class, 'index']);
+        Route::post('/timekeeper', [TimeKeeperController::class, 'insert']);
+        Route::put('/timekeeper', [TimeKeeperController::class, 'update']);
+        Route::delete('/timekeeper', [TimeKeeperController::class, 'delete']);
+
         Route::get('/list-menu-group', [MenuManagementController::class, 'listMenuGroup']);
         Route::get('/menu-group', [MenuManagementController::class, 'indexMenuGroup']);
         Route::post('/menu-group', [MenuManagementController::class, 'insertMenuGroup']);
@@ -677,6 +686,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/unpaid/export', [ReportSalesController::class, 'exportUnpaid']);
             Route::get('/discountsummary', [ReportSalesController::class, 'indexDiscountSummary']);
             Route::get('/paymentsummary', [ReportSalesController::class, 'indexPaymentSummary']);
+            Route::get('/dailyaudit', [ReportSalesController::class, 'indexDailyAudit']);
+            Route::get('/dailyaudit/export', [ReportSalesController::class, 'exportDailyAudit']);
         });
 
         Route::group(['prefix' => 'service'], function () {});
