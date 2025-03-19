@@ -901,14 +901,14 @@ class SalesController extends Controller
         }
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Details.xlsx';
+        $newFilePath = public_path() . '/template_download/' . 'Export Sales Details.xlsx';
         $writer->save($newFilePath);
 
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export_Sales_Details.xlsx"',
+            'Content-Disposition' => 'attachment; filename="Export Sales Details.xlsx"',
         ]);
     }
 
@@ -1075,14 +1075,14 @@ class SalesController extends Controller
         }
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Unpaid.xlsx';
+        $newFilePath = public_path() . '/template_download/' . 'Export Sales Unpaid.xlsx';
         $writer->save($newFilePath);
 
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export_Sales_Unpaid.xlsx"',
+            'Content-Disposition' => 'attachment; filename="Export Sales Unpaid.xlsx"',
         ]);
     }
 
@@ -1263,7 +1263,7 @@ class SalesController extends Controller
                         "data" => [0, 100000000, 200000000, 200000000, 200000000, 0]
                     ]
                 ],
-                "categories" => ["Jan", "Feb", "Mar", "Apr" . "May"]
+                "categories" => ["Jan", "Feb", "Mar", "Apr", "May"]
             ],
 
             "chartsNetIncome" => [
@@ -1273,7 +1273,7 @@ class SalesController extends Controller
                         "data" => [2300000000, 2700000000, 3300000000, 3200000000, 10000000, 1500000000]
                     ]
                 ],
-                "categories" => ["Jan", "Feb", "Mar", "Apr" . "May"]
+                "categories" => ["Jan", "Feb", "Mar", "Apr", "May"]
             ],
 
             'table' => [
@@ -1428,20 +1428,19 @@ class SalesController extends Controller
             ]
         ];
 
-        // Memuat template Excel (jika ada), atau buat spreadsheet baru
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Sales_Daily_Audit.xlsx');
+        $sheet = $spreadsheet->getSheet(0);
 
         // Menulis header kolom pada baris 1 dan 2
-        $sheet->setCellValue('A1', 'Day');
-        $sheet->setCellValue('B1', 'Date');
+        $sheet->setCellValue('A2', 'Day');
+        $sheet->setCellValue('B2', 'Date');
         $sheet->setCellValue('C1', 'Sales Summary');
-        $sheet->setCellValue('D1', 'Payment Summary');
+        $sheet->setCellValue('E1', 'Payment Summary');
 
         // Menggabungkan kolom Day dan Date
         $sheet->mergeCells('A1:B1');
-        $sheet->mergeCells('C1:C2');
-        $sheet->mergeCells('D1:I1');
+        $sheet->mergeCells('C1:D1');
+        $sheet->mergeCells('E1:I1');
 
         // Menulis sub-header untuk Sales Summary dan Payment Summary
         $sheet->setCellValue('C2', 'Sales Value (Rp)');
@@ -1483,7 +1482,7 @@ class SalesController extends Controller
 
         // Menulis dan menyimpan file Excel
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Daily_Audit.xlsx';
+        $newFilePath = public_path() . '/template_download/' . 'Export Sales Daily Audit.xlsx';
         $writer->save($newFilePath);
 
         // Mengirim file Excel untuk diunduh oleh pengguna
@@ -1491,7 +1490,7 @@ class SalesController extends Controller
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export_Sales_Daily_Audit.xlsx"',
+            'Content-Disposition' => 'attachment; filename="Export Sales Daily Audit.xlsx"',
         ]);
     }
 }
