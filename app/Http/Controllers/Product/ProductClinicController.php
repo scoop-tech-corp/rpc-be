@@ -2,18 +2,9 @@
 
 namespace App\Http\Controllers\Product;
 
-use App\Models\ProductClinic;
-use App\Models\ProductClinicCustomerGroup;
 use App\Models\ProductClinicDosage;
-use App\Models\ProductClinicImages;
-use App\Models\ProductClinicLocation;
-use App\Models\ProductClinicPriceLocation;
-use App\Models\ProductClinicQuantity;
-use App\Models\ProductClinicReminder;
 use App\Exports\Product\ProductClinicReport;
-use App\Exports\Product\ProductSellReport;
 use App\Exports\Product\TemplateUploadProductClinic;
-use App\Imports\Product\ImportProductClinic;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -719,7 +710,7 @@ class ProductClinicController
 
                 foreach ($ResultDosages as $dos) {
                     ProductClinicDosage::create([
-                        'productId' => $product->id,
+                        'productClinicId' => $product->id,
                         'from' => $dos['from'],
                         'to' => $dos['to'],
                         'dosage' => $dos['dosage'],
@@ -991,7 +982,7 @@ class ProductClinicController
             ->get();
 
         $prod->dosages = DB::table('productClinicDosages as pcd')
-            ->join('products as pc', 'pcd.productId', 'pc.id')
+            ->join('products as pc', 'pcd.productClinicId', 'pc.id')
             ->select(
                 'pcd.id',
                 DB::raw("TRIM(pcd.from)+0 as fromWeight"),
@@ -1435,7 +1426,7 @@ class ProductClinicController
                     ProductClinicDosage::updateOrCreate(
                         ['id' => $val['id']],
                         [
-                            'productId' => $product->id,
+                            'productClinicId' => $product->id,
                             'from' => $val['from'],
                             'to' => $val['to'],
                             'dosage' => $val['dosage'],
