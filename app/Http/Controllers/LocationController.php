@@ -2257,31 +2257,22 @@ class LocationController extends Controller
             ], 422);
         }
 
+        $data = DB::table('location as l')
+            ->join('productLocations as psl', 'l.id', 'psl.locationId')
+            ->join('products as ps', 'ps.id', 'psl.productId')
+            ->select('l.id', 'l.locationName')
+            ->where('l.isDeleted', '=', 0)
+            ->where('l.id', '<>', $request->locationId)
+            ->where('ps.fullName', '=', $request->productName);
+
         if ($request->productType == 'productSell') {
-
-            $data = DB::table('location as l')
-                ->join('productSellLocations as psl', 'l.id', 'psl.locationId')
-                ->join('productSells as ps', 'ps.id', 'psl.productSellId')
-                ->select('l.id', 'l.locationName')
-                ->where('l.isDeleted', '=', 0)
-                ->where('l.id', '<>', $request->locationId)
-                ->where('ps.fullName', '=', $request->productName)
-                ->orderBy('l.created_at', 'desc')
-                ->get();
-            return response()->json($data, 200);
+            $data = $data->where('ps.category', '=', 'sell');
         } elseif ($request->productType == 'productClinic') {
-
-            $data = DB::table('location as l')
-                ->join('productClinicLocations as pcl', 'l.id', 'pcl.locationId')
-                ->join('productClinics as ps', 'ps.id', 'pcl.productClinicId')
-                ->select('l.id', 'l.locationName')
-                ->where('l.isDeleted', '=', 0)
-                ->where('l.id', '<>', $request->locationId)
-                ->where('ps.fullName', '=', $request->productName)
-                ->orderBy('l.created_at', 'desc')
-                ->get();
-            return response()->json($data, 200);
+            $data = $data->where('ps.category', '=', 'clinic');
         }
+
+        $data = $data->get();
+        return response()->json($data, 200);
     }
 
     public function locationDestination(Request $request)
