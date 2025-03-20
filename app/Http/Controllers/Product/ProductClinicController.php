@@ -718,7 +718,7 @@ class ProductClinicController
                 }
 
                 foreach ($ResultDosages as $dos) {
-                    ProductDosage::create([
+                    ProductClinicDosage::create([
                         'productId' => $product->id,
                         'from' => $dos['from'],
                         'to' => $dos['to'],
@@ -990,7 +990,7 @@ class ProductClinicController
             ->where('pci.isDeleted', '=', 0)
             ->get();
 
-        $prod->dosages = DB::table('productDosages as pcd')
+        $prod->dosages = DB::table('productClinicDosages as pcd')
             ->join('products as pc', 'pcd.productId', 'pc.id')
             ->select(
                 'pcd.id',
@@ -1422,7 +1422,7 @@ class ProductClinicController
             foreach ($ResultDosages as $val) {
 
                 if ($val['status'] == 'del') {
-                    ProductDosage::where('id', '=', $val['id'])
+                    ProductClinicDosage::where('id', '=', $val['id'])
                         ->where('isDeleted', '=', 0)
                         ->update(
                             [
@@ -1432,7 +1432,7 @@ class ProductClinicController
                             ]
                         );
                 } else {
-                    ProductDosage::updateOrCreate(
+                    ProductClinicDosage::updateOrCreate(
                         ['id' => $val['id']],
                         [
                             'productId' => $product->id,
