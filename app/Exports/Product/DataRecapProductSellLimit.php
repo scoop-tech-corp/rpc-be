@@ -53,7 +53,7 @@ class DataRecapProductSellLimit implements FromCollection, ShouldAutoSize, WithH
             )
             ->where('ps.isDeleted', '=', 0)
             ->where('psl.diffStock', '<=', 0)
-            ->where('pc.category', '=', 'sell');
+            ->where('ps.category', '=', 'sell');
 
         $locations = $this->locationId;
 

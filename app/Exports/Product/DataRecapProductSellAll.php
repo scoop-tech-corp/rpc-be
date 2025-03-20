@@ -51,7 +51,7 @@ class DataRecapProductSellAll implements FromCollection, ShouldAutoSize, WithHea
                 DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
             )
             ->where('ps.isDeleted', '=', 0)
-            ->where('pc.category', '=', 'sell');
+            ->where('ps.category', '=', 'sell');
 
         $locations = $this->locationId;
 
