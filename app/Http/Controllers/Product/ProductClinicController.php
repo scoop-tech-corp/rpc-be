@@ -990,7 +990,7 @@ class ProductClinicController
                 DB::raw("TRIM(pcd.dosage)+0 as dosage"),
                 'pcd.unit',
             )
-            ->where('pcd.productId', '=', $request->id)
+            ->where('pcd.productClinicId', '=', $request->id)
             ->where('pcd.isDeleted', '=', 0)
             ->get();
 
