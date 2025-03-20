@@ -88,7 +88,7 @@ class ProductClinicController
 
         if ($request->category) {
 
-            $cat = DB::table('productCategories as pc')
+            $cat = DB::table('productCoreCategories as pc')
                 ->select('productId')
                 ->whereIn('productCategoryId', $request->category)
                 ->where('pc.isDeleted', '=', 0)
