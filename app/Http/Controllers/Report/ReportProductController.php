@@ -662,42 +662,42 @@ class ReportProductController extends Controller
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Fariez Tachsin',
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Belia',
                     'subAccount' => 'Pino',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62812299338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Fariez Tachsin',
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Fariez Tachsin',
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Fariez Tachsin',
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '30 May 2022 (17 days from now)',
                 ],
             ]
         ];
@@ -716,42 +716,42 @@ class ReportProductController extends Controller
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Fariez Tachsin',
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Belia',
                     'subAccount' => 'Pino',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62812299338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Fariez Tachsin',
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Fariez Tachsin',
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '31 May 2022 (18 days from now)',
                 ],
                 [
                     'customerName' => 'Fariez Tachsin',
                     'subAccount' => 'Kimi',
                     'productName' => 'Vaksin Felocell 4 / F4 (1 pcs)',
                     'phoneNumber' => '62811999338',
-                    'dueDate' => '2022-05-31',
+                    'dueDate' => '30 May 2022 (17 days from now)',
                 ],
             ]
         ];
@@ -771,13 +771,13 @@ class ReportProductController extends Controller
         $row = 2;
         foreach ($data['data'] as $item) {
             
-            $dueDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['dueDate'])->locale('en')->isoFormat('D MMMM YYYY');
+            // $dueDate = \Carbon\Carbon::createFromFormat('Y-m-d', $item['dueDate'])->locale('en')->isoFormat('D MMMM YYYY');
 
             $sheet->setCellValue("A{$row}", $item['customerName']);
             $sheet->setCellValue("B{$row}", $item['subAccount']);
             $sheet->setCellValue("C{$row}", $item['productName']);
             $sheet->setCellValue("D{$row}", $item['phoneNumber']);
-            $sheet->setCellValue("E{$row}", $dueDate);
+            $sheet->setCellValue("E{$row}", $item['dueDate']);
 
             $sheet->getStyle("A{$row}:E{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
