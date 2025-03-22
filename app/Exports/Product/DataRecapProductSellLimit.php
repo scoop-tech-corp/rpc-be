@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
 
-class DataRecapProductLimit implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
+class DataRecapProductSellLimit implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
 {
     use Exportable;
 
@@ -53,7 +53,7 @@ class DataRecapProductLimit implements FromCollection, ShouldAutoSize, WithHeadi
             )
             ->where('ps.isDeleted', '=', 0)
             ->where('psl.diffStock', '<=', 0)
-            ->where('pc.category', '=', 'sell');
+            ->where('ps.category', '=', 'sell');
 
         $locations = $this->locationId;
 

@@ -86,7 +86,7 @@ class ProductSellController
 
         if ($request->category) {
 
-            $cat = DB::table('productCategories as pc')
+            $cat = DB::table('productCoreCategories as pc')
                 ->select('productId')
                 ->whereIn('productCategoryId', $request->category)
                 ->where('pc.isDeleted', '=', 0)
@@ -1176,24 +1176,24 @@ class ProductSellController
         }
 
         //validation category
-        foreach ($ResultCategories as  $validCat) {
-            $dat = ProductCategories::find($validCat);
-            $diff = 0;
-            $date = $request->expiredDate;
+        // foreach ($ResultCategories as  $validCat) {
+        //     $dat = ProductCategories::find($validCat);
+        //     $diff = 0;
+        //     $date = $request->expiredDate;
 
-            if ($request->expiredDate > Carbon::now()) {
-                $diff = now()->diffInDays(Carbon::parse($date));
-            } else {
-                $diff = now()->diffInDays(Carbon::parse($date)) * -1;
-            }
+        //     if ($request->expiredDate > Carbon::now()) {
+        //         $diff = now()->diffInDays(Carbon::parse($date));
+        //     } else {
+        //         $diff = now()->diffInDays(Carbon::parse($date)) * -1;
+        //     }
 
-            if ($dat[0]->expiredDay > $diff) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Expired Days should more than expired date inserted! At Category ' . $dat[0]->categoryName],
-                ], 422);
-            }
-        }
+        //     if ($dat[0]->expiredDay > $diff) {
+        //         return response()->json([
+        //             'message' => 'The given data was invalid.',
+        //             'errors' => ['Expired Days should more than expired date inserted! At Category ' . $dat[0]->categoryName],
+        //         ], 422);
+        //     }
+        // }
 
         //UPDATE DATA
 
