@@ -22,10 +22,10 @@ use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Product\SupplierController;
 use App\Http\Controllers\Staff\StaffLeaveController;
 use App\Http\Controllers\Customer\CustomerController;
-use App\Http\Controllers\Promotion\PartnerController;
-use App\Http\Controllers\Promotion\DiscountController;
+// use App\Http\Controllers\Promotion\PartnerController;
+// use App\Http\Controllers\Promotion\DiscountController;
 use App\Http\Controllers\Product\ProductSellController;
-use App\Http\Controllers\Promotion\PromotionController;
+// use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Staff\SecurityGroupController;
 
 use App\Http\Controllers\Report\ReportProductController;
@@ -47,8 +47,9 @@ use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
-use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
+// use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
+use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\TimeKeeperController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -334,14 +335,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::group(['prefix' => 'promotion'], function () {
 
+        Route::group(['prefix' => 'dashboard'], function () {
+            Route::get('/', [PromotionDashboardController::class, 'index']);
+        });
+
         Route::group(['prefix' => 'discount'], function () {
-            Route::post('/', [DiscountController::class, 'create']);
-            Route::get('/', [DiscountController::class, 'index']);
-            Route::get('/export', [DiscountController::class, 'export']);
-            Route::get('/list-type', [DiscountController::class, 'listType']);
-            Route::get('/detail', [DiscountController::class, 'detail']);
-            Route::put('/', [DiscountController::class, 'update']);
-            Route::delete('/', [DiscountController::class, 'delete']);
+            Route::post('/', [DiscountPromotionController::class, 'create']);
+            Route::get('/', [DiscountPromotionController::class, 'index']);
+            Route::get('/export', [DiscountPromotionController::class, 'export']);
+            Route::get('/list-type', [DiscountPromotionController::class, 'listType']);
+            Route::get('/detail', [DiscountPromotionController::class, 'detail']);
+            Route::put('/', [DiscountPromotionController::class, 'update']);
+            Route::delete('/', [DiscountPromotionController::class, 'delete']);
         });
 
 
