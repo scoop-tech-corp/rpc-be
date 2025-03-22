@@ -45,25 +45,25 @@ class PromotionDashboardController extends Controller
 
             'mostPopular' => [
                 [
-                    'promotionName' => 'Jasa Dokter Hewan',
+                    'promotionName' => 'Ramadhan Promo',
                     'promotions' => 120,
                 ],
                 [
-                    'promotionName' => 'Salon Kucing',
+                    'promotionName' => 'New Year Sales',
                     'promotions' => 111,
                 ],
                 [
-                    'promotionName' => 'Rawat Inap',
+                    'promotionName' => 'Independence Day',
                     'promotions' => 15,
                 ],
                 [
-                    'promotionName' => 'Steril',
+                    'promotionName' => 'Weekend Promo',
                     'promotions' => 90,
                 ],
             ],
 
             'promotionsByCategory' => [
-                'labels' => ['Pet Food', 'Pet Salon', 'Pet Accessories', 'Pet Medicine'],
+                'labels' => ['Free Iten', 'Discount', 'Bundle', 'Based Sales'],
                 'series' => [150, 40, 60, 70],
             ]
         ];
