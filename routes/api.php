@@ -47,6 +47,7 @@ use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
+use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
 // use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
@@ -630,6 +631,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/list/export', [BookingController::class, 'exportList']);
             Route::get('/diagnose/export', [BookingController::class, 'exportDiagnose']);
             Route::get('/diagnosespecies/export', [BookingController::class, 'exportSpecies']);
+
+            Route::get('/diagnosespeciesgender', [BookingController::class, 'indexDiagnosesSpeciesGender']);
+            Route::get('/diagnosespeciesgender/export', [BookingController::class, 'exportDiagnosesSpeciesGender']);
         });
 
         Route::group(['prefix' => 'customer'], function () {
@@ -658,7 +662,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/summary/export', [DepositController::class, 'exportSummary']);
         });
 
-        Route::group(['prefix' => 'expenses'], function () {});
+        Route::group(['prefix' => 'expenses'], function () {
+            Route::get('/list', [ReportExpensesController::class, 'indexList']);
+            Route::get('/list/export', [ReportExpensesController::class, 'exportList']);
+            Route::get('/summary', [ReportExpensesController::class, 'indexSummary']);
+            Route::get('/summary/export', [ReportExpensesController::class, 'exportSummary']);
+        });
 
         Route::group(['prefix' => 'products'], function () {
             Route::get('/stockcount', [ReportProductController::class, 'indexStockCount']);
