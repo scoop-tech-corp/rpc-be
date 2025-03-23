@@ -145,7 +145,7 @@ class ReportProductController extends Controller
                 'ps.sku',
                 DB::raw("IFNULL(psup.supplierName, '') as supplierName"),
                 'l.locationName',
-                'pl.lowStock',
+                'pl.inStock',
             )
             ->where('ps.isDeleted', '=', 0);
 
@@ -196,7 +196,7 @@ class ReportProductController extends Controller
                 'ps.sku',
                 DB::raw("IFNULL(psup.supplierName, '') as supplierName"),
                 'l.locationName',
-                'pl.lowStock',
+                'pl.inStock',
             )
             ->where('ps.isDeleted', '=', 0)
             ->get();
