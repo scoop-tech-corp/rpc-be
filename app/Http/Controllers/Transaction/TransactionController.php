@@ -601,6 +601,11 @@ class TransactionController extends Controller
             $data = $data->whereIn('t.status', ['Selesai', 'Batal']);
         }
 
+        if ($request->serviceCategoryId) {
+
+            $data = $data->whereIn('t.serviceCategory', $request->serviceCategoryId);
+        }
+
         $data = $data->orderBy('t.updated_at', 'desc')->get();
 
         $spreadsheet = IOFactory::load(public_path() . '/template/transaction/' . 'Template_Export_Transaction.xlsx');
@@ -814,8 +819,5 @@ class TransactionController extends Controller
         return responseCreate();
     }
 
-    public function Treatment()
-    {
-
-    }
+    public function Treatment() {}
 }
