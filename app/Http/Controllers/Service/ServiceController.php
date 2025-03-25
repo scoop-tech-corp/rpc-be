@@ -494,7 +494,7 @@ class ServiceController extends Controller
 
             $this->updateService = Service::find($request->id);
             $this->userId = $request->user()->id;
-            $request->categories = json_decode($request->categories, true);
+            //$request->categories = json_decode($request->categories, true);
                 $getId = DB::table('servicesCategoryList')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
                 $categoryWithCreatedAt = array_filter($request->categories, function ($value) {
                     return isset($value['created_at']);
@@ -519,7 +519,7 @@ class ServiceController extends Controller
                         'created_at' => Carbon::now(),
                     ]);
                 });
-            $request->followup = json_decode($request->followup, true);
+            //$request->followup = json_decode($request->followup, true);
                 $getId = DB::table('servicesFollowup')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
                 $followupWithCreatedAt = array_filter($request->followup, function ($value) {
                     return isset($value['created_at']);
@@ -545,7 +545,7 @@ class ServiceController extends Controller
                     ]);
                 });
 
-            $request->facility = json_decode($request->facility, true);
+            //$request->facility = json_decode($request->facility, true);
                 $getId = DB::table('servicesFacility')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
                 $facilityWithCreatedAt = array_filter($request->facility, function ($value) {
                     return isset($value['created_at']);
@@ -571,7 +571,7 @@ class ServiceController extends Controller
                     ]);
                 });
 
-            $request->listPrice = json_decode($request->listPrice, true);
+            //$request->listPrice = json_decode($request->listPrice, true);
                 $getId = DB::table('servicesPrice')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
                 $priceWithCreatedAt = array_filter($request->listPrice, function ($value) {
                     return isset($value['created_at']);
@@ -606,7 +606,7 @@ class ServiceController extends Controller
                 });
 
 
-            $request->productRequired = json_decode($request->productRequired, true);
+            //$request->productRequired = json_decode($request->productRequired, true);
 
                 $getId = DB::table('servicesProductRequired')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
                 $productWithCreatedAt = array_filter($request->productRequired, function ($value) {
@@ -636,7 +636,7 @@ class ServiceController extends Controller
                     ]);
                 });
 
-            $request->listStaff = json_decode($request->listStaff, true);
+            //$request->listStaff = json_decode($request->listStaff, true);
                 $getId = DB::table('servicesStaff')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
                 $staffWithCreatedAt = array_filter($request->listStaff, function ($value) {
                     return isset($value['created_at']);
@@ -677,7 +677,7 @@ class ServiceController extends Controller
                     ]);
                 });
 
-            $request->location = json_decode($request->location, true);
+            //$request->location = json_decode($request->location, true);
                 $getId = DB::table('servicesLocation')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
                 $locationWithCreatedAt = array_filter($request->location, function ($value) {
                     return isset($value['created_at']);
@@ -706,9 +706,9 @@ class ServiceController extends Controller
                     ]);
                 });
 
-                $request->imagesName = json_decode($request->imagesName, true);
+                //$request->photos = json_decode($request->imagesName, true);
                 $getId = DB::table('servicesImages')->where('service_id', $this->updateService->id)->where('isDeleted', 0)->get()->pluck('id');
-                $imageWithCreatedAt = array_filter($request->imagesName, function ($value) {
+                $imageWithCreatedAt = array_filter($request->photos, function ($value) {
                     return isset($value['created_at']);
                 });
 
@@ -722,19 +722,19 @@ class ServiceController extends Controller
                     }
                 }
 
-                foreach ($request->imagesName as $key => $value) {
+                foreach ($request->photos as $key => $value) {
                     if(in_array($value['id'], $getId->toArray())){
                         DB::table('servicesImages')->where('id', $value)->update([
-                        'labelName' => $value['name'],
+                        'labelName' => $value['labelName'],
                     ]);
                     }
                 }
-                $imageWithoutCreatedAt = array_filter($request->imagesName, function ($value) {
+                $imageWithoutCreatedAt = array_filter($request->photos, function ($value) {
                     return !isset($value['created_at']);
                 });
                 $imageWithoutCreatedAt = array_values($imageWithoutCreatedAt);
 
-                $this->images = $request->images;
+                $this->images = $request->photos;
 
                 collect($imageWithoutCreatedAt)->map(function ($file, $index) {
                     if(isset($this->images[$index])){
