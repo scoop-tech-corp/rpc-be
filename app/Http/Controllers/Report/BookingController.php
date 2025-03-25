@@ -12,188 +12,197 @@ class BookingController extends Controller
     {
 
         $data = [
+            'speciesList' => [
+                'anjing', 'ayam', 'burung', 'gecko', 'hamster', 'iguana', 'kelinci', 
+                'marmut', 'monyet', 'musang', 'naga', 'other', 'otter', 'sugarGlider'
+            ],
             'totalPagination' => 1,
             'data' => [
-                [
-                    'no' => '1',
-                    'diagnosis' => '(Suspect) Limpoma',
-                    'anjing' => [
-                        'betina' => 0,
-                        'jantan' => 0
+                'species' => [
+                    [
+                        'no' => '1',
+                        'diagnosis' => '(Suspect) Limpoma',
+                        'total' => 0,
+                        'anjing' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'ayam' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'burung' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'gecko' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'hamster' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'iguana' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'kelinci' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'marmut' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'monyet' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'musang' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'naga' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'other' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'otter' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'sugarGlider' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
                     ],
-                    'ayam' => [
-                        'betina' => 0,
-                        'jantan' => 0
+                    [
+                        'no' => '2',
+                        'diagnosis' => '(Suspect) Salmonellosis',
+                        'total' => 0,
+                        'anjing' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'ayam' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'burung' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'gecko' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'hamster' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'iguana' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'kelinci' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'marmut' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'monyet' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'musang' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'naga' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'other' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'otter' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'sugarGlider' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
                     ],
-                    'burung' => [
-                        'betina' => 0,
-                        'jantan' => 0
+                    [
+                        'no' => '3',
+                        'total' => 0,
+                        'diagnosis' => 'Abnormalitas Gigi',
+                        'anjing' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'ayam' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'burung' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'gecko' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'hamster' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'iguana' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'kelinci' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'marmut' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'monyet' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'musang' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'naga' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'other' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'otter' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
+                        'sugarGlider' => [
+                            'betina' => 0,
+                            'jantan' => 0
+                        ],
                     ],
-                    'gecko' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'hamster' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'iguana' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'kelinci' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'marmut' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'monyet' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'musang' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'naga' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'other' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'otter' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'sugarGlider' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                ],
-                [
-                    'no' => '2',
-                    'diagnosis' => '(Suspect) Salmonellosis',
-                    'anjing' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'ayam' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'burung' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'gecko' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'hamster' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'iguana' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'kelinci' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'marmut' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'monyet' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'musang' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'naga' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'other' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'otter' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'sugarGlider' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                ],
-                [
-                    'no' => '3',
-                    'diagnosis' => 'Abnormalitas Gigi',
-                    'anjing' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'ayam' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'burung' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'gecko' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'hamster' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'iguana' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'kelinci' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'marmut' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'monyet' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'musang' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'naga' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'other' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'otter' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                    'sugarGlider' => [
-                        'betina' => 0,
-                        'jantan' => 0
-                    ],
-                ],
+                ]
             ]
         ];
 
