@@ -703,6 +703,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/netincome', [ReportSalesController::class, 'indexNetIncome']);
             Route::get('/dailyaudit', [ReportSalesController::class, 'indexDailyAudit']);
             Route::get('/dailyaudit/export', [ReportSalesController::class, 'exportDailyAudit']);
+            Route::get('/staffservicesales', [ReportSalesController::class, 'indexStaffServiceSales']);
+            Route::get('/staffservicesales/export', [ReportSalesController::class, 'exportStaffServiceSales']);
         });
 
         Route::group(['prefix' => 'service'], function () {});

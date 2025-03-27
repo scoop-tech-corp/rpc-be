@@ -164,10 +164,13 @@ class ExpensesController extends Controller
                     'month6' => 0.00,
                     'month7' => 0.00,
                     'month8' => 0.00,
-                    'month9' => 0.00,
-                    'month10' => 3292950.00,
-                    'month11' => 8825250.00,
-                    'month12' => 5149000.00,
+                    'month9' =>  0.00,
+                    'month10' => 0.00,
+                    'month11' => 0.00,
+                    'month12' => 0.00,
+                    'month13' => 3292950.00,
+                    'month14' => 8825250.00,
+                    'month15' => 5149000.00,
                 ],
                 [
                     'category' => 'Klinik',
@@ -179,10 +182,13 @@ class ExpensesController extends Controller
                     'month6' => 0.00,
                     'month7' => 0.00,
                     'month8' => 0.00,
-                    'month9' => 1558100.00,
-                    'month10' => 6386725.00,
-                    'month11' => 19660603.00,
-                    'month12' => 22154200.00,
+                    'month9' => 0.00,
+                    'month10' => 0.00,
+                    'month11' => 0.00,
+                    'month12' => 1558100.00,
+                    'month13' => 6386725.00,
+                    'month14' => 19660603.00,
+                    'month15' => 22154200.00,
                 ],
                 [
                     'category' => 'Petshop',
@@ -195,9 +201,12 @@ class ExpensesController extends Controller
                     'month7' => 0.00,
                     'month8' => 0.00,
                     'month9' => 0.00,
-                    'month10' => 13294100.00,
-                    'month11' => 23498000.00,
-                    'month12' => 22834520.00,
+                    'month10' => 0.00,
+                    'month11' => 0.00,
+                    'month12' => 0.00,
+                    'month13' => 13294100.00,
+                    'month14' => 23498000.00,
+                    'month15' => 22834520.00,
                 ]
             ]
         ];
@@ -207,7 +216,6 @@ class ExpensesController extends Controller
 
     public function exportSummary(Request $request)
     {
-
         $data = [
             'totalPagination' => 1,
             'data' => [
@@ -221,10 +229,13 @@ class ExpensesController extends Controller
                     'month6' => 0.00,
                     'month7' => 0.00,
                     'month8' => 0.00,
-                    'month9' => 0.00,
-                    'month10' => 3292950.00,
-                    'month11' => 8825250.00,
-                    'month12' => 5149000.00,
+                    'month9' =>  0.00,
+                    'month10' => 0.00,
+                    'month11' => 0.00,
+                    'month12' => 0.00,
+                    'month13' => 3292950.00,
+                    'month14' => 8825250.00,
+                    'month15' => 5149000.00,
                 ],
                 [
                     'category' => 'Klinik',
@@ -236,10 +247,13 @@ class ExpensesController extends Controller
                     'month6' => 0.00,
                     'month7' => 0.00,
                     'month8' => 0.00,
-                    'month9' => 1558100.00,
-                    'month10' => 6386725.00,
-                    'month11' => 19660603.00,
-                    'month12' => 22154200.00,
+                    'month9' => 0.00,
+                    'month10' => 0.00,
+                    'month11' => 0.00,
+                    'month12' => 1558100.00,
+                    'month13' => 6386725.00,
+                    'month14' => 19660603.00,
+                    'month15' => 22154200.00,
                 ],
                 [
                     'category' => 'Petshop',
@@ -252,9 +266,12 @@ class ExpensesController extends Controller
                     'month7' => 0.00,
                     'month8' => 0.00,
                     'month9' => 0.00,
-                    'month10' => 13294100.00,
-                    'month11' => 23498000.00,
-                    'month12' => 22834520.00,
+                    'month10' => 0.00,
+                    'month11' => 0.00,
+                    'month12' => 0.00,
+                    'month13' => 13294100.00,
+                    'month14' => 23498000.00,
+                    'month15' => 22834520.00,
                 ]
             ]
         ];
@@ -263,47 +280,63 @@ class ExpensesController extends Controller
         $sheet = $spreadsheet->getSheet(0);
 
         $sheet->setCellValue('A1', 'Category');
-        $sheet->setCellValue('B1', 'May 21');
-        $sheet->setCellValue('C1', 'Jun 21');
-        $sheet->setCellValue('D1', 'Jul 21');
-        $sheet->setCellValue('E1', 'Aug 21');
-        $sheet->setCellValue('F1', 'Sep 21');
-        $sheet->setCellValue('G1', 'Oct 21');
-        $sheet->setCellValue('H1', 'Nov 21');
-        $sheet->setCellValue('I1', 'Dec 21');
-        $sheet->setCellValue('J1', 'Jan 22');
-        $sheet->setCellValue('K1', 'Feb 22');
-        $sheet->setCellValue('L1', 'Mar 22');
-        $sheet->setCellValue('M1', 'Apr 22');
+        $sheet->setCellValue('B1', 'Jan 24');
+        $sheet->setCellValue('C1', 'Feb 24');
+        $sheet->setCellValue('D1', 'Mar 24');
+        $sheet->setCellValue('E1', 'Apr 24');
+        $sheet->setCellValue('F1', 'May 24');
+        $sheet->setCellValue('G1', 'Jun 24');
+        $sheet->setCellValue('H1', 'Jul 24');
+        $sheet->setCellValue('I1', 'Aug 24');
+        $sheet->setCellValue('J1', 'Sep 24');
+        $sheet->setCellValue('K1', 'Oct 24');
+        $sheet->setCellValue('L1', 'Nov 24');
+        $sheet->setCellValue('M1', 'Dec 24');
+        $sheet->setCellValue('N1', 'Jan 25');
+        $sheet->setCellValue('O1', 'Feb 25');
+        $sheet->setCellValue('P1', 'Mar 25');
 
-        $sheet->getStyle('A1:M1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:M1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('A1:M1')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle('A1:P1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:P1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:P1')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
         $row = 2;
+        $totals = array_fill(0, 15, 0);
+
         foreach ($data['data'] as $item) {
-
             $sheet->setCellValue("A{$row}", $item['category']);
-            $sheet->setCellValue("B{$row}", $item['month1']);
-            $sheet->setCellValue("C{$row}", $item['month2']);
-            $sheet->setCellValue("D{$row}", $item['month3']);
-            $sheet->setCellValue("E{$row}", $item['month4']);
-            $sheet->setCellValue("F{$row}", $item['month5']);
-            $sheet->setCellValue("G{$row}", $item['month6']);
-            $sheet->setCellValue("H{$row}", $item['month7']);
-            $sheet->setCellValue("I{$row}", $item['month8']);
-            $sheet->setCellValue("J{$row}", $item['month9']);
-            $sheet->setCellValue("K{$row}", $item['month10']);
-            $sheet->setCellValue("L{$row}", $item['month11']);
-            $sheet->setCellValue("M{$row}", $item['month12']);
+            for ($col = 1; $col <= 15; $col++) {
+                $monthKey = 'month' . $col;
+                $value = isset($item[$monthKey]) ? $item[$monthKey] : 0.00;
+                $sheet->setCellValueByColumnAndRow($col + 1, $row, $value);
+                $totals[$col - 1] += $value;
+            }
 
-            $sheet->getStyle("A{$row}:M{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            $sheet->getStyle("A{$row}:P{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            $sheet->getStyle("A{$row}:P{$row}")->getFont()->setBold(false);
 
             $row++;
         }
 
+        $sheet->setCellValue("A{$row}", 'Total');
+        for ($col = 1; $col <= 15; $col++) {
+            $sheet->setCellValueByColumnAndRow($col + 1, $row, $totals[$col - 1]);
+        }
 
-        foreach (range('A', 'M') as $columnID) {
+        $sheet->setCellValue("A{$row}", 'Total');
+        for ($col = 1; $col <= 15; $col++) {
+            $sheet->setCellValueByColumnAndRow($col + 1, $row, $totals[$col - 1]);
+        }
+        
+        $sheet->getStyle("A{$row}:P{$row}")->getFont()->setBold(true); 
+        $sheet->getStyle("A{$row}:P{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+        $sheet->getStyle("A{$row}")->getFont()->setBold(true); 
+
+        $sheet->getStyle("A{$row}")->getFont()->setBold(true);
+
+        foreach (range('A', 'P') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 
