@@ -1524,7 +1524,7 @@ class SalesController extends Controller
                     'totalSoldValue' => 150000,
                 ],
                 [
-                    'staff' => 'INV-12345',
+                    'staff' => 'Drh Cahyo Bagaskoro',
                     'service' => 'Healing Luka',
                     'pricing' => 'Standard',
                     'location' => $locationQty,
@@ -1533,7 +1533,7 @@ class SalesController extends Controller
                     'totalSoldValue' => 10000,
                 ],
                 [
-                    'staff' => 'INV-12345',
+                    'staff' => 'Drh Cahyo Bagaskoro',
                     'service' => 'Jasa Dokter Hewan',
                     'pricing' => 'Cat Large',
                     'location' => $locationQty,
@@ -1575,7 +1575,7 @@ class SalesController extends Controller
                     'totalSoldValue' => 150000,
                 ],
                 [
-                    'staff' => 'INV-12345',
+                    'staff' => 'Drh Cahyo Bagaskoro',
                     'service' => 'Healing Luka',
                     'pricing' => 'Standard',
                     'location' => $locationQty,
@@ -1584,7 +1584,7 @@ class SalesController extends Controller
                     'totalSoldValue' => 10000,
                 ],
                 [
-                    'staff' => 'INV-12345',
+                    'staff' => 'Drh Cahyo Bagaskoro',
                     'service' => 'Jasa Dokter Hewan',
                     'pricing' => 'Cat Large',
                     'location' => $locationQty,
