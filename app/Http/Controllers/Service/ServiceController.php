@@ -735,29 +735,35 @@ class ServiceController extends Controller
 
             $this->images = $request->photos;
 
-            collect($imageWithoutCreatedAt)->map(function ($file, $index) {
-                if (isset($this->images[$index])) {
-                    $img = $this->images[$index];
+            foreach ($imageWithoutCreatedAt as $file) {
 
-                    if (!$img->id) {
-                        $name = $img->hashName();
-                    } else {
-                        $name = $img->realImageName;
-                        //$name = $name->hashName();
-                    }
+                if (is_null($file['id'])) {
 
-                    $img->move(public_path() . '/ServiceListImages/', $name);
-                    $fileName = "/ServiceListImages/" . $name;
+                    $base64String = $file['imagePath'];
+
+                    preg_match('/^data:image\/(\w+);base64,/', $base64String, $matches);
+                    $extension = isset($matches[1]) ? $matches[1] : 'png';
+
+                    $base64Data = preg_replace('/^data:image\/\w+;base64,/', '', $base64String);
+                    $binaryData = base64_decode($base64Data);
+
+                    $filename = uniqid() . '.' . $extension;
+
+                    $path = public_path('ServiceListImages');
+
+                    $filePath = $path . '/' . $filename;
+                    file_put_contents($filePath, $binaryData);
+
                     DB::table('servicesImages')->insert([
                         'service_id' => $this->updateService->id,
                         'labelName' => $file['label'],
-                        'realImageName' => $img->getClientOriginalName(),
-                        'imagePath' => $fileName,
+                        'realImageName' => $file['originalName'],
+                        'imagePath' => '/ServiceListImages/' . $filename,
                         'userId' => $this->userId,
                         'created_at' => Carbon::now(),
                     ]);
                 }
-            });
+            }
             DB::commit();
 
             $result = Service::with(['categoryList', 'facilityList', 'staffList', 'productRequiredList', 'locationList', 'priceList', 'imageList'])->find($request->id);

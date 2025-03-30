@@ -1273,7 +1273,7 @@ class TransferProductController
         $status = $request->status;
         $statusName = "";
 
-        if (!$locations[0] == null) {
+        if (!is_null($locations)) {
 
             $location = DB::table('location')
                 ->select('locationName')

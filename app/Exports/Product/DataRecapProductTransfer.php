@@ -61,8 +61,9 @@ class DataRecapProductTransfer implements FromCollection, ShouldAutoSize, WithHe
         $locations = $this->locationDestinationId;
 
         // if ($this->locationDestinationId) {
-        if (!$locations[0] == null) {
-            $data = $data->whereIn('ld.id', $this->locationDestinationId);
+
+        if (!is_null($locations)) {
+            $data = $data->whereIn('ld.id', $locations);
         }
 
         if ($this->status) {
