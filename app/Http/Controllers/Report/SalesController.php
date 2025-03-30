@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Report;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -1491,6 +1492,186 @@ class SalesController extends Controller
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="Export Sales Daily Audit.xlsx"',
+        ]);
+    }
+
+    public function indexStaffServiceSales(Request $request)
+    {
+
+        $locations = DB::table('location')->select('id', 'locationName')->get();
+
+        $locationQty = [];
+
+        foreach ($locations as $location) {
+
+            mt_srand($location->id);
+
+            $qty = mt_rand(1, 10);
+
+            $locationQty[$location->locationName] = $qty;
+        }
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'USG',
+                    'pricing' => 'Standard',
+                    'location' => $locationQty, 
+                    'totalQty' => array_sum($locationQty),
+                    'totalDuration' => 2,
+                    'totalSoldValue' => 150000,
+                ],
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'Healing Luka',
+                    'pricing' => 'Standard',
+                    'location' => $locationQty,
+                    'totalQty' => array_sum($locationQty),
+                    'totalDuration' => 4,
+                    'totalSoldValue' => 10000,
+                ],
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'Jasa Dokter Hewan',
+                    'pricing' => 'Cat Large',
+                    'location' => $locationQty,
+                    'totalQty' => array_sum($locationQty), 
+                    'totalDuration' => 0.25,
+                    'totalSoldValue' => 100000,
+                ],
+            ]
+        ];
+
+        return response()->json($data);
+    }
+
+    public function exportStaffServiceSales(Request $request)
+    {
+
+        $locations = DB::table('location')->select('id', 'locationName')->get();
+        $locationNames = $locations->pluck('locationName')->toArray();
+
+
+        $locationQty = [];
+        foreach ($locations as $location) {
+            mt_srand($location->id);
+            $qty = mt_rand(1, 10);
+            $locationQty[$location->locationName] = $qty;
+        }
+
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'USG',
+                    'pricing' => 'Standard',
+                    'location' => $locationQty, 
+                    'totalQty' => array_sum($locationQty),
+                    'totalDuration' => 2,
+                    'totalSoldValue' => 150000,
+                ],
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'Healing Luka',
+                    'pricing' => 'Standard',
+                    'location' => $locationQty,
+                    'totalQty' => array_sum($locationQty),
+                    'totalDuration' => 4,
+                    'totalSoldValue' => 10000,
+                ],
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'Jasa Dokter Hewan',
+                    'pricing' => 'Cat Large',
+                    'location' => $locationQty,
+                    'totalQty' => array_sum($locationQty), 
+                    'totalDuration' => 0.25,
+                    'totalSoldValue' => 100000,
+                ],
+            ]
+        ];
+
+
+        $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Staff_Service_Sales.xlsx');
+        $sheet = $spreadsheet->getSheet(0);
+
+        $sheet->setCellValue('A1', 'Staff');
+        $sheet->setCellValue('B1', 'Service');
+        $sheet->setCellValue('C1', 'Pricing');
+
+        $colIndex = 4;
+        foreach ($locationNames as $location) {
+
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue("{$col}1", $location);
+            $colIndex++;
+        }
+
+        $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+        $sheet->setCellValue("{$col}1", 'Total Qty');
+        $colIndex++;
+        $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+        $sheet->setCellValue("{$col}1", 'Total Duration (Hrs)');
+        $colIndex++;
+        $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+        $sheet->setCellValue("{$col}1", 'Total Sold Value (Rp)');
+
+        $sheet->getStyle('A1:' . $col . '1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:' . $col . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:' . $col . '1')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+        $row = 2;
+        foreach ($data['data'] as $item) {
+
+            $sheet->setCellValue("A{$row}", $item['staff']);
+            $sheet->setCellValue("B{$row}", $item['service']);
+            $sheet->setCellValue("C{$row}", $item['pricing']);
+
+            $colIndex = 4;
+            foreach ($locationNames as $location) {
+                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $sheet->setCellValue("{$col}{$row}", isset($item['location'][$location]) ? $item['location'][$location] : 0);
+                $sheet->getStyle("{$col}{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $colIndex++;
+            }
+
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue("{$col}{$row}", $item['totalQty']);
+            $sheet->getStyle("{$col}{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);  // Set alignment center
+            $colIndex++;
+
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue("{$col}{$row}", $item['totalDuration']);
+            $sheet->getStyle("{$col}{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);  // Set alignment center
+            $colIndex++;
+
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue("{$col}{$row}", $item['totalSoldValue']);
+            $sheet->getStyle("{$col}{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);  // Set alignment center
+            $colIndex++;
+
+            $sheet->getStyle("A{$row}:" . $col . "{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            $row++;
+        }
+
+        foreach (range('A', \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex)) as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . 'Export Staff Service Sales.xlsx';
+        $writer->save($newFilePath);
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export Staff Service Sales.xlsx"',
         ]);
     }
 }
