@@ -653,7 +653,7 @@ class TransactionController extends Controller
             $row++;
         }
 
-        $fileName = 'Export Transaksi ' . $request->serviceCategoryId . '.xlsx';
+        $fileName = 'Export Transaksi ' . $request->serviceCategoryId[0] . '.xlsx';
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
