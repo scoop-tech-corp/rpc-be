@@ -512,7 +512,10 @@ class TransactionController extends Controller
         DB::beginTransaction();
 
         try {
-            Transaction::updateOrCreate(
+
+            $oldTransaction = Transaction::find($request->id);
+
+            $transaction = Transaction::updateOrCreate(
                 ['id' => $request->id],
                 [
                     'registrationNo' => $request->registrationNo,
@@ -531,7 +534,26 @@ class TransactionController extends Controller
                 ]
             );
 
-            transactionLog($request->id, 'Update Transaction', '', $request->user()->id);
+            if ($oldTransaction) {
+                $fieldNames = [
+                    'registrationNo' => 'Nomor Registrasi',
+                    'locationId' => 'Lokasi',
+                    'customerId' => 'ID Pelanggan',
+                    'petId' => 'Data Hewan',
+                    'registrant' => 'Pendaftar',
+                    'startDate' => 'Tanggal Mulai',
+                    'endDate' => 'Tanggal Selesai',
+                    'doctorId' => 'Dokter yang menangani',
+                    'note' => 'Catatan',
+                ];
+
+                $changes = $transaction->getChanges();
+
+                foreach ($changes as $field => $newValue) {
+                    $customName = $fieldNames[$field] ?? $field;
+                    transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
+                }
+            }
 
             DB::commit();
             return responseUpdate();
@@ -631,21 +653,23 @@ class TransactionController extends Controller
             $row++;
         }
 
+        $fileName = 'Export Transaksi ' . $request->serviceCategoryId . '.xlsx';
+
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export Transaction.xlsx'; // Set the desired path
+        $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
         $writer->save($newFilePath);
 
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export Transaction.xlsx"',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
 
     public function TransactionCategory()
     {
-        $data = ['Pet Clinic', 'Pet Hotel', 'Pet Salon', 'Pacak'];
+        $data = ['Pet Clinic', 'Pet Hotel', 'Pet Salon', 'Pacak', 'Pet Shop'];
 
         return responseList($data);
     }
