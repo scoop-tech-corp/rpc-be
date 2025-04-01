@@ -550,8 +550,10 @@ class TransactionController extends Controller
                 $changes = $transaction->getChanges();
 
                 foreach ($changes as $field => $newValue) {
-                    $customName = $fieldNames[$field] ?? $field;
-                    transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
+                    if ($field != 'updated_at') {
+                        $customName = $fieldNames[$field] ?? $field;
+                        transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
+                    }
                 }
             }
 
