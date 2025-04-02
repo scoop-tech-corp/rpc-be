@@ -695,6 +695,12 @@ class TransactionController extends Controller
             return responseInvalid($errors);
         }
 
+        $tran = Transaction::where([['id', '=', $request->transactionId]])->first();
+
+        if ($tran->doctorId != $request->user()->id) {
+            return responseInvalid(['Can not accept transaction because the designated doctor is different!']);
+        }
+
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
 
         if ($request->status == 1) {
