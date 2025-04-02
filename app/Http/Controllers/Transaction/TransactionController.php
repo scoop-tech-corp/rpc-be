@@ -698,7 +698,7 @@ class TransactionController extends Controller
         $tran = Transaction::where([['id', '=', $request->transactionId]])->first();
 
         if ($tran->doctorId != $request->user()->id) {
-            return responseInvalid(['Can not accept transaction because the designated doctor is different!']);
+            return responseErrorValidation('Can not accept transaction because the designated doctor is different!','Can not accept transaction because the designated doctor is different!');
         }
 
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
@@ -809,7 +809,7 @@ class TransactionController extends Controller
             return responseInvalid($errors);
         }
 
-        if (!$request->isAcceptToProcess) {
+        if ($request->isAcceptToProcess == 0) {
             $validate = Validator::make($request->all(), [
                 'reasonReject' => 'required|string',
             ]);
