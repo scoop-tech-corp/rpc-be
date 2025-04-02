@@ -552,7 +552,14 @@ class TransactionController extends Controller
                 foreach ($changes as $field => $newValue) {
                     if ($field != 'updated_at') {
                         $customName = $fieldNames[$field] ?? $field;
-                        transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
+
+                        if ($customName == 'Dokter yang menangani') {
+                            $doctor = User::where([['id', '=', $newValue]])->first();
+
+                            transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$doctor->firstName}", $request->user()->id);
+                        } else {
+                            transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
+                        }
                     }
                 }
             }
