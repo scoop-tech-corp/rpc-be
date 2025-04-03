@@ -676,7 +676,7 @@ class RestockController extends Controller
                     'pr.id',
                     'pr.productId',
                     'pr.productType',
-                    'p.fullName',
+                    'p.fullName as productName',
                     'pr.supplierId',
                     'sup.supplierName',
                     'pr.requireDate',
