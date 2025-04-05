@@ -2076,49 +2076,20 @@ class RestockController extends Controller
 
                 $detail = productRestockDetails::find($value['productRestockDetailId']);
 
-                // if ($detail->productType == 'productSell') {
-
-                // } elseif ($detail->productType == 'productClinic') {
-                //     $find = ProductClinic::find($detail->productId);
-                //     $clinicLoc = ProductClinicLocation::where('productClinicId', '=', $detail->productId)
-                //         ->first();
-
-                //     productClinicBatch::create([
-                //         'batchNumber' => '123',
-                //         'productId' => $detail->productId,
-                //         'productRestockId' => $request->productRestockId,
-                //         'productTransferId' => 0,
-                //         'transferNumber' => '',
-                //         'productRestockDetailId' => $detail->id,
-                //         'purchaseRequestNumber' => $detail->purchaseRequestNumber,
-                //         'purchaseOrderNumber' => $detail->purchaseOrderNumber,
-                //         'expiredDate' => $value['expiredDate'],
-                //         'sku' => $value['sku'],
-                //         'userId' => $request->user()->id,
-
-                //     ]);
-
-                //     $inStock = $clinicLoc->inStock;
-                //     $diffStock = $clinicLoc->diffStock;
-
-                //     $newStock =  $value['received'];
-
-                //     productClinicLog($dtl->productId, 'Restock Product', 'Add New Stock', $newStock, ($inStock + $newStock), $request->user()->id);
-
-                //     $prodLoc = ProductClinicLocation::find($clinicLoc->id);
-                //     $prodLoc->inStock = $inStock + $newStock;
-                //     $prodLoc->diffStock = $diffStock + $newStock;
-                //     $prodLoc->save();
-                // }
-
                 $find = Products::find($detail->productId);
-                $sellLoc = ProductLocations::where('productId', '=', $detail->productId)
-                    ->first();
+                $sellLoc = ProductLocations::where('productId', '=', $detail->productId)->first();
 
                 //ngecek ke category untuk tanggal expirednya
                 //masukin ke product log
+
+                $findData = ProductBatches::whereDate('created_at', Carbon::today())->count();
+
+                $dateNumber = Carbon::today();
+
+                $batchNumber = 'RPC-BTCRST' . str_pad($findData + 1, 5, 0, STR_PAD_LEFT) . '-'  . $dateNumber->format('Ymd');
+
                 ProductBatches::create([
-                    'batchNumber' => '123',
+                    'batchNumber' => $batchNumber,
                     'productId' => $detail->productId,
                     'productRestockId' => $request->productRestockId,
                     'productTransferId' => 0,
