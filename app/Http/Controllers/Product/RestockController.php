@@ -425,7 +425,7 @@ class RestockController extends Controller
                 if ($value['restockQuantity'] > $find->reStockLimit) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+                        'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' is ' . $find->reStockLimit . '. So can not be greater than Restock Limit!'],
                     ], 422);
                 }
             }
@@ -847,6 +847,7 @@ class RestockController extends Controller
 
                 $prodList = DB::table('productRestockDetails as prd')
                     ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+                    ->select('prd.id')
                     ->where('prd.productRestockId', '=', $request->id)
                     ->where('prd.supplierId', '=', $value)
                     ->get();
@@ -870,8 +871,18 @@ class RestockController extends Controller
 
                     $prd = DB::table('products as ps')
                         ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                        ->select('prd.id', 'ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
-                        ->where('ps.id', '=', $list->productId)
+                        ->select(
+                            'prd.id',
+                            'ps.fullName',
+                            DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
+                            'prd.reStockQuantity',
+                            'prd.rejected',
+                            'prd.canceled',
+                            'prd.accepted',
+                            'prd.received',
+                            'prd.id'
+                        )
+                        ->where('prd.id', '=', $list->id)
                         ->first();
 
                     $image = DB::table('productRestockImages as pri')
