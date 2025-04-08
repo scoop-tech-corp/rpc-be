@@ -429,6 +429,7 @@ class TransactionController extends Controller
                 DB::raw("DATE_FORMAT(tl.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
             )
             ->where('tl.transactionId', '=', $request->id)
+            ->orderBy('tl.id', 'desc')
             ->get();
 
         $data = ['detail' => $detail, 'transactionLogs' => $log];
@@ -698,7 +699,7 @@ class TransactionController extends Controller
         $tran = Transaction::where([['id', '=', $request->transactionId]])->first();
 
         if ($tran->doctorId != $request->user()->id) {
-            return responseErrorValidation('Can not accept transaction because the designated doctor is different!','Can not accept transaction because the designated doctor is different!');
+            return responseErrorValidation('Can not accept transaction because the designated doctor is different!', 'Can not accept transaction because the designated doctor is different!');
         }
 
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
