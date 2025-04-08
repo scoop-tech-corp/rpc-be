@@ -589,6 +589,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/export', [TreatmentController::class, 'export']);
             Route::get('/item', [TreatmentController::class, 'indexItem']);
             Route::get('/', [TreatmentController::class, 'index']);
+            Route::get('/list', [TreatmentController::class, 'listTreatment']);
             Route::get('/detail', [TreatmentController::class, 'detail']);
             Route::post('/', [TreatmentController::class, 'store']);
             Route::put('/', [TreatmentController::class, 'update']);

@@ -676,7 +676,7 @@ class ProductController
 
             $data = DB::table('products as ps')
                 ->join('productLocations as psl', 'ps.id', 'psl.productId')
-                ->select('ps.fullName')
+                ->select('ps.id', 'ps.fullName')
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.category', '=', 'sell')
                 ->distinct()
@@ -684,7 +684,7 @@ class ProductController
         } else {
             $data = DB::table('products as ps')
                 ->join('productLocations as psl', 'ps.id', 'psl.productId')
-                ->select('ps.fullName')
+                ->select('ps.id', 'ps.fullName')
                 ->wherein('psl.locationId', $arr)
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.category', '=', 'sell')

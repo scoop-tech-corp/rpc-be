@@ -880,7 +880,6 @@ class RestockController extends Controller
                             'prd.canceled',
                             'prd.accepted',
                             'prd.received',
-                            'prd.id'
                         )
                         ->where('prd.id', '=', $list->id)
                         ->first();
