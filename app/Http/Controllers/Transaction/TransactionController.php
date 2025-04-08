@@ -766,16 +766,14 @@ class TransactionController extends Controller
         $tran = Transaction::where('id', '=', $request->transactionId)->first();
 
         //tanggal start rawat inap
-        $date1 = Carbon::parse($tran->startDate);
+        $date1 = Carbon::parse($tran->startDate); // today or reference date
+        $date2 = Carbon::parse($request->estimateDateofBirth); // HPL
 
-        //tanggal HPL
-        $date2 = Carbon::parse($request->estimateDateofBirth);
-
-        $diffInDays = $date1->diffInDays($date2) * ($date1 > $date2 ? 1 : -1);
+        $diffInDays = $date1->diffInDays($date2, false); // false means keep sign
 
         $status = "";
 
-        if ($diffInDays <= 5) {
+        if ($diffInDays <= 5 && $diffInDays >= 0) {
             $status = 'HPL Sudah Dekat';
         } else {
             $status = 'HPL Masih Jauh';
