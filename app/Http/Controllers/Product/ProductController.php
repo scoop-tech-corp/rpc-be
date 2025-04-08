@@ -670,7 +670,8 @@ class ProductController
 
     public function ListProductSellWithLocation(Request $request)
     {
-        $arr = json_decode($request->locationId, true);
+        $arr = $request->locationId;
+        //json_decode(, true);
 
         if (count($arr) == 0) {
 

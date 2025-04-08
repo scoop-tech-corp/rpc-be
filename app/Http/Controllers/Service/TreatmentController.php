@@ -24,7 +24,7 @@ class TreatmentController extends Controller
 
     public function listTreatment(Request $request)
     {
-        $arr = json_decode($request->locationId, true);
+        $arr = $request->locationId;
 
         if (count($arr) == 0) {
 
