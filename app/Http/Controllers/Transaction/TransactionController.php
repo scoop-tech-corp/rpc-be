@@ -708,7 +708,7 @@ class TransactionController extends Controller
 
             statusTransaction($request->transactionId, 'Cek Kondisi Pet');
 
-            transactionLog($request->transactionId, 'Pengecekan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+            transactionLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
         } else {
 
             $validate = Validator::make($request->all(), [

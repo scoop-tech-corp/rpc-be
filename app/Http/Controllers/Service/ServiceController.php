@@ -811,14 +811,14 @@ class ServiceController extends Controller
 
             $data = DB::table('services as s')
                 ->join('servicesLocation as sl', 's.id', 'sl.service_id')
-                ->select('s.fullName')
+                ->select('s.id', 's.fullName')
                 ->where('s.isDeleted', '=', 0)
                 ->distinct()
                 ->get();
         } else {
             $data = DB::table('services as s')
                 ->join('servicesLocation as sl', 's.id', 'sl.service_id')
-                ->select('s.fullName')
+                ->select('s.id', 's.fullName')
                 ->wherein('sl.location_id', $request->locationId)
                 ->where('s.isDeleted', '=', 0)
                 ->distinct()
