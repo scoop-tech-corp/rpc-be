@@ -284,6 +284,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/export', [CustomerController::class, 'exportCustomer']); //add
         Route::get('/typeid', [CustomerController::class, 'getTypeIdCustomer']);
         Route::post('/typeid', [CustomerController::class, 'insertTypeIdCustomer']);
+        Route::get('/dashboard', [CustomerController::class, 'index']);
+
 
         Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
         Route::post('/group', [CustomerController::class, 'createCustomerGroup']);
