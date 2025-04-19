@@ -7,6 +7,9 @@ use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Transaction;
 use App\Models\TransactionPetCheck;
+use App\Models\TransactionPetHotelTreatmentProduct;
+use App\Models\TransactionPetHotelTreatmentService;
+use App\Models\TransactionPetHotelTreatmentTreatPlan;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -857,5 +860,182 @@ class TransactionController extends Controller
         return responseCreate();
     }
 
-    public function Treatment() {}
+    public function Treatment(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $tran = Transaction::where('id', '=', $request->transactionId)->where('isDeleted', '=', 0)->first();
+
+        if (!$tran) {
+            return responseInvalid(['Transaction is not found or already deleted!']);
+        }
+
+        $services = json_decode($request->services, true);
+        $productSell = json_decode($request->productSells, true);
+        $productClinic = json_decode($request->productClinics, true);
+        $treatmentPlans = json_decode($request->treatmentPlans, true);
+
+        if (count($services) == 0 && count($productSell) == 0 && count($productClinic) == 0 && count($treatmentPlans) == 0) {
+
+            return responseInvalid(['All category must one to filled!']);
+        }
+
+        if ($services) {
+
+            $validateServices = Validator::make(
+                $services,
+                [
+                    '*.id' => 'required|integer',
+                    '*.quantity' => 'required|integer',
+                ],
+                [
+                    '*.id.integer' => 'Id Should be Integer!',
+                    '*.id.required' => 'Id Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Integer!',
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                ]
+            );
+
+            if ($validateServices->fails()) {
+                $errors = $validateServices->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
+                ], 422);
+            }
+        }
+
+        if ($productSell) {
+
+            $validateProductSell = Validator::make(
+                $productSell,
+                [
+                    '*.id' => 'required|integer',
+                    '*.quantity' => 'required|integer',
+                ],
+                [
+                    '*.id.integer' => 'Id Should be Integer!',
+                    '*.id.required' => 'Id Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Integer!',
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                ]
+            );
+
+            if ($validateProductSell->fails()) {
+                $errors = $validateProductSell->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
+                ], 422);
+            }
+        }
+
+        if ($productClinic) {
+
+            $validateProductClinic = Validator::make(
+                $productClinic,
+                [
+                    '*.id' => 'required|integer',
+                    '*.quantity' => 'required|integer',
+                ],
+                [
+                    '*.id.integer' => 'Id Should be Integer!',
+                    '*.id.required' => 'Id Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Integer!',
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                ]
+            );
+
+            if ($validateProductClinic->fails()) {
+                $errors = $validateProductClinic->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
+                ], 422);
+            }
+        }
+
+        if ($treatmentPlans) {
+
+            $validateTreatmentPlans = Validator::make(
+                ['treatmentPlans' => $treatmentPlans],
+                [
+                    'treatmentPlans' => 'required|array',
+                    'treatmentPlans.*' => 'required|integer',
+                ],
+                [
+                    'treatmentPlans.*.required' => 'Id is required!',
+                    'treatmentPlans.*.integer' => 'Id should be integer!',
+                ]
+            );
+
+            if ($validateTreatmentPlans->fails()) {
+                $errors = $validateTreatmentPlans->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
+                ], 422);
+            }
+        }
+
+        //proses insert
+        DB::beginTransaction();
+        try {
+            foreach ($services as $value) {
+
+                TransactionPetHotelTreatmentService::create([
+                    'transactionId' => $request->transactionId,
+                    'serviceId' => $value['id'],
+                    'quantity' => $value['quantity'],
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            foreach ($productSell as $value) {
+                TransactionPetHotelTreatmentProduct::create([
+                    'transactionId' => $request->transactionId,
+                    'productId' => $value['id'],
+                    'quantity' => $value['quantity'],
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            foreach ($productClinic as $value) {
+                TransactionPetHotelTreatmentProduct::create([
+                    'transactionId' => $request->transactionId,
+                    'productId' => $value['id'],
+                    'quantity' => $value['quantity'],
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            foreach ($treatmentPlans as $value) {
+                TransactionPetHotelTreatmentTreatPlan::create([
+                    'transactionId' => $request->transactionId,
+                    'treatmentPlanId' => $value,
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $th,
+            ]);
+        }
+    }
 }
