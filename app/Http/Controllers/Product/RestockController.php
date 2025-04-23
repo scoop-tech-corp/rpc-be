@@ -839,6 +839,61 @@ class RestockController extends Controller
 
             return responseList($data);
         } elseif ($request->type == 'receive') {
+            $restock = productRestocks::find($request->id);
+        
+            $isAdmin = false;
+            $isOffice = false;
+        
+            if (adminAccess($request->user()->id)) {
+                $isAdmin = true;
+            }
+        
+            if (officeAccess($request->user()->id)) {
+                $isOffice = true;
+            }
+        
+            // Ambil semua data dengan productRestockId yang sama
+            $prodList = DB::table('productRestockDetails as pr')
+                ->where('pr.productRestockId', '=', $request->id)
+                ->where('pr.isDeleted', '=', 0);
+        
+            if ($isAdmin) {
+                $prodList = $prodList->where('pr.isAdminApproval', '=', 1)
+                    ->get();
+            } else if ($isOffice) {
+                $prodList = $prodList->get();
+            }
+        
+            $data = null;
+        
+            foreach ($prodList as $value) {
+                $prd = DB::table('products as ps')
+                    ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                    ->select(
+                        'prd.id',
+                        'prd.purchaseRequestNumber',
+                        'ps.fullName',
+                        DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
+                        'prd.reStockQuantity',
+                        'prd.rejected',
+                        'prd.accepted',
+                        'prd.id'
+                    )
+                    ->where('prd.id', '=', $value->id)
+                    ->first();
+        
+                $data[] = array(
+                    'id' => $prd->id,
+                    'purchaseRequestNumber' => $prd->purchaseRequestNumber,
+                    'fullName' => $prd->fullName,
+                    'unitCost' => $prd->costPerItem,
+                    'orderQuantity' => $prd->reStockQuantity,
+                    'rejected' => $prd->rejected,
+                    'accepted' => $prd->accepted,
+                );
+            }
+        
+            return responseList($data);
         } else {
             $chk = productRestocks::find($request->id);
 
