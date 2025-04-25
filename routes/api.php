@@ -48,10 +48,10 @@ use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
 use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
-// use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\TimeKeeperController;
+use App\Http\Controllers\Transaction\TransactionPetClinicController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -546,6 +546,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     // Transaction
     Route::group(['prefix' => 'transaction'], function () {
         Route::get('/category', [TransactionController::class, 'TransactionCategory']);
+
+        Route::get('/petclinic', [TransactionPetClinicController::class, 'index']);
+        Route::post('/petclinic', [TransactionPetClinicController::class, 'create']);
+        Route::get('/petclinic/detail', [TransactionPetClinicController::class, 'detail']);
+        Route::put('/petclinic', [TransactionPetClinicController::class, 'update']);
+        Route::delete('/petclinic', [TransactionPetClinicController::class, 'delete']);
 
         Route::post('/', [TransactionController::class, 'create']);
         Route::get('/', [TransactionController::class, 'index']);
