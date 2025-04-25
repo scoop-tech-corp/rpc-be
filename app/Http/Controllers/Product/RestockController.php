@@ -2309,7 +2309,7 @@ class RestockController extends Controller
 
             foreach ($restock as $value) {
 
-                if ($value->accepted == ($value->received + $value->canceled)) {
+                if ($value->accepted != ($value->received + $value->canceled)) {
                     $statusReceive = false;
                     break;
                 }
