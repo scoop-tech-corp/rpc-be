@@ -596,4 +596,215 @@ class TransactionPetClinicController extends Controller
 
         return responseDelete();
     }
+
+    public function export(Request $request)
+    {
+
+        $data1 = DB::table('transactionPetClinics as t')
+            ->join('location as l', 'l.id', 't.locationId')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->join('customerPets as cp', 'cp.id', 't.PetId')
+            ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
+            ->join('users as u', 'u.id', 't.doctorId')
+            ->join('users as uc', 'uc.id', 't.userId')
+            ->select(
+                't.registrationNo',
+                'l.locationName',
+                'c.firstName',
+                DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
+                DB::raw("IFNULL(t.startDate,'') as startDate"),
+                DB::raw("IFNULL(t.endDate,'') as endDate"),
+                't.status',
+                'u.firstName as picDoctor',
+                'uc.firstName as createdBy',
+                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
+            )
+            ->where('t.isDeleted', '=', 0)
+            ->where('t.typeOfCare', '=', 1);
+
+        if (!$request->user()->roleId == 1 || !$request->user()->roleId == 2) {
+            $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
+            $data1 = $data1->whereIn('l.id', $locations);
+        } else {
+
+            if ($request->locationId) {
+
+                $data1 = $data1->whereIn('l.id', $request->locationId);
+            }
+        }
+
+        if ($request->customerGroupId) {
+
+            $data1 = $data1->whereIn('cg.id', $request->customerGroupId);
+        }
+
+        $data1 = $data1->orderBy('t.updated_at', 'desc')->get();
+
+        $data2 = DB::table('transactionPetClinics as t')
+            ->join('location as l', 'l.id', 't.locationId')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->join('customerPets as cp', 'cp.id', 't.PetId')
+            ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
+            ->join('users as u', 'u.id', 't.doctorId')
+            ->join('users as uc', 'uc.id', 't.userId')
+            ->select(
+                't.registrationNo',
+                'l.locationName',
+                'c.firstName',
+                DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
+                DB::raw("IFNULL(t.startDate,'') as startDate"),
+                DB::raw("IFNULL(t.endDate,'') as endDate"),
+                't.status',
+                'u.firstName as picDoctor',
+                'uc.firstName as createdBy',
+                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
+            )
+            ->where('t.isDeleted', '=', 0)
+            ->where('t.typeOfCare', '=', 2);
+
+        if (!$request->user()->roleId == 1 || !$request->user()->roleId == 2) {
+            $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
+            $data2 = $data2->whereIn('l.id', $locations);
+        } else {
+
+            if ($request->locationId) {
+
+                $data2 = $data2->whereIn('l.id', $request->locationId);
+            }
+        }
+
+        if ($request->customerGroupId) {
+
+            $data2 = $data2->whereIn('cg.id', $request->customerGroupId);
+        }
+
+        $data2 = $data2->orderBy('t.updated_at', 'desc')->get();
+
+        $data3 = DB::table('transactionPetClinics as t')
+            ->join('location as l', 'l.id', 't.locationId')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->join('customerPets as cp', 'cp.id', 't.PetId')
+            ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
+            ->join('users as u', 'u.id', 't.doctorId')
+            ->join('users as uc', 'uc.id', 't.userId')
+            ->select(
+                't.registrationNo',
+                'l.locationName',
+                'c.firstName',
+                DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
+                DB::raw("IFNULL(t.startDate,'') as startDate"),
+                DB::raw("IFNULL(t.endDate,'') as endDate"),
+                DB::raw("CASE WHEN t.typeOfCare = 1 then 'Rawat Jalan' else 'Rawat Inap' end as typeOfCare"),
+                't.status',
+                'u.firstName as picDoctor',
+                'uc.firstName as createdBy',
+                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
+            )
+            ->where('t.isDeleted', '=', 0);
+
+        if (!$request->user()->roleId == 1 || !$request->user()->roleId == 2) {
+            $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
+            $data3 = $data3->whereIn('l.id', $locations);
+        } else {
+
+            if ($request->locationId) {
+
+                $data3 = $data3->whereIn('l.id', $request->locationId);
+            }
+        }
+
+        $data3 = $data3->whereIn('t.status', ['Selesai', 'Batal']);
+
+        if ($request->customerGroupId) {
+
+            $data3 = $data3->whereIn('cg.id', $request->customerGroupId);
+        }
+
+        $data3 = $data3->orderBy('t.updated_at', 'desc')->get();
+
+        $spreadsheet = IOFactory::load(public_path() . '/template/transaction/' . 'Template_Export_Transaction_Pet_Clinic.xlsx');
+
+        $sheet = $spreadsheet->getSheet(0);
+        $row = 2;
+        foreach ($data1 as $item) {
+
+            $sheet->setCellValue("A{$row}", $row - 1);
+            $sheet->setCellValue("B{$row}", $item->registrationNo);
+            $sheet->setCellValue("C{$row}", $item->locationName);
+            $sheet->setCellValue("D{$row}", $item->firstName);
+            $sheet->setCellValue("E{$row}", $item->customerGroup);
+            $sheet->setCellValue("F{$row}", $item->startDate);
+            $sheet->setCellValue("G{$row}", $item->endDate);
+            $sheet->setCellValue("H{$row}", $item->status);
+            $sheet->setCellValue("I{$row}", $item->picDoctor);
+            $sheet->setCellValue("J{$row}", $item->createdBy);
+            $sheet->setCellValue("K{$row}", $item->createdAt);
+
+            $row++;
+        }
+
+        $sheet = $spreadsheet->getSheet(1);
+        $row = 2;
+        foreach ($data2 as $item) {
+
+            $sheet->setCellValue("A{$row}", $row - 1);
+            $sheet->setCellValue("B{$row}", $item->registrationNo);
+            $sheet->setCellValue("C{$row}", $item->locationName);
+            $sheet->setCellValue("D{$row}", $item->firstName);
+            $sheet->setCellValue("E{$row}", $item->customerGroup);
+            $sheet->setCellValue("F{$row}", $item->startDate);
+            $sheet->setCellValue("G{$row}", $item->endDate);
+            $sheet->setCellValue("H{$row}", $item->status);
+            $sheet->setCellValue("I{$row}", $item->picDoctor);
+            $sheet->setCellValue("J{$row}", $item->createdBy);
+            $sheet->setCellValue("K{$row}", $item->createdAt);
+
+            $row++;
+        }
+
+        $sheet = $spreadsheet->getSheet(2);
+        $row = 2;
+        foreach ($data3 as $item) {
+
+            $sheet->setCellValue("A{$row}", $row - 1);
+            $sheet->setCellValue("B{$row}", $item->registrationNo);
+            $sheet->setCellValue("C{$row}", $item->locationName);
+            $sheet->setCellValue("D{$row}", $item->firstName);
+            $sheet->setCellValue("E{$row}", $item->customerGroup);
+            $sheet->setCellValue("F{$row}", $item->typeOfCare);
+            $sheet->setCellValue("G{$row}", $item->startDate);
+            $sheet->setCellValue("H{$row}", $item->endDate);
+            $sheet->setCellValue("I{$row}", $item->status);
+            $sheet->setCellValue("J{$row}", $item->picDoctor);
+            $sheet->setCellValue("K{$row}", $item->createdBy);
+            $sheet->setCellValue("L{$row}", $item->createdAt);
+
+            $row++;
+        }
+
+        $fileName = 'Export Transaksi Pet Clinic.xlsx';
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
+        $writer->save($newFilePath);
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function petCheck(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+    }
 }

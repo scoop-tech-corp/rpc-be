@@ -552,6 +552,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/petclinic/detail', [TransactionPetClinicController::class, 'detail']);
         Route::put('/petclinic', [TransactionPetClinicController::class, 'update']);
         Route::delete('/petclinic', [TransactionPetClinicController::class, 'delete']);
+        Route::get('/petclinic/export', [TransactionPetClinicController::class, 'export']);
+
+        Route::post('/petclinic/petcheck', [TransactionPetClinicController::class, 'petcheck']);
 
         Route::post('/', [TransactionController::class, 'create']);
         Route::get('/', [TransactionController::class, 'index']);
