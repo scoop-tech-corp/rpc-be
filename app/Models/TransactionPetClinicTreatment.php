@@ -7,5 +7,25 @@ use Illuminate\Database\Eloquent\Model;
 
 class TransactionPetClinicTreatment extends Model
 {
-    use HasFactory;
+    protected $table = "transactionPetClinicTreatments";
+
+    protected $dates = ['created_at', 'deletedAt'];
+
+    protected $guarded = ['id'];
+
+    protected $fillable = [
+        'transactionPetClinicId',
+        'isSurgery',
+        'noteSurgery',
+        'infusion',
+        'fisioteraphy',
+        'injectionMedicine',
+        'oralMedicine',
+        'tropicalMedicine',
+        'vaccination',
+        'othersTreatment',
+        'userId',
+        'userUpdateId'
+    ];
+
 }

@@ -5,7 +5,13 @@ namespace App\Http\Controllers\Transaction;
 use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
+use App\Models\Customer\CustomerTelephones;
 use App\Models\TransactionPetClinic;
+use App\Models\TransactionPetClinicAdvice;
+use App\Models\transactionPetClinicAnamnesis;
+use App\Models\TransactionPetClinicCheckUpResult;
+use App\Models\TransactionPetClinicDiagnose;
+use App\Models\TransactionPetClinicTreatment;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Validator;
@@ -796,7 +802,7 @@ class TransactionPetClinicController extends Controller
         ]);
     }
 
-    public function petCheck(Request $request)
+    public function orderNumber(Request $request)
     {
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
@@ -805,6 +811,377 @@ class TransactionPetClinicController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
             return responseInvalid($errors);
+        }
+
+        $trx = TransactionPetClinic::find($request->id);
+        $data = transactionPetClinicAnamnesis::where('locationId', $trx->locationId)->count();
+
+        $date = Carbon::now()->format('d');
+        $month = Carbon::now()->format('m');
+        $year = Carbon::now()->format('Y');
+
+        $regisNo = str_pad($data + 1, 3, 0, STR_PAD_LEFT) . '/LPIK-RIS-RPC-VET/' . $trx->locationId . '/' . $date . '/' . $month . '/' . $year;
+
+        return response()->json($regisNo, 200);
+    }
+
+    public function loadDataPetCheck(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $trx = TransactionPetClinic::find($request->id);
+
+        $cust = Customer::find($trx->customerId);
+
+        $phone = CustomerTelephones::where('customerId', '=', $trx->customerId)
+            ->where('usage', '=', 'Utama')
+            ->first();
+
+        $pet = CustomerPets::join('petCategory', 'customerPets.petCategoryId', '=', 'petCategory.id')
+            ->where('customerPets.id', $trx->petId)
+            ->select('customerPets.petName', 'petCategory.petCategoryName as petCategory')
+            ->first();
+
+        return response()->json([
+            'ownerName' => $cust->firstName,
+            'phoneNumber' => $phone->phoneNumber,
+            'type' => $pet->petCategory,
+            'petName' => $pet->petName,
+        ], 200);
+    }
+
+    public function createPetCheck(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionPetClinicId' => 'required|integer',
+            'petCheckRegistrationNo' => 'required|string',
+            'locationId' => 'required|integer',
+
+            'isAnthelmintic' => 'required|boolean',
+            'anthelminticDate' => 'required|date',
+            'anthelminticBrand' => 'required|string',
+
+            'isVaccination' => 'required|boolean',
+            'vaccinationDate' => 'required|date',
+            'vaccinationBrand' => 'required|string',
+
+            'isFleaMedicine' => 'required|boolean',
+            'fleaMedicineDate' => 'required|date',
+            'fleaMedicineBrand' => 'required|string',
+
+            'previousAction' => 'required|string',
+            'othersCompalints' => 'nullable|string',
+
+            'weight' => 'required|numeric',
+            'weightCategory' => 'required|integer',
+
+            'temperature' => 'required|numeric',
+            'temperatureBottom' => 'required|numeric',
+            'temperatureTop' => 'required|numeric',
+            'temperatureCategory' => 'required|integer',
+
+            'isLice' => 'required|boolean',
+            'noteLice' => 'nullable|string',
+
+            'isFlea' => 'required|boolean',
+            'noteFlea' => 'nullable|string',
+
+            'isCaplak' => 'required|boolean',
+            'noteCaplak' => 'nullable|string',
+
+            'isTungau' => 'required|boolean',
+            'noteTungau' => 'nullable|string',
+
+            'ectoParasitCategory' => 'nullable|integer',
+
+            'isNematoda' => 'required|boolean',
+            'noteNematoda' => 'nullable|string',
+            //endoparasit
+            'isTermatoda' => 'required|boolean',
+            'noteTermatoda' => 'nullable|string',
+
+            'isCestode' => 'required|boolean',
+            'noteCestode' => 'nullable|string',
+
+            'isFungiFound' => 'required|boolean',
+
+            'konjung' => 'nullable|string',
+            'ginggiva' => 'nullable|string',
+            'ear' => 'nullable|string',
+            'tongue' => 'nullable|string',
+            'nose' => 'nullable|string',
+            'CRT' => 'nullable|string',
+
+            //kelamin
+            'genitals' => 'nullable|string',
+
+            'neurologicalFindings' => 'nullable|string',
+            'lokomosiFindings' => 'nullable|string',
+
+            //ingus
+            'isSnot' => 'required|boolean',
+            'noteSnot' => 'nullable|string',
+
+            'breathType' => 'nullable|integer',
+            'breathSoundType' => 'nullable|integer',
+            'breathSoundNote' => 'nullable|string',
+            'othersFoundBreath' => 'nullable|string',
+
+            'isPulsus' => 'required|boolean',
+            'heartSound' => 'nullable|integer',
+            'othersFoundHeart' => 'nullable|string',
+
+            'othersFoundSkin' => 'nullable|string',
+            'othersFoundHair' => 'nullable|string',
+
+            //urogenital
+            'maleTesticles' => 'nullable|integer',
+            'othersMaleTesticles' => 'nullable|string',
+            'penisCondition' => 'nullable|string',
+            'vaginalDischargeType' => 'nullable|integer',
+            'urinationType' => 'nullable|string',
+            'othersUrination' => 'nullable|string',
+            'othersFoundUrogenital' => 'nullable|string',
+
+            'abnormalitasCavumOris' => 'nullable|string',
+            'intestinalPeristalsis' => 'nullable|string',
+            'perkusiAbdomen' => 'nullable|string',
+            'rektumKloaka' => 'nullable|string',
+            'othersCharacterRektumKloaka' => 'nullable|string',
+
+            'fecesForm' => 'nullable|string',
+            'fecesColor' => 'nullable|string',
+            'fecesWithCharacter' => 'nullable|string',
+            'othersFoundDigesti' => 'nullable|string',
+
+            'reflectPupil' => 'nullable|string',
+            'eyeBallCondition' => 'nullable|string',
+            'othersFoundVision' => 'nullable|string',
+
+            'earlobe' => 'nullable|string',
+            'isEarwax' => 'required|boolean',
+            'earwaxCharacter' => 'nullable|string',
+            'othersFoundEar' => 'nullable|string',
+
+            'isInpatient' => 'required|boolean',
+            'noteInpatient' => 'nullable|string',
+
+            'isTherapeuticFeed' => 'required|boolean',
+            'noteTherapeuticFeed' => 'nullable|string',
+
+            'imuneBooster' => 'required|boolean',
+            'suplement' => 'nullable|string',
+            'desinfeksi' => 'nullable|string',
+            'care' => 'nullable|string',
+
+            'isGrooming' => 'required|boolean',
+            'noteGrooming' => 'nullable|string',
+
+            'othersNoteAdvice' => 'nullable|string',
+            'nextControlCheckup' => 'required|date',
+
+            'diagnoseDisease' => 'nullable|string',
+            'prognoseDisease' => 'nullable|string',
+            'diseaseProgressOverview' => 'nullable|string',
+
+            'isMicroscope' => 'required|boolean',
+            'noteMicroscope' => 'nullable|string',
+
+            'isEye' => 'required|boolean',
+            'noteEye' => 'nullable|string',
+
+            'isTeskit' => 'required|boolean',
+            'noteTeskit' => 'nullable|string',
+
+            'isUltrasonografi' => 'required|boolean',
+            'noteUltrasonografi' => 'nullable|string',
+
+            'isRontgen' => 'required|boolean',
+            'noteRontgen' => 'nullable|string',
+
+            'isSitologi' => 'required|boolean',
+            'noteSitologi' => 'nullable|string',
+
+            'isBloodLab' => 'required|boolean',
+            'noteBloodLab' => 'nullable|string',
+
+            'isSurgery' => 'required|boolean',
+            'noteSurgery' => 'nullable|string',
+
+            'infusion' => 'nullable|string',
+            'fisioteraphy' => 'nullable|string',
+            'injectionMedicine' => 'nullable|string',
+            'oralMedicine' => 'nullable|string',
+            'tropicalMedicine' => 'nullable|string',
+            'vaccination' => 'nullable|string',
+            'othersTreatment' => 'nullable|string',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        DB::beginTransaction();
+        try {
+            transactionPetClinicAnamnesis::create([
+                'transactionPetClinicId' => $request->transactionPetClinicId,
+                'petCheckRegistrationNo' => $request->petCheckRegistrationNo,
+                'locationId' => $request->locationId,
+                'isAnthelmintic' => $request->isAnthelmintic,
+                'anthelminticDate' => $request->anthelminticDate,
+                'anthelminticBrand' => $request->anthelminticBrand,
+                'isVaccination' => $request->isVaccination,
+                'vaccinationDate' => $request->vaccinationDate,
+                'vaccinationBrand' => $request->vaccinationBrand,
+                'isFleaMedicine' => $request->isFleaMedicine,
+                'fleaMedicineDate' => $request->fleaMedicineDate,
+                'fleaMedicineBrand' => $request->fleaMedicineBrand,
+                'previousAction' => $request->previousAction,
+                'othersCompalints' => $request->othersCompalints,
+                'userId' => $request->user()->id,
+                'userUpdateId' => $request->user()->id, // Jika `userUpdateId` sama dengan `userId`, kamu bisa sesuaikan
+            ]);
+
+            TransactionPetClinicCheckUpResult::create([
+                'transactionPetClinicId' => $request->transactionPetClinicId,
+                'weight' => $request->weight,
+                'weightCategory' => $request->weightCategory,
+                'temperature' => $request->temperature,
+                'temperatureBottom' => $request->temperatureBottom,
+                'temperatureTop' => $request->temperatureTop,
+                'temperatureCategory' => $request->temperatureCategory,
+                'isLice' => $request->isLice,
+                'noteLice' => $request->noteLice,
+                'isFlea' => $request->isFlea,
+                'noteFlea' => $request->noteFlea,
+                'isCaplak' => $request->isCaplak,
+                'noteCaplak' => $request->noteCaplak,
+                'isTungau' => $request->isTungau,
+                'noteTungau' => $request->noteTungau,
+                'ectoParasitCategory' => $request->ectoParasitCategory,
+                'isNematoda' => $request->isNematoda,
+                'noteNematoda' => $request->noteNematoda,
+                'isTermatoda' => $request->isTermatoda,
+                'noteTermatoda' => $request->noteTermatoda,
+                'isCestode' => $request->isCestode,
+                'noteCestode' => $request->noteCestode,
+                'isFungiFound' => $request->isFungiFound,
+                'konjung' => $request->konjung,
+                'ginggiva' => $request->ginggiva,
+                'ear' => $request->ear,
+                'tongue' => $request->tongue,
+                'nose' => $request->nose,
+                'CRT' => $request->CRT,
+                'genitals' => $request->genitals,
+                'neurologicalFindings' => $request->neurologicalFindings,
+                'lokomosiFindings' => $request->lokomosiFindings,
+                'isSnot' => $request->isSnot,
+                'noteSnot' => $request->noteSnot,
+                'breathType' => $request->breathType,
+                'breathSoundType' => $request->breathSoundType,
+                'breathSoundNote' => $request->breathSoundNote,
+                'othersFoundBreath' => $request->othersFoundBreath,
+                'isPulsus' => $request->isPulsus,
+                'heartSound' => $request->heartSound,
+                'othersFoundHeart' => $request->othersFoundHeart,
+                'othersFoundSkin' => $request->othersFoundSkin,
+                'othersFoundHair' => $request->othersFoundHair,
+                'maleTesticles' => $request->maleTesticles,
+                'othersMaleTesticles' => $request->othersMaleTesticles,
+                'penisCondition' => $request->penisCondition,
+                'vaginalDischargeType' => $request->vaginalDischargeType,
+                'urinationType' => $request->urinationType,
+                'othersUrination' => $request->othersUrination,
+                'othersFoundUrogenital' => $request->othersFoundUrogenital,
+                'abnormalitasCavumOris' => $request->abnormalitasCavumOris,
+                'intestinalPeristalsis' => $request->intestinalPeristalsis,
+                'perkusiAbdomen' => $request->perkusiAbdomen,
+                'rektumKloaka' => $request->rektumKloaka,
+                'othersCharacterRektumKloaka' => $request->othersCharacterRektumKloaka,
+                'fecesForm' => $request->fecesForm,
+                'fecesColor' => $request->fecesColor,
+                'fecesWithCharacter' => $request->fecesWithCharacter,
+                'othersFoundDigesti' => $request->othersFoundDigesti,
+                'reflectPupil' => $request->reflectPupil,
+                'eyeBallCondition' => $request->eyeBallCondition,
+                'othersFoundVision' => $request->othersFoundVision,
+                'earlobe' => $request->earlobe,
+                'isEarwax' => $request->isEarwax,
+                'earwaxCharacter' => $request->earwaxCharacter,
+                'othersFoundEar' => $request->othersFoundEar,
+                'userId' => $request->user()->id,
+                'userUpdateId' => $request->user()->id, // Jika userUpdateId sama dengan userId, bisa disesuaikan
+            ]);
+
+            TransactionPetClinicDiagnose::create([
+                'transactionPetClinicId' => $request->transactionPetClinicId,
+                'diagnoseDisease' => $request->diagnoseDisease,
+                'prognoseDisease' => $request->prognoseDisease,
+                'diseaseProgressOverview' => $request->diseaseProgressOverview,
+                'isMicroscope' => $request->isMicroscope,
+                'noteMicroscope' => $request->noteMicroscope,
+                'isEye' => $request->isEye,
+                'noteEye' => $request->noteEye,
+                'isTeskit' => $request->isTeskit,
+                'noteTeskit' => $request->noteTeskit,
+                'isUltrasonografi' => $request->isUltrasonografi,
+                'noteUltrasonografi' => $request->noteUltrasonografi,
+                'isRontgen' => $request->isRontgen,
+                'noteRontgen' => $request->noteRontgen,
+                'isSitologi' => $request->isSitologi,
+                'noteSitologi' => $request->noteSitologi,
+                'isBloodLab' => $request->isBloodLab,
+                'noteBloodLab' => $request->noteBloodLab,
+                'userId' => $request->user()->id,
+                'userUpdateId' => $request->user()->id, // Jika `userUpdateId` sama dengan `userId`, bisa disesuaikan
+            ]);
+
+            TransactionPetClinicTreatment::create([
+                'transactionPetClinicId' => $request->transactionPetClinicId,
+                'isSurgery' => $request->isSurgery,
+                'noteSurgery' => $request->noteSurgery,
+                'infusion' => $request->infusion,
+                'fisioteraphy' => $request->fisioteraphy,
+                'injectionMedicine' => $request->injectionMedicine,
+                'oralMedicine' => $request->oralMedicine,
+                'tropicalMedicine' => $request->tropicalMedicine,
+                'vaccination' => $request->vaccination,
+                'othersTreatment' => $request->othersTreatment,
+                'userId' => $request->user()->id,
+                'userUpdateId' => $request->user()->id, // Jika `userUpdateId` sama dengan `userId`, bisa disesuaikan
+            ]);
+
+            TransactionPetClinicAdvice::create([
+                'transactionPetClinicId' => $request->transactionPetClinicId,
+                'isInpatient' => $request->isInpatient,
+                'noteInpatient' => $request->noteInpatient,
+                'isTherapeuticFeed' => $request->isTherapeuticFeed,
+                'noteTherapeuticFeed' => $request->noteTherapeuticFeed,
+                'imuneBooster' => $request->imuneBooster,
+                'suplement' => $request->suplement,
+                'desinfeksi' => $request->desinfeksi,
+                'care' => $request->care,
+                'isGrooming' => $request->isGrooming,
+                'noteGrooming' => $request->noteGrooming,
+                'othersNoteAdvice' => $request->othersNoteAdvice,
+                'nextControlCheckup' => $request->nextControlCheckup,
+                'userId' => $request->user()->id,
+                'userUpdateId' => $request->user()->id, // Jika `userUpdateId` sama dengan `userId`, bisa disesuaikan
+            ]);
+
+            DB::commit();
+            return responseCreate();
+        } catch (Exception $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
         }
     }
 }
