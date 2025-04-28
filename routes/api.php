@@ -556,8 +556,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/petclinic/ordernumber', [TransactionPetClinicController::class, 'orderNumber']);
         Route::post('/petclinic/petcheck', [TransactionPetClinicController::class, 'createPetCheck']);
-
         Route::get('/petclinic/load-petcheck', [TransactionPetClinicController::class, 'loadDataPetCheck']);
+
+        Route::post('/list', [TransactionPetClinicController::class, 'createList']);
+        Route::get('/listdata/weight', [TransactionPetClinicController::class, 'listDataWeight']);
+        Route::get('/listdata/temperature', [TransactionPetClinicController::class, 'listDatatemperature']);
+        Route::get('/listdata/breath', [TransactionPetClinicController::class, 'listDatabreath']);
+        Route::get('/listdata/sound', [TransactionPetClinicController::class, 'listDatasound']);
+        Route::get('/listdata/heart', [TransactionPetClinicController::class, 'listDataheart']);
+        Route::get('/listdata/vaginal', [TransactionPetClinicController::class, 'listDatavaginal']);
 
         Route::post('/', [TransactionController::class, 'create']);
         Route::get('/', [TransactionController::class, 'index']);

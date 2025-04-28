@@ -6,6 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Customer\CustomerTelephones;
+use App\Models\ListBreathTransaction;
+use App\Models\ListHeartTransaction;
+use App\Models\ListSoundTransaction;
+use App\Models\ListTemperatureTransaction;
+use App\Models\ListVaginalTransaction;
+use App\Models\ListWeightTransaction;
 use App\Models\TransactionPetClinic;
 use App\Models\TransactionPetClinicAdvice;
 use App\Models\transactionPetClinicAnamnesis;
@@ -1183,5 +1189,124 @@ class TransactionPetClinicController extends Controller
             DB::rollback();
             return responseInvalid([$th->getMessage()]);
         }
+    }
+
+    public function createList(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'category' => 'required|string|in:weight,temperature,breath,sound,heart,vaginal',
+            'name' => 'required|string'
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        if ($request->category == 'weight') {
+            ListWeightTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'temperature') {
+            ListTemperatureTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'breath') {
+            ListBreathTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'sound') {
+            ListSoundTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'heart') {
+            ListHeartTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'vaginal') {
+            ListVaginalTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        }
+
+        return responseCreate();
+    }
+
+    public function listDataWeight()
+    {
+        $data = ListWeightTransaction::select('id', 'name')
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        return responseList($data);
+    }
+
+    public function listDataTemperature()
+    {
+        $data = ListTemperatureTransaction::select('id', 'name')
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        return responseList($data);
+    }
+
+    public function listDatabreath()
+    {
+        $data = ListBreathTransaction::select('id', 'name')
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        return responseList($data);
+    }
+
+    public function listDatasound()
+    {
+        $data = ListSoundTransaction::select('id', 'name')
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        return responseList($data);
+    }
+
+    public function listDataheart()
+    {
+        $data = ListHeartTransaction::select('id', 'name')
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        return responseList($data);
+    }
+
+    public function listDatavaginal()
+    {
+        $data = ListVaginalTransaction::select('id', 'name')
+            ->where('isDeleted', '=', 0)
+            ->get();
+
+        return responseList($data);
     }
 }
