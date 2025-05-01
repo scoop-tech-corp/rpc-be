@@ -857,7 +857,7 @@ class TransactionPetClinicController extends Controller
 
         $phoneNumber = '';
 
-        if (count($phone) == 0) {
+        if ($phone) {
             $phoneNumber = $phone->phoneNumber;
         }
 
