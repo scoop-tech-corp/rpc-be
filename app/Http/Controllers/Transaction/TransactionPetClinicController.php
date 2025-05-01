@@ -855,9 +855,15 @@ class TransactionPetClinicController extends Controller
             ->select('customerPets.petName', 'petCategory.petCategoryName as petCategory')
             ->first();
 
+        $phoneNumber = '';
+
+        if (count($phone) == 0) {
+            $phoneNumber = $phone->phoneNumber;
+        }
+
         return response()->json([
             'ownerName' => $cust->firstName,
-            'phoneNumber' => $phone->phoneNumber,
+            'phoneNumber' => $phoneNumber,
             'type' => $pet->petCategory,
             'petName' => $pet->petName,
         ], 200);
