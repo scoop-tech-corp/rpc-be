@@ -844,7 +844,15 @@ class TransactionPetClinicController extends Controller
 
         $trx = TransactionPetClinic::find($request->id);
 
+        if (!$trx) {
+            return responseInvalid(['Transaction is not found!']);
+        }
+
         $cust = Customer::find($trx->customerId);
+
+        if (!$cust) {
+            return responseInvalid(['Customer is not found!']);
+        }
 
         $phone = CustomerTelephones::where('customerId', '=', $trx->customerId)
             ->where('usage', '=', 'Utama')
