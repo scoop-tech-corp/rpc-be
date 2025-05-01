@@ -2,12 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiController;
+use App\Http\Controllers\OtpController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataStaticController;
+use App\Http\Controllers\TimeKeeperController;
 use App\Http\Controllers\ImportRegionController;
 use App\Http\Controllers\Staff\AbsentController;
 use App\Http\Controllers\Staff\ProfileController;
@@ -20,16 +22,16 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\RestockController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Product\SupplierController;
-use App\Http\Controllers\Staff\StaffLeaveController;
-use App\Http\Controllers\Customer\CustomerController;
 // use App\Http\Controllers\Promotion\PartnerController;
 // use App\Http\Controllers\Promotion\DiscountController;
-use App\Http\Controllers\Product\ProductSellController;
+use App\Http\Controllers\Staff\StaffLeaveController;
 // use App\Http\Controllers\Promotion\PromotionController;
+use App\Http\Controllers\Customer\CustomerController;
+
+use App\Http\Controllers\Product\ProductSellController;
+
 use App\Http\Controllers\Staff\SecurityGroupController;
-
 use App\Http\Controllers\Report\ReportProductController;
-
 use App\Http\Controllers\ReportMenuManagementController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Report\ReportCustomerController;
@@ -38,20 +40,19 @@ use App\Http\Controllers\VerifyUserandPasswordController;
 use App\Http\Controllers\Customer\ImportCustomerController;
 use App\Http\Controllers\Product\TransferProductController;
 use App\Http\Controllers\Transaction\TransactionController;
+use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
+use App\Http\Controllers\Transaction\TransactionPetShopController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
-use App\Http\Controllers\OtpController;
-use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
-use App\Http\Controllers\Report\StaffController as ReportStaffController;
-use App\Http\Controllers\Report\SalesController as ReportSalesController;
-use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
-use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
-use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
-use App\Http\Controllers\TimeKeeperController;
 use App\Http\Controllers\Transaction\TransactionPetClinicController;
+use App\Http\Controllers\Report\SalesController as ReportSalesController;
+use App\Http\Controllers\Report\StaffController as ReportStaffController;
+use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
+use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
+use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -557,6 +558,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/petclinic/ordernumber', [TransactionPetClinicController::class, 'orderNumber']);
         Route::post('/petclinic/petcheck', [TransactionPetClinicController::class, 'createPetCheck']);
         Route::get('/petclinic/load-petcheck', [TransactionPetClinicController::class, 'loadDataPetCheck']);
+
+        Route::get('/petshop', [TransactionPetShopController::class, 'index']);
+        Route::post('/petshop', [TransactionPetShopController::class, 'create']);
+        Route::get('/petshop/detail', [TransactionPetShopController::class, 'detail']);
+        Route::put('/petshop', [TransactionPetShopController::class, 'update']);
+        Route::delete('/petshop', [TransactionPetShopController::class, 'delete']);
+        Route::get('/petshop/export', [TransactionPetShopController::class, 'export']);
 
         Route::post('/list', [TransactionPetClinicController::class, 'createList']);
         Route::get('/listdata/weight', [TransactionPetClinicController::class, 'listDataWeight']);
