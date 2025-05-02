@@ -22,7 +22,7 @@ class TransactionPetShopController
         $page = $request->goToPage;
 
         $subDetail = DB::table('transactionpetshopdetail as d')
-            ->join('transactionpetshop as tp', 'tp.id', '=', 'd.transactionpetshopId') // <- sesuaikan di sini
+            ->join('transactionpetshop as tp', 'tp.id', '=', 'd.transactionpetshopId') 
             ->select(
                 'tp.id as transaction_id',
                 DB::raw('SUM(d.quantity) as totalItem'),
@@ -32,7 +32,7 @@ class TransactionPetShopController
             ->groupBy('tp.id');
 
 
-        // Main query
+        
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
             ->join('location as l', 'tp.locationId', '=', 'l.id')
@@ -45,11 +45,11 @@ class TransactionPetShopController
                 'tp.registrationNo',
                 'tp.locationId',
                 'tp.customerId',
-                'cg.customerGroup as customerGroup', // ← ambil nama grup dari tabel customergroups
+                'cg.customerGroup as customerGroup', 
                 DB::raw('COALESCE(detail.totalItem, 0) as totalItem'),
                 DB::raw('COALESCE(detail.totalUsePromo, 0) as totalUsePromo'),
                 DB::raw('COALESCE(detail.totalAmount, 0) as totalAmount'),
-                'c.nickName as customerName', // ← ganti label jadi customerName
+                'c.nickName as customerName', 
                 'l.locationName'
             )
             ->where('tp.isDeleted', '=', 0);
@@ -75,7 +75,7 @@ class TransactionPetShopController
             $data = $data->whereIn('tp.serviceCategory', $request->serviceCategories);
         }
 
-        // Search
+        
         if ($request->search) {
             $res = $this->Search($request);
             if ($res) {
@@ -99,7 +99,7 @@ class TransactionPetShopController
 
         $data = $data->orderBy('tp.updated_at', 'desc');
 
-        // Pagination
+        
         $offset = ($page - 1) * $itemPerPage;
         $count_data = $data->count();
         $totalPaging = ceil($count_data / $itemPerPage);
@@ -113,7 +113,7 @@ class TransactionPetShopController
     {
         $temp_column = [];
 
-        // Cari di tp.registrationNo
+        
         $data = DB::table('transactionpetshop as tp')
             ->select('tp.registrationNo')
             ->where('tp.isDeleted', '=', 0);
@@ -126,7 +126,7 @@ class TransactionPetShopController
             $temp_column[] = 'tp.registrationNo';
         }
 
-        // Cari di c.nickName (customer name)
+        
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'c.id', '=', 'tp.customerId')
             ->select('c.nickName')
@@ -140,7 +140,7 @@ class TransactionPetShopController
             $temp_column[] = 'c.nickName';
         }
 
-        // Cari di l.locationName
+        
         $data = DB::table('transactionpetshop as tp')
             ->join('location as l', 'l.id', '=', 'tp.locationId')
             ->select('l.locationName')
@@ -215,7 +215,7 @@ class TransactionPetShopController
                 }
             }
 
-            // Validasi stok
+            
             $lowStockWarnings = [];
             foreach ($request->productList as $prod) {
                 $productLoc = ProductLocations::where('locationId', $request->locationId)

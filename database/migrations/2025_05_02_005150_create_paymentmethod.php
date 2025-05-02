@@ -17,7 +17,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
 
-
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');
             $table->integer('userUpdateId')->nullable();

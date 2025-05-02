@@ -19,7 +19,6 @@ return new class extends Migration
             $table->integer('locationId');
             $table->integer('customerId');
             $table->integer('paymentMethod');
-            $table->integer('userId');
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');
