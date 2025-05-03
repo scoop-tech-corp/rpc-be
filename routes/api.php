@@ -42,12 +42,14 @@ use App\Http\Controllers\Product\TransferProductController;
 use App\Http\Controllers\Transaction\TransactionController;
 use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Product\ProductInventoryController;
+use App\Http\Controllers\Transaction\MaterialDataController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
-use App\Http\Controllers\Transaction\TransactionPetShopController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
+use App\Http\Controllers\Transaction\TransactionPetShopController;
 use App\Http\Controllers\Transaction\TransactionPetClinicController;
+use App\Http\Controllers\Transaction\TransactionPaymentMethodController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
@@ -565,6 +567,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/petshop', [TransactionPetShopController::class, 'update']);
         Route::delete('/petshop', [TransactionPetShopController::class, 'delete']);
         Route::get('/petshop/export', [TransactionPetShopController::class, 'export']);
+
+        Route::get('/paymentmethod', [MaterialDataController::class, 'index']);
+        Route::post('/paymentmethod', [MaterialDataController::class, 'store']);
+        Route::put('/paymentmethod', [MaterialDataController::class, 'update']);
+        Route::post('/paymentmethod/detail', [MaterialDataController::class, 'detail']);
+        Route::delete('/paymentmethod', [MaterialDataController::class, 'delete']);
 
         Route::post('/list', [TransactionPetClinicController::class, 'createList']);
         Route::get('/listdata/weight', [TransactionPetClinicController::class, 'listDataWeight']);

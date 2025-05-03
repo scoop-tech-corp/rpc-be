@@ -16,13 +16,106 @@ use App\Models\TransactionPetShopDetail;
 
 class TransactionPetShopController
 {
+    // public function index(Request $request)
+    // {
+    //     $itemPerPage = $request->rowPerPage;
+    //     $page = $request->goToPage;
+
+    //     $subDetail = DB::table('transactionpetshopdetail as d')
+    //         ->join('transactionpetshop as tp', 'tp.id', '=', 'd.transactionpetshopId') 
+    //         ->select(
+    //             'tp.id as transaction_id',
+    //             DB::raw('SUM(d.quantity) as totalItem'),
+    //             DB::raw('SUM(CASE WHEN d.promoId IS NOT NULL THEN 1 ELSE 0 END) as totalUsePromo'),
+    //             DB::raw('SUM(d.quantity * d.price) as totalAmount')
+    //         )
+    //         ->groupBy('tp.id');
+
+
+
+    //     $data = DB::table('transactionpetshop as tp')
+    //         ->join('customer as c', 'tp.customerId', '=', 'c.id')
+    //         ->join('location as l', 'tp.locationId', '=', 'l.id')
+    //         ->join('customergroups as cg', 'c.customerGroupId', '=', 'cg.id')
+    //         ->leftJoinSub($subDetail, 'detail', function ($join) {
+    //             $join->on('tp.id', '=', 'detail.transaction_id');
+    //         })
+    //         ->select(
+    //             'tp.id',
+    //             'tp.registrationNo',
+    //             'tp.locationId',
+    //             'tp.customerId',
+    //             'cg.customerGroup as customerGroup', 
+    //             DB::raw('COALESCE(detail.totalItem, 0) as totalItem'),
+    //             DB::raw('COALESCE(detail.totalUsePromo, 0) as totalUsePromo'),
+    //             DB::raw('COALESCE(detail.totalAmount, 0) as totalAmount'),
+    //             'c.nickName as customerName', 
+    //             'l.locationName'
+    //         )
+    //         ->where('tp.isDeleted', '=', 0);
+
+
+    //     $roleId = $request->user()->roleId;
+
+    //     if ($roleId == 1) {
+    //         if ($request->locationId) {
+    //             $data = $data->whereIn('tp.locationId', $request->locationId);
+    //         }
+    //     } else {
+    //         $locations = UsersLocation::where('usersId', $request->user()->id)->pluck('id')->toArray();
+    //         $data = $data->whereIn('tp.locationId', $locations);
+    //     }
+
+
+    //     if ($request->customerGroupId) {
+    //         $data = $data->whereIn('c.customerGroupId', $request->customerGroupId);
+    //     }
+
+    //     if ($request->serviceCategories) {
+    //         $data = $data->whereIn('tp.serviceCategory', $request->serviceCategories);
+    //     }
+
+
+    //     if ($request->search) {
+    //         $res = $this->Search($request);
+    //         if ($res) {
+    //             $data = $data->where(function ($query) use ($res, $request) {
+    //                 $query->where($res[0], 'like', '%' . $request->search . '%');
+    //                 for ($i = 1; $i < count($res); $i++) {
+    //                     $query->orWhere($res[$i], 'like', '%' . $request->search . '%');
+    //                 }
+    //             });
+    //         } else {
+    //             return response()->json([
+    //                 'totalPagination' => 0,
+    //                 'data' => []
+    //             ], 200);
+    //         }
+    //     }
+
+    //     if ($request->orderValue) {
+    //         $data = $data->orderBy($request->orderColumn, $request->orderValue);
+    //     }
+
+    //     $data = $data->orderBy('tp.updated_at', 'desc');
+
+
+    //     $offset = ($page - 1) * $itemPerPage;
+    //     $count_data = $data->count();
+    //     $totalPaging = ceil($count_data / $itemPerPage);
+
+    //     $data = $data->offset($offset)->limit($itemPerPage)->get();
+
+    //     return responseIndex($totalPaging, $data);
+    // }
+
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
         $page = $request->goToPage;
 
         $subDetail = DB::table('transactionpetshopdetail as d')
-            ->join('transactionpetshop as tp', 'tp.id', '=', 'd.transactionpetshopId') 
+            ->join('transactionpetshop as tp', 'tp.id', '=', 'd.transactionpetshopId')
             ->select(
                 'tp.id as transaction_id',
                 DB::raw('SUM(d.quantity) as totalItem'),
@@ -31,8 +124,6 @@ class TransactionPetShopController
             )
             ->groupBy('tp.id');
 
-
-        
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
             ->join('location as l', 'tp.locationId', '=', 'l.id')
@@ -45,15 +136,14 @@ class TransactionPetShopController
                 'tp.registrationNo',
                 'tp.locationId',
                 'tp.customerId',
-                'cg.customerGroup as customerGroup', 
+                'cg.customerGroup as customerGroup',
                 DB::raw('COALESCE(detail.totalItem, 0) as totalItem'),
                 DB::raw('COALESCE(detail.totalUsePromo, 0) as totalUsePromo'),
                 DB::raw('COALESCE(detail.totalAmount, 0) as totalAmount'),
-                'c.nickName as customerName', 
+                'c.nickName as customerName',
                 'l.locationName'
             )
             ->where('tp.isDeleted', '=', 0);
-
 
         $roleId = $request->user()->roleId;
 
@@ -66,7 +156,6 @@ class TransactionPetShopController
             $data = $data->whereIn('tp.locationId', $locations);
         }
 
-
         if ($request->customerGroupId) {
             $data = $data->whereIn('c.customerGroupId', $request->customerGroupId);
         }
@@ -75,7 +164,6 @@ class TransactionPetShopController
             $data = $data->whereIn('tp.serviceCategory', $request->serviceCategories);
         }
 
-        
         if ($request->search) {
             $res = $this->Search($request);
             if ($res) {
@@ -93,13 +181,21 @@ class TransactionPetShopController
             }
         }
 
-        if ($request->orderValue) {
-            $data = $data->orderBy($request->orderColumn, $request->orderValue);
-        }
+        $allowedColumns = [
+            'tp.registrationNo',
+            'c.nickName',
+            'l.locationName',
+            'detail.totalAmount',
+            'detail.totalItem',
+            'detail.totalUsePromo',
+            'tp.updated_at'
+        ];
 
-        $data = $data->orderBy('tp.updated_at', 'desc');
+        $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'tp.updated_at';
+        $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
 
-        
+        $data = $data->orderBy(DB::raw($orderColumn), $orderValue);
+
         $offset = ($page - 1) * $itemPerPage;
         $count_data = $data->count();
         $totalPaging = ceil($count_data / $itemPerPage);
@@ -109,11 +205,12 @@ class TransactionPetShopController
         return responseIndex($totalPaging, $data);
     }
 
+
     private function Search(Request $request)
     {
         $temp_column = [];
 
-        
+
         $data = DB::table('transactionpetshop as tp')
             ->select('tp.registrationNo')
             ->where('tp.isDeleted', '=', 0);
@@ -126,7 +223,7 @@ class TransactionPetShopController
             $temp_column[] = 'tp.registrationNo';
         }
 
-        
+
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'c.id', '=', 'tp.customerId')
             ->select('c.nickName')
@@ -140,7 +237,7 @@ class TransactionPetShopController
             $temp_column[] = 'c.nickName';
         }
 
-        
+
         $data = DB::table('transactionpetshop as tp')
             ->join('location as l', 'l.id', '=', 'tp.locationId')
             ->select('l.locationName')
@@ -163,7 +260,6 @@ class TransactionPetShopController
             'isNewCustomer' => 'required|boolean',
             'locationId' => 'required|integer',
             'serviceCategory' => 'required|string|in:Pet Clinic,Pet Hotel,Pet Salon,Pet Shop,Pacak',
-            'notes' => 'nullable|string',
             'paymentMethod' => 'required|integer',
             'productList' => 'required|array|min:1',
             'productList.*.productId' => 'required|integer',
@@ -215,7 +311,7 @@ class TransactionPetShopController
                 }
             }
 
-            
+
             $lowStockWarnings = [];
             foreach ($request->productList as $prod) {
                 $productLoc = ProductLocations::where('locationId', $request->locationId)
