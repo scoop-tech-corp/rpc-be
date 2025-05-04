@@ -1056,6 +1056,7 @@ class DiscountController extends Controller
         }
 
         //$tempDiscount = array_merge($tempDiscount, $res);
+        $resultBundle = [];
 
         foreach ($data as $value) {
             // return $value;
@@ -1108,6 +1109,8 @@ class DiscountController extends Controller
         }
 
         $data = json_decode($request->transactions, true);
+
+        $resultBasedSales = [];
 
         $totalTransaction = 0;
         foreach ($data as $value) {
