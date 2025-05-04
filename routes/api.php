@@ -353,6 +353,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/detail', [DiscountPromotionController::class, 'detail']);
             Route::put('/', [DiscountPromotionController::class, 'update']);
             Route::delete('/', [DiscountPromotionController::class, 'delete']);
+
+            Route::post('/checkpromo', [DiscountPromotionController::class, 'checkPromo']);
         });
 
 
