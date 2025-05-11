@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Exports\Promotion\PromoReport;
+use App\Models\Customer\Customer;
 use App\Models\PromotionBasedSales;
 use App\Models\PromotionBundle;
 use App\Models\PromotionBundleDetail;
@@ -1001,11 +1002,18 @@ class DiscountController extends Controller
     {
         $data = json_decode($request->transactions, true);
 
+        $custGroup = '';
+        if (!is_null($request->customerId)) {
+            $cust = Customer::find($request->customerId);
+            $custGroup = $cust->customerGroupId;
+        }
+
         $tempFree = [];
 
         foreach ($data as $value) {
 
             $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
                 ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
                 ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
                 ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
@@ -1017,17 +1025,22 @@ class DiscountController extends Controller
                 )
                 ->where('pl.locationId', '=', $value['locationId'])
                 ->where('fi.productBuyId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
                 ->get()
                 ->toArray();
+
             $tempFree = array_merge($tempFree, $res);
         }
-        //$tempFree = array_merge($tempFree, $res);
 
         $tempDiscount = [];
 
         foreach ($data as $value) {
 
             $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
                 ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
                 ->join('promotionDiscounts as pd', 'pm.id', 'pd.promoMasterId')
                 ->join('products as p', 'p.id', 'pd.productId')
@@ -1049,6 +1062,10 @@ class DiscountController extends Controller
                 )
                 ->where('pl.locationId', '=', $value['locationId'])
                 ->where('pd.productId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
                 ->get()
                 ->toArray();
 
@@ -1061,6 +1078,7 @@ class DiscountController extends Controller
         foreach ($data as $value) {
             // return $value;
             $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
                 ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
                 ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
                 ->join('promotionBundleDetails as pbd', 'pb.id', 'pbd.promoBundleId')
@@ -1068,10 +1086,13 @@ class DiscountController extends Controller
                 ->select(
                     'pbd.promoBundleId',
                     'pm.name',
-                    // DB::raw("CONCAT('Beli ', fi.quantityBuyItem, ' ',pbuy.fullName,' gratis ',fi.quantityFreeItem,' ',pfree.fullName) as note")
                 )
                 ->where('pl.locationId', '=', $value['locationId'])
                 ->where('pbd.productId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
                 ->get();
 
             foreach ($res as $valdtl) {
@@ -1118,11 +1139,16 @@ class DiscountController extends Controller
         }
 
         $findBasedSales = DB::table('promotionMasters as pm')
+            ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
             ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
             ->join('promotionBasedSales as bs', 'pm.id', 'bs.promoMasterId')
             ->where('pl.locationId', '=', $value['locationId'])
             ->where('bs.minPurchase', '<', $totalTransaction)
             ->where('bs.maxPurchase', '>', $totalTransaction)
+            ->where('pcg.customerGroupId', '=', $custGroup)
+            ->where('pm.startDate', '<=', Carbon::now())
+            ->where('pm.endDate', '>=', Carbon::now())
+            ->where('pm.status', '=', 1)
             ->get();
 
         $text = "";
