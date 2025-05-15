@@ -127,7 +127,7 @@ class TransactionPetShopController
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
             ->join('location as l', 'tp.locationId', '=', 'l.id')
-            ->join('customergroups as cg', 'c.customerGroupId', '=', 'cg.id')
+            ->join('customerGroups as cg', 'c.customerGroupId', '=', 'cg.id')
             ->leftJoinSub($subDetail, 'detail', function ($join) {
                 $join->on('tp.id', '=', 'detail.transaction_id');
             })
@@ -438,7 +438,7 @@ class TransactionPetShopController
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
             ->join('location as l', 'tp.locationId', '=', 'l.id')
-            ->join('customergroups as cg', 'c.customerGroupId', '=', 'cg.id')
+            ->join('customerGroups as cg', 'c.customerGroupId', '=', 'cg.id')
             ->leftJoin('users as u', 'tp.userId', '=', 'u.id')
             ->leftJoin('paymentmethod as pm', 'tp.paymentMethod', '=', 'pm.id')
             ->where('tp.isDeleted', '=', 0)
