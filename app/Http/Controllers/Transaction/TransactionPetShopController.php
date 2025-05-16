@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Transaction;
 use DB;
 use Validator;
 use Carbon\Carbon;
+use App\Models\Product;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Models\ProductLocations;
 use App\Models\Customer\Customer;
 use App\Models\TransactionPetShop;
 use App\Models\Staff\UsersLocation;
+use Illuminate\Support\Facades\Http;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\TransactionPetShopDetail;
 
@@ -267,7 +269,16 @@ class TransactionPetShopController
             'productList.*.price' => 'required|integer|min:0',
             'productList.*.note' => 'nullable|string',
             'productList.*.promoId' => 'nullable|integer',
+            'selectedPromos' => 'nullable|array',
+            'selectedPromos.freeItems' => 'nullable|array',
+            'selectedPromos.discounts' => 'nullable|array',
+            'selectedPromos.bundles' => 'nullable|array',
+            'selectedPromos.basedSales' => 'nullable|array',
         ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
 
         if ($request->isNewCustomer) {
             $validate->after(function ($validator) use ($request) {
@@ -335,6 +346,28 @@ class TransactionPetShopController
                 }
             }
 
+            $promoResponse = Http::post(env('APP_URL') . '/api/transaction/petshop/discount', [
+                'freeItems' => $request->selectedPromos['freeItems'] ?? [],
+                'discounts' => $request->selectedPromos['discounts'] ?? [],
+                'bundles' => $request->selectedPromos['bundles'] ?? [],
+                'basedSales' => $request->selectedPromos['basedSales'] ?? [],
+                'products' => array_map(function ($p) use ($request) {
+                    return [
+                        'productId' => $p['productId'],
+                        'quantity' => $p['quantity'],
+                        'eachPrice' => $p['price'],
+                        'priceOverall' => $p['price'] * $p['quantity'],
+                        'locationId' => $request->locationId,
+                    ];
+                }, $request->productList),
+            ]);
+
+            if (!$promoResponse->successful()) {
+                return responseInvalid(['Gagal mendapatkan promo.']);
+            }
+
+            $promoData = $promoResponse->json();
+
             $trxCount = TransactionPetShop::where('locationId', $request->locationId)->count();
             $regisNo = 'RPC.TRX.' . $request->locationId . '.' . str_pad($trxCount + 1, 8, '0', STR_PAD_LEFT);
 
@@ -347,42 +380,47 @@ class TransactionPetShopController
                 'note' => $request->notes,
                 'paymentMethod' => $request->paymentMethod,
                 'userId' => $request->user()->id,
+                'totalAmount' => $promoData['subtotal'],
+                'totalDiscount' => $promoData['total_discount'],
+                'totalPayment' => $promoData['total_payment'],
+                'promoNotes' => implode('; ', $promoData['promo_notes']),
             ]);
 
             $totalItem = 0;
             $totalUsePromo = 0;
-            $totalAmount = 0;
 
-            foreach ($request->productList as $prod) {
+            foreach ($promoData['purchases'] as $item) {
                 TransactionPetShopDetail::create([
                     'transactionpetshopId' => $tran->id,
-                    'productId' => $prod['productId'],
-                    'quantity' => $prod['quantity'],
-                    'price' => $prod['price'],
-                    'note' => $prod['note'] ?? null,
-                    'promoId' => $prod['promoId'] ?? null,
+                    'productId' => $this->resolveProductId($item),
+                    'quantity' => $item['quantity'],
+                    'price' => $item['unit_price'] ?? $item['total'], // fallback kalau gak ada unit_price
+                    'discount' => $item['discount'] ?? 0,
+                    'final_price' => $item['total'],
+                    'promoId' => null,
                     'isDeleted' => false,
                     'userId' => $request->user()->id,
                     'userUpdateId' => $request->user()->id,
                 ]);
 
-                $totalItem += $prod['quantity'];
-                if (!empty($prod['promoId'])) $totalUsePromo++;
-                $totalAmount += $prod['quantity'] * $prod['price'];
+                $totalItem += $item['quantity'];
+                if (!empty($item['discount'])) $totalUsePromo++;
 
-                ProductLocations::where('locationId', $request->locationId)
-                    ->where('productId', $prod['productId'])
-                    ->decrement('inStock', $prod['quantity']);
+                // Update stok tetap berdasarkan productId asli
+                if ($id = $this->resolveProductId($item)) {
+                    ProductLocations::where('locationId', $request->locationId)
+                        ->where('productId', $id)
+                        ->decrement('inStock', $item['quantity']);
 
-                ProductLocations::where('locationId', $request->locationId)
-                    ->where('productId', $prod['productId'])
-                    ->decrement('diffStock', $prod['quantity']);
+                    ProductLocations::where('locationId', $request->locationId)
+                        ->where('productId', $id)
+                        ->decrement('diffStock', $item['quantity']);
+                }
             }
 
             $tran->update([
                 'totalItem' => $totalItem,
                 'totalUsePromo' => $totalUsePromo,
-                'totalAmount' => $totalAmount,
             ]);
 
             transactionLog($tran->id, 'New Transaction', '', $request->user()->id);
@@ -392,12 +430,22 @@ class TransactionPetShopController
             return response()->json([
                 'status' => 'success',
                 'message' => 'Transaksi berhasil dibuat.',
-                'lowStockWarnings' => $lowStockWarnings
+                'lowStockWarnings' => $lowStockWarnings,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return responseInvalid([$e->getMessage()]);
         }
+    }
+
+    private function resolveProductId(array $item): ?int
+    {
+        if (isset($item['fullName']) && $item['category'] === 'sell' || $item['category'] === 'clinic') {
+            $product = ProductLocations::where('name', 'like', $item['fullName'])->first();
+            return $product?->id;
+        }
+
+        return null; 
     }
 
     public function delete(Request $request)
