@@ -1026,8 +1026,14 @@ class TransactionPetClinicController extends Controller
             'isRontgen' => 'required|boolean',
             'noteRontgen' => 'nullable|string',
 
+            'isBloodReview' => 'required|boolean',
+            'noteBloodReview' => 'nullable|string',
+
             'isSitologi' => 'required|boolean',
             'noteSitologi' => 'nullable|string',
+
+            'isVaginalSmear' => 'required|boolean',
+            'noteVaginalSmear' => 'nullable|string',
 
             'isBloodLab' => 'required|boolean',
             'noteBloodLab' => 'nullable|string',
@@ -1156,8 +1162,12 @@ class TransactionPetClinicController extends Controller
                 'noteUltrasonografi' => $request->noteUltrasonografi,
                 'isRontgen' => $request->isRontgen,
                 'noteRontgen' => $request->noteRontgen,
+                'isBloodReview' => $request->isBloodReview,
+                'noteBloodReview' => $request->noteBloodReview,
                 'isSitologi' => $request->isSitologi,
                 'noteSitologi' => $request->noteSitologi,
+                'isVaginalSmear' => $request->isVaginalSmear,
+                'noteVaginalSmear' => $request->noteVaginalSmear,
                 'isBloodLab' => $request->isBloodLab,
                 'noteBloodLab' => $request->noteBloodLab,
                 'userId' => $request->user()->id,
