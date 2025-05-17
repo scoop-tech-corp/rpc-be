@@ -882,7 +882,6 @@ class TransactionPetClinicController extends Controller
         $validate = Validator::make($request->all(), [
             'transactionPetClinicId' => 'required|integer',
             'petCheckRegistrationNo' => 'required|string',
-            'locationId' => 'required|integer',
 
             'isAnthelmintic' => 'required|boolean',
             'anthelminticDate' => 'required|date',
@@ -1060,7 +1059,6 @@ class TransactionPetClinicController extends Controller
             transactionPetClinicAnamnesis::create([
                 'transactionPetClinicId' => $request->transactionPetClinicId,
                 'petCheckRegistrationNo' => $request->petCheckRegistrationNo,
-                'locationId' => $request->locationId,
                 'isAnthelmintic' => $request->isAnthelmintic,
                 'anthelminticDate' => $request->anthelminticDate,
                 'anthelminticBrand' => $request->anthelminticBrand,
