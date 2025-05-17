@@ -16,7 +16,6 @@ class transactionPetClinicAnamnesis extends Model
     protected $fillable = [
         'transactionPetClinicId',
         'petCheckRegistrationNo',
-        'locationId',
         'isAnthelmintic',
         'anthelminticDate',
         'anthelminticBrand',
