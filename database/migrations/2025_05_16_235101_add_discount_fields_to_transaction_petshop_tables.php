@@ -22,6 +22,8 @@ return new class extends Migration
             $table->integer('totalAmount')->default(0)->after('note');
             $table->integer('totalDiscount')->default(0)->after('totalAmount');
             $table->integer('totalPayment')->default(0)->after('totalDiscount');
+            $table->integer('totalUsePromo')->default(false)->after('totalPayment');
+            $table->integer('totalItem')->default(false)->after('totalUsePromo');
             $table->text('promoNotes')->nullable()->after('totalPayment');
         });
     }
