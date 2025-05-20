@@ -820,13 +820,14 @@ class TransactionPetClinicController extends Controller
         }
 
         $trx = TransactionPetClinic::find($request->id);
-        $data = transactionPetClinicAnamnesis::where('locationId', $trx->locationId)->count();
+
+        $loc = TransactionPetClinic::where('locationId', $trx->locationId)->count();
 
         $date = Carbon::now()->format('d');
         $month = Carbon::now()->format('m');
         $year = Carbon::now()->format('Y');
 
-        $regisNo = str_pad($data + 1, 3, 0, STR_PAD_LEFT) . '/LPIK-RIS-RPC-VET/' . $trx->locationId . '/' . $date . '/' . $month . '/' . $year;
+        $regisNo = str_pad($loc + 1, 3, 0, STR_PAD_LEFT) . '/LPIK-RIS-RPC-VET/' . $trx->locationId . '/' . $date . '/' . $month . '/' . $year;
 
         return response()->json($regisNo, 200);
     }
