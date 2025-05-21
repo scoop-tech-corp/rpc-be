@@ -565,7 +565,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::get('/petshop', [TransactionPetShopController::class, 'index']);
         Route::post('/petshop', [TransactionPetShopController::class, 'create']);
-        Route::get('/petshop/detail', [TransactionPetShopController::class, 'detail']);
+        Route::get('/petshop/detail', [TransactionPetShopController::class, 'getTransactionDetails']);
         Route::put('/petshop', [TransactionPetShopController::class, 'update']);
         Route::delete('/petshop', [TransactionPetShopController::class, 'delete']);
         Route::get('/petshop/export', [TransactionPetShopController::class, 'export']);
