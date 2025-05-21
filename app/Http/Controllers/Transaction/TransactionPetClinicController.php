@@ -954,7 +954,7 @@ class TransactionPetClinicController extends Controller
             'breathSoundNote' => 'nullable|string',
             'othersFoundBreath' => 'nullable|string',
 
-            'isPulsus' => 'required|boolean',
+            'pulsus' => 'nullable|integer',
             'heartSound' => 'nullable|integer',
             'othersFoundHeart' => 'nullable|string',
 
@@ -966,7 +966,7 @@ class TransactionPetClinicController extends Controller
             'othersMaleTesticles' => 'nullable|string',
             'penisCondition' => 'nullable|string',
             'vaginalDischargeType' => 'nullable|integer',
-            'urinationType' => 'nullable|string',
+            'urinationType' => 'nullable|integer',
             'othersUrination' => 'nullable|string',
             'othersFoundUrogenital' => 'nullable|string',
 
@@ -986,7 +986,7 @@ class TransactionPetClinicController extends Controller
             'othersFoundVision' => 'nullable|string',
 
             'earlobe' => 'nullable|string',
-            'isEarwax' => 'required|boolean',
+            'earwax' => 'required|integer',
             'earwaxCharacter' => 'nullable|string',
             'othersFoundEar' => 'nullable|string',
 
@@ -1114,7 +1114,7 @@ class TransactionPetClinicController extends Controller
                 'breathSoundType' => $request->breathSoundType,
                 'breathSoundNote' => $request->breathSoundNote,
                 'othersFoundBreath' => $request->othersFoundBreath,
-                'isPulsus' => $request->isPulsus,
+                'pulsus' => $request->pulsus,
                 'heartSound' => $request->heartSound,
                 'othersFoundHeart' => $request->othersFoundHeart,
                 'othersFoundSkin' => $request->othersFoundSkin,
@@ -1139,7 +1139,7 @@ class TransactionPetClinicController extends Controller
                 'eyeBallCondition' => $request->eyeBallCondition,
                 'othersFoundVision' => $request->othersFoundVision,
                 'earlobe' => $request->earlobe,
-                'isEarwax' => $request->isEarwax,
+                'earwax' => $request->earwax,
                 'earwaxCharacter' => $request->earwaxCharacter,
                 'othersFoundEar' => $request->othersFoundEar,
                 'userId' => $request->user()->id,
