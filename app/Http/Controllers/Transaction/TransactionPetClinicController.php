@@ -996,7 +996,7 @@ class TransactionPetClinicController extends Controller
             'isTherapeuticFeed' => 'required|boolean',
             'noteTherapeuticFeed' => 'nullable|string',
 
-            'imuneBooster' => 'required|boolean',
+            'imuneBooster' => 'nullable|string',
             'suplement' => 'nullable|string',
             'desinfeksi' => 'nullable|string',
             'care' => 'nullable|string',
