@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Exports\Promotion\PromoReport;
+use App\Models\Customer\Customer;
 use App\Models\PromotionBasedSales;
 use App\Models\PromotionBundle;
 use App\Models\PromotionBundleDetail;
@@ -995,5 +996,188 @@ class DiscountController extends Controller
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
+    }
+
+    function checkPromo(Request $request)
+    {
+        $data = json_decode($request->transactions, true);
+
+        $custGroup = '';
+        if (!is_null($request->customerId)) {
+            $cust = Customer::find($request->customerId);
+            $custGroup = $cust->customerGroupId;
+        }
+
+        $tempFree = [];
+
+        foreach ($data as $value) {
+
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
+                ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
+                ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
+                ->select(
+                    'pm.id',
+                    'pm.name',
+                    DB::raw("CONCAT('Pembelian ', fi.quantityBuyItem, ' ',pbuy.fullName,' gratis ',fi.quantityFreeItem,' ',pfree.fullName) as note")
+                )
+                ->where('pl.locationId', '=', $value['locationId'])
+                ->where('fi.productBuyId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get()
+                ->toArray();
+
+            $tempFree = array_merge($tempFree, $res);
+        }
+
+        $tempDiscount = [];
+
+        foreach ($data as $value) {
+
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionDiscounts as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('products as p', 'p.id', 'pd.productId')
+                ->select(
+                    'pm.id',
+                    'pm.name',
+                    DB::raw("
+                            CONCAT(
+                                'Pembelian Produk ',
+                                p.fullName,
+                                CASE
+                                    WHEN pd.percentOrAmount = 'percent' THEN CONCAT(' diskon ', pd.percent, '%')
+                                    WHEN pd.percentOrAmount = 'amount' THEN CONCAT(' diskon Rp ', pd.amount)
+                                    ELSE ''
+                                END
+                            ) as note
+                        ")
+
+                )
+                ->where('pl.locationId', '=', $value['locationId'])
+                ->where('pd.productId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get()
+                ->toArray();
+
+            $tempDiscount = array_merge($tempDiscount, $res);
+        }
+
+        //$tempDiscount = array_merge($tempDiscount, $res);
+        $resultBundle = [];
+
+        foreach ($data as $value) {
+            // return $value;
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                ->join('promotionBundleDetails as pbd', 'pb.id', 'pbd.promoBundleId')
+                ->join('products as p', 'p.id', 'pbd.productId')
+                ->select(
+                    'pbd.promoBundleId',
+                    'pm.name',
+                )
+                ->where('pl.locationId', '=', $value['locationId'])
+                ->where('pbd.productId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get();
+
+            foreach ($res as $valdtl) {
+
+                $data = DB::table('promotionBundleDetails as b')
+                    ->join('products as p', 'p.id', 'b.productId')
+                    ->join('promotionBundles as pb', 'pb.id', 'b.promoBundleId')
+                    ->join('promotionMasters as m', 'pb.promoMasterId', 'm.id')
+                    ->select('pb.id', 'p.fullName', 'b.quantity', 'pb.price', 'm.name')
+                    ->where('b.promoBundleId', '=', $valdtl->promoBundleId)
+                    ->get();
+                $kalimat = 'paket bundling produk ';
+
+                for ($i = 0; $i < count($data); $i++) {
+
+                    if (count($data) == 1) {
+                        $kalimat .= $data[$i]->quantity . ' ' . $data[$i]->fullName;
+                    } else {
+                        if ($i == count($data) - 1) {
+                            $kalimat .= 'dan ' . $data[$i]->quantity . ' ' . $data[$i]->fullName;
+                        } else {
+                            $kalimat .= $data[$i]->quantity . ' ' . $data[$i]->fullName . ', ';
+                        }
+                    }
+                }
+
+                $kalimat .= ' sebesar Rp ' . $data[0]->price;
+
+                $resultBundle[] = [
+                    'id' => $data[0]->id,
+                    'note' => $kalimat,
+                    'name' => $data[0]->name
+                ];
+            }
+        }
+
+        $data = json_decode($request->transactions, true);
+
+        $resultBasedSales = [];
+
+        $totalTransaction = 0;
+        foreach ($data as $value) {
+            $totalTransaction += $value['priceOverall'];
+        }
+
+        $findBasedSales = DB::table('promotionMasters as pm')
+            ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+            ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+            ->join('promotionBasedSales as bs', 'pm.id', 'bs.promoMasterId')
+            ->where('pl.locationId', '=', $value['locationId'])
+            ->where('bs.minPurchase', '<', $totalTransaction)
+            ->where('bs.maxPurchase', '>', $totalTransaction)
+            ->where('pcg.customerGroupId', '=', $custGroup)
+            ->where('pm.startDate', '<=', Carbon::now())
+            ->where('pm.endDate', '>=', Carbon::now())
+            ->where('pm.status', '=', 1)
+            ->get();
+
+        $text = "";
+
+        foreach ($findBasedSales as $sale) {
+
+            if ($sale->percentOrAmount == 'percent') {
+                $text = 'Diskon ' . $sale->percent . ' % setiap pembelian minimal Rp ' . $sale->minPurchase;
+            } elseif ($sale->percentOrAmount == 'amount') {
+                $text = 'Potongan harga sebesar Rp ' . $sale->amount . ' setiap pembelian minimal Rp ' . $sale->minPurchase;
+            }
+
+            $resultBasedSales[] = [
+                'id' => $sale->id,
+                'note' => $text,
+                'name' => $sale->name
+            ];
+
+            $text = "";
+        }
+
+        $result = [
+            'freeItem' => $tempFree,
+            'discount' => $tempDiscount,
+            'bundles' => $resultBundle,
+            'basedSales' => $resultBasedSales,
+        ];
+
+        // Jika ingin menampilkan sebagai JSON:
+        return response()->json($result);
     }
 }

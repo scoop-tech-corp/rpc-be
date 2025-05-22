@@ -2,12 +2,14 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiController;
+use App\Http\Controllers\OtpController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataStaticController;
+use App\Http\Controllers\TimeKeeperController;
 use App\Http\Controllers\ImportRegionController;
 use App\Http\Controllers\Staff\AbsentController;
 use App\Http\Controllers\Staff\ProfileController;
@@ -20,16 +22,16 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\RestockController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Product\SupplierController;
+// use App\Http\Controllers\Promotion\PartnerController;
+// use App\Http\Controllers\Promotion\DiscountController;
 use App\Http\Controllers\Staff\StaffLeaveController;
+// use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Customer\CustomerController;
-use App\Http\Controllers\Promotion\PartnerController;
-use App\Http\Controllers\Promotion\DiscountController;
+
 use App\Http\Controllers\Product\ProductSellController;
-use App\Http\Controllers\Promotion\PromotionController;
+
 use App\Http\Controllers\Staff\SecurityGroupController;
-
 use App\Http\Controllers\Report\ReportProductController;
-
 use App\Http\Controllers\ReportMenuManagementController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Report\ReportCustomerController;
@@ -38,18 +40,21 @@ use App\Http\Controllers\VerifyUserandPasswordController;
 use App\Http\Controllers\Customer\ImportCustomerController;
 use App\Http\Controllers\Product\TransferProductController;
 use App\Http\Controllers\Transaction\TransactionController;
+use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Product\ProductInventoryController;
+use App\Http\Controllers\Transaction\MaterialDataController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
-use App\Http\Controllers\OtpController;
-use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
-use App\Http\Controllers\Report\StaffController as ReportStaffController;
+use App\Http\Controllers\Transaction\TransactionPetShopController;
+use App\Http\Controllers\Transaction\TransactionPetClinicController;
+use App\Http\Controllers\Transaction\TransactionPaymentMethodController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
-use App\Http\Controllers\Promotion\DataStaticController as PromotionDataStaticController;
+use App\Http\Controllers\Report\StaffController as ReportStaffController;
+use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
+use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
-use App\Http\Controllers\TimeKeeperController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -282,6 +287,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/export', [CustomerController::class, 'exportCustomer']); //add
         Route::get('/typeid', [CustomerController::class, 'getTypeIdCustomer']);
         Route::post('/typeid', [CustomerController::class, 'insertTypeIdCustomer']);
+        Route::get('/dashboard', [CustomerController::class, 'index']);
+
 
         Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
         Route::post('/group', [CustomerController::class, 'createCustomerGroup']);
@@ -334,14 +341,20 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::group(['prefix' => 'promotion'], function () {
 
+        Route::group(['prefix' => 'dashboard'], function () {
+            Route::get('/', [PromotionDashboardController::class, 'index']);
+        });
+
         Route::group(['prefix' => 'discount'], function () {
-            Route::post('/', [DiscountController::class, 'create']);
-            Route::get('/', [DiscountController::class, 'index']);
-            Route::get('/export', [DiscountController::class, 'export']);
-            Route::get('/list-type', [DiscountController::class, 'listType']);
-            Route::get('/detail', [DiscountController::class, 'detail']);
-            Route::put('/', [DiscountController::class, 'update']);
-            Route::delete('/', [DiscountController::class, 'delete']);
+            Route::post('/', [DiscountPromotionController::class, 'create']);
+            Route::get('/', [DiscountPromotionController::class, 'index']);
+            Route::get('/export', [DiscountPromotionController::class, 'export']);
+            Route::get('/list-type', [DiscountPromotionController::class, 'listType']);
+            Route::get('/detail', [DiscountPromotionController::class, 'detail']);
+            Route::put('/', [DiscountPromotionController::class, 'update']);
+            Route::delete('/', [DiscountPromotionController::class, 'delete']);
+
+            Route::post('/checkpromo', [DiscountPromotionController::class, 'checkPromo']);
         });
 
 
@@ -539,6 +552,39 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::group(['prefix' => 'transaction'], function () {
         Route::get('/category', [TransactionController::class, 'TransactionCategory']);
 
+        Route::get('/petclinic', [TransactionPetClinicController::class, 'index']);
+        Route::post('/petclinic', [TransactionPetClinicController::class, 'create']);
+        Route::get('/petclinic/detail', [TransactionPetClinicController::class, 'detail']);
+        Route::put('/petclinic', [TransactionPetClinicController::class, 'update']);
+        Route::delete('/petclinic', [TransactionPetClinicController::class, 'delete']);
+        Route::get('/petclinic/export', [TransactionPetClinicController::class, 'export']);
+
+        Route::get('/petclinic/ordernumber', [TransactionPetClinicController::class, 'orderNumber']);
+        Route::post('/petclinic/petcheck', [TransactionPetClinicController::class, 'createPetCheck']);
+        Route::get('/petclinic/load-petcheck', [TransactionPetClinicController::class, 'loadDataPetCheck']);
+
+        Route::get('/petshop', [TransactionPetShopController::class, 'index']);
+        Route::post('/petshop', [TransactionPetShopController::class, 'create']);
+        Route::get('/petshop/detail', [TransactionPetShopController::class, 'getTransactionDetails']);
+        Route::put('/petshop', [TransactionPetShopController::class, 'update']);
+        Route::delete('/petshop', [TransactionPetShopController::class, 'delete']);
+        Route::get('/petshop/export', [TransactionPetShopController::class, 'export']);
+        Route::post('/petshop/discount', [TransactionPetShopController::class, 'transactionDiscount']);
+
+        Route::get('/paymentmethod', [MaterialDataController::class, 'index']);
+        Route::post('/paymentmethod', [MaterialDataController::class, 'store']);
+        Route::put('/paymentmethod', [MaterialDataController::class, 'update']);
+        Route::post('/paymentmethod/detail', [MaterialDataController::class, 'detail']);
+        Route::delete('/paymentmethod', [MaterialDataController::class, 'delete']);
+
+        Route::post('/list', [TransactionPetClinicController::class, 'createList']);
+        Route::get('/listdata/weight', [TransactionPetClinicController::class, 'listDataWeight']);
+        Route::get('/listdata/temperature', [TransactionPetClinicController::class, 'listDatatemperature']);
+        Route::get('/listdata/breath', [TransactionPetClinicController::class, 'listDatabreath']);
+        Route::get('/listdata/sound', [TransactionPetClinicController::class, 'listDatasound']);
+        Route::get('/listdata/heart', [TransactionPetClinicController::class, 'listDataheart']);
+        Route::get('/listdata/vaginal', [TransactionPetClinicController::class, 'listDatavaginal']);
+
         Route::post('/', [TransactionController::class, 'create']);
         Route::get('/', [TransactionController::class, 'index']);
         Route::get('/detail', [TransactionController::class, 'detail']);
@@ -549,6 +595,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/reassign', [TransactionController::class, 'reassignDoctor']);
         Route::post('/hplcheck', [TransactionController::class, 'HPLCheck']);
         Route::post('/petcheck', [TransactionController::class, 'petCheck']);
+        Route::post('/treatment', [TransactionController::class, 'Treatment']);
 
         Route::get('/export', [TransactionController::class, 'export']);
     });
@@ -583,6 +630,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/export', [TreatmentController::class, 'export']);
             Route::get('/item', [TreatmentController::class, 'indexItem']);
             Route::get('/', [TreatmentController::class, 'index']);
+            Route::get('/list', [TreatmentController::class, 'listTreatment']);
             Route::get('/detail', [TreatmentController::class, 'detail']);
             Route::post('/', [TreatmentController::class, 'store']);
             Route::put('/', [TreatmentController::class, 'update']);
@@ -625,6 +673,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/list/export', [BookingController::class, 'exportList']);
             Route::get('/diagnose/export', [BookingController::class, 'exportDiagnose']);
             Route::get('/diagnosespecies/export', [BookingController::class, 'exportSpecies']);
+
+            Route::get('/diagnosespeciesgender', [BookingController::class, 'indexDiagnosesSpeciesGender']);
+            Route::get('/diagnosespeciesgender/export', [BookingController::class, 'exportDiagnosesSpeciesGender']);
         });
 
         Route::group(['prefix' => 'customer'], function () {
@@ -653,7 +704,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/summary/export', [DepositController::class, 'exportSummary']);
         });
 
-        Route::group(['prefix' => 'expenses'], function () {});
+        Route::group(['prefix' => 'expenses'], function () {
+            Route::get('/list', [ReportExpensesController::class, 'indexList']);
+            Route::get('/list/export', [ReportExpensesController::class, 'exportList']);
+            Route::get('/summary', [ReportExpensesController::class, 'indexSummary']);
+            Route::get('/summary/export', [ReportExpensesController::class, 'exportSummary']);
+        });
 
         Route::group(['prefix' => 'products'], function () {
             Route::get('/stockcount', [ReportProductController::class, 'indexStockCount']);
@@ -686,8 +742,11 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/unpaid/export', [ReportSalesController::class, 'exportUnpaid']);
             Route::get('/discountsummary', [ReportSalesController::class, 'indexDiscountSummary']);
             Route::get('/paymentsummary', [ReportSalesController::class, 'indexPaymentSummary']);
+            Route::get('/netincome', [ReportSalesController::class, 'indexNetIncome']);
             Route::get('/dailyaudit', [ReportSalesController::class, 'indexDailyAudit']);
             Route::get('/dailyaudit/export', [ReportSalesController::class, 'exportDailyAudit']);
+            Route::get('/staffservicesales', [ReportSalesController::class, 'indexStaffServiceSales']);
+            Route::get('/staffservicesales/export', [ReportSalesController::class, 'exportStaffServiceSales']);
         });
 
         Route::group(['prefix' => 'service'], function () {});

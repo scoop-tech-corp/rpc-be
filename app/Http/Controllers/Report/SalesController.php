@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Report;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -901,14 +902,14 @@ class SalesController extends Controller
         }
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Details.xlsx';
+        $newFilePath = public_path() . '/template_download/' . 'Export Sales Details.xlsx';
         $writer->save($newFilePath);
 
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export_Sales_Details.xlsx"',
+            'Content-Disposition' => 'attachment; filename="Export Sales Details.xlsx"',
         ]);
     }
 
@@ -1075,14 +1076,14 @@ class SalesController extends Controller
         }
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Unpaid.xlsx';
+        $newFilePath = public_path() . '/template_download/' . 'Export Sales Unpaid.xlsx';
         $writer->save($newFilePath);
 
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export_Sales_Unpaid.xlsx"',
+            'Content-Disposition' => 'attachment; filename="Export Sales Unpaid.xlsx"',
         ]);
     }
 
@@ -1263,7 +1264,7 @@ class SalesController extends Controller
                         "data" => [0, 100000000, 200000000, 200000000, 200000000, 0]
                     ]
                 ],
-                "categories" => ["Jan", "Feb", "Mar", "Apr" . "May"]
+                "categories" => ["Jan", "Feb", "Mar", "Apr", "May"]
             ],
 
             "chartsNetIncome" => [
@@ -1273,7 +1274,7 @@ class SalesController extends Controller
                         "data" => [2300000000, 2700000000, 3300000000, 3200000000, 10000000, 1500000000]
                     ]
                 ],
-                "categories" => ["Jan", "Feb", "Mar", "Apr" . "May"]
+                "categories" => ["Jan", "Feb", "Mar", "Apr", "May"]
             ],
 
             'table' => [
@@ -1428,20 +1429,19 @@ class SalesController extends Controller
             ]
         ];
 
-        // Memuat template Excel (jika ada), atau buat spreadsheet baru
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Sales_Daily_Audit.xlsx');
+        $sheet = $spreadsheet->getSheet(0);
 
         // Menulis header kolom pada baris 1 dan 2
-        $sheet->setCellValue('A1', 'Day');
-        $sheet->setCellValue('B1', 'Date');
+        $sheet->setCellValue('A2', 'Day');
+        $sheet->setCellValue('B2', 'Date');
         $sheet->setCellValue('C1', 'Sales Summary');
-        $sheet->setCellValue('D1', 'Payment Summary');
+        $sheet->setCellValue('E1', 'Payment Summary');
 
         // Menggabungkan kolom Day dan Date
         $sheet->mergeCells('A1:B1');
-        $sheet->mergeCells('C1:C2');
-        $sheet->mergeCells('D1:I1');
+        $sheet->mergeCells('C1:D1');
+        $sheet->mergeCells('E1:I1');
 
         // Menulis sub-header untuk Sales Summary dan Payment Summary
         $sheet->setCellValue('C2', 'Sales Value (Rp)');
@@ -1483,7 +1483,7 @@ class SalesController extends Controller
 
         // Menulis dan menyimpan file Excel
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export_Sales_Daily_Audit.xlsx';
+        $newFilePath = public_path() . '/template_download/' . 'Export Sales Daily Audit.xlsx';
         $writer->save($newFilePath);
 
         // Mengirim file Excel untuk diunduh oleh pengguna
@@ -1491,7 +1491,187 @@ class SalesController extends Controller
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export_Sales_Daily_Audit.xlsx"',
+            'Content-Disposition' => 'attachment; filename="Export Sales Daily Audit.xlsx"',
+        ]);
+    }
+
+    public function indexStaffServiceSales(Request $request)
+    {
+
+        $locations = DB::table('location')->select('id', 'locationName')->get();
+
+        $locationQty = [];
+
+        foreach ($locations as $location) {
+
+            mt_srand($location->id);
+
+            $qty = mt_rand(1, 10);
+
+            $locationQty[$location->locationName] = $qty;
+        }
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'USG',
+                    'pricing' => 'Standard',
+                    'location' => $locationQty, 
+                    'totalQty' => array_sum($locationQty),
+                    'totalDuration' => 2,
+                    'totalSoldValue' => 150000,
+                ],
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'Healing Luka',
+                    'pricing' => 'Standard',
+                    'location' => $locationQty,
+                    'totalQty' => array_sum($locationQty),
+                    'totalDuration' => 4,
+                    'totalSoldValue' => 10000,
+                ],
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'Jasa Dokter Hewan',
+                    'pricing' => 'Cat Large',
+                    'location' => $locationQty,
+                    'totalQty' => array_sum($locationQty), 
+                    'totalDuration' => 0.25,
+                    'totalSoldValue' => 100000,
+                ],
+            ]
+        ];
+
+        return response()->json($data);
+    }
+
+    public function exportStaffServiceSales(Request $request)
+    {
+
+        $locations = DB::table('location')->select('id', 'locationName')->get();
+        $locationNames = $locations->pluck('locationName')->toArray();
+
+
+        $locationQty = [];
+        foreach ($locations as $location) {
+            mt_srand($location->id);
+            $qty = mt_rand(1, 10);
+            $locationQty[$location->locationName] = $qty;
+        }
+
+
+        $data = [
+            'totalPagination' => 1,
+            'data' => [
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'USG',
+                    'pricing' => 'Standard',
+                    'location' => $locationQty, 
+                    'totalQty' => array_sum($locationQty),
+                    'totalDuration' => 2,
+                    'totalSoldValue' => 150000,
+                ],
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'Healing Luka',
+                    'pricing' => 'Standard',
+                    'location' => $locationQty,
+                    'totalQty' => array_sum($locationQty),
+                    'totalDuration' => 4,
+                    'totalSoldValue' => 10000,
+                ],
+                [
+                    'staff' => 'Drh Cahyo Bagaskoro',
+                    'service' => 'Jasa Dokter Hewan',
+                    'pricing' => 'Cat Large',
+                    'location' => $locationQty,
+                    'totalQty' => array_sum($locationQty), 
+                    'totalDuration' => 0.25,
+                    'totalSoldValue' => 100000,
+                ],
+            ]
+        ];
+
+
+        $spreadsheet = IOFactory::load(public_path() . '/template/report/' . 'Template_Report_Staff_Service_Sales.xlsx');
+        $sheet = $spreadsheet->getSheet(0);
+
+        $sheet->setCellValue('A1', 'Staff');
+        $sheet->setCellValue('B1', 'Service');
+        $sheet->setCellValue('C1', 'Pricing');
+
+        $colIndex = 4;
+        foreach ($locationNames as $location) {
+
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue("{$col}1", $location);
+            $colIndex++;
+        }
+
+        $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+        $sheet->setCellValue("{$col}1", 'Total Qty');
+        $colIndex++;
+        $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+        $sheet->setCellValue("{$col}1", 'Total Duration (Hrs)');
+        $colIndex++;
+        $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+        $sheet->setCellValue("{$col}1", 'Total Sold Value (Rp)');
+
+        $sheet->getStyle('A1:' . $col . '1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:' . $col . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:' . $col . '1')->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+        $row = 2;
+        foreach ($data['data'] as $item) {
+
+            $sheet->setCellValue("A{$row}", $item['staff']);
+            $sheet->setCellValue("B{$row}", $item['service']);
+            $sheet->setCellValue("C{$row}", $item['pricing']);
+
+            $colIndex = 4;
+            foreach ($locationNames as $location) {
+                $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+                $sheet->setCellValue("{$col}{$row}", isset($item['location'][$location]) ? $item['location'][$location] : 0);
+                $sheet->getStyle("{$col}{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                $colIndex++;
+            }
+
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue("{$col}{$row}", $item['totalQty']);
+            $sheet->getStyle("{$col}{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);  // Set alignment center
+            $colIndex++;
+
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue("{$col}{$row}", $item['totalDuration']);
+            $sheet->getStyle("{$col}{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);  // Set alignment center
+            $colIndex++;
+
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex);
+            $sheet->setCellValue("{$col}{$row}", $item['totalSoldValue']);
+            $sheet->getStyle("{$col}{$row}")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);  // Set alignment center
+            $colIndex++;
+
+            $sheet->getStyle("A{$row}:" . $col . "{$row}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+            $row++;
+        }
+
+        foreach (range('A', \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex)) as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $newFilePath = public_path() . '/template_download/' . 'Export Staff Service Sales.xlsx';
+        $writer->save($newFilePath);
+
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export Staff Service Sales.xlsx"',
         ]);
     }
 }

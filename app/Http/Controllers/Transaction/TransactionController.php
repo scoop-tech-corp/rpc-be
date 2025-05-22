@@ -7,6 +7,9 @@ use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Transaction;
 use App\Models\TransactionPetCheck;
+use App\Models\TransactionPetHotelTreatmentProduct;
+use App\Models\TransactionPetHotelTreatmentService;
+use App\Models\TransactionPetHotelTreatmentTreatPlan;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -429,6 +432,7 @@ class TransactionController extends Controller
                 DB::raw("DATE_FORMAT(tl.created_at, '%d-%m-%Y %H:%m:%s') as createdAt")
             )
             ->where('tl.transactionId', '=', $request->id)
+            ->orderBy('tl.id', 'desc')
             ->get();
 
         $data = ['detail' => $detail, 'transactionLogs' => $log];
@@ -512,7 +516,10 @@ class TransactionController extends Controller
         DB::beginTransaction();
 
         try {
-            Transaction::updateOrCreate(
+
+            $oldTransaction = Transaction::find($request->id);
+
+            $transaction = Transaction::updateOrCreate(
                 ['id' => $request->id],
                 [
                     'registrationNo' => $request->registrationNo,
@@ -531,7 +538,35 @@ class TransactionController extends Controller
                 ]
             );
 
-            transactionLog($request->id, 'Update Transaction', '', $request->user()->id);
+            if ($oldTransaction) {
+                $fieldNames = [
+                    'registrationNo' => 'Nomor Registrasi',
+                    'locationId' => 'Lokasi',
+                    'customerId' => 'ID Pelanggan',
+                    'petId' => 'Data Hewan',
+                    'registrant' => 'Pendaftar',
+                    'startDate' => 'Tanggal Mulai',
+                    'endDate' => 'Tanggal Selesai',
+                    'doctorId' => 'Dokter yang menangani',
+                    'note' => 'Catatan',
+                ];
+
+                $changes = $transaction->getChanges();
+
+                foreach ($changes as $field => $newValue) {
+                    if ($field != 'updated_at') {
+                        $customName = $fieldNames[$field] ?? $field;
+
+                        if ($customName == 'Dokter yang menangani') {
+                            $doctor = User::where([['id', '=', $newValue]])->first();
+
+                            transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$doctor->firstName}", $request->user()->id);
+                        } else {
+                            transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
+                        }
+                    }
+                }
+            }
 
             DB::commit();
             return responseUpdate();
@@ -601,6 +636,11 @@ class TransactionController extends Controller
             $data = $data->whereIn('t.status', ['Selesai', 'Batal']);
         }
 
+        if ($request->serviceCategoryId) {
+
+            $data = $data->whereIn('t.serviceCategory', $request->serviceCategoryId);
+        }
+
         $data = $data->orderBy('t.updated_at', 'desc')->get();
 
         $spreadsheet = IOFactory::load(public_path() . '/template/transaction/' . 'Template_Export_Transaction.xlsx');
@@ -626,21 +666,23 @@ class TransactionController extends Controller
             $row++;
         }
 
+        $fileName = 'Export Transaksi ' . $request->serviceCategoryId[0] . '.xlsx';
+
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export Transaction.xlsx'; // Set the desired path
+        $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
         $writer->save($newFilePath);
 
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export Transaction.xlsx"',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
         ]);
     }
 
     public function TransactionCategory()
     {
-        $data = ['Pet Clinic', 'Pet Hotel', 'Pet Salon', 'Pacak'];
+        $data = ['Pet Clinic', 'Pet Hotel', 'Pet Salon', 'Pacak', 'Pet Shop'];
 
         return responseList($data);
     }
@@ -657,13 +699,19 @@ class TransactionController extends Controller
             return responseInvalid($errors);
         }
 
+        $tran = Transaction::where([['id', '=', $request->transactionId]])->first();
+
+        if ($tran->doctorId != $request->user()->id) {
+            return responseErrorValidation('Can not accept transaction because the designated doctor is different!', 'Can not accept transaction because the designated doctor is different!');
+        }
+
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
 
         if ($request->status == 1) {
 
             statusTransaction($request->transactionId, 'Cek Kondisi Pet');
 
-            transactionLog($request->transactionId, 'Pengecekan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+            transactionLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
         } else {
 
             $validate = Validator::make($request->all(), [
@@ -721,16 +769,14 @@ class TransactionController extends Controller
         $tran = Transaction::where('id', '=', $request->transactionId)->first();
 
         //tanggal start rawat inap
-        $date1 = Carbon::parse($tran->startDate);
+        $date1 = Carbon::parse($tran->startDate); // today or reference date
+        $date2 = Carbon::parse($request->estimateDateofBirth); // HPL
 
-        //tanggal HPL
-        $date2 = Carbon::parse($request->estimateDateofBirth);
-
-        $diffInDays = $date1->diffInDays($date2) * ($date1 > $date2 ? 1 : -1);
+        $diffInDays = $date1->diffInDays($date2, false); // false means keep sign
 
         $status = "";
 
-        if ($diffInDays <= 5) {
+        if ($diffInDays <= 5 && $diffInDays >= 0) {
             $status = 'HPL Sudah Dekat';
         } else {
             $status = 'HPL Masih Jauh';
@@ -765,7 +811,7 @@ class TransactionController extends Controller
             return responseInvalid($errors);
         }
 
-        if (!$request->isAcceptToProcess) {
+        if ($request->isAcceptToProcess == 0) {
             $validate = Validator::make($request->all(), [
                 'reasonReject' => 'required|string',
             ]);
@@ -814,8 +860,182 @@ class TransactionController extends Controller
         return responseCreate();
     }
 
-    public function Treatment()
+    public function Treatment(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
 
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $tran = Transaction::where('id', '=', $request->transactionId)->where('isDeleted', '=', 0)->first();
+
+        if (!$tran) {
+            return responseInvalid(['Transaction is not found or already deleted!']);
+        }
+
+        $services = json_decode($request->services, true);
+        $productSell = json_decode($request->productSells, true);
+        $productClinic = json_decode($request->productClinics, true);
+        $treatmentPlans = json_decode($request->treatmentPlans, true);
+
+        if (count($services) == 0 && count($productSell) == 0 && count($productClinic) == 0 && count($treatmentPlans) == 0) {
+
+            return responseInvalid(['All category must one to filled!']);
+        }
+
+        if ($services) {
+
+            $validateServices = Validator::make(
+                $services,
+                [
+                    '*.id' => 'required|integer',
+                    '*.quantity' => 'required|integer',
+                ],
+                [
+                    '*.id.integer' => 'Id Should be Integer!',
+                    '*.id.required' => 'Id Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Integer!',
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                ]
+            );
+
+            if ($validateServices->fails()) {
+                $errors = $validateServices->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
+                ], 422);
+            }
+        }
+
+        if ($productSell) {
+
+            $validateProductSell = Validator::make(
+                $productSell,
+                [
+                    '*.id' => 'required|integer',
+                    '*.quantity' => 'required|integer',
+                ],
+                [
+                    '*.id.integer' => 'Id Should be Integer!',
+                    '*.id.required' => 'Id Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Integer!',
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                ]
+            );
+
+            if ($validateProductSell->fails()) {
+                $errors = $validateProductSell->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
+                ], 422);
+            }
+        }
+
+        if ($productClinic) {
+
+            $validateProductClinic = Validator::make(
+                $productClinic,
+                [
+                    '*.id' => 'required|integer',
+                    '*.quantity' => 'required|integer',
+                ],
+                [
+                    '*.id.integer' => 'Id Should be Integer!',
+                    '*.id.required' => 'Id Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Integer!',
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                ]
+            );
+
+            if ($validateProductClinic->fails()) {
+                $errors = $validateProductClinic->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
+                ], 422);
+            }
+        }
+
+        if ($treatmentPlans) {
+
+            $validateTreatmentPlans = Validator::make(
+                ['treatmentPlans' => $treatmentPlans],
+                [
+                    'treatmentPlans' => 'required|array',
+                    'treatmentPlans.*' => 'required|integer',
+                ],
+                [
+                    'treatmentPlans.*.required' => 'Id is required!',
+                    'treatmentPlans.*.integer' => 'Id should be integer!',
+                ]
+            );
+
+            if ($validateTreatmentPlans->fails()) {
+                $errors = $validateTreatmentPlans->errors()->first();
+
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => [$errors],
+                ], 422);
+            }
+        }
+
+        //proses insert
+        DB::beginTransaction();
+        try {
+            foreach ($services as $value) {
+
+                TransactionPetHotelTreatmentService::create([
+                    'transactionId' => $request->transactionId,
+                    'serviceId' => $value['id'],
+                    'quantity' => $value['quantity'],
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            foreach ($productSell as $value) {
+                TransactionPetHotelTreatmentProduct::create([
+                    'transactionId' => $request->transactionId,
+                    'productId' => $value['id'],
+                    'quantity' => $value['quantity'],
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            foreach ($productClinic as $value) {
+                TransactionPetHotelTreatmentProduct::create([
+                    'transactionId' => $request->transactionId,
+                    'productId' => $value['id'],
+                    'quantity' => $value['quantity'],
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            foreach ($treatmentPlans as $value) {
+                TransactionPetHotelTreatmentTreatPlan::create([
+                    'transactionId' => $request->transactionId,
+                    'treatmentPlanId' => $value,
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'message' => 'Failed',
+                'errors' => $th,
+            ]);
+        }
     }
 }

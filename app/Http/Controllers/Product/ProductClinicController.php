@@ -2,18 +2,9 @@
 
 namespace App\Http\Controllers\Product;
 
-use App\Models\ProductClinic;
-use App\Models\ProductClinicCustomerGroup;
 use App\Models\ProductClinicDosage;
-use App\Models\ProductClinicImages;
-use App\Models\ProductClinicLocation;
-use App\Models\ProductClinicPriceLocation;
-use App\Models\ProductClinicQuantity;
-use App\Models\ProductClinicReminder;
 use App\Exports\Product\ProductClinicReport;
-use App\Exports\Product\ProductSellReport;
 use App\Exports\Product\TemplateUploadProductClinic;
-use App\Imports\Product\ImportProductClinic;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -88,7 +79,7 @@ class ProductClinicController
 
         if ($request->category) {
 
-            $cat = DB::table('productCategories as pc')
+            $cat = DB::table('productCoreCategories as pc')
                 ->select('productId')
                 ->whereIn('productCategoryId', $request->category)
                 ->where('pc.isDeleted', '=', 0)
@@ -718,8 +709,8 @@ class ProductClinicController
                 }
 
                 foreach ($ResultDosages as $dos) {
-                    ProductDosage::create([
-                        'productId' => $product->id,
+                    ProductClinicDosage::create([
+                        'productClinicId' => $product->id,
                         'from' => $dos['from'],
                         'to' => $dos['to'],
                         'dosage' => $dos['dosage'],
@@ -990,8 +981,8 @@ class ProductClinicController
             ->where('pci.isDeleted', '=', 0)
             ->get();
 
-        $prod->dosages = DB::table('productDosages as pcd')
-            ->join('products as pc', 'pcd.productId', 'pc.id')
+        $prod->dosages = DB::table('productClinicDosages as pcd')
+            ->join('products as pc', 'pcd.productClinicId', 'pc.id')
             ->select(
                 'pcd.id',
                 DB::raw("TRIM(pcd.from)+0 as fromWeight"),
@@ -999,7 +990,7 @@ class ProductClinicController
                 DB::raw("TRIM(pcd.dosage)+0 as dosage"),
                 'pcd.unit',
             )
-            ->where('pcd.productId', '=', $request->id)
+            ->where('pcd.productClinicId', '=', $request->id)
             ->where('pcd.isDeleted', '=', 0)
             ->get();
 
@@ -1276,24 +1267,24 @@ class ProductClinicController
         }
 
         //validation category
-        foreach ($ResultCategories as  $validCat) {
-            $dat = ProductCategories::find($validCat);
-            $diff = 0;
-            $date = $request->expiredDate;
+        // foreach ($ResultCategories as  $validCat) {
+        //     $dat = ProductCategories::find($validCat);
+        //     $diff = 0;
+        //     $date = $request->expiredDate;
 
-            if ($request->expiredDate > Carbon::now()) {
-                $diff = now()->diffInDays(Carbon::parse($date));
-            } else {
-                $diff = now()->diffInDays(Carbon::parse($date)) * -1;
-            }
+        //     if ($request->expiredDate > Carbon::now()) {
+        //         $diff = now()->diffInDays(Carbon::parse($date));
+        //     } else {
+        //         $diff = now()->diffInDays(Carbon::parse($date)) * -1;
+        //     }
 
-            if ($dat[0]->expiredDay > $diff) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Expired Days should more than expired date inserted! At Category ' . $dat[0]->categoryName],
-                ], 422);
-            }
-        }
+        //     if ($dat[0]->expiredDay > $diff) {
+        //         return response()->json([
+        //             'message' => 'The given data was invalid.',
+        //             'errors' => ['Expired Days should more than expired date inserted! At Category ' . $dat[0]->categoryName],
+        //         ], 422);
+        //     }
+        // }
 
         //UPDATE DATA
 
@@ -1422,7 +1413,7 @@ class ProductClinicController
             foreach ($ResultDosages as $val) {
 
                 if ($val['status'] == 'del') {
-                    ProductDosage::where('id', '=', $val['id'])
+                    ProductClinicDosage::where('id', '=', $val['id'])
                         ->where('isDeleted', '=', 0)
                         ->update(
                             [
@@ -1432,10 +1423,10 @@ class ProductClinicController
                             ]
                         );
                 } else {
-                    ProductDosage::updateOrCreate(
+                    ProductClinicDosage::updateOrCreate(
                         ['id' => $val['id']],
                         [
-                            'productId' => $product->id,
+                            'productClinicId' => $product->id,
                             'from' => $val['from'],
                             'to' => $val['to'],
                             'dosage' => $val['dosage'],

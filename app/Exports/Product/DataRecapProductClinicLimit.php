@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\Exportable;
 
-class DataRecapProductLimit implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
+class DataRecapProductClinicLimit implements FromCollection, ShouldAutoSize, WithHeadings, WithTitle, WithMapping
 {
     use Exportable;
 

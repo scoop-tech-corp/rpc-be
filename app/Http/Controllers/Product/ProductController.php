@@ -670,13 +670,14 @@ class ProductController
 
     public function ListProductSellWithLocation(Request $request)
     {
-        $arr = json_decode($request->locationId, true);
+        $arr = $request->locationId;
+        //json_decode(, true);
 
         if (count($arr) == 0) {
 
             $data = DB::table('products as ps')
                 ->join('productLocations as psl', 'ps.id', 'psl.productId')
-                ->select('ps.fullName')
+                ->select('ps.id', 'ps.fullName')
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.category', '=', 'sell')
                 ->distinct()
@@ -684,7 +685,7 @@ class ProductController
         } else {
             $data = DB::table('products as ps')
                 ->join('productLocations as psl', 'ps.id', 'psl.productId')
-                ->select('ps.fullName')
+                ->select('ps.id', 'ps.fullName')
                 ->wherein('psl.locationId', $arr)
                 ->where('ps.isDeleted', '=', 0)
                 ->where('ps.category', '=', 'sell')
@@ -697,7 +698,7 @@ class ProductController
 
     public function ListProductClinicWithLocation(Request $request)
     {
-        $arr = json_decode($request->locationId, true);
+        $arr = $request->locationId;
 
         if (count($arr) == 0) {
 

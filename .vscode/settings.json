@@ -2,5 +2,6 @@
     "intelephense.diagnostics.typeErrors": false,
     "intelephense.diagnostics.undefinedTypes": false,
     "intelephense.diagnostics.undefinedMethods": false,
-    "intelephense.diagnostics.undefinedProperties": false
+    "intelephense.diagnostics.undefinedProperties": false,
+    "bitoAI.codeCompletion.enableAutoCompletion": false
 }

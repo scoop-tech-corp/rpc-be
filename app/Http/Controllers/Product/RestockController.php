@@ -236,6 +236,20 @@ class RestockController extends Controller
             $numberId = '#' . str_pad($cntNum + 1, 8, 0, STR_PAD_LEFT);
         }
 
+        // $existingRestock = productRestockDetails::where('productId', $request->productId)
+        //     ->where('supplierId', $request->supplierId)
+        //     ->whereHas('productRestock', function ($query) use ($numberId) {
+        //         $query->where('numberId', $numberId);
+        //     })
+        //     ->exists();
+
+        // if ($existingRestock) {
+        //     return response()->json([
+        //         'message' => 'The given data was invalid.',
+        //         'errors' => ['This product and supplier combination already exists for this restock order.'],
+        //     ], 422);
+        // }
+
         $prodRstk = productRestocks::create([
             'numberId' => $numberId,
             'locationId' => $locationId,
@@ -321,6 +335,15 @@ class RestockController extends Controller
                 ]);
             }
         }
+
+        productRestockLog(
+            $prodRstk->id,
+            'Created',
+            'Restock created with quantity: ' . $request->reStockQuantity,
+            $request->user()->id
+        );
+
+        \Log::info('productRestockLog berhasil ditambahkan untuk Restock ID: ' . $prodRstk->id);
 
         return responseCreate();
     }
@@ -425,7 +448,7 @@ class RestockController extends Controller
                 if ($value['restockQuantity'] > $find->reStockLimit) {
                     return response()->json([
                         'message' => 'The given data was invalid.',
-                        'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' can not be greater than Restock Limit!'],
+                        'errors' => ['Restock Quantity on product ' . $findProd->fullName . ' is ' . $find->reStockLimit . '. So can not be greater than Restock Limit!'],
                     ], 422);
                 }
             }
@@ -486,6 +509,20 @@ class RestockController extends Controller
         $prNumber = "";
 
         $adminApprovalMaster = false;
+
+        $productSupplierPairs = [];
+        foreach ($datas as $data) {
+            $pair = $data['productId'] . '-' . $data['supplierId'];
+
+            if (in_array($pair, $productSupplierPairs)) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors' => ['Duplicate product and supplier combination found. Each product and supplier combination must be unique within a restock order.'],
+                ], 422);
+            }
+
+            $productSupplierPairs[] = $pair;
+        }
 
         foreach ($datas as $val) {
             $checkAdminApproval = false;
@@ -580,6 +617,15 @@ class RestockController extends Controller
             $res->isAdminApproval = $adminApprovalMaster;
             $res->save();
         }
+
+        productRestockLog(
+            $prodRestock->id,
+            'Create',
+            'Restock created with quantity: ' . $request->reStockQuantity,
+            $request->user()->id
+        );
+
+        // \Log::info('productRestockLog berhasil ditambahkan untuk Restock ID: ' . $prodRestock->id);
 
         return responseCreate();
     }
@@ -676,7 +722,7 @@ class RestockController extends Controller
                     'pr.id',
                     'pr.productId',
                     'pr.productType',
-                    'p.fullName',
+                    'p.fullName as productName',
                     'pr.supplierId',
                     'sup.supplierName',
                     'pr.requireDate',
@@ -793,6 +839,61 @@ class RestockController extends Controller
 
             return responseList($data);
         } elseif ($request->type == 'receive') {
+            $restock = productRestocks::find($request->id);
+        
+            $isAdmin = false;
+            $isOffice = false;
+        
+            if (adminAccess($request->user()->id)) {
+                $isAdmin = true;
+            }
+        
+            if (officeAccess($request->user()->id)) {
+                $isOffice = true;
+            }
+        
+            // Ambil semua data dengan productRestockId yang sama
+            $prodList = DB::table('productRestockDetails as pr')
+                ->where('pr.productRestockId', '=', $request->id)
+                ->where('pr.isDeleted', '=', 0);
+        
+            if ($isAdmin) {
+                $prodList = $prodList->where('pr.isAdminApproval', '=', 1)
+                    ->get();
+            } else if ($isOffice) {
+                $prodList = $prodList->get();
+            }
+        
+            $data = null;
+        
+            foreach ($prodList as $value) {
+                $prd = DB::table('products as ps')
+                    ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
+                    ->select(
+                        'prd.id',
+                        'prd.purchaseRequestNumber',
+                        'ps.fullName',
+                        DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
+                        'prd.reStockQuantity',
+                        'prd.rejected',
+                        'prd.accepted',
+                        'prd.id'
+                    )
+                    ->where('prd.id', '=', $value->id)
+                    ->first();
+        
+                $data[] = array(
+                    'id' => $prd->id,
+                    'purchaseRequestNumber' => $prd->purchaseRequestNumber,
+                    'fullName' => $prd->fullName,
+                    'unitCost' => $prd->costPerItem,
+                    'orderQuantity' => $prd->reStockQuantity,
+                    'rejected' => $prd->rejected,
+                    'accepted' => $prd->accepted,
+                );
+            }
+        
+            return responseList($data);
         } else {
             $chk = productRestocks::find($request->id);
 
@@ -847,6 +948,7 @@ class RestockController extends Controller
 
                 $prodList = DB::table('productRestockDetails as prd')
                     ->join('productSuppliers as ps', 'prd.supplierId', 'ps.id')
+                    ->select('prd.id')
                     ->where('prd.productRestockId', '=', $request->id)
                     ->where('prd.supplierId', '=', $value)
                     ->get();
@@ -870,8 +972,17 @@ class RestockController extends Controller
 
                     $prd = DB::table('products as ps')
                         ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
-                        ->select('prd.id', 'ps.fullName', DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"), 'prd.reStockQuantity', 'prd.rejected', 'prd.canceled', 'prd.accepted', 'prd.received', 'prd.id')
-                        ->where('ps.id', '=', $list->productId)
+                        ->select(
+                            'prd.id',
+                            'ps.fullName',
+                            DB::raw("TRIM(prd.costPerItem)+0 as costPerItem"),
+                            'prd.reStockQuantity',
+                            'prd.rejected',
+                            'prd.canceled',
+                            'prd.accepted',
+                            'prd.received',
+                        )
+                        ->where('prd.id', '=', $list->id)
                         ->first();
 
                     $image = DB::table('productRestockImages as pri')
@@ -1344,11 +1455,11 @@ class RestockController extends Controller
             ]
         );
 
-        if ($number == 'draft') {
-            productRestockLog($request->id, "Updated", "Draft", $request->user()->id);
-        } else {
-            productRestockLog($request->id, "Updated", "Waiting for Approval", $request->user()->id);
-        }
+        // if ($number == 'draft') {
+        //     productRestockLog($request->id, "Updated", "Draft", $request->user()->id);
+        // } else {
+        //     productRestockLog($request->id, "Updated", "Waiting for Approval", $request->user()->id);
+        // }
 
         $number = "";
         $prNumber = "";
@@ -1423,31 +1534,90 @@ class RestockController extends Controller
                     $userId = $request->user()->id;
                 }
 
-                productRestockDetails::updateOrCreate(
-                    ['id' => $val['id']],
-                    [
-                        'purchaseRequestNumber' => $prNumber,
-                        'purchaseOrderNumber' => '',
-                        'productRestockId' => $request->id,
-                        'productId' => $val['productId'],
-                        'productType' => $val['productType'],
-                        'supplierId' => $val['supplierId'],
-                        'requireDate' => $val['requireDate'],
-                        'currentStock' => $val['currentStock'],
-                        'reStockQuantity' => $val['restockQuantity'],
-                        'rejected' => '0',
-                        'canceled' => '0',
-                        'accepted' => '0',
-                        'received' => '0',
-                        'costPerItem' => $val['costPerItem'],
-                        'total' => $val['total'],
-                        'remark' => $val['remark'],
-                        'isAdminApproval' => $checkAdminApproval,
-                        'updated_at' => Carbon::now(),
-                        'userId' => $userId,
-                        'userUpdateId' => $request->user()->id,
-                    ]
-                );
+
+                $logMessages = [];
+
+                foreach ($datas as $val) {
+                    $checkAdminApproval = false;
+
+                    $find = ProductLocations::where('productId', '=', $val['productId'])->first();
+                    $diffStock = $find->diffStock;
+
+                    if ($diffStock > 0) {
+                        $checkAdminApproval = true;
+                        $adminApprovalMaster = true;
+                    }
+
+                    if ($val['status'] === 'del') {
+                        if ($val['id']) {
+                            $res = productRestockDetails::find($val['id']);
+
+                            $deletedProd = Products::find($val['productId']);
+                            if ($deletedProd) {
+                                $logMessages[] = "removed {$val['productType']} {$deletedProd->fullName} from restock";
+                            }
+
+                            $res->DeletedBy = $request->user()->id;
+                            $res->isDeleted = true;
+                            $res->DeletedAt = Carbon::now();
+                            $res->save();
+                        }
+                    } else {
+                        $prod = productRestockDetails::find($val['id']);
+                        $userId = '';
+                        if ($prod) {
+                            $userId = $prod->userId;
+                            $findProd = Products::find($val['productId']);
+
+                            if ($prod->reStockQuantity != $val['restockQuantity']) {
+                                $change = $val['restockQuantity'] > $prod->reStockQuantity ? 'increase' : 'decrease';
+                                $logMessages[] = "{$change} {$val['productType']} {$findProd->fullName} qty from {$prod->reStockQuantity} to {$val['restockQuantity']}";
+                            }
+
+                            if ($prod->costPerItem != $val['costPerItem']) {
+                                $logMessages[] = "change cost of {$val['productType']} {$findProd->fullName} from {$prod->costPerItem} to {$val['costPerItem']}";
+                            }
+                        } else {
+                            $userId = $request->user()->id;
+                            $findProd = Products::find($val['productId']);
+                            if ($findProd) {
+                                $logMessages[] = "added new {$val['productType']} {$findProd->fullName} with qty {$val['restockQuantity']}";
+                            }
+                        }
+
+                        productRestockDetails::updateOrCreate(
+                            ['id' => $val['id']],
+                            [
+                                'purchaseRequestNumber' => $prNumber,
+                                'purchaseOrderNumber' => '',
+                                'productRestockId' => $request->id,
+                                'productId' => $val['productId'],
+                                'productType' => $val['productType'],
+                                'supplierId' => $val['supplierId'],
+                                'requireDate' => $val['requireDate'],
+                                'currentStock' => $val['currentStock'],
+                                'reStockQuantity' => $val['restockQuantity'],
+                                'rejected' => '0',
+                                'canceled' => '0',
+                                'accepted' => '0',
+                                'received' => '0',
+                                'costPerItem' => $val['costPerItem'],
+                                'total' => $val['total'],
+                                'remark' => $val['remark'],
+                                'isAdminApproval' => $checkAdminApproval,
+                                'updated_at' => Carbon::now(),
+                                'userId' => $userId,
+                                'userUpdateId' => $request->user()->id,
+                            ]
+                        );
+                    }
+                }
+            }
+
+            $statusChanged = false;
+            $oldRestock = productRestocks::find($request->id);
+            if ($oldRestock && $oldRestock->status != $statusdata) {
+                $statusChanged = true;
             }
 
             // foreach ($val['images'] as $valueImg) {
@@ -1478,6 +1648,18 @@ class RestockController extends Controller
             //         );
             //     }
             // }
+        }
+
+        if (empty($logMessages)) {
+            if ($number == 'draft') {
+                productRestockLog($request->id, "Updated", "Draft", $request->user()->id);
+            } else {
+                productRestockLog($request->id, "Updated", "Waiting for Approval", $request->user()->id);
+            }
+        } else {
+            foreach ($logMessages as $logMsg) {
+                productRestockLog($request->id, "Updated", $logMsg, $request->user()->id);
+            }
         }
 
         if ($adminApprovalMaster == true) {
@@ -2076,49 +2258,20 @@ class RestockController extends Controller
 
                 $detail = productRestockDetails::find($value['productRestockDetailId']);
 
-                // if ($detail->productType == 'productSell') {
-
-                // } elseif ($detail->productType == 'productClinic') {
-                //     $find = ProductClinic::find($detail->productId);
-                //     $clinicLoc = ProductClinicLocation::where('productClinicId', '=', $detail->productId)
-                //         ->first();
-
-                //     productClinicBatch::create([
-                //         'batchNumber' => '123',
-                //         'productId' => $detail->productId,
-                //         'productRestockId' => $request->productRestockId,
-                //         'productTransferId' => 0,
-                //         'transferNumber' => '',
-                //         'productRestockDetailId' => $detail->id,
-                //         'purchaseRequestNumber' => $detail->purchaseRequestNumber,
-                //         'purchaseOrderNumber' => $detail->purchaseOrderNumber,
-                //         'expiredDate' => $value['expiredDate'],
-                //         'sku' => $value['sku'],
-                //         'userId' => $request->user()->id,
-
-                //     ]);
-
-                //     $inStock = $clinicLoc->inStock;
-                //     $diffStock = $clinicLoc->diffStock;
-
-                //     $newStock =  $value['received'];
-
-                //     productClinicLog($dtl->productId, 'Restock Product', 'Add New Stock', $newStock, ($inStock + $newStock), $request->user()->id);
-
-                //     $prodLoc = ProductClinicLocation::find($clinicLoc->id);
-                //     $prodLoc->inStock = $inStock + $newStock;
-                //     $prodLoc->diffStock = $diffStock + $newStock;
-                //     $prodLoc->save();
-                // }
-
                 $find = Products::find($detail->productId);
-                $sellLoc = ProductLocations::where('productId', '=', $detail->productId)
-                    ->first();
+                $sellLoc = ProductLocations::where('productId', '=', $detail->productId)->first();
 
                 //ngecek ke category untuk tanggal expirednya
                 //masukin ke product log
+
+                $findData = ProductBatches::whereDate('created_at', Carbon::today())->count();
+
+                $dateNumber = Carbon::today();
+
+                $batchNumber = 'RPC-BTCRST' . str_pad($findData + 1, 5, 0, STR_PAD_LEFT) . '-'  . $dateNumber->format('Ymd');
+
                 ProductBatches::create([
-                    'batchNumber' => '123',
+                    'batchNumber' => $batchNumber,
                     'productId' => $detail->productId,
                     'productRestockId' => $request->productRestockId,
                     'productTransferId' => 0,
@@ -2156,7 +2309,7 @@ class RestockController extends Controller
 
             foreach ($restock as $value) {
 
-                if ($value->accepted == ($value->received + $value->canceled)) {
+                if ($value->accepted != ($value->received + $value->canceled)) {
                     $statusReceive = false;
                     break;
                 }

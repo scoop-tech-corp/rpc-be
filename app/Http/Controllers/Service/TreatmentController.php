@@ -21,6 +21,30 @@ class TreatmentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+    public function listTreatment(Request $request)
+    {
+        $arr = $request->locationId;
+
+        if (count($arr) == 0) {
+
+            $data = DB::table('treatments')
+                ->select('id', 'name')
+                ->where('isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        } else {
+            $data = DB::table('treatments')
+                ->select('id', 'name')
+                ->wherein('location_id', $arr)
+                ->where('isDeleted', '=', 0)
+                ->distinct()
+                ->get();
+        }
+
+        return responseList($data);
+    }
+
     public function index(Request $request)
     {
         function buildQuery(Request $request)
