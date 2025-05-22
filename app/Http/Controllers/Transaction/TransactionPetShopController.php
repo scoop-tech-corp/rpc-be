@@ -395,6 +395,9 @@ class TransactionPetShopController
             }
 
 
+
+
+
             $trxCount = DB::table('transactionpetshop')
                 ->where('locationId', $request->locationId)
                 ->count();
@@ -447,6 +450,26 @@ class TransactionPetShopController
 
             $totalItem = 0;
 
+            $bundleItems = [];
+
+            if (!empty($request->selectedPromos['bundles'])) {
+                try {
+                    $promoResultBundle = $this->handleBundlePromos(
+                        $request->locationId,
+                        $request->selectedPromos['bundles'],
+                        $request->user()->id,
+                        $tran->id // kirim ID transaksi agar langsung insert detail
+                    );
+
+                    $bundleItems = $promoResultBundle['bundleItems'];
+                    $lowStockWarnings = array_merge($lowStockWarnings, $promoResultBundle['lowStockWarnings']);
+                    $promoNotes = array_merge($promoNotes, $promoResultBundle['promoNotes'] ?? []);
+                    $totalAmount += $promoResultBundle['bundleTotalAmount'] ?? 0;
+                    $totalItem += $promoResultBundle['bundleTotalItem'] ?? 0;
+                } catch (\Exception $e) {
+                    return responseInvalid([$e->getMessage()]);
+                }
+            }
             if (!empty($promoResult['purchases'])) {
                 foreach ($promoResult['purchases'] as $purchase) {
                     $productId = null;
@@ -519,10 +542,12 @@ class TransactionPetShopController
                         ->where('productId', $productId)
                         ->decrement('inStock', $totalQuantity);
 
-                    DB::table('productLocations')
-                        ->where('locationId', $request->locationId)
-                        ->where('productId', $productId)
-                        ->decrement('diffStock', $totalQuantity);
+                    updateDiffStock($request->locationId, $productId);
+
+                    // DB::table('productLocations')
+                    //     ->where('locationId', $request->locationId)
+                    //     ->where('productId', $productId)
+                    //     ->decrement('diffStock', $totalQuantity);
                 }
             } else {
                 foreach ($request->productList as $prod) {
@@ -703,6 +728,89 @@ class TransactionPetShopController
             'totalDiscount' => $totalDiscount,
         ];
     }
+
+    private function handleBundlePromos($locationId, $bundlePromoIds, $userId, $transactionId)
+    {
+        $lowStockWarnings = [];
+        $promoNotes = [];
+        $bundleTotalAmount = 0;
+        $bundleTotalItem = 0;
+
+        $bundles = DB::table('promotionBundles')
+            ->whereIn('promoMasterId', $bundlePromoIds)
+            ->get();
+
+        foreach ($bundles as $bundle) {
+            $details = DB::table('promotionBundleDetails')
+                ->where('promoBundleId', $bundle->id)
+                ->get();
+
+            foreach ($details as $detail) {
+                $productLoc = DB::table('productLocations')
+                    ->where('locationId', $locationId)
+                    ->where('productId', $detail->productId)
+                    ->first();
+
+                if (!$productLoc) {
+                    throw new \Exception("Produk ID {$detail->productId} tidak ditemukan di cabang.");
+                }
+
+                $remainingStock = $productLoc->inStock - $detail->quantity;
+
+                if ($detail->quantity > $productLoc->inStock) {
+                    throw new \Exception("Stok produk bundle '{$detail->productId}' tidak mencukupi. Tersedia: {$productLoc->inStock}, Dibutuhkan: {$detail->quantity}");
+                }
+
+                if ($remainingStock < $productLoc->lowStock) {
+                    $lowStockWarnings[] = "Stok produk '{$detail->productId}' akan di bawah minimum ({$productLoc->lowStock}). Sisa: {$remainingStock}";
+                }
+
+                DB::table('productLocations')
+                    ->where('locationId', $locationId)
+                    ->where('productId', $detail->productId)
+                    ->decrement('inStock', $detail->quantity);
+
+                updateDiffStock($locationId, $detail->productId);
+
+                DB::table('transactionpetshopdetail')->insert([
+                    'transactionpetshopId' => $transactionId,
+                    'productId' => $detail->productId,
+                    'quantity' => $detail->quantity,
+                    'price' => 0,
+                    'discount' => 0,
+                    'final_price' => 0,
+                    'promoId' => $bundle->promoMasterId,
+                    'isDeleted' => false,
+                    'userId' => $userId,
+                    'userUpdateId' => $userId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                $bundleTotalItem += $detail->quantity;
+
+
+
+                $bundleTotalAmount += $bundle->price;
+                $promoNotes[] = "Bundle Promo: ID {$bundle->promoMasterId} - Harga: Rp " . number_format($bundle->price);
+            }
+
+            DB::table('promotionBundles')
+                ->where('id', $bundle->id)
+                ->where('totalMaxUsage', '>', 0)
+                ->decrement('totalMaxUsage', 1);
+        }
+
+
+        return [
+            'bundleItems' => [],
+            'lowStockWarnings' => $lowStockWarnings,
+            'promoNotes' => $promoNotes,
+            'bundleTotalAmount' => $bundleTotalAmount,
+            'bundleTotalItem' => $bundleTotalItem,
+        ];
+    }
+
 
 
     public function delete(Request $request)
