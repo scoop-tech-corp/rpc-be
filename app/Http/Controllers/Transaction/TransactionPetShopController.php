@@ -264,10 +264,10 @@ class TransactionPetShopController
             'locationId' => 'required|integer',
             'serviceCategory' => 'required|string|in:Pet Clinic,Pet Hotel,Pet Salon,Pet Shop,Pacak',
             'paymentMethod' => 'required|integer',
-            'productList' => 'required|array|min:1',
-            'productList.*.productId' => 'required|integer',
-            'productList.*.quantity' => 'required|integer|min:1',
-            'productList.*.price' => 'required|integer|min:0',
+            'productList' => 'nullable|array',
+            'productList.*.productId' => 'nullable|integer',
+            'productList.*.quantity' => 'integer|min:1',
+            'productList.*.price' => 'integer|min:0',
             'productList.*.note' => 'nullable|string',
             'productList.*.promoId' => 'nullable|integer',
             'selectedPromos' => 'nullable|array',
@@ -353,21 +353,6 @@ class TransactionPetShopController
                 }
             }
 
-            if (!empty($request->selectedPromos['freeItems'])) {
-                try {
-                    $promoResultFreeItems = $this->handleFreeItemsPromo(
-                        $request->locationId,
-                        $request->selectedPromos['freeItems'],
-                        $request->user()->id
-                    );
-
-                    $freeItems = $promoResultFreeItems['freeItems'];
-                    $lowStockWarnings = array_merge($lowStockWarnings, $promoResultFreeItems['lowStockWarnings']);
-                } catch (\Exception $e) {
-                    return responseInvalid([$e->getMessage()]);
-                }
-            }
-
             $discountedProducts = [];
             $discountDetails = [];
             $discountAmount = 0;
@@ -384,19 +369,13 @@ class TransactionPetShopController
                     $discountDetails = $promoResultDiscounts['discountDetails'];
                     $discountAmount = $promoResultDiscounts['totalDiscount'];
 
-                    // Gabungkan catatan promo diskon ke promoNotes
                     $promoNotes = array_merge($promoNotes, $discountDetails);
 
-                    // Tambahkan total diskon ke akumulasi diskon
                     $totalDiscount += $discountAmount;
                 } catch (\Exception $e) {
                     return responseInvalid([$e->getMessage()]);
                 }
             }
-
-
-
-
 
             $trxCount = DB::table('transactionpetshop')
                 ->where('locationId', $request->locationId)
@@ -452,13 +431,28 @@ class TransactionPetShopController
 
             $bundleItems = [];
 
+            if (!empty($request->selectedPromos['freeItems'])) {
+                try {
+                    $promoResultFreeItems = $this->handleFreeItemsPromo(
+                        $request->locationId,
+                        $request->selectedPromos['freeItems'],
+                        $request->user()->id,
+                        $tran->id
+                    );
+                    $freeItems = $promoResultFreeItems['freeItems'];
+                    $lowStockWarnings = array_merge($lowStockWarnings, $promoResultFreeItems['lowStockWarnings']);
+                } catch (\Exception $e) {
+                    return responseInvalid([$e->getMessage()]);
+                }
+            }
+
             if (!empty($request->selectedPromos['bundles'])) {
                 try {
                     $promoResultBundle = $this->handleBundlePromos(
                         $request->locationId,
                         $request->selectedPromos['bundles'],
                         $request->user()->id,
-                        $tran->id // kirim ID transaksi agar langsung insert detail
+                        $tran->id
                     );
 
                     $bundleItems = $promoResultBundle['bundleItems'];
@@ -466,105 +460,52 @@ class TransactionPetShopController
                     $promoNotes = array_merge($promoNotes, $promoResultBundle['promoNotes'] ?? []);
                     $totalAmount += $promoResultBundle['bundleTotalAmount'] ?? 0;
                     $totalItem += $promoResultBundle['bundleTotalItem'] ?? 0;
+
+                    Log::debug('test', [$totalAmount, $totalItem, $promoResultBundle['bundleTotalAmount']]);
                 } catch (\Exception $e) {
                     return responseInvalid([$e->getMessage()]);
                 }
             }
-            if (!empty($promoResult['purchases'])) {
-                foreach ($promoResult['purchases'] as $purchase) {
-                    $productId = null;
-                    $note = $purchase['note'] ?? '';
 
+            $totalFromProductList = 0;
+            foreach ($request->productList as $prod) {
+                $totalFromProductList += $prod['quantity'] * $prod['price'];
+            }
 
-                    if (!empty($purchase['sku'])) {
-                        $product = DB::table('products')
-                            ->where('sku', $purchase['sku'])
-                            ->first();
+            if (!empty($request->selectedPromos['basedSales'])) {
+                try {
+                    $promoResultBasedSales = $this->handleBasedSalesPromo(
+                        $request->selectedPromos['basedSales'],
+                        $totalFromProductList
+                    );
 
-                        if ($product) {
-                            $productId = $product->id;
-                        } else {
-
-                            continue;
-                        }
-                    } else {
-
-                        continue;
-                    }
-
-
-                    if (isset($purchase['included_items'])) {
-                        $includedItems = [];
-                        foreach ($purchase['included_items'] as $item) {
-                            $includedItems[] = $item['name'] . " (Rp" . number_format($item['normal_price']) . ")";
-                        }
-                        $note .= " Includes: " . implode(", ", $includedItems);
-                    }
-
-
-                    $unitPrice = $purchase['unit_price'] ?? ($purchase['total'] / $purchase['quantity']);
-                    $discount = $purchase['discount'] ?? 0;
-                    $finalPrice = $unitPrice;
-
-                    if ($discount > 0) {
-                        if ($discount <= 100) {
-                            $finalPrice = $unitPrice - ($unitPrice * ($discount / 100));
-                        } else {
-                            $finalPrice = $unitPrice - $discount;
-                        }
-                    }
-
-                    $bonusQuantity = $purchase['bonus'] ?? 0;
-                    $totalQuantity = $purchase['quantity'];
-
-
-                    DB::table('transactionpetshopdetail')->insert([
-                        'transactionpetshopId' => $tran->id,
-                        'productId' => $productId,
-                        'quantity' => $totalQuantity,
-                        'price' => $unitPrice,
-                        'discount' => $discount,
-                        'final_price' => $finalPrice,
-                        'promoId' => null,
-                        'note' => $note,
-                        'isDeleted' => false,
-                        'userId' => $request->user()->id,
-                        'userUpdateId' => $request->user()->id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
-                    $totalItem += $totalQuantity;
-
-
-                    DB::table('productLocations')
-                        ->where('locationId', $request->locationId)
-                        ->where('productId', $productId)
-                        ->decrement('inStock', $totalQuantity);
-
-                    updateDiffStock($request->locationId, $productId);
-
-                    // DB::table('productLocations')
-                    //     ->where('locationId', $request->locationId)
-                    //     ->where('productId', $productId)
-                    //     ->decrement('diffStock', $totalQuantity);
+                    $totalDiscount += $promoResultBasedSales['discount'];
+                    $totalPayment -= $promoResultBasedSales['discount'];
+                    $promoNotes[] = $promoResultBasedSales['note'];
+                } catch (\Exception $e) {
+                    return responseInvalid([$e->getMessage()]);
                 }
-            } else {
-                foreach ($request->productList as $prod) {
-                    $discounted = collect($discountedProducts)->firstWhere('productId', $prod['productId']);
+            }
 
+            if (
+                empty($request->selectedPromos['freeItems']) &&
+                empty($request->selectedPromos['bundles']) &&
+                empty($request->selectedPromos['discounts']) &&
+                (empty($promoResult) || empty($promoResult['purchases']))
+            ) {
+
+                foreach ($request->productList as $prod) {
                     $unitPrice = $prod['price'];
-                    $discount = $discounted['discount'] ?? 0;
-                    $finalPrice = $discounted['finalPrice'] ?? $unitPrice;
-                    $promoId = $discounted['promoId'] ?? ($prod['promoId'] ?? null);
+                    $quantity = $prod['quantity'];
+                    $promoId = $prod['promoId'] ?? null;
 
                     DB::table('transactionpetshopdetail')->insert([
                         'transactionpetshopId' => $tran->id,
                         'productId' => $prod['productId'],
-                        'quantity' => $prod['quantity'],
+                        'quantity' => $quantity,
                         'price' => $unitPrice,
-                        'discount' => $discount,
-                        'final_price' => $finalPrice,
+                        'discount' => 0,
+                        'final_price' => $unitPrice,
                         'promoId' => $promoId,
                         'isDeleted' => false,
                         'userId' => $request->user()->id,
@@ -573,27 +514,29 @@ class TransactionPetShopController
                         'updated_at' => now(),
                     ]);
 
-                    $totalItem += $prod['quantity'];
+                    $totalItem += $quantity;
 
                     DB::table('productLocations')
                         ->where('locationId', $request->locationId)
                         ->where('productId', $prod['productId'])
-                        ->decrement('inStock', $prod['quantity']);
+                        ->decrement('inStock', $quantity);
 
                     DB::table('productLocations')
                         ->where('locationId', $request->locationId)
                         ->where('productId', $prod['productId'])
-                        ->decrement('diffStock', $prod['quantity']);
+                        ->decrement('diffStock', $quantity);
                 }
             }
-
 
             DB::table('transactionpetshop')
                 ->where('id', $tran->id)
                 ->update([
+                    'totalAmount' => $totalAmount,
+                    'totalDiscount' => $totalDiscount,
+                    'totalPayment' => $totalPayment,
+                    'promoNotes' => !empty($promoNotes) ? json_encode($promoNotes) : null,
                     'totalItem' => $totalItem,
                 ]);
-
             transactionLog($tran->id, 'New Transaction', '', $request->user()->id);
 
             DB::commit();
@@ -612,16 +555,14 @@ class TransactionPetShopController
         }
     }
 
-    private function handleFreeItemsPromo($locationId, $promoIds, $userId)
+    private function handleFreeItemsPromo($locationId, $promoIds, $userId, $transactionId)
     {
         $lowStockWarnings = [];
-
         $freeItems = DB::table('promotionFreeItems')
             ->select('promotionFreeItems.*', 'promotionMasters.name')
             ->join('promotionMasters', 'promotionMasters.id', '=', 'promotionFreeItems.promoMasterId')
             ->whereIn('promotionMasters.id', $promoIds)
             ->get();
-
 
         foreach ($freeItems as $freeItem) {
             $productLoc = DB::table('productLocations')
@@ -653,6 +594,25 @@ class TransactionPetShopController
                 ->where('id', $freeItem->id)
                 ->where('totalMaxUsage', '>', 0)
                 ->decrement('totalMaxUsage', 1);
+
+            DB::table('productLocations')
+                ->where('locationId', $locationId)
+                ->where('productId', $freeItem->productFreeId)
+                ->decrement('inStock', $freeItem->quantityFreeItem);
+
+            DB::table('transactionpetshopdetail')->insert([
+                'transactionpetshopId' => $transactionId,
+                'productId' => $freeItem->productFreeId,
+                'quantity' => $freeItem->quantityFreeItem,
+                'price' => 0,
+                'final_price' => 0,
+                'promoId' => $freeItem->promoMasterId,
+                'isDeleted' => false,
+                'userId' => $userId,
+                'userUpdateId' => $userId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
         return [
@@ -788,13 +748,10 @@ class TransactionPetShopController
                 ]);
 
                 $bundleTotalItem += $detail->quantity;
-
-
-
-                $bundleTotalAmount += $bundle->price;
-                $promoNotes[] = "Bundle Promo: ID {$bundle->promoMasterId} - Harga: Rp " . number_format($bundle->price);
             }
 
+            $bundleTotalAmount += $bundle->price;
+            $promoNotes[] = "Bundle Promo: ID {$bundle->promoMasterId} - Harga: Rp " . number_format($bundle->price);
             DB::table('promotionBundles')
                 ->where('id', $bundle->id)
                 ->where('totalMaxUsage', '>', 0)
@@ -810,6 +767,46 @@ class TransactionPetShopController
             'bundleTotalItem' => $bundleTotalItem,
         ];
     }
+
+    private function handleBasedSalesPromo(array $promoIds, float $baseTotal)
+    {
+        $discount = 0;
+        $note = '';
+
+        $basedSales = DB::table('promotionBasedSales')
+            ->whereIn('promoMasterId', $promoIds)
+            ->get();
+
+        foreach ($basedSales as $promo) {
+            if ($baseTotal >= $promo->minPurchase && $baseTotal <= $promo->maxPurchase) {
+                if ($promo->percentOrAmount === 'percent') {
+                    $discount = round(($baseTotal * $promo->percent) / 100, 2);
+                    $note = "Diskon {$promo->percent}% (Rp" . number_format($discount, 2) . ") dari promo basedSales ID {$promo->promoMasterId}";
+                } elseif ($promo->percentOrAmount === 'amount') {
+                    $discount = $promo->amount;
+                    $note = "Diskon tetap Rp" . number_format($discount, 2) . " dari promo basedSales ID {$promo->promoMasterId}";
+                }
+                break;
+            }
+        }
+
+        if ($discount === 0) {
+            throw new \Exception("Tidak ada promo basedSales yang memenuhi syarat untuk total belanja Rp" . number_format($baseTotal, 2));
+        }
+
+
+        DB::table('promotionFreeItems')
+            ->where('id', $promo->id)
+            ->where('totalMaxUsage', '>', 0)
+            ->decrement('totalMaxUsage', 1);
+
+        return [
+            'discount' => $discount,
+            'note' => $note
+        ];
+    }
+
+
 
 
 
@@ -1110,9 +1107,27 @@ class TransactionPetShopController
 
     public function getTransactionDetails(Request $request)
     {
-        $transactionId = $request->input('transactionId');
+        $transactionId = $request->input('transactionId') ?? $request->input('id');
 
-        $details = DB::table('transactionPetshopDetail as d')
+        if (!$transactionId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transaction ID tidak ditemukan dalam request.'
+            ], 400);
+        }
+
+        $transaction = DB::table('transactionpetshop')
+            ->where('id', $transactionId)
+            ->first();
+
+        if (!$transaction) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data transaksi tidak ditemukan.'
+            ], 404);
+        }
+
+        $details = DB::table('transactionpetshopdetail as d')
             ->join('products as p', 'p.id', '=', 'd.productId')
             ->select(
                 'd.id',
@@ -1129,9 +1144,11 @@ class TransactionPetShopController
             ->where('d.isDeleted', false)
             ->get();
 
+        $transaction->detail = $details;
+
         return response()->json([
             'status' => 'success',
-            'data' => $details
+            'transaction' => $transaction
         ]);
     }
 }
