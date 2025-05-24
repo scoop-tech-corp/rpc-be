@@ -14,6 +14,7 @@ use App\Models\ProductSellLog;
 use App\Models\recentActivity;
 use App\Models\Transaction;
 use App\Models\TransactionLog;
+use App\Models\TransactionPetClinic;
 
 if (!function_exists('adminAccess')) {
     function adminAccess($id)
@@ -234,7 +235,7 @@ if (!function_exists('transactionLog')) {
 if (!function_exists('statusTransaction')) {
     function statusTransaction($transactionId, $status)
     {
-        Transaction::where('id', '=', $transactionId)
+        TransactionPetClinic::where('id', '=', $transactionId)
             ->update([
                 'status' => $status,
             ]);
