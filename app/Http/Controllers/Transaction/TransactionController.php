@@ -7,6 +7,7 @@ use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Transaction;
 use App\Models\TransactionPetCheck;
+use App\Models\TransactionPetClinic;
 use App\Models\TransactionPetHotelTreatmentProduct;
 use App\Models\TransactionPetHotelTreatmentService;
 use App\Models\TransactionPetHotelTreatmentTreatPlan;
@@ -699,7 +700,7 @@ class TransactionController extends Controller
             return responseInvalid($errors);
         }
 
-        $tran = Transaction::where([['id', '=', $request->transactionId]])->first();
+        $tran = TransactionPetClinic::where([['id', '=', $request->transactionId]])->first();
 
         if ($tran->doctorId != $request->user()->id) {
             return responseErrorValidation('Can not accept transaction because the designated doctor is different!', 'Can not accept transaction because the designated doctor is different!');
