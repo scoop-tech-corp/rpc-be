@@ -990,10 +990,10 @@ class TransPetClinicController extends Controller
             'earwaxCharacter' => 'nullable|string',
             'othersFoundEar' => 'nullable|string',
 
-            'isInpatient' => 'required|boolean',
+            'isInpatient' => 'required|integer',
             'noteInpatient' => 'nullable|string',
 
-            'isTherapeuticFeed' => 'required|boolean',
+            'isTherapeuticFeed' => 'required|integer',
             'noteTherapeuticFeed' => 'nullable|string',
 
             'imuneBooster' => 'nullable|string',
@@ -1190,9 +1190,9 @@ class TransPetClinicController extends Controller
 
             TransactionPetClinicAdvice::create([
                 'transactionPetClinicId' => $request->transactionPetClinicId,
-                'isInpatient' => $request->isInpatient,
+                'inpatient' => $request->isInpatient,
                 'noteInpatient' => $request->noteInpatient,
-                'isTherapeuticFeed' => $request->isTherapeuticFeed,
+                'therapeuticFeed' => $request->isTherapeuticFeed,
                 'noteTherapeuticFeed' => $request->noteTherapeuticFeed,
                 'imuneBooster' => $request->imuneBooster,
                 'suplement' => $request->suplement,
