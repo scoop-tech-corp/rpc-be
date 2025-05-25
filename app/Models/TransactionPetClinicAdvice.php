@@ -23,7 +23,7 @@ class TransactionPetClinicAdvice extends Model
         'suplement',
         'desinfeksi',
         'care',
-        'isGrooming',
+        'grooming',
         'noteGrooming',
         'othersNoteAdvice',
         'nextControlCheckup',

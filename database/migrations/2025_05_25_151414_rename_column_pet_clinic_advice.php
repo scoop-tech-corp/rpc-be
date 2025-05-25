@@ -16,11 +16,13 @@ return new class extends Migration
         Schema::table('transactionPetClinicAdvice', function (Blueprint $table) {
             $table->integer('isInpatient')->change();
             $table->integer('isTherapeuticFeed')->change();
+            $table->integer('isGrooming')->change();
         });
 
         Schema::table('transactionPetClinicAdvice', function (Blueprint $table) {
             $table->renameColumn('isInpatient', 'inpatient');
             $table->renameColumn('isTherapeuticFeed', 'therapeuticFeed');
+            $table->renameColumn('isGrooming', 'grooming');
         });
     }
 
@@ -34,11 +36,13 @@ return new class extends Migration
         Schema::table('transactionPetClinicAdvice', function (Blueprint $table) {
             $table->renameColumn('inpatient', 'isInpatient');
             $table->renameColumn('therapeuticFeed', 'isTherapeuticFeed');
+            $table->renameColumn('grooming', 'isGrooming');
         });
 
         Schema::table('transactionPetClinicAdvice', function (Blueprint $table) {
             $table->boolean('isInpatient')->change();
             $table->boolean('isTherapeuticFeed')->change();
+            $table->boolean('isGrooming')->change();
         });
     }
 };
