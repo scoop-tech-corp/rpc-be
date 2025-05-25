@@ -946,7 +946,6 @@ class TransactionPetShopController
         $freeItems = json_decode($request->freeItems, true);
         $discounts = json_decode($request->discounts, true);
         $bundles = json_decode($request->bundles, true);
-        $basedSales = json_decode($request->basedSales, true);
 
         $results = [];
         $promoNotes = [];
@@ -954,9 +953,9 @@ class TransactionPetShopController
         $totalDiscount = 0;
 
         foreach ($products as $value) {
+            $isGetPromo = false;
 
             foreach ($freeItems as $free) {
-                Log::debug('Checking free item promo:', ['freePromoId' => $free, 'productId' => $value['productId']]);
 
                 $res = DB::table('promotionMasters as pm')
                     ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
@@ -964,6 +963,7 @@ class TransactionPetShopController
                     ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
                     ->select(
                         'pbuy.fullName as item_name',
+                        'pbuy.id as buy_product_id',
                         'pfree.id as free_product_id',
                         'pbuy.category',
                         'fi.quantityBuyItem as quantity',
@@ -977,14 +977,10 @@ class TransactionPetShopController
                     ->where('pbuy.id', '=', $value['productId'])
                     ->get();
 
-                if ($res->isEmpty()) {
-                    Log::debug("Promo ID $free tidak cocok dengan productId {$value['productId']}");
-
-                    Log::debug('Checking promo match:', [
-                        'promoId' => $free,
-                        'productId' => $value['productId']
-                    ]);
+                if (count($res) > 0) {
+                    $isGetPromo = true;
                 }
+
                 foreach ($res as $item) {
                     $results[] = (array)$item;
                     $subtotal += $item->total;
@@ -1038,6 +1034,8 @@ class TransactionPetShopController
 
                 $subtotal += $bundleData->total;
                 $promoNotes[] = $bundleNote;
+
+                $isGetPromo = true;
             }
 
             foreach ($discounts as $disc) {
@@ -1083,14 +1081,74 @@ class TransactionPetShopController
                 $subtotal += $data->total;
                 $totalDiscount += $saved;
                 $promoNotes[] = $discountNote;
+                $isGetPromo = true;
+                info('msk diskon');
+            }
+
+            if (!$isGetPromo) {
+                $res = DB::table('products as p')
+                    ->select(
+                        'p.fullName as item_name',
+                        'p.category',
+                        DB::raw($value['quantity'] . ' as quantity'),
+                        DB::raw('0 as bonus'),
+                        DB::raw('0 as discount'),
+                        DB::raw($value['eachPrice'] . ' as unit_price'),
+                        DB::raw($value['priceOverall'] . ' as total'),
+                        DB::raw("'' as note")
+                    )
+                    ->where('p.id', '=', $value['productId'])
+                    ->get();
+
+                foreach ($res as $item) {
+                    $results[] = (array)$item;
+                    $subtotal += $item->total;
+                    $promoNotes[] = $item->note;
+                }
             }
         }
 
-        // Misalnya ada diskon tambahan jika subtotal > 200rb
-        if ($subtotal > 200000) {
-            $totalDiscount += 10000;
-            $promoNotes[] = 'Rp10,000 discount for purchases over Rp200,000';
-            $discountNote = 'Diskon Nominal (Belanja > Rp 200.000)';
+        //perhitungan based sales
+        $res = DB::table('promotionMasters as pm')
+            ->join('promotionBasedSales as pb', 'pm.id', 'pb.promoMasterId')
+            ->select(
+                'pm.name',
+                'pb.minPurchase',
+                DB::raw("
+            CASE
+                WHEN percentOrAmount = 'amount' THEN 'amount'
+                WHEN percentOrAmount = 'percent' THEN 'percent'
+                ELSE ''
+            END as discountType
+            "),
+                DB::raw("
+            CASE
+                WHEN percentOrAmount = 'amount' THEN amount
+                WHEN percentOrAmount = 'percent' THEN percent
+                ELSE 0
+            END as totaldiscount
+            ")
+            )
+            ->where('pm.id', '=', $request->basedSale)
+            ->where('minPurchase', '<=', $subtotal)
+            ->where('maxPurchase', '>=', $subtotal)
+            ->first();
+
+
+        if ($res) {
+
+            if ($res->discountType == 'amount') {
+                $totalPayment = $subtotal - $res->totaldiscount;
+                $promoNotes[] = 'Diskon Rp ' . $res->totaldiscount . ' untuk pembelian lebih dari Rp ' . $res->minPurchase;
+                $discountNote = 'Diskon Nominal (Belanja > Rp ' . $res->minPurchase . ')';
+                $totalDiscount = $res->totaldiscount;
+            } else if ($res->discountType == 'percent') {
+
+                $totalPayment = $subtotal - ($subtotal * ($res->totaldiscount / 100));
+                $promoNotes[] = 'Diskon ' . $res->totaldiscount . '% untuk pembelian lebih dari Rp ' . $res->minPurchase;
+                $discountNote = 'Diskon ' . $res->totaldiscount . ' % (Belanja > Rp ' . $res->minPurchase . ')';
+                $totalDiscount = $res->totaldiscount;
+            }
         } else {
             $discountNote = '';
         }
@@ -1100,7 +1158,7 @@ class TransactionPetShopController
             'subtotal' => $subtotal,
             'discount_note' => $discountNote,
             'total_discount' => $totalDiscount,
-            'total_payment' => $subtotal - $totalDiscount,
+            'total_payment' => $totalPayment,
             'promo_notes' => $promoNotes
         ];
     }

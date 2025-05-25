@@ -1206,16 +1206,19 @@ class TransPetClinicController extends Controller
                 'userUpdateId' => $request->user()->id, // Jika `userUpdateId` sama dengan `userId`, bisa disesuaikan
             ]);
 
-            if ($request->isInpatient) {
+            if ($request->isInpatient == 1) {
                 $status = 'Proses Rawat Inap';
+                $typeOfCare = 2; // Rawat Inap
             } else {
                 $status = 'Input Service dan Obat';
+                $typeOfCare = 1; // Rawat Jalan
             }
 
             TransactionPetClinic::updateOrCreate(
                 ['id' => $request->transactionPetClinicId],
                 [
                     'status' => $status,
+                    'typeOfCare' => $typeOfCare,
                     'userUpdatedId' => $request->user()->id,
                 ]
             );
@@ -1238,8 +1241,6 @@ class TransPetClinicController extends Controller
             $errors = $validate->errors()->all();
             return responseInvalid($errors);
         }
-
-
     }
 
     public function createList(Request $request)
