@@ -6,43 +6,249 @@ use Illuminate\Http\Request;
 use App\Models\PaymentMethod;
 use Illuminate\Support\Carbon;
 use App\Http\Controllers\Controller;
+use App\Models\ListWeightTransaction;
+use App\Models\ListTemperatureTransaction;
+use App\Models\ListBreathTransaction;
+use App\Models\ListSoundTransaction;
+use App\Models\ListHeartTransaction;
+use App\Models\ListVaginalTransaction;
 use Illuminate\Support\Facades\Validator;
+use DB;
 
 class MaterialDataController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $data = PaymentMethod::where('isDeleted', false)->get();
+        $itemPerPage = $request->rowPerPage;
 
-        return response()->json([
-            'message' => 'Success',
-            'data' => $data,
-        ], 200);
+        $page = $request->goToPage;
+
+        $databreath = DB::table('listBreathTransactions as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.name',
+                DB::raw("'breath' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $dataheart = DB::table('listHeartTransactions as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.name',
+                DB::raw("'heart' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $datasound = DB::table('listSoundTransactions as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.name',
+                DB::raw("'sound' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $datatemperature = DB::table('listTemperatureTransactions as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.name',
+                DB::raw("'temperature' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $datavaginal = DB::table('listVaginalTransactions as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.name',
+                DB::raw("'vaginal' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $dataweight = DB::table('listWeightTransactions as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.name',
+                DB::raw("'weight' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $datapaymentmethod = DB::table('paymentmethod as ps')
+            ->join('users as u', 'ps.userId', 'u.id')
+            ->select(
+                'ps.id',
+                'ps.name',
+                DB::raw("'paymentmethod' as type"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(ps.created_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('ps.isDeleted', '=', 0);
+
+        $data = $databreath
+            ->union($dataheart)
+            ->union($datasound)
+            ->union($datatemperature)
+            ->union($datavaginal)
+            ->union($dataweight)
+            ->union($datapaymentmethod);
+
+        $data = DB::query()->fromSub($data, 'p_pn')
+            ->select('id', 'name', 'type', 'createdBy', 'createdAt');
+
+        $dataTemp = DB::query()->fromSub($data, 'p_pn')
+            ->select('id', 'name', 'type', 'createdBy', 'createdAt');
+
+        $temp_column = null;
+
+        if ($request->search) {
+
+            $data1 = $dataTemp->where('name', 'like', '%' . $request->search . '%')->get();
+
+            if (count($data1)) {
+                $temp_column[] = 'name';
+            }
+
+            $dataTemp = DB::query()->fromSub($data, 'p_pn')
+                ->select('id', 'name', 'type', 'createdBy', 'createdAt');
+
+            $data2 = $dataTemp->where('type', 'like', '%' . $request->search . '%')->get();
+
+            if (count($data2)) {
+                $temp_column[] = 'type';
+            }
+
+            $dataTemp = DB::query()->fromSub($data, 'p_pn')
+                ->select('id', 'name', 'type', 'createdBy', 'createdAt');
+
+            $data3 = $dataTemp->where('createdBy', 'like', '%' . $request->search . '%')->get();
+
+            if (count($data3)) {
+                $temp_column[] = 'createdBy';
+            }
+
+            $res = $temp_column;
+
+            if ($res) {
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
+            } else {
+                $data = [];
+                return responseIndex(0, $data);
+            }
+        }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('createdAt', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+        return responseIndex(ceil($totalPaging), $data);
     }
 
     public function store(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'name' => 'required|string|max:255'
+            'category' => 'required|string|in:weight,temperature,breath,sound,heart,vaginal,paymentmethod',
+            'name' => 'required|string'
         ]);
 
         if ($validate->fails()) {
-            return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => $validate->errors()->all(),
-            ], 422);
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
         }
 
-        $method = PaymentMethod::create([
-            'name' => $request->name,
-            'userId' => $request->user()->id,
-            'userUpdateId' => $request->user()->id,
-        ]);
+        if ($request->category == 'weight') {
+            ListWeightTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'temperature') {
+            ListTemperatureTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'breath') {
+            ListBreathTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'sound') {
+            ListSoundTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'heart') {
+            ListHeartTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'vaginal') {
+            ListVaginalTransaction::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        } elseif ($request->category == 'paymentmethod') {
+            PaymentMethod::create(
+                [
+                    'name' => $request->name,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id
+                ]
+            );
+        }
 
-        return response()->json([
-            'message' => 'Created successfully',
-            'data' => $method,
-        ], 201);
+        return responseCreate();
     }
 
     public function update(Request $request)
@@ -106,31 +312,109 @@ class MaterialDataController extends Controller
 
     public function delete(Request $request)
     {
-        $validate = Validator::make($request->all(), [
-            'id' => 'required|array|min:1',
-            'id.*' => 'integer'
-        ]);
+        $validate = Validator::make(
+            $request->datas,
+            [
+                '*.id' => 'required|integer',
+                '*.type' => 'required|string|in:weight,temperature,breath,sound,heart,vaginal,paymentmethod',
+            ],
+            [
+                '*.id.required' => 'Id Should be Required!',
+                '*.id.integer' => 'Id Should be Integer!',
+
+                '*.type.required' => 'Type Should be Required!',
+                '*.type.string' => 'Type Should be String!',
+                '*.type.in' => 'Type Should be Phone, Messenger, or Usage!',
+            ]
+        );
 
         if ($validate->fails()) {
+            $errors = $validate->errors()->first();
+
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $validate->errors()->all(),
+                'errors' => [$errors],
             ], 422);
         }
 
-        foreach ($request->id as $id) {
-            $method = PaymentMethod::find($id);
-            if ($method && !$method->isDeleted) {
-                $method->update([
-                    'isDeleted' => true,
-                    'deletedBy' => $request->user()->id,
-                    'deletedAt' => Carbon::now(),
-                ]);
+        foreach ($request->datas as $value) {
+            if ($value['type'] == 'weight') {
+
+                ListWeightTransaction::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } elseif ($value['type'] == 'temperature') {
+                ListTemperatureTransaction::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } elseif ($value['type'] == 'breath') {
+                ListBreathTransaction::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+
+            } elseif ($value['type'] == 'sound') {
+                ListSoundTransaction::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } elseif ($value['type'] == 'heart') {
+                ListHeartTransaction::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } elseif ($value['type'] == 'vaginal') {
+                ListVaginalTransaction::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
+            } elseif ($value['type'] == 'paymentmethod') {
+                PaymentMethod::where('id', '=', $value['id'])
+                    ->update(
+                        [
+                            'deletedBy' => $request->user()->id,
+                            'isDeleted' => 1,
+                            'deletedAt' => Carbon::now()
+                        ]
+                    );
             }
         }
 
         return response()->json([
             'message' => 'Deleted successfully',
         ], 200);
+    }
+
+    public function listPaymentMethod()
+    {
+        $data = PaymentMethod::where('isDeleted', false)->get();
+
+        return responseList($data);
     }
 }

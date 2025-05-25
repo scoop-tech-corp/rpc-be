@@ -24,7 +24,7 @@ use Validator;
 use DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-class TransactionPetClinicController extends Controller
+class TransPetClinicController extends Controller
 {
     public function index(Request $request)
     {
@@ -1206,12 +1206,40 @@ class TransactionPetClinicController extends Controller
                 'userUpdateId' => $request->user()->id, // Jika `userUpdateId` sama dengan `userId`, bisa disesuaikan
             ]);
 
+            if ($request->isInpatient) {
+                $status = 'Proses Rawat Inap';
+            } else {
+                $status = 'Input Service dan Obat';
+            }
+
+            TransactionPetClinic::updateOrCreate(
+                ['id' => $request->transactionPetClinicId],
+                [
+                    'status' => $status,
+                    'userUpdatedId' => $request->user()->id,
+                ]
+            );
+
             DB::commit();
             return responseCreate();
         } catch (Exception $th) {
             DB::rollback();
             return responseInvalid([$th->getMessage()]);
         }
+    }
+
+    public function serviceandReceipt(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+
     }
 
     public function createList(Request $request)
