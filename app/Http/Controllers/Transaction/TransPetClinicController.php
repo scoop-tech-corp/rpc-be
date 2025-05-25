@@ -1001,7 +1001,7 @@ class TransPetClinicController extends Controller
             'desinfeksi' => 'nullable|string',
             'care' => 'nullable|string',
 
-            'isGrooming' => 'required|boolean',
+            'isGrooming' => 'required|integer',
             'noteGrooming' => 'nullable|string',
 
             'othersNoteAdvice' => 'nullable|string',
@@ -1198,7 +1198,7 @@ class TransPetClinicController extends Controller
                 'suplement' => $request->suplement,
                 'desinfeksi' => $request->desinfeksi,
                 'care' => $request->care,
-                'isGrooming' => $request->isGrooming,
+                'grooming' => $request->isGrooming,
                 'noteGrooming' => $request->noteGrooming,
                 'othersNoteAdvice' => $request->othersNoteAdvice,
                 'nextControlCheckup' => $request->nextControlCheckup,
