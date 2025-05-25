@@ -12,11 +12,15 @@ use App\Models\ListSoundTransaction;
 use App\Models\ListTemperatureTransaction;
 use App\Models\ListVaginalTransaction;
 use App\Models\ListWeightTransaction;
+use App\Models\Products;
+use App\Models\Service;
 use App\Models\TransactionPetClinic;
 use App\Models\TransactionPetClinicAdvice;
 use App\Models\transactionPetClinicAnamnesis;
 use App\Models\TransactionPetClinicCheckUpResult;
 use App\Models\TransactionPetClinicDiagnose;
+use App\Models\TransactionPetClinicRecipes;
+use App\Models\TransactionPetClinicServices;
 use App\Models\TransactionPetClinicTreatment;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -1038,7 +1042,7 @@ class TransPetClinicController extends Controller
             'isBloodLab' => 'required|boolean',
             'noteBloodLab' => 'nullable|string',
 
-            'isSurgery' => 'required|boolean',
+            'isSurgery' => 'required|integer',
             'noteSurgery' => 'nullable|string',
 
             'infusion' => 'nullable|string',
@@ -1226,20 +1230,67 @@ class TransPetClinicController extends Controller
             DB::commit();
             return responseCreate();
         } catch (Exception $th) {
-            DB::rollback();
+
             return responseInvalid([$th->getMessage()]);
         }
     }
 
-    public function serviceandReceipt(Request $request)
+    public function serviceandrecipe(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'id' => 'required|integer',
+            'transactionPetClinicId' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
             return responseInvalid($errors);
+        }
+
+        foreach ($request->services as $service) {
+            $find = Service::find($service);
+            if (!$find) {
+                return responseInvalid(['Service not found!']);
+            }
+        }
+
+        foreach ($request->recipes as $recipe) {
+            $find = Products::find($recipe['productId']);
+            if (!$find) {
+                return responseInvalid(['Product not found!']);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            // Add services
+            foreach ($request->services as $service) {
+                TransactionPetClinicServices::create([
+                    'transactionPetClinicId' => $request->transactionPetClinicId,
+                    'serviceId' => $service,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id,
+                ]);
+            }
+
+            // Add recipes
+            foreach ($request->recipes as $recipe) {
+                TransactionPetClinicRecipes::create([
+                    'transactionPetClinicId' => $request->transactionPetClinicId,
+                    'productId' => $recipe['productId'],
+                    'dosage' => $recipe['dosage'],
+                    'unit' => $recipe['unit'],
+                    'frequency' => $recipe['frequency'],
+                    'giveMedicine' => $recipe['giveMedicine'],
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id,
+                ]);
+            }
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
         }
     }
 
