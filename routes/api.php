@@ -22,10 +22,7 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Product\RestockController;
 use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Product\SupplierController;
-// use App\Http\Controllers\Promotion\PartnerController;
-// use App\Http\Controllers\Promotion\DiscountController;
 use App\Http\Controllers\Staff\StaffLeaveController;
-// use App\Http\Controllers\Promotion\PromotionController;
 use App\Http\Controllers\Customer\CustomerController;
 
 use App\Http\Controllers\Product\ProductSellController;
@@ -48,13 +45,12 @@ use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Transaction\TransactionPetShopController;
-use App\Http\Controllers\Transaction\TransactionPetClinicController;
-use App\Http\Controllers\Transaction\TransactionPaymentMethodController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
 use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
+use App\Http\Controllers\Transaction\TransPetClinicController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -552,16 +548,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::group(['prefix' => 'transaction'], function () {
         Route::get('/category', [TransactionController::class, 'TransactionCategory']);
 
-        Route::get('/petclinic', [TransactionPetClinicController::class, 'index']);
-        Route::post('/petclinic', [TransactionPetClinicController::class, 'create']);
-        Route::get('/petclinic/detail', [TransactionPetClinicController::class, 'detail']);
-        Route::put('/petclinic', [TransactionPetClinicController::class, 'update']);
-        Route::delete('/petclinic', [TransactionPetClinicController::class, 'delete']);
-        Route::get('/petclinic/export', [TransactionPetClinicController::class, 'export']);
+        Route::get('/petclinic', [TransPetClinicController::class, 'index']);
+        Route::post('/petclinic', [TransPetClinicController::class, 'create']);
+        Route::get('/petclinic/detail', [TransPetClinicController::class, 'detail']);
+        Route::put('/petclinic', [TransPetClinicController::class, 'update']);
+        Route::delete('/petclinic', [TransPetClinicController::class, 'delete']);
+        Route::get('/petclinic/export', [TransPetClinicController::class, 'export']);
 
-        Route::get('/petclinic/ordernumber', [TransactionPetClinicController::class, 'orderNumber']);
-        Route::post('/petclinic/petcheck', [TransactionPetClinicController::class, 'createPetCheck']);
-        Route::get('/petclinic/load-petcheck', [TransactionPetClinicController::class, 'loadDataPetCheck']);
+        Route::get('/petclinic/ordernumber', [TransPetClinicController::class, 'orderNumber']);
+        Route::post('/petclinic/petcheck', [TransPetClinicController::class, 'createPetCheck']);
+        Route::get('/petclinic/load-petcheck', [TransPetClinicController::class, 'loadDataPetCheck']);
 
         Route::get('/petshop', [TransactionPetShopController::class, 'index']);
         Route::post('/petshop', [TransactionPetShopController::class, 'create']);
@@ -571,19 +567,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/petshop/export', [TransactionPetShopController::class, 'export']);
         Route::post('/petshop/discount', [TransactionPetShopController::class, 'transactionDiscount']);
 
-        Route::get('/paymentmethod', [MaterialDataController::class, 'index']);
-        Route::post('/paymentmethod', [MaterialDataController::class, 'store']);
-        Route::put('/paymentmethod', [MaterialDataController::class, 'update']);
-        Route::post('/paymentmethod/detail', [MaterialDataController::class, 'detail']);
-        Route::delete('/paymentmethod', [MaterialDataController::class, 'delete']);
+        Route::get('/materialdata', [MaterialDataController::class, 'index']);
+        Route::post('/materialdata', [MaterialDataController::class, 'store']);
+        Route::delete('/materialdata', [MaterialDataController::class, 'delete']);
 
-        Route::post('/list', [TransactionPetClinicController::class, 'createList']);
-        Route::get('/listdata/weight', [TransactionPetClinicController::class, 'listDataWeight']);
-        Route::get('/listdata/temperature', [TransactionPetClinicController::class, 'listDatatemperature']);
-        Route::get('/listdata/breath', [TransactionPetClinicController::class, 'listDatabreath']);
-        Route::get('/listdata/sound', [TransactionPetClinicController::class, 'listDatasound']);
-        Route::get('/listdata/heart', [TransactionPetClinicController::class, 'listDataheart']);
-        Route::get('/listdata/vaginal', [TransactionPetClinicController::class, 'listDatavaginal']);
+        Route::post('/list', [TransPetClinicController::class, 'createList']);
+        Route::get('/listdata/paymentmethod', [MaterialDataController::class, 'listPaymentMethod']);
+        Route::get('/listdata/weight', [TransPetClinicController::class, 'listDataWeight']);
+        Route::get('/listdata/temperature', [TransPetClinicController::class, 'listDatatemperature']);
+        Route::get('/listdata/breath', [TransPetClinicController::class, 'listDatabreath']);
+        Route::get('/listdata/sound', [TransPetClinicController::class, 'listDatasound']);
+        Route::get('/listdata/heart', [TransPetClinicController::class, 'listDataheart']);
+        Route::get('/listdata/vaginal', [TransPetClinicController::class, 'listDatavaginal']);
 
         Route::post('/', [TransactionController::class, 'create']);
         Route::get('/', [TransactionController::class, 'index']);
