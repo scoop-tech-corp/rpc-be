@@ -15,9 +15,9 @@ class TransactionPetClinicAdvice extends Model
 
     protected $fillable = [
         'transactionPetClinicId',
-        'isInpatient',
+        'inpatient',
         'noteInpatient',
-        'isTherapeuticFeed',
+        'therapeuticFeed',
         'noteTherapeuticFeed',
         'imuneBooster',
         'suplement',
