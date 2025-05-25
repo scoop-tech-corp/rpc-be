@@ -480,6 +480,23 @@ if (!function_exists('checkAccessDelete')) {
         return $res;
     }
 }
+
+function updateDiffStock($locationId, $productId)
+{
+    $productLoc = DB::table('productLocations')
+        ->where('locationId', $locationId)
+        ->where('productId', $productId)
+        ->first();
+
+    if ($productLoc) {
+        $newDiffStock = $productLoc->inStock - $productLoc->lowStock;
+        DB::table('productLocations')
+            ->where('locationId', $locationId)
+            ->where('productId', $productId)
+            ->update(['diffStock' => $newDiffStock]);
+    }
+}
+
 //add by danny wahyudi
 // if (!function_exists('securityGroupAdmin')) {
 //     function securityGroupAdmin($id)
