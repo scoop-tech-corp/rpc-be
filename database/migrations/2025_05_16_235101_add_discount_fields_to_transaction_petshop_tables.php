@@ -27,4 +27,22 @@ return new class extends Migration
             $table->text('promoNotes')->nullable()->after('totalPayment');
         });
     }
+
+    public function down(): void
+    {
+        Schema::table('transactionpetshopdetail', function (Blueprint $table) {
+            $table->dropColumn(['discount', 'final_price']);
+        });
+
+        Schema::table('transactionpetshop', function (Blueprint $table) {
+            $table->dropColumn([
+                'totalAmount',
+                'totalDiscount',
+                'totalPayment',
+                'totalUsePromo',
+                'totalItem',
+                'promoNotes'
+            ]);
+        });
+    }
 };

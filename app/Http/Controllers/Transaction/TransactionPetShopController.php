@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\Product;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductLocations;
 use App\Models\Customer\Customer;
 use App\Models\TransactionPetShop;
@@ -19,130 +20,24 @@ use App\Models\TransactionPetShopDetail;
 
 class TransactionPetShopController
 {
-    // public function index(Request $request)
-    // {
-    //     $itemPerPage = $request->rowPerPage;
-    //     $page = $request->goToPage;
-
-    //     $subDetail = DB::table('transactionpetshopdetail as d')
-    //         ->join('transactionpetshop as tp', 'tp.id', '=', 'd.transactionpetshopId')
-    //         ->select(
-    //             'tp.id as transaction_id',
-    //             DB::raw('SUM(d.quantity) as totalItem'),
-    //             DB::raw('SUM(CASE WHEN d.promoId IS NOT NULL THEN 1 ELSE 0 END) as totalUsePromo'),
-    //             DB::raw('SUM(d.quantity * d.price) as totalAmount')
-    //         )
-    //         ->groupBy('tp.id');
-
-
-
-    //     $data = DB::table('transactionpetshop as tp')
-    //         ->join('customer as c', 'tp.customerId', '=', 'c.id')
-    //         ->join('location as l', 'tp.locationId', '=', 'l.id')
-    //         ->join('customergroups as cg', 'c.customerGroupId', '=', 'cg.id')
-    //         ->leftJoinSub($subDetail, 'detail', function ($join) {
-    //             $join->on('tp.id', '=', 'detail.transaction_id');
-    //         })
-    //         ->select(
-    //             'tp.id',
-    //             'tp.registrationNo',
-    //             'tp.locationId',
-    //             'tp.customerId',
-    //             'cg.customerGroup as customerGroup',
-    //             DB::raw('COALESCE(detail.totalItem, 0) as totalItem'),
-    //             DB::raw('COALESCE(detail.totalUsePromo, 0) as totalUsePromo'),
-    //             DB::raw('COALESCE(detail.totalAmount, 0) as totalAmount'),
-    //             'c.nickName as customerName',
-    //             'l.locationName'
-    //         )
-    //         ->where('tp.isDeleted', '=', 0);
-
-
-    //     $roleId = $request->user()->roleId;
-
-    //     if ($roleId == 1) {
-    //         if ($request->locationId) {
-    //             $data = $data->whereIn('tp.locationId', $request->locationId);
-    //         }
-    //     } else {
-    //         $locations = UsersLocation::where('usersId', $request->user()->id)->pluck('id')->toArray();
-    //         $data = $data->whereIn('tp.locationId', $locations);
-    //     }
-
-
-    //     if ($request->customerGroupId) {
-    //         $data = $data->whereIn('c.customerGroupId', $request->customerGroupId);
-    //     }
-
-    //     if ($request->serviceCategories) {
-    //         $data = $data->whereIn('tp.serviceCategory', $request->serviceCategories);
-    //     }
-
-
-    //     if ($request->search) {
-    //         $res = $this->Search($request);
-    //         if ($res) {
-    //             $data = $data->where(function ($query) use ($res, $request) {
-    //                 $query->where($res[0], 'like', '%' . $request->search . '%');
-    //                 for ($i = 1; $i < count($res); $i++) {
-    //                     $query->orWhere($res[$i], 'like', '%' . $request->search . '%');
-    //                 }
-    //             });
-    //         } else {
-    //             return response()->json([
-    //                 'totalPagination' => 0,
-    //                 'data' => []
-    //             ], 200);
-    //         }
-    //     }
-
-    //     if ($request->orderValue) {
-    //         $data = $data->orderBy($request->orderColumn, $request->orderValue);
-    //     }
-
-    //     $data = $data->orderBy('tp.updated_at', 'desc');
-
-
-    //     $offset = ($page - 1) * $itemPerPage;
-    //     $count_data = $data->count();
-    //     $totalPaging = ceil($count_data / $itemPerPage);
-
-    //     $data = $data->offset($offset)->limit($itemPerPage)->get();
-
-    //     return responseIndex($totalPaging, $data);
-    // }
-
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
         $page = $request->goToPage;
 
-        $subDetail = DB::table('transactionpetshopdetail as d')
-            ->join('transactionpetshop as tp', 'tp.id', '=', 'd.transactionpetshopId')
-            ->select(
-                'tp.id as transaction_id',
-                DB::raw('SUM(d.quantity) as totalItem'),
-                DB::raw('SUM(CASE WHEN d.promoId IS NOT NULL THEN 1 ELSE 0 END) as totalUsePromo'),
-                DB::raw('SUM(d.quantity * d.price) as totalAmount')
-            )
-            ->groupBy('tp.id');
-
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
             ->join('location as l', 'tp.locationId', '=', 'l.id')
             ->join('customerGroups as cg', 'c.customerGroupId', '=', 'cg.id')
-            ->leftJoinSub($subDetail, 'detail', function ($join) {
-                $join->on('tp.id', '=', 'detail.transaction_id');
-            })
             ->select(
                 'tp.id',
                 'tp.registrationNo',
                 'tp.locationId',
                 'tp.customerId',
                 'cg.customerGroup as customerGroup',
-                DB::raw('COALESCE(detail.totalItem, 0) as totalItem'),
-                DB::raw('COALESCE(detail.totalUsePromo, 0) as totalUsePromo'),
-                DB::raw('COALESCE(detail.totalAmount, 0) as totalAmount'),
+                'tp.totalItem',
+                'tp.totalUsePromo',
+                'tp.totalAmount',
                 'c.nickName as customerName',
                 'l.locationName'
             )
@@ -188,9 +83,9 @@ class TransactionPetShopController
             'tp.registrationNo',
             'c.nickName',
             'l.locationName',
-            'detail.totalAmount',
-            'detail.totalItem',
-            'detail.totalUsePromo',
+            'tp.totalAmount',
+            'tp.totalItem',
+            'tp.totalUsePromo',
             'tp.updated_at'
         ];
 
@@ -207,6 +102,7 @@ class TransactionPetShopController
 
         return responseIndex($totalPaging, $data);
     }
+
 
 
     private function Search(Request $request)
@@ -812,30 +708,50 @@ class TransactionPetShopController
 
     public function delete(Request $request)
     {
-        foreach ($request->id as $va) {
-            $tran = TransactionPetShop::find($va);
+        $ids = $request->input('id');
 
-            if (!$tran) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Transaksi tidak ditemukan.'],
-                ], 422);
-            }
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'message' => 'ID transaksi tidak valid.',
+                'errors' => ['Silakan kirim array ID untuk dihapus.'],
+            ], 422);
         }
 
-        foreach ($request->id as $va) {
-            $tran = TransactionPetShop::find($va);
+        $transaksis = TransactionPetShop::whereIn('id', $ids)->get();
 
+        if (count($transaksis) !== count($ids)) {
+            return response()->json([
+                'message' => 'Beberapa ID tidak ditemukan.',
+                'errors' => ['Pastikan semua ID transaksi valid.'],
+            ], 422);
+        }
+
+        $deletedIds = [];
+
+        foreach ($transaksis as $tran) {
             $tran->deletedBy = $request->user()->id;
             $tran->isDeleted = true;
             $tran->deletedAt = Carbon::now();
             $tran->save();
 
-            transactionLog($va, 'Transaction Deleted', '', $request->user()->id);
+            DB::table('transactionpetshopdetail')
+                ->where('transactionpetshopId', $tran->id)
+                ->update([
+                    'isDeleted' => true,
+                    'userUpdateId' => $request->user()->id,
+                    'updated_at' => now(),
+                ]);
+
+            transactionLog($tran->id, 'Transaction Deleted', '', $request->user()->id);
+            $deletedIds[] = $tran->id;
         }
 
-        return responseDelete();
+        return response()->json([
+            'message' => 'Delete Data Successful',
+            'deletedIds' => $deletedIds
+        ]);
     }
+
 
     public function export(Request $request)
     {
@@ -1117,7 +1033,24 @@ class TransactionPetShopController
         }
 
         $transaction = DB::table('transactionpetshop')
+            ->select(
+                'id',
+                'registrationNo',
+                'locationId',
+                'customerId',
+                'note',
+                'totalItem',
+                'totalAmount',
+                'totalDiscount',
+                'totalPayment',
+                'totalUsePromo',
+                'promoNotes',
+                'isPayed',
+                'proofOfPayment',
+                'paymentMethod'
+            )
             ->where('id', $transactionId)
+            ->where('isDeleted', 0)
             ->first();
 
         if (!$transaction) {
@@ -1141,7 +1074,7 @@ class TransactionPetShopController
                 'd.promoId'
             )
             ->where('d.transactionpetshopId', $transactionId)
-            ->where('d.isDeleted', false)
+            ->where('d.isDeleted', 0)
             ->get();
 
         $transaction->detail = $details;
@@ -1150,5 +1083,58 @@ class TransactionPetShopController
             'status' => 'success',
             'transaction' => $transaction
         ]);
+    }
+
+
+    public function confirmPayment(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:transactionpetshop,id',
+            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+        ]);
+
+        $transaction = TransactionPetShop::find($request->id);
+
+        if ($transaction->isPayed == 2) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transaksi sudah dikonfirmasi sebelumnya.'
+            ], 400);
+        }
+
+        $isCash = $transaction->paymentMethod == 1;
+
+        if (!$isCash && !$request->hasFile('proof')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Bukti pembayaran wajib diunggah untuk metode non-tunai.'
+            ], 422);
+        }
+
+        $filePath = null;
+
+        if (!$isCash && $request->hasFile('proof')) {
+            $file = $request->file('proof');
+            $fileName = 'proof_' . $transaction->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('public/proof_of_payment', $fileName);
+            $transaction->proofOfPayment = $filePath;
+        }
+
+        $transaction->isPayed = 2;
+        $transaction->updated_at = now();
+        $transaction->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pembayaran berhasil dikonfirmasi.',
+            'isPayed' => 2,
+            'proof' => $filePath
+        ]);
+    }
+
+    public function generateInvoice()
+    {
+        $pdf = Pdf::loadView('/invoice/invoice_petshop');
+        return $pdf->download('nota_petshop.pdf');
     }
 }
