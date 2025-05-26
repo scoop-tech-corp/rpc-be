@@ -258,8 +258,8 @@ if (!function_exists('responseInvalid')) {
     function responseInvalid($errors)
     {
         return response()->json([
-            'message' => 'The given data was invalid.',
-            'errors' => $errors,
+            'message' => $errors,
+            'errors' => 'The given data was invalid.',
         ], 422);
     }
 }

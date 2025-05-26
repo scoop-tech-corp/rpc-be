@@ -12,11 +12,15 @@ use App\Models\ListSoundTransaction;
 use App\Models\ListTemperatureTransaction;
 use App\Models\ListVaginalTransaction;
 use App\Models\ListWeightTransaction;
+use App\Models\Products;
+use App\Models\Service;
 use App\Models\TransactionPetClinic;
 use App\Models\TransactionPetClinicAdvice;
 use App\Models\transactionPetClinicAnamnesis;
 use App\Models\TransactionPetClinicCheckUpResult;
 use App\Models\TransactionPetClinicDiagnose;
+use App\Models\TransactionPetClinicRecipes;
+use App\Models\TransactionPetClinicServices;
 use App\Models\TransactionPetClinicTreatment;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -24,7 +28,7 @@ use Validator;
 use DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-class TransactionPetClinicController extends Controller
+class TransPetClinicController extends Controller
 {
     public function index(Request $request)
     {
@@ -885,18 +889,18 @@ class TransactionPetClinicController extends Controller
             'petCheckRegistrationNo' => 'required|string',
 
             'isAnthelmintic' => 'required|boolean',
-            'anthelminticDate' => 'required|date',
-            'anthelminticBrand' => 'required|string',
+            'anthelminticDate' => 'nullable|date',
+            'anthelminticBrand' => 'nullable|string',
 
             'isVaccination' => 'required|boolean',
-            'vaccinationDate' => 'required|date',
-            'vaccinationBrand' => 'required|string',
+            'vaccinationDate' => 'nullable|date',
+            'vaccinationBrand' => 'nullable|string',
 
             'isFleaMedicine' => 'required|boolean',
-            'fleaMedicineDate' => 'required|date',
-            'fleaMedicineBrand' => 'required|string',
+            'fleaMedicineDate' => 'nullable|date',
+            'fleaMedicineBrand' => 'nullable|string',
 
-            'previousAction' => 'required|string',
+            'previousAction' => 'nullable|string',
             'othersCompalints' => 'nullable|string',
 
             'weight' => 'required|numeric',
@@ -907,30 +911,30 @@ class TransactionPetClinicController extends Controller
             'temperatureTop' => 'required|numeric',
             'temperatureCategory' => 'required|integer',
 
-            'isLice' => 'required|boolean',
+            'isLice' => 'nullable|boolean',
             'noteLice' => 'nullable|string',
 
-            'isFlea' => 'required|boolean',
+            'isFlea' => 'nullable|boolean',
             'noteFlea' => 'nullable|string',
 
-            'isCaplak' => 'required|boolean',
+            'isCaplak' => 'nullable|boolean',
             'noteCaplak' => 'nullable|string',
 
-            'isTungau' => 'required|boolean',
+            'isTungau' => 'nullable|boolean',
             'noteTungau' => 'nullable|string',
 
             'ectoParasitCategory' => 'nullable|integer',
 
-            'isNematoda' => 'required|boolean',
+            'isNematoda' => 'nullable|boolean',
             'noteNematoda' => 'nullable|string',
             //endoparasit
-            'isTermatoda' => 'required|boolean',
+            'isTermatoda' => 'nullable|boolean',
             'noteTermatoda' => 'nullable|string',
 
-            'isCestode' => 'required|boolean',
+            'isCestode' => 'nullable|boolean',
             'noteCestode' => 'nullable|string',
 
-            'isFungiFound' => 'required|boolean',
+            'isFungiFound' => 'nullable|boolean',
 
             'konjung' => 'nullable|string',
             'ginggiva' => 'nullable|string',
@@ -946,7 +950,7 @@ class TransactionPetClinicController extends Controller
             'lokomosiFindings' => 'nullable|string',
 
             //ingus
-            'isSnot' => 'required|boolean',
+            'isSnot' => 'nullable|boolean',
             'noteSnot' => 'nullable|string',
 
             'breathType' => 'nullable|integer',
@@ -986,14 +990,14 @@ class TransactionPetClinicController extends Controller
             'othersFoundVision' => 'nullable|string',
 
             'earlobe' => 'nullable|string',
-            'earwax' => 'required|integer',
+            'earwax' => 'nullable|integer',
             'earwaxCharacter' => 'nullable|string',
             'othersFoundEar' => 'nullable|string',
 
-            'isInpatient' => 'required|boolean',
+            'isInpatient' => 'required|integer',
             'noteInpatient' => 'nullable|string',
 
-            'isTherapeuticFeed' => 'required|boolean',
+            'isTherapeuticFeed' => 'required|integer',
             'noteTherapeuticFeed' => 'nullable|string',
 
             'imuneBooster' => 'nullable|string',
@@ -1001,7 +1005,7 @@ class TransactionPetClinicController extends Controller
             'desinfeksi' => 'nullable|string',
             'care' => 'nullable|string',
 
-            'isGrooming' => 'required|boolean',
+            'isGrooming' => 'required|integer',
             'noteGrooming' => 'nullable|string',
 
             'othersNoteAdvice' => 'nullable|string',
@@ -1038,7 +1042,7 @@ class TransactionPetClinicController extends Controller
             'isBloodLab' => 'required|boolean',
             'noteBloodLab' => 'nullable|string',
 
-            'isSurgery' => 'required|boolean',
+            'isSurgery' => 'required|integer',
             'noteSurgery' => 'nullable|string',
 
             'infusion' => 'nullable|string',
@@ -1190,15 +1194,15 @@ class TransactionPetClinicController extends Controller
 
             TransactionPetClinicAdvice::create([
                 'transactionPetClinicId' => $request->transactionPetClinicId,
-                'isInpatient' => $request->isInpatient,
+                'inpatient' => $request->isInpatient,
                 'noteInpatient' => $request->noteInpatient,
-                'isTherapeuticFeed' => $request->isTherapeuticFeed,
+                'therapeuticFeed' => $request->isTherapeuticFeed,
                 'noteTherapeuticFeed' => $request->noteTherapeuticFeed,
                 'imuneBooster' => $request->imuneBooster,
                 'suplement' => $request->suplement,
                 'desinfeksi' => $request->desinfeksi,
                 'care' => $request->care,
-                'isGrooming' => $request->isGrooming,
+                'grooming' => $request->isGrooming,
                 'noteGrooming' => $request->noteGrooming,
                 'othersNoteAdvice' => $request->othersNoteAdvice,
                 'nextControlCheckup' => $request->nextControlCheckup,
@@ -1206,9 +1210,85 @@ class TransactionPetClinicController extends Controller
                 'userUpdateId' => $request->user()->id, // Jika `userUpdateId` sama dengan `userId`, bisa disesuaikan
             ]);
 
+            if ($request->isInpatient == 1) {
+                $status = 'Proses Rawat Inap';
+                $typeOfCare = 2; // Rawat Inap
+            } else {
+                $status = 'Input Service dan Obat';
+                $typeOfCare = 1; // Rawat Jalan
+            }
+
+            TransactionPetClinic::updateOrCreate(
+                ['id' => $request->transactionPetClinicId],
+                [
+                    'status' => $status,
+                    'typeOfCare' => $typeOfCare,
+                    'userUpdatedId' => $request->user()->id,
+                ]
+            );
+
             DB::commit();
             return responseCreate();
         } catch (Exception $th) {
+
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    public function serviceandrecipe(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionPetClinicId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        foreach ($request->services as $service) {
+            $find = Service::find($service);
+            if (!$find) {
+                return responseInvalid(['Service not found!']);
+            }
+        }
+
+        foreach ($request->recipes as $recipe) {
+            $find = Products::find($recipe['productId']);
+            if (!$find) {
+                return responseInvalid(['Product not found!']);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            // Add services
+            foreach ($request->services as $service) {
+                TransactionPetClinicServices::create([
+                    'transactionPetClinicId' => $request->transactionPetClinicId,
+                    'serviceId' => $service,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id,
+                ]);
+            }
+
+            // Add recipes
+            foreach ($request->recipes as $recipe) {
+                TransactionPetClinicRecipes::create([
+                    'transactionPetClinicId' => $request->transactionPetClinicId,
+                    'productId' => $recipe['productId'],
+                    'dosage' => $recipe['dosage'],
+                    'unit' => $recipe['unit'],
+                    'frequency' => $recipe['frequency'],
+                    'giveMedicine' => $recipe['giveMedicine'],
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id,
+                ]);
+            }
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
             DB::rollback();
             return responseInvalid([$th->getMessage()]);
         }
