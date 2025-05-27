@@ -998,7 +998,6 @@ class TransactionPetShopController
                 $totalDiscount += $saved;
                 $promoNotes[] = $discountNote;
                 $isGetPromo = true;
-                info('msk diskon');
             }
 
             if (!$isGetPromo) {
@@ -1019,7 +1018,6 @@ class TransactionPetShopController
                 foreach ($res as $item) {
                     $results[] = (array)$item;
                     $subtotal += $item->total;
-                    $promoNotes[] = $item->note;
                 }
             }
         }
@@ -1050,7 +1048,6 @@ class TransactionPetShopController
             ->where('maxPurchase', '>=', $subtotal)
             ->first();
 
-
         if ($res) {
 
             if ($res->discountType == 'amount') {
@@ -1066,7 +1063,9 @@ class TransactionPetShopController
                 $totalDiscount = $res->totaldiscount;
             }
         } else {
+            $totalPayment = $subtotal;
             $discountNote = '';
+            $totalDiscount = 0;
         }
 
         return [
