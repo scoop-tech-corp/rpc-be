@@ -5,13 +5,12 @@ namespace App\Models\Location;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class LocationTelephone extends Model
+class Location extends Model
 {
+
     use HasFactory;
 
-    protected $primaryKey = 'codeLocation';
-
-    protected $table = "location_telephone";
+    protected $table = "location";
 
     protected $dates = ['created_at', 'updated_at'];
 
@@ -21,16 +20,17 @@ class LocationTelephone extends Model
 
     protected $fillable = [
         'codeLocation',
-        'phoneNumber',
-        'type',
-        'usage',
+        'locationName',
+        'status',
+        'description',
         'isDeleted',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
-    public function location()
+    public function telephones()
     {
-        return $this->belongsTo(Location::class, 'codeLocation', 'codeLocation');
+        // Relasi berdasarkan codeLocation
+        return $this->hasMany(LocationTelephone::class, 'codeLocation', 'codeLocation');
     }
 }

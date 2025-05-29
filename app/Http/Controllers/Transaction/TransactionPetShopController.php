@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\ProductLocations;
 use App\Models\Customer\Customer;
+use App\Models\Location\Location;
 use App\Models\TransactionPetShop;
 use App\Models\Staff\UsersLocation;
 use Illuminate\Support\Facades\Log;
@@ -28,7 +29,7 @@ class TransactionPetShopController
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
             ->join('location as l', 'tp.locationId', '=', 'l.id')
-            ->join('customerGroups as cg', 'c.customerGroupId', '=', 'cg.id')
+            ->leftJoin('customerGroups as cg', 'c.customerGroupId', '=', 'cg.id')
             ->select(
                 'tp.id',
                 'tp.registrationNo',
@@ -102,8 +103,6 @@ class TransactionPetShopController
 
         return responseIndex($totalPaging, $data);
     }
-
-
 
     private function Search(Request $request)
     {
@@ -702,10 +701,6 @@ class TransactionPetShopController
         ];
     }
 
-
-
-
-
     public function delete(Request $request)
     {
         $ids = $request->input('id');
@@ -751,7 +746,6 @@ class TransactionPetShopController
             'deletedIds' => $deletedIds
         ]);
     }
-
 
     public function export(Request $request)
     {
@@ -1143,7 +1137,6 @@ class TransactionPetShopController
         ]);
     }
 
-
     public function confirmPayment(Request $request)
     {
         $request->validate([
@@ -1190,9 +1183,72 @@ class TransactionPetShopController
         ]);
     }
 
+    // public function generateInvoice()
+    // {
+    //     // Menggunakan Eloquent dengan relasi berdasarkan codeLocation
+    //     $locations = Location::with(['telephones' => function ($query) {
+    //         $query->where('usage', 'Utama');
+    //     }])->get();
+
+    //     // Format data lokasi untuk view
+    //     $formattedLocations = [];
+    //     foreach ($locations as $location) {
+    //         $phone = $location->telephones->first();
+    //         $formattedLocations[] = [
+    //             'name' => $location->locationName,
+    //             'description' => $location->description,
+    //             'phone' => $phone ? $phone->phoneNumber : ''
+    //         ];
+    //     }
+
+    //     $data = [
+    //         'locations' => $formattedLocations
+    //     ];
+
+    //     $pdf = Pdf::loadView('/invoice/invoice_petshop', $data);
+    //     return $pdf->download('nota_petshop.pdf');
+    // }
+
     public function generateInvoice()
-    {
-        $pdf = Pdf::loadView('/invoice/invoice_petshop');
-        return $pdf->download('nota_petshop.pdf');
+{
+    // Menggunakan query builder dengan join berdasarkan codeLocation
+    $formattedLocations = [];
+    
+    $locations = DB::table('location')
+        ->leftJoin('location_telephone', 'location.codeLocation', '=', 'location_telephone.codeLocation')
+        ->where(function($query) {
+            $query->where('location_telephone.usage', 'Utama')
+                  ->orWhereNull('location_telephone.usage');
+        })
+        ->select(
+            'location.locationName', 
+            'location.description', 
+            'location_telephone.phoneNumber',
+            'location.codeLocation'
+        )
+        ->distinct()
+        ->get();
+    
+    // Group by location untuk menghindari duplikasi
+    $locationGroups = [];
+    foreach($locations as $location) {
+        $key = $location->codeLocation;
+        if (!isset($locationGroups[$key])) {
+            $locationGroups[$key] = [
+                'name' => $location->locationName,
+                'description' => $location->description,
+                'phone' => $location->phoneNumber ?? ''
+            ];
+        }
     }
+    
+    $formattedLocations = array_values($locationGroups);
+    
+    $data = [
+        'locations' => $formattedLocations
+    ];
+    
+    $pdf = Pdf::loadView('/invoice/invoice_petshop', $data);
+    return $pdf->download('nota_petshop.pdf');
+}
 }

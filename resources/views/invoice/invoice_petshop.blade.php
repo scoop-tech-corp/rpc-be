@@ -34,31 +34,6 @@
             align-items: center;
         }
 
-        .logo-section {
-            width: 120px;
-            text-align: center;
-            margin-right: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .logo {
-            width: 90px;
-            height: auto;
-            margin: 0;
-        }
-
-        .logo-text {
-            border: 1px solid #000;
-            padding: 4px;
-            font-size: 8px;
-            font-weight: bold;
-            text-align: center;
-            line-height: 1.2;
-        }
-
         .alamat-section {
             flex: 1;
         }
@@ -72,6 +47,60 @@
         .alamat-info p {
             margin: 2px 0;
             padding: 0;
+        }
+
+        /* Updated styles for location table */
+        .location-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            font-size: 7px;
+            /* Ukuran font lebih kecil */
+        }
+
+        .location-table td {
+            border: 1px solid #000;
+            padding: 3px;
+            vertical-align: top;
+        }
+
+        .logo-cell {
+            width: 15%;
+            text-align: center;
+        }
+
+        .logo-text {
+            border: 1px solid #000;
+            padding: 2px;
+            font-size: 8px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .logo {
+            width: 70px;
+            /* Logo lebih kecil */
+            height: auto;
+        }
+
+        .locations-cell {
+            width: 85%;
+            line-height: 1.3;
+        }
+
+        .location-row {
+            margin-bottom: 2px;
+            font-size: 7px;
+        }
+
+        .locations-container {
+            display: flex;
+            gap: 8px;
+        }
+
+        .location-column {
+            flex: 1;
+            padding: 0 2px;
         }
 
         .nota-header {
@@ -216,28 +245,48 @@
         </div>
 
         <div class="header-content">
-            <table width="100%" style="margin-top: 5px;">
+            <table class="location-table" width="100%">
                 <tr>
-                    <td width="25%" align="center">
-                        <div style="border: 1px solid #000; padding: 3px; font-size: 9px; font-weight: bold;">
+                    <td class="logo-cell" width="25%" valign="top" align="center">
+                        <div style="border: 1px solid #000; padding: 3px; font-size: 9px; font-weight: bold; margin-bottom: 5px;">
                             RADHIYAN PET AND CARE
                         </div>
-                        <img src="{{ public_path('storage/Logo/Logo-Radhiyan.png') }}" alt="Logo" style="width: 90px;"><br>
+                        <img src="{{ public_path('storage/Logo/Logo-Radhiyan.png') }}" alt="Logo" style="width: 80px;">
                     </td>
-                    <td width="75%" style="font-size: 9px; line-height: 1.4;">
-                        <strong>JAKARTA UTARA:</strong> KELAPA GADING - 085600900900 &nbsp;&nbsp;&nbsp;
-                        <strong>BEKASI:</strong> HANKAM PONDOK GEDE - 082112863218, 085810500300 &nbsp;&nbsp;&nbsp;
-                        <strong>SURABAYA:</strong> KETINTANG, WARU SIDOARJO - 085890000619, 085890000695<br>
-                        <strong>JAKARTA TIMUR:</strong> PULO GEBANG, CONDET KRAMATATI - 081221135640, 081217123277 &nbsp;&nbsp;&nbsp;
-                        <strong>TANGERANG:</strong> KARAWACI - 085777040048 &nbsp;&nbsp;&nbsp;
-                        <strong>SUMATERA SELATAN:</strong> KENTEN PALEMBANG - 081520007739<br>
-                        <strong>JAKARTA BARAT:</strong> KALIDERES, T. DUREN - 081307045819, 08563002100 &nbsp;&nbsp;&nbsp;
-                        <strong>DEPOK:</strong> SAWANGAN, SUKMAJAYA - 081210245030, 081520007739 &nbsp;&nbsp;&nbsp;
-                        <strong>Call Center:</strong> 081312245500
+
+                    <td class="locations-cell" width="75%">
+                        <table width="100%">
+                            <tr>
+                                <td width="50%" valign="top">
+                                    @php
+                                    $halfCount = ceil(count($locations) / 2);
+                                    $firstHalf = array_slice($locations, 0, $halfCount);
+                                    @endphp
+                                    @foreach($firstHalf as $location)
+                                    <div style="font-size: 9px; line-height: 1.4; margin-bottom: 2px;">
+                                        <strong>{{ $location['name'] }}</strong> - {{ $location['description'] }} - {{ $location['phone'] }}
+                                    </div>
+                                    @endforeach
+                                </td>
+                                <td width="50%" valign="top">
+                                    @php
+                                    $secondHalf = array_slice($locations, $halfCount);
+                                    @endphp
+                                    @foreach($secondHalf as $location)
+                                    <div style="font-size: 9px; line-height: 1.4; margin-bottom: 2px;">
+                                        <strong>{{ $location['name'] }}</strong> - {{ $location['description'] }} - {{ $location['phone'] }}
+                                    </div>
+                                    @endforeach
+
+                                    <div style="font-size: 9px; margin-top: 5px;">
+                                        <strong>Call Center:</strong> 081312245500
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>
-
         </div>
     </div>
 
