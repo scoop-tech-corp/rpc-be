@@ -13,8 +13,12 @@ use App\Models\ProductTransferLog;
 use App\Models\ProductSellLog;
 use App\Models\recentActivity;
 use App\Models\Transaction;
+use App\Models\TransactionBreedingLog;
 use App\Models\TransactionLog;
 use App\Models\TransactionPetClinic;
+use App\Models\TransactionPetClinicLog;
+use App\Models\TransactionPetHotel;
+use App\Models\TransactionPetHotelLog;
 
 if (!function_exists('adminAccess')) {
     function adminAccess($id)
@@ -232,10 +236,66 @@ if (!function_exists('transactionLog')) {
     }
 }
 
+if (!function_exists('transactionPetClinicLog')) {
+    function transactionPetClinicLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionPetClinicLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('transactionPetHotelLog')) {
+    function transactionPetHotelLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionPetHotelLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('transactionBreedingLog')) {
+    function transactionBreedingLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionBreedingLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('statusTransactionPetClinic')) {
+    function statusTransactionPetClinic($transactionId, $status)
+    {
+        TransactionPetClinic::where('id', '=', $transactionId)
+            ->update([
+                'status' => $status,
+            ]);
+    }
+}
+
 if (!function_exists('statusTransaction')) {
     function statusTransaction($transactionId, $status)
     {
         TransactionPetClinic::where('id', '=', $transactionId)
+            ->update([
+                'status' => $status,
+            ]);
+    }
+}
+
+if (!function_exists('statusTransactionPetHotel')) {
+    function statusTransactionPetHotel($transactionId, $status)
+    {
+        TransactionPetHotel::where('id', '=', $transactionId)
             ->update([
                 'status' => $status,
             ]);
