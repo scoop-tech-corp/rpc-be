@@ -28,6 +28,7 @@ class Customer extends Model
         'customerGroupId',
         'locationId',
         'notes',
+        'colorType',
         'joinDate',
         'typeId',
         'numberId',
