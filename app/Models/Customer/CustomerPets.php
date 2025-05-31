@@ -29,6 +29,7 @@ class CustomerPets extends Model
         'petMonth',
         'petYear',
         'dateOfBirth',
+        'remark',
         'isDeleted',
         'deletedBy',
         'deletedAt',

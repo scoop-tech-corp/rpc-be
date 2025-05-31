@@ -50,6 +50,7 @@ use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
+use App\Http\Controllers\Transaction\PetHotelController;
 use App\Http\Controllers\Transaction\TransPetClinicController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -548,27 +549,44 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::group(['prefix' => 'transaction'], function () {
         Route::get('/category', [TransactionController::class, 'TransactionCategory']);
 
-        Route::get('/petclinic', [TransPetClinicController::class, 'index']);
-        Route::post('/petclinic', [TransPetClinicController::class, 'create']);
-        Route::get('/petclinic/detail', [TransPetClinicController::class, 'detail']);
-        Route::put('/petclinic', [TransPetClinicController::class, 'update']);
-        Route::delete('/petclinic', [TransPetClinicController::class, 'delete']);
-        Route::get('/petclinic/export', [TransPetClinicController::class, 'export']);
+        Route::group(['prefix' => 'petclinic'], function () {
+            Route::get('/', [TransPetClinicController::class, 'index']);
+            Route::post('/', [TransPetClinicController::class, 'create']);
+            Route::get('/detail', [TransPetClinicController::class, 'detail']);
+            Route::put('/', [TransPetClinicController::class, 'update']);
+            Route::delete('/', [TransPetClinicController::class, 'delete']);
+            Route::get('/export', [TransPetClinicController::class, 'export']);
 
-        Route::get('/petclinic/ordernumber', [TransPetClinicController::class, 'orderNumber']);
-        Route::post('/petclinic/petcheck', [TransPetClinicController::class, 'createPetCheck']);
-        Route::get('/petclinic/load-petcheck', [TransPetClinicController::class, 'loadDataPetCheck']);
-        Route::post('/petclinic/serviceandrecipe', [TransPetClinicController::class, 'serviceandrecipe']);
+            Route::get('/ordernumber', [TransPetClinicController::class, 'orderNumber']);
+            Route::post('/petcheck', [TransPetClinicController::class, 'createPetCheck']);
+            Route::get('/load-petcheck', [TransPetClinicController::class, 'loadDataPetCheck']);
+            Route::post('/serviceandrecipe', [TransPetClinicController::class, 'serviceandrecipe']);
+        });
 
-        Route::get('/petshop', [TransactionPetShopController::class, 'index']);
-        Route::post('/petshop', [TransactionPetShopController::class, 'create']);
-        Route::get('/petshop/detail', [TransactionPetShopController::class, 'getTransactionDetails']);
-        Route::put('/petshop', [TransactionPetShopController::class, 'update']);
-        Route::delete('/petshop', [TransactionPetShopController::class, 'delete']);
-        Route::get('/petshop/export', [TransactionPetShopController::class, 'export']);
-        Route::post('/petshop/discount', [TransactionPetShopController::class, 'transactionDiscount']);
-        Route::post('/petshop/confirmPayment', [TransactionPetShopController::class, 'confirmPayment']);
-        Route::get('/petshop/generateInvoice/{id}', [TransactionPetShopController::class, 'generateInvoice']);
+        Route::group(['prefix' => 'petshop'], function () {
+            Route::get('/', [TransactionPetShopController::class, 'index']);
+            Route::post('/', [TransactionPetShopController::class, 'create']);
+            Route::get('/detail', [TransactionPetShopController::class, 'getTransactionDetails']);
+            Route::put('/', [TransactionPetShopController::class, 'update']);
+            Route::delete('/', [TransactionPetShopController::class, 'delete']);
+            Route::get('/export', [TransactionPetShopController::class, 'export']);
+            Route::post('/discount', [TransactionPetShopController::class, 'transactionDiscount']);
+            Route::post('/confirmPayment', [TransactionPetShopController::class, 'confirmPayment']);
+            Route::get('/generateInvoice', [TransactionPetShopController::class, 'generateInvoice']);
+        });
+
+        Route::group(['prefix' => 'pethotel'], function () {
+            Route::get('/', [PetHotelController::class, 'index']);
+            Route::post('/', [PetHotelController::class, 'create']);
+            Route::get('/detail', [PetHotelController::class, 'detail']);
+            Route::put('/', [PetHotelController::class, 'update']);
+            Route::delete('/', [PetHotelController::class, 'delete']);
+            Route::get('/export', [PetHotelController::class, 'export']);
+
+            Route::post('/petcheck', [PetHotelController::class, 'createPetCheck']);
+            Route::get('/load-petcheck', [PetHotelController::class, 'loadDataPetCheck']);
+            Route::post('/serviceandrecipe', [PetHotelController::class, 'serviceandrecipe']);
+        });
 
         Route::get('/materialdata', [MaterialDataController::class, 'index']);
         Route::post('/materialdata', [MaterialDataController::class, 'store']);
