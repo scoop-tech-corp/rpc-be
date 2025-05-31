@@ -396,7 +396,6 @@ class CustomerController extends Controller
             $total_paging = $count_data / $defaultRowPerPage;
 
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
-
         } catch (Exception $e) {
 
             return response()->json([
@@ -1944,6 +1943,7 @@ class CustomerController extends Controller
                     $customerPets->isSteril = $val['isSteril'];
                     $customerPets->remark = $val['remark'];
                     $customerPets->createdBy = $request->user()->id;
+                    $customerPets->userUpdateId = $request->user()->id;
                     $customerPets->save();
                 }
             }
@@ -2823,6 +2823,7 @@ class CustomerController extends Controller
                     $customerPets->isSteril = $val['isSteril'];
                     $customerPets->remark = $val['remark'];
                     $customerPets->createdBy = $request->user()->id;
+                    $customerPets->userUpdateId = $request->user()->id;
                     $customerPets->save();
                 } else {
 
