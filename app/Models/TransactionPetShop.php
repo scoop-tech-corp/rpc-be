@@ -20,6 +20,8 @@ class TransactionPetShop extends Model
         'locationId',
         'customerId',
         'paymentMethod',
+        'originalName',
+        'proofRandomName',
         'userId'
     ];
 }

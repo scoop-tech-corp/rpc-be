@@ -14,22 +14,15 @@ return new class extends Migration
     public function up()
     {
         Schema::table('transactionpetshop', function (Blueprint $table) {
-
-            $table->integer('totalUsePromo')->default(false)->after('totalPayment');
-            $table->integer('totalItem')->default(false)->after('totalUsePromo');
+            $table->string('originalName')->nullable()->after('proofOfPayment');
+            $table->string('proofRandomName')->nullable()->after('originalName');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::table('transactionpetshop', function (Blueprint $table) {
-            $table->dropColumn('totalUsePromo');
-            $table->dropColumn('totalItem');
+            $table->dropColumn(['originalName', 'proofRandomName']);
         });
     }
 };

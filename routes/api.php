@@ -568,7 +568,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/petshop/export', [TransactionPetShopController::class, 'export']);
         Route::post('/petshop/discount', [TransactionPetShopController::class, 'transactionDiscount']);
         Route::post('/petshop/confirmPayment', [TransactionPetShopController::class, 'confirmPayment']);
-        Route::get('/petshop/generateInvoice', [TransactionPetShopController::class, 'generateInvoice']);
+        Route::get('/petshop/generateInvoice/{id}', [TransactionPetShopController::class, 'generateInvoice']);
 
         Route::get('/materialdata', [MaterialDataController::class, 'index']);
         Route::post('/materialdata', [MaterialDataController::class, 'store']);

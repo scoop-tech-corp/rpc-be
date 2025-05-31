@@ -232,6 +232,34 @@ if (!function_exists('transactionLog')) {
     }
 }
 
+if (!function_exists('transactionPetshopLog')) {
+    function transactionPetshopLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('transactionPetshopLog')) {
+    function getPaymentMethodLabel($method)
+    {
+        $methods = [
+            1 => 'Cash',
+            2 => 'Debit',
+            3 => 'Transfer',
+            4 => 'QRIS'
+        ];
+
+        return $methods[$method] ?? 'Unknown';
+    }
+}
+
+
+
 if (!function_exists('statusTransaction')) {
     function statusTransaction($transactionId, $status)
     {
