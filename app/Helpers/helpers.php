@@ -13,6 +13,7 @@ use App\Models\ProductTransferLog;
 use App\Models\ProductSellLog;
 use App\Models\recentActivity;
 use App\Models\Transaction;
+use App\Models\TransactionBreeding;
 use App\Models\TransactionBreedingLog;
 use App\Models\TransactionLog;
 use App\Models\TransactionPetClinic;
@@ -296,6 +297,16 @@ if (!function_exists('statusTransactionPetHotel')) {
     function statusTransactionPetHotel($transactionId, $status)
     {
         TransactionPetHotel::where('id', '=', $transactionId)
+            ->update([
+                'status' => $status,
+            ]);
+    }
+}
+
+if (!function_exists('statusTransactionBreeding')) {
+    function statusTransactionBreeding($transactionId, $status)
+    {
+        TransactionBreeding::where('id', '=', $transactionId)
             ->update([
                 'status' => $status,
             ]);

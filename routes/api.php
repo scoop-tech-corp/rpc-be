@@ -50,6 +50,7 @@ use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
+use App\Http\Controllers\Transaction\BreedingController;
 use App\Http\Controllers\Transaction\PetHotelController;
 use App\Http\Controllers\Transaction\TransPetClinicController;
 
@@ -586,6 +587,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/petcheck', [PetHotelController::class, 'createPetCheck']);
             Route::get('/load-petcheck', [PetHotelController::class, 'loadDataPetCheck']);
             Route::post('/serviceandrecipe', [PetHotelController::class, 'serviceandrecipe']);
+        });
+
+        Route::group(['prefix' => 'breeding'], function () {
+
+            Route::get('/', [BreedingController::class, 'index']);
+            Route::post('/', [BreedingController::class, 'create']);
+            Route::get('/detail', [BreedingController::class, 'detail']);
+            Route::put('/', [BreedingController::class, 'update']);
+            Route::delete('/', [BreedingController::class, 'delete']);
+            Route::get('/export', [BreedingController::class, 'export']);
+
+            Route::post('/petcheck', [BreedingController::class, 'createPetCheck']);
         });
 
         Route::get('/materialdata', [MaterialDataController::class, 'index']);
