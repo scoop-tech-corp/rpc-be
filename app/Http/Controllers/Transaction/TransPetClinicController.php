@@ -1246,7 +1246,9 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        foreach ($request->services as $service) {
+        $services = json_decode($request->services, true);
+
+        foreach ($services as $service) {
             $find = Service::find($service);
             if (!$find) {
                 return responseInvalid(['Service not found!']);
@@ -1263,7 +1265,7 @@ class TransPetClinicController extends Controller
         DB::beginTransaction();
         try {
             // Add services
-            foreach ($request->services as $service) {
+            foreach ($services as $service) {
                 TransactionPetClinicServices::create([
                     'transactionPetClinicId' => $request->transactionPetClinicId,
                     'serviceId' => $service,
