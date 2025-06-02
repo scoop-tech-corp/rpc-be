@@ -126,6 +126,67 @@ class PetHotelController extends Controller
         return responseIndex(ceil($totalPaging), $data);
     }
 
+    private function Search($request)
+    {
+        $temp_column = null;
+
+        $data = DB::table('transaction_pet_hotels as t')
+            ->select(
+                't.registrationNo'
+            )
+            ->where('t.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('t.registrationNo', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 't.registrationNo';
+        }
+        //------------------------
+
+        $data = DB::table('transaction_pet_hotels as t')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->select(
+                'c.firstName'
+            )
+            ->where('t.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('c.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'c.firstName';
+        }
+        //------------------------
+
+        $data = DB::table('transaction_pet_hotels as t')
+            ->join('customer as c', 'c.id', 't.customerId')
+            ->join('users as u', 'u.id', 't.doctorId')
+            ->select(
+                'u.firstName',
+            )
+            ->where('t.isDeleted', '=', 0);
+
+        if ($request->search) {
+            $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
+        }
+
+        $data = $data->get();
+
+        if (count($data)) {
+            $temp_column[] = 'u.firstName';
+        }
+        //------------------------
+
+        return $temp_column;
+    }
+
     public function create(Request $request)
     {
 
