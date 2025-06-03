@@ -1246,7 +1246,7 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        $services = json_decode($request->services, true);
+        $services = $request->services;
 
         foreach ($services as $service) {
             $find = Service::find($service);
@@ -1255,8 +1255,10 @@ class TransPetClinicController extends Controller
             }
         }
 
-        foreach ($request->recipes as $recipe) {
-            $find = Products::find($recipe['productId']);
+        $ResultRecipe = json_decode($request->recipes, true);
+
+        foreach ($ResultRecipe as $val) {
+            $find = Products::find($val['productId']);
             if (!$find) {
                 return responseInvalid(['Product not found!']);
             }
@@ -1275,14 +1277,14 @@ class TransPetClinicController extends Controller
             }
 
             // Add recipes
-            foreach ($request->recipes as $recipe) {
+            foreach ($ResultRecipe as $val) {
                 TransactionPetClinicRecipes::create([
                     'transactionPetClinicId' => $request->transactionPetClinicId,
-                    'productId' => $recipe['productId'],
-                    'dosage' => $recipe['dosage'],
-                    'unit' => $recipe['unit'],
-                    'frequency' => $recipe['frequency'],
-                    'giveMedicine' => $recipe['giveMedicine'],
+                    'productId' => $val['productId'],
+                    'dosage' => $val['dosage'],
+                    'unit' => $val['unit'],
+                    'frequency' => $val['frequency'],
+                    'giveMedicine' => $val['giveMedicine'],
                     'userId' => $request->user()->id,
                     'userUpdateId' => $request->user()->id,
                 ]);
