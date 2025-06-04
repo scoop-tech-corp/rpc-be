@@ -17,6 +17,7 @@ class TransactionPetShop extends Model
 
     protected $fillable = [
         'registrationNo',
+        'no_nota',
         'locationId',
         'customerId',
         'paymentMethod',

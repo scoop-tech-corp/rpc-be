@@ -30,6 +30,7 @@ class TransactionPetShopController
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
             ->join('location as l', 'tp.locationId', '=', 'l.id')
+            ->join('users as u', 'tp.userId', '=', 'u.id')
             ->leftJoin('customerGroups as cg', 'c.customerGroupId', '=', 'cg.id')
             ->select(
                 'tp.id',
@@ -40,8 +41,10 @@ class TransactionPetShopController
                 'tp.totalItem',
                 'tp.totalUsePromo',
                 'tp.totalAmount',
-                'c.nickName as customerName',
-                'l.locationName'
+                'c.firstName as customerName',
+                'l.locationName',
+                'u.firstName as createdBy',
+                'tp.created_at as createdAt'
             )
             ->where('tp.isDeleted', '=', 0);
 
@@ -83,7 +86,7 @@ class TransactionPetShopController
 
         $allowedColumns = [
             'tp.registrationNo',
-            'c.nickName',
+            'c.firstName',
             'l.locationName',
             'tp.totalAmount',
             'tp.totalItem',
@@ -125,15 +128,15 @@ class TransactionPetShopController
 
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'c.id', '=', 'tp.customerId')
-            ->select('c.nickName')
+            ->select('c.firstName')
             ->where('tp.isDeleted', '=', 0);
 
         if ($request->search) {
-            $data = $data->where('c.nickName', 'like', '%' . $request->search . '%');
+            $data = $data->where('c.firstName', 'like', '%' . $request->search . '%');
         }
 
         if ($data->exists()) {
-            $temp_column[] = 'c.nickName';
+            $temp_column[] = 'c.firstName';
         }
 
 
@@ -224,6 +227,20 @@ class TransactionPetShopController
             $promoNotes = [];
             $totalDiscount = 0;
 
+            $locationId = $request->locationId;
+            $now = Carbon::now();
+            $tahun = $now->format('Y');
+            $bulan = $now->format('m');
+
+            $jumlahTransaksi = DB::table('transactionpetshop')
+                ->where('locationId', $locationId)
+                ->whereYear('created_at', $tahun)
+                ->whereMonth('created_at', $bulan)
+                ->count();
+
+            $nomorUrut = str_pad($jumlahTransaksi + 1, 4, '0', STR_PAD_LEFT);
+
+            $nomorNota = "INV/PS/{$locationId}/{$tahun}/{$bulan}/{$nomorUrut}";
 
             $lowStockWarnings = [];
             foreach ($request->productList as $prod) {
@@ -304,6 +321,7 @@ class TransactionPetShopController
 
             $tranId = DB::table('transactionpetshop')->insertGetId([
                 'registrationNo' => $regisNo,
+                'no_nota' => $nomorNota,
                 'locationId' => $request->locationId,
                 'customerId' => $cust,
                 'note' => $request->notes,
@@ -448,6 +466,54 @@ class TransactionPetShopController
         } catch (\Exception $e) {
             DB::rollBack();
             return responseInvalid([$e->getMessage()]);
+        }
+    }
+
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:transactionpetshop,id',
+            'registrationNo' => 'required|string',
+            'locationId' => 'required|integer',
+            'customerId' => 'required|integer',
+            'note' => 'nullable|string',
+            'paymentMethod' => 'required',
+            'totalAmount' => 'required|numeric',
+            'totalDiscount' => 'required|numeric',
+            'totalPayment' => 'required|numeric',
+            'promoNotes' => 'nullable|array',
+            'isPayed' => 'required|boolean',
+            'totalUsePromo' => 'required|numeric',
+        ]);
+
+        $user = $request->user();
+
+        if (!in_array($user->roleId, [1, 6])) {
+            return response()->json(['message' => 'Unauthorized. Only admin and officer can update transactions.'], 403);
+        }
+
+        $updated = DB::table('transactionpetshop')
+            ->where('id', $request->id)
+            ->update([
+                'registrationNo' => $request->registrationNo,
+                'locationId' => $request->locationId,
+                'customerId' => $request->customerId,
+                'note' => $request->note,
+                'paymentMethod' => $request->paymentMethod,
+                'userId' => $request->user()->id,
+                'totalAmount' => $request->totalAmount,
+                'totalDiscount' => $request->totalDiscount,
+                'totalPayment' => $request->totalPayment,
+                'promoNotes' => !empty($request->promoNotes) ? json_encode($request->promoNotes) : null,
+                'isPayed' => $request->isPayed,
+                'totalUsePromo' => $request->totalUsePromo,
+                'updated_at' => now(),
+            ]);
+
+        if ($updated) {
+            return response()->json(['message' => 'Transaction updated successfully.']);
+        } else {
+            return response()->json(['message' => 'No changes made or transaction not found.'], 404);
         }
     }
 
@@ -767,11 +833,11 @@ class TransactionPetShopController
                 'tp.id',
                 'tp.registrationNo',
                 'l.locationName',
-                'c.nickName as customerName',
+                'c.firstName as customerName',
                 'cg.customerGroup',
                 'pm.name as paymentMethod',
                 'tp.created_at',
-                'u.nickName as createdBy'
+                'u.firstName as createdBy'
             )
             ->get();
 
@@ -1072,69 +1138,6 @@ class TransactionPetShopController
             'promo_notes' => $promoNotes
         ];
     }
-    // public function getTransactionDetails(Request $request)
-    // {
-    //     $transactionId = $request->input('transactionId') ?? $request->input('id');
-
-    //     if (!$transactionId) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Transaction ID tidak ditemukan dalam request.'
-    //         ], 400);
-    //     }
-
-    //     $transaction = DB::table('transactionpetshop')
-    //         ->select(
-    //             'id',
-    //             'registrationNo',
-    //             'locationId',
-    //             'customerId',
-    //             'note',
-    //             'totalItem',
-    //             'totalAmount',
-    //             'totalDiscount',
-    //             'totalPayment',
-    //             'totalUsePromo',
-    //             'promoNotes',
-    //             'isPayed',
-    //             'proofOfPayment',
-    //             'paymentMethod'
-    //         )
-    //         ->where('id', $transactionId)
-    //         ->where('isDeleted', 0)
-    //         ->first();
-
-    //     if (!$transaction) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Data transaksi tidak ditemukan.'
-    //         ], 404);
-    //     }
-
-    //     $details = DB::table('transactionpetshopdetail as d')
-    //         ->join('products as p', 'p.id', '=', 'd.productId')
-    //         ->select(
-    //             'd.id',
-    //             'd.transactionpetshopId',
-    //             'd.productId',
-    //             'p.fullName as productName',
-    //             'd.quantity',
-    //             'd.price',
-    //             'd.discount',
-    //             'd.final_price',
-    //             'd.promoId'
-    //         )
-    //         ->where('d.transactionpetshopId', $transactionId)
-    //         ->where('d.isDeleted', 0)
-    //         ->get();
-
-    //     $transaction->detail = $details;
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'transaction' => $transaction
-    //     ]);
-    // }
 
     public function getTransactionDetails(Request $request)
     {
@@ -1175,10 +1178,10 @@ class TransactionPetShopController
                 't.proofOfPayment',
                 't.created_at',
                 'l.locationName as locationName',
-                'c.nickName as customerName',
+                'c.firstName as customerName',
                 // 'c.isNew as isNewCustomer',
                 't.paymentMethod',
-                'u.nickName as createdBy'
+                'u.firstName as createdBy'
             )
             ->where('t.id', $transactionId)
             ->where('t.isDeleted', 0)
@@ -1213,15 +1216,7 @@ class TransactionPetShopController
             ->get();
 
         $mappedProducts = $products->map(function ($item) {
-            $item->note = $item->note ?? '';
-
-            if ($item->promoId) {
-                $item->included_items = DB::table('promotion_products as pp')
-                    ->join('products as p', 'p.id', '=', 'pp.productId')
-                    ->where('pp.promoId', $item->promoId)
-                    ->select('p.fullName as name', 'p.price as normal_price')
-                    ->get();
-            }
+            // $item->note = $item->note ?? '';
 
             return $item;
         });
@@ -1232,7 +1227,7 @@ class TransactionPetShopController
                 'l.id',
                 'l.activity',
                 'l.remark',
-                'u.nickName as createdBy',
+                'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(l.created_at, '%d-%m-%Y %H:%i:%s') as createdAt")
             )
             ->where('l.transactionId', $transactionId)
@@ -1267,7 +1262,6 @@ class TransactionPetShopController
         return $methods[$method] ?? 'Unknown';
     }
 
-
     public function confirmPayment(Request $request)
     {
         $request->validate([
@@ -1284,9 +1278,14 @@ class TransactionPetShopController
             ], 400);
         }
 
-        $isCash = $transaction->paymentMethod == 1;
+        if ($transaction->paymentMethod == 1) {
+            return response()->json([
+                'status' => 'warning',
+                'message' => 'Metode pembayaran Cash tidak perlu konfirmasi atau bukti pembayaran.'
+            ], 400);
+        }
 
-        if (!$isCash && !$request->hasFile('proof')) {
+        if (!$request->hasFile('proof')) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Bukti pembayaran wajib diunggah untuk metode non-tunai.'
@@ -1297,7 +1296,7 @@ class TransactionPetShopController
         $originalName = null;
         $randomName = null;
 
-        if (!$isCash && $request->hasFile('proof')) {
+        if ($request->hasFile('proof')) {
             $file = $request->file('proof');
             $originalName = $file->getClientOriginalName();
             $randomName = 'proof_' . $transaction->id . '_' . time() . '.' . $file->getClientOriginalExtension();
@@ -1306,7 +1305,7 @@ class TransactionPetShopController
                 Storage::disk('public')->makeDirectory('Transaction/Petshop/proof_of_payment');
             }
 
-            $filePath = $file->storeAs('public/Transaction/Petshop/proof_of_payment', $randomName, 'public');
+            $filePath = $file->storeAs('Transaction/Petshop/proof_of_payment', $randomName, 'public');
 
             $transaction->proofOfPayment = $filePath;
             $transaction->originalName = $originalName;
@@ -1353,24 +1352,27 @@ class TransactionPetShopController
     //     return $pdf->download('nota_petshop.pdf');
     // }
 
-    public function generateInvoice($transactionId)
+    public function generateInvoice($id)
     {
+        if (!is_numeric($id) || !DB::table('transactionpetshop')->where('id', $id)->exists()) {
+            return response()->json(['message' => 'Invalid or missing transaction ID.'], 400);
+        }
+
         $transaction = DB::table('transactionpetshop as t')
             ->leftJoin('customer as c', 't.customerId', '=', 'c.id')
-            ->leftJoin('customertelephones as ct', function ($join) {
-                $join->on('c.id', '=', 'ct.customerId');
-            })
-            ->where('t.id', $transactionId)
+            ->leftJoin('customerTelephones as ct', 'c.id', '=', 'ct.customerId')
+            ->where('t.id', $id)
             ->select(
                 't.*',
+                // 't.no_nota',
                 'c.memberNo',
-                'c.nickName',
+                'c.firstName',
                 'ct.phoneNumber'
             )
             ->first();
 
         if (!$transaction) {
-            abort(404, 'Transaksi tidak ditemukan');
+            return response()->json(['message' => 'Transaction not found.'], 404);
         }
 
         $locations = DB::table('location')
@@ -1393,9 +1395,9 @@ class TransactionPetShopController
             $key = $location->codeLocation;
             if (!isset($locationGroups[$key])) {
                 $locationGroups[$key] = [
-                    'name' => $location->locationName,
+                    'name'        => $location->locationName,
                     'description' => $location->description,
-                    'phone' => $location->phoneNumber ?? ''
+                    'phone'       => $location->phoneNumber ?? ''
                 ];
             }
         }
@@ -1404,7 +1406,7 @@ class TransactionPetShopController
         $details = DB::table('transactionpetshopdetail as d')
             ->leftJoin('products as p', 'd.productId', '=', 'p.id')
             ->leftJoin('promotionMasters as pm', 'd.promoId', '=', 'pm.id')
-            ->where('d.transactionpetshopId', $transactionId)
+            ->where('d.transactionpetshopId', $id)
             ->select(
                 'p.fullName as product_name',
                 'pm.name as promo_name',
@@ -1416,12 +1418,29 @@ class TransactionPetShopController
 
         $total = $details->sum('final_price');
 
+        $locationId = $transaction->locationId;
+        $createdAt = Carbon::parse($transaction->created_at);
+        $tahun = $createdAt->format('Y');
+        $bulan = $createdAt->format('m');
+
+        $monthlyTransactionCount = DB::table('transactionpetshop')
+            ->where('locationId', $locationId)
+            ->whereYear('created_at', $tahun)
+            ->whereMonth('created_at', $bulan)
+            ->where('created_at', '<=', $createdAt)
+            ->count();
+
+        $nomorUrut = str_pad($monthlyTransactionCount, 4, '0', STR_PAD_LEFT);
+
+        $namaFile = "INV_PS_{$locationId}_{$tahun}_{$bulan}_{$nomorUrut}.pdf";
+
+
         $data = [
             'locations'      => $formattedLocations,
             'nota_date'      => Carbon::parse($transaction->created_at)->format('d/m/Y'),
-            'nota_number'    => $transaction->registrationNo ?? '___________',
+            'no_nota'    => $transaction->no_nota ?? '___________',
             'member_no'      => $transaction->memberNo ?? '-',
-            'customer_name'  => $transaction->nickName ?? '-',
+            'customer_name'  => $transaction->firstName ?? '-',
             'phone_number'   => $transaction->phoneNumber ?? '-',
             'arrival_time'   => Carbon::parse($transaction->created_at)->format('H:i'),
             'details'        => $details,
@@ -1430,7 +1449,7 @@ class TransactionPetShopController
             'total_tagihan'  => $total,
         ];
 
-        $pdf = Pdf::loadView('/invoice/invoice_petshop', $data);
-        return $pdf->download('nota_petshop.pdf');
+        $pdf = Pdf::loadView('invoice.invoice_petshop', $data);
+        return $pdf->download($namaFile);
     }
 }

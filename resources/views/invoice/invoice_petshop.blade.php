@@ -273,10 +273,10 @@
             <table class="location-table" width="100%">
                 <tr>
                     <td class="logo-cell" width="25%" valign="top" align="center">
-                        <div style="padding: 1px; font-size: 6px; font-weight: bold; margin-bottom: 5px;">
+                        <div style="padding: 1px; font-size: 8px; font-weight: bold; margin-bottom: 5px;">
                             RADHIYAN PET AND CARE
                         </div>
-                        <img src="{{ public_path('storage/Logo/Logo-Radhiyan.png') }}" alt="Logo" style="width: 80px;">
+                        <img src="{{ public_path('storage/Logo/Logo-Radhiyan.png') }}" alt="Logo" style="width: 120px;">
                     </td>
 
                     <td class="locations-cell" width="75%">
@@ -339,7 +339,7 @@
 
             <!-- Kolom kanan: No Nota -->
             <td style="font-size: 10px; text-align: right; width: 30%; white-space: nowrap;">
-                No.Nota: {{ $nota_number }}
+                No.Nota: {{ $no_nota }}
             </td>
         </tr>
     </table>
@@ -411,74 +411,67 @@
         </div>
     </div> -->
 
-    <!-- <div class="notes">
+    <div class="notes">
         <strong>Catatan:</strong><br>
-        -Kumpulkan nota bukti grooming & penitipan (*tunjukkan kepada pegawai kasir)<br>
+        <!-- -Kumpulkan nota bukti grooming & penitipan (*tunjukkan kepada pegawai kasir)<br> -->
         -Khusus VIP Member diskon 10%<br>
-        -Penitipan minimal 10 hari, gratis grooming sehat 1x
-    </div> -->
-
-    <div class="payment-info" style="font-size: 12px; line-height: 1.4; max-width: 500px;">
-        <strong>Pembayaran via transfer ke:</strong><br><br>
-
-        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-            <tr>
-                <td style="width: 130px; vertical-align: top; font-weight: bold;">
-                    No. Rek BCA
-                </td>
-                <td style="vertical-align: top; font-weight: bold;">
-                    599-096-0005
-                </td>
-            </tr>
-            <tr>
-                <td style="font-weight: bold;">a.n</td>
-                <td style="padding-bottom: 4px; font-weight: bold;">
-                    Radhiyan Fadiar Sahistya
-                </td>
-            </tr>
-            <tr>
-                <td style="vertical-align: top;">Cabang</td>
-                <td style="padding-bottom: 12px;">
-                    Kp. Gading, Pulogebang, Tanjung Duren, Buaran, Sukmajaya, Sawangan, Hankam Pondokgede, Lippo Cikarang, Kalangtenah Karawaci Ketintang Surabaya, Waru Sidoarjo, Kenten Palembang
-                </td>
-            </tr>
-
-            <tr>
-                <td style="width: 130px; vertical-align: top; font-weight: bold;">
-                    No. Rek BCA
-                </td>
-                <td style="vertical-align: top; font-weight: bold;">
-                    599-093-0009
-                </td>
-            </tr>
-            <tr>
-                <td style="font-weight: bold;">a.n</td>
-                <td style="padding-bottom: 4px; font-weight: bold;">
-                    Dharmawijaya Widyatama
-                </td>
-            </tr>
-            <tr>
-                <td style="vertical-align: top;">Cabang</td>
-                <td style="padding-bottom: 12px;">
-                    Condet & Rawamangun
-                </td>
-            </tr>
-        </table>
-
-        <div style="margin-top: 10px; font-weight: bold;">
-            Pembayaran akan dianggap sah setelah masuk ke rekening yang ada diatas
-        </div>
+        <!-- -Penitipan minimal 10 hari, gratis grooming sehat 1x -->
     </div>
 
+    <table style="width: 100%; font-size: 12px; line-height: 1.4; border-collapse: collapse;">
+        <tr>
+            <!-- Kolom kiri: Info Pembayaran -->
+            <td style="width: 65%; vertical-align: top;">
+                <div class="payment-info">
+                    <strong>Pembayaran via transfer ke:</strong><br><br>
 
-    <div class="signature-section">
-        <div style="float: right; text-align: center;">
-            Mengetahui,<br><br><br><br>
-            ( _________________ )<br>
-            <strong>Kasir</strong>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <tr>
+                            <td style="width: 130px; vertical-align: top; font-weight: bold;">No. Rek BCA</td>
+                            <td style="vertical-align: top; font-weight: bold;">599-096-0005</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">a.n</td>
+                            <td style="padding-bottom: 4px; font-weight: bold;">Radhiyan Fadiar Sahistya</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">Cabang</td>
+                            <td style="padding-bottom: 12px;">
+                                Kp. Gading, Pulogebang, Tanjung Duren, Buaran, Sukmajaya, Sawangan, Hankam Pondokgede, Lippo Cikarang, Kalangtenah Karawaci Ketintang Surabaya, Waru Sidoarjo, Kenten Palembang
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="width: 130px; vertical-align: top; font-weight: bold;">No. Rek BCA</td>
+                            <td style="vertical-align: top; font-weight: bold;">599-093-0009</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">a.n</td>
+                            <td style="padding-bottom: 4px; font-weight: bold;">Dharmawijaya Widyatama</td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top;">Cabang</td>
+                            <td style="padding-bottom: 12px;">Condet & Rawamangun</td>
+                        </tr>
+                    </table>
+
+                    <div style="margin-top: 10px; font-weight: bold;">
+                        Pembayaran akan dianggap sah setelah masuk ke rekening yang ada di atas
+                    </div>
+                </div>
+            </td>
+
+            <!-- Kolom kanan: Tanda tangan -->
+            <td style="width: 35%; vertical-align: top; padding-top: 20px;">
+                <div class="signature-section" style="width: 100%; text-align: center;">
+                    Mengetahui,<br><br><br><br>
+                    ( _________________ )<br>
+                    <strong>Kasir</strong>
+                </div>
+            </td>
+        </tr>
+    </table>
+
 </body>
 
 </html>
