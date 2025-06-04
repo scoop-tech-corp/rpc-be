@@ -3,21 +3,18 @@
 namespace App\Http\Controllers\Transaction;
 
 use App\Http\Controllers\Controller;
-use App\Models\Customer\Customer;
-use App\Models\Customer\CustomerPets;
-use App\Models\TransactionPetHotel;
-use App\Models\TransactionPetHotelCheck;
-use App\Models\TransactionPetHotelTreatmentProduct;
-use App\Models\TransactionPetHotelTreatmentService;
-use App\Models\TransactionPetHotelTreatmentTreatPlan;
-use App\Models\User;
+use App\Models\TransactionBreeding;
 use Illuminate\Http\Request;
 use Validator;
 use DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Carbon\Carbon;
+use App\Models\Customer\Customer;
+use App\Models\Customer\CustomerPets;
+use App\Models\TransactionBreedingCheck;
+use App\Models\User;
 
-class PetHotelController extends Controller
+class BreedingController extends Controller
 {
     public function index(Request $request)
     {
@@ -40,7 +37,7 @@ class PetHotelController extends Controller
             $statusDoc = 1;
         }
 
-        $data = DB::table('transaction_pet_hotels as t')
+        $data = DB::table('transaction_breedings as t')
             ->join('location as l', 'l.id', 't.locationId')
             ->join('customer as c', 'c.id', 't.customerId')
             ->join('customerPets as cp', 'cp.id', 't.PetId')
@@ -130,7 +127,7 @@ class PetHotelController extends Controller
     {
         $temp_column = null;
 
-        $data = DB::table('transaction_pet_hotels as t')
+        $data = DB::table('transaction_breedings as t')
             ->select(
                 't.registrationNo'
             )
@@ -147,7 +144,7 @@ class PetHotelController extends Controller
         }
         //------------------------
 
-        $data = DB::table('transaction_pet_hotels as t')
+        $data = DB::table('transaction_breedings as t')
             ->join('customer as c', 'c.id', 't.customerId')
             ->select(
                 'c.firstName'
@@ -165,7 +162,7 @@ class PetHotelController extends Controller
         }
         //------------------------
 
-        $data = DB::table('transaction_pet_hotels as t')
+        $data = DB::table('transaction_breedings as t')
             ->join('customer as c', 'c.id', 't.customerId')
             ->join('users as u', 'u.id', 't.doctorId')
             ->select(
@@ -248,13 +245,13 @@ class PetHotelController extends Controller
             return responseInvalid(['Start Date must be less than End Date']);
         }
 
-        $loc = TransactionPetHotel::where('locationId', $request->locationId)->count();
+        $loc = TransactionBreeding::where('locationId', $request->locationId)->count();
 
         $date = Carbon::now()->format('d');
         $month = Carbon::now()->format('m');
         $year = Carbon::now()->format('Y');
 
-        $petCheckRegistrationNo = str_pad($loc + 1, 3, 0, STR_PAD_LEFT) . '/LPIK-RIS-RPC-PH/' . $request->locationId . '/' . $date . '/' . $month . '/' . $year;
+        $petCheckRegistrationNo = str_pad($loc + 1, 3, 0, STR_PAD_LEFT) . '/LPIK-RIS-RPC-BRE/' . $request->locationId . '/' . $date . '/' . $month . '/' . $year;
 
         DB::beginTransaction();
         try {
@@ -343,11 +340,11 @@ class PetHotelController extends Controller
                 return responseInvalid(['Doctor is Not Found']);
             }
 
-            $trx = TransactionPetHotel::where('locationId', $request->locationId)->count();
+            $trx = TransactionBreeding::where('locationId', $request->locationId)->count();
 
             $regisNo = 'RPC.TRX.' . $request->locationId . '.' . str_pad($trx + 1, 8, 0, STR_PAD_LEFT);
 
-            $tran = TransactionPetHotel::create([
+            $tran = TransactionBreeding::create([
                 'registrationNo' => $regisNo,
                 'petCheckRegistrationNo' => $petCheckRegistrationNo,
                 'status' => 'Menunggu Dokter',
@@ -364,7 +361,7 @@ class PetHotelController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
-            transactionPetHotelLog($tran->id, 'New Transaction', '', $request->user()->id);
+            transactionBreedingLog($tran->id, 'New Transaction', '', $request->user()->id);
 
             DB::commit();
             return responseCreate();
@@ -376,7 +373,7 @@ class PetHotelController extends Controller
 
     public function detail(Request $request)
     {
-        $detail = DB::table('transaction_pet_hotels as t')
+        $detail = DB::table('transaction_breedings as t')
             ->join('location as l', 'l.id', 't.locationId')
             ->join('customer as c', 'c.id', 't.customerId')
             ->join('customerPets as cp', 'cp.id', 't.PetId')
@@ -418,8 +415,8 @@ class PetHotelController extends Controller
             ->where('t.id', '=', $request->id)
             ->first();
 
-        $log = DB::table('transaction_pet_hotel_logs as tl')
-            ->join('transaction_pet_hotels as t', 't.id', 'tl.transactionId')
+        $log = DB::table('transaction_breeding_logs as tl')
+            ->join('transaction_breedings as t', 't.id', 'tl.transactionId')
             ->join('users as u', 'u.id', 'tl.userId')
             ->select(
                 'tl.id',
@@ -511,9 +508,9 @@ class PetHotelController extends Controller
 
         try {
 
-            $oldTransaction = TransactionPetHotel::find($request->id);
+            $oldTransaction = TransactionBreeding::find($request->id);
 
-            $transaction = TransactionPetHotel::updateOrCreate(
+            $transaction = TransactionBreeding::updateOrCreate(
                 ['id' => $request->id],
                 [
                     'registrationNo' => $request->registrationNo,
@@ -553,9 +550,9 @@ class PetHotelController extends Controller
                         if ($customName == 'Dokter yang menangani') {
                             $doctor = User::where([['id', '=', $newValue]])->first();
 
-                            transactionPetHotelLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$doctor->firstName}", $request->user()->id);
+                            transactionBreedingLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$doctor->firstName}", $request->user()->id);
                         } else {
-                            transactionPetHotelLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
+                            transactionBreedingLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
                         }
                     }
                 }
@@ -573,7 +570,7 @@ class PetHotelController extends Controller
     {
 
         foreach ($request->id as $va) {
-            $res = TransactionPetHotel::find($va);
+            $res = TransactionBreeding::find($va);
 
             if (!$res) {
                 return response()->json([
@@ -585,14 +582,14 @@ class PetHotelController extends Controller
 
         foreach ($request->id as $va) {
 
-            $tran = TransactionPetHotel::find($va);
+            $tran = TransactionBreeding::find($va);
 
             $tran->DeletedBy = $request->user()->id;
             $tran->isDeleted = true;
             $tran->DeletedAt = Carbon::now();
             $tran->save();
 
-            transactionPetHotelLog($va, 'Transaction Deleted', '', $request->user()->id);
+            transactionBreedingLog($va, 'Transaction Deleted', '', $request->user()->id);
         }
 
         return responseDelete();
@@ -601,7 +598,7 @@ class PetHotelController extends Controller
     public function export(Request $request)
     {
 
-        $data = DB::table('transaction_pet_hotels as t')
+        $data = DB::table('transaction_breedings as t')
             ->join('location as l', 'l.id', 't.locationId')
             ->join('customer as c', 'c.id', 't.customerId')
             ->join('customerPets as cp', 'cp.id', 't.PetId')
@@ -652,7 +649,7 @@ class PetHotelController extends Controller
             $row++;
         }
 
-        $fileName = 'Export Transaksi Pet Hotel.xlsx';
+        $fileName = 'Export Transaksi Breeding.xlsx';
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
         $newFilePath = public_path() . '/template_download/' . $fileName; // Set the desired path
@@ -678,7 +675,7 @@ class PetHotelController extends Controller
             return responseInvalid($errors);
         }
 
-        $tran = TransactionPetHotel::where([['id', '=', $request->transactionId]])->first();
+        $tran = TransactionBreeding::where([['id', '=', $request->transactionId]])->first();
 
         if ($tran->doctorId != $request->user()->id) {
             return responseErrorValidation('Can not accept transaction because the designated doctor is different!', 'Can not accept transaction because the designated doctor is different!');
@@ -688,9 +685,9 @@ class PetHotelController extends Controller
 
         if ($request->status == 1) {
 
-            statusTransactionPetHotel($request->transactionId, 'Cek Kondisi Pet');
+            statusTransactionBreeding($request->transactionId, 'Cek Kondisi Pet');
 
-            transactionPetHotelLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+            transactionBreedingLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
         } else {
 
             $validate = Validator::make($request->all(), [
@@ -702,9 +699,9 @@ class PetHotelController extends Controller
                 return responseInvalid($errors);
             }
 
-            statusTransactionPetHotel($request->transactionId, 'Ditolak Dokter');
+            statusTransactionBreeding($request->transactionId, 'Ditolak Dokter');
 
-            transactionPetHotelLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+            transactionBreedingLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
         }
 
         return responseCreate();
@@ -726,9 +723,9 @@ class PetHotelController extends Controller
 
         $user = User::where([['id', '=', $request->user()->id]])->first();
 
-        statusTransactionPetHotel($request->transactionId, 'Menunggu Dokter');
+        statusTransactionBreeding($request->transactionId, 'Menunggu Dokter');
 
-        transactionPetHotelLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
+        transactionBreedingLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
 
         return responseCreate();
     }
@@ -768,7 +765,7 @@ class PetHotelController extends Controller
             }
         }
 
-        TransactionPetHotelCheck::create([
+        TransactionBreedingCheck::create([
             'transactionId' => $request->transactionId,
             'numberVaccines' => $request->numberVaccines,
             'isLiceFree' => $request->isLiceFree,
@@ -804,184 +801,5 @@ class PetHotelController extends Controller
         }
 
         return responseCreate();
-    }
-
-    public function Treatment(Request $request)
-    {
-        $validate = Validator::make($request->all(), [
-            'transactionId' => 'required|integer',
-        ]);
-
-        if ($validate->fails()) {
-            $errors = $validate->errors()->all();
-            return responseInvalid($errors);
-        }
-
-        $tran = TransactionPetHotel::where('id', '=', $request->transactionId)->where('isDeleted', '=', 0)->first();
-
-        if (!$tran) {
-            return responseInvalid(['Transaction is not found or already deleted!']);
-        }
-
-        $services = json_decode($request->services, true);
-        $productSell = json_decode($request->productSells, true);
-        $productClinic = json_decode($request->productClinics, true);
-        $treatmentPlans = json_decode($request->treatmentPlans, true);
-
-        if (count($services) == 0 && count($productSell) == 0 && count($productClinic) == 0 && count($treatmentPlans) == 0) {
-
-            return responseInvalid(['All category must one to filled!']);
-        }
-
-        if ($services) {
-
-            $validateServices = Validator::make(
-                $services,
-                [
-                    '*.id' => 'required|integer',
-                    '*.quantity' => 'required|integer',
-                ],
-                [
-                    '*.id.integer' => 'Id Should be Integer!',
-                    '*.id.required' => 'Id Should be Required!',
-                    '*.quantity.integer' => 'Quantity Should be Integer!',
-                    '*.quantity.required' => 'Quantity Should be Required!',
-                ]
-            );
-
-            if ($validateServices->fails()) {
-                $errors = $validateServices->errors()->first();
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
-            }
-        }
-
-        if ($productSell) {
-
-            $validateProductSell = Validator::make(
-                $productSell,
-                [
-                    '*.id' => 'required|integer',
-                    '*.quantity' => 'required|integer',
-                ],
-                [
-                    '*.id.integer' => 'Id Should be Integer!',
-                    '*.id.required' => 'Id Should be Required!',
-                    '*.quantity.integer' => 'Quantity Should be Integer!',
-                    '*.quantity.required' => 'Quantity Should be Required!',
-                ]
-            );
-
-            if ($validateProductSell->fails()) {
-                $errors = $validateProductSell->errors()->first();
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
-            }
-        }
-
-        if ($productClinic) {
-
-            $validateProductClinic = Validator::make(
-                $productClinic,
-                [
-                    '*.id' => 'required|integer',
-                    '*.quantity' => 'required|integer',
-                ],
-                [
-                    '*.id.integer' => 'Id Should be Integer!',
-                    '*.id.required' => 'Id Should be Required!',
-                    '*.quantity.integer' => 'Quantity Should be Integer!',
-                    '*.quantity.required' => 'Quantity Should be Required!',
-                ]
-            );
-
-            if ($validateProductClinic->fails()) {
-                $errors = $validateProductClinic->errors()->first();
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
-            }
-        }
-
-        if ($treatmentPlans) {
-
-            $validateTreatmentPlans = Validator::make(
-                ['treatmentPlans' => $treatmentPlans],
-                [
-                    'treatmentPlans' => 'required|array',
-                    'treatmentPlans.*' => 'required|integer',
-                ],
-                [
-                    'treatmentPlans.*.required' => 'Id is required!',
-                    'treatmentPlans.*.integer' => 'Id should be integer!',
-                ]
-            );
-
-            if ($validateTreatmentPlans->fails()) {
-                $errors = $validateTreatmentPlans->errors()->first();
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
-            }
-        }
-
-        //proses insert
-        DB::beginTransaction();
-        try {
-            foreach ($services as $value) {
-
-                TransactionPetHotelTreatmentService::create([
-                    'transactionId' => $request->transactionId,
-                    'serviceId' => $value['id'],
-                    'quantity' => $value['quantity'],
-                    'userId' => $request->user()->id,
-                ]);
-            }
-
-            foreach ($productSell as $value) {
-                TransactionPetHotelTreatmentProduct::create([
-                    'transactionId' => $request->transactionId,
-                    'productId' => $value['id'],
-                    'quantity' => $value['quantity'],
-                    'userId' => $request->user()->id,
-                ]);
-            }
-
-            foreach ($productClinic as $value) {
-                TransactionPetHotelTreatmentProduct::create([
-                    'transactionId' => $request->transactionId,
-                    'productId' => $value['id'],
-                    'quantity' => $value['quantity'],
-                    'userId' => $request->user()->id,
-                ]);
-            }
-
-            foreach ($treatmentPlans as $value) {
-                TransactionPetHotelTreatmentTreatPlan::create([
-                    'transactionId' => $request->transactionId,
-                    'treatmentPlanId' => $value,
-                    'userId' => $request->user()->id,
-                ]);
-            }
-
-            return responseCreate();
-        } catch (\Throwable $th) {
-            DB::rollback();
-
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $th,
-            ]);
-        }
     }
 }

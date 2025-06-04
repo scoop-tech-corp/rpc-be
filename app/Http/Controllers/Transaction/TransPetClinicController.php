@@ -1246,15 +1246,19 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        foreach ($request->services as $service) {
+        $services = $request->services;
+
+        foreach ($services as $service) {
             $find = Service::find($service);
             if (!$find) {
                 return responseInvalid(['Service not found!']);
             }
         }
 
-        foreach ($request->recipes as $recipe) {
-            $find = Products::find($recipe['productId']);
+        $ResultRecipe = json_decode($request->recipes, true);
+
+        foreach ($ResultRecipe as $val) {
+            $find = Products::find($val['productId']);
             if (!$find) {
                 return responseInvalid(['Product not found!']);
             }
@@ -1263,7 +1267,7 @@ class TransPetClinicController extends Controller
         DB::beginTransaction();
         try {
             // Add services
-            foreach ($request->services as $service) {
+            foreach ($services as $service) {
                 TransactionPetClinicServices::create([
                     'transactionPetClinicId' => $request->transactionPetClinicId,
                     'serviceId' => $service,
@@ -1273,14 +1277,14 @@ class TransPetClinicController extends Controller
             }
 
             // Add recipes
-            foreach ($request->recipes as $recipe) {
+            foreach ($ResultRecipe as $val) {
                 TransactionPetClinicRecipes::create([
                     'transactionPetClinicId' => $request->transactionPetClinicId,
-                    'productId' => $recipe['productId'],
-                    'dosage' => $recipe['dosage'],
-                    'unit' => $recipe['unit'],
-                    'frequency' => $recipe['frequency'],
-                    'giveMedicine' => $recipe['giveMedicine'],
+                    'productId' => $val['productId'],
+                    'dosage' => $val['dosage'],
+                    'unit' => $val['unit'],
+                    'frequency' => $val['frequency'],
+                    'giveMedicine' => $val['giveMedicine'],
                     'userId' => $request->user()->id,
                     'userUpdateId' => $request->user()->id,
                 ]);
