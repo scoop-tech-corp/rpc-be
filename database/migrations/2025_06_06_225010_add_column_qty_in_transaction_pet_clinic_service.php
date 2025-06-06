@@ -16,6 +16,10 @@ return new class extends Migration
         Schema::table('transaction_pet_clinic_services', function (Blueprint $table) {
             $table->integer('quantity')->nullable()->after('serviceId');
         });
+
+        Schema::table('transaction_pet_clinic_recipes', function (Blueprint $table) {
+            $table->string('notes')->nullable()->after('giveMedicine');
+        });
     }
 
     /**
@@ -27,6 +31,10 @@ return new class extends Migration
     {
         Schema::table('transaction_pet_clinic_services', function (Blueprint $table) {
             $table->dropColumn('quantity');
+        });
+
+        Schema::table('transaction_pet_clinic_recipes', function (Blueprint $table) {
+            $table->dropColumn('notes');
         });
     }
 };

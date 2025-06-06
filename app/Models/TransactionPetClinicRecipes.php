@@ -20,6 +20,7 @@ class TransactionPetClinicRecipes extends Model
         'unit',
         'frequency',
         'giveMedicine',
+        'notes',
         'userId',
         'userUpdateId'
     ];
