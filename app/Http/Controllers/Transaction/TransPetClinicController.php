@@ -1348,7 +1348,7 @@ class TransPetClinicController extends Controller
                 'p.price as basedPrice'
             )
             ->where('rc.transactionPetClinicId', '=', $request->transactionPetClinicId)
-            ->where('pl.locationId', '=', $trans->location)
+            ->where('pl.locationId', '=', $trans->locationId)
             ->get();
 
         $data = [
