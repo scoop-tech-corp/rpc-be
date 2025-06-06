@@ -1286,6 +1286,7 @@ class TransPetClinicController extends Controller
                     'unit' => $val['unit'],
                     'frequency' => $val['frequency'],
                     'giveMedicine' => $val['giveMedicine'],
+                    'notes' => $val['notes'],
                     'userId' => $request->user()->id,
                     'userUpdateId' => $request->user()->id,
                 ]);
@@ -1306,6 +1307,61 @@ class TransPetClinicController extends Controller
             return responseInvalid([$th->getMessage()]);
         }
     }
+
+    public function showDataBeforePayment(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionPetClinicId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $trans = TransactionPetClinic::find($request->transactionPetClinicId);
+
+        $dataServices = TransactionPetClinicServices::from('transaction_pet_clinic_services as tpcs')
+            ->join('services as s', 's.id', '=', 'tpcs.serviceId')
+            ->join('servicesPrice as sp', 's.id', '=', 'sp.service_id')
+            ->select(
+                's.id as serviceId',
+                's.fullName as serviceName',
+                'tpcs.quantity',
+                'sp.price as basedPrice'
+            )
+            ->where('tpcs.transactionPetClinicId', '=', $request->transactionPetClinicId)
+            ->where('sp.location_id', '=', $trans->locationId)
+            ->get();
+
+        $dataRecipes = TransactionPetClinicRecipes::from('transaction_pet_clinic_recipes as rc')
+            ->join('products as p', 'p.id', '=', 'rc.productId')
+            ->join('productLocations as pl', 'p.id', '=', 'pl.productId')
+            ->select(
+                'p.id as productId',
+                'p.fullName as productName',
+                'rc.dosage',
+                'rc.unit',
+                'rc.frequency',
+                'rc.giveMedicine',
+                'rc.notes',
+                'p.price as basedPrice'
+            )
+            ->where('rc.transactionPetClinicId', '=', $request->transactionPetClinicId)
+            ->where('pl.locationId', '=', $trans->location)
+            ->get();
+
+        $data = [
+            'services' => $dataServices,
+            'recipes' => $dataRecipes,
+        ];
+
+        return response()->json([
+            'data' => $data,
+        ]);
+    }
+
+    public function paymentInpatient(Request $request) {}
 
     public function createList(Request $request)
     {
