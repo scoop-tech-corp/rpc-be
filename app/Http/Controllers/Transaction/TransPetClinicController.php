@@ -1246,7 +1246,7 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        $dataServices = json_decode($request->services, true);
+        $dataServices = $request->services;
 
         foreach ($dataServices as $val) {
             $find = Service::find($val['serviceId']);
@@ -1255,7 +1255,7 @@ class TransPetClinicController extends Controller
             }
         }
 
-        $ResultRecipe = json_decode($request->recipes, true);
+        $ResultRecipe = $request->recipes;
 
         foreach ($ResultRecipe as $val) {
             $find = Products::find($val['productId']);
