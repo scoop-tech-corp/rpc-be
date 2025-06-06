@@ -16,6 +16,7 @@ class TransactionPetClinicServices extends Model
     protected $fillable = [
         'transactionPetClinicId',
         'serviceId',
+        'quantity',
         'userId',
         'userUpdateId'
     ];

@@ -1246,10 +1246,10 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        $services = $request->services;
+        $dataServices = json_decode($request->services, true);
 
-        foreach ($services as $service) {
-            $find = Service::find($service);
+        foreach ($dataServices as $val) {
+            $find = Service::find($val['serviceId']);
             if (!$find) {
                 return responseInvalid(['Service not found!']);
             }
@@ -1267,10 +1267,11 @@ class TransPetClinicController extends Controller
         DB::beginTransaction();
         try {
             // Add services
-            foreach ($services as $service) {
+            foreach ($dataServices as $val) {
                 TransactionPetClinicServices::create([
                     'transactionPetClinicId' => $request->transactionPetClinicId,
-                    'serviceId' => $service,
+                    'serviceId' => $val['serviceId'],
+                    'quantity' => $val['quantity'],
                     'userId' => $request->user()->id,
                     'userUpdateId' => $request->user()->id,
                 ]);
@@ -1289,6 +1290,14 @@ class TransPetClinicController extends Controller
                     'userUpdateId' => $request->user()->id,
                 ]);
             }
+
+            TransactionPetClinic::updateOrCreate(
+                ['id' => $request->transactionPetClinicId],
+                [
+                    'status' => "Proses Pembayaran",
+                    'userUpdatedId' => $request->user()->id,
+                ]
+            );
 
             DB::commit();
             return responseCreate();
