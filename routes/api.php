@@ -567,7 +567,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::group(['prefix' => 'petshop'], function () {
             Route::get('/', [TransactionPetShopController::class, 'index']);
             Route::post('/', [TransactionPetShopController::class, 'create']);
-            Route::get('/detail', [TransactionPetShopController::class, 'getTransactionDetails']);
+            Route::get('/detail', [TransactionPetShopController::class, 'detail']);
             Route::put('/', [TransactionPetShopController::class, 'update']);
             Route::delete('/', [TransactionPetShopController::class, 'delete']);
             Route::get('/export', [TransactionPetShopController::class, 'export']);
