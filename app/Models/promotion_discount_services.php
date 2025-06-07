@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PromotionFreeItem extends Model
+class promotion_discount_services extends Model
 {
-    protected $table = "promotionFreeItems";
+    protected $table = "promotion_discount_services";
 
     protected $dates = ['created_at', 'deletedAt'];
 
@@ -15,10 +15,10 @@ class PromotionFreeItem extends Model
 
     protected $fillable = [
         'promoMasterId',
-        'quantityBuyItem',
-        'productBuyId',
-        'quantityFreeItem',
-        'productFreeId',
+        'discountType', // percentOrAmount
+        'serviceId',
+        'amount',
+        'percent',
         'totalMaxUsage',
         'maxUsagePerCustomer',
         'userId',

@@ -5,22 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PromotionFreeItem extends Model
+class promotion_bundle_detail_services extends Model
 {
-    protected $table = "promotionFreeItems";
+    protected $table = "promotion_bundle_detail_services";
 
     protected $dates = ['created_at', 'deletedAt'];
 
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'promoMasterId',
-        'quantityBuyItem',
-        'productBuyId',
-        'quantityFreeItem',
-        'productFreeId',
-        'totalMaxUsage',
-        'maxUsagePerCustomer',
+        'promoBundleId',
+        'serviceId',
+        'quantity',
         'userId',
         'userUpdateId'
     ];
