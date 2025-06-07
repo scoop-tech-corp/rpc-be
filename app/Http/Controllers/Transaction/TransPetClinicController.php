@@ -1321,6 +1321,12 @@ class TransPetClinicController extends Controller
 
         $trans = TransactionPetClinic::find($request->transactionPetClinicId);
 
+        $phone = CustomerTelephones::where('customerId', '=', $trans->customerId)
+            ->where('usage', '=', 'Utama')
+            ->first();
+
+        $cust = Customer::find($trans->customerId);
+
         $dataServices = TransactionPetClinicServices::from('transaction_pet_clinic_services as tpcs')
             ->join('services as s', 's.id', '=', 'tpcs.serviceId')
             ->join('servicesPrice as sp', 's.id', '=', 'sp.service_id')
@@ -1357,6 +1363,9 @@ class TransPetClinicController extends Controller
         ];
 
         return response()->json([
+            'customerName' => $cust ? $cust->firstName : '',
+            'phoneNumber' => $phone ? $phone->phoneNumber : '',
+            'arrivalTime' => $trans->created_at->locale('id')->translatedFormat('l, j F Y H:i'),
             'data' => $data,
         ]);
     }
