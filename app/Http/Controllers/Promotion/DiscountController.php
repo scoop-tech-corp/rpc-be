@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Exports\Promotion\PromoReport;
 use App\Models\Customer\Customer;
+use App\Models\promotion_bundle_detail_products;
+use App\Models\promotion_bundle_detail_services;
+use App\Models\promotion_discount_product;
+use App\Models\promotion_discount_services;
 use App\Models\PromotionBasedSales;
 use App\Models\PromotionBundle;
 use App\Models\PromotionBundleDetail;
@@ -39,8 +43,7 @@ class DiscountController extends Controller
             responseInvalid($errors);
         }
 
-        $ResultLocations = $request->locations;
-        //json_decode($request->locations, true);
+        $ResultLocations = json_decode($request->locations, true);
 
         if (!$ResultLocations) {
 
@@ -56,28 +59,22 @@ class DiscountController extends Controller
             $validateLocation = Validator::make(
                 $ResultFreeItem,
                 [
-                    'quantityBuyItem' => 'required|integer',
-                    'productBuyType' => 'required|string',
-                    'productBuyName' => 'required|string',
-                    'quantityFreeItem' => 'required|integer',
-                    'productFreeType' => 'required|string',
-                    'productFreeName' => 'required|string',
+                    'quantityBuy' => 'required|integer',
+                    'productBuyId' => 'required|integer',
+                    'quantityFree' => 'required|integer',
+                    'productFreeId' => 'required|integer',
                     'totalMaxUsage' => 'required|integer',
                     'maxUsagePerCustomer' => 'required|integer',
                 ],
                 [
-                    'quantityBuyItem.required' => 'Quantity Buy Item Should be Required!',
-                    'quantityBuyItem.integer' => 'Quantity Buy Item Should be Filled!',
-                    'productBuyType.required' => 'Product Buy Type Should be Required!',
-                    'productBuyType.string' => 'Product Buy Type Should be Filled!',
-                    'productBuyName.required' => 'Product Buy Name Should be Required!',
-                    'productBuyName.string' => 'Product Buy Name Should be Filled!',
-                    'quantityFreeItem.required' => 'Quantity Free Item Should be Required!',
-                    'quantityFreeItem.integer' => 'Quantity Free Item Should be Filled!',
-                    'productFreeType.required' => 'Product Free Type Should be Required!',
-                    'productFreeType.string' => 'Product Free Type Should be Filled!',
-                    'productFreeName.required' => 'Product Free Name Should be Required!',
-                    'productFreeName.string' => 'Product Free Name Should be Filled!',
+                    'quantityBuy.required' => 'Quantity Buy Item Should be Required!',
+                    'quantityBuy.integer' => 'Quantity Buy Item Should be Filled!',
+                    'productBuyId.required' => 'Product Buy Id Should be Required!',
+                    'productBuyId.integer' => 'Product Buy Id Should be Filled!',
+                    'quantityFree.required' => 'Quantity Free Item Should be Required!',
+                    'quantityFree.integer' => 'Quantity Free Item Should be Filled!',
+                    'productFreeId.required' => 'Product Free Id Should be Required!',
+                    'productFreeId.integer' => 'Product Free Id Should be Filled!',
                     'totalMaxUsage.required' => 'Total Max Usage Should be Required!',
                     'totalMaxUsage.integer' => 'Total Max Usage Should be Filled!',
                     'maxUsagePerCustomer.required' => 'Max Usage per Customer Should be Required!',
@@ -92,29 +89,23 @@ class DiscountController extends Controller
             }
         } elseif ($request->type == 2) {
 
-            $ResultDiscount = json_decode($request->discount, true);
+            $ResultDiscountProducts = json_decode($request->discountProducts, true);
 
-            $validateLocation = Validator::make(
-                $ResultDiscount,
+            $validate = Validator::make(
+                $ResultDiscountProducts,
                 [
-                    'productOrService' => 'required|string',
-                    'percentOrAmount' => 'required|string',
-                    'productType' => 'required|string',
-                    'productName' => 'required|string',
+                    'discountType' => 'required|string',
+                    'productId' => 'required|integer',
                     'amount' => 'nullable|numeric',
                     'percent' => 'nullable|numeric',
                     'totalMaxUsage' => 'required|integer',
                     'maxUsagePerCustomer' => 'required|integer',
                 ],
                 [
-                    'productOrService.required' => 'Product or Service Should be Required!',
-                    'productOrService.string' => 'Product or Service Should be Filled!',
-                    'percentOrAmount.required' => 'Percent or Amount Should be Required!',
-                    'percentOrAmount.string' => 'Percent or Amount Should be Filled!',
-                    'productType.required' => 'Product Type Should be Required!',
-                    'productType.string' => 'Product Type Should be Filled!',
-                    'productName.required' => 'Product Name Should be Required!',
-                    'productName.string' => 'Product Name Should be Filled!',
+                    'discountType.required' => 'Percent or Amount Should be Required!',
+                    'discountType.string' => 'Percent or Amount Should be Filled!',
+                    'productId.required' => 'Product Id Should be Required!',
+                    'productId.integer' => 'Product Id Should be Filled!',
                     'amount.numeric' => 'Amount Should be Filled!',
                     'percent.numeric' => 'Percent Should be Filled!',
                     'totalMaxUsage.required' => 'Total Max Usage Should be Required!',
@@ -124,8 +115,41 @@ class DiscountController extends Controller
                 ]
             );
 
-            if ($validateLocation->fails()) {
-                $errors = $validateLocation->errors()->first();
+            if ($validate->fails()) {
+                $errors = $validate->errors()->first();
+
+                responseInvalid([$errors]);
+            }
+
+            $ResultDiscountServices = json_decode($request->discountServices, true);
+
+            $validate = Validator::make(
+                $ResultDiscountServices,
+                [
+                    'discountType' => 'required|string',
+                    'serviceId' => 'required|integer',
+                    'amount' => 'nullable|numeric',
+                    'percent' => 'nullable|numeric',
+                    'totalMaxUsage' => 'required|integer',
+                    'maxUsagePerCustomer' => 'required|integer',
+                ],
+                [
+
+                    'discountType.required' => 'Percent or Amount Should be Required!',
+                    'discountType.string' => 'Percent or Amount Should be Filled!',
+                    'serviceId.required' => 'Service Id Should be Required!',
+                    'serviceId.integer' => 'Service Id Should be Filled!',
+                    'amount.numeric' => 'Amount Should be Filled!',
+                    'percent.numeric' => 'Percent Should be Filled!',
+                    'totalMaxUsage.required' => 'Total Max Usage Should be Required!',
+                    'totalMaxUsage.integer' => 'Total Max Usage Should be Filled!',
+                    'maxUsagePerCustomer.required' => 'Max Usage per Customer Should be Required!',
+                    'maxUsagePerCustomer.integer' => 'Max Usage per Customer Should be Filled!',
+                ]
+            );
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->first();
 
                 responseInvalid([$errors]);
             }
@@ -155,31 +179,43 @@ class DiscountController extends Controller
                 responseInvalid([$errors]);
             }
 
-            $ResultBundleDetails = json_decode($request->bundleDetails, true);
+            $bundleDetailProduct = json_decode($request->bundleDetailProducts, true);
+            $bundleDetailService = json_decode($request->bundleDetailServices, true);
 
-            $validateBundleDetails = Validator::make(
-                $ResultBundleDetails,
+            $validateBundleDetailProduct = Validator::make(
+                $bundleDetailProduct,
                 [
-                    '*.productOrService' => 'required|string',
-                    '*.productType' => 'required|string',
                     '*.productId' => 'nullable|integer',
+                    '*.quantity' => 'required|integer',
+                ],
+                [
+                    '*.productId.integer' => 'Product Id Should be Filled!',
+                    '*.quantity.required' => 'Quantity Should be Required!',
+                    '*.quantity.integer' => 'Quantity Should be Filled!',
+                ]
+            );
+
+            if ($validateBundleDetailProduct->fails()) {
+                $errors = $validateBundleDetailProduct->errors()->first();
+
+                responseInvalid([$errors]);
+            }
+
+            $validateBundleDetailService = Validator::make(
+                $bundleDetailService,
+                [
                     '*.serviceId' => 'nullable|integer',
                     '*.quantity' => 'required|integer',
                 ],
                 [
-                    '*.productOrService.required' => 'Product or Service Should be Required!',
-                    '*.productOrService.string' => 'Product or Service Should be Filled!',
-                    '*.productType.required' => 'Product Type Should be Required!',
-                    '*.productType.string' => 'Product Type Should be Filled!',
-                    '*.productId.integer' => 'Product Id Should be Filled!',
                     '*.serviceId.integer' => 'Service Id Should be Filled!',
                     '*.quantity.required' => 'Quantity Should be Required!',
                     '*.quantity.integer' => 'Quantity Should be Filled!',
                 ]
             );
 
-            if ($validateBundleDetails->fails()) {
-                $errors = $validateBundleDetails->errors()->first();
+            if ($validateBundleDetailService->fails()) {
+                $errors = $validateBundleDetailService->errors()->first();
 
                 responseInvalid([$errors]);
             }
@@ -252,51 +288,40 @@ class DiscountController extends Controller
 
             if ($request->type == 1) {
 
+                $dataProdBuy = DB::table('products')
+                    ->select('id', 'fullName')
+                    ->where('id', '=', $ResultFreeItem['productBuyId'])
+                    ->first();
+
+                $dataProdFree = DB::table('products')
+                    ->select('id', 'fullName')
+                    ->where('id', '=', $ResultFreeItem['productFreeId'])
+                    ->first();
+
                 foreach ($ResultLocations as $value) {
 
-                    // if ($ResultFreeItem['productBuyType'] == 'Sell') {
-                    // } elseif ($ResultFreeItem['productBuyType'] == 'Clinic') {
-                    //     $dataProdBuyId = DB::table('productClinics as ps')
-                    //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                    //         ->select('ps.id')
-                    //         ->where('ps.fullName', '=', $ResultFreeItem['productBuyName'])
-                    //         ->where('psl.locationId', '=', $value)
-                    //         ->first();
-                    // }
-
-                    $dataProdBuyId = DB::table('products as ps')
-                        ->join('productLocations as psl', 'ps.id', 'psl.productId')
-                        ->select('ps.id')
-                        ->where('ps.fullName', '=', $ResultFreeItem['productBuyName'])
-                        ->where('psl.locationId', '=', $value)
+                    $listProdBuy = DB::table('products')
+                        ->join('productLocations as pl', 'products.id', 'pl.productId')
+                        ->select('products.id', 'products.fullName')
+                        ->where('fullName', '=', $dataProdBuy->fullName)
+                        ->where('pl.locationId', '=', $value)
                         ->first();
 
-                    $dataProdFreeId = DB::table('products as ps')
-                        ->join('productLocations as psl', 'ps.id', 'psl.productId')
-                        ->select('ps.id')
-                        ->where('ps.fullName', '=', $ResultFreeItem['productFreeName'])
-                        ->where('psl.locationId', '=', $value)
+                    //free
+
+                    $listProdFree = DB::table('products')
+                        ->join('productLocations as pl', 'products.id', 'pl.productId')
+                        ->select('products.id', 'products.fullName')
+                        ->where('fullName', '=', $dataProdFree->fullName)
+                        ->where('pl.locationId', '=', $value)
                         ->first();
-
-                    // if ($ResultFreeItem['productFreeType'] == 'Sell') {
-
-                    // } elseif ($ResultFreeItem['productFreeType'] == 'Clinic') {
-                    //     $dataProdFreeId = DB::table('productClinics as ps')
-                    //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                    //         ->select('ps.id')
-                    //         ->where('ps.fullName', '=', $ResultFreeItem['productFreeName'])
-                    //         ->where('psl.locationId', '=', $value)
-                    //         ->first();
-                    // }
 
                     PromotionFreeItem::create([
                         'promoMasterId' => $idPromo->id,
-                        'quantityBuyItem' => $ResultFreeItem['quantityBuyItem'],
-                        'productBuyType' => $ResultFreeItem['productBuyType'],
-                        'productBuyId' => $dataProdBuyId->id,
-                        'quantityFreeItem' => $ResultFreeItem['quantityFreeItem'],
-                        'productFreeType' => $ResultFreeItem['productFreeType'],
-                        'productFreeId' => $dataProdFreeId->id,
+                        'quantityBuyItem' => $ResultFreeItem['quantityBuy'],
+                        'productBuyId' => $listProdBuy->id,
+                        'quantityFreeItem' => $ResultFreeItem['quantityFree'],
+                        'productFreeId' => $listProdFree->id,
                         'totalMaxUsage' => $ResultFreeItem['totalMaxUsage'],
                         'maxUsagePerCustomer' => $ResultFreeItem['maxUsagePerCustomer'],
                         'userId' => $request->user()->id,
@@ -304,37 +329,54 @@ class DiscountController extends Controller
                 }
             } elseif ($request->type == 2) {
 
+                $dataProd = DB::table('products')
+                    ->select('id', 'fullName')
+                    ->where('id', '=', $ResultDiscountProducts['productId'])
+                    ->first();
+
                 foreach ($ResultLocations as $value) {
 
-                    $dataProdId = DB::table('products as ps')
-                        ->join('productLocations as psl', 'ps.id', 'psl.productId')
-                        ->select('ps.id')
-                        ->where('ps.fullName', '=', $ResultDiscount['productName'])
-                        ->where('psl.locationId', '=', $value)
+                    $listProd = DB::table('products')
+                        ->join('productLocations as pl', 'products.id', 'pl.productId')
+                        ->select('products.id', 'products.fullName')
+                        ->where('fullName', '=', $dataProd->fullName)
+                        ->where('pl.locationId', '=', $value)
                         ->first();
 
-                    // if ($ResultDiscount['productType'] == 'Sell') {
-
-                    // } elseif ($ResultDiscount['productType'] == 'Clinic') {
-                    //     $dataProdId = DB::table('productClinics as ps')
-                    //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                    //         ->select('ps.id')
-                    //         ->where('ps.fullName', '=', $ResultDiscount['productName'])
-                    //         ->where('psl.locationId', '=', $value)
-                    //         ->first();
-                    // }
-
-                    PromotionDiscount::create([
+                    promotion_discount_product::create([
                         'promoMasterId' => $idPromo->id,
-                        'productOrService' => $ResultDiscount['productOrService'],
-                        'percentOrAmount' => $ResultDiscount['percentOrAmount'],
-                        'productType' => $ResultDiscount['productType'],
-                        'productId' => $dataProdId->id,
-                        'serviceId' => $ResultDiscount['serviceId'],
-                        'amount' => $ResultDiscount['amount'],
-                        'percent' => $ResultDiscount['percent'],
-                        'totalMaxUsage' => $ResultDiscount['totalMaxUsage'],
-                        'maxUsagePerCustomer' => $ResultDiscount['maxUsagePerCustomer'],
+                        'discountType' => $ResultDiscountProducts['discountType'],
+                        'productId' => $listProd->id,
+                        'amount' => $ResultDiscountProducts['amount'],
+                        'percent' => $ResultDiscountProducts['percent'],
+                        'totalMaxUsage' => $ResultDiscountProducts['totalMaxUsage'],
+                        'maxUsagePerCustomer' => $ResultDiscountProducts['maxUsagePerCustomer'],
+                        'userId' => $request->user()->id,
+                    ]);
+                }
+
+                $dataService = DB::table('services')
+                    ->select('id', 'fullName')
+                    ->where('id', '=', $ResultDiscountServices['serviceId'])
+                    ->first();
+
+                foreach ($ResultLocations as $value) {
+
+                    $listService = DB::table('services as s')
+                        ->join('servicesLocation as sl', 's.id', 'sl.service_id')
+                        ->select('s.id', 's.fullName')
+                        ->where('fullName', '=', $dataService->fullName)
+                        ->where('sl.location_id', '=', $value)
+                        ->first();
+
+                    promotion_discount_services::create([
+                        'promoMasterId' => $idPromo->id,
+                        'discountType' => $ResultDiscountServices['discountType'],
+                        'serviceId' => $listService->id,
+                        'amount' => $ResultDiscountServices['amount'],
+                        'percent' => $ResultDiscountServices['percent'],
+                        'totalMaxUsage' => $ResultDiscountServices['totalMaxUsage'],
+                        'maxUsagePerCustomer' => $ResultDiscountServices['maxUsagePerCustomer'],
                         'userId' => $request->user()->id,
                     ]);
                 }
@@ -348,38 +390,24 @@ class DiscountController extends Controller
                     'userId' => $request->user()->id,
                 ]);
 
-                foreach ($ResultBundleDetails as $res) {
+                foreach ($bundleDetailProduct as $res) {
 
-                    foreach ($ResultLocations as $value) {
+                    promotion_bundle_detail_products::create([
+                        'promoBundleId' => $idBundle->id,
+                        'productId' => $res['productId'],
+                        'quantity' => $res['quantity'],
+                        'userId' => $request->user()->id,
+                    ]);
+                }
 
-                        $dataProdId = DB::table('products as ps')
-                            ->join('productLocations as psl', 'ps.id', 'psl.productId')
-                            ->select('ps.id')
-                            ->where('ps.fullName', '=', $res['productName'])
-                            ->where('psl.locationId', '=', $value)
-                            ->first();
+                foreach ($bundleDetailService as $res) {
 
-                        // if ($res['productType'] == 'Sell') {
-
-                        // } elseif ($res['productType'] == 'Clinic') {
-                        //     $dataProdId = DB::table('productClinics as ps')
-                        //         ->join('productClinicLocations as psl', 'ps.id', 'psl.productClinicId')
-                        //         ->select('ps.id')
-                        //         ->where('ps.fullName', '=', $res['productName'])
-                        //         ->where('psl.locationId', '=', $value)
-                        //         ->first();
-                        // }
-
-                        PromotionBundleDetail::create([
-                            'promoBundleId' => $idBundle->id,
-                            'productOrService' => $res['productOrService'],
-                            'productType' => $res['productType'],
-                            'productId' => $dataProdId->id,
-                            'serviceId' => $res['serviceId'],
-                            'quantity' => $res['quantity'],
-                            'userId' => $request->user()->id,
-                        ]);
-                    }
+                    promotion_bundle_detail_services::create([
+                        'promoBundleId' => $idBundle->id,
+                        'serviceId' => $res['serviceId'],
+                        'quantity' => $res['quantity'],
+                        'userId' => $request->user()->id,
+                    ]);
                 }
             } elseif ($request->type == 4) {
                 PromotionBasedSales::create([
