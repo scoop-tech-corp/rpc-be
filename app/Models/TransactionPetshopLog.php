@@ -5,24 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TransactionPetShop extends Model
+class TransactionPetshopLog extends Model
 {
     use HasFactory;
 
-    protected $table = "transactionpetshop";
+    protected $table = "transaction_petshop_logs";
 
     protected $dates = ['created_at', 'deletedAt'];
 
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'registrationNo',
-        'no_nota',
-        'locationId',
-        'customerId',
-        'paymentMethod',
-        'originalName',
-        'proofRandomName',
-        'userId'
+        'transactionId',
+        'activity',
+        'remark',
+        'userId',
+        'userUpdateId'
     ];
 }

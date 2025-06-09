@@ -6,20 +6,21 @@
  * @return response()
  */
 
-use App\Models\ProductClinicLog;
 use App\Models\ProductLog;
-use App\Models\productRestockLog;
-use App\Models\ProductTransferLog;
+use App\Models\Transaction;
 use App\Models\ProductSellLog;
 use App\Models\recentActivity;
-use App\Models\Transaction;
-use App\Models\TransactionBreeding;
-use App\Models\TransactionBreedingLog;
 use App\Models\TransactionLog;
-use App\Models\TransactionPetClinic;
-use App\Models\TransactionPetClinicLog;
+use App\Models\ProductClinicLog;
+use App\Models\productRestockLog;
+use App\Models\ProductTransferLog;
+use App\Models\TransactionBreeding;
 use App\Models\TransactionPetHotel;
+use App\Models\TransactionPetClinic;
+use App\Models\TransactionPetshopLog;
+use App\Models\TransactionBreedingLog;
 use App\Models\TransactionPetHotelLog;
+use App\Models\TransactionPetClinicLog;
 use App\Models\transactionpetsalon;
 use App\Models\transactionPetSalonLog;
 
@@ -251,6 +252,7 @@ if (!function_exists('transactionPetClinicLog')) {
     }
 }
 
+
 if (!function_exists('transactionPetHotelLog')) {
     function transactionPetHotelLog($transactionId, $activity, $remark, $userId)
     {
@@ -296,6 +298,19 @@ if (!function_exists('statusTransactionPetClinic')) {
             ]);
     }
 }
+
+if (!function_exists('transactionPetshopLog')) {
+    function transactionPetshopLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionPetshopLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
 
 if (!function_exists('statusTransaction')) {
     function statusTransaction($transactionId, $status)
