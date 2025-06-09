@@ -21,6 +21,8 @@ use App\Models\TransactionPetshopLog;
 use App\Models\TransactionBreedingLog;
 use App\Models\TransactionPetHotelLog;
 use App\Models\TransactionPetClinicLog;
+use App\Models\transactionpetsalon;
+use App\Models\transactionPetSalonLog;
 
 if (!function_exists('adminAccess')) {
     function adminAccess($id)
@@ -275,6 +277,18 @@ if (!function_exists('transactionBreedingLog')) {
     }
 }
 
+if (!function_exists('transactionPetSalonLog')) {
+    function transactionPetSalonLog($transactionId, $activity, $remark, $userId)
+    {
+        transactionPetSalonLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
 if (!function_exists('statusTransactionPetClinic')) {
     function statusTransactionPetClinic($transactionId, $status)
     {
@@ -322,6 +336,16 @@ if (!function_exists('statusTransactionBreeding')) {
     function statusTransactionBreeding($transactionId, $status)
     {
         TransactionBreeding::where('id', '=', $transactionId)
+            ->update([
+                'status' => $status,
+            ]);
+    }
+}
+
+if (!function_exists('statusTransactionPetSalon')) {
+    function statusTransactionPetSalon($transactionId, $status)
+    {
+        transactionpetsalon::where('id', '=', $transactionId)
             ->update([
                 'status' => $status,
             ]);

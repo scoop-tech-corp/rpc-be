@@ -52,6 +52,7 @@ use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticC
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 use App\Http\Controllers\Transaction\BreedingController;
 use App\Http\Controllers\Transaction\PetHotelController;
+use App\Http\Controllers\Transaction\PetSalonController;
 use App\Http\Controllers\Transaction\TransPetClinicController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -613,6 +614,21 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/reassign', [BreedingController::class, 'reassignDoctor']);
 
             Route::post('/petcheck', [BreedingController::class, 'createPetCheck']);
+        });
+
+        Route::group(['prefix' => 'petsalon'], function () {
+
+            Route::get('/', [PetSalonController::class, 'index']);
+            Route::post('/', [PetSalonController::class, 'create']);
+            Route::get('/detail', [PetSalonController::class, 'detail']);
+            Route::put('/', [PetSalonController::class, 'update']);
+            Route::delete('/', [PetSalonController::class, 'delete']);
+            Route::get('/export', [PetSalonController::class, 'export']);
+
+            Route::post('/accept', [PetSalonController::class, 'acceptionTransaction']);
+            Route::post('/reassign', [PetSalonController::class, 'reassignDoctor']);
+
+            Route::post('/petcheck', [PetSalonController::class, 'createPetCheck']);
         });
 
         Route::get('/materialdata', [MaterialDataController::class, 'index']);
