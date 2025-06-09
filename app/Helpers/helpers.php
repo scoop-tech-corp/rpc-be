@@ -582,53 +582,12 @@ function updateDiffStock($locationId, $productId)
     }
 }
 
-//add by danny wahyudi
-// if (!function_exists('securityGroupAdmin')) {
-//     function securityGroupAdmin($id)
-//     {
-//         $user = DB::table('users as u')
-//             ->select('u.securityGroupAdmin')
-//             ->where('u.id', '=', $id)
-//             ->first();
-
-//         return $user->securityGroupAdmin;
-//     }
-// }
-
-// if (!function_exists('securityGroupManager')) {
-//     function securityGroupManager($id)
-//     {
-//         $user = DB::table('users as u')
-//             ->select('u.securityGroupManager')
-//             ->where('u.id', '=', $id)
-//             ->first();
-
-//         return $user->securityGroupManager;
-//     }
-// }
-
-// if (!function_exists('securityGroupVet')) {
-//     function securityGroupVet($id)
-//     {
-//         $user = DB::table('users as u')
-//             ->select('u.securityGroupVet')
-//             ->where('u.id', '=', $id)
-//             ->first();
-
-//         return $user->securityGroupVet;
-//     }
-// }
-
-
-// if (!function_exists('securityGroupReceptionist')) {
-//     function securityGroupReceptionist($id)
-//     {
-//         $user = DB::table('users as u')
-//             ->select('u.securityGroupReceptionist')
-//             ->where('u.id', '=', $id)
-//             ->first();
-
-//         return $user->securityGroupReceptionist;
-//     }
-// }
-// //end add by danny wahyudi
+function recentActivity($userId, $module, $event, $detail)
+{
+    recentActivity::create([
+        'userId' => $userId,
+        'module' => $module,
+        'event' => $event,
+        'details' => $detail,
+    ]);
+}
