@@ -14,6 +14,7 @@ use App\Models\ListVaginalTransaction;
 use App\Models\ListWeightTransaction;
 use App\Models\Products;
 use App\Models\Service;
+use App\Models\Staff\UsersLocation;
 use App\Models\TransactionPetClinic;
 use App\Models\TransactionPetClinicAdvice;
 use App\Models\transactionPetClinicAnamnesis;
@@ -22,6 +23,7 @@ use App\Models\TransactionPetClinicDiagnose;
 use App\Models\TransactionPetClinicRecipes;
 use App\Models\TransactionPetClinicServices;
 use App\Models\TransactionPetClinicTreatment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Validator;
@@ -834,6 +836,80 @@ class TransPetClinicController extends Controller
         $regisNo = str_pad($loc + 1, 3, 0, STR_PAD_LEFT) . '/LPIK-RIS-RPC-PC/' . $trx->locationId . '/' . $date . '/' . $month . '/' . $year;
 
         return response()->json($regisNo, 200);
+    }
+
+    public function acceptionTransaction(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'status' => 'required|bool',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $tran = TransactionPetClinic::where([['id', '=', $request->transactionId]])->first();
+
+        $locs = UsersLocation::where([['usersId', '=', $request->user()->id]])->get();
+
+        $temp = false;
+        foreach ($locs as $val) {
+            if ($val['locationId'] == $tran->locationId) {
+                $temp = true;
+            }
+        }
+
+        if (!$temp) {
+            return responseErrorValidation('Can not accept transaction because the doctor is different branch!', 'Can not accept transaction because the doctor is different branch!');
+        }
+
+        $doctor = User::where([['id', '=', $request->user()->id]])->first();
+
+        if ($request->status == 1) {
+
+            statusTransactionPetClinic($request->transactionId, 'Cek Kondisi Pet');
+
+            transactionPetClinicLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+        } else {
+
+            $validate = Validator::make($request->all(), [
+                'reason' => 'required|string',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
+
+            statusTransactionPetClinic($request->transactionId, 'Ditolak Dokter');
+
+            transactionPetClinicLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+        }
+
+        return responseCreate();
+    }
+
+    public function reassignDoctor(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'doctorId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $user = User::where([['id', '=', $request->user()->id]])->first();
+
+        statusTransactionPetClinic($request->transactionId, 'Menunggu Dokter');
+
+        transactionPetClinicLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
+
+        return responseCreate();
     }
 
     public function loadDataPetCheck(Request $request)
@@ -1778,10 +1854,7 @@ class TransPetClinicController extends Controller
         return response()->json($result);
     }
 
-    public function promoResult()
-    {
-
-    }
+    public function promoResult(Request $request) {}
 
     public function paymentInpatient(Request $request) {}
 

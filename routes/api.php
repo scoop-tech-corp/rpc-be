@@ -559,6 +559,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/export', [TransPetClinicController::class, 'export']);
 
             Route::get('/ordernumber', [TransPetClinicController::class, 'orderNumber']);
+
+            Route::post('/accept', [TransPetClinicController::class, 'acceptionTransaction']);
+            Route::post('/reassign', [TransPetClinicController::class, 'reassignDoctor']);
+
             Route::post('/petcheck', [TransPetClinicController::class, 'createPetCheck']);
             Route::get('/load-petcheck', [TransPetClinicController::class, 'loadDataPetCheck']);
             Route::post('/serviceandrecipe', [TransPetClinicController::class, 'serviceandrecipe']);
@@ -588,6 +592,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::delete('/', [PetHotelController::class, 'delete']);
             Route::get('/export', [PetHotelController::class, 'export']);
 
+            Route::post('/accept', [PetHotelController::class, 'acceptionTransaction']);
+            Route::post('/reassign', [PetHotelController::class, 'reassignDoctor']);
+
             Route::post('/petcheck', [PetHotelController::class, 'createPetCheck']);
             Route::get('/load-petcheck', [PetHotelController::class, 'loadDataPetCheck']);
             Route::post('/serviceandrecipe', [PetHotelController::class, 'serviceandrecipe']);
@@ -601,6 +608,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::put('/', [BreedingController::class, 'update']);
             Route::delete('/', [BreedingController::class, 'delete']);
             Route::get('/export', [BreedingController::class, 'export']);
+
+            Route::post('/accept', [BreedingController::class, 'acceptionTransaction']);
+            Route::post('/reassign', [BreedingController::class, 'reassignDoctor']);
 
             Route::post('/petcheck', [BreedingController::class, 'createPetCheck']);
         });

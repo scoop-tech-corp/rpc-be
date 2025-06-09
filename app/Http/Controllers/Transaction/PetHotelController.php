@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Transaction;
 use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
+use App\Models\Staff\UsersLocation;
 use App\Models\TransactionPetHotel;
 use App\Models\TransactionPetHotelCheck;
 use App\Models\TransactionPetHotelTreatmentProduct;
@@ -680,7 +681,16 @@ class PetHotelController extends Controller
 
         $tran = TransactionPetHotel::where([['id', '=', $request->transactionId]])->first();
 
-        if ($tran->doctorId != $request->user()->id) {
+        $locs = UsersLocation::where([['usersId', '=', $request->user()->id]])->get();
+
+        $temp = false;
+        foreach ($locs as $val) {
+            if ($val['locationId'] == $tran->locationId) {
+                $temp = true;
+            }
+        }
+
+        if (!$temp) {
             return responseErrorValidation('Can not accept transaction because the designated doctor is different!', 'Can not accept transaction because the designated doctor is different!');
         }
 
