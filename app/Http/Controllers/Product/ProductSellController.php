@@ -884,7 +884,7 @@ class ProductSellController
                 $locName = DB::table('location')
                     ->where('id', $value['locationId'])
                     ->value('locationName')
-                    ->first();
+                    ->get();
                 recentActivity($request->user()->id, 'Product', 'Add Product Sell', 'Add Product ' . $request->fullName . 'at branch ' . $locName->locationName);
             }
 
