@@ -1595,10 +1595,10 @@ class TransactionPetShopController
             ->where('d.isDeleted', 0)
             ->get();
 
-        // Ambil promoId dari detail produk, filter yang ada nilainya, unikkan dan jadikan array
+        
         $promoIds = $products->pluck('promoId')->filter()->unique()->values()->all();
 
-        // Cari promo-promo yang terkait di tabel promo spesifik (sesuaikan dengan promoMasterId)
+        
         $promoBundles = DB::table('promotionbundles')
             ->whereIn('promoMasterId', $promoIds)
             ->pluck('promoMasterId')
@@ -1652,10 +1652,11 @@ class TransactionPetShopController
                 'createdAt' => $transaction->createdAt,
                 'notes' => $transaction->note,
                 'proofOfPayment' => $transaction->proofOfPayment,
-                'products' => $mappedProducts
+                'products' => $mappedProducts,
+                'selectedPromos' => $selectedPromos
             ],
             'transactionLogs' => $logs,
-            'selectedPromos' => $selectedPromos
+
         ]);
     }
 
