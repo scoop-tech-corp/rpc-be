@@ -882,10 +882,10 @@ class ProductSellController
                 productSellLog($product->id, "Create new Item", "", $value['inStock'], $value['inStock'], $request->user()->id);
                 //add product kaotin at branch condet
                 $locName = DB::table('location')
-                    ->where('id', $value['locationId'])
-                    ->value('locationName')
-                    ->get();
-                recentActivity($request->user()->id, 'Product', 'Add Product Sell', 'Add Product ' . $request->fullName . 'at branch ' . $locName->locationName);
+                    ->select('locationName')
+                    ->where('id', '=', $value['locationId'])
+                    ->first();
+                recentActivity($request->user()->id, 'Product', 'Add Product Sell', 'Add Product ' . $request->fullName . ' at branch ' . $locName->locationName);
             }
 
             DB::commit();
