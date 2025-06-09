@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use DB;
 
 class DashboardController extends Controller
 {
@@ -202,52 +203,67 @@ class DashboardController extends Controller
             return responseUnauthorize();
         }
 
-        $data = [
-            'totalPagination' => 1,
-            'data' => [
-                [
-                    'id' => 9,
-                    'date' => '19 Nov, 2022 12:00 AM',
-                    'staff' => 'Hafis',
-                    'module' => 'Customer',
-                    'event' => 'Change Data',
-                    'detail' => 'Change user ID',
-                ],
-                [
-                    'id' => 10,
-                    'date' => '19 Nov, 2022 12:05 AM',
-                    'staff' => 'Hafis',
-                    'module' => 'Product',
-                    'event' => 'Update Stock',
-                    'detail' => 'Update Stock Product A',
-                ],
-                [
-                    'id' => 11,
-                    'date' => '9 Nov, 2022 12:05 AM',
-                    'staff' => 'Hafis',
-                    'module' => 'Staff',
-                    'event' => 'Delete Data',
-                    'detail' => 'Delete Account for dummy 1',
-                ],
-                [
-                    'id' => 12,
-                    'date' => '9 Nov, 2022 12:05 AM',
-                    'staff' => 'Hafis',
-                    'module' => 'Staff',
-                    'event' => 'Delete Data',
-                    'detail' => 'Delete Account for dummy 2',
-                ],
-                [
-                    'id' => 13,
-                    'date' => '9 Nov, 2022 12:05 AM',
-                    'staff' => 'Hafis',
-                    'module' => 'Staff',
-                    'event' => 'Delete Data',
-                    'detail' => 'Delete Account for dummy 3',
-                ],
-            ],
-        ];
+        $itemPerPage = $request->rowPerPage;
 
-        return response()->json($data);
+        $page = $request->goToPage;
+
+        $data = DB::table('recentActivities as ra')
+            ->join('users as u', 'ra.userId', 'u.id')
+            ->select(
+                'ra.id as id',
+                'ra.module as module',
+                'ra.event as event',
+                'ra.details as detail',
+                'u.firstName as staff',
+                DB::raw("DATE_FORMAT(ra.created_at, '%d %b, %Y %l:%i %p') as date")
+            );
+
+        if ($request->locationId) {
+
+            $data = $data->whereIn('loc.id', $request->locationId);
+        }
+
+        if ($request->search) {
+            $res = $this->Search($request);
+            if ($res) {
+                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
+
+                for ($i = 1; $i < count($res); $i++) {
+
+                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
+                }
+            } else {
+                $data = [];
+                return response()->json([
+                    'totalPagination' => 0,
+                    'data' => $data
+                ], 200);
+            }
+        }
+
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        }
+
+        $data = $data->orderBy('ra.updated_at', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $count_data = $data->count();
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+        return response()->json([
+            'totalPagination' => ceil($totalPaging),
+            'data' => $data
+        ], 200);
     }
 }
