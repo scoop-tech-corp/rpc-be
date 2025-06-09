@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Transaction;
+use App\Models\TransactionBreeding;
 use App\Models\TransactionPetCheck;
 use App\Models\TransactionPetClinic;
+use App\Models\TransactionPetHotel;
 use App\Models\TransactionPetHotelTreatmentProduct;
 use App\Models\TransactionPetHotelTreatmentService;
 use App\Models\TransactionPetHotelTreatmentTreatPlan;
@@ -758,6 +760,7 @@ class TransactionController extends Controller
     public function HPLCheck(Request $request)
     {
         $validate = Validator::make($request->all(), [
+            'transactionCategory' => 'required|string|in:pet-hotel,pet-salon,breeding',
             'transactionId' => 'required|integer',
             'estimateDateofBirth' => 'required|date_format:Y-m-d',
         ]);
@@ -767,7 +770,13 @@ class TransactionController extends Controller
             return responseInvalid($errors);
         }
 
-        $tran = Transaction::where('id', '=', $request->transactionId)->first();
+        if ($request->transactionCategory == 'pet-hotel') {
+            $tran = TransactionPetHotel::where('id', '=', $request->transactionId)->first();
+        } elseif ($request->transactionCategory == 'pet-salon') {
+            $tran = transactinoPetSalon::where('id', '=', $request->transactionId)->first();
+        } elseif ($request->transactionCategory == 'breeding') {
+            $tran = TransactionBreeding::where('id', '=', $request->transactionId)->first();
+        }
 
         //tanggal start rawat inap
         $date1 = Carbon::parse($tran->startDate); // today or reference date
