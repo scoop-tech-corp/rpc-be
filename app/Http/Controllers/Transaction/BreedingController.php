@@ -680,6 +680,12 @@ class BreedingController extends Controller
 
         $locs = UsersLocation::where([['usersId', '=', $request->user()->id]])->get();
 
+        $user = User::where([['id', '=', $request->user()->id]])->first();
+
+        if ($user->jobTitleId != 17) { //id job title dokter hewan
+            return responseErrorValidation('You are not a doctor!', 'You are not a doctor!');
+        }
+
         $temp = false;
         foreach ($locs as $val) {
             if ($val['locationId'] == $tran->locationId) {
