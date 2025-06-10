@@ -1599,22 +1599,22 @@ class TransactionPetShopController
         $promoIds = $products->pluck('promoId')->filter()->unique()->values()->all();
 
         
-        $promoBundles = DB::table('promotionbundles')
+        $promoBundles = DB::table('promotionBundles')
             ->whereIn('promoMasterId', $promoIds)
             ->pluck('promoMasterId')
             ->toArray();
 
-        $promoDiscounts = DB::table('promotiondiscounts')
+        $promoDiscounts = DB::table('promotionDiscounts')
             ->whereIn('promoMasterId', $promoIds)
             ->pluck('promoMasterId')
             ->toArray();
 
-        $promoFreeItems = DB::table('promotionfreeitems')
+        $promoFreeItems = DB::table('promotionFreeItems')
             ->whereIn('promoMasterId', $promoIds)
             ->pluck('promoMasterId')
             ->toArray();
 
-        $promoBasedSales = DB::table('promotionbasedsales')
+        $promoBasedSales = DB::table('promotionBasedSales')
             ->whereIn('promoMasterId', $promoIds)
             ->pluck('promoMasterId')
             ->toArray();
