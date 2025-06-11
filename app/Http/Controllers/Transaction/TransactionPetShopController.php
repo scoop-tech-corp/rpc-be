@@ -401,45 +401,56 @@ class TransactionPetShopController
                 }
             }
 
-            if (
-                empty($request->selectedPromos['freeItems']) &&
-                empty($request->selectedPromos['bundles']) &&
-                empty($request->selectedPromos['discounts']) &&
-                (empty($promoResult) || empty($promoResult['purchases']))
-            ) {
+            // if (
+            //     empty($request->selectedPromos['freeItems']) &&
+            //     empty($request->selectedPromos['bundles']) &&
+            //     empty($request->selectedPromos['discounts']) &&
+            //     (empty($promoResult) || empty($promoResult['purchases']))
+            // )
 
-                foreach ($request->productList as $prod) {
-                    $unitPrice = $prod['price'];
-                    $quantity = $prod['quantity'];
-                    $promoId = $prod['promoId'] ?? null;
+            foreach ($request->productList as $prod) {
+                $unitPrice = $prod['price'];
+                $quantity = $prod['quantity'];
+                $discount = 0;
+                $finalPrice = $unitPrice;
+                $promoId = $prod['promoId'] ?? null;
 
-                    DB::table('transactionpetshopdetail')->insert([
-                        'transactionpetshopId' => $tran->id,
-                        'productId' => $prod['productId'],
-                        'quantity' => $quantity,
-                        'price' => $unitPrice,
-                        'discount' => 0,
-                        'final_price' => $unitPrice,
-                        'promoId' => $promoId,
-                        'isDeleted' => false,
-                        'userId' => $request->user()->id,
-                        'userUpdateId' => $request->user()->id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
-                    $totalItem += $quantity;
-
-                    DB::table('productLocations')
-                        ->where('locationId', $request->locationId)
-                        ->where('productId', $prod['productId'])
-                        ->decrement('inStock', $quantity);
-
-                    DB::table('productLocations')
-                        ->where('locationId', $request->locationId)
-                        ->where('productId', $prod['productId'])
-                        ->decrement('diffStock', $quantity);
+                $discountProduct = collect($discountedProducts)->firstWhere('productId', $prod['productId']);
+                if ($discountProduct) {
+                    $discount = $discountProduct['discount'];
+                    $finalPrice = $discountProduct['finalPrice'];
+                    $promoId = $discountProduct['promoId'];
                 }
+
+                $totalFinalPrice = $quantity * $finalPrice;
+
+                DB::table('transactionpetshopdetail')->insert([
+                    'transactionpetshopId' => $tran->id,
+                    'productId' => $prod['productId'],
+                    'quantity' => $quantity,
+                    'price' => $unitPrice,
+                    'discount' => $discount,
+                    'final_price' => $finalPrice,
+                    'total_final_price' => $totalFinalPrice,
+                    'promoId' => $promoId,
+                    'isDeleted' => false,
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('productLocations')
+                    ->where('locationId', $request->locationId)
+                    ->where('productId', $prod['productId'])
+                    ->decrement('inStock', $quantity);
+
+                DB::table('productLocations')
+                    ->where('locationId', $request->locationId)
+                    ->where('productId', $prod['productId'])
+                    ->decrement('diffStock', $quantity);
+
+                $totalItem += $quantity;
             }
 
             DB::table('transactionpetshop')
