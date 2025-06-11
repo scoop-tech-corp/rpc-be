@@ -593,7 +593,7 @@ class TransactionPetShopController
                 $discount = 0;
                 $finalPrice = $unitPrice;
                 $promoId = $prod['promoId'] ?? null;
-
+                $totalFinalPrice = $quantity * $finalPrice;
 
                 $discountProduct = collect($discountedProducts)->firstWhere('productId', $prod['productId']);
                 if ($discountProduct) {
@@ -610,6 +610,7 @@ class TransactionPetShopController
                     'price' => $unitPrice,
                     'discount' => $discount,
                     'final_price' => $finalPrice,
+                    'total_final_price' => $totalFinalPrice,
                     'promoId' => $promoId,
                     'isDeleted' => false,
                     'userId' => $request->user()->id,
@@ -657,10 +658,7 @@ class TransactionPetShopController
                 $totalItem += $bundleResult['bundleTotalItem'] ?? 0;
             }
 
-
-
             $totalDiscount = $totalAmountBeforeDiscount - $totalAmountAfterDiscount;
-
 
             if (!empty($request->selectedPromos['basedSales'])) {
                 $basedSalesResult = $this->handleBasedSalesPromo($request->selectedPromos['basedSales'], $baseTotal);
@@ -673,7 +671,6 @@ class TransactionPetShopController
             $totalPayment = $totalAmountAfterDiscount;
             if ($totalPayment < 0) $totalPayment = 0;
 
-
             $totalUsePromo = 0;
             if (!empty($request->selectedPromos)) {
                 $totalUsePromo += count($request->selectedPromos['freeItems'] ?? []);
@@ -681,7 +678,6 @@ class TransactionPetShopController
                 $totalUsePromo += count($request->selectedPromos['bundles'] ?? []);
                 $totalUsePromo += count($request->selectedPromos['basedSales'] ?? []);
             }
-
 
             DB::table('transactionpetshop')
                 ->where('id', $request->id)
@@ -1586,7 +1582,7 @@ class TransactionPetShopController
                 'd.discount',
                 'd.bonus',
                 'd.price as unit_price',
-                'd.final_price as total',
+                'd.total_final_price as total',
                 'd.id',
                 'd.productId',
                 'd.promoId'
@@ -1659,7 +1655,6 @@ class TransactionPetShopController
 
         ]);
     }
-
 
     private function getPaymentMethodLabel($method)
     {
