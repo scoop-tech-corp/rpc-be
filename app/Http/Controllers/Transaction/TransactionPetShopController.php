@@ -593,7 +593,6 @@ class TransactionPetShopController
                 $discount = 0;
                 $finalPrice = $unitPrice;
                 $promoId = $prod['promoId'] ?? null;
-                $totalFinalPrice = $quantity * $finalPrice;
 
                 $discountProduct = collect($discountedProducts)->firstWhere('productId', $prod['productId']);
                 if ($discountProduct) {
@@ -601,6 +600,8 @@ class TransactionPetShopController
                     $finalPrice = $discountProduct['finalPrice'];
                     $promoId = $discountProduct['promoId'];
                 }
+
+                $totalFinalPrice = $quantity * $finalPrice;
 
 
                 DB::table('transactionpetshopdetail')->insert([
@@ -1591,10 +1592,10 @@ class TransactionPetShopController
             ->where('d.isDeleted', 0)
             ->get();
 
-        
+
         $promoIds = $products->pluck('promoId')->filter()->unique()->values()->all();
 
-        
+
         $promoBundles = DB::table('promotionBundles')
             ->whereIn('promoMasterId', $promoIds)
             ->pluck('promoMasterId')
