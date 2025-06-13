@@ -1582,8 +1582,7 @@ class TransactionPetShopController
         }
 
         $transaction->createdAt = Carbon::parse($transaction->created_at)->format('d/m/Y H:i:s');
-        $transaction->paymentMethod = $this->getPaymentMethodLabel($transaction->paymentMethod);
-        $transaction->proofOfPayment = $transaction->proofOfPayment ?? ' ';
+        $transaction->proofOfPayment = $transaction->proofOfPayment ?? null;
 
         $products = DB::table('transactionpetshopdetail as d')
             ->join('products as p', 'p.id', '=', 'd.productId')
@@ -1666,18 +1665,6 @@ class TransactionPetShopController
             'transactionLogs' => $logs,
 
         ]);
-    }
-
-    private function getPaymentMethodLabel($method)
-    {
-        $methods = [
-            1 => 'Cash',
-            2 => 'Debit',
-            3 => 'Transfer',
-            4 => 'QRIS'
-        ];
-
-        return $methods[$method] ?? 'Unknown';
     }
 
     public function confirmPayment(Request $request)
