@@ -25,11 +25,15 @@ use App\Http\Controllers\Product\SupplierController;
 use App\Http\Controllers\Staff\StaffLeaveController;
 use App\Http\Controllers\Customer\CustomerController;
 
-use App\Http\Controllers\Product\ProductSellController;
+use App\Http\Controllers\Staff\StaffPayrollController;
 
+use App\Http\Controllers\Product\ProductSellController;
 use App\Http\Controllers\Staff\SecurityGroupController;
 use App\Http\Controllers\Report\ReportProductController;
 use App\Http\Controllers\ReportMenuManagementController;
+use App\Http\Controllers\Transaction\BreedingController;
+use App\Http\Controllers\Transaction\PetHotelController;
+use App\Http\Controllers\Transaction\PetSalonController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\Staff\DataStaticStaffController;
@@ -41,6 +45,7 @@ use App\Http\Controllers\Product\ProductDashboardController;
 use App\Http\Controllers\Product\ProductInventoryController;
 use App\Http\Controllers\Transaction\MaterialDataController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
+use App\Http\Controllers\Transaction\TransPetClinicController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
@@ -50,10 +55,6 @@ use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
-use App\Http\Controllers\Transaction\BreedingController;
-use App\Http\Controllers\Transaction\PetHotelController;
-use App\Http\Controllers\Transaction\PetSalonController;
-use App\Http\Controllers\Transaction\TransPetClinicController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -448,6 +449,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/profile', [ProfileController::class, 'updateProfile']);
         Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
         Route::post('/profile/image', [ProfileController::class, 'uploadImageProfile']);
+
+        Route::get('/salary-slip', [StaffPayrollController::class, 'index']);
+        Route::get('/salary-slip/export', [StaffPayrollController::class, 'export']);
+        Route::delete('/salary-slip', [StaffPayrollController::class, 'delete']);
     });
 
 
