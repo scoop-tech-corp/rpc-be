@@ -82,7 +82,6 @@ class StaffPayrollController
 
     public function create(Request $request)
     {
-        $user = $request->user();
         $staff = User::findOrFail($request->staffId);
 
         switch ($staff->jobTitleId) {
@@ -97,7 +96,6 @@ class StaffPayrollController
     {
         $input = $request->all();
 
-        // Set default untuk structured fields
         $structuredFields = [
             'lab_xray_incentive',
             'grooming_incentive',
@@ -114,7 +112,6 @@ class StaffPayrollController
             $input[$field]['total'] = $input[$field]['total'] ?? 0;
         }
 
-        // Set default untuk flat numeric fields
         $flatFields = [
             'attendance_allowance',
             'meal_allowance',
@@ -132,7 +129,6 @@ class StaffPayrollController
             $input[$field] = $input[$field] ?? 0;
         }
 
-        // Hitung total
         $total_income = $input['basic_income']
             + $input['annual_increment_incentive']
             + $input['attendance_allowance']
@@ -154,8 +150,8 @@ class StaffPayrollController
         $net_pay = $total_income - $total_deduction;
 
         $payroll = StaffPayroll::create([
-            'staffId' => $staff->id,
-            'name' => $staff->name,
+            'staffId' => $input['staffId'],
+            'name' => $input['name'], 
             'payroll_date' => $input['payroll_date'],
             'locationId' => $input['locationId'],
             'basic_income' => $input['basic_income'],
