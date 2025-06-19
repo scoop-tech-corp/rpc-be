@@ -4217,4 +4217,181 @@ class StaffController extends Controller
 
         return response()->json($data, 200);
     }
+
+    public function salaryCheck(Request $request)
+    {
+        $user = DB::table('users as u')
+            ->join('jobTitle as j', 'u.jobtitleid', 'j.id')
+            ->join('payPeriod as p', 'u.payPeriodId', 'p.id')
+            ->select(
+                DB::raw("IFNULL ((registrationNo),'') as registrationNo"),
+                'u.payPeriodId',
+                'p.periodName as payPeriodName',
+                'j.id as jobtitleId',
+                'j.jobName',
+                DB::raw("'Mitra Kerja' as status"),
+                'u.startDate',
+                'u.endDate',
+                DB::raw("TRIM(u.payAmount)+0 as payAmount"),
+            )
+            ->where('u.id', '=', $request->staffId)
+            ->where('u.isDeleted', '=', 0)
+            ->first();
+
+        if ($user->jobtitleId == 3) {   //groomer
+            $data = [
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 250000,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+                'positionAllowance' => 500000,
+                'quantityXray' => 2,
+                'eachXray' => 10000,
+                'labXrayIncentive' => 20000,
+                'quantityGrooming' => 1,
+                'eachGrooming' => 10000,
+                'groomingIncentive' => 10000,
+                'groomingAchievementBonus' => 10000,
+                'salesBonus' => 10000,
+
+                'quantitySubstituteDayWage' => 5,
+                'eachSubstituteDayWage' => 20000, // nominal per hari
+                'totalSubstituteDayWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 2) {   //helper
+            $data = [
+                // Pendapatan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 250000,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+                'positionAllowance' => 500000,
+
+                'quantityXray' => 2,
+                'eachXray' => 10000,
+                'labXrayIncentive' => 20000,
+
+                'quantityGrooming' => 1,
+                'eachGrooming' => 10000,
+                'groomingIncentive' => 10000,
+
+                'clinicAchievementBonus' => 10000,
+                'salesBonus' => 10000,
+
+                'quantitySubstituteDayWage' => 5,
+                'eachSubstituteDayWage' => 20000, // nominal per hari
+                'totalSubstituteDayWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                // Pengeluaran / Potongan
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 1) {   //kasir
+            $data = [
+                // Pendapatan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 250000,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+                'positionAllowance' => 500000,
+                'housingAllowance' => 600000,
+                'petshopRevenueIncentive' => 300000,
+                'revenueAchievementBonus' => 200000,
+                'memberAchievementBonus' => 150000,
+
+                'quantitySubstituteDayWage' => 5,
+                'eachSubstituteDayWage' => 20000, // nominal per hari
+                'totalSubstituteDayWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                // Potongan / Pengeluaran
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 4) {   //paramedis
+            $data = [
+                // Pendapatan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 250000,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+                'housingAllowance' => 600000,
+
+                'quantityXray' => 2,
+                'eachXray' => 10000,
+                'labXrayIncentive' => 20000,
+
+                'clinicRevenueBonus' => 250000,
+
+                'quantityLongShiftSubstituteWage' => 5,
+                'eachLongShiftSubstituteWage' => 20000, // nominal per hari
+                'totalLongShiftSubstituteWage' => 100000, // total keseluruhan
+
+                'quantityFullShiftSubstituteWage' => 5,
+                'eachFullShiftSubstituteWage' => 20000, // nominal per hari
+                'totalFullShiftSubstituteWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                // Potongan / Pengeluaran
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 17) {   //dokter hewan
+
+            $data = [
+                // Pemasukan
+                'basicIncome' => $user->payAmount,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+
+                'quantityPatientIncentive' => 2,
+                'eachPatientIncentive' => 10000,
+                'PatientIncentive' => 300000, // total keseluruhan
+
+                'quantityXray' => 2,
+                'eachXray' => 10000,
+                'labXrayIncentive' => 20000,
+
+                'clinicRevenueBonus' => 400000,
+
+                'quantityLongShiftSubstituteWage' => 5,
+                'eachLongShiftSubstituteWage' => 20000, // nominal per hari
+                'totalLongShiftSubstituteWage' => 100000, // total keseluruhan
+
+                'quantityFullShiftSubstituteWage' => 5,
+                'eachFullShiftSubstituteWage' => 20000, // nominal per hari
+                'totalFullShiftSubstituteWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                // Pengeluaran
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        }
+
+        return response()->json([
+            'user' => $user,
+            'sallary' => $data,
+        ]);
+    }
 }
