@@ -4238,6 +4238,12 @@ class StaffController extends Controller
             ->where('u.isDeleted', '=', 0)
             ->first();
 
+        if (!$user) {
+            return response()->json([
+                'message' => 'Staff not found or has been deleted',
+            ], 404);
+        }
+
         if ($user->jobtitleId == 3) {   //groomer
             $data = [
                 'basicIncome' => $user->payAmount,
