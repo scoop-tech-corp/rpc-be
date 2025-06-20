@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\StaffPayroll;
 use Illuminate\Http\Request;
 use App\Models\Staff\UsersLocation;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -29,14 +30,16 @@ class StaffPayrollController
             ->select(
                 'sp.id',
                 'sp.name',
-                'sp.payroll_date',
-                'sp.basic_income',
-                'sp.annual_increment_incentive',
-                'sp.absent_days',
-                'sp.late_days',
-                'sp.total_income',
-                'sp.total_deduction',
-                'sp.net_pay',
+                'sp.payrollDate',
+                'sp.startDate',
+                'sp.endDate',
+                'sp.basicIncome',
+                'sp.annualIncrementIncentive',
+                'sp.absentDays',
+                'sp.lateDays',
+                'sp.totalIncome',
+                'sp.totalDeduction',
+                'sp.netPay',
                 'l.locationName'
             );
 
@@ -60,13 +63,13 @@ class StaffPayrollController
 
         $allowedColumns = [
             'sp.name',
-            'sp.payroll_date',
-            'sp.basic_income',
-            'sp.total_income',
-            'sp.total_deduction',
-            'sp.net_pay'
+            'sp.payrollDate',
+            'sp.basicIncome',
+            'sp.totalIncome',
+            'sp.totalDeduction',
+            'sp.netPay'
         ];
-        $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payroll_date';
+        $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payrollDate';
         $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
 
         $data = $data->orderBy(DB::raw($orderColumn), $orderValue);
@@ -79,6 +82,7 @@ class StaffPayrollController
 
         return responseIndex($totalPaging, $data);
     }
+
 
     public function create(Request $request)
     {
@@ -94,113 +98,138 @@ class StaffPayrollController
 
     private function createPayrollVetNurse(Request $request, $staff)
     {
+        $request->validate([
+            'staffId' => 'required|integer',
+            'name' => 'required|string',
+            'locationId' => 'required|integer',
+            'payrollDate' => 'required|date',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date',
+            'basicIncome' => 'numeric|min:0',
+            'annualIncrementIncentive' => 'numeric|min:0',
+            'income' => 'array',
+            'expense' => 'array',
+        ]);
+
         $input = $request->all();
 
-        $structuredFields = [
-            'lab_xray_incentive',
-            'grooming_incentive',
-            'replacement_days',
+        $income = $input['income'] ?? [];
+        $expense = $input['expense'] ?? [];
+
+        $structuredIncome = [
+            'labXrayIncentive',
+            'groomingIncentive',
+            'replacementDays',
+        ];
+
+        foreach ($structuredIncome as $field) {
+            $income[$field] = $income[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
+        }
+
+        $structuredExpense = [
             'absent',
             'late',
-            'not_wearing_attribute'
+            'notWearingAttribute',
         ];
 
-        foreach ($structuredFields as $field) {
-            $input[$field] = $input[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
-            $input[$field]['amount'] = $input[$field]['amount'] ?? 0;
-            $input[$field]['unitNominal'] = $input[$field]['unitNominal'] ?? 0;
-            $input[$field]['total'] = $input[$field]['total'] ?? 0;
+        foreach ($structuredExpense as $field) {
+            $expense[$field] = $expense[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
         }
 
-        $flatFields = [
-            'attendance_allowance',
-            'meal_allowance',
-            'positional_allowance',
-            'clinic_turnover_bonus',
-            'bpjs_health_allowance',
-            'current_month_cash_advance',
-            'remaining_debt_last_month',
-            'stock_opname_inventory',
-            'basic_income',
-            'annual_increment_incentive'
+        $incomeFields = [
+            'attendanceAllowance',
+            'mealAllowance',
+            'positionalAllowance',
+            'clinicTurnoverBonus',
+            'bpjsHealthAllowance',
         ];
 
-        foreach ($flatFields as $field) {
-            $input[$field] = $input[$field] ?? 0;
+        foreach ($incomeFields as $field) {
+            $income[$field] = $income[$field] ?? 0;
         }
 
-        $total_income = $input['basic_income']
-            + $input['annual_increment_incentive']
-            + $input['attendance_allowance']
-            + $input['meal_allowance']
-            + $input['positional_allowance']
-            + $input['lab_xray_incentive']['total']
-            + $input['grooming_incentive']['total']
-            + $input['clinic_turnover_bonus']
-            + $input['replacement_days']['total']
-            + $input['bpjs_health_allowance'];
+        $expenseFields = [
+            'currentMonthCashAdvance',
+            'remainingDebtLastMonth',
+            'stockOpnameInventory',
+        ];
 
-        $total_deduction = $input['absent']['total']
-            + $input['not_wearing_attribute']['total']
-            + $input['late']['total']
-            + $input['current_month_cash_advance']
-            + $input['remaining_debt_last_month']
-            + $input['stock_opname_inventory'];
+        foreach ($expenseFields as $field) {
+            $expense[$field] = $expense[$field] ?? 0;
+        }
 
-        $net_pay = $total_income - $total_deduction;
+        $totalIncome = $input['basicIncome']
+            + $input['annualIncrementIncentive']
+            + $income['attendanceAllowance']
+            + $income['mealAllowance']
+            + $income['positionalAllowance']
+            + $income['labXrayIncentive']['total']
+            + $income['groomingIncentive']['total']
+            + $income['clinicTurnoverBonus']
+            + $income['replacementDays']['total']
+            + $income['bpjsHealthAllowance'];
+
+        $totalDeduction = $expense['absent']['total']
+            + $expense['notWearingAttribute']['total']
+            + $expense['late']['total']
+            + $expense['currentMonthCashAdvance']
+            + $expense['remainingDebtLastMonth']
+            + $expense['stockOpnameInventory'];
+
+        $netPay = $totalIncome - $totalDeduction;
 
         $payroll = StaffPayroll::create([
             'staffId' => $input['staffId'],
-            'name' => $input['name'], 
-            'payroll_date' => $input['payroll_date'],
+            'name' => $input['name'],
+            'payrollDate' => $input['payrollDate'],
+            'startDate' => $input['startDate'],
+            'endDate' => $input['endDate'],
             'locationId' => $input['locationId'],
-            'basic_income' => $input['basic_income'],
-            'annual_increment_incentive' => $input['annual_increment_incentive'],
-            'attendance_allowance' => $input['attendance_allowance'],
-            'meal_allowance' => $input['meal_allowance'],
-            'positional_allowance' => $input['positional_allowance'],
+            'basicIncome' => $input['basicIncome'],
+            'annualIncrementIncentive' => $input['annualIncrementIncentive'],
 
-            'lab_xray_incentive_amount' => $input['lab_xray_incentive']['amount'],
-            'lab_xray_incentive_unit_nominal' => $input['lab_xray_incentive']['unitNominal'],
-            'lab_xray_incentive_total' => $input['lab_xray_incentive']['total'],
+            'attendanceAllowance' => $income['attendanceAllowance'],
+            'mealAllowance' => $income['mealAllowance'],
+            'positionalAllowance' => $income['positionalAllowance'],
+            'clinicTurnoverBonus' => $income['clinicTurnoverBonus'],
+            'bpjsHealthAllowance' => $income['bpjsHealthAllowance'],
 
-            'grooming_incentive_amount' => $input['grooming_incentive']['amount'],
-            'grooming_incentive_unit_nominal' => $input['grooming_incentive']['unitNominal'],
-            'grooming_incentive_total' => $input['grooming_incentive']['total'],
+            'labXrayIncentiveAmount' => $income['labXrayIncentive']['amount'],
+            'labXrayIncentiveUnitNominal' => $income['labXrayIncentive']['unitNominal'],
+            'labXrayIncentiveTotal' => $income['labXrayIncentive']['total'],
 
-            'clinic_turnover_bonus' => $input['clinic_turnover_bonus'],
+            'groomingIncentiveAmount' => $income['groomingIncentive']['amount'],
+            'groomingIncentiveUnitNominal' => $income['groomingIncentive']['unitNominal'],
+            'groomingIncentiveTotal' => $income['groomingIncentive']['total'],
 
-            'replacement_days_amount' => $input['replacement_days']['amount'],
-            'replacement_days_unit_nominal' => $input['replacement_days']['unitNominal'],
-            'replacement_days_total' => $input['replacement_days']['total'],
+            'replacementDaysAmount' => $income['replacementDays']['amount'],
+            'replacementDaysUnitNominal' => $income['replacementDays']['unitNominal'],
+            'replacementDaysTotal' => $income['replacementDays']['total'],
 
-            'bpjs_health_allowance' => $input['bpjs_health_allowance'],
+            'absentAmount' => $expense['absent']['amount'],
+            'absentUnitNominal' => $expense['absent']['unitNominal'],
+            'absentTotal' => $expense['absent']['total'],
 
-            'absent_amount' => $input['absent']['amount'],
-            'absent_unit_nominal' => $input['absent']['unitNominal'],
-            'absent_total' => $input['absent']['total'],
+            'lateAmount' => $expense['late']['amount'],
+            'lateUnitNominal' => $expense['late']['unitNominal'],
+            'lateTotal' => $expense['late']['total'],
 
-            'not_wearing_attribute_amount' => $input['not_wearing_attribute']['amount'],
-            'not_wearing_attribute_unit_nominal' => $input['not_wearing_attribute']['unitNominal'],
-            'not_wearing_attribute_total' => $input['not_wearing_attribute']['total'],
+            'notWearingAttributeAmount' => $expense['notWearingAttribute']['amount'],
+            'notWearingAttributeUnitNominal' => $expense['notWearingAttribute']['unitNominal'],
+            'notWearingAttributeTotal' => $expense['notWearingAttribute']['total'],
 
-            'late_amount' => $input['late']['amount'],
-            'late_unit_nominal' => $input['late']['unitNominal'],
-            'late_total' => $input['late']['total'],
+            'currentMonthCashAdvance' => $expense['currentMonthCashAdvance'],
+            'remainingDebtLastMonth' => $expense['remainingDebtLastMonth'],
+            'stockOpnameInventory' => $expense['stockOpnameInventory'],
 
-            'current_month_cash_advance' => $input['current_month_cash_advance'],
-            'remaining_debt_last_month' => $input['remaining_debt_last_month'],
-            'stock_opname_inventory' => $input['stock_opname_inventory'],
-
-            'total_income' => $total_income,
-            'total_deduction' => $total_deduction,
-            'net_pay' => $net_pay,
+            'totalIncome' => $totalIncome,
+            'totalDeduction' => $totalDeduction,
+            'netPay' => $netPay,
             'userId' => $request->user()->id,
         ]);
 
         return response()->json(['message' => 'Payroll created successfully.', 'data' => $payroll], 201);
     }
-
 
 
     public function export(Request $request)

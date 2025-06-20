@@ -11,22 +11,18 @@ return new class extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('staff_payroll', function (Blueprint $table) {
-            $table->integer('staffId')->after('name');
+            $table->date('startDate')->nullable()->after('payrollDate');
+            $table->date('endDate')->nullable()->after('startDate');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         Schema::table('staff_payroll', function (Blueprint $table) {
-            $table->dropColumn('staffId');
+            $table->dropColumn(['startDate', 'endDate']);
         });
     }
 };
