@@ -2519,13 +2519,6 @@ class StaffController extends Controller
                     $resEmail = $value['alamat_email'];
                 }
 
-                staffcontract::create([
-                    'staffId' => $request->id,
-                    'startDate' => $startDateFormatted,
-                    'endDate' => $endDateFormatted,
-                    'userId' => $request->user()->id,
-                ]);
-
                 $userId = DB::table('users')
                     ->insertGetId([
                         'userName' => '',
@@ -2566,6 +2559,13 @@ class StaffController extends Controller
                         'updated_at' => now(),
                         'isLogin' => 0,
                     ]);
+
+                staffcontract::create([
+                    'staffId' => $userId,
+                    'startDate' => $startDateFormatted,
+                    'endDate' => $endDateFormatted,
+                    'userId' => $request->user()->id,
+                ]);
 
                 $jobtitleName = JobTitle::where('id', '=', $src1[$i]['jabatan'])->first();
 
