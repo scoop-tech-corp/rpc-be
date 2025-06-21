@@ -21,6 +21,8 @@ use App\Models\Staff\UsersLocation;
 use App\Models\Staff\UsersMessengers;
 use App\Models\Staff\UsersRoles;
 use App\Models\Staff\UsersTelephones;
+use App\Models\staffcontract;
+use App\Models\User;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -496,6 +498,13 @@ class StaffController extends Controller
                     'password' => null,
                     'isLogin' => 0,
                 ]);
+
+            staffcontract::create([
+                'staffId' => $lastInsertedID,
+                'startDate' => $start,
+                'endDate' => $end,
+                'userId' => $request->user()->id,
+            ]);
 
             $locationId = json_decode($request->locationId, true);
 
@@ -3447,6 +3456,17 @@ class StaffController extends Controller
 
             if ($insertEmailUsers) {
 
+                $user = User::where('id', $request->id);
+
+                if ($user->startDate != $start) {
+                    staffcontract::create([
+                        'staffId' => $request->id,
+                        'startDate' => $start,
+                        'endDate' => $end,
+                        'userId' => $request->user()->id,
+                    ]);
+                }
+
                 DB::table('users')
                     ->where('id', '=', $request->id)
                     ->update([
@@ -3617,6 +3637,17 @@ class StaffController extends Controller
                     ]);
                 }
             } else {
+
+                $user = User::where('id', $request->id);
+
+                if ($user->startDate != $start) {
+                    staffcontract::create([
+                        'staffId' => $request->id,
+                        'startDate' => $start,
+                        'endDate' => $end,
+                        'userId' => $request->user()->id,
+                    ]);
+                }
 
 
                 DB::table('users')
@@ -4186,7 +4217,7 @@ class StaffController extends Controller
             ->where('u.isDeleted', '=', 0)
             ->groupBy('u.firstName')
             ->groupBy('u.id')
-            ->orderBy('u.id','asc')
+            ->orderBy('u.id', 'asc')
             ->get();
 
         return response()->json($data, 200);
