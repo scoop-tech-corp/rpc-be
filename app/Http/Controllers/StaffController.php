@@ -2560,6 +2560,13 @@ class StaffController extends Controller
                         'isLogin' => 0,
                     ]);
 
+                staffcontract::create([
+                    'staffId' => $userId,
+                    'startDate' => $startDateFormatted,
+                    'endDate' => $endDateFormatted,
+                    'userId' => $request->user()->id,
+                ]);
+
                 $jobtitleName = JobTitle::where('id', '=', $src1[$i]['jabatan'])->first();
 
                 //send email
