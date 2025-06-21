@@ -881,7 +881,7 @@ class TransPetClinicController extends Controller
 
         if ($request->status == 1) {
 
-            statusTransactionPetClinic($request->transactionId, 'Cek Kondisi Pet');
+            statusTransactionPetClinic($request->transactionId, 'Cek Kondisi Pet', $request->user()->id);
 
             transactionPetClinicLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
         } else {
@@ -895,7 +895,7 @@ class TransPetClinicController extends Controller
                 return responseInvalid($errors);
             }
 
-            statusTransactionPetClinic($request->transactionId, 'Ditolak Dokter');
+            statusTransactionPetClinic($request->transactionId, 'Ditolak Dokter', $request->user()->id);
 
             transactionPetClinicLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
         }
@@ -917,7 +917,7 @@ class TransPetClinicController extends Controller
 
         $user = User::where([['id', '=', $request->user()->id]])->first();
 
-        statusTransactionPetClinic($request->transactionId, 'Menunggu Dokter');
+        statusTransactionPetClinic($request->transactionId, 'Menunggu Dokter', $request->user()->id);
 
         transactionPetClinicLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
 

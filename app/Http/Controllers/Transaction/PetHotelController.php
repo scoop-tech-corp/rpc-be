@@ -710,7 +710,7 @@ class PetHotelController extends Controller
 
         if ($request->status == 1) {
 
-            statusTransactionPetHotel($request->transactionId, 'Cek Kondisi Pet');
+            statusTransactionPetHotel($request->transactionId, 'Cek Kondisi Pet', $request->user()->id);
 
             transactionPetHotelLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
         } else {
@@ -724,7 +724,7 @@ class PetHotelController extends Controller
                 return responseInvalid($errors);
             }
 
-            statusTransactionPetHotel($request->transactionId, 'Ditolak Dokter');
+            statusTransactionPetHotel($request->transactionId, 'Ditolak Dokter', $request->user()->id);
 
             transactionPetHotelLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
         }
@@ -748,7 +748,7 @@ class PetHotelController extends Controller
 
         $user = User::where([['id', '=', $request->user()->id]])->first();
 
-        statusTransactionPetHotel($request->transactionId, 'Menunggu Dokter');
+        statusTransactionPetHotel($request->transactionId, 'Menunggu Dokter', $request->user()->id);
 
         transactionPetHotelLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
 
@@ -815,14 +815,14 @@ class PetHotelController extends Controller
 
             if ($request->isRecomendInpatient) {
                 transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet dipindahkan ke Pet Clinic', $request->user()->id);
-                statusTransactionPetHotel($request->transactionId, 'Pet dipindahkan ke Pet Clinic');
+                statusTransactionPetHotel($request->transactionId, 'Pet dipindahkan ke Pet Clinic', $request->user()->id);
             } else {
                 transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
-                statusTransactionPetHotel($request->transactionId, 'Pet diterima masuk Pet Hotel');
+                statusTransactionPetHotel($request->transactionId, 'Pet diterima masuk Pet Hotel', $request->user()->id);
             }
         } else {
             transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel karena ' . $request->reasonReject, $request->user()->id);
-            statusTransactionPetHotel($request->transactionId, 'Pet ditolak Pet Hotel');
+            statusTransactionPetHotel($request->transactionId, 'Pet ditolak Pet Hotel', $request->user()->id);
         }
 
         return responseCreate();
