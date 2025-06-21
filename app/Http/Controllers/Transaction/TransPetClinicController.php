@@ -265,7 +265,10 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        if ($request->startDate > $request->endDate || $request->startDate == $request->endDate) {
+        $startDate = Carbon::parse($request->startDate);
+        $endDate = Carbon::parse($request->endDate);
+
+        if ($startDate > $endDate) {
             return responseInvalid(['Start Date must be less than End Date']);
         }
 
@@ -518,7 +521,10 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        if ($request->startDate > $request->endDate || $request->startDate == $request->endDate) {
+        $startDate = Carbon::parse($request->startDate);
+        $endDate = Carbon::parse($request->endDate);
+
+        if ($startDate > $endDate) {
             return responseInvalid(['Start Date must be less than End Date']);
         }
 
@@ -1860,10 +1866,7 @@ class TransPetClinicController extends Controller
         return response()->json($result);
     }
 
-    public function promoResult(Request $request)
-    {
-
-    }
+    public function promoResult(Request $request) {}
 
     public function paymentInpatient(Request $request) {}
 
