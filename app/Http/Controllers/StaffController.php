@@ -3458,7 +3458,7 @@ class StaffController extends Controller
 
                 $user = DB::table('users')
                     ->where([
-                        ['usersId', '!=', $request->id]
+                        ['id', '=', $request->id]
                     ])
                     ->first();
 
@@ -3644,7 +3644,7 @@ class StaffController extends Controller
 
                 $user = DB::table('users')
                     ->where([
-                        ['usersId', '!=', $request->id]
+                        ['id', '=', $request->id]
                     ])
                     ->first();
 
