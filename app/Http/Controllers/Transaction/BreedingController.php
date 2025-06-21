@@ -707,7 +707,7 @@ class BreedingController extends Controller
 
         if ($request->status == 1) {
 
-            statusTransactionBreeding($request->transactionId, 'Cek Kondisi Pet');
+            statusTransactionBreeding($request->transactionId, 'Cek Kondisi Pet', $request->user()->id);
 
             transactionBreedingLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
         } else {
@@ -721,7 +721,7 @@ class BreedingController extends Controller
                 return responseInvalid($errors);
             }
 
-            statusTransactionBreeding($request->transactionId, 'Ditolak Dokter');
+            statusTransactionBreeding($request->transactionId, 'Ditolak Dokter', $request->user()->id);
 
             transactionBreedingLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
         }
@@ -745,7 +745,7 @@ class BreedingController extends Controller
 
         $user = User::where([['id', '=', $request->user()->id]])->first();
 
-        statusTransactionBreeding($request->transactionId, 'Menunggu Dokter');
+        statusTransactionBreeding($request->transactionId, 'Menunggu Dokter', $request->user()->id);
 
         transactionBreedingLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
 
@@ -811,15 +811,15 @@ class BreedingController extends Controller
         if ($request->isAcceptToProcess) {
 
             if ($request->isRecomendInpatient) {
-                transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet dipindahkan ke Pet Clinic', $request->user()->id);
-                statusTransactionPetHotel($request->transactionId, 'Pet dipindahkan ke Pet Clinic');
+                transactionBreedingLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet dipindahkan ke Pet Clinic', $request->user()->id);
+                statusTransactionBreeding($request->transactionId, 'Pet dipindahkan ke Pet Clinic', $request->user()->id);
             } else {
-                transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
-                statusTransactionPetHotel($request->transactionId, 'Pet diterima masuk Pet Hotel');
+                transactionBreedingLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
+                statusTransactionBreeding($request->transactionId, 'Pet diterima masuk Pet Hotel', $request->user()->id);
             }
         } else {
-            transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel karena ' . $request->reasonReject, $request->user()->id);
-            statusTransactionPetHotel($request->transactionId, 'Pet ditolak Pet Hotel');
+            transactionBreedingLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel karena ' . $request->reasonReject, $request->user()->id);
+            statusTransactionBreeding($request->transactionId, 'Pet ditolak Pet Hotel', $request->user()->id);
         }
 
         return responseCreate();

@@ -290,12 +290,21 @@ if (!function_exists('transactionPetSalonLog')) {
 }
 
 if (!function_exists('statusTransactionPetClinic')) {
-    function statusTransactionPetClinic($transactionId, $status)
+    function statusTransactionPetClinic($transactionId, $status, $doctorId)
     {
-        TransactionPetClinic::where('id', '=', $transactionId)
-            ->update([
-                'status' => $status,
-            ]);
+        if ($status == 'Cek Kondisi Pet') {
+            TransactionPetClinic::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                    'doctorId' => $doctorId,
+                ]);
+            return;
+        } else {
+            TransactionPetClinic::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                ]);
+        }
     }
 }
 
@@ -323,32 +332,57 @@ if (!function_exists('statusTransaction')) {
 }
 
 if (!function_exists('statusTransactionPetHotel')) {
-    function statusTransactionPetHotel($transactionId, $status)
+    function statusTransactionPetHotel($transactionId, $status, $doctorId)
     {
-        TransactionPetHotel::where('id', '=', $transactionId)
-            ->update([
-                'status' => $status,
-            ]);
+        if ($status == 'Cek Kondisi Pet') {
+            TransactionPetHotel::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                    'doctorId' => $doctorId,
+                ]);
+        } else {
+            TransactionPetHotel::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                ]);
+        }
     }
 }
 
 if (!function_exists('statusTransactionBreeding')) {
-    function statusTransactionBreeding($transactionId, $status)
+    function statusTransactionBreeding($transactionId, $status, $doctorId)
     {
-        TransactionBreeding::where('id', '=', $transactionId)
-            ->update([
-                'status' => $status,
-            ]);
+
+        if ($status == 'Cek Kondisi Pet') {
+            TransactionBreeding::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                    'doctorId' => $doctorId,
+                ]);
+        } else {
+            TransactionBreeding::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                ]);
+        }
     }
 }
 
 if (!function_exists('statusTransactionPetSalon')) {
-    function statusTransactionPetSalon($transactionId, $status)
+    function statusTransactionPetSalon($transactionId, $status, $doctorId)
     {
-        transactionpetsalon::where('id', '=', $transactionId)
-            ->update([
-                'status' => $status,
-            ]);
+        if ($status == 'Cek Kondisi Pet') {
+            transactionpetsalon::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                    'doctorId' => $doctorId,
+                ]);
+        } else {
+            transactionpetsalon::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                ]);
+        }
     }
 }
 
