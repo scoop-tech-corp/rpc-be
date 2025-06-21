@@ -4163,6 +4163,8 @@ class StaffController extends Controller
 
     public function listStaffDoctorWithLocation(Request $request)
     {
+        $value = $request->locationId;
+
         $data = DB::table('users as u')
             ->join('usersLocation as ul', 'u.id', 'ul.usersId')
             ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
@@ -4171,14 +4173,20 @@ class StaffController extends Controller
                 'u.firstName',
             );
 
-        if ($request->locationId) {
-            $data = $data->where('ul.locationId', '=', $request->locationId);
+        if ($value) {
+
+            if (is_array($value)) {
+                $data = $data->whereIn('ul.locationId', $value);
+            } elseif (is_numeric($value)) {
+                $data = $data->where('ul.locationId', '=', $value);
+            }
         }
 
         $data = $data->where('j.id', '=', 17)   //id job title dokter hewan
             ->where('u.isDeleted', '=', 0)
             ->groupBy('u.firstName')
             ->groupBy('u.id')
+            ->orderBy('u.id','asc')
             ->get();
 
         return response()->json($data, 200);
