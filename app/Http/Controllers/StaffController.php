@@ -2519,6 +2519,13 @@ class StaffController extends Controller
                     $resEmail = $value['alamat_email'];
                 }
 
+                staffcontract::create([
+                    'staffId' => $request->id,
+                    'startDate' => $startDateFormatted,
+                    'endDate' => $endDateFormatted,
+                    'userId' => $request->user()->id,
+                ]);
+
                 $userId = DB::table('users')
                     ->insertGetId([
                         'userName' => '',
