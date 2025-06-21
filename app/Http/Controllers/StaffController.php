@@ -3456,7 +3456,11 @@ class StaffController extends Controller
 
             if ($insertEmailUsers) {
 
-                $user = User::where('id', $request->id);
+                $user = DB::table('users')
+                    ->where([
+                        ['usersId', '!=', $request->id]
+                    ])
+                    ->first();
 
                 if ($user->startDate != $start) {
                     staffcontract::create([
@@ -3638,7 +3642,11 @@ class StaffController extends Controller
                 }
             } else {
 
-                $user = User::where('id', $request->id);
+                $user = DB::table('users')
+                    ->where([
+                        ['usersId', '!=', $request->id]
+                    ])
+                    ->first();
 
                 if ($user->startDate != $start) {
                     staffcontract::create([
