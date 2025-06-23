@@ -294,7 +294,10 @@ class AbsentController extends Controller
 
         if ($request->dateFrom && $request->dateTo) {
 
-            $data = $data->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
+            $data = $data
+                ->where('sa.presentTime', '>=', $request->dateFrom)
+                ->where('sa.presentTime', '<=', $request->dateTo);
+            //->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
         }
 
         $locations = $request->locationId;
@@ -485,7 +488,9 @@ class AbsentController extends Controller
             ])
             ->first();
 
-        $keeper = Timekeeper::where('jobtitleId', '=', $users->jobTitleId)->get();
+        $keeper = Timekeeper::where('jobtitleId', '=', $users->jobTitleId)
+            ->where('isDeleted', '=', 0)
+            ->get();
 
         if (count($keeper) > 1) {
             $validate = Validator::make($request->all(), [
@@ -567,7 +572,7 @@ class AbsentController extends Controller
         $status = "";
         $shift = "";
 
-        $keeperRes = Timekeeper::where('jobtitleId', '=', $users->jobTitleId);
+        $keeperRes = Timekeeper::where('jobtitleId', '=', $users->jobTitleId)->where('isDeleted', '=', 0);
 
         if (count($keeper) > 1) {
             $keeperRes = $keeperRes->where('shiftId', '=', $request->shift);

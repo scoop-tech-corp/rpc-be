@@ -396,7 +396,6 @@ class CustomerController extends Controller
             $total_paging = $count_data / $defaultRowPerPage;
 
             return response()->json(['totalPagination' => ceil($total_paging), 'data' => $data], 200);
-            
         } catch (Exception $e) {
 
             return response()->json([
@@ -1257,6 +1256,7 @@ class CustomerController extends Controller
                     'customerGroupId' => 'nullable|integer',
                     'locationId' => 'required|integer',
                     'notes' => 'nullable|string',
+                    'colorType' => 'nullable|string',
                     'joinDate' => 'required|date',
                     'typeId' => 'nullable|integer',
                     'numberId' => 'nullable|string|max:50',
@@ -1318,6 +1318,7 @@ class CustomerController extends Controller
                             'condition' => 'required|string|max:100',
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
+                            'remark' => 'nullable|string',
 
                         ],
                         $messageCustomerPet
@@ -1885,6 +1886,7 @@ class CustomerController extends Controller
             $customer->customerGroupId = $request->customerGroupId;
             $customer->locationId = $request->locationId;
             $customer->notes =  $request->notes;
+            $customer->colorType =  $request->colorType;
             $customer->joinDate = $request->joinDate;
             $customer->typeId =  $request->typeId;
             $customer->numberId =  $request->numberId;
@@ -1939,7 +1941,9 @@ class CustomerController extends Controller
                     $customerPets->dateOfBirth = $valueDate;
                     $customerPets->petGender = $val['petGender'];
                     $customerPets->isSteril = $val['isSteril'];
+                    $customerPets->remark = $val['remark'];
                     $customerPets->createdBy = $request->user()->id;
+                    $customerPets->userUpdateId = $request->user()->id;
                     $customerPets->save();
                 }
             }
@@ -2224,6 +2228,7 @@ class CustomerController extends Controller
                     'customerGroupId' => 'nullable|integer',
                     'locationId' => 'required|integer',
                     'notes' => 'nullable|string',
+                    'colorType' => 'nullable|string',
                     'joinDate' => 'required|date',
                     'typeId' => 'nullable|integer',
                     'numberId' => 'nullable|string|max:50',
@@ -2275,6 +2280,7 @@ class CustomerController extends Controller
                             'condition' => 'required|string|max:100',
                             'petGender' => 'required|in:J,B',
                             'isSteril' => 'required|in:1,0',
+                            'remark' => 'nullable|string',
 
                         ],
                         $messageCustomerPet
@@ -2763,6 +2769,7 @@ class CustomerController extends Controller
                     'customerGroupId' => $request->customerGroupId,
                     'locationId' => $request->locationId,
                     'notes' => $request->notes,
+                    'colorType' => $request->colorType,
                     'joinDate' => $request->joinDate,
                     'typeId' => $request->typeId,
                     'numberId' => $request->numberId,
@@ -2814,7 +2821,9 @@ class CustomerController extends Controller
                     $customerPets->dateOfBirth = $valueDate;
                     $customerPets->petGender = $val['petGender'];
                     $customerPets->isSteril = $val['isSteril'];
+                    $customerPets->remark = $val['remark'];
                     $customerPets->createdBy = $request->user()->id;
+                    $customerPets->userUpdateId = $request->user()->id;
                     $customerPets->save();
                 } else {
 
@@ -2868,6 +2877,7 @@ class CustomerController extends Controller
                             'dateOfBirth' => $valueDate,
                             'petGender' => $val['petGender'],
                             'isSteril' => $val['isSteril'],
+                            'remark' => $val['remark'],
                             'updated_at' => now(),
                         ]);
                     }
@@ -3091,6 +3101,7 @@ class CustomerController extends Controller
                         'customerGroupId',
                         'locationId',
                         'notes',
+                        'colorType',
                         DB::raw("DATE_FORMAT(joinDate, '%Y-%m-%d') as joinDate"),
                         'typeId',
                         'numberId',
@@ -3116,7 +3127,8 @@ class CustomerController extends Controller
                         'petYear',
                         DB::raw("IFNULL(DATE_FORMAT(dateOfBirth, '%Y-%m-%d'),'') as dateOfBirth"),
                         'petGender',
-                        'isSteril'
+                        'isSteril',
+                        'remark'
                     )
                     ->where([
                         ['customerId', '=', $customerId],

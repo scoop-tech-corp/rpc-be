@@ -21,6 +21,8 @@ use App\Models\Staff\UsersLocation;
 use App\Models\Staff\UsersMessengers;
 use App\Models\Staff\UsersRoles;
 use App\Models\Staff\UsersTelephones;
+use App\Models\staffcontract;
+use App\Models\User;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -496,6 +498,13 @@ class StaffController extends Controller
                     'password' => null,
                     'isLogin' => 0,
                 ]);
+
+            staffcontract::create([
+                'staffId' => $lastInsertedID,
+                'startDate' => $start,
+                'endDate' => $end,
+                'userId' => $request->user()->id,
+            ]);
 
             $locationId = json_decode($request->locationId, true);
 
@@ -2551,6 +2560,13 @@ class StaffController extends Controller
                         'isLogin' => 0,
                     ]);
 
+                staffcontract::create([
+                    'staffId' => $userId,
+                    'startDate' => $startDateFormatted,
+                    'endDate' => $endDateFormatted,
+                    'userId' => $request->user()->id,
+                ]);
+
                 $jobtitleName = JobTitle::where('id', '=', $src1[$i]['jabatan'])->first();
 
                 //send email
@@ -3447,6 +3463,21 @@ class StaffController extends Controller
 
             if ($insertEmailUsers) {
 
+                $user = DB::table('users')
+                    ->where([
+                        ['id', '=', $request->id]
+                    ])
+                    ->first();
+
+                if ($user->startDate != $start) {
+                    staffcontract::create([
+                        'staffId' => $request->id,
+                        'startDate' => $start,
+                        'endDate' => $end,
+                        'userId' => $request->user()->id,
+                    ]);
+                }
+
                 DB::table('users')
                     ->where('id', '=', $request->id)
                     ->update([
@@ -3617,6 +3648,21 @@ class StaffController extends Controller
                     ]);
                 }
             } else {
+
+                $user = DB::table('users')
+                    ->where([
+                        ['id', '=', $request->id]
+                    ])
+                    ->first();
+
+                if ($user->startDate != $start) {
+                    staffcontract::create([
+                        'staffId' => $request->id,
+                        'startDate' => $start,
+                        'endDate' => $end,
+                        'userId' => $request->user()->id,
+                    ]);
+                }
 
 
                 DB::table('users')
@@ -4163,6 +4209,8 @@ class StaffController extends Controller
 
     public function listStaffDoctorWithLocation(Request $request)
     {
+        $value = $request->locationId;
+
         $data = DB::table('users as u')
             ->join('usersLocation as ul', 'u.id', 'ul.usersId')
             ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
@@ -4171,14 +4219,20 @@ class StaffController extends Controller
                 'u.firstName',
             );
 
-        if ($request->locationId) {
-            $data = $data->where('ul.locationId', '=', $request->locationId);
+        if ($value) {
+
+            if (is_array($value)) {
+                $data = $data->whereIn('ul.locationId', $value);
+            } elseif (is_numeric($value)) {
+                $data = $data->where('ul.locationId', '=', $value);
+            }
         }
 
         $data = $data->where('j.id', '=', 17)   //id job title dokter hewan
             ->where('u.isDeleted', '=', 0)
             ->groupBy('u.firstName')
             ->groupBy('u.id')
+            ->orderBy('u.id', 'asc')
             ->get();
 
         return response()->json($data, 200);
@@ -4197,5 +4251,207 @@ class StaffController extends Controller
             ->get();
 
         return response()->json($data, 200);
+    }
+
+    public function listStaffWithLocationJobTitle(Request $request)
+    {
+        $data = DB::table('users as u')
+            ->join('usersLocation as ul', 'u.id', 'ul.usersId')
+            ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
+            ->select(
+                'u.id',
+                'u.firstName',
+            )
+            ->where('ul.locationId', '=', $request->locationId)
+            ->where('j.id', '=', $request->jobTitleId)
+            ->where('u.isDeleted', '=', 0)
+            ->groupBy('u.firstName')
+            ->groupBy('u.id')
+            ->get();
+
+        return response()->json($data, 200);
+    }
+
+    public function salaryCheck(Request $request)
+    {
+        $user = DB::table('users as u')
+            ->join('jobTitle as j', 'u.jobtitleid', 'j.id')
+            ->join('payPeriod as p', 'u.payPeriodId', 'p.id')
+            ->select(
+                DB::raw("IFNULL ((registrationNo),'') as registrationNo"),
+                'u.payPeriodId',
+                'p.periodName as payPeriodName',
+                'j.id as jobtitleId',
+                'j.jobName',
+                DB::raw("'Mitra Kerja' as status"),
+                'u.startDate',
+                'u.endDate',
+                DB::raw("TRIM(u.payAmount)+0 as payAmount"),
+            )
+            ->where('u.id', '=', $request->staffId)
+            ->where('u.isDeleted', '=', 0)
+            ->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Staff not found or has been deleted',
+            ], 404);
+        }
+
+        if ($user->jobtitleId == 3) {   //groomer
+            $data = [
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 250000,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+                'positionAllowance' => 500000,
+                'quantityXray' => 2,
+                'eachXray' => 10000,
+                'labXrayIncentive' => 20000,
+                'quantityGrooming' => 1,
+                'eachGrooming' => 10000,
+                'groomingIncentive' => 10000,
+                'groomingAchievementBonus' => 10000,
+                'salesBonus' => 10000,
+
+                'quantitySubstituteDayWage' => 5,
+                'eachSubstituteDayWage' => 20000, // nominal per hari
+                'totalSubstituteDayWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 2) {   //helper
+            $data = [
+                // Pendapatan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 250000,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+                'positionAllowance' => 500000,
+
+                'quantityXray' => 2,
+                'eachXray' => 10000,
+                'labXrayIncentive' => 20000,
+
+                'quantityGrooming' => 1,
+                'eachGrooming' => 10000,
+                'groomingIncentive' => 10000,
+
+                'clinicAchievementBonus' => 10000,
+                'salesBonus' => 10000,
+
+                'quantitySubstituteDayWage' => 5,
+                'eachSubstituteDayWage' => 20000, // nominal per hari
+                'totalSubstituteDayWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                // Pengeluaran / Potongan
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 1) {   //kasir
+            $data = [
+                // Pendapatan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 250000,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+                'positionAllowance' => 500000,
+                'housingAllowance' => 600000,
+                'petshopRevenueIncentive' => 300000,
+                'revenueAchievementBonus' => 200000,
+                'memberAchievementBonus' => 150000,
+
+                'quantitySubstituteDayWage' => 5,
+                'eachSubstituteDayWage' => 20000, // nominal per hari
+                'totalSubstituteDayWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                // Potongan / Pengeluaran
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 4) {   //paramedis
+            $data = [
+                // Pendapatan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 250000,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+                'housingAllowance' => 600000,
+
+                'quantityXray' => 2,
+                'eachXray' => 10000,
+                'labXrayIncentive' => 20000,
+
+                'clinicRevenueBonus' => 250000,
+
+                'quantityLongShiftSubstituteWage' => 5,
+                'eachLongShiftSubstituteWage' => 20000, // nominal per hari
+                'totalLongShiftSubstituteWage' => 100000, // total keseluruhan
+
+                'quantityFullShiftSubstituteWage' => 5,
+                'eachFullShiftSubstituteWage' => 20000, // nominal per hari
+                'totalFullShiftSubstituteWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                // Potongan / Pengeluaran
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 17) {   //dokter hewan
+
+            $data = [
+                // Pemasukan
+                'basicIncome' => $user->payAmount,
+                'attendanceAllowance' => 200000,
+                'mealAllowance' => 150000,
+
+                'quantityPatientIncentive' => 2,
+                'eachPatientIncentive' => 10000,
+                'PatientIncentive' => 300000, // total keseluruhan
+
+                'quantityXray' => 2,
+                'eachXray' => 10000,
+                'labXrayIncentive' => 20000,
+
+                'clinicRevenueBonus' => 400000,
+
+                'quantityLongShiftSubstituteWage' => 5,
+                'eachLongShiftSubstituteWage' => 20000, // nominal per hari
+                'totalLongShiftSubstituteWage' => 100000, // total keseluruhan
+
+                'quantityFullShiftSubstituteWage' => 5,
+                'eachFullShiftSubstituteWage' => 20000, // nominal per hari
+                'totalFullShiftSubstituteWage' => 100000, // total keseluruhan
+
+                'bpjsHealthAllowance' => 100000,
+
+                // Pengeluaran
+                'notComingToWork' => 2, // jumlah hari
+                'eachNotComingToWork' => 20000, // nominal potongan per hari
+                'notComingToWorkTotal' => 40000, // nominal potongan total
+                'late' => 20000, // jumlah keterlambatan
+            ];
+        }
+
+        return response()->json([
+            'user' => $user,
+            'sallary' => $data,
+        ]);
     }
 }

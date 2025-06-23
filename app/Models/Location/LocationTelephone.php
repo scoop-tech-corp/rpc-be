@@ -18,8 +18,19 @@ class LocationTelephone extends Model
     protected $guarded = ['id'];
 
     public $timestamps = true;
-    
+
     protected $fillable = [
-        'codeLocation', 'phoneNumber', 'type', 'usage', 'isDeleted', 'created_at', 'updated_at'
+        'codeLocation',
+        'phoneNumber',
+        'type',
+        'usage',
+        'isDeleted',
+        'created_at',
+        'updated_at'
     ];
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class, 'codeLocation', 'codeLocation');
+    }
 }

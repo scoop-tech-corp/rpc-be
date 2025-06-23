@@ -6,15 +6,23 @@
  * @return response()
  */
 
-use App\Models\ProductClinicLog;
 use App\Models\ProductLog;
-use App\Models\productRestockLog;
-use App\Models\ProductTransferLog;
+use App\Models\Transaction;
 use App\Models\ProductSellLog;
 use App\Models\recentActivity;
-use App\Models\Transaction;
 use App\Models\TransactionLog;
+use App\Models\ProductClinicLog;
+use App\Models\productRestockLog;
+use App\Models\ProductTransferLog;
+use App\Models\TransactionBreeding;
+use App\Models\TransactionPetHotel;
 use App\Models\TransactionPetClinic;
+use App\Models\TransactionPetshopLog;
+use App\Models\TransactionBreedingLog;
+use App\Models\TransactionPetHotelLog;
+use App\Models\TransactionPetClinicLog;
+use App\Models\transactionpetsalon;
+use App\Models\transactionPetSalonLog;
 
 if (!function_exists('adminAccess')) {
     function adminAccess($id)
@@ -232,6 +240,87 @@ if (!function_exists('transactionLog')) {
     }
 }
 
+if (!function_exists('transactionPetClinicLog')) {
+    function transactionPetClinicLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionPetClinicLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+
+if (!function_exists('transactionPetHotelLog')) {
+    function transactionPetHotelLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionPetHotelLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('transactionBreedingLog')) {
+    function transactionBreedingLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionBreedingLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('transactionPetSalonLog')) {
+    function transactionPetSalonLog($transactionId, $activity, $remark, $userId)
+    {
+        transactionPetSalonLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+if (!function_exists('statusTransactionPetClinic')) {
+    function statusTransactionPetClinic($transactionId, $status, $doctorId)
+    {
+        if ($status == 'Cek Kondisi Pet') {
+            TransactionPetClinic::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                    'doctorId' => $doctorId,
+                ]);
+            return;
+        } else {
+            TransactionPetClinic::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                ]);
+        }
+    }
+}
+
+if (!function_exists('transactionPetshopLog')) {
+    function transactionPetshopLog($transactionId, $activity, $remark, $userId)
+    {
+        TransactionPetshopLog::create([
+            'transactionId' => $transactionId,
+            'activity' => $activity,
+            'remark' => $remark,
+            'userId' => $userId,
+        ]);
+    }
+}
+
+
 if (!function_exists('statusTransaction')) {
     function statusTransaction($transactionId, $status)
     {
@@ -239,6 +328,61 @@ if (!function_exists('statusTransaction')) {
             ->update([
                 'status' => $status,
             ]);
+    }
+}
+
+if (!function_exists('statusTransactionPetHotel')) {
+    function statusTransactionPetHotel($transactionId, $status, $doctorId)
+    {
+        if ($status == 'Cek Kondisi Pet') {
+            TransactionPetHotel::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                    'doctorId' => $doctorId,
+                ]);
+        } else {
+            TransactionPetHotel::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                ]);
+        }
+    }
+}
+
+if (!function_exists('statusTransactionBreeding')) {
+    function statusTransactionBreeding($transactionId, $status, $doctorId)
+    {
+
+        if ($status == 'Cek Kondisi Pet') {
+            TransactionBreeding::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                    'doctorId' => $doctorId,
+                ]);
+        } else {
+            TransactionBreeding::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                ]);
+        }
+    }
+}
+
+if (!function_exists('statusTransactionPetSalon')) {
+    function statusTransactionPetSalon($transactionId, $status, $doctorId)
+    {
+        if ($status == 'Cek Kondisi Pet') {
+            transactionpetsalon::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                    'doctorId' => $doctorId,
+                ]);
+        } else {
+            transactionpetsalon::where('id', '=', $transactionId)
+                ->update([
+                    'status' => $status,
+                ]);
+        }
     }
 }
 
@@ -497,53 +641,12 @@ function updateDiffStock($locationId, $productId)
     }
 }
 
-//add by danny wahyudi
-// if (!function_exists('securityGroupAdmin')) {
-//     function securityGroupAdmin($id)
-//     {
-//         $user = DB::table('users as u')
-//             ->select('u.securityGroupAdmin')
-//             ->where('u.id', '=', $id)
-//             ->first();
-
-//         return $user->securityGroupAdmin;
-//     }
-// }
-
-// if (!function_exists('securityGroupManager')) {
-//     function securityGroupManager($id)
-//     {
-//         $user = DB::table('users as u')
-//             ->select('u.securityGroupManager')
-//             ->where('u.id', '=', $id)
-//             ->first();
-
-//         return $user->securityGroupManager;
-//     }
-// }
-
-// if (!function_exists('securityGroupVet')) {
-//     function securityGroupVet($id)
-//     {
-//         $user = DB::table('users as u')
-//             ->select('u.securityGroupVet')
-//             ->where('u.id', '=', $id)
-//             ->first();
-
-//         return $user->securityGroupVet;
-//     }
-// }
-
-
-// if (!function_exists('securityGroupReceptionist')) {
-//     function securityGroupReceptionist($id)
-//     {
-//         $user = DB::table('users as u')
-//             ->select('u.securityGroupReceptionist')
-//             ->where('u.id', '=', $id)
-//             ->first();
-
-//         return $user->securityGroupReceptionist;
-//     }
-// }
-// //end add by danny wahyudi
+function recentActivity($userId, $module, $event, $detail)
+{
+    recentActivity::create([
+        'userId' => $userId,
+        'module' => $module,
+        'event' => $event,
+        'details' => $detail,
+    ]);
+}

@@ -880,6 +880,12 @@ class ProductSellController
                 }
 
                 productSellLog($product->id, "Create new Item", "", $value['inStock'], $value['inStock'], $request->user()->id);
+                //add product kaotin at branch condet
+                $locName = DB::table('location')
+                    ->select('locationName')
+                    ->where('id', '=', $value['locationId'])
+                    ->first();
+                recentActivity($request->user()->id, 'Product', 'Add Product Sell', 'Add Product ' . $request->fullName . ' at branch ' . $locName->locationName);
             }
 
             DB::commit();
@@ -1537,11 +1543,12 @@ class ProductSellController
         foreach ($request->id as $va) {
 
             $Prod = Products::find($va);
-
+            $prodName = $Prod->fullName;
             $ProdLoc = ProductLocations::where('ProductId', '=', $Prod->id)->get();
 
             if ($ProdLoc) {
 
+                $locId = $ProdLoc[0]->locationId;
                 ProductLocations::where('ProductId', '=', $Prod->id)
                     ->update(
                         [
@@ -1643,6 +1650,13 @@ class ProductSellController
             $Prod->DeletedAt = Carbon::now();
             $Prod->save();
         }
+
+        $locName = DB::table('location')
+            ->select('locationName')
+            ->where('id', '=', $locId)
+            ->first();
+
+        recentActivity($request->user()->id, 'Product', 'Delete Product Sell', 'Delete Product ' . $prodName . ' at branch ' . $locName->locationName);
 
         return response()->json([
             'message' => 'Delete Data Successful',
@@ -2031,6 +2045,13 @@ class ProductSellController
                     }
 
                     productSellLog($product->id, "Create New Item with Import Excel", "", $inStock[$count], $inStock[$count], $request->user()->id);
+
+                    $locName = DB::table('location')
+                        ->select('locationName')
+                        ->where('id', '=', $locIns)
+                        ->first();
+
+                    recentActivity($request->user()->id, 'Product', 'Add Product Sell', 'Add Product ' . $value['nama'] . ' at branch ' . $locName->locationName);
 
                     $count += 1;
                 }

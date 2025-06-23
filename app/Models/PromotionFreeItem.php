@@ -16,10 +16,8 @@ class PromotionFreeItem extends Model
     protected $fillable = [
         'promoMasterId',
         'quantityBuyItem',
-        'productBuyType',
         'productBuyId',
         'quantityFreeItem',
-        'productFreeType',
         'productFreeId',
         'totalMaxUsage',
         'maxUsagePerCustomer',

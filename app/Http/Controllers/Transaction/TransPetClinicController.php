@@ -12,12 +12,18 @@ use App\Models\ListSoundTransaction;
 use App\Models\ListTemperatureTransaction;
 use App\Models\ListVaginalTransaction;
 use App\Models\ListWeightTransaction;
+use App\Models\Products;
+use App\Models\Service;
+use App\Models\Staff\UsersLocation;
 use App\Models\TransactionPetClinic;
 use App\Models\TransactionPetClinicAdvice;
 use App\Models\transactionPetClinicAnamnesis;
 use App\Models\TransactionPetClinicCheckUpResult;
 use App\Models\TransactionPetClinicDiagnose;
+use App\Models\TransactionPetClinicRecipes;
+use App\Models\TransactionPetClinicServices;
 use App\Models\TransactionPetClinicTreatment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Validator;
@@ -259,7 +265,10 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        if ($request->startDate > $request->endDate || $request->startDate == $request->endDate) {
+        $startDate = Carbon::parse($request->startDate);
+        $endDate = Carbon::parse($request->endDate);
+
+        if ($startDate > $endDate) {
             return responseInvalid(['Start Date must be less than End Date']);
         }
 
@@ -512,7 +521,10 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        if ($request->startDate > $request->endDate || $request->startDate == $request->endDate) {
+        $startDate = Carbon::parse($request->startDate);
+        $endDate = Carbon::parse($request->endDate);
+
+        if ($startDate > $endDate) {
             return responseInvalid(['Start Date must be less than End Date']);
         }
 
@@ -827,9 +839,89 @@ class TransPetClinicController extends Controller
         $month = Carbon::now()->format('m');
         $year = Carbon::now()->format('Y');
 
-        $regisNo = str_pad($loc + 1, 3, 0, STR_PAD_LEFT) . '/LPIK-RIS-RPC-VET/' . $trx->locationId . '/' . $date . '/' . $month . '/' . $year;
+        $regisNo = str_pad($loc + 1, 3, 0, STR_PAD_LEFT) . '/LPIK-RIS-RPC-PC/' . $trx->locationId . '/' . $date . '/' . $month . '/' . $year;
 
         return response()->json($regisNo, 200);
+    }
+
+    public function acceptionTransaction(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'status' => 'required|bool',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $tran = TransactionPetClinic::where([['id', '=', $request->transactionId]])->first();
+
+        $locs = UsersLocation::where([['usersId', '=', $request->user()->id]])->get();
+
+        $user = User::where([['id', '=', $request->user()->id]])->first();
+
+        if ($user->jobTitleId != 17) { //id job title dokter hewan
+            return responseErrorValidation('You are not a doctor!', 'You are not a doctor!');
+        }
+
+        $temp = false;
+        foreach ($locs as $val) {
+            if ($val['locationId'] == $tran->locationId) {
+                $temp = true;
+            }
+        }
+
+        if (!$temp) {
+            return responseErrorValidation('Can not accept transaction because the doctor is different branch!', 'Can not accept transaction because the doctor is different branch!');
+        }
+
+        $doctor = User::where([['id', '=', $request->user()->id]])->first();
+
+        if ($request->status == 1) {
+
+            statusTransactionPetClinic($request->transactionId, 'Cek Kondisi Pet', $request->user()->id);
+
+            transactionPetClinicLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+        } else {
+
+            $validate = Validator::make($request->all(), [
+                'reason' => 'required|string',
+            ]);
+
+            if ($validate->fails()) {
+                $errors = $validate->errors()->all();
+                return responseInvalid($errors);
+            }
+
+            statusTransactionPetClinic($request->transactionId, 'Ditolak Dokter', $request->user()->id);
+
+            transactionPetClinicLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+        }
+
+        return responseCreate();
+    }
+
+    public function reassignDoctor(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'doctorId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $user = User::where([['id', '=', $request->user()->id]])->first();
+
+        statusTransactionPetClinic($request->transactionId, 'Menunggu Dokter', $request->user()->id);
+
+        transactionPetClinicLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
+
+        return responseCreate();
     }
 
     public function loadDataPetCheck(Request $request)
@@ -1038,7 +1130,7 @@ class TransPetClinicController extends Controller
             'isBloodLab' => 'required|boolean',
             'noteBloodLab' => 'nullable|string',
 
-            'isSurgery' => 'required|boolean',
+            'isSurgery' => 'required|integer',
             'noteSurgery' => 'nullable|string',
 
             'infusion' => 'nullable|string',
@@ -1206,16 +1298,19 @@ class TransPetClinicController extends Controller
                 'userUpdateId' => $request->user()->id, // Jika `userUpdateId` sama dengan `userId`, bisa disesuaikan
             ]);
 
-            if ($request->isInpatient) {
+            if ($request->isInpatient == 1) {
                 $status = 'Proses Rawat Inap';
+                $typeOfCare = 2; // Rawat Inap
             } else {
                 $status = 'Input Service dan Obat';
+                $typeOfCare = 1; // Rawat Jalan
             }
 
             TransactionPetClinic::updateOrCreate(
                 ['id' => $request->transactionPetClinicId],
                 [
                     'status' => $status,
+                    'typeOfCare' => $typeOfCare,
                     'userUpdatedId' => $request->user()->id,
                 ]
             );
@@ -1223,15 +1318,15 @@ class TransPetClinicController extends Controller
             DB::commit();
             return responseCreate();
         } catch (Exception $th) {
-            DB::rollback();
+
             return responseInvalid([$th->getMessage()]);
         }
     }
 
-    public function serviceandReceipt(Request $request)
+    public function serviceandrecipe(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            'id' => 'required|integer',
+            'transactionPetClinicId' => 'required|integer',
         ]);
 
         if ($validate->fails()) {
@@ -1239,8 +1334,541 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
+        $dataServices = json_decode($request->services, true);
 
+        foreach ($dataServices as $val) {
+            $find = Service::find($val['serviceId']);
+            if (!$find) {
+                return responseInvalid(['Service not found!']);
+            }
+        }
+
+        $ResultRecipe = json_decode($request->recipes, true);
+
+        foreach ($ResultRecipe as $val) {
+            $find = Products::find($val['productId']);
+            if (!$find) {
+                return responseInvalid(['Product not found!']);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            // Add services
+            foreach ($dataServices as $val) {
+                TransactionPetClinicServices::create([
+                    'transactionPetClinicId' => $request->transactionPetClinicId,
+                    'serviceId' => $val['serviceId'],
+                    'quantity' => $val['quantity'],
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id,
+                ]);
+            }
+
+            // Add recipes
+            foreach ($ResultRecipe as $val) {
+                TransactionPetClinicRecipes::create([
+                    'transactionPetClinicId' => $request->transactionPetClinicId,
+                    'productId' => $val['productId'],
+                    'dosage' => $val['dosage'],
+                    'unit' => $val['unit'],
+                    'frequency' => $val['frequency'],
+                    'giveMedicine' => $val['giveMedicine'],
+                    'notes' => $val['notes'],
+                    'userId' => $request->user()->id,
+                    'userUpdateId' => $request->user()->id,
+                ]);
+            }
+
+            TransactionPetClinic::updateOrCreate(
+                ['id' => $request->transactionPetClinicId],
+                [
+                    'status' => "Proses Pembayaran",
+                    'userUpdatedId' => $request->user()->id,
+                ]
+            );
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
     }
+
+    public function showDataBeforePayment(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionPetClinicId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $trans = TransactionPetClinic::find($request->transactionPetClinicId);
+
+        $phone = CustomerTelephones::where('customerId', '=', $trans->customerId)
+            ->where('usage', '=', 'Utama')
+            ->first();
+
+        $cust = Customer::find($trans->customerId);
+
+        $dataServices = TransactionPetClinicServices::from('transaction_pet_clinic_services as tpcs')
+            ->join('services as s', 's.id', '=', 'tpcs.serviceId')
+            ->join('servicesPrice as sp', 's.id', '=', 'sp.service_id')
+            ->select(
+                's.id as serviceId',
+                's.fullName as serviceName',
+                'tpcs.quantity',
+                'sp.price as basedPrice'
+            )
+            ->where('tpcs.transactionPetClinicId', '=', $request->transactionPetClinicId)
+            ->where('sp.location_id', '=', $trans->locationId)
+            ->get();
+
+        $dataRecipes = TransactionPetClinicRecipes::from('transaction_pet_clinic_recipes as rc')
+            ->join('products as p', 'p.id', '=', 'rc.productId')
+            ->join('productLocations as pl', 'p.id', '=', 'pl.productId')
+            ->select(
+                'p.id as productId',
+                'p.fullName as productName',
+                'rc.dosage',
+                'rc.unit',
+                'rc.frequency',
+                'rc.giveMedicine',
+                'rc.notes',
+                'p.price as basedPrice'
+            )
+            ->where('rc.transactionPetClinicId', '=', $request->transactionPetClinicId)
+            ->where('pl.locationId', '=', $trans->locationId)
+            ->get();
+
+        $data = [
+            'services' => $dataServices,
+            'recipes' => $dataRecipes,
+        ];
+
+        return response()->json([
+            'customerName' => $cust ? $cust->firstName : '',
+            'phoneNumber' => $phone ? $phone->phoneNumber : '',
+            'arrivalTime' => $trans->created_at->locale('id')->translatedFormat('l, j F Y H:i'),
+            'data' => $data,
+        ]);
+    }
+
+    public function checkPromo(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionPetClinicId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $trans = TransactionPetClinic::find($request->transactionPetClinicId);
+
+        if (!$trans) {
+            return responseInvalid(['Transaction not found!']);
+        }
+
+        $custGroup = "";
+
+        if (!is_null($trans->customerId)) {
+            $cust = Customer::find($trans->customerId);
+            $custGroup = $cust->customerGroupId;
+        }
+
+        $dataRecipes = json_decode($request->recipes, true);
+        $dataServices = json_decode($request->services, true);
+        $dataProducts = json_decode($request->products, true);
+
+        $tempFree = [];
+        $tempDiscount = [];
+        $resultBundle = [];
+
+        //free item
+        foreach ($dataRecipes as $value) {
+
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
+                ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
+                ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
+                ->select(
+                    'pm.id',
+                    'pm.name',
+                    DB::raw("CONCAT('Pembelian ', fi.quantityBuyItem, ' ',pbuy.fullName,' gratis ',fi.quantityFreeItem,' ',pfree.fullName) as note")
+                )
+                ->where('pl.locationId', '=', $trans->locationId)
+                ->where('fi.productBuyId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get()
+                ->toArray();
+
+            $tempFree = array_merge($tempFree, $res);
+        }
+
+        foreach ($dataProducts as $value) {
+
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
+                ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
+                ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
+                ->select(
+                    'pm.id',
+                    'pm.name',
+                    DB::raw("CONCAT('Pembelian ', fi.quantityBuyItem, ' ',pbuy.fullName,' gratis ',fi.quantityFreeItem,' ',pfree.fullName) as note")
+                )
+                ->where('pl.locationId', '=', $trans->locationId)
+                ->where('fi.productBuyId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get()
+                ->toArray();
+
+            $tempFree = array_merge($tempFree, $res);
+        }
+
+        //discount
+        foreach ($dataRecipes as $value) {
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('products as p', 'p.id', 'pd.productId')
+                ->select(
+                    'pm.id',
+                    'pm.name',
+                    DB::raw("
+                            CONCAT(
+                                'Pembelian Produk ',
+                                p.fullName,
+                                CASE
+                                    WHEN pd.discountType = 'percent' THEN CONCAT(' diskon ', pd.percent, '%')
+                                    WHEN pd.discountType = 'amount' THEN CONCAT(' diskon Rp ', pd.amount)
+                                    ELSE ''
+                                END
+                            ) as note
+                        ")
+
+                )
+                ->where('pl.locationId', '=', $trans->locationId)
+                ->where('pd.productId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get()
+                ->toArray();
+
+            $tempDiscount = array_merge($tempDiscount, $res);
+        }
+
+        foreach ($dataProducts as $value) {
+
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('products as p', 'p.id', 'pd.productId')
+                ->select(
+                    'pm.id',
+                    'pm.name',
+                    DB::raw("
+                            CONCAT(
+                                'Pembelian Produk ',
+                                p.fullName,
+                                CASE
+                                    WHEN pd.discountType = 'percent' THEN CONCAT(' diskon ', pd.percent, '%')
+                                    WHEN pd.discountType = 'amount' THEN CONCAT(' diskon Rp ', pd.amount)
+                                    ELSE ''
+                                END
+                            ) as note
+                        ")
+
+                )
+                ->where('pl.locationId', '=', $trans->locationId)
+                ->where('pd.productId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get()
+                ->toArray();
+
+            $tempDiscount = array_merge($tempDiscount, $res);
+        }
+
+        foreach ($dataServices as $value) {
+
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotion_discount_services as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('products as p', 'p.id', 'pd.serviceId')
+                ->select(
+                    'pm.id',
+                    'pm.name',
+                    DB::raw("
+                            CONCAT(
+                                'Pembelian Produk ',
+                                p.fullName,
+                                CASE
+                                    WHEN pd.discountType = 'percent' THEN CONCAT(' diskon ', pd.percent, '%')
+                                    WHEN pd.discountType = 'amount' THEN CONCAT(' diskon Rp ', pd.amount)
+                                    ELSE ''
+                                END
+                            ) as note
+                        ")
+
+                )
+                ->where('pl.locationId', '=', $trans->locationId)
+                ->where('pd.serviceId', '=', $value['serviceId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get()
+                ->toArray();
+
+            $tempDiscount = array_merge($tempDiscount, $res);
+        }
+
+        //bundle
+        foreach ($dataRecipes as $value) {
+            // return $value;
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                ->join('promotion_bundle_detail_products as pbd', 'pb.id', 'pbd.promoBundleId')
+                ->join('products as p', 'p.id', 'pbd.productId')
+                ->select(
+                    'pbd.promoBundleId',
+                    'pm.name',
+                )
+                ->where('pl.locationId', '=', $trans->locationId)
+                ->where('pbd.productId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get();
+
+            foreach ($res as $valdtl) {
+
+                $data = DB::table('promotion_bundle_detail_products as b')
+                    ->join('products as p', 'p.id', 'b.productId')
+                    ->join('promotionBundles as pb', 'pb.id', 'b.promoBundleId')
+                    ->join('promotionMasters as m', 'pb.promoMasterId', 'm.id')
+                    ->select('pb.id', 'p.fullName', 'b.quantity', 'pb.price', 'm.name')
+                    ->where('b.promoBundleId', '=', $valdtl->promoBundleId)
+                    ->get();
+                $kalimat = 'paket bundling produk ';
+
+                for ($i = 0; $i < count($data); $i++) {
+
+                    if (count($data) == 1) {
+                        $kalimat .= $data[$i]->quantity . ' ' . $data[$i]->fullName;
+                    } else {
+                        if ($i == count($data) - 1) {
+                            $kalimat .= 'dan ' . $data[$i]->quantity . ' ' . $data[$i]->fullName;
+                        } else {
+                            $kalimat .= $data[$i]->quantity . ' ' . $data[$i]->fullName . ', ';
+                        }
+                    }
+                }
+
+                $kalimat .= ' sebesar Rp ' . $data[0]->price;
+
+                $resultBundle[] = [
+                    'id' => $data[0]->id,
+                    'note' => $kalimat,
+                    'name' => $data[0]->name
+                ];
+            }
+        }
+
+        foreach ($dataServices as $value) {
+            // return $value;
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                ->join('promotion_bundle_detail_services as pbd', 'pb.id', 'pbd.promoBundleId')
+                ->join('products as p', 'p.id', 'pbd.serviceId')
+                ->select(
+                    'pbd.promoBundleId',
+                    'pm.name',
+                )
+                ->where('pl.locationId', '=', $trans->locationId)
+                ->where('pbd.serviceId', '=', $value['serviceId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get();
+
+            foreach ($res as $valdtl) {
+
+                $data = DB::table('promotion_bundle_detail_services as b')
+                    ->join('products as p', 'p.id', 'b.serviceId')
+                    ->join('promotionBundles as pb', 'pb.id', 'b.promoBundleId')
+                    ->join('promotionMasters as m', 'pb.promoMasterId', 'm.id')
+                    ->select('pb.id', 'p.fullName', 'b.quantity', 'pb.price', 'm.name')
+                    ->where('b.promoBundleId', '=', $valdtl->promoBundleId)
+                    ->get();
+                $kalimat = 'paket bundling layanan ';
+
+                for ($i = 0; $i < count($data); $i++) {
+
+                    if (count($data) == 1) {
+                        $kalimat .= $data[$i]->quantity . ' ' . $data[$i]->fullName;
+                    } else {
+                        if ($i == count($data) - 1) {
+                            $kalimat .= 'dan ' . $data[$i]->quantity . ' ' . $data[$i]->fullName;
+                        } else {
+                            $kalimat .= $data[$i]->quantity . ' ' . $data[$i]->fullName . ', ';
+                        }
+                    }
+                }
+
+                $kalimat .= ' sebesar Rp ' . $data[0]->price;
+
+                $resultBundle[] = [
+                    'id' => $data[0]->id,
+                    'note' => $kalimat,
+                    'name' => $data[0]->name
+                ];
+            }
+        }
+
+        foreach ($dataProducts as $value) {
+            // return $value;
+            $res = DB::table('promotionMasters as pm')
+                ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                ->join('promotion_bundle_detail_products as pbd', 'pb.id', 'pbd.promoBundleId')
+                ->join('products as p', 'p.id', 'pbd.productId')
+                ->select(
+                    'pbd.promoBundleId',
+                    'pm.name',
+                )
+                ->where('pl.locationId', '=', $trans->locationId)
+                ->where('pbd.productId', '=', $value['productId'])
+                ->where('pcg.customerGroupId', '=', $custGroup)
+                ->where('pm.startDate', '<=', Carbon::now())
+                ->where('pm.endDate', '>=', Carbon::now())
+                ->where('pm.status', '=', 1)
+                ->get();
+
+            foreach ($res as $valdtl) {
+
+                $data = DB::table('promotion_bundle_detail_products as b')
+                    ->join('products as p', 'p.id', 'b.productId')
+                    ->join('promotionBundles as pb', 'pb.id', 'b.promoBundleId')
+                    ->join('promotionMasters as m', 'pb.promoMasterId', 'm.id')
+                    ->select('pb.id', 'p.fullName', 'b.quantity', 'pb.price', 'm.name')
+                    ->where('b.promoBundleId', '=', $valdtl->promoBundleId)
+                    ->get();
+                $kalimat = 'paket bundling produk ';
+
+                for ($i = 0; $i < count($data); $i++) {
+
+                    if (count($data) == 1) {
+                        $kalimat .= $data[$i]->quantity . ' ' . $data[$i]->fullName;
+                    } else {
+                        if ($i == count($data) - 1) {
+                            $kalimat .= 'dan ' . $data[$i]->quantity . ' ' . $data[$i]->fullName;
+                        } else {
+                            $kalimat .= $data[$i]->quantity . ' ' . $data[$i]->fullName . ', ';
+                        }
+                    }
+                }
+
+                $kalimat .= ' sebesar Rp ' . $data[0]->price;
+
+                $resultBundle[] = [
+                    'id' => $data[0]->id,
+                    'note' => $kalimat,
+                    'name' => $data[0]->name
+                ];
+            }
+        }
+
+        $resultBasedSales = [];
+
+        $totalTransaction = 0;
+        foreach ($dataRecipes as $value) {
+            $totalTransaction += $value['priceOverall'];
+        }
+
+        foreach ($dataServices as $value) {
+            $totalTransaction += $value['priceOverall'];
+        }
+
+        foreach ($dataProducts as $value) {
+            $totalTransaction += $value['priceOverall'];
+        }
+
+        $findBasedSales = DB::table('promotionMasters as pm')
+            ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
+            ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+            ->join('promotionBasedSales as bs', 'pm.id', 'bs.promoMasterId')
+            ->where('pl.locationId', '=', $trans->locationId)
+            ->where('bs.minPurchase', '<', $totalTransaction)
+            ->where('bs.maxPurchase', '>', $totalTransaction)
+            ->where('pcg.customerGroupId', '=', $custGroup)
+            ->where('pm.startDate', '<=', Carbon::now())
+            ->where('pm.endDate', '>=', Carbon::now())
+            ->where('pm.status', '=', 1)
+            ->get();
+
+        $text = "";
+
+        foreach ($findBasedSales as $sale) {
+
+            if ($sale->percentOrAmount == 'percent') {
+                $text = 'Diskon ' . $sale->percent . ' % setiap pembelian minimal Rp ' . $sale->minPurchase;
+            } elseif ($sale->percentOrAmount == 'amount') {
+                $text = 'Potongan harga sebesar Rp ' . $sale->amount . ' setiap pembelian minimal Rp ' . $sale->minPurchase;
+            }
+
+            $resultBasedSales[] = [
+                'id' => $sale->id,
+                'note' => $text,
+                'name' => $sale->name
+            ];
+
+            $text = "";
+        }
+
+        $result = [
+            'freeItem' => $tempFree,
+            'discount' => $tempDiscount,
+            'bundles' => $resultBundle,
+            'basedSales' => $resultBasedSales,
+        ];
+
+        return response()->json($result);
+    }
+
+    public function promoResult(Request $request) {}
+
+    public function paymentInpatient(Request $request) {}
 
     public function createList(Request $request)
     {
