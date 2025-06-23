@@ -1559,6 +1559,7 @@ class TransactionPetShopController
             ->leftJoin('location as l', 'l.id', '=', 't.locationId')
             ->leftJoin('customer as c', 'c.id', '=', 't.customerId')
             ->leftJoin('users as u', 'u.id', '=', 't.userId')
+            ->leftJoin('paymentmethod as pm', 'pm.id', '=', 't.paymentMethod') 
             ->select(
                 't.id',
                 't.registrationNo',
@@ -1567,19 +1568,12 @@ class TransactionPetShopController
                 't.created_at',
                 'l.locationName as locationName',
                 'c.firstName as customerName',
-                't.paymentMethod',
+                'pm.name as paymentMethod',
                 'u.firstName as createdBy'
             )
             ->where('t.id', $transactionId)
             ->where('t.isDeleted', 0)
             ->first();
-
-        if (!$transaction) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Data transaksi tidak ditemukan.'
-            ], 404);
-        }
 
         $transaction->createdAt = Carbon::parse($transaction->created_at)->format('d/m/Y H:i:s');
         $transaction->proofOfPayment = $transaction->proofOfPayment ?? null;
