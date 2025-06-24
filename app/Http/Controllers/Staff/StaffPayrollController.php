@@ -69,6 +69,15 @@ class StaffPayrollController
             'sp.totalDeduction',
             'sp.netPay'
         ];
+
+        if ($request->startDate) {
+            $data = $data->whereDate('sp.payrollDate', '>=', $request->startDate);
+        }
+
+        if ($request->endDate) {
+            $data = $data->whereDate('sp.payrollDate', '<=', $request->endDate);
+        }
+
         $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payrollDate';
         $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
 
@@ -83,7 +92,6 @@ class StaffPayrollController
         return responseIndex($totalPaging, $data);
     }
 
-
     public function create(Request $request)
     {
         $user = $request->user();
@@ -91,12 +99,10 @@ class StaffPayrollController
 
         $staff = User::findOrFail($request->staffId);
 
-        // Validasi: Jika user bukan dari job title yang diizinkan, hanya bisa buat payroll untuk diri sendiri
         if (!in_array($user->jobTitleId, $allowedToCreateAll) && $user->id !== $staff->id) {
             return response()->json(['message' => 'You are not authorized to create payroll for this staff.'], 403);
         }
 
-        // Routing berdasarkan job title staff (bukan pembuat)
         switch ($staff->jobTitleId) {
             case 1: // Cashier
                 return $this->createPayrollCashier($request, $staff);
@@ -104,11 +110,15 @@ class StaffPayrollController
                 return $this->createPayrollParamedic($request, $staff);
             case 5: // Veterinary Nurse (Helper)
                 return $this->createPayrollVetNurse($request, $staff);
+            case 17: // Vet Doctor
+                return $this->createPayrollVetDoctor($request, $staff);
+            case 18: // QC
+                return $this->createPayrollQualityControl($request, $staff);
+
             default:
                 return response()->json(['message' => 'Job title not supported for payroll creation.'], 400);
         }
     }
-
 
     private function createPayrollVetNurse(Request $request, $staff)
     {
@@ -258,9 +268,9 @@ class StaffPayrollController
             'payrollDate' => 'required|date',
             'startDate' => 'required|date',
             'endDate' => 'required|date',
-            'basicIncome' => 'numeric|min:0',
-            'annualIncrementIncentive' => 'numeric|min:0',
-            'income' => 'array',
+            'income' => 'required|array',
+            'income.basicIncome' => 'numeric|min:0',
+            'income.annualIncrementIncentive' => 'numeric|min:0',
             'expense' => 'array',
         ]);
 
@@ -284,6 +294,8 @@ class StaffPayrollController
         }
 
         $incomeFields = [
+            'basicIncome',
+            'annualIncrementIncentive',
             'attendanceAllowance',
             'mealAllowance',
             'positionalAllowance',
@@ -293,7 +305,6 @@ class StaffPayrollController
             'memberAchievementBonus',
             'bpjsHealthAllowance',
         ];
-
         foreach ($incomeFields as $field) {
             $income[$field] = $income[$field] ?? 0;
         }
@@ -304,13 +315,12 @@ class StaffPayrollController
             'stockOpnameInventory',
             'lostInventory',
         ];
-
         foreach ($expenseFields as $field) {
             $expense[$field] = $expense[$field] ?? 0;
         }
 
-        $totalIncome = $input['basicIncome']
-            + $input['annualIncrementIncentive']
+        $totalIncome = $income['basicIncome']
+            + $income['annualIncrementIncentive']
             + $income['attendanceAllowance']
             + $income['mealAllowance']
             + $income['positionalAllowance']
@@ -338,9 +348,9 @@ class StaffPayrollController
             'payrollDate' => $input['payrollDate'],
             'startDate' => $input['startDate'],
             'endDate' => $input['endDate'],
-            'basicIncome' => $input['basicIncome'],
-            'annualIncrementIncentive' => $input['annualIncrementIncentive'],
 
+            'basicIncome' => $income['basicIncome'],
+            'annualIncrementIncentive' => $income['annualIncrementIncentive'],
             'attendanceAllowance' => $income['attendanceAllowance'],
             'mealAllowance' => $income['mealAllowance'],
             'positionalAllowance' => $income['positionalAllowance'],
@@ -377,7 +387,11 @@ class StaffPayrollController
             'userId' => $request->user()->id,
         ]);
 
-        return response()->json(['message' => 'Payroll created successfully.', 'data' => $payroll], 201);
+        return response()->json([
+            'message' => 'Payroll created successfully for job title: Cashier',
+            'jobTitle' => 'Cashier',
+            'data' => $payroll
+        ], 201);
     }
 
     private function createPayrollParamedic(Request $request, $staff)
@@ -389,9 +403,9 @@ class StaffPayrollController
             'payrollDate' => 'required|date',
             'startDate' => 'required|date',
             'endDate' => 'required|date',
-            'basicIncome' => 'numeric|min:0',
-            'annualIncrementIncentive' => 'numeric|min:0',
-            'income' => 'array',
+            'income' => 'required|array',
+            'income.basicIncome' => 'numeric|min:0',
+            'income.annualIncrementIncentive' => 'numeric|min:0',
             'expense' => 'array',
         ]);
 
@@ -403,20 +417,19 @@ class StaffPayrollController
         $income = $input['income'] ?? [];
         $expense = $input['expense'] ?? [];
 
-
         $structuredIncome = ['labXrayIncentive', 'longShiftReplacement', 'fullShiftReplacement'];
         foreach ($structuredIncome as $field) {
             $income[$field] = $income[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
         }
-
 
         $structuredExpense = ['absent', 'late', 'notWearingAttribute'];
         foreach ($structuredExpense as $field) {
             $expense[$field] = $expense[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
         }
 
-
         $incomeFields = [
+            'basicIncome',
+            'annualIncrementIncentive',
             'attendanceAllowance',
             'mealAllowance',
             'housingAllowance',
@@ -427,7 +440,6 @@ class StaffPayrollController
             $income[$field] = $income[$field] ?? 0;
         }
 
-
         $expenseFields = [
             'currentMonthCashAdvance',
             'remainingDebtLastMonth',
@@ -437,9 +449,8 @@ class StaffPayrollController
             $expense[$field] = $expense[$field] ?? 0;
         }
 
-
-        $totalIncome = $input['basicIncome']
-            + $input['annualIncrementIncentive']
+        $totalIncome = $income['basicIncome']
+            + $income['annualIncrementIncentive']
             + $income['attendanceAllowance']
             + $income['mealAllowance']
             + $income['housingAllowance']
@@ -448,7 +459,6 @@ class StaffPayrollController
             + $income['labXrayIncentive']['total']
             + $income['longShiftReplacement']['total']
             + $income['fullShiftReplacement']['total'];
-
 
         $totalDeduction = $expense['absent']['total']
             + $expense['late']['total']
@@ -466,16 +476,14 @@ class StaffPayrollController
             'payrollDate' => $input['payrollDate'],
             'startDate' => $input['startDate'],
             'endDate' => $input['endDate'],
-            'basicIncome' => $input['basicIncome'],
-            'annualIncrementIncentive' => $input['annualIncrementIncentive'],
 
-
+            'basicIncome' => $income['basicIncome'],
+            'annualIncrementIncentive' => $income['annualIncrementIncentive'],
             'attendanceAllowance' => $income['attendanceAllowance'],
             'mealAllowance' => $income['mealAllowance'],
             'housingAllowance' => $income['housingAllowance'],
             'clinicTurnoverBonus' => $income['clinicTurnoverBonus'],
             'bpjsHealthAllowance' => $income['bpjsHealthAllowance'],
-
 
             'labXrayIncentiveAmount' => $income['labXrayIncentive']['amount'],
             'labXrayIncentiveUnitNominal' => $income['labXrayIncentive']['unitNominal'],
@@ -489,7 +497,6 @@ class StaffPayrollController
             'fullShiftReplacementUnitNominal' => $income['fullShiftReplacement']['unitNominal'],
             'fullShiftReplacementTotal' => $income['fullShiftReplacement']['total'],
 
-
             'absentAmount' => $expense['absent']['amount'],
             'absentUnitNominal' => $expense['absent']['unitNominal'],
             'absentTotal' => $expense['absent']['total'],
@@ -502,11 +509,9 @@ class StaffPayrollController
             'notWearingAttributeUnitNominal' => $expense['notWearingAttribute']['unitNominal'],
             'notWearingAttributeTotal' => $expense['notWearingAttribute']['total'],
 
-
             'currentMonthCashAdvance' => $expense['currentMonthCashAdvance'],
             'remainingDebtLastMonth' => $expense['remainingDebtLastMonth'],
             'stockOpnameInventory' => $expense['stockOpnameInventory'],
-
 
             'totalIncome' => $totalIncome,
             'totalDeduction' => $totalDeduction,
@@ -521,8 +526,253 @@ class StaffPayrollController
         ], 201);
     }
 
+    private function createPayrollVetDoctor(Request $request, $staff)
+    {
+        $request->validate([
+            'staffId' => 'required|integer',
+            'name' => 'required|string',
+            'locationId' => 'required|integer',
+            'payrollDate' => 'required|date',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date',
+            'basicIncome' => 'numeric|min:0',
+            'income' => 'array',
+            'expense' => 'array',
+        ]);
 
+        if ($staff->jobTitleId !== 17) {
+            return response()->json(['message' => 'Staff is not a Veterinary Doctor.'], 400);
+        }
 
+        $input = $request->all();
+        $income = $input['income'] ?? [];
+        $expense = $input['expense'] ?? [];
+
+        $structuredIncome = [
+            'patientIncentive',
+            'labXrayIncentive',
+            'longShiftReplacement',
+            'fullShiftReplacement',
+        ];
+        foreach ($structuredIncome as $field) {
+            $income[$field] = $income[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
+        }
+
+        $flatIncomeFields = [
+            'attendanceAllowance',
+            'mealAllowance',
+            'clinicTurnoverBonus',
+            'bpjsHealthAllowance',
+        ];
+        foreach ($flatIncomeFields as $field) {
+            $income[$field] = $income[$field] ?? 0;
+        }
+
+        $structuredExpense = [
+            'absent',
+            'late',
+            'notWearingAttribute',
+        ];
+        foreach ($structuredExpense as $field) {
+            $expense[$field] = $expense[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
+        }
+
+        $flatExpenseFields = [
+            'currentMonthCashAdvance',
+            'remainingDebtLastMonth',
+            'stockOpnameInventory',
+            'stockOpnameLost',
+            'stockOpnameExpired',
+        ];
+        foreach ($flatExpenseFields as $field) {
+            $expense[$field] = $expense[$field] ?? 0;
+        }
+
+        $totalIncome = $income['basicIncome']
+            + $income['attendanceAllowance']
+            + $income['mealAllowance']
+            + $income['clinicTurnoverBonus']
+            + $income['bpjsHealthAllowance']
+            + $income['patientIncentive']['total']
+            + $income['labXrayIncentive']['total']
+            + $income['longShiftReplacement']['total']
+            + $income['fullShiftReplacement']['total'];
+
+        $totalDeduction = $expense['absent']['total']
+            + $expense['late']['total']
+            + $expense['notWearingAttribute']['total']
+            + $expense['currentMonthCashAdvance']
+            + $expense['remainingDebtLastMonth']
+            + $expense['stockOpnameInventory']
+            + $expense['stockOpnameLost']
+            + $expense['stockOpnameExpired'];
+
+        $netPay = $totalIncome - $totalDeduction;
+
+        $payroll = StaffPayroll::create([
+            'staffId' => $input['staffId'],
+            'name' => $input['name'],
+            'locationId' => $input['locationId'],
+            'payrollDate' => $input['payrollDate'],
+            'startDate' => $input['startDate'],
+            'endDate' => $input['endDate'],
+
+            'basicIncome' => $income['basicIncome'],
+            'attendanceAllowance' => $income['attendanceAllowance'],
+            'mealAllowance' => $income['mealAllowance'],
+            'clinicTurnoverBonus' => $income['clinicTurnoverBonus'],
+            'bpjsHealthAllowance' => $income['bpjsHealthAllowance'],
+
+            'patientIncentiveAmount' => $income['patientIncentive']['amount'],
+            'patientIncentiveUnitNominal' => $income['patientIncentive']['unitNominal'],
+            'patientIncentiveTotal' => $income['patientIncentive']['total'],
+
+            'labXrayIncentiveAmount' => $income['labXrayIncentive']['amount'],
+            'labXrayIncentiveUnitNominal' => $income['labXrayIncentive']['unitNominal'],
+            'labXrayIncentiveTotal' => $income['labXrayIncentive']['total'],
+
+            'longShiftReplacementAmount' => $income['longShiftReplacement']['amount'],
+            'longShiftReplacementUnitNominal' => $income['longShiftReplacement']['unitNominal'],
+            'longShiftReplacementTotal' => $income['longShiftReplacement']['total'],
+
+            'fullShiftReplacementAmount' => $income['fullShiftReplacement']['amount'],
+            'fullShiftReplacementUnitNominal' => $income['fullShiftReplacement']['unitNominal'],
+            'fullShiftReplacementTotal' => $income['fullShiftReplacement']['total'],
+
+            'absentAmount' => $expense['absent']['amount'],
+            'absentUnitNominal' => $expense['absent']['unitNominal'],
+            'absentTotal' => $expense['absent']['total'],
+
+            'lateAmount' => $expense['late']['amount'],
+            'lateUnitNominal' => $expense['late']['unitNominal'],
+            'lateTotal' => $expense['late']['total'],
+
+            'notWearingAttributeAmount' => $expense['notWearingAttribute']['amount'],
+            'notWearingAttributeUnitNominal' => $expense['notWearingAttribute']['unitNominal'],
+            'notWearingAttributeTotal' => $expense['notWearingAttribute']['total'],
+
+            'currentMonthCashAdvance' => $expense['currentMonthCashAdvance'],
+            'remainingDebtLastMonth' => $expense['remainingDebtLastMonth'],
+            'stockOpnameInventory' => $expense['stockOpnameInventory'],
+            'stockOpnameLost' => $expense['stockOpnameLost'],
+            'stockOpnameExpired' => $expense['stockOpnameExpired'],
+
+            'totalIncome' => $totalIncome,
+            'totalDeduction' => $totalDeduction,
+            'netPay' => $netPay,
+            'userId' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Payroll created successfully for job title: Veterinary Doctor',
+            'jobTitle' => 'Veterinary Doctor',
+            'data' => $payroll
+        ], 201);
+    }
+
+    private function createPayrollQualityControl(Request $request, $staff)
+    {
+        $request->validate([
+            'staffId' => 'required|integer',
+            'name' => 'required|string',
+            'locationId' => 'required|integer',
+            'payrollDate' => 'required|date',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date',
+            'income' => 'required|array',
+            'expense' => 'required|array',
+        ]);
+
+        if ($staff->jobTitleId !== 18) {
+            return response()->json(['message' => 'Staff is not a Quality Control.'], 400);
+        }
+
+        $input = $request->all();
+        $income = $input['income'];
+        $expense = $input['expense'];
+
+        $incomeFields = [
+            'basicIncome',
+            'annualIncrementIncentive',
+            'attendanceAllowance',
+            'entertainAllowance',
+            'transportAllowance',
+            'positionalAllowance',
+            'housingAllowance',
+            'bpjsHealthAllowance',
+            'turnoverAchievementBonus'
+        ];
+        foreach ($incomeFields as $field) {
+            $income[$field] = $income[$field] ?? 0;
+        }
+
+        $structuredExpense = ['absent', 'late', 'notWearingAttribute'];
+        foreach ($structuredExpense as $field) {
+            $expense[$field] = $expense[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
+        }
+
+        $flatExpense = ['currentMonthCashAdvance', 'remainingDebtLastMonth', 'stockOpnameInventory'];
+        foreach ($flatExpense as $field) {
+            $expense[$field] = $expense[$field] ?? 0;
+        }
+
+        $totalIncome = array_sum(array_intersect_key($income, array_flip($incomeFields)));
+        $totalDeduction =
+            $expense['absent']['total'] +
+            $expense['late']['total'] +
+            $expense['notWearingAttribute']['total'] +
+            $expense['currentMonthCashAdvance'] +
+            $expense['remainingDebtLastMonth'] +
+            $expense['stockOpnameInventory'];
+
+        $netPay = $totalIncome - $totalDeduction;
+
+        $payroll = StaffPayroll::create([
+            'staffId' => $input['staffId'],
+            'name' => $input['name'],
+            'locationId' => $input['locationId'],
+            'payrollDate' => $input['payrollDate'],
+            'startDate' => $input['startDate'],
+            'endDate' => $input['endDate'],
+
+            'basicIncome' => $income['basicIncome'],
+            'annualIncrementIncentive' => $income['annualIncrementIncentive'],
+            'attendanceAllowance' => $income['attendanceAllowance'],
+            'entertainAllowance' => $income['entertainAllowance'],
+            'transportAllowance' => $income['transportAllowance'],
+            'positionalAllowance' => $income['positionalAllowance'],
+            'housingAllowance' => $income['housingAllowance'],
+            'bpjsHealthAllowance' => $income['bpjsHealthAllowance'],
+            'turnoverAchievementBonus' => $income['turnoverAchievementBonus'],
+
+            'absentAmount' => $expense['absent']['amount'],
+            'absentUnitNominal' => $expense['absent']['unitNominal'],
+            'absentTotal' => $expense['absent']['total'],
+
+            'lateAmount' => $expense['late']['amount'],
+            'lateUnitNominal' => $expense['late']['unitNominal'],
+            'lateTotal' => $expense['late']['total'],
+
+            'notWearingAttributeAmount' => $expense['notWearingAttribute']['amount'],
+            'notWearingAttributeUnitNominal' => $expense['notWearingAttribute']['unitNominal'],
+            'notWearingAttributeTotal' => $expense['notWearingAttribute']['total'],
+
+            'currentMonthCashAdvance' => $expense['currentMonthCashAdvance'],
+            'remainingDebtLastMonth' => $expense['remainingDebtLastMonth'],
+            'stockOpnameInventory' => $expense['stockOpnameInventory'],
+
+            'totalIncome' => $totalIncome,
+            'totalDeduction' => $totalDeduction,
+            'netPay' => $netPay,
+            'userId' => $request->user()->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Payroll created successfully for job title: Quality Control',
+            'jobTitle' => 'Quality Control',
+            'data' => $payroll
+        ], 201);
+    }
     public function export(Request $request)
     {
         if ($request->user()->roleId != 1) {
@@ -535,15 +785,15 @@ class StaffPayrollController
             ->join('location as l', 'sp.locationId', '=', 'l.id')
             ->select(
                 'sp.name',
-                'sp.payroll_date',
+                'sp.payrollDate',
                 'l.locationName',
-                'sp.basic_income',
-                'sp.annual_increment_incentive',
-                'sp.absent_days',
-                'sp.late_days',
-                'sp.total_income',
-                'sp.total_deduction',
-                'sp.net_pay'
+                'sp.basicIncome',
+                'sp.annualIncrementIncentive',
+                'sp.absentDays',
+                'sp.lateDays',
+                'sp.totalIncome',
+                'sp.totalDeduction',
+                'sp.netPay'
             )
             ->get();
 
@@ -571,15 +821,15 @@ class StaffPayrollController
         foreach ($data as $item) {
             $sheet->setCellValue("A{$row}", $no);
             $sheet->setCellValue("B{$row}", $item->name);
-            $sheet->setCellValue("C{$row}", $item->payroll_date);
+            $sheet->setCellValue("C{$row}", $item->payrollDate);
             $sheet->setCellValue("D{$row}", $item->locationName);
-            $sheet->setCellValue("E{$row}", $item->basic_income);
-            $sheet->setCellValue("F{$row}", $item->annual_increment_incentive);
-            $sheet->setCellValue("G{$row}", $item->absent_days);
-            $sheet->setCellValue("H{$row}", $item->late_days);
-            $sheet->setCellValue("I{$row}", $item->total_income);
-            $sheet->setCellValue("J{$row}", $item->total_deduction);
-            $sheet->setCellValue("K{$row}", $item->net_pay);
+            $sheet->setCellValue("E{$row}", $item->basicIncome);
+            $sheet->setCellValue("F{$row}", $item->annualIncrementIncentive);
+            $sheet->setCellValue("G{$row}", $item->absentDays);
+            $sheet->setCellValue("H{$row}", $item->lateDays);
+            $sheet->setCellValue("I{$row}", $item->totalIncome);
+            $sheet->setCellValue("J{$row}", $item->totalDeduction);
+            $sheet->setCellValue("K{$row}", $item->netPay);
 
             $sheet->getStyle("A{$row}:K{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle("A{$row}:K{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
@@ -600,7 +850,33 @@ class StaffPayrollController
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export_Staff_Payroll.xlsx"',
+            'Content-Disposition' => 'attachment; filename="Export Staff Payroll.xlsx"',
         ]);
+    }
+
+    public function delete(Request $request)
+    {
+        $user = $request->user();
+
+        $allowedJobTitles = [13, 14, 15];
+        if (!in_array($user->jobTitleId, $allowedJobTitles)) {
+            return response()->json([
+                'result' => 'forbidden',
+                'message' => 'You are not authorized to delete payroll records.'
+            ], 403);
+        }
+
+        $request->validate([
+            'id' => 'required|array',
+            'id.*' => 'integer|exists:staff_payroll,id'
+        ]);
+
+        $count = StaffPayroll::whereIn('id', $request->id)
+            ->update(['isDeleted' => 1]);
+
+        return response()->json([
+            'result' => 'success',
+            'message' => "$count payroll record(s) successfully deleted."
+        ], 200);
     }
 }

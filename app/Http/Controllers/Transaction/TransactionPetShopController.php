@@ -1226,6 +1226,7 @@ class TransactionPetShopController
                 'message' => 'Unauthorized. Only admin can export data.'
             ], 403);
         }
+        $filter = $request->only(['locationId', 'customerGroupId']);
 
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
@@ -1234,6 +1235,12 @@ class TransactionPetShopController
             ->leftJoin('users as u', 'tp.userId', '=', 'u.id')
             ->leftJoin('paymentmethod as pm', 'tp.paymentMethod', '=', 'pm.id')
             ->where('tp.isDeleted', '=', 0)
+            ->when(!empty($filter['locationId']), function ($query) use ($filter) {
+                $query->whereIn('tp.locationId', $filter['locationId']);
+            })
+            ->when(!empty($filter['customerGroupId']), function ($query) use ($filter) {
+                $query->whereIn('c.customerGroupId', $filter['customerGroupId']);
+            })
             ->select(
                 'tp.id',
                 'tp.registrationNo',
@@ -1267,15 +1274,15 @@ class TransactionPetShopController
 
         $sheet->setCellValue('A1', 'No');
         $sheet->setCellValue('B1', 'Transaction No');
-        $sheet->setCellValue('C1', 'Cabang');
+        $sheet->setCellValue('C1', 'Branch');
         $sheet->setCellValue('D1', 'Customer Name');
         $sheet->setCellValue('E1', 'Customer Group');
         $sheet->setCellValue('F1', 'Total Use Promo');
         $sheet->setCellValue('G1', 'Total Item');
         $sheet->setCellValue('H1', 'Amount Transaction');
         $sheet->setCellValue('I1', 'Payment Method');
-        $sheet->setCellValue('J1', 'Dibuat Pada');
-        $sheet->setCellValue('K1', 'Dibuat Oleh');
+        $sheet->setCellValue('J1', 'Created At');
+        $sheet->setCellValue('K1', 'Created By');
 
         $sheet->getStyle('A1:K1')->getFont()->setBold(true);
         $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
@@ -1559,7 +1566,7 @@ class TransactionPetShopController
             ->leftJoin('location as l', 'l.id', '=', 't.locationId')
             ->leftJoin('customer as c', 'c.id', '=', 't.customerId')
             ->leftJoin('users as u', 'u.id', '=', 't.userId')
-            ->leftJoin('paymentmethod as pm', 'pm.id', '=', 't.paymentMethod') 
+            ->leftJoin('paymentmethod as pm', 'pm.id', '=', 't.paymentMethod')
             ->select(
                 't.id',
                 't.registrationNo',
@@ -1763,7 +1770,7 @@ class TransactionPetShopController
             ->where('t.id', $id)
             ->select(
                 't.*',
-                // 't.no_nota',
+                't.no_nota',
                 'c.memberNo',
                 'c.firstName',
                 'ct.phoneNumber'
@@ -1831,13 +1838,13 @@ class TransactionPetShopController
 
         $nomorUrut = str_pad($monthlyTransactionCount, 4, '0', STR_PAD_LEFT);
 
-        $namaFile = "INV_PS_{$locationId}_{$tahun}_{$bulan}_{$nomorUrut}.pdf";
-
+        // $namaFile = "INV/PS/{$locationId}/{$tahun}/{$bulan}/{$nomorUrut}.pdf";
+        $namaFile = str_replace('/', '_', $transaction->no_nota ?? 'INV') . '.pdf';
 
         $data = [
             'locations'      => $formattedLocations,
             'nota_date'      => Carbon::parse($transaction->created_at)->format('d/m/Y'),
-            'no_nota'    => $transaction->no_nota ?? '___________',
+            'no_nota'        => $transaction->no_nota ?? '___________',
             'member_no'      => $transaction->memberNo ?? '-',
             'customer_name'  => $transaction->firstName ?? '-',
             'phone_number'   => $transaction->phoneNumber ?? '-',

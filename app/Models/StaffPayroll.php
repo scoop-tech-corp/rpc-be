@@ -21,29 +21,58 @@ class StaffPayroll extends Model
         'attendanceAllowance',
         'mealAllowance',
         'positionalAllowance',
+
         'labXrayIncentiveAmount',
         'labXrayIncentiveUnitNominal',
         'labXrayIncentiveTotal',
+
         'groomingIncentiveAmount',
         'groomingIncentiveUnitNominal',
         'groomingIncentiveTotal',
+
         'clinicTurnoverBonus',
+
         'replacementDaysAmount',
         'replacementDaysUnitNominal',
         'replacementDaysTotal',
+
+        'longShiftReplacementAmount',
+        'longShiftReplacementUnitNominal',
+        'longShiftReplacementTotal',
+
+        'fullShiftReplacementAmount',
+        'fullShiftReplacementUnitNominal',
+        'fullShiftReplacementTotal',
+
+        'patientIncentiveAmount',
+        'patientIncentiveUnitNominal',
+        'patientIncentiveTotal',
+
         'bpjsHealthAllowance',
+
         'absentAmount',
         'absentUnitNominal',
         'absentTotal',
+
         'notWearingAttributeAmount',
         'notWearingAttributeUnitNominal',
         'notWearingAttributeTotal',
+
         'lateAmount',
         'lateUnitNominal',
         'lateTotal',
+
         'currentMonthCashAdvance',
         'remainingDebtLastMonth',
+
         'stockOpnameInventory',
+        'stockOpnameLost',
+        'stockOpnameExpired',
+        'entertainAllowance',
+        'transportAllowance',
+        'housingAllowance',
+        'turnoverAchievementBonus',
+
         'totalIncome',
         'totalDeduction',
         'netPay',
