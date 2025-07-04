@@ -78,10 +78,27 @@ class StaffPayroll extends Model
         'netPay',
         'userId',
         'startDate',
-        'endDate'
+        'endDate',
+
+        'functionalLeaderAllowance',
+        'hardshipAllowance',
+        'familyAllowance',
+
+        'bonusGroomingAchievement',
+        'bonusSalesAchievement',
     ];
 
     protected $casts = [
         'payroll_date' => 'date',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'staffId');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class, 'locationId');
+    }
 }

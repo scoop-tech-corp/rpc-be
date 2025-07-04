@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use DB;
+use App\Models\Staff\JobTitle;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
-use DB;
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -19,7 +20,10 @@ class User extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $fillable = [
-        'name', 'password', 'isDeleted','isLogin'
+        'name',
+        'password',
+        'isDeleted',
+        'isLogin'
     ];
 
     /**
@@ -28,7 +32,8 @@ class User extends Authenticatable implements JWTSubject
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
     /**
@@ -48,7 +53,8 @@ class User extends Authenticatable implements JWTSubject
             ->select(
                 'id',
                 'email',
-                'password',)
+                'password',
+            )
             ->where([
                 ['email', '=', $this->email],
                 ['isDeleted', '=', 0]
@@ -59,8 +65,6 @@ class User extends Authenticatable implements JWTSubject
 
             return $this->getKey();
         }
-
-
     }
     public function getJWTCustomClaims()
     {
@@ -73,5 +77,10 @@ class User extends Authenticatable implements JWTSubject
     public function chat()
     {
         return $this->hasMany(Chat::class, 'toUserId', 'id');
+    }
+
+    public function jobTitle()
+    {
+        return $this->belongsTo(JobTitle::class, 'jobTitleId');
     }
 }
