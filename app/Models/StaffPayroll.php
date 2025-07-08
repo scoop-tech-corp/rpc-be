@@ -101,4 +101,9 @@ class StaffPayroll extends Model
     {
         return $this->belongsTo(Location::class, 'locationId');
     }
+
+    public function staff()
+    {
+        return $this->belongsTo(User::class, 'staffId');
+    }
 }

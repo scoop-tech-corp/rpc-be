@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class StaffPayrollController
 {
@@ -1113,7 +1114,8 @@ class StaffPayrollController
                 'staffId' => $payroll->staffId,
                 'name' => $payroll->name,
                 'jobTitle' => $payroll->user->jobTitle->name ?? null,
-                'location' => $payroll->location->locationName ?? null,
+                'locationId' => $payroll->location->id ?? null,
+                'locationName' => $payroll->location->locationName ?? null,
                 'payrollDate' => $payroll->payrollDate,
                 'startDate' => $payroll->startDate,
                 'endDate' => $payroll->endDate,
@@ -1462,5 +1464,165 @@ class StaffPayrollController
             'result' => 'success',
             'message' => "$count payroll record(s) successfully deleted."
         ], 200);
+    }
+
+
+    public function generatePayrollSlip(Request $request)
+    {
+        setlocale(LC_TIME, 'id_ID');
+        Carbon::setLocale('id');
+        ini_set('memory_limit', '256M');
+        set_time_limit(120);
+
+        $request->validate([
+            'id' => 'required|integer|exists:staff_payroll,id'
+        ]);
+
+        try {
+
+            $payroll = StaffPayroll::select([
+                'id',
+                'staffId',
+                'payrollDate',
+                'totalIncome',
+                'totalDeduction',
+                'netPay',
+                'userId',
+                'basicIncome',
+                'annualIncrementIncentive',
+                'attendanceAllowance',
+                'mealAllowance',
+                'entertainAllowance',
+                'transportAllowance',
+                'positionalAllowance',
+                'functionalLeaderAllowance',
+                'hardshipAllowance',
+                'familyAllowance',
+                'bpjsHealthAllowance',
+                'clinicTurnoverBonus',
+                'turnoverAchievementBonus',
+                'bonusGroomingAchievement',
+                'bonusSalesAchievement',
+                'replacementDaysTotal',
+                'longShiftReplacementTotal',
+                'fullShiftReplacementTotal',
+                'patientIncentiveTotal',
+                'labXrayIncentiveTotal',
+                'groomingIncentiveTotal',
+                'absentTotal',
+                'notWearingAttributeTotal',
+                'lateTotal',
+                'currentMonthCashAdvance',
+                'remainingDebtLastMonth',
+                'stockOpnameInventory',
+                'stockOpnameLost',
+                'stockOpnameExpired'
+            ])->with(['staff' => function ($query) {
+                $query->select('id', 'firstName', 'registrationNo', 'startDate', 'jobTitleId')
+                    ->with(['jobTitle' => function ($q) {
+                        $q->select('id', 'jobName');
+                    }]);
+            }])->findOrFail($request->id);
+
+            $staff = $payroll->staff;
+
+            $creator = User::select('id', 'firstName')
+                ->findOrFail($payroll->userId);
+
+            $payrollDate = Carbon::parse($payroll->payrollDate);
+            $period = $payrollDate->translatedFormat('F Y');
+            $slipDate = $payrollDate->translatedFormat('d F Y');
+
+            $incomeFields = $this->buildIncomeFields($payroll);
+            $expenseFields = $this->buildExpenseFields($payroll);
+
+            $pdf = Pdf::loadView('payroll.salary-slip', [
+                'payroll' => $payroll,
+                'user' => $staff,
+                'userId' => $creator,
+                'period' => $period,
+                'slipDate' => $slipDate,
+                'incomeFields' => $incomeFields,
+                'expenseFields' => $expenseFields,
+            ])
+                ->setPaper('A4');
+            // ->setOptions([
+            //     'isHtml5ParserEnabled' => true,
+            //     'isPhpEnabled' => true,
+            //     'defaultFont' => 'Arial',
+            //     'dpi' => 96,
+            //     'defaultPaperSize' => 'A4',
+            //     'isRemoteEnabled' => true,
+            // ]);
+
+            $filename = 'Slip_Gaji_' . str_replace(' ', '_', $staff->fullname) . '_' . str_replace(' ', '_', $period) . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            \Log::error('Error generating payroll slip: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal generate slip gaji: ' . $e->getMessage()], 500);
+        }
+    }
+
+    private function buildIncomeFields($payroll)
+    {
+        $incomeKeys = [
+            'basicIncome' => 'Penghasilan Pokok',
+            'annualIncrementIncentive' => 'Insentif Kenaikan Tahunan',
+            'attendanceAllowance' => 'Tunjangan Kehadiran',
+            'mealAllowance' => 'Tunjangan Makan',
+            'entertainAllowance' => 'Tunjangan Entertain',
+            'transportAllowance' => 'Tunjangan Transportasi',
+            'transportationAllowance' => 'Tunjangan Transportasi',
+            'positionalAllowance' => 'Tunjangan Jabatan',
+            'functionalLeaderAllowance' => 'Tunjangan Fungsional Leader',
+            'hardshipAllowance' => 'Tunjangan Hardship',
+            'familyAllowance' => 'Tunjangan Keluarga',
+            'bpjsHealthAllowance' => 'Tunjangan BPJS Kesehatan',
+            'clinicTurnoverBonus' => 'Bonus Omset Klinik',
+            'turnoverAchievementBonus' => 'Bonus Omset',
+            'bonusGroomingAchievement' => 'Bonus Pencapaian Grooming',
+            'bonusSalesAchievement' => 'Bonus Penjualan Barang',
+            'replacementDaysTotal' => 'Upah Pengganti Hari',
+            'longShiftReplacementTotal' => 'Upah Longshift',
+            'fullShiftReplacementTotal' => 'Upah Fullshift',
+            'patientIncentiveTotal' => 'Insentif Pasien',
+            'labXrayIncentiveTotal' => 'Insentif Lab/Xray',
+            'groomingIncentiveTotal' => 'Insentif Grooming',
+        ];
+
+        $incomeFields = [];
+        foreach ($incomeKeys as $key => $label) {
+            $value = $payroll->$key ?? 0;
+            if ($value > 0) {
+                $incomeFields[$label] = $value;
+            }
+        }
+
+        return $incomeFields;
+    }
+
+    private function buildExpenseFields($payroll)
+    {
+        $expenseKeys = [
+            'absentTotal' => 'Tidak Masuk Kerja',
+            'notWearingAttributeTotal' => 'Tidak Mengenakan Atribut',
+            'lateTotal' => 'Keterlambatan',
+            'currentMonthCashAdvance' => 'Kasbon Bulan Berjalan',
+            'remainingDebtLastMonth' => 'Sisa Hutang Bulan Lalu',
+            'stockOpnameInventory' => 'Stock Opname Inventory',
+            'stockOpnameLost' => 'Stock Opname Hilang',
+            'stockOpnameExpired' => 'Stock Opname Expired',
+        ];
+
+        $expenseFields = [];
+        foreach ($expenseKeys as $key => $label) {
+            $value = $payroll->$key ?? 0;
+            if ($value > 0) {
+                $expenseFields[$label] = $value;
+            }
+        }
+
+        return $expenseFields;
     }
 }
