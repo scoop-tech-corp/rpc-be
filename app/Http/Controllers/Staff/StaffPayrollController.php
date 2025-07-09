@@ -110,22 +110,22 @@ class StaffPayrollController
             return response()->json(['message' => 'You are not authorized to create payroll for this staff.'], 403);
         }
 
-        switch (strtolower($staffJobTitle)) {
-            case 'cashier':
+        switch ($staff->jobTitle->id) {
+            case 1:
                 return $this->createPayrollCashier($request, $staff);
-            case 'paramedic':
-                return $this->createPayrollParamedic($request, $staff);
-            case 'vet nurse helper':
-                return $this->createPayrollVetNurseHelper($request, $staff);
-            case 'vet nurse groomer':
+            case 3:
                 return $this->createPayrollVetNurseGroomer($request, $staff);
-            case 'veterinary doctor':
-                return $this->createPayrollVetDoctor($request, $staff);
-            case 'quality control':
-                return $this->createPayrollQualityControl($request, $staff);
-            case 'manager':
+            case 4:
+                return $this->createPayrollParamedic($request, $staff);
+            case 5:
+                return $this->createPayrollVetNurseHelper($request, $staff);
+            case 16:
                 return $this->createPayrollManager($request, $staff);
-            case 'office staff':
+            case 17:
+                return $this->createPayrollVetDoctor($request, $staff);
+            case 18:
+                return $this->createPayrollQualityControl($request, $staff);
+            case 19:
                 return $this->createPayrollOfficeStaff($request, $staff);
             default:
                 return response()->json(['message' => 'Job title not supported for payroll creation.'], 400);
@@ -1114,7 +1114,7 @@ class StaffPayrollController
                 'staffId' => $payroll->staffId,
                 'name' => $payroll->name,
                 'jobTitleId' => $payroll->user->jobTitle->id ?? null,
-                'jobTitleName' => $payroll->user->jobTitle->name ?? null,
+                'jobTitleName' => $payroll->user->jobTitle->jobName ?? null,
                 'locationId' => $payroll->location->id ?? null,
                 'locationName' => $payroll->location->locationName ?? null,
                 'payrollDate' => $payroll->payrollDate,
@@ -1388,16 +1388,16 @@ class StaffPayrollController
         $sheet = $spreadsheet->getSheet(0);
 
         $sheet->setCellValue('A1', 'No');
-        $sheet->setCellValue('B1', 'Name');
-        $sheet->setCellValue('C1', 'Payroll Date');
-        $sheet->setCellValue('D1', 'Branch');
-        $sheet->setCellValue('E1', 'Basic Income');
-        $sheet->setCellValue('F1', 'Annual Incentive');
-        $sheet->setCellValue('G1', 'Absent Days');
-        $sheet->setCellValue('H1', 'Late Days');
-        $sheet->setCellValue('I1', 'Total Income');
-        $sheet->setCellValue('J1', 'Total Deduction');
-        $sheet->setCellValue('K1', 'Net Pay');
+        $sheet->setCellValue('B1', 'Nama');
+        $sheet->setCellValue('C1', 'Tanggal Penggajian');
+        $sheet->setCellValue('D1', 'Cabang');
+        $sheet->setCellValue('E1', 'Penghasilan Pokok');
+        $sheet->setCellValue('F1', 'Insentif Kenaikan Tahunan');
+        $sheet->setCellValue('G1', 'Tidak Masuk Kerja');
+        $sheet->setCellValue('H1', 'Keterlambatan');
+        $sheet->setCellValue('I1', 'Total Penghasilan');
+        $sheet->setCellValue('J1', 'Total Pengurangan');
+        $sheet->setCellValue('K1', 'Penerimaan Bersih');
 
         $sheet->getStyle('A1:K1')->getFont()->setBold(true);
         $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
