@@ -276,7 +276,7 @@
                         <div style="padding: 1px; font-size: 8px; font-weight: bold; margin-bottom: 5px;">
                             RADHIYAN PET AND CARE
                         </div>
-                        <img src="{{ public_path('storage/Logo/Logo-Radhiyan.png') }}" alt="Logo" style="width: 120px;">
+                        <img src="{{ public_path() . '/asset/logo-rpc-full.png' }}" alt="Logo" style="width: 120px;">
                     </td>
 
                     <td class="locations-cell" width="75%">
