@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class promotion_discount_product extends Model
 {
-    protected $table = "promotion_discount_product";
+    protected $table = "promotion_discount_products";
 
     protected $dates = ['created_at', 'deletedAt'];
 
