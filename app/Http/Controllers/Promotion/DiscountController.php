@@ -630,7 +630,7 @@ class DiscountController extends Controller
             // }
 
             $data->quantityBuyItem = $temp->quantityBuyItem;
-            $data->productBuyType = $temp->productBuyType;
+            //$data->productBuyType = $temp->productBuyType;
             $data->productBuyId = $temp->productBuyId;
             $data->productBuyName = $dataProdBuy->fullName;
 
