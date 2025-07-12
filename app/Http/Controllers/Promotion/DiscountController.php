@@ -635,7 +635,7 @@ class DiscountController extends Controller
             $data->productBuyName = $dataProdBuy->fullName;
 
             $data->quantityFreeItem = $temp->quantityFreeItem;
-            $data->productFreeType = $temp->productFreeType;
+            //$data->productFreeType = $temp->productFreeType;
             $data->productFreeId = $temp->productFreeId;
             $data->productFreeName = $dataProdFree->fullName;
 
