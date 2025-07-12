@@ -167,7 +167,7 @@
         <table class="header-table">
             <tr>
                 <td style="width: 25%; vertical-align: top; padding: 0 10px 0 0;">
-                    <img src="{{ public_path('storage/Logo/Logo-Radhiyan.png') }}" style="width: 100px;" alt="Logo">
+                    <img src="{{ public_path() . '/asset/logo-rpc-full.png' }}" style="width: 100px;" alt="Logo">
                 </td>
                 <td style="text-align: left; padding: 0; line-height: 1.3;">
                     <div style="font-weight: bold; font-size: 14px;">RADHIYAN PET & CARE GRUP</div>
