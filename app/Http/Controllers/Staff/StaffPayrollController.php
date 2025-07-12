@@ -148,7 +148,7 @@ class StaffPayrollController
             'expense' => 'array',
         ]);
 
-        if ($staff->jobTitleId !== 5) {
+        if ($staff->jobTitleId !== "5") {
             return response()->json(['message' => 'Staff is not a Veterinary Nurse.'], 400);
         }
 
@@ -512,7 +512,7 @@ class StaffPayrollController
             'expense' => 'array',
         ]);
 
-        if ($staff->jobTitleId !== 1) {
+        if ($staff->jobTitleId !== "1") {
             return response()->json(['message' => 'Staff is not a Cashier.'], 400);
         }
 
@@ -647,7 +647,7 @@ class StaffPayrollController
             'expense' => 'array',
         ]);
 
-        if ($staff->jobTitleId !== 4) {
+        if ($staff->jobTitleId !== "4") {
             return response()->json(['message' => 'Staff is not a Paramedic.'], 400);
         }
 
@@ -778,7 +778,7 @@ class StaffPayrollController
             'expense' => 'array',
         ]);
 
-        if ($staff->jobTitleId !== 17) {
+        if ($staff->jobTitleId !== "17") {
             return response()->json(['message' => 'Staff is not a Veterinary Doctor.'], 400);
         }
 
@@ -921,7 +921,7 @@ class StaffPayrollController
             'expense' => 'required|array',
         ]);
 
-        if ($staff->jobTitleId !== 18) {
+        if ($staff->jobTitleId !== "18") {
             return response()->json(['message' => 'Staff is not a Quality Control.'], 400);
         }
 
