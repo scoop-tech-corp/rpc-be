@@ -53,7 +53,7 @@ class StaffPayrollController
             $data = $data->whereIn('sp.locationId', $locations);
         }
 
-        $jobTitleAllowedToViewAll = [13, 14, 15]; // Finance, Director, Komisaris
+        $jobTitleAllowedToViewAll = [13, 14, 15, 19]; // Finance, Director, Komisaris
         if (!in_array($jobTitleId, $jobTitleAllowedToViewAll)) {
             $data = $data->where('sp.staffId', $user->id);
         }
@@ -96,7 +96,6 @@ class StaffPayrollController
     public function create(Request $request)
     {
         $user = $request->user();
-        $allowedToCreateAll = ['Finance', 'Director', 'Komisaris'];
 
         $staff = User::with('jobTitle')->findOrFail($request->staffId);
 
@@ -106,9 +105,12 @@ class StaffPayrollController
 
         $staffJobTitle = $staff->jobTitle->jobName;
 
-        if (!in_array($user->jobTitle->jobName, $allowedToCreateAll) && $user->id !== $staff->id) {
-            return response()->json(['message' => 'You are not authorized to create payroll for this staff.'], 403);
+        $allowedToCreateAll = [13, 14, 15, 19];
+
+        if (!in_array($staff->jobTitleId, $allowedToCreateAll)) {
+            return response()->json(['message' => 'Not allowed to create payroll for this staff.'], 403);
         }
+
 
         switch ($staff->jobTitle->id) {
             case 1:

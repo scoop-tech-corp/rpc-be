@@ -348,6 +348,13 @@ class MaterialDataController extends Controller
                             'deletedAt' => Carbon::now()
                         ]
                     );
+
+                recentActivity(
+                    $request->user()->id,
+                    'Material Data',
+                    'Delete Weight',
+                    'Delete Weight data with ID ' . $value['id']
+                );
             } elseif ($value['type'] == 'temperature') {
                 ListTemperatureTransaction::where('id', '=', $value['id'])
                     ->update(
@@ -357,43 +364,69 @@ class MaterialDataController extends Controller
                             'deletedAt' => Carbon::now()
                         ]
                     );
+
+                recentActivity(
+                    $request->user()->id,
+                    'Material Data',
+                    'Delete Temperature',
+                    'Delete Temperature data with ID ' . $value['id']
+                );
             } elseif ($value['type'] == 'breath') {
                 ListBreathTransaction::where('id', '=', $value['id'])
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
-                            'isDeleted' => 1,
-                            'deletedAt' => Carbon::now()
-                        ]
-                    );
+                    ->update([
+                        'deletedBy' => $request->user()->id,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]);
 
+                recentActivity(
+                    $request->user()->id,
+                    'Material Data',
+                    'Delete Breath',
+                    'Delete Breath data with ID ' . $value['id']
+                );
             } elseif ($value['type'] == 'sound') {
                 ListSoundTransaction::where('id', '=', $value['id'])
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
-                            'isDeleted' => 1,
-                            'deletedAt' => Carbon::now()
-                        ]
-                    );
+                    ->update([
+                        'deletedBy' => $request->user()->id,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]);
+
+                recentActivity(
+                    $request->user()->id,
+                    'Material Data',
+                    'Delete Sound',
+                    'Delete Sound data with ID ' . $value['id']
+                );
             } elseif ($value['type'] == 'heart') {
                 ListHeartTransaction::where('id', '=', $value['id'])
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
-                            'isDeleted' => 1,
-                            'deletedAt' => Carbon::now()
-                        ]
-                    );
+                    ->update([
+                        'deletedBy' => $request->user()->id,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]);
+
+                recentActivity(
+                    $request->user()->id,
+                    'Material Data',
+                    'Delete Heart',
+                    'Delete Heart data with ID ' . $value['id']
+                );
             } elseif ($value['type'] == 'vaginal') {
                 ListVaginalTransaction::where('id', '=', $value['id'])
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
-                            'isDeleted' => 1,
-                            'deletedAt' => Carbon::now()
-                        ]
-                    );
+                    ->update([
+                        'deletedBy' => $request->user()->id,
+                        'isDeleted' => 1,
+                        'deletedAt' => Carbon::now()
+                    ]);
+
+                recentActivity(
+                    $request->user()->id,
+                    'Material Data',
+                    'Delete Vaginal',
+                    'Delete Vaginal data with ID ' . $value['id']
+                );
             } elseif ($value['type'] == 'paymentmethod') {
                 PaymentMethod::where('id', '=', $value['id'])
                     ->update(
@@ -403,6 +436,13 @@ class MaterialDataController extends Controller
                             'deletedAt' => Carbon::now()
                         ]
                     );
+
+                recentActivity(
+                    $request->user()->id,
+                    'Material Data',
+                    'Delete Paymentmethod',
+                    'Delete Paymentmethod data with ID ' . $value['id']
+                );
             }
         }
 
