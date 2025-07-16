@@ -41,6 +41,7 @@ class StaffPayrollController
                 'sp.totalIncome',
                 'sp.totalDeduction',
                 'sp.netPay',
+                'sp.currentMonthCashAdvance',
                 'l.locationName'
             );
 
@@ -68,7 +69,8 @@ class StaffPayrollController
             'sp.basicIncome',
             'sp.totalIncome',
             'sp.totalDeduction',
-            'sp.netPay'
+            'sp.netPay',
+            'sp.currentMonthCashAdvance'
         ];
 
         if ($request->startDate) {
