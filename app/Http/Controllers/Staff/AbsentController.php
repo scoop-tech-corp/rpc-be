@@ -474,6 +474,7 @@ class AbsentController extends Controller
                 ->where('u.isDeleted', '=', 0);
 
             $tmpstaff = $request->staff;
+            //
 
             if (count($tmpstaff) > 0) {
                 if (!$tmpstaff[0] == null) {
