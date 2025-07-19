@@ -441,11 +441,18 @@ class AbsentController extends Controller
 
 
         if ($request->locationId) {
-            $locations = Location::select('id', 'locationName')
+
+            $locations = DB::table('location')
+                ->select('id', 'locationName')
+                ->where('isDeleted', '=', 0)
                 ->whereIn('id', $request->locationId)
                 ->get();
+
         } else {
-            $locations = Location::select('id', 'locationName')->get();
+            $locations = DB::table('location')
+                ->select('id', 'locationName')
+                ->where('isDeleted', '=', 0)
+                ->get();
         }
 
         $startDataRow = 3; // Data dimulai dari baris ke-3
