@@ -473,9 +473,14 @@ class AbsentController extends Controller
                 ->where('ul.locationId', '=', $loc->id)
                 ->where('u.isDeleted', '=', 0);
 
-            if ($request->staff) {
-                $users = $users->whereIn('u.id', $request->staff);
+            $tmpstaff = $request->staff;
+
+            if (count($tmpstaff) > 0) {
+                if (!$tmpstaff[0] == null) {
+                    $users = $users->whereIn('u.id', $tmpstaff);
+                }
             }
+
             $users = $users->get();
 
             foreach ($users as $usr) {
