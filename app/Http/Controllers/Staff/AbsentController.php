@@ -439,21 +439,19 @@ class AbsentController extends Controller
             $colIndex++;
         }
 
+        $tmplocations = $request->locationId;
 
-        if ($request->locationId) {
+        $locations = DB::table('location')
+            ->select('id', 'locationName')
+            ->where('isDeleted', '=', 0);
 
-            $locations = DB::table('location')
-                ->select('id', 'locationName')
-                ->where('isDeleted', '=', 0)
-                ->whereIn('id', $request->locationId)
-                ->get();
-
-        } else {
-            $locations = DB::table('location')
-                ->select('id', 'locationName')
-                ->where('isDeleted', '=', 0)
-                ->get();
+        if (count($tmplocations) > 0) {
+            if (!$tmplocations[0] == null) {
+                $locations = $locations->whereIn('id', $tmplocations);
+            }
         }
+
+        $locations = $locations->get();
 
         $startDataRow = 3; // Data dimulai dari baris ke-3
         $currentRow = $startDataRow;
