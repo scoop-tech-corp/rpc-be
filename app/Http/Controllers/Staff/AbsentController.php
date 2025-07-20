@@ -361,6 +361,7 @@ class AbsentController extends Controller
         $sheet = $spreadsheet->getSheet(0);
 
         $dateFrom = Carbon::parse($request->dateFrom);
+        $dateFrom = $dateFrom->addDay();
         $dateTo = Carbon::parse($request->dateTo);
 
         $allDates = [];
