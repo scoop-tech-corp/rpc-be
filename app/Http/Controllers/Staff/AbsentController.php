@@ -255,106 +255,13 @@ class AbsentController extends Controller
 
         if ($request->dateFrom && $request->dateTo) {
             $fromDate = Carbon::parse($request->dateFrom);
+            $fromDate = $fromDate->addDay();
             $toDate = Carbon::parse($request->dateTo);
 
-            $date = " " . $fromDate->format('dmy') . "-" . $toDate->format('dmy');
+            $date = " " . $fromDate->format('d-M-Y') . "-" . $toDate->format('d-M-Y');
         }
 
         $fileName = "Rekap Absensi" . $jobName . $location . $date . ".xlsx";
-        //-----------------------------
-        // $data = DB::table('staffAbsents as sa')
-        //     ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
-        //     ->leftJoin('presentStatuses as ps1', 'sa.statusHome', 'ps1.id')
-        //     ->join('users as u', 'sa.userId', 'u.id')
-        //     ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
-        //     ->join('usersLocation as ul', 'ul.usersId', 'u.id')
-        //     ->join('location as l', 'ul.locationId', 'l.id')
-        //     ->select(
-        //         'sa.id',
-        //         'u.firstName as name',
-        //         'l.locationName',
-        //         'j.jobName',
-        //         'sa.shift',
-        //         'sa.status',
-        //         DB::raw("DATE_FORMAT(sa.presentTime, '%Y-%m-%d') AS day"),
-        //         DB::raw("TIME_FORMAT(sa.presentTime, '%H:%i') AS presentTime"),
-        //         DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H:%i') END AS homeTime"),
-        //         DB::raw("CASE WHEN sa.duration is null THEN '' ELSE CONCAT(
-        //             HOUR(sa.duration), ' jam ',
-        //             MINUTE(sa.duration), ' menit'
-        //         ) END AS duration"),
-        //         'ps.statusName as presentStatus',
-        //         DB::raw("CASE WHEN ps1.statusName is null THEN '' ELSE ps1.statusName END as homeStatus"),
-        //         'sa.cityPresent as presentLocation',
-        //         DB::raw("CASE WHEN sa.cityHome is null THEN '' ELSE sa.cityHome END as homeLocation"),
-        //     )
-        //     ->where('sa.isDeleted', '=', 0)
-        //     ->where('ul.isMainLocation', '=', 1);
-
-        // if (role($request->user()->id) != 'Office' && role($request->user()->id) != 'Administrator' && role($request->user()->id) != 'Manager') {
-        //     $data = $data->where('sa.userId', '=', $request->user()->id);
-        // }
-
-        // if ($request->dateFrom && $request->dateTo) {
-
-        //     $data = $data
-        //         ->where('sa.presentTime', '>=', $request->dateFrom)
-        //         ->where('sa.presentTime', '<=', $request->dateTo);
-        //     //->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
-        // }
-
-        // $locations = $request->locationId;
-
-        // if (count($locations) > 0) {
-        //     if (!$locations[0] == null) {
-        //         $data = $data->whereIn('l.id', $request->locationId);
-        //     }
-        // }
-
-        // $staffs = $request->staff;
-
-        // if (count($staffs) > 0) {
-        //     if (!$staffs[0] == null) {
-        //         $data = $data->whereIn('sa.userId', $request->staff);
-        //     }
-        // }
-
-        // if ($request->statusPresent) {
-        //     $statusPresents = $request->statusPresent;
-        //     if (count($statusPresents) > 0) {
-        //         if (!$statusPresents[0] == null) {
-        //             $data = $data->whereIn('sa.statusPresent', $request->statusPresent);
-        //         }
-        //     }
-        // }
-
-        // if ($request->staffJob) {
-        //     $staffJobs = $request->staffJob;
-
-        //     if (count($staffJobs) > 0) {
-        //         if (!$staffJobs[0] == null) {
-        //             $data = $data->whereIn('j.id', $request->staffJob);
-        //         }
-        //     }
-        // }
-
-        // $data = $data->groupBy(
-        //     'sa.id',
-        //     'u.firstName',
-        //     'l.locationName',
-        //     'j.jobName',
-        //     'sa.shift',
-        //     'sa.status',
-        //     'sa.presentTime',
-        //     'sa.homeTime',
-        //     'sa.duration',
-        //     'ps.statusName',
-        //     'ps1.statusName',
-        //     'sa.cityPresent',
-        //     'sa.cityHome'
-        // );
-
-        // $data = $data->orderBy('sa.updated_at', 'desc')->get();
 
         $spreadsheet = IOFactory::load(public_path() . '/template/absen/' . 'Template_Export_Absen2.xlsx');
 
