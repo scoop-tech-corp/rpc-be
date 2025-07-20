@@ -285,6 +285,12 @@ class PartnerController extends Controller
                 ]);
             }
 
+            recentActivity(
+                $request->user()->id,
+                'Partner',
+                'Add Partner',
+                'Added new partner "' . $mst->name . '" (ID: ' . $mst->id . ')'
+            );
             DB::commit();
             return responseCreate();
         } catch (\Throwable $e) {
@@ -586,6 +592,13 @@ class PartnerController extends Controller
             $partner->updated_at = \Carbon\Carbon::now();
             $partner->save();
 
+            recentActivity(
+                $request->user()->id,
+                'Partner',
+                'Update Partner',
+                'Updated partner "' . $partner->name . '" (ID: ' . $partner->id . ')'
+            );
+
             DB::commit();
             return responseUpdate();
         } catch (\Throwable $e) {
@@ -691,6 +704,13 @@ class PartnerController extends Controller
             $partnerMaster->isDeleted = true;
             $partnerMaster->DeletedAt = Carbon::now();
             $partnerMaster->save();
+
+            recentActivity(
+                $request->user()->id,
+                'Partner',
+                'Delete Partner',
+                'Deleted partner "' . $partnerMaster->name . '" (ID: ' . $partnerMaster->id . ')'
+            );
         }
     }
 

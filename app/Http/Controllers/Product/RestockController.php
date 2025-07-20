@@ -336,6 +336,13 @@ class RestockController extends Controller
             }
         }
 
+        recentActivity(
+            $request->user()->id,
+            'Product Restock',
+            'Create Restock',
+            'Created product Restock'
+        );
+
         productRestockLog(
             $prodRstk->id,
             'Created',
@@ -840,32 +847,32 @@ class RestockController extends Controller
             return responseList($data);
         } elseif ($request->type == 'receive') {
             $restock = productRestocks::find($request->id);
-        
+
             $isAdmin = false;
             $isOffice = false;
-        
+
             if (adminAccess($request->user()->id)) {
                 $isAdmin = true;
             }
-        
+
             if (officeAccess($request->user()->id)) {
                 $isOffice = true;
             }
-        
+
             // Ambil semua data dengan productRestockId yang sama
             $prodList = DB::table('productRestockDetails as pr')
                 ->where('pr.productRestockId', '=', $request->id)
                 ->where('pr.isDeleted', '=', 0);
-        
+
             if ($isAdmin) {
                 $prodList = $prodList->where('pr.isAdminApproval', '=', 1)
                     ->get();
             } else if ($isOffice) {
                 $prodList = $prodList->get();
             }
-        
+
             $data = null;
-        
+
             foreach ($prodList as $value) {
                 $prd = DB::table('products as ps')
                     ->join('productRestockDetails as prd', 'ps.id', 'prd.productId')
@@ -881,7 +888,7 @@ class RestockController extends Controller
                     )
                     ->where('prd.id', '=', $value->id)
                     ->first();
-        
+
                 $data[] = array(
                     'id' => $prd->id,
                     'purchaseRequestNumber' => $prd->purchaseRequestNumber,
@@ -892,7 +899,7 @@ class RestockController extends Controller
                     'accepted' => $prd->accepted,
                 );
             }
-        
+
             return responseList($data);
         } else {
             $chk = productRestocks::find($request->id);
@@ -1669,6 +1676,13 @@ class RestockController extends Controller
             $res->save();
         }
 
+        recentActivity(
+            $request->user()->id,
+            'Product Restock',
+            'Update Restock',
+            'Updated product Restock'
+        );
+
         return responseUpdate();
     }
 
@@ -1752,6 +1766,13 @@ class RestockController extends Controller
                         'DeletedAt' => Carbon::now()
                     ]);
             }
+
+            recentActivity(
+                $request->user()->id,
+                'Product Restock',
+                'Delete Restock',
+                'Deleted product Restock'
+            );
 
             DB::commit();
             return responseDelete();

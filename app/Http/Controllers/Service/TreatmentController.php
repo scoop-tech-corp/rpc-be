@@ -155,6 +155,13 @@ class TreatmentController extends Controller
             'updated_at' => Carbon::now(),
         ]);
 
+        recentActivity(
+            auth()->user()->id,
+            'Treatment',
+            'Add Treatment',
+            'Created treatment "' . $request->name
+        );
+
         return response()->json($result);
     }
     public function manageItem(Request $request)
@@ -295,6 +302,13 @@ class TreatmentController extends Controller
                 $cat->column = $request->column;
             }
             $cat->save();
+
+            recentActivity(
+                auth()->user()->id,
+                'Treatment',
+                'Update Treatment',
+                'Updated treatment "' . $cat->name . '" at location ID ' . $cat->location_id
+            );
         }
         return responseSuccess($request->id, 'Updated Data Successful!');
     }
@@ -325,6 +339,13 @@ class TreatmentController extends Controller
             $cat->isDeleted = true;
             $cat->DeletedAt = Carbon::now();
             $cat->save();
+
+            recentActivity(
+                $request->user()->id,
+                'Treatment',
+                'Delete Treatment',
+                'Deleted treatment "' . $cat->name . '" at location ID ' . $cat->location_id
+            );
         }
 
         return responseSuccess($request->id, 'Delete Data Successful!');

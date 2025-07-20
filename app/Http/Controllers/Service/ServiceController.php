@@ -257,6 +257,14 @@ class ServiceController extends Controller
             $result = Service::with(['categoryList', 'facilityList', 'staffList', 'productRequiredList', 'locationList', 'priceList', 'imageList'])
                 ->where('id', $this->createService->id)
                 ->get();
+
+            recentActivity(
+                $request->user()->id,
+                'Service',
+                'Add Service',
+                'Create service'
+            );
+
             DB::commit();
             return responseSuccess($result, 'Service created successfully');
         } catch (\Exception $e) {
@@ -423,6 +431,14 @@ class ServiceController extends Controller
                         });
                     }
                 }
+
+                recentActivity(
+                    $request->user()->id,
+                    'Service',
+                    'Upload Service',
+                    'Upload Template service'
+                );
+
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
@@ -764,6 +780,14 @@ class ServiceController extends Controller
                     ]);
                 }
             }
+
+            recentActivity(
+                $request->user()->id,
+                'Service',
+                'Update Service',
+                'Updated service'
+            );
+
             DB::commit();
 
             $result = Service::with(['categoryList', 'facilityList', 'staffList', 'productRequiredList', 'locationList', 'priceList', 'imageList'])->find($request->id);
@@ -800,6 +824,13 @@ class ServiceController extends Controller
             $cat->isDeleted = true;
             $cat->DeletedAt = Carbon::now();
             $cat->save();
+
+            recentActivity(
+                $request->user()->id,
+                'Service',
+                'Delete Service',
+                'Deleted service'
+            );
         }
 
         return responseSuccess($request->id, 'Delete Data Successful!');
@@ -820,7 +851,7 @@ class ServiceController extends Controller
             $data = DB::table('services as s')
                 ->join('servicesLocation as sl', 's.id', 'sl.service_id')
                 ->leftjoin('servicesPrice as sp', 's.id', 'sp.service_id')
-                ->select('s.id', 's.fullName','sp.price')
+                ->select('s.id', 's.fullName', 'sp.price')
                 ->wherein('sl.location_id', $request->locationId)
                 ->where('s.isDeleted', '=', 0)
                 ->distinct()

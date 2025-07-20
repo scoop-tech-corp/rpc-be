@@ -29,7 +29,7 @@ class CategoryController extends Controller
             } else {
                 $data = $data->orderBy('sc.updated_at', 'desc');
             }
-            return $data->select('sc.id', 'sc.categoryName', 'sc.created_at', 'sc.updated_at',DB::raw('(SELECT COUNT(*) FROM servicesCategoryList as scl WHERE sc.id = scl.category_id AND scl.isDeleted = 0) as totalServices'), DB::raw("DATE_FORMAT(sc.updated_at, '%d/%m/%Y') as createdAt"),'users.firstName as createdBy');
+            return $data->select('sc.id', 'sc.categoryName', 'sc.created_at', 'sc.updated_at', DB::raw('(SELECT COUNT(*) FROM servicesCategoryList as scl WHERE sc.id = scl.category_id AND scl.isDeleted = 0) as totalServices'), DB::raw("DATE_FORMAT(sc.updated_at, '%d/%m/%Y') as createdAt"), 'users.firstName as createdBy');
         }
 
         $data = buildQuery($request);
@@ -37,7 +37,7 @@ class CategoryController extends Controller
 
         return response()->json($data);
     }
-  
+
     public function create(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -62,6 +62,13 @@ class CategoryController extends Controller
             'userId' => $request->user()->id,
             'updated_at' => Carbon::now(),
         ]);
+
+        recentActivity(
+            $request->user()->id,
+            'Service Category',
+            'Create Category',
+            'Created service category "' . $request->categoryName . '"'
+        );
         return responseSuccess($result);
     }
 
@@ -98,6 +105,13 @@ class CategoryController extends Controller
         ]);
 
         $result = ServiceCategories::find($request->id);
+
+        recentActivity(
+            $request->user()->id,
+            'Service Category',
+            'Update Category',
+            'Updated service category to "' . $request->categoryName . '"'
+        );
 
         return responseSuccess($result, 'Update Data Successful!');
     }
@@ -138,8 +152,15 @@ class CategoryController extends Controller
             $cat->isDeleted = true;
             $cat->DeletedAt = Carbon::now();
             $cat->save();
+
+            recentActivity(
+                $request->user()->id,
+                'Service Category',
+                'Delete Category',
+                'Deleted service category "' . $cat->categoryName . '"'
+            );
         }
 
-       return responseSuccess($request->id, 'Delete Data Successful!');
+        return responseSuccess($request->id, 'Delete Data Successful!');
     }
 }

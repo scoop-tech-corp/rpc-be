@@ -321,6 +321,14 @@ class FacilityController extends Controller
                 }
             }
 
+
+            recentActivity(
+                $request->user()->id,
+                'Facility',
+                'Create Facility',
+                'Created Facility'
+            );
+
             DB::commit();
 
             return response()->json([
@@ -399,6 +407,13 @@ class FacilityController extends Controller
                     ['locationId', '=', $val],
                     ['isDeleted', '=', '0']
                 ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+
+                recentActivity(
+                    $request->user()->id,
+                    'Facility',
+                    'Delete Facility',
+                    'Deleted Facility'
+                );
 
                 DB::commit();
             }
@@ -758,6 +773,13 @@ class FacilityController extends Controller
                     }
                 }
             }
+
+            recentActivity(
+                $request->user()->id,
+                'Facility',
+                'Update Facility',
+                'Updated Facility'
+            );
 
             DB::commit();
 

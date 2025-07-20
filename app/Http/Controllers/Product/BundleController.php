@@ -226,6 +226,13 @@ class BundleController
                 ]);
             }
 
+            recentActivity(
+                $request->user()->id,
+                'Product Bundle',
+                'Add Bundle',
+                'Created product bundle'
+            );
+
             DB::commit();
 
             $this->AddLog($request, $prod->id, 'Created', '', '');
@@ -580,6 +587,13 @@ class BundleController
             }
         }
 
+        recentActivity(
+            $request->user()->id,
+            'Product Bundle',
+            'Update Bundle',
+            'Updated product bundle'
+        );
+
         return response()->json([
             'message' => 'Update data successfull',
         ], 200);
@@ -647,6 +661,13 @@ class BundleController
             $prodBundle->isDeleted = true;
             $prodBundle->DeletedAt = Carbon::now();
             $prodBundle->save();
+
+            recentActivity(
+                $request->user()->id,
+                'Product Bundle',
+                'Delete Bundle',
+                'Deleted product bundle'
+            );
         }
 
         return response()->json([

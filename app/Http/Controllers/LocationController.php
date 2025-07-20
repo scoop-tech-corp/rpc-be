@@ -589,6 +589,13 @@ class LocationController extends Controller
                     File::delete(public_path() . $checkImages->imagePath);
                 }
 
+                recentActivity(
+                    $request->user()->id,
+                    'Location',
+                    'Delete Location',
+                    'Deleted Location'
+                );
+
                 DB::commit();
             }
 
@@ -1093,6 +1100,14 @@ class LocationController extends Controller
                         ]);
                 }
             }
+
+
+            recentActivity(
+                $request->user()->id,
+                'Location',
+                'Update Location',
+                'Updated Location'
+            );
 
             DB::commit();
 
@@ -1605,6 +1620,14 @@ class LocationController extends Controller
                         ]);
                 }
             }
+
+
+            recentActivity(
+                $request->user()->id,
+                'Location',
+                'Create Location',
+                'Created Location'
+            );
 
             DB::commit();
 
