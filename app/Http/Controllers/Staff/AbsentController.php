@@ -255,7 +255,6 @@ class AbsentController extends Controller
 
         if ($request->dateFrom && $request->dateTo) {
             $fromDate = Carbon::parse($request->dateFrom);
-            $fromDate = $fromDate->addDay();
             $toDate = Carbon::parse($request->dateTo);
 
             $date = " " . $fromDate->format('dMY') . " - " . $toDate->format('dMY');
@@ -268,7 +267,6 @@ class AbsentController extends Controller
         $sheet = $spreadsheet->getSheet(0);
 
         $dateFrom = Carbon::parse($request->dateFrom);
-        $dateFrom = $dateFrom->addDay();
         $dateTo = Carbon::parse($request->dateTo);
 
         $allDates = [];
