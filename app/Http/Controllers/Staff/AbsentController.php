@@ -258,7 +258,7 @@ class AbsentController extends Controller
             $fromDate = $fromDate->addDay();
             $toDate = Carbon::parse($request->dateTo);
 
-            $date = " " . $fromDate->format('d-M-Y') . "-" . $toDate->format('d-M-Y');
+            $date = " " . $fromDate->format('dMY') . " - " . $toDate->format('dMY');
         }
 
         $fileName = "Rekap Absensi" . $jobName . $location . $date . ".xlsx";
