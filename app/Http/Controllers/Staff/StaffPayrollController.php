@@ -45,7 +45,17 @@ class StaffPayrollController
                 'l.locationName'
             );
 
-        if ($roleId == 1) {
+        $allowGenerateInvoice = $roleId == 1 || in_array($jobTitleId, [8, 13]);
+
+        if (!$allowGenerateInvoice) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized to access payroll data.',
+                'allowGenerateInvoice' => false
+            ], 403);
+        }
+
+        if ($roleId == 1 && in_array($jobTitleId, [8, 13])) {
             if ($request->locationId) {
                 $data = $data->whereIn('sp.locationId', $request->locationId);
             }
@@ -59,7 +69,7 @@ class StaffPayrollController
         //     $data = $data->where('sp.staffId', $user->id);
         // }
 
-        if ($roleId !== 1) {
+        if (!($roleId == 1 || in_array($jobTitleId, [8, 13]))) {
             $data = $data->where('sp.staffId', $user->id);
         }
 
@@ -96,7 +106,15 @@ class StaffPayrollController
 
         $data = $data->offset($offset)->limit($itemPerPage)->get();
 
-        return responseIndex($totalPaging, $data);
+        $allowGenerateInvoice = $roleId == 1 && in_array($jobTitleId, [8, 13]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Payroll data retrieved successfully.',
+            'data' => $data,
+            'totalPaging' => $totalPaging,
+            'allowGenerateInvoice' => true
+        ]);
     }
 
     public function create(Request $request)
@@ -118,7 +136,9 @@ class StaffPayrollController
         //     return response()->json(['message' => 'Not allowed to create payroll for this staff.'], 403);
         // }
 
-        if ($roleId !== 1) {
+        $canCreatePayroll = $user->roleId == 1 || in_array($user->jobTitleId, [8, 13]);
+
+        if (!$canCreatePayroll) {
             return response()->json(['message' => 'You are not allowed to create payroll.'], 403);
         }
 
@@ -1223,6 +1243,16 @@ class StaffPayrollController
 
     public function update(Request $request)
     {
+
+        $user = $request->user();
+        $canUpdatePayroll = $user->roleId == 1 || in_array($user->jobTitleId, [8, 13]);
+
+        if (!$canUpdatePayroll) {
+            return response()->json([
+                'message' => 'You are not authorized to update payroll.'
+            ], 403);
+        }
+
         $request->validate([
             'id' => 'required|integer|exists:staff_payroll,id',
             'staffId' => 'required|integer',
@@ -1256,7 +1286,10 @@ class StaffPayrollController
             'clinicTurnoverBonus',
             'functionalLeaderAllowance',
             'hardshipAllowance',
-            'familyAllowance'
+            'familyAllowance',
+            'salesAchievementBonus',
+            'memberAchievementBonus',
+            'petshopTurnoverIncentive',
         ];
 
         foreach ($numericIncomeFields as $field) {
@@ -1273,7 +1306,7 @@ class StaffPayrollController
             $expense[$field] = $expense[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
         }
 
-        $flatExpense = ['currentMonthCashAdvance', 'remainingDebtLastMonth', 'stockOpnameInventory', 'stockOpnameLost', 'stockOpnameExpired'];
+        $flatExpense = ['currentMonthCashAdvance', 'remainingDebtLastMonth', 'stockOpnameInventory', 'stockOpnameLost', 'stockOpnameExpired', 'lostInventory'];
         foreach ($flatExpense as $field) {
             $expense[$field] = $expense[$field] ?? 0;
         }
@@ -1284,7 +1317,10 @@ class StaffPayrollController
             $income['replacementDays']['total'] +
             $income['longShiftReplacement']['total'] +
             $income['fullShiftReplacement']['total'] +
-            $income['patientIncentive']['total'];
+            $income['patientIncentive']['total'] +
+            $income['salesAchievementBonus'] +
+            $income['memberAchievementBonus'] +
+            $income['petshopTurnoverIncentive'];
 
         $totalDeduction =
             $expense['absent']['total'] +
@@ -1294,7 +1330,8 @@ class StaffPayrollController
             $expense['remainingDebtLastMonth'] +
             $expense['stockOpnameInventory'] +
             $expense['stockOpnameLost'] +
-            $expense['stockOpnameExpired'];
+            $expense['stockOpnameExpired'] +
+            $expense['lostInventory'];
 
         $netPay = $totalIncome - $totalDeduction;
 
@@ -1323,6 +1360,9 @@ class StaffPayrollController
             'functionalLeaderAllowance' => $income['functionalLeaderAllowance'],
             'hardshipAllowance' => $income['hardshipAllowance'],
             'familyAllowance' => $income['familyAllowance'],
+            'salesAchievementBonus' => $income['salesAchievementBonus'],
+            'memberAchievementBonus' => $income['memberAchievementBonus'],
+            'petshopTurnoverIncentive' => $income['petshopTurnoverIncentive'],
 
             // Structured Income
             'labXrayIncentiveAmount' => $income['labXrayIncentive']['amount'],
@@ -1353,6 +1393,7 @@ class StaffPayrollController
             'absentAmount' => $expense['absent']['amount'],
             'absentUnitNominal' => $expense['absent']['unitNominal'],
             'absentTotal' => $expense['absent']['total'],
+            'lostInventory' => $expense['lostInventory'],
 
             'lateAmount' => $expense['late']['amount'],
             'lateUnitNominal' => $expense['late']['unitNominal'],
@@ -1372,6 +1413,7 @@ class StaffPayrollController
             'totalDeduction' => $totalDeduction,
             'netPay' => $netPay,
             'userId' => $request->user()->id,
+            'userUpdateId' => $user->id,
         ]);
 
         return response()->json([

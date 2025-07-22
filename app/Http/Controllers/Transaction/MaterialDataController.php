@@ -451,39 +451,100 @@ class MaterialDataController extends Controller
     //     ], 200);
     // }
 
-    
+
+    // public function delete(Request $request)
+    // {
+    //     $validate = Validator::make(
+    //         $request->all(),
+    //         [
+    //             'datas' => 'required|array',
+    //             'datas.*.id' => 'required|integer',
+    //             'datas.*.type' => 'required|string|in:weight,temperature,breath,sound,heart,vaginal,paymentmethod',
+    //         ],
+    //         [
+    //             'datas.*.id.required' => 'Id Should be Required!',
+    //             'datas.*.id.integer' => 'Id Should be Integer!',
+    //             'datas.*.type.required' => 'Type Should be Required!',
+    //             'datas.*.type.string' => 'Type Should be String!',
+    //             'datas.*.type.in' => 'Type Should be one of: weight, temperature, breath, sound, heart, vaginal, paymentmethod.',
+    //         ]
+    //     );
+
+    //     if ($validate->fails()) {
+    //         $errors = $validate->errors()->first();
+    //         return response()->json([
+    //             'message' => 'The given data was invalid.',
+    //             'errors' => [$errors],
+    //         ], 422);
+    //     }
+
+    //     $userId = $request->user()->id;
+
+    //     foreach ($request->datas as $value) {
+    //         $value = (array) $value;
+    //         $id = $value['id'];
+    //         $type = strtolower($value['type']);
+
+    //         $models = [
+    //             'weight' => ListWeightTransaction::class,
+    //             'temperature' => ListTemperatureTransaction::class,
+    //             'breath' => ListBreathTransaction::class,
+    //             'sound' => ListSoundTransaction::class,
+    //             'heart' => ListHeartTransaction::class,
+    //             'vaginal' => ListVaginalTransaction::class,
+    //             'paymentmethod' => PaymentMethod::class,
+    //         ];
+
+    //         if (isset($models[$type])) {
+    //             $model = $models[$type];
+
+    //             $model::where('id', $id)->update([
+    //                 'deletedBy' => $userId,
+    //                 'isDeleted' => 1,
+    //                 'deletedAt' => now(),
+    //             ]);
+
+    //             recentActivity(
+    //                 $userId,
+    //                 'Material Data',
+    //                 'Delete ' . ucfirst($type),
+    //                 'Delete ' . ucfirst($type) . ' data with ID ' . $id
+    //             );
+    //         }
+    //     }
+
+    //     return response()->json([
+    //         'message' => 'Deleted successfully',
+    //     ], 200);
+    // }
+
     public function delete(Request $request)
-{
-    $validate = Validator::make(
-        $request->all(),
-        [
-            'datas' => 'required|array',
-            'datas.*.id' => 'required|integer',
-            'datas.*.type' => 'required|string|in:weight,temperature,breath,sound,heart,vaginal,paymentmethod',
-        ],
-        [
-            'datas.*.id.required' => 'Id Should be Required!',
-            'datas.*.id.integer' => 'Id Should be Integer!',
-            'datas.*.type.required' => 'Type Should be Required!',
-            'datas.*.type.string' => 'Type Should be String!',
-            'datas.*.type.in' => 'Type Should be one of: weight, temperature, breath, sound, heart, vaginal, paymentmethod.',
-        ]
-    );
+    {
+        $validate = Validator::make(
+            $request->all(),
+            [
+                'datas' => 'required|array',
+                'datas.*.id' => 'required|integer',
+                'datas.*.type' => 'required|string|in:weight,temperature,breath,sound,heart,vaginal,paymentmethod',
+            ],
+            [
+                'datas.*.id.required' => 'Id Should be Required!',
+                'datas.*.id.integer' => 'Id Should be Integer!',
+                'datas.*.type.required' => 'Type Should be Required!',
+                'datas.*.type.string' => 'Type Should be String!',
+                'datas.*.type.in' => 'Type Should be one of: weight, temperature, breath, sound, heart, vaginal, paymentmethod.',
+            ]
+        );
 
-    if ($validate->fails()) {
-        $errors = $validate->errors()->first();
-        return response()->json([
-            'message' => 'The given data was invalid.',
-            'errors' => [$errors],
-        ], 422);
-    }
+        if ($validate->fails()) {
+            $errors = $validate->errors()->first();
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => [$errors],
+            ], 422);
+        }
 
-    $userId = $request->user()->id;
-
-    foreach ($request->datas as $value) {
-        $value = (array) $value;
-        $id = $value['id'];
-        $type = strtolower($value['type']);
+        $userId = $request->user()->id;
 
         $models = [
             'weight' => ListWeightTransaction::class,
@@ -495,28 +556,40 @@ class MaterialDataController extends Controller
             'paymentmethod' => PaymentMethod::class,
         ];
 
-        if (isset($models[$type])) {
-            $model = $models[$type];
+        $groupedDeletions = [];
 
-            $model::where('id', $id)->update([
-                'deletedBy' => $userId,
-                'isDeleted' => 1,
-                'deletedAt' => now(),
-            ]);
+        foreach ($request->datas as $value) {
+            $value = (array) $value;
+            $id = $value['id'];
+            $type = strtolower($value['type']);
 
+            if (isset($models[$type])) {
+                $model = $models[$type];
+
+                $model::where('id', $id)->update([
+                    'deletedBy' => $userId,
+                    'isDeleted' => 1,
+                    'deletedAt' => now(),
+                ]);
+
+                $groupedDeletions[$type][] = $id;
+            }
+        }
+
+        foreach ($groupedDeletions as $type => $ids) {
             recentActivity(
                 $userId,
                 'Material Data',
                 'Delete ' . ucfirst($type),
-                'Delete ' . ucfirst($type) . ' data with ID ' . $id
+                'Delete ' . ucfirst($type) . ' data with ID(s): ' . implode(', ', $ids)
             );
         }
+
+        return response()->json([
+            'message' => 'Deleted successfully',
+        ], 200);
     }
 
-    return response()->json([
-        'message' => 'Deleted successfully',
-    ], 200);
-}
 
     public function listPaymentMethod()
     {
