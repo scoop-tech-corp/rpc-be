@@ -54,8 +54,12 @@ class StaffPayrollController
             $data = $data->whereIn('sp.locationId', $locations);
         }
 
-        $jobTitleAllowedToViewAll = [13, 14, 15, 19]; // Finance, Director, Komisaris
-        if (!in_array($jobTitleId, $jobTitleAllowedToViewAll)) {
+        // $jobTitleAllowedToViewAll = [13, 14, 15, 19]; // Finance, Director, Komisaris
+        // if (!in_array($jobTitleId, $jobTitleAllowedToViewAll)) {
+        //     $data = $data->where('sp.staffId', $user->id);
+        // }
+
+        if ($roleId !== 1) {
             $data = $data->where('sp.staffId', $user->id);
         }
 
@@ -98,6 +102,7 @@ class StaffPayrollController
     public function create(Request $request)
     {
         $user = $request->user();
+        $roleId = $user->roleId;
 
         $staff = User::with('jobTitle')->findOrFail($request->staffId);
 
@@ -107,12 +112,15 @@ class StaffPayrollController
 
         $staffJobTitle = $staff->jobTitle->jobName;
 
-        $allowedToCreateAll = [13, 14, 15, 19];
+        // $allowedToCreateAll = [13, 14, 15, 19];
 
-        if (!in_array($staff->jobTitleId, $allowedToCreateAll)) {
-            return response()->json(['message' => 'Not allowed to create payroll for this staff.'], 403);
+        // if (!in_array($staff->jobTitleId, $allowedToCreateAll)) {
+        //     return response()->json(['message' => 'Not allowed to create payroll for this staff.'], 403);
+        // }
+
+        if ($roleId !== 1) {
+            return response()->json(['message' => 'You are not allowed to create payroll.'], 403);
         }
-
 
         switch ($staff->jobTitle->id) {
             case 1:
@@ -1130,8 +1138,8 @@ class StaffPayrollController
                     'annualIncrementIncentive' => $payroll->annualIncrementIncentive,
                     'attendanceAllowance' => $payroll->attendanceAllowance,
                     'mealAllowance' => $payroll->mealAllowance,
-                    'entertainAllowance' => $payroll->entertainAllowance ?? $payroll->entertainmentAllowance,
-                    'transportAllowance' => $payroll->transportAllowance ?? $payroll->transportationAllowance,
+                    'entertainAllowance' => $payroll->entertainAllowance,
+                    'transportAllowance' => $payroll->transportAllowance,
                     'positionalAllowance' => $payroll->positionalAllowance,
                     'functionalLeaderAllowance' => $payroll->functionalLeaderAllowance,
                     'hardshipAllowance' => $payroll->hardshipAllowance,
@@ -1196,6 +1204,14 @@ class StaffPayrollController
                     'stockOpnameInventory' => $payroll->stockOpnameInventory,
                     'stockOpnameLost' => $payroll->stockOpnameLost,
                     'stockOpnameExpired' => $payroll->stockOpnameExpired,
+
+                    'memberAchievementBonus' => $payroll->memberAchievementBonus,
+                    'petshopTurnoverIncentive' => $payroll->petshopTurnoverIncentive,
+                    'salesAchievementBonus' => $payroll->salesAchievementBonus,
+
+                    'lostInventory' => $payroll->lostInventory,
+                    'absentDays' => $payroll->absentDays,
+                    'lateDays' => $payroll->lateDays,
                 ],
 
                 'totalIncome' => $payroll->totalIncome,
@@ -1578,7 +1594,6 @@ class StaffPayrollController
             'mealAllowance' => 'Tunjangan Makan',
             'entertainAllowance' => 'Tunjangan Entertain',
             'transportAllowance' => 'Tunjangan Transportasi',
-            'transportationAllowance' => 'Tunjangan Transportasi',
             'positionalAllowance' => 'Tunjangan Jabatan',
             'functionalLeaderAllowance' => 'Tunjangan Fungsional Leader',
             'hardshipAllowance' => 'Tunjangan Hardship',

@@ -17,78 +17,85 @@ class StaffPayroll extends Model
         'staffId',
         'name',
         'payrollDate',
+        'startDate',
+        'endDate',
         'locationId',
+
+        // Income-related
         'basicIncome',
         'annualIncrementIncentive',
         'attendanceAllowance',
         'mealAllowance',
         'positionalAllowance',
+        'housingAllowance',
+        'entertainAllowance',
+        'transportAllowance',
+        'turnoverAchievementBonus',
+        'functionalLeaderAllowance',
+        'hardshipAllowance',
+        'familyAllowance',
+        'bonusGroomingAchievement',
+        'bonusSalesAchievement',
+        'salesAchievementBonus',
+        'memberAchievementBonus',
+        'petshopTurnoverIncentive',
 
+        // Incentives
         'labXrayIncentiveAmount',
         'labXrayIncentiveUnitNominal',
         'labXrayIncentiveTotal',
-
         'groomingIncentiveAmount',
         'groomingIncentiveUnitNominal',
         'groomingIncentiveTotal',
-
         'clinicTurnoverBonus',
-
-        'replacementDaysAmount',
-        'replacementDaysUnitNominal',
-        'replacementDaysTotal',
-
-        'longShiftReplacementAmount',
-        'longShiftReplacementUnitNominal',
-        'longShiftReplacementTotal',
-
-        'fullShiftReplacementAmount',
-        'fullShiftReplacementUnitNominal',
-        'fullShiftReplacementTotal',
-
         'patientIncentiveAmount',
         'patientIncentiveUnitNominal',
         'patientIncentiveTotal',
 
-        'bpjsHealthAllowance',
+        // Replacements
+        'replacementDaysAmount',
+        'replacementDaysUnitNominal',
+        'replacementDaysTotal',
+        'longShiftReplacementAmount',
+        'longShiftReplacementUnitNominal',
+        'longShiftReplacementTotal',
+        'fullShiftReplacementAmount',
+        'fullShiftReplacementUnitNominal',
+        'fullShiftReplacementTotal',
 
+        // Penalties
         'absentAmount',
+        'absentDays',
         'absentUnitNominal',
         'absentTotal',
-
         'notWearingAttributeAmount',
         'notWearingAttributeUnitNominal',
         'notWearingAttributeTotal',
-
         'lateAmount',
+        'lateDays',
         'lateUnitNominal',
         'lateTotal',
 
+        // Others
         'currentMonthCashAdvance',
         'remainingDebtLastMonth',
-
         'stockOpnameInventory',
         'stockOpnameLost',
         'stockOpnameExpired',
-        'entertainAllowance',
-        'transportAllowance',
-        'housingAllowance',
-        'turnoverAchievementBonus',
+        'lostInventory',
 
+        // Final calculation
         'totalIncome',
         'totalDeduction',
         'netPay',
+
+        // Audit
         'userId',
-        'startDate',
-        'endDate',
-
-        'functionalLeaderAllowance',
-        'hardshipAllowance',
-        'familyAllowance',
-
-        'bonusGroomingAchievement',
-        'bonusSalesAchievement',
+        'userUpdateId',
+        'deletedBy',
+        'deletedAt'
     ];
+
 
     protected $casts = [
         'payroll_date' => 'date',
