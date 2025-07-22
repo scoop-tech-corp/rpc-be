@@ -1273,16 +1273,16 @@ class TransactionPetShopController
         $sheet = $spreadsheet->getSheet(0);
 
         $sheet->setCellValue('A1', 'No');
-        $sheet->setCellValue('B1', 'Transaction No');
-        $sheet->setCellValue('C1', 'Branch');
-        $sheet->setCellValue('D1', 'Customer Name');
-        $sheet->setCellValue('E1', 'Customer Group');
-        $sheet->setCellValue('F1', 'Total Use Promo');
+        $sheet->setCellValue('B1', 'No Transaksi');
+        $sheet->setCellValue('C1', 'Cabang');
+        $sheet->setCellValue('D1', 'Nama Pelanggan');
+        $sheet->setCellValue('E1', 'Grup Pelanggan');
+        $sheet->setCellValue('F1', 'Total Gunakan Promo');
         $sheet->setCellValue('G1', 'Total Item');
-        $sheet->setCellValue('H1', 'Amount Transaction');
-        $sheet->setCellValue('I1', 'Payment Method');
-        $sheet->setCellValue('J1', 'Created At');
-        $sheet->setCellValue('K1', 'Created By');
+        $sheet->setCellValue('H1', 'Jumlah Transaksi');
+        $sheet->setCellValue('I1', 'Metode Pembayaran');
+        $sheet->setCellValue('J1', 'Tanggal Dibuat');
+        $sheet->setCellValue('K1', 'Dibuat Oleh');
 
         $sheet->getStyle('A1:K1')->getFont()->setBold(true);
         $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
