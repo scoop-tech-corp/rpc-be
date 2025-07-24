@@ -180,6 +180,13 @@ class TransferProductController
                 ], 422);
             }
 
+            recentActivity(
+                $request->user()->id,
+                'Product Transfer',
+                'Create Transfer',
+                'Created product Transfer'
+            );
+
             DB::commit();
             return responseCreate();
         } catch (\Throwable $th) {
@@ -951,6 +958,13 @@ class TransferProductController
                 $res->save();
             }
 
+            recentActivity(
+                $request->user()->id,
+                'Product Transfer',
+                'Update Transfer',
+                'Updated product Transfer'
+            );
+
             DB::commit();
             return responseUpdate();
         } catch (\Throwable $th) {
@@ -1060,6 +1074,14 @@ class TransferProductController
                 //         'DeletedAt' => Carbon::now()
                 //     ]);
             }
+
+            recentActivity(
+                $request->user()->id,
+                'Product Transfer',
+                'Delete Transfer',
+                'Deleted product Transfer'
+            );
+
             DB::commit();
             return responseDelete();
         } catch (\Throwable $th) {

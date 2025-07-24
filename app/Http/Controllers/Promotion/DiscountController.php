@@ -424,6 +424,13 @@ class DiscountController extends Controller
             }
 
             DB::commit();
+
+            recentActivity(
+                $request->user()->id,
+                'Promotion',
+                'Create Promotion',
+                'Create new promotion' . $request->name
+            );
             return responseCreate();
         } catch (Exception $th) {
             DB::rollback();
@@ -630,12 +637,12 @@ class DiscountController extends Controller
             // }
 
             $data->quantityBuyItem = $temp->quantityBuyItem;
-            $data->productBuyType = $temp->productBuyType;
+            //$data->productBuyType = $temp->productBuyType;
             $data->productBuyId = $temp->productBuyId;
             $data->productBuyName = $dataProdBuy->fullName;
 
             $data->quantityFreeItem = $temp->quantityFreeItem;
-            $data->productFreeType = $temp->productFreeType;
+            //$data->productFreeType = $temp->productFreeType;
             $data->productFreeId = $temp->productFreeId;
             $data->productFreeName = $dataProdFree->fullName;
 
@@ -799,6 +806,23 @@ class DiscountController extends Controller
         return response()->json($data, 200);
     }
 
+    // public function update(Request $request)
+    // {
+    //     $validate = Validator::make($request->all(), [
+    //         'id' => 'required|integer',
+    //         'type' => 'required|integer|in:1,2,3,4',
+    //         'name' => 'required|string',
+    //         'startDate' => 'required|date',
+    //         'endDate' => 'required|date',
+    //         'status' => 'required|bool',
+    //     ]);
+
+    //     if ($validate->fails()) {
+    //         $errors = $validate->errors()->all();
+    //         responseInvalid($errors);
+    //     }
+    // }
+
     public function update(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -807,91 +831,213 @@ class DiscountController extends Controller
             'name' => 'required|string',
             'startDate' => 'required|date',
             'endDate' => 'required|date',
-            'status' => 'required|bool',
+            'status' => 'required|boolean',
         ]);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            responseInvalid($errors);
+            return responseInvalid($errors);
+        }
+
+        $promo = PromotionMaster::find($request->id);
+
+        if (!$promo) {
+            return responseInvalid(['Promotion not found.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $promo->type = $request->type;
+            $promo->name = $request->name;
+            $promo->startDate = $request->startDate;
+            $promo->endDate = $request->endDate;
+            $promo->status = $request->status;
+            $promo->userUpdateId = $request->user()->id;
+            $promo->updated_at = now();
+            $promo->save();
+
+            // ✅ recentActivity log
+            recentActivity(
+                $request->user()->id,
+                'Promotion',
+                'Update Promotion',
+                'Updated Promotion "' . $promo->name . '" (ID: ' . $promo->id . ')'
+            );
+
+            DB::commit();
+            return response()->json([
+                'message' => 'Promotion updated successfully.',
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to update promotion.',
+                'errors' => [$e->getMessage()],
+            ], 500);
         }
     }
+
+    // public function delete(Request $request)
+    // {
+    //     foreach ($request->id as $va) {
+    //         $res = PromotionMaster::find($va);
+    //         if (!$res) {
+    //             responseInvalid(['There is any Data not found!']);
+    //         }
+    //     }
+
+    //     foreach ($request->id as $va) {
+
+    //         $res = PromotionMaster::find($va);
+
+    //         if ($res->type == 1) {
+    //             PromotionFreeItem::where('promoMasterId', '=', $res->id)
+    //                 ->update(
+    //                     [
+    //                         'deletedBy' => $request->user()->id,
+    //                         'isDeleted' => 1,
+    //                         'deletedAt' => Carbon::now()
+    //                     ]
+    //                 );
+    //         } elseif ($res->type == 2) {
+    //             PromotionDiscount::where('promoMasterId', '=', $res->id)
+    //                 ->update(
+    //                     [
+    //                         'deletedBy' => $request->user()->id,
+    //                         'isDeleted' => 1,
+    //                         'deletedAt' => Carbon::now()
+    //                     ]
+    //                 );
+    //         } elseif ($res->type == 3) {
+
+    //             $bundle = PromotionBundle::where('promoMasterId', '=', $res->id)
+    //                 ->first();
+
+    //             PromotionBundleDetail::where('promoBundleId', '=', $bundle->id)
+    //                 ->update(
+    //                     [
+    //                         'deletedBy' => $request->user()->id,
+    //                         'isDeleted' => 1,
+    //                         'deletedAt' => Carbon::now()
+    //                     ]
+    //                 );
+
+    //             PromotionBundle::where('promoMasterId', '=', $res->id)
+    //                 ->update(
+    //                     [
+    //                         'deletedBy' => $request->user()->id,
+    //                         'isDeleted' => 1,
+    //                         'deletedAt' => Carbon::now()
+    //                     ]
+    //                 );
+    //         } elseif ($res->type == 4) {
+    //             PromotionBasedSales::where('promoMasterId', '=', $res->id)
+    //                 ->update(
+    //                     [
+    //                         'deletedBy' => $request->user()->id,
+    //                         'isDeleted' => 1,
+    //                         'deletedAt' => Carbon::now()
+    //                     ]
+    //                 );
+    //         }
+
+    //         PromotionMaster::where('id', '=', $res->id)
+    //             ->update(
+    //                 [
+    //                     'deletedBy' => $request->user()->id,
+    //                     'isDeleted' => 1,
+    //                     'deletedAt' => Carbon::now()
+    //                 ]
+    //             );
+
+    //         return response()->json([
+    //             'message' => 'Delete Data Successful',
+    //         ], 200);
+    //     }
+    // }
+
 
     public function delete(Request $request)
     {
         foreach ($request->id as $va) {
             $res = PromotionMaster::find($va);
             if (!$res) {
-                responseInvalid(['There is any Data not found!']);
+                return responseInvalid(['Promotion with ID ' . $va . ' not found.']);
             }
         }
 
-        foreach ($request->id as $va) {
+        DB::beginTransaction();
+        try {
+            foreach ($request->id as $va) {
+                $res = PromotionMaster::find($va);
+                $userId = $request->user()->id;
 
-            $res = PromotionMaster::find($va);
-
-            if ($res->type == 1) {
-                PromotionFreeItem::where('promoMasterId', '=', $res->id)
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
+                if ($res->type == 1) {
+                    PromotionFreeItem::where('promoMasterId', $res->id)
+                        ->update([
+                            'deletedBy' => $userId,
                             'isDeleted' => 1,
                             'deletedAt' => Carbon::now()
-                        ]
-                    );
-            } elseif ($res->type == 2) {
-                PromotionDiscount::where('promoMasterId', '=', $res->id)
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
+                        ]);
+                } elseif ($res->type == 2) {
+                    PromotionDiscount::where('promoMasterId', $res->id)
+                        ->update([
+                            'deletedBy' => $userId,
                             'isDeleted' => 1,
                             'deletedAt' => Carbon::now()
-                        ]
-                    );
-            } elseif ($res->type == 3) {
+                        ]);
+                } elseif ($res->type == 3) {
+                    $bundle = PromotionBundle::where('promoMasterId', $res->id)->first();
 
-                $bundle = PromotionBundle::where('promoMasterId', '=', $res->id)
-                    ->first();
+                    if ($bundle) {
+                        PromotionBundleDetail::where('promoBundleId', $bundle->id)
+                            ->update([
+                                'deletedBy' => $userId,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]);
 
-                PromotionBundleDetail::where('promoBundleId', '=', $bundle->id)
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
+                        PromotionBundle::where('promoMasterId', $res->id)
+                            ->update([
+                                'deletedBy' => $userId,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]);
+                    }
+                } elseif ($res->type == 4) {
+                    PromotionBasedSales::where('promoMasterId', $res->id)
+                        ->update([
+                            'deletedBy' => $userId,
                             'isDeleted' => 1,
                             'deletedAt' => Carbon::now()
-                        ]
-                    );
+                        ]);
+                }
 
-                PromotionBundle::where('promoMasterId', '=', $res->id)
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
-                            'isDeleted' => 1,
-                            'deletedAt' => Carbon::now()
-                        ]
-                    );
-            } elseif ($res->type == 4) {
-                PromotionBasedSales::where('promoMasterId', '=', $res->id)
-                    ->update(
-                        [
-                            'deletedBy' => $request->user()->id,
-                            'isDeleted' => 1,
-                            'deletedAt' => Carbon::now()
-                        ]
-                    );
-            }
-
-            PromotionMaster::where('id', '=', $res->id)
-                ->update(
-                    [
-                        'deletedBy' => $request->user()->id,
+                PromotionMaster::where('id', $res->id)
+                    ->update([
+                        'deletedBy' => $userId,
                         'isDeleted' => 1,
                         'deletedAt' => Carbon::now()
-                    ]
-                );
+                    ]);
 
+                recentActivity(
+                    $userId,
+                    'Promotion',
+                    'Delete Promotion',
+                    'Deleted Promotion: "' . $res->name . '" (Type ' . $res->type . ') with ID ' . $res->id
+                );
+            }
+
+            DB::commit();
             return response()->json([
                 'message' => 'Delete Data Successful',
             ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Delete Failed',
+                'errors' => [$e->getMessage()],
+            ], 500);
         }
     }
 

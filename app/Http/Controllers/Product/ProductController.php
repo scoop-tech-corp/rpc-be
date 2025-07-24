@@ -61,6 +61,13 @@ class ProductController
                     'userId' => $request->user()->id,
                 ]);
 
+                recentActivity(
+                    $request->user()->id,
+                    'Product Brand',
+                    'Add Brand',
+                    'Added product brand "' . $request->brandName . '"'
+                );
+
                 return response()->json(
                     [
                         'message' => 'Insert Data Successful!',

@@ -453,9 +453,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/profile/image', [ProfileController::class, 'uploadImageProfile']);
 
         Route::get('/salary-slip', [StaffPayrollController::class, 'index']);
+        Route::put('/salary-slip', [StaffPayrollController::class, 'update']);
+        Route::get('/salary-slip/detail', [StaffPayrollController::class, 'detail']);
         Route::get('/salary-slip/export', [StaffPayrollController::class, 'export']);
         Route::post('/salary-slip', [StaffPayrollController::class, 'create']);
         Route::delete('/salary-slip', [StaffPayrollController::class, 'delete']);
+        Route::get('/salary-slip/generate-slip', [StaffPayrollController::class, 'generatePayrollSlip']);
+
     });
 
 

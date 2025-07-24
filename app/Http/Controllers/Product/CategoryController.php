@@ -42,6 +42,13 @@ class CategoryController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
+            recentActivity(
+                $request->user()->id,
+                'Product Category',
+                'Create Category',
+                'Created product category'
+            );
+
             return response()->json(
                 [
                     'message' => 'Insert Data Successful!',
@@ -335,6 +342,13 @@ class CategoryController extends Controller
                     ]
                 );
 
+            recentActivity(
+                $request->user()->id,
+                'Product Category',
+                'Update Category',
+                'Updated product category'
+            );
+
             return response()->json(
                 [
                     'message' => 'Update Data Successful!',
@@ -393,6 +407,13 @@ class CategoryController extends Controller
             $cat->isDeleted = true;
             $cat->DeletedAt = Carbon::now();
             $cat->save();
+
+            recentActivity(
+                $request->user()->id,
+                'Product Category',
+                'Delete Category',
+                'Deleted product category'
+            );
         }
 
         return response()->json([

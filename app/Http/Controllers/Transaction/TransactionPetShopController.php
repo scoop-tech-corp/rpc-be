@@ -1226,14 +1226,21 @@ class TransactionPetShopController
                 'message' => 'Unauthorized. Only admin can export data.'
             ], 403);
         }
+        $filter = $request->only(['locationId', 'customerGroupId']);
 
         $data = DB::table('transactionpetshop as tp')
             ->join('customer as c', 'tp.customerId', '=', 'c.id')
             ->join('location as l', 'tp.locationId', '=', 'l.id')
-            ->join('customerGroups as cg', 'c.customerGroupId', '=', 'cg.id')
+            ->leftJoin('customerGroups as cg', 'c.customerGroupId', '=', 'cg.id')
             ->leftJoin('users as u', 'tp.userId', '=', 'u.id')
             ->leftJoin('paymentmethod as pm', 'tp.paymentMethod', '=', 'pm.id')
             ->where('tp.isDeleted', '=', 0)
+            // ->when(!empty($filter['locationId']), function ($query) use ($filter) {
+            //     $query->whereIn('tp.locationId', $filter['locationId']);
+            // })
+            // ->when(!empty($filter['customerGroupId']), function ($query) use ($filter) {
+            //     $query->whereIn('c.customerGroupId', $filter['customerGroupId']);
+            // })
             ->select(
                 'tp.id',
                 'tp.registrationNo',
@@ -1266,15 +1273,15 @@ class TransactionPetShopController
         $sheet = $spreadsheet->getSheet(0);
 
         $sheet->setCellValue('A1', 'No');
-        $sheet->setCellValue('B1', 'Transaction No');
+        $sheet->setCellValue('B1', 'No Transaksi');
         $sheet->setCellValue('C1', 'Cabang');
-        $sheet->setCellValue('D1', 'Customer Name');
-        $sheet->setCellValue('E1', 'Customer Group');
-        $sheet->setCellValue('F1', 'Total Use Promo');
+        $sheet->setCellValue('D1', 'Nama Pelanggan');
+        $sheet->setCellValue('E1', 'Grup Pelanggan');
+        $sheet->setCellValue('F1', 'Total Gunakan Promo');
         $sheet->setCellValue('G1', 'Total Item');
-        $sheet->setCellValue('H1', 'Amount Transaction');
-        $sheet->setCellValue('I1', 'Payment Method');
-        $sheet->setCellValue('J1', 'Dibuat Pada');
+        $sheet->setCellValue('H1', 'Jumlah Transaksi');
+        $sheet->setCellValue('I1', 'Metode Pembayaran');
+        $sheet->setCellValue('J1', 'Tanggal Dibuat');
         $sheet->setCellValue('K1', 'Dibuat Oleh');
 
         $sheet->getStyle('A1:K1')->getFont()->setBold(true);
@@ -1559,6 +1566,7 @@ class TransactionPetShopController
             ->leftJoin('location as l', 'l.id', '=', 't.locationId')
             ->leftJoin('customer as c', 'c.id', '=', 't.customerId')
             ->leftJoin('users as u', 'u.id', '=', 't.userId')
+            ->leftJoin('paymentmethod as pm', 'pm.id', '=', 't.paymentMethod')
             ->select(
                 't.id',
                 't.registrationNo',
@@ -1567,19 +1575,12 @@ class TransactionPetShopController
                 't.created_at',
                 'l.locationName as locationName',
                 'c.firstName as customerName',
-                't.paymentMethod',
+                'pm.name as paymentMethod',
                 'u.firstName as createdBy'
             )
             ->where('t.id', $transactionId)
             ->where('t.isDeleted', 0)
             ->first();
-
-        if (!$transaction) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Data transaksi tidak ditemukan.'
-            ], 404);
-        }
 
         $transaction->createdAt = Carbon::parse($transaction->created_at)->format('d/m/Y H:i:s');
         $transaction->proofOfPayment = $transaction->proofOfPayment ?? null;
@@ -1769,7 +1770,7 @@ class TransactionPetShopController
             ->where('t.id', $id)
             ->select(
                 't.*',
-                // 't.no_nota',
+                't.no_nota',
                 'c.memberNo',
                 'c.firstName',
                 'ct.phoneNumber'
@@ -1837,13 +1838,13 @@ class TransactionPetShopController
 
         $nomorUrut = str_pad($monthlyTransactionCount, 4, '0', STR_PAD_LEFT);
 
-        $namaFile = "INV_PS_{$locationId}_{$tahun}_{$bulan}_{$nomorUrut}.pdf";
-
+        // $namaFile = "INV/PS/{$locationId}/{$tahun}/{$bulan}/{$nomorUrut}.pdf";
+        $namaFile = str_replace('/', '_', $transaction->no_nota ?? 'INV') . '.pdf';
 
         $data = [
             'locations'      => $formattedLocations,
             'nota_date'      => Carbon::parse($transaction->created_at)->format('d/m/Y'),
-            'no_nota'    => $transaction->no_nota ?? '___________',
+            'no_nota'        => $transaction->no_nota ?? '___________',
             'member_no'      => $transaction->memberNo ?? '-',
             'customer_name'  => $transaction->firstName ?? '-',
             'phone_number'   => $transaction->phoneNumber ?? '-',

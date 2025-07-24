@@ -2,29 +2,30 @@
 
 namespace App\Http\Controllers\Customer;
 
-use App\Http\Controllers\Controller;
-use Maatwebsite\Excel\Facades\Excel;
+use DB;
+use File;
+use Validator;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use App\Models\CustomerGroups;
-use App\Models\Customer\CustomerImages;
-use App\Models\Customer\CustomerMessengers;
-use App\Models\Customer\CustomerTelephones;
-use App\Models\Customer\CustomerEmails;
-use App\Models\Customer\CustomerAddresses;
-use App\Models\Customer\CustomerReminder;
-use App\Models\Customer\CustomerPets;
 use App\Models\Customer\Customer;
+use App\Models\Location\Location;
+use App\Http\Controllers\Controller;
+use App\Models\Customer\PetCategory;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Models\Customer\CustomerPets;
 use App\Models\Customer\TitleCustomer;
-use App\Models\Customer\CustomerOccupation;
-use App\Models\Customer\ReferenceCustomer;
+use App\Models\Customer\CustomerEmails;
+use App\Models\Customer\CustomerImages;
 use App\Models\Customer\SourceCustomer;
 use App\Models\Customer\TypeIdCustomer;
 use App\Exports\Customer\exportCustomer;
-use App\Models\Customer\PetCategory;
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use Validator;
-use File;
-use DB;
+use App\Models\Customer\CustomerReminder;
+use App\Models\Customer\CustomerAddresses;
+use App\Models\Customer\ReferenceCustomer;
+use App\Models\Customer\CustomerMessengers;
+use App\Models\Customer\CustomerOccupation;
+use App\Models\Customer\CustomerTelephones;
 
 class CustomerController extends Controller
 {
@@ -1902,6 +1903,14 @@ class CustomerController extends Controller
 
             $lastInsertedID = $customer->id;
 
+            // log
+            $locName = Location::find($request->locationId);
+            recentActivity(
+                $request->user()->id,
+                'Customer',
+                'Add Customer',
+                'Add Customer ' . $request->firstName . ' at branch ' . optional($locName)->locationName
+            );
 
             if ($request->customerPets) {
 
@@ -2782,6 +2791,15 @@ class CustomerController extends Controller
                     'updated_at' => now(),
                 ]);
 
+            $locName = Location::find($request->locationId);
+            $customer = Customer::find($request->customerId);
+            recentActivity(
+                $request->user()->id,
+                'Customer',
+                'Update Customer',
+                'Update data for customer ' . $customer->firstName . ' at branch ' . optional($locName)->locationName
+            );
+
             foreach ($request->customerPets as $val) {
 
                 if ($val['id'] == "") {
@@ -2821,7 +2839,7 @@ class CustomerController extends Controller
                     $customerPets->dateOfBirth = $valueDate;
                     $customerPets->petGender = $val['petGender'];
                     $customerPets->isSteril = $val['isSteril'];
-                    $customerPets->remark = $val['remark'];
+                    $customerPets->remark = $val['remark'] ?? null; // tambahan null
                     $customerPets->createdBy = $request->user()->id;
                     $customerPets->userUpdateId = $request->user()->id;
                     $customerPets->save();
@@ -2877,7 +2895,7 @@ class CustomerController extends Controller
                             'dateOfBirth' => $valueDate,
                             'petGender' => $val['petGender'],
                             'isSteril' => $val['isSteril'],
-                            'remark' => $val['remark'],
+                            'remark' => $val['remark'] ?? null,
                             'updated_at' => now(),
                         ]);
                     }
@@ -3451,6 +3469,16 @@ class CustomerController extends Controller
                     ->update([
                         'isDeleted' => 1,
                     ]);
+
+                $customer = Customer::with('location')->find($val);
+                $locName = optional($customer->location)->locationName;
+
+                recentActivity(
+                    $request->user()->id,
+                    'Customer',
+                    'Delete Customer',
+                    'Delete Customer ' . $customer->firstName . ' at branch ' . $locName
+                );
 
                 DB::commit();
             }

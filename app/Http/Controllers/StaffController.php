@@ -499,6 +499,13 @@ class StaffController extends Controller
                     'isLogin' => 0,
                 ]);
 
+            recentActivity(
+                $request->user()->id,
+                'Staff',
+                'Add Staff',
+                'Add new staff'
+            );
+
             staffcontract::create([
                 'staffId' => $lastInsertedID,
                 'startDate' => $start,
@@ -3514,6 +3521,13 @@ class StaffController extends Controller
                         'email' => $insertEmailUsers,
                     ]);
 
+                recentActivity(
+                    $request->user()->id,
+                    'Staff',
+                    'Add Staff',
+                    'Update staff'
+                );
+
 
 
                 if ($request->locationId) {
@@ -4048,6 +4062,103 @@ class StaffController extends Controller
         }
     }
 
+    // public function deleteStaff(Request $request)
+    // {
+    //     if (!checkAccessDelete('staff-list', $request->user()->roleId)) {
+    //         return responseUnauthorize();
+    //     }
+
+    //     $validate = Validator::make($request->all(), [
+    //         'id' => 'required',
+    //     ]);
+
+    //     if ($validate->fails()) {
+    //         $errors = $validate->errors()->all();
+
+    //         return response()->json([
+    //             'message' => 'The given data was invalid.',
+    //             'errors' => $errors,
+    //         ], 422);
+    //     }
+
+    //     DB::beginTransaction();
+    //     try {
+
+
+    //         foreach ($request->id as $val) {
+
+    //             $checkIfDataExits = DB::table('users')
+    //                 ->where([
+    //                     ['id', '=', $val],
+    //                     ['isDeleted', '=', 0],
+    //                 ])
+    //                 ->first();
+
+    //             if (!$checkIfDataExits) {
+    //                 return response()->json([
+    //                     'message' => 'The given data was invalid.',
+    //                     'errors' => ['Data not found! try different ID'],
+    //                 ], 422);
+    //             }
+    //         }
+
+    //         foreach ($request->id as $val) {
+
+    //             DB::table('users')
+    //                 ->where('id', '=', $val)
+    //                 ->update(['isDeleted' => 1]);
+
+    //             DB::table('usersDetailAddresses')
+    //                 ->where('usersId', '=', $val)
+    //                 ->update(['isDeleted' => 1]);
+
+    //             DB::table('usersEmails')
+    //                 ->where('usersId', '=', $val)
+    //                 ->update(['isDeleted' => 1]);
+
+    //             DB::table('usersMessengers')
+    //                 ->where('usersId', '=', $val)
+    //                 ->update(['isDeleted' => 1]);
+
+    //             DB::table('usersIdentifications')
+    //                 ->where('usersId', '=', $val)
+    //                 ->update(['isDeleted' => 1]);
+
+    //             DB::table('usersTelephones')
+    //                 ->where('usersId', '=', $val)
+    //                 ->update(['isDeleted' => 1]);
+
+
+    //             $checkImages = DB::table('usersIdentifications')
+    //                 ->where([
+    //                     ['usersId', '=', $val]
+    //                 ])
+    //                 ->first();
+
+    //             if ($checkImages != null) {
+
+    //                 File::delete(public_path() . $checkImages->imagePath);
+    //             }
+
+    //             DB::commit();
+
+    //         }
+
+    //         return response()->json([
+    //             'result' => 'success',
+    //             'message' => 'Successfully deleted user',
+    //         ], 200);
+    //     } catch (Exception $e) {
+
+    //         DB::rollback();
+
+    //         return response()->json([
+    //             'message' => 'failed',
+    //             'errors' => $e,
+    //         ], 422);
+    //     }
+    // }
+
     public function deleteStaff(Request $request)
     {
         if (!checkAccessDelete('staff-list', $request->user()->roleId)) {
@@ -4055,94 +4166,86 @@ class StaffController extends Controller
         }
 
         $validate = Validator::make($request->all(), [
-            'id' => 'required',
+            'id' => 'required|array',
+            'id.*' => 'required|integer|distinct'
         ]);
 
         if ($validate->fails()) {
-            $errors = $validate->errors()->all();
-
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => $errors,
+                'errors' => $validate->errors()->all(),
             ], 422);
         }
 
         DB::beginTransaction();
         try {
+            $ids = $request->id;
 
+            $staffs = DB::table('users')
+                ->whereIn('id', $ids)
+                ->where('isDeleted', 0)
+                ->get();
 
-            foreach ($request->id as $val) {
+            $existingIds = $staffs->pluck('id')->toArray();
+            $notFoundIds = array_diff($ids, $existingIds);
 
-                $checkIfDataExits = DB::table('users')
-                    ->where([
-                        ['id', '=', $val],
-                        ['isDeleted', '=', 0],
-                    ])
-                    ->first();
-
-                if (!$checkIfDataExits) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => ['Data not found! try different ID'],
-                    ], 422);
-                }
+            if (count($notFoundIds) > 0) {
+                return response()->json([
+                    'message' => 'Inputed data is not valid',
+                    'errors' => ['User ID not found: ' . implode(', ', $notFoundIds)],
+                ], 422);
             }
 
-            foreach ($request->id as $val) {
+            foreach ($staffs as $staff) {
+                $userId = $staff->id;
 
-                DB::table('users')
-                    ->where('id', '=', $val)
-                    ->update(['isDeleted' => 1]);
+                $tables = [
+                    'users' => 'id',
+                    'usersDetailAddresses' => 'usersId',
+                    'usersEmails' => 'usersId',
+                    'usersMessengers' => 'usersId',
+                    'usersIdentifications' => 'usersId',
+                    'usersTelephones' => 'usersId',
+                ];
 
-                DB::table('usersDetailAddresses')
-                    ->where('usersId', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('usersEmails')
-                    ->where('usersId', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('usersMessengers')
-                    ->where('usersId', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('usersIdentifications')
-                    ->where('usersId', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('usersTelephones')
-                    ->where('usersId', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-
-                $checkImages = DB::table('usersIdentifications')
-                    ->where([
-                        ['usersId', '=', $val]
-                    ])
-                    ->first();
-
-                if ($checkImages != null) {
-
-                    File::delete(public_path() . $checkImages->imagePath);
+                foreach ($tables as $table => $column) {
+                    DB::table($table)
+                        ->where($column, $userId)
+                        ->update(['isDeleted' => 1]);
                 }
 
-                DB::commit();
+                $image = DB::table('usersIdentifications')
+                    ->where('usersId', $userId)
+                    ->first();
+
+                if ($image && $image->imagePath) {
+                    File::delete(public_path($image->imagePath));
+                }
+
+                recentActivity(
+                    $request->user()->id,
+                    'Staff',
+                    'Delete Staff',
+                    'Delete staff ' . $staff->firstName . ' with ID ' . $staff->id
+                );
             }
+
+            DB::commit();
 
             return response()->json([
                 'result' => 'success',
                 'message' => 'Successfully deleted user',
             ], 200);
         } catch (Exception $e) {
-
             DB::rollback();
 
             return response()->json([
                 'message' => 'failed',
-                'errors' => $e,
+                'errors' => $e->getMessage(),
             ], 422);
         }
     }
+
 
     public function staffListTransferProduct(Request $request)
     {

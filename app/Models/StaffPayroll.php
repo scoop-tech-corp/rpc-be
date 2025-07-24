@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\User;
+use App\Models\Location\Location;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class StaffPayroll extends Model
 {
@@ -15,12 +17,30 @@ class StaffPayroll extends Model
         'staffId',
         'name',
         'payrollDate',
+        'startDate',
+        'endDate',
         'locationId',
+
+        // Income-related
         'basicIncome',
         'annualIncrementIncentive',
         'attendanceAllowance',
         'mealAllowance',
         'positionalAllowance',
+        'housingAllowance',
+        'entertainAllowance',
+        'transportAllowance',
+        'turnoverAchievementBonus',
+        'functionalLeaderAllowance',
+        'hardshipAllowance',
+        'familyAllowance',
+        'bonusGroomingAchievement',
+        'bonusSalesAchievement',
+        'salesAchievementBonus',
+        'memberAchievementBonus',
+        'petshopTurnoverIncentive',
+
+        // Incentives
         'labXrayIncentiveAmount',
         'labXrayIncentiveUnitNominal',
         'labXrayIncentiveTotal',
@@ -28,31 +48,71 @@ class StaffPayroll extends Model
         'groomingIncentiveUnitNominal',
         'groomingIncentiveTotal',
         'clinicTurnoverBonus',
+        'patientIncentiveAmount',
+        'patientIncentiveUnitNominal',
+        'patientIncentiveTotal',
+
+        // Replacements
         'replacementDaysAmount',
         'replacementDaysUnitNominal',
         'replacementDaysTotal',
-        'bpjsHealthAllowance',
+        'longShiftReplacementAmount',
+        'longShiftReplacementUnitNominal',
+        'longShiftReplacementTotal',
+        'fullShiftReplacementAmount',
+        'fullShiftReplacementUnitNominal',
+        'fullShiftReplacementTotal',
+
+        // Penalties
         'absentAmount',
+        'absentDays',
         'absentUnitNominal',
         'absentTotal',
         'notWearingAttributeAmount',
         'notWearingAttributeUnitNominal',
         'notWearingAttributeTotal',
         'lateAmount',
+        'lateDays',
         'lateUnitNominal',
         'lateTotal',
+
+        // Others
         'currentMonthCashAdvance',
         'remainingDebtLastMonth',
         'stockOpnameInventory',
+        'stockOpnameLost',
+        'stockOpnameExpired',
+        'lostInventory',
+
+        // Final calculation
         'totalIncome',
         'totalDeduction',
         'netPay',
+
+        // Audit
         'userId',
-        'startDate',
-        'endDate'
+        'userUpdateId',
+        'deletedBy',
+        'deletedAt'
     ];
+
 
     protected $casts = [
         'payroll_date' => 'date',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'staffId');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class, 'locationId');
+    }
+
+    public function staff()
+    {
+        return $this->belongsTo(User::class, 'staffId');
+    }
 }

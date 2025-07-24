@@ -888,6 +888,12 @@ class ProductSellController
                 recentActivity($request->user()->id, 'Product', 'Add Product Sell', 'Add Product ' . $request->fullName . ' at branch ' . $locName->locationName);
             }
 
+            recentActivity(
+                $request->user()->id,
+                'Product Sell',
+                'Add Product',
+                'Created product sell'
+            );
             DB::commit();
             return responseCreate();
         } catch (Exception $th) {
@@ -1411,6 +1417,14 @@ class ProductSellController
                 }
             }
             // }
+
+            recentActivity(
+                $request->user()->id,
+                'Product Sell',
+                'Update Product',
+                'Updated product sell'
+            );
+
             DB::commit();
 
             return responseUpdate();
@@ -1649,6 +1663,13 @@ class ProductSellController
             $Prod->isDeleted = true;
             $Prod->DeletedAt = Carbon::now();
             $Prod->save();
+
+            recentActivity(
+                $request->user()->id,
+                'Product Sell',
+                'Delete Product',
+                'Deleted product sell'
+            );
         }
 
         $locName = DB::table('location')

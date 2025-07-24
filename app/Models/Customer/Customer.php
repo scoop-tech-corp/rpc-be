@@ -2,8 +2,9 @@
 
 namespace App\Models\Customer;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Location\Location;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Customer extends Model
 {
@@ -45,4 +46,9 @@ class Customer extends Model
         'created_at',
         'updated_at'
     ];
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class, 'locationId');
+    }
 }
