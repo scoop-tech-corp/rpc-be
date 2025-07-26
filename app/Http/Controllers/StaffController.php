@@ -4386,7 +4386,7 @@ class StaffController extends Controller
                 'p.periodName as payPeriodName',
                 'j.id as jobtitleId',
                 'j.jobName',
-                DB::raw("'Mitra Kerja' as status"),
+                DB::raw("'Mitra Kerja' as status"), //Mitra Kerja atau Masa Percobaan
                 'u.startDate',
                 'u.endDate',
                 DB::raw("TRIM(u.payAmount)+0 as payAmount"),
@@ -4543,6 +4543,67 @@ class StaffController extends Controller
                 'totalFullShiftSubstituteWage' => 500000, // total keseluruhan
 
                 'bpjsHealthAllowance' => 500000,
+
+                // Pengeluaran
+                'notComingToWork' => 5, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => 50000, // nominal potongan total
+                'late' => 50000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 6 || $user->jobtitleId == 8 || $user->jobtitleId == 9 || $user->jobtitleId == 10 || $user->jobtitleId == 11) {
+            //staff
+            $data = [
+                // Pemasukan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 40000,
+                'attendanceAllowance' => 400000,
+                'entertainAllowance' => 40000,
+                'transportAllowance' => 40000,
+                'functionalAllowance' => 40000,
+                'hardShiftAllowance' => 400000,
+                'famillyAllowance' => 400000,
+                'bpjsHealthAllowance' => 500000,
+                'turnoverAchievementBonus' => 500000,
+
+                // Pengeluaran
+                'notComingToWork' => 5, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => 50000, // nominal potongan total
+                'late' => 2, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 7 || $user->jobtitleId == 12 || $user->jobtitleId == 16 || $user->jobtitleId == 19 || $user->jobtitleId == 20) {
+            //manager
+            $data = [
+                // Pemasukan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 40000,
+                'attendanceAllowance' => 400000,
+                'entertainAllowance' => 40000,
+                'transportAllowance' => 40000,
+                'functionalLeaderAllowance' => 40000,
+                'hardShiftAllowance' => 400000,
+                'famillyAllowance' => 400000,
+                'bpjsHealthAllowance' => 500000,
+
+                // Pengeluaran
+                'notComingToWork' => 5, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => 50000, // nominal potongan total
+                'late' => 50000, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 18) {
+            //quality control
+            $data = [
+                // Pemasukan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 40000,
+                'attendanceAllowance' => 400000,
+                'entertainAllowance' => 40000,
+                'transportAllowance' => 40000,
+                'positionAllowance' => 40000,
+                'housingAllowance' => 400000,
+                'bpjsHealthAllowance' => 500000,
+                'turnoverAchievementBonus' => 500000,
 
                 // Pengeluaran
                 'notComingToWork' => 5, // jumlah hari
