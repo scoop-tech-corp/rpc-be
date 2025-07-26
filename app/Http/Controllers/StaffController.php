@@ -4401,6 +4401,13 @@ class StaffController extends Controller
             ], 404);
         }
 
+        $late = DB::table('staffAbsents as sa')
+            ->where('sa.userId', '=', $request->staffId)
+            ->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]) // Tambahkan baris ini
+            ->where('sa.status', '=', 'Terlambat')
+            ->where('sa.isDeleted', '=', 0)
+            ->count();
+
         if ($user->jobtitleId == 3) {   //groomer
             $data = [
                 'basicIncome' => $user->payAmount,
@@ -4426,7 +4433,7 @@ class StaffController extends Controller
                 'notComingToWork' => 1, // jumlah hari
                 'eachNotComingToWork' => 10000, // nominal potongan per hari
                 'notComingToWorkTotal' => 10000, // nominal potongan total
-                'late' => 10000, // jumlah keterlambatan
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 2) {   //helper
             $data = [
@@ -4458,7 +4465,7 @@ class StaffController extends Controller
                 'notComingToWork' => 2, // jumlah hari
                 'eachNotComingToWork' => 20000, // nominal potongan per hari
                 'notComingToWorkTotal' => 20000, // nominal potongan total
-                'late' => 20000, // jumlah keterlambatan
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 1) {   //kasir
             $data = [
@@ -4483,7 +4490,7 @@ class StaffController extends Controller
                 'notComingToWork' => 3, // jumlah hari
                 'eachNotComingToWork' => 30000, // nominal potongan per hari
                 'notComingToWorkTotal' => 30000, // nominal potongan total
-                'late' => 30000, // jumlah keterlambatan
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 4) {   //paramedis
             $data = [
@@ -4514,7 +4521,7 @@ class StaffController extends Controller
                 'notComingToWork' => 4, // jumlah hari
                 'eachNotComingToWork' => 40000, // nominal potongan per hari
                 'notComingToWorkTotal' => 40000, // nominal potongan total
-                'late' => 40000, // jumlah keterlambatan
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 17) {   //dokter hewan
 
@@ -4548,7 +4555,7 @@ class StaffController extends Controller
                 'notComingToWork' => 5, // jumlah hari
                 'eachNotComingToWork' => 50000, // nominal potongan per hari
                 'notComingToWorkTotal' => 50000, // nominal potongan total
-                'late' => 50000, // jumlah keterlambatan
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 6 || $user->jobtitleId == 8 || $user->jobtitleId == 9 || $user->jobtitleId == 10 || $user->jobtitleId == 11) {
             //staff
@@ -4569,7 +4576,7 @@ class StaffController extends Controller
                 'notComingToWork' => 5, // jumlah hari
                 'eachNotComingToWork' => 50000, // nominal potongan per hari
                 'notComingToWorkTotal' => 50000, // nominal potongan total
-                'late' => 2, // jumlah keterlambatan
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 7 || $user->jobtitleId == 12 || $user->jobtitleId == 16 || $user->jobtitleId == 19 || $user->jobtitleId == 20) {
             //manager
@@ -4589,7 +4596,7 @@ class StaffController extends Controller
                 'notComingToWork' => 5, // jumlah hari
                 'eachNotComingToWork' => 50000, // nominal potongan per hari
                 'notComingToWorkTotal' => 50000, // nominal potongan total
-                'late' => 50000, // jumlah keterlambatan
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 18) {
             //quality control
@@ -4609,7 +4616,7 @@ class StaffController extends Controller
                 'notComingToWork' => 5, // jumlah hari
                 'eachNotComingToWork' => 50000, // nominal potongan per hari
                 'notComingToWorkTotal' => 50000, // nominal potongan total
-                'late' => 50000, // jumlah keterlambatan
+                'late' => $late, // jumlah keterlambatan
             ];
         }
 
