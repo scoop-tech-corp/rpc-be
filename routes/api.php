@@ -449,6 +449,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/schedule', [AccessControlSchedulesController::class, 'updateAccessControlSchedules']);
 
         Route::get('/profile', [ProfileController::class, 'detailProfile']);
+        Route::get('/profile/late', [ProfileController::class, 'staffLate']);
         Route::put('/profile', [ProfileController::class, 'updateProfile']);
         Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
         Route::post('/profile/image', [ProfileController::class, 'uploadImageProfile']);
