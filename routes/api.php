@@ -55,6 +55,8 @@ use App\Http\Controllers\Report\StaffController as ReportStaffController;
 use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
+use App\Http\Controllers\Staff\IdentityController;
+use App\Http\Controllers\Staff\RequireSalaryController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -448,6 +450,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/schedule', [AccessControlSchedulesController::class, 'updateAccessControlSchedules']);
 
         Route::get('/profile', [ProfileController::class, 'detailProfile']);
+        Route::get('/profile/late', [ProfileController::class, 'staffLate']);
         Route::put('/profile', [ProfileController::class, 'updateProfile']);
         Route::put('/profile/password', [ProfileController::class, 'updatePassword']);
         Route::post('/profile/image', [ProfileController::class, 'uploadImageProfile']);
@@ -460,6 +463,17 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/salary-slip', [StaffPayrollController::class, 'delete']);
         Route::get('/salary-slip/generate-slip', [StaffPayrollController::class, 'generatePayrollSlip']);
 
+        Route::post('req-salary', [RequireSalaryController::class, 'create']);
+        Route::get('/req-salary', [RequireSalaryController::class, 'index']);
+        Route::get('/req-salary/export', [RequireSalaryController::class, 'export']);
+        Route::get('/req-salary/detail', [RequireSalaryController::class, 'detail']);
+        Route::put('/req-salary', [RequireSalaryController::class, 'update']);
+        Route::delete('/req-salary', [RequireSalaryController::class, 'delete']);
+
+        Route::post('identity', [IdentityController::class, 'create']);
+        Route::get('/identity', [IdentityController::class, 'index']);
+        Route::put('/identity', [IdentityController::class, 'update']);
+        Route::delete('/identity', [IdentityController::class, 'delete']);
     });
 
 

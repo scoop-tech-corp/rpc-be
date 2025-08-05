@@ -99,6 +99,7 @@ class StaffPayroll extends Model
 
     protected $casts = [
         'payroll_date' => 'date',
+        'currentMonthCashAdvance' => 'float',
     ];
 
     public function user()

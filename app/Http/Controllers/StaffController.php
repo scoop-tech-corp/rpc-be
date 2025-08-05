@@ -580,6 +580,10 @@ class StaffController extends Controller
                                     'typeId' => $identify[$count]['typeId'],
                                     'identification' => $identify[$count]['identificationNumber'],
                                     'imagePath' => $fileName,
+                                    'status' => 1,
+                                    'reason' => '',
+                                    'approvedBy' => $request->user()->id,
+                                    'approvedAt' => now(),
                                     'isDeleted' => 0,
                                     'created_at' => now(),
                                     'updated_at' => now(),
@@ -603,6 +607,10 @@ class StaffController extends Controller
                             'typeId' => $identify[$count]['typeId'],
                             'identification' => $identify[$count]['identificationNumber'],
                             'imagePath' => $res['imagePath'],
+                            'status' => 1,
+                            'reason' => '',
+                            'approvedBy' => $request->user()->id,
+                            'approvedAt' => now(),
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -1798,6 +1806,10 @@ class StaffController extends Controller
                                     'typeId' => $identify[$count]['typeId'],
                                     'identification' => $identify[$count]['identificationNumber'],
                                     'imagePath' => $fileName,
+                                    'status' => 1,
+                                    'reason' => '',
+                                    'approvedBy' => $request->user()->id,
+                                    'approvedAt' => now(),
                                     'isDeleted' => 0,
                                     'created_at' => now(),
                                     'updated_at' => now(),
@@ -1821,6 +1833,10 @@ class StaffController extends Controller
                             'typeId' => $identify[$count]['typeId'],
                             'identification' => $identify[$count]['identificationNumber'],
                             'imagePath' => $res['imagePath'],
+                            'status' => 1,
+                            'reason' => '',
+                            'approvedBy' => $request->user()->id,
+                            'approvedAt' => now(),
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -2600,6 +2616,10 @@ class StaffController extends Controller
                             'typeId' => $cardIdentity[$j],
                             'identification' => $noCardIdentity[$j],
                             'imagePath' => '',
+                            'status' => 1,
+                            'reason' => '',
+                            'approvedBy' => $request->user()->id,
+                            'approvedAt' => now(),
                             'isDeleted' => 0,
                             'created_at' => now(),
                             'updated_at' => now(),
@@ -4386,7 +4406,7 @@ class StaffController extends Controller
                 'p.periodName as payPeriodName',
                 'j.id as jobtitleId',
                 'j.jobName',
-                DB::raw("'Mitra Kerja' as status"),
+                DB::raw("'Mitra Kerja' as status"), //Mitra Kerja atau Masa Percobaan
                 'u.startDate',
                 'u.endDate',
                 DB::raw("TRIM(u.payAmount)+0 as payAmount"),
@@ -4401,154 +4421,242 @@ class StaffController extends Controller
             ], 404);
         }
 
+        $dateFrom = Carbon::parse($request->input('dateFrom'));
+        $dateTo = Carbon::parse($request->input('dateTo'));
+
+        // 3. Melakukan Perhitungan
+        $fullDay = $dateFrom->diffInDays($dateTo) - 4;
+        // $jumlahHariTermasukKeduanya = $jumlahHariPenuh + 1;
+        // $jumlahHariKerja = $dateFrom->diffInWeekdays($dateTo);
+
+        $late = DB::table('staffAbsents as sa')
+            ->where('sa.userId', '=', $request->staffId)
+            ->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]) // Tambahkan baris ini
+            ->where('sa.status', '=', 'Terlambat')
+            ->where('sa.isDeleted', '=', 0)
+            ->count();
+
+        $comingDays = DB::table('staffAbsents as sa')
+            ->where('sa.userId', '=', $request->staffId)
+            ->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]) // Tambahkan baris ini
+            ->where('sa.isDeleted', '=', 0)
+            ->count();
+
+        $notComing = $fullDay - $comingDays;
+
+
         if ($user->jobtitleId == 3) {   //groomer
             $data = [
                 'basicIncome' => $user->payAmount,
-                'annualIncreaseIncentive' => 250000,
-                'attendanceAllowance' => 200000,
-                'mealAllowance' => 150000,
-                'positionAllowance' => 500000,
-                'quantityXray' => 2,
-                'eachXray' => 10000,
-                'labXrayIncentive' => 20000,
+                'annualIncreaseIncentive' => 0,
+                'attendanceAllowance' => 520000,
+                'mealAllowance' => 280000,
+                'positionAllowance' => 100000,
+
+                'quantityXray' => 0,
+                'eachXray' => 5000,
+                'labXrayIncentive' => 0,
+
                 'quantityGrooming' => 1,
                 'eachGrooming' => 10000,
-                'groomingIncentive' => 10000,
-                'groomingAchievementBonus' => 10000,
-                'salesBonus' => 10000,
+                'groomingIncentive' => 0,
 
-                'quantitySubstituteDayWage' => 5,
-                'eachSubstituteDayWage' => 20000, // nominal per hari
-                'totalSubstituteDayWage' => 100000, // total keseluruhan
+                'groomingAchievementBonus' => 0,
+                'salesBonus' => 0,
 
-                'bpjsHealthAllowance' => 100000,
+                'quantitySubstituteDayWage' => 0,
+                'eachSubstituteDayWage' => 50000, // nominal per hari
+                'totalSubstituteDayWage' => 0, // total keseluruhan
 
-                'notComingToWork' => 2, // jumlah hari
-                'eachNotComingToWork' => 20000, // nominal potongan per hari
-                'notComingToWorkTotal' => 40000, // nominal potongan total
-                'late' => 20000, // jumlah keterlambatan
+                'bpjsHealthAllowance' => 0,
+
+                'notComingToWork' => $notComing, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => $notComing * 50000, // nominal potongan total
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 2) {   //helper
             $data = [
                 // Pendapatan
                 'basicIncome' => $user->payAmount,
-                'annualIncreaseIncentive' => 250000,
-                'attendanceAllowance' => 200000,
-                'mealAllowance' => 150000,
-                'positionAllowance' => 500000,
+                'annualIncreaseIncentive' => 0,
+                'attendanceAllowance' => 520000,
+                'mealAllowance' => 280000,
+                'positionAllowance' => 200000,
 
-                'quantityXray' => 2,
-                'eachXray' => 10000,
-                'labXrayIncentive' => 20000,
+                'quantityXray' => 0,
+                'eachXray' => 5000,
+                'labXrayIncentive' => 0,
 
-                'quantityGrooming' => 1,
-                'eachGrooming' => 10000,
-                'groomingIncentive' => 10000,
+                'quantityGrooming' => 0,
+                'eachGrooming' => 5000,
+                'groomingIncentive' => 0,
 
-                'clinicAchievementBonus' => 10000,
-                'salesBonus' => 10000,
+                'clinicAchievementBonus' => 0,
+                'salesBonus' => 0,
 
-                'quantitySubstituteDayWage' => 5,
-                'eachSubstituteDayWage' => 20000, // nominal per hari
-                'totalSubstituteDayWage' => 100000, // total keseluruhan
+                'quantitySubstituteDayWage' => 0,
+                'eachSubstituteDayWage' => 50000, // nominal per hari
+                'totalSubstituteDayWage' => 0, // total keseluruhan
 
-                'bpjsHealthAllowance' => 100000,
+                'bpjsHealthAllowance' => 0,
 
                 // Pengeluaran / Potongan
-                'notComingToWork' => 2, // jumlah hari
-                'eachNotComingToWork' => 20000, // nominal potongan per hari
-                'notComingToWorkTotal' => 40000, // nominal potongan total
-                'late' => 20000, // jumlah keterlambatan
+                'notComingToWork' => $notComing, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => $notComing * 50000, // nominal potongan total
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 1) {   //kasir
             $data = [
                 // Pendapatan
                 'basicIncome' => $user->payAmount,
-                'annualIncreaseIncentive' => 250000,
-                'attendanceAllowance' => 200000,
-                'mealAllowance' => 150000,
-                'positionAllowance' => 500000,
-                'housingAllowance' => 600000,
-                'petshopRevenueIncentive' => 300000,
-                'revenueAchievementBonus' => 200000,
-                'memberAchievementBonus' => 150000,
+                'annualIncreaseIncentive' => 300000,
+                'attendanceAllowance' => 820000,
+                'mealAllowance' => 280000,
+                'positionAllowance' => 200000,
+                'housingAllowance' => 500000,
+                'petshopRevenueIncentive' => 0,
+                'revenueAchievementBonus' => 0,
+                'memberAchievementBonus' => 0,
 
-                'quantitySubstituteDayWage' => 5,
-                'eachSubstituteDayWage' => 20000, // nominal per hari
-                'totalSubstituteDayWage' => 100000, // total keseluruhan
+                'quantitySubstituteDayWage' => 0,
+                'eachSubstituteDayWage' => 0, // nominal per hari
+                'totalSubstituteDayWage' => 0, // total keseluruhan
 
-                'bpjsHealthAllowance' => 100000,
+                'bpjsHealthAllowance' => 0,
 
                 // Potongan / Pengeluaran
-                'notComingToWork' => 2, // jumlah hari
-                'eachNotComingToWork' => 20000, // nominal potongan per hari
-                'notComingToWorkTotal' => 40000, // nominal potongan total
-                'late' => 20000, // jumlah keterlambatan
+                'notComingToWork' => $notComing, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => $notComing * 50000, // nominal potongan total
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 4) {   //paramedis
             $data = [
                 // Pendapatan
                 'basicIncome' => $user->payAmount,
-                'annualIncreaseIncentive' => 250000,
-                'attendanceAllowance' => 200000,
-                'mealAllowance' => 150000,
-                'housingAllowance' => 600000,
+                'annualIncreaseIncentive' => 0,
+                'attendanceAllowance' => 220000,
+                'mealAllowance' => 280000,
+                'housingAllowance' => 500000,
 
-                'quantityXray' => 2,
-                'eachXray' => 10000,
-                'labXrayIncentive' => 20000,
+                'quantityXray' => 0,
+                'eachXray' => 5000,
+                'labXrayIncentive' => 0,
 
-                'clinicRevenueBonus' => 250000,
+                'clinicRevenueBonus' => 0,
 
-                'quantityLongShiftSubstituteWage' => 5,
-                'eachLongShiftSubstituteWage' => 20000, // nominal per hari
-                'totalLongShiftSubstituteWage' => 100000, // total keseluruhan
+                'quantityLongShiftSubstituteWage' => 0,
+                'eachLongShiftSubstituteWage' => 10000, // nominal per hari
+                'totalLongShiftSubstituteWage' => 0, // total keseluruhan
 
-                'quantityFullShiftSubstituteWage' => 5,
-                'eachFullShiftSubstituteWage' => 20000, // nominal per hari
-                'totalFullShiftSubstituteWage' => 100000, // total keseluruhan
+                'quantityFullShiftSubstituteWage' => 0,
+                'eachFullShiftSubstituteWage' => 0, // nominal per hari
+                'totalFullShiftSubstituteWage' => 0, // total keseluruhan
 
-                'bpjsHealthAllowance' => 100000,
+                'bpjsHealthAllowance' => 0,
 
                 // Potongan / Pengeluaran
-                'notComingToWork' => 2, // jumlah hari
-                'eachNotComingToWork' => 20000, // nominal potongan per hari
-                'notComingToWorkTotal' => 40000, // nominal potongan total
-                'late' => 20000, // jumlah keterlambatan
+                'notComingToWork' => $notComing, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => $notComing * 50000, // nominal potongan total
+                'late' => $late, // jumlah keterlambatan
             ];
         } elseif ($user->jobtitleId == 17) {   //dokter hewan
 
             $data = [
                 // Pemasukan
                 'basicIncome' => $user->payAmount,
-                'attendanceAllowance' => 200000,
-                'mealAllowance' => 150000,
+                'attendanceAllowance' => 500000,
+                'mealAllowance' => 50000,
 
-                'quantityPatientIncentive' => 2,
-                'eachPatientIncentive' => 10000,
-                'PatientIncentive' => 300000, // total keseluruhan
+                'quantityPatientIncentive' => 5,
+                'eachPatientIncentive' => 50000,
+                'PatientIncentive' => 500000, // total keseluruhan
 
-                'quantityXray' => 2,
-                'eachXray' => 10000,
-                'labXrayIncentive' => 20000,
+                'quantityXray' => 5,
+                'eachXray' => 50000,
+                'labXrayIncentive' => 50000,
 
-                'clinicRevenueBonus' => 400000,
+                'clinicRevenueBonus' => 500000,
 
                 'quantityLongShiftSubstituteWage' => 5,
-                'eachLongShiftSubstituteWage' => 20000, // nominal per hari
-                'totalLongShiftSubstituteWage' => 100000, // total keseluruhan
+                'eachLongShiftSubstituteWage' => 50000, // nominal per hari
+                'totalLongShiftSubstituteWage' => 500000, // total keseluruhan
 
                 'quantityFullShiftSubstituteWage' => 5,
-                'eachFullShiftSubstituteWage' => 20000, // nominal per hari
-                'totalFullShiftSubstituteWage' => 100000, // total keseluruhan
+                'eachFullShiftSubstituteWage' => 50000, // nominal per hari
+                'totalFullShiftSubstituteWage' => 500000, // total keseluruhan
 
-                'bpjsHealthAllowance' => 100000,
+                'bpjsHealthAllowance' => 500000,
 
                 // Pengeluaran
-                'notComingToWork' => 2, // jumlah hari
-                'eachNotComingToWork' => 20000, // nominal potongan per hari
-                'notComingToWorkTotal' => 40000, // nominal potongan total
-                'late' => 20000, // jumlah keterlambatan
+                'notComingToWork' => $notComing, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => $notComing * 50000, // nominal potongan total
+                'late' => $late, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 6 || $user->jobtitleId == 8 || $user->jobtitleId == 9 || $user->jobtitleId == 10 || $user->jobtitleId == 11) {
+            //staff
+            $data = [
+                // Pemasukan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 200000,
+                'attendanceAllowance' => 520000,
+                'entertainAllowance' => 200000,
+                'transportAllowance' => 300000,
+                'functionalAllowance' => 0,
+                'hardShiftAllowance' => 0,
+                'famillyAllowance' => 0,
+                'bpjsHealthAllowance' => 0,
+                'turnoverAchievementBonus' => 0,
+
+                // Pengeluaran
+                'notComingToWork' => $notComing, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => $notComing * 50000, // nominal potongan total
+                'late' => $late, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 7 || $user->jobtitleId == 12 || $user->jobtitleId == 16 || $user->jobtitleId == 19 || $user->jobtitleId == 20) {
+            //manager
+            $data = [
+                // Pemasukan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 40000,
+                'attendanceAllowance' => 400000,
+                'entertainAllowance' => 40000,
+                'transportAllowance' => 40000,
+                'functionalLeaderAllowance' => 40000,
+                'hardShiftAllowance' => 400000,
+                'famillyAllowance' => 400000,
+                'bpjsHealthAllowance' => 500000,
+
+                // Pengeluaran
+                'notComingToWork' => $notComing, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => $notComing * 50000, // nominal potongan total
+                'late' => $late, // jumlah keterlambatan
+            ];
+        } elseif ($user->jobtitleId == 18) {
+            //quality control
+            $data = [
+                // Pemasukan
+                'basicIncome' => $user->payAmount,
+                'annualIncreaseIncentive' => 0,
+                'attendanceAllowance' => 840000,
+                'entertainAllowance' => 200000,
+                'transportAllowance' => 280000,
+                'positionAllowance' => 200000,
+                'housingAllowance' => 500000,
+                'bpjsHealthAllowance' => 0,
+                'turnoverAchievementBonus' => 0,
+
+                // Pengeluaran
+                'notComingToWork' => $notComing, // jumlah hari
+                'eachNotComingToWork' => 50000, // nominal potongan per hari
+                'notComingToWorkTotal' => $notComing * 50000, // nominal potongan total
+                'late' => $late, // jumlah keterlambatan
             ];
         }
 

@@ -17,6 +17,107 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class StaffPayrollController
 {
+    // public function index(Request $request)
+    // {
+    //     $itemPerPage = $request->rowPerPage ?? 10;
+    //     $page = $request->goToPage ?? 1;
+
+    //     $user = $request->user();
+    //     $jobTitleId = $user->jobTitleId;
+    //     $roleId = $user->roleId;
+
+    //     $data = DB::table('staff_payroll as sp')
+    //         ->join('location as l', 'sp.locationId', '=', 'l.id')
+    //         ->select(
+    //             'sp.id',
+    //             'sp.name',
+    //             'sp.payrollDate',
+    //             'sp.startDate',
+    //             'sp.endDate',
+    //             'sp.basicIncome',
+    //             'sp.annualIncrementIncentive',
+    //             'sp.absentDays',
+    //             'sp.lateDays',
+    //             'sp.totalIncome',
+    //             'sp.totalDeduction',
+    //             'sp.netPay',
+    //             'sp.currentMonthCashAdvance',
+    //             'l.locationName'
+    //         );
+
+    //     $allowGenerateInvoice = $roleId == 1 || in_array($jobTitleId, [8, 13]);
+
+    //     if (!$allowGenerateInvoice) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Unauthorized to access payroll data.',
+    //             'allowGenerateInvoice' => false
+    //         ], 403);
+    //     }
+
+    //     if ($roleId == 1 && in_array($jobTitleId, [8, 13])) {
+    //         if (!empty($request->locationId) && is_array($request->locationId)) {
+    //             $data = $data->whereIn('sp.locationId', $request->locationId);
+    //         }
+    //     } else {
+    //         $locations = UsersLocation::where('usersId', $user->id)->pluck('id')->toArray();
+    //         $data = $data->whereIn('sp.locationId', $locations);
+    //     }
+
+    //     // $jobTitleAllowedToViewAll = [13, 14, 15, 19]; // Finance, Director, Komisaris
+    //     // if (!in_array($jobTitleId, $jobTitleAllowedToViewAll)) {
+    //     //     $data = $data->where('sp.staffId', $user->id);
+    //     // }
+
+    //     if (!($roleId == 1 || in_array($jobTitleId, [8, 13]))) {
+    //         $data = $data->where('sp.staffId', $user->id);
+    //     }
+
+    //     if ($request->search) {
+    //         $data = $data->where('sp.name', 'like', '%' . $request->search . '%');
+    //     }
+
+    //     $allowedColumns = [
+    //         'sp.name',
+    //         'sp.payrollDate',
+    //         'sp.basicIncome',
+    //         'sp.totalIncome',
+    //         'sp.totalDeduction',
+    //         'sp.netPay',
+    //         'sp.currentMonthCashAdvance'
+    //     ];
+
+    //     if ($request->startDate) {
+    //         $data = $data->whereDate('sp.payrollDate', '>=', $request->startDate);
+    //     }
+
+    //     if ($request->endDate) {
+    //         $data = $data->whereDate('sp.payrollDate', '<=', $request->endDate);
+    //     }
+
+    //     $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payrollDate';
+    //     $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
+
+    //     $data = $data->orderBy(DB::raw($orderColumn), $orderValue);
+
+    //     $offset = ($page - 1) * $itemPerPage;
+    //     $count_data = $data->count();
+    //     $totalPaging = ceil($count_data / $itemPerPage);
+
+    //     $data = $data->offset($offset)->limit($itemPerPage)->get();
+
+    //     $allowGenerateInvoice = $roleId == 1 && in_array($jobTitleId, [8, 13]);
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Payroll data retrieved successfully.',
+    //         'data' => $data,
+    //         'totalPaging' => $totalPaging,
+    //         'allowGenerateInvoice' => true
+    //     ]);
+    // }
+
+
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage ?? 10;
@@ -25,6 +126,18 @@ class StaffPayrollController
         $user = $request->user();
         $jobTitleId = $user->jobTitleId;
         $roleId = $user->roleId;
+
+
+        $allowedJobTitles = [8, 13];
+        $isAuthorized = $roleId == 1 || in_array($jobTitleId, $allowedJobTitles);
+
+        if (!$isAuthorized) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized to access payroll data.',
+                'allowGenerateInvoice' => false
+            ], 403);
+        }
 
         $data = DB::table('staff_payroll as sp')
             ->join('location as l', 'sp.locationId', '=', 'l.id')
@@ -40,42 +153,30 @@ class StaffPayrollController
                 'sp.lateDays',
                 'sp.totalIncome',
                 'sp.totalDeduction',
-                'sp.netPay',
                 'sp.currentMonthCashAdvance',
+                'sp.netPay',
                 'l.locationName'
-            );
+            )
+            ->where('sp.isDeleted', 0);
 
-        $allowGenerateInvoice = $roleId == 1 || in_array($jobTitleId, [8, 13]);
 
-        if (!$allowGenerateInvoice) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized to access payroll data.',
-                'allowGenerateInvoice' => false
-            ], 403);
+        if ($request->has('locationId') && is_array($request->locationId) && count($request->locationId) > 0) {
+            $data = $data->whereIn('sp.locationId', $request->locationId);
         }
 
-        if ($roleId == 1 && in_array($jobTitleId, [8, 13])) {
-            if ($request->locationId) {
-                $data = $data->whereIn('sp.locationId', $request->locationId);
-            }
-        } else {
-            $locations = UsersLocation::where('usersId', $user->id)->pluck('id')->toArray();
-            $data = $data->whereIn('sp.locationId', $locations);
-        }
 
-        // $jobTitleAllowedToViewAll = [13, 14, 15, 19]; // Finance, Director, Komisaris
-        // if (!in_array($jobTitleId, $jobTitleAllowedToViewAll)) {
-        //     $data = $data->where('sp.staffId', $user->id);
-        // }
-
-        if (!($roleId == 1 || in_array($jobTitleId, [8, 13]))) {
-            $data = $data->where('sp.staffId', $user->id);
-        }
-
-        if ($request->search) {
+        if (!empty($request->search)) {
             $data = $data->where('sp.name', 'like', '%' . $request->search . '%');
         }
+
+
+        if ($request->startDate) {
+            $data = $data->whereDate('sp.payrollDate', '>=', $request->startDate);
+        }
+        if ($request->endDate) {
+            $data = $data->whereDate('sp.payrollDate', '<=', $request->endDate);
+        }
+
 
         $allowedColumns = [
             'sp.name',
@@ -87,26 +188,17 @@ class StaffPayrollController
             'sp.currentMonthCashAdvance'
         ];
 
-        if ($request->startDate) {
-            $data = $data->whereDate('sp.payrollDate', '>=', $request->startDate);
-        }
-
-        if ($request->endDate) {
-            $data = $data->whereDate('sp.payrollDate', '<=', $request->endDate);
-        }
-
         $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payrollDate';
         $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
 
         $data = $data->orderBy(DB::raw($orderColumn), $orderValue);
 
+
         $offset = ($page - 1) * $itemPerPage;
-        $count_data = $data->count();
-        $totalPaging = ceil($count_data / $itemPerPage);
+        $countData = $data->count();
+        $totalPaging = ceil($countData / $itemPerPage);
 
         $data = $data->offset($offset)->limit($itemPerPage)->get();
-
-        $allowGenerateInvoice = $roleId == 1 && in_array($jobTitleId, [8, 13]);
 
         return response()->json([
             'status' => true,
@@ -116,6 +208,7 @@ class StaffPayrollController
             'allowGenerateInvoice' => true
         ]);
     }
+
 
     public function create(Request $request)
     {
@@ -833,6 +926,7 @@ class StaffPayrollController
             'mealAllowance',
             'clinicTurnoverBonus',
             'bpjsHealthAllowance',
+            'housingAllowance'
         ];
         foreach ($flatIncomeFields as $field) {
             $income[$field] = $income[$field] ?? 0;
@@ -863,6 +957,7 @@ class StaffPayrollController
             + $income['mealAllowance']
             + $income['clinicTurnoverBonus']
             + $income['bpjsHealthAllowance']
+            + $income['housingAllowance']
             + $income['patientIncentive']['total']
             + $income['labXrayIncentive']['total']
             + $income['longShiftReplacement']['total']
@@ -892,6 +987,7 @@ class StaffPayrollController
             'mealAllowance' => $income['mealAllowance'],
             'clinicTurnoverBonus' => $income['clinicTurnoverBonus'],
             'bpjsHealthAllowance' => $income['bpjsHealthAllowance'],
+            'housingAllowance' => $income['housingAllowance'],
 
             'patientIncentiveAmount' => $income['patientIncentive']['amount'],
             'patientIncentiveUnitNominal' => $income['patientIncentive']['unitNominal'],
@@ -1430,7 +1526,7 @@ class StaffPayrollController
             ], 403);
         }
 
-        $data = DB::table('staff_payroll as sp')
+        $query = DB::table('staff_payroll as sp')
             ->join('location as l', 'sp.locationId', '=', 'l.id')
             ->select(
                 'sp.name',
@@ -1440,15 +1536,54 @@ class StaffPayrollController
                 'sp.annualIncrementIncentive',
                 'sp.absentDays',
                 'sp.lateDays',
+                'sp.currentMonthCashAdvance',
                 'sp.totalIncome',
                 'sp.totalDeduction',
                 'sp.netPay'
             )
-            ->get();
+            ->where('sp.isDeleted', 0);
 
-        $spreadsheet = IOFactory::load(public_path() . '/template/staff/' . 'Template_Export_Staff_Payroll.xlsx');
+       
+        if ($request->startDate) {
+            $query->whereDate('sp.payrollDate', '>=', $request->startDate);
+        }
+        if ($request->endDate) {
+            $query->whereDate('sp.payrollDate', '<=', $request->endDate);
+        }
+
+       
+        if ($request->has('locationId') && is_array($request->locationId) && count($request->locationId) > 0) {
+            $query->whereIn('sp.locationId', $request->locationId);
+        }
+
+        $data = $query->get();
+
+       
+        $filename = 'Slip Gaji.xlsx';
+        if ($request->locationId || $request->startDate || $request->endDate) {
+            $locationLabel = '';
+            if ($request->locationId && is_array($request->locationId)) {
+                $locationNames = DB::table('location')
+                    ->whereIn('id', $request->locationId)
+                    ->pluck('locationName')
+                    ->toArray();
+                $locationLabel = implode('_', $locationNames);
+            }
+
+            $periodLabel = '';
+            if ($request->startDate || $request->endDate) {
+                $periodLabel = Carbon::parse($request->startDate ?? $request->endDate)->translatedFormat('F_Y');
+            }
+
+            $parts = array_filter([$locationLabel, $periodLabel]);
+            $filename = 'Slip Gaji ' . implode(' ', $parts) . '.xlsx';
+        }
+
+       
+        $spreadsheet = IOFactory::load(public_path() . '/template/staff/Template_Export_Staff_Payroll.xlsx');
         $sheet = $spreadsheet->getSheet(0);
 
+       
         $sheet->setCellValue('A1', 'No');
         $sheet->setCellValue('B1', 'Nama');
         $sheet->setCellValue('C1', 'Tanggal Penggajian');
@@ -1457,14 +1592,16 @@ class StaffPayrollController
         $sheet->setCellValue('F1', 'Insentif Kenaikan Tahunan');
         $sheet->setCellValue('G1', 'Tidak Masuk Kerja');
         $sheet->setCellValue('H1', 'Keterlambatan');
-        $sheet->setCellValue('I1', 'Total Penghasilan');
-        $sheet->setCellValue('J1', 'Total Pengurangan');
-        $sheet->setCellValue('K1', 'Penerimaan Bersih');
+        $sheet->setCellValue('I1', 'Kasbon');
+        $sheet->setCellValue('J1', 'Total Penghasilan');
+        $sheet->setCellValue('K1', 'Total Pengurangan');
+        $sheet->setCellValue('L1', 'Penerimaan Bersih');
 
-        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-        $sheet->getStyle('A1:K1')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle('A1:L1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1:L1')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
+       
         $row = 2;
         $no = 1;
         foreach ($data as $item) {
@@ -1476,42 +1613,42 @@ class StaffPayrollController
             $sheet->setCellValue("F{$row}", $item->annualIncrementIncentive);
             $sheet->setCellValue("G{$row}", $item->absentDays);
             $sheet->setCellValue("H{$row}", $item->lateDays);
-            $sheet->setCellValue("I{$row}", $item->totalIncome);
-            $sheet->setCellValue("J{$row}", $item->totalDeduction);
-            $sheet->setCellValue("K{$row}", $item->netPay);
+            $sheet->setCellValue("I{$row}", (float) $item->currentMonthCashAdvance);
+            $sheet->setCellValue("J{$row}", $item->totalIncome);
+            $sheet->setCellValue("K{$row}", $item->totalDeduction);
+            $sheet->setCellValue("L{$row}", $item->netPay);
 
-            $sheet->getStyle("A{$row}:K{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-            $sheet->getStyle("A{$row}:K{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+            $sheet->getStyle("A{$row}:L{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle("A{$row}:L{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
             $row++;
             $no++;
         }
 
-        foreach (range('A', 'K') as $columnID) {
+        foreach (range('A', 'L') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 
+       
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $newFilePath = public_path() . '/template_download/' . 'Export_Staff_Payroll.xlsx';
-        $writer->save($newFilePath);
 
         return response()->stream(function () use ($writer) {
             $writer->save('php://output');
         }, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="Export Staff Payroll.xlsx"',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
     }
+
 
     public function delete(Request $request)
     {
         $user = $request->user();
+        $canUpdatePayroll = $user->roleId == 1 || in_array($user->jobTitleId, [8, 13]);
 
-        $allowedJobTitles = [13, 14, 15];
-        if (!in_array($user->jobTitleId, $allowedJobTitles)) {
+        if (!$canUpdatePayroll) {
             return response()->json([
-                'result' => 'forbidden',
-                'message' => 'You are not authorized to delete payroll records.'
+                'message' => 'You are not authorized to delete payroll.'
             ], 403);
         }
 
@@ -1618,7 +1755,8 @@ class StaffPayrollController
             //     'isRemoteEnabled' => true,
             // ]);
 
-            $filename = 'Slip_Gaji_' . str_replace(' ', '_', $staff->fullname) . '_' . str_replace(' ', '_', $period) . '.pdf';
+            $filename = 'Slip Gaji ' . $staff->firstName . ' ' . $period . ' ' . str_pad($payroll->id, 2, '0', STR_PAD_LEFT) . '.pdf';
+
 
             return $pdf->download($filename);
         } catch (\Exception $e) {

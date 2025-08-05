@@ -406,7 +406,6 @@ class ProfileController extends Controller
                     'updated_at' => now(),
                 ]);
                 $path = '';
-
             } else {
 
                 User::where([['id', '=', $request->id]])->update([
@@ -563,5 +562,86 @@ class ProfileController extends Controller
 
             return responseInvalid([$e]);
         }
+    }
+
+    public function staffLate(Request $request)
+    {
+        $itemPerPage = $request->rowPerPage;
+
+        $page = $request->goToPage;
+
+        $data = DB::table('staffAbsents as sa')
+            ->join('presentStatuses as ps', 'sa.statusPresent', 'ps.id')
+            ->leftJoin('presentStatuses as ps1', 'sa.statusHome', 'ps1.id')
+            ->join('users as u', 'sa.userId', 'u.id')
+            ->join('jobTitle as j', 'u.jobTitleId', 'j.id')
+            ->join('usersLocation as ul', 'ul.usersId', 'u.id')
+            ->join('location as l', 'ul.locationId', 'l.id')
+            ->join('jobTitle as jt', 'u.jobTitleId', 'jt.id')
+            ->select(
+                'sa.id',
+                'sa.shift',
+                DB::raw("
+                CONCAT(
+                    CASE DAYOFWEEK(sa.presentTime)
+                        WHEN 1 THEN 'Minggu'
+                        WHEN 2 THEN 'Senin'
+                        WHEN 3 THEN 'Selasa'
+                        WHEN 4 THEN 'Rabu'
+                        WHEN 5 THEN 'Kamis'
+                        WHEN 6 THEN 'Jumat'
+                        WHEN 7 THEN 'Sabtu'
+                    END,
+                    ', ',
+                    DATE_FORMAT(sa.presentTime, '%e %b %Y')
+                ) AS day
+                "),
+                DB::raw("TIME_FORMAT(sa.presentTime, '%H:%i') AS presentTime"),
+                DB::raw("CASE WHEN sa.homeTime is null THEN '' ELSE TIME_FORMAT(sa.homeTime, '%H:%i') END AS homeTime"),
+            )
+            ->where('sa.isDeleted', '=', 0)
+            ->where('sa.status', '=', 'Terlambat');
+
+        $data = $data->where('sa.userId', '=', $request->user()->id);
+
+        if ($request->dateFrom && $request->dateTo) {
+
+            $data = $data->whereBetween('sa.presentTime', [$request->dateFrom, $request->dateTo]);
+        }
+
+        $data = $data->groupBy(
+            'sa.id',
+            'u.firstName',
+            'j.jobName',
+            'sa.shift',
+            'sa.status',
+            'sa.presentTime',
+            'sa.homeTime',
+            'sa.duration',
+            'ps.statusName',
+            'ps1.statusName',
+            'sa.cityPresent',
+            'sa.cityHome'
+        );
+
+        $data = $data->orderBy('sa.updated_at', 'desc');
+
+        $offset = ($page - 1) * $itemPerPage;
+
+        $dataTemp = $data->get();
+
+        $count_data = $dataTemp->count();
+
+        $count_result = $count_data - $offset;
+
+        if ($count_result < 0) {
+            $data = $data->offset(0)->limit($itemPerPage)->get();
+        } else {
+            $data = $data->offset($offset)->limit($itemPerPage)->get();
+        }
+
+        $totalPaging = $count_data / $itemPerPage;
+
+        return responseIndex(ceil($totalPaging), $data);
     }
 }
