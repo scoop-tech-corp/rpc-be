@@ -127,17 +127,8 @@ class StaffPayrollController
         $jobTitleId = $user->jobTitleId;
         $roleId = $user->roleId;
 
-
         $allowedJobTitles = [8, 13];
-        $isAuthorized = $roleId == 1 || in_array($jobTitleId, $allowedJobTitles);
-
-        if (!$isAuthorized) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized to access payroll data.',
-                'allowGenerateInvoice' => false
-            ], 403);
-        }
+        $isPrivileged = $roleId == 1 || in_array($jobTitleId, $allowedJobTitles);
 
         $data = DB::table('staff_payroll as sp')
             ->join('location as l', 'sp.locationId', '=', 'l.id')
@@ -159,25 +150,30 @@ class StaffPayrollController
             )
             ->where('sp.isDeleted', 0);
 
+        
+        if (!$isPrivileged) {
+            $data->where('sp.userId', $user->id);
+        }
 
+        
         if ($request->has('locationId') && is_array($request->locationId) && count($request->locationId) > 0) {
-            $data = $data->whereIn('sp.locationId', $request->locationId);
+            $data->whereIn('sp.locationId', $request->locationId);
         }
 
-
+        
         if (!empty($request->search)) {
-            $data = $data->where('sp.name', 'like', '%' . $request->search . '%');
+            $data->where('sp.name', 'like', '%' . $request->search . '%');
         }
 
-
+        
         if ($request->startDate) {
-            $data = $data->whereDate('sp.payrollDate', '>=', $request->startDate);
+            $data->whereDate('sp.payrollDate', '>=', $request->startDate);
         }
         if ($request->endDate) {
-            $data = $data->whereDate('sp.payrollDate', '<=', $request->endDate);
+            $data->whereDate('sp.payrollDate', '<=', $request->endDate);
         }
 
-
+        
         $allowedColumns = [
             'sp.name',
             'sp.payrollDate',
@@ -191,9 +187,9 @@ class StaffPayrollController
         $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payrollDate';
         $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
 
-        $data = $data->orderBy(DB::raw($orderColumn), $orderValue);
+        $data->orderBy(DB::raw($orderColumn), $orderValue);
 
-
+        
         $offset = ($page - 1) * $itemPerPage;
         $countData = $data->count();
         $totalPaging = ceil($countData / $itemPerPage);
@@ -205,7 +201,7 @@ class StaffPayrollController
             'message' => 'Payroll data retrieved successfully.',
             'data' => $data,
             'totalPaging' => $totalPaging,
-            'allowGenerateInvoice' => true
+            'allowGenerateInvoice' => $isPrivileged 
         ]);
     }
 
@@ -1543,7 +1539,7 @@ class StaffPayrollController
             )
             ->where('sp.isDeleted', 0);
 
-       
+
         if ($request->startDate) {
             $query->whereDate('sp.payrollDate', '>=', $request->startDate);
         }
@@ -1551,14 +1547,14 @@ class StaffPayrollController
             $query->whereDate('sp.payrollDate', '<=', $request->endDate);
         }
 
-       
+
         if ($request->has('locationId') && is_array($request->locationId) && count($request->locationId) > 0) {
             $query->whereIn('sp.locationId', $request->locationId);
         }
 
         $data = $query->get();
 
-       
+
         $filename = 'Slip Gaji.xlsx';
         if ($request->locationId || $request->startDate || $request->endDate) {
             $locationLabel = '';
@@ -1579,11 +1575,11 @@ class StaffPayrollController
             $filename = 'Slip Gaji ' . implode(' ', $parts) . '.xlsx';
         }
 
-       
+
         $spreadsheet = IOFactory::load(public_path() . '/template/staff/Template_Export_Staff_Payroll.xlsx');
         $sheet = $spreadsheet->getSheet(0);
 
-       
+
         $sheet->setCellValue('A1', 'No');
         $sheet->setCellValue('B1', 'Nama');
         $sheet->setCellValue('C1', 'Tanggal Penggajian');
@@ -1601,7 +1597,7 @@ class StaffPayrollController
         $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('A1:L1')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-       
+
         $row = 2;
         $no = 1;
         foreach ($data as $item) {
@@ -1629,7 +1625,7 @@ class StaffPayrollController
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 
-       
+
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
 
         return response()->stream(function () use ($writer) {
