@@ -405,8 +405,7 @@ class AbsentController extends Controller
                             DB::raw("DATE_FORMAT(sa.presentTime, '%H:%i') as presentTime"),
                             DB::raw("DATE_FORMAT(sa.homeTime, '%H:%i') as homeTime"),
                             'sa.duration',
-                            // 'ps.statusName as presentStatus',
-                            //DB::raw("CASE WHEN ps1.statusName is null THEN '' ELSE ps1.statusName END as homeStatus"),
+                            'sa.status'
                         )
                         ->where('sa.userId', '=', $usr->id)
                         ->where('sa.statusPresent', '=', 1)
@@ -415,10 +414,22 @@ class AbsentController extends Controller
                         ->first();
 
                     if ($absent) {
+                        if ($absent->status == 'Terlambat') {
+                            $sheet->getStyle(Coordinate::stringFromColumnIndex($colIndex) . $currentRow)->applyFromArray([
+                                'fill' => [
+                                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                                    'startColor' => [
+                                        'rgb' => 'FFFF00', // Yellow background color
+                                    ],
+                                ],
+                            ]);
+                        }
                         $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, $absent->presentTime);
                         $colIndex++;
+
                         $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, $absent->homeTime);
                         $colIndex++;
+
                         if ($absent->duration == null) {
                             $absent->duration = '00:00:00';
                         }
