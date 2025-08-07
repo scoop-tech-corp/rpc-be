@@ -518,6 +518,7 @@ class ProfileController extends Controller
                     ->select(
                         'a.id',
                         'a.typeId',
+                        't.typeName',
                         'a.identification',
                         'a.imagePath',
                         DB::raw("
@@ -585,6 +586,7 @@ class ProfileController extends Controller
                     ->select(
                         'a.id',
                         'a.typeId',
+                        't.typeName',
                         'a.identification',
                         'a.imagePath',
                         DB::raw("
