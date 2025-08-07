@@ -511,6 +511,33 @@ class ProfileController extends Controller
                     ->get();
 
                 $data->locations = $locationId;
+
+                $userIdentification = DB::table('usersIdentifications as a')
+                    ->join('typeId as t', 'a.typeId', 't.id')
+                    ->leftjoin('users as ua', 'a.approvedBy', 'ua.id')
+                    ->select(
+                        'a.id',
+                        'a.typeId',
+                        'a.identification',
+                        'a.imagePath',
+                        DB::raw("
+                        CASE
+                        WHEN a.status = 0 or a.status = 1 THEN 'Waiting for Approval'
+                        WHEN a.status = 2 THEN 'Approved'
+                        WHEN a.status = 3 THEN 'Reject'
+                        END as statusText"),
+                        'a.status',
+                        'ua.firstName as approvedBy',
+                        DB::raw("DATE_FORMAT(a.approvedAt, '%d/%m/%Y %H:%i:%s') as approvedAt"),
+                        DB::raw("DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+                    )
+                    ->where([
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', 0]
+                    ])
+                    ->get();
+
+                $data->userIdentifications = $userIdentification;
             } else if ($request->type === 'edit') {
 
                 $latestPhoneNumber = $this->getPhoneLatest();
@@ -551,6 +578,33 @@ class ProfileController extends Controller
                         ['a.isDeleted', '=', '0'],
                     ])
                     ->first();
+
+                $userIdentification = DB::table('usersIdentifications as a')
+                    ->join('typeId as t', 'a.typeId', 't.id')
+                    ->leftjoin('users as ua', 'a.approvedBy', 'ua.id')
+                    ->select(
+                        'a.id',
+                        'a.typeId',
+                        'a.identification',
+                        'a.imagePath',
+                        DB::raw("
+                        CASE
+                        WHEN a.status = 0 or a.status = 1 THEN 'Waiting for Approval'
+                        WHEN a.status = 2 THEN 'Approved'
+                        WHEN a.status = 3 THEN 'Reject'
+                        END as statusText"),
+                        'a.status',
+                        'ua.firstName as approvedBy',
+                        DB::raw("DATE_FORMAT(a.approvedAt, '%d/%m/%Y %H:%i:%s') as approvedAt"),
+                        DB::raw("DATE_FORMAT(a.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
+                    )
+                    ->where([
+                        ['a.usersId', '=', $request->id],
+                        ['a.isDeleted', '=', 0]
+                    ])
+                    ->get();
+
+                $data->userIdentifications = $userIdentification;
             }
 
             return response()->json($data, 200);
