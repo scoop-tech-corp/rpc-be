@@ -150,30 +150,29 @@ class StaffPayrollController
             )
             ->where('sp.isDeleted', 0);
 
-        
+
         if (!$isPrivileged) {
             $data->where('sp.userId', $user->id);
         }
 
-        
+
         if ($request->has('locationId') && is_array($request->locationId) && count($request->locationId) > 0) {
             $data->whereIn('sp.locationId', $request->locationId);
         }
 
-        
+
         if (!empty($request->search)) {
             $data->where('sp.name', 'like', '%' . $request->search . '%');
         }
 
-        
+
         if ($request->startDate) {
-            $data->whereDate('sp.payrollDate', '>=', $request->startDate);
+            $data->whereDate('sp.startDate', '>=', $request->startDate);
         }
         if ($request->endDate) {
-            $data->whereDate('sp.payrollDate', '<=', $request->endDate);
+            $data->whereDate('sp.startDate', '<=', $request->endDate);
         }
 
-        
         $allowedColumns = [
             'sp.name',
             'sp.payrollDate',
@@ -189,7 +188,7 @@ class StaffPayrollController
 
         $data->orderBy(DB::raw($orderColumn), $orderValue);
 
-        
+
         $offset = ($page - 1) * $itemPerPage;
         $countData = $data->count();
         $totalPaging = ceil($countData / $itemPerPage);
@@ -201,7 +200,7 @@ class StaffPayrollController
             'message' => 'Payroll data retrieved successfully.',
             'data' => $data,
             'totalPaging' => $totalPaging,
-            'allowGenerateInvoice' => $isPrivileged 
+            'allowGenerateInvoice' => $isPrivileged
         ]);
     }
 
@@ -1516,9 +1515,11 @@ class StaffPayrollController
 
     public function export(Request $request)
     {
-        if ($request->user()->roleId != 1) {
+
+
+        if (!($request->user()->roleId == 1 || in_array($request->user()->jobTitleId, [8, 13]))) {
             return response()->json([
-                'message' => 'Unauthorized. Only admin can export data.'
+                'message' => 'Unauthorized. Only admin or specific job titles can export data.'
             ], 403);
         }
 
@@ -1539,46 +1540,45 @@ class StaffPayrollController
             )
             ->where('sp.isDeleted', 0);
 
-
-        if ($request->startDate) {
-            $query->whereDate('sp.payrollDate', '>=', $request->startDate);
-        }
-        if ($request->endDate) {
-            $query->whereDate('sp.payrollDate', '<=', $request->endDate);
+        if ($request->startDate && $request->endDate) {
+            $query->whereDate('sp.startDate', '>=', $request->startDate)
+                ->whereDate('sp.startDate', '<=', $request->endDate);
         }
 
-
-        if ($request->has('locationId') && is_array($request->locationId) && count($request->locationId) > 0) {
-            $query->whereIn('sp.locationId', $request->locationId);
+        if ($request->has('locationId')) {
+            $locationIds = is_array($request->locationId) ? $request->locationId : [$request->locationId];
+            $query->whereIn('sp.locationId', $locationIds);
         }
 
         $data = $query->get();
 
-
-        $filename = 'Slip Gaji.xlsx';
-        if ($request->locationId || $request->startDate || $request->endDate) {
-            $locationLabel = '';
-            if ($request->locationId && is_array($request->locationId)) {
-                $locationNames = DB::table('location')
-                    ->whereIn('id', $request->locationId)
-                    ->pluck('locationName')
-                    ->toArray();
-                $locationLabel = implode('_', $locationNames);
-            }
-
-            $periodLabel = '';
-            if ($request->startDate || $request->endDate) {
-                $periodLabel = Carbon::parse($request->startDate ?? $request->endDate)->translatedFormat('F_Y');
-            }
-
-            $parts = array_filter([$locationLabel, $periodLabel]);
-            $filename = 'Slip Gaji ' . implode(' ', $parts) . '.xlsx';
+        $dateLabel = '';
+        if ($request->startDate && $request->endDate) {
+            $dateLabel = Carbon::parse($request->startDate)->format('dmy') . ' - ' .
+                Carbon::parse($request->endDate)->format('dmy');
+        } elseif ($request->startDate) {
+            $dateLabel = Carbon::parse($request->startDate)->format('dmy');
+        } elseif ($request->endDate) {
+            $dateLabel = Carbon::parse($request->endDate)->format('dmy');
         }
 
+        $locationLabel = '';
+        if ($request->locationId && is_array($request->locationId) && count($request->locationId) > 0) {
+            $locationNames = DB::table('location')
+                ->whereIn('id', $request->locationId)
+                ->pluck('locationName')
+                ->toArray();
+
+            $locationLabel = implode(', ', $locationNames);
+        }
+
+        $parts = [];
+        if (!empty($dateLabel)) $parts[] = $dateLabel;
+        if (!empty($locationLabel)) $parts[] = $locationLabel;
+        $filename = 'Slip Gaji' . (count($parts) ? ' ' . implode(' ', $parts) : '') . '.xlsx';
 
         $spreadsheet = IOFactory::load(public_path() . '/template/staff/Template_Export_Staff_Payroll.xlsx');
         $sheet = $spreadsheet->getSheet(0);
-
 
         $sheet->setCellValue('A1', 'No');
         $sheet->setCellValue('B1', 'Nama');
@@ -1596,7 +1596,6 @@ class StaffPayrollController
         $sheet->getStyle('A1:L1')->getFont()->setBold(true);
         $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         $sheet->getStyle('A1:L1')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-
 
         $row = 2;
         $no = 1;
@@ -1616,7 +1615,6 @@ class StaffPayrollController
 
             $sheet->getStyle("A{$row}:L{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getStyle("A{$row}:L{$row}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-
             $row++;
             $no++;
         }
@@ -1624,7 +1622,6 @@ class StaffPayrollController
         foreach (range('A', 'L') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
-
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
 
@@ -1635,6 +1632,7 @@ class StaffPayrollController
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
     }
+
 
 
     public function delete(Request $request)
