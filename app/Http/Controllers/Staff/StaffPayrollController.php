@@ -127,8 +127,9 @@ class StaffPayrollController
         $jobTitleId = $user->jobTitleId;
         $roleId = $user->roleId;
 
-        $allowedJobTitles = [8, 13];
-        $isPrivileged = $roleId == 1 || in_array($jobTitleId, $allowedJobTitles);
+        // $allowedJobTitles = [8, 13];
+        // $isPrivileged = $roleId == 1 || in_array($jobTitleId, $allowedJobTitles);
+        $isPrivileged = false;
 
         $data = DB::table('staff_payroll as sp')
             ->join('location as l', 'sp.locationId', '=', 'l.id')
@@ -151,10 +152,12 @@ class StaffPayrollController
             ->where('sp.isDeleted', 0);
 
 
-        if (!$isPrivileged) {
-            $data->where('sp.userId', $user->id);
-        }
+        $excludedJobTitles = [8, 20, 13, 14, 15];
 
+        if (!in_array($jobTitleId, $excludedJobTitles)) {
+            $data->where('sp.userId', $user->id);
+            $isPrivileged = true;
+        }
 
         if ($request->has('locationId') && is_array($request->locationId) && count($request->locationId) > 0) {
             $data->whereIn('sp.locationId', $request->locationId);
