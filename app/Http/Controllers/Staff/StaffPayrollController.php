@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\Staff;
 
 use DB;
-use Validator;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\StaffPayroll;
 use Illuminate\Http\Request;
-use App\Models\Staff\UsersLocation;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -17,107 +15,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class StaffPayrollController
 {
-    // public function index(Request $request)
-    // {
-    //     $itemPerPage = $request->rowPerPage ?? 10;
-    //     $page = $request->goToPage ?? 1;
-
-    //     $user = $request->user();
-    //     $jobTitleId = $user->jobTitleId;
-    //     $roleId = $user->roleId;
-
-    //     $data = DB::table('staff_payroll as sp')
-    //         ->join('location as l', 'sp.locationId', '=', 'l.id')
-    //         ->select(
-    //             'sp.id',
-    //             'sp.name',
-    //             'sp.payrollDate',
-    //             'sp.startDate',
-    //             'sp.endDate',
-    //             'sp.basicIncome',
-    //             'sp.annualIncrementIncentive',
-    //             'sp.absentDays',
-    //             'sp.lateDays',
-    //             'sp.totalIncome',
-    //             'sp.totalDeduction',
-    //             'sp.netPay',
-    //             'sp.currentMonthCashAdvance',
-    //             'l.locationName'
-    //         );
-
-    //     $allowGenerateInvoice = $roleId == 1 || in_array($jobTitleId, [8, 13]);
-
-    //     if (!$allowGenerateInvoice) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Unauthorized to access payroll data.',
-    //             'allowGenerateInvoice' => false
-    //         ], 403);
-    //     }
-
-    //     if ($roleId == 1 && in_array($jobTitleId, [8, 13])) {
-    //         if (!empty($request->locationId) && is_array($request->locationId)) {
-    //             $data = $data->whereIn('sp.locationId', $request->locationId);
-    //         }
-    //     } else {
-    //         $locations = UsersLocation::where('usersId', $user->id)->pluck('id')->toArray();
-    //         $data = $data->whereIn('sp.locationId', $locations);
-    //     }
-
-    //     // $jobTitleAllowedToViewAll = [13, 14, 15, 19]; // Finance, Director, Komisaris
-    //     // if (!in_array($jobTitleId, $jobTitleAllowedToViewAll)) {
-    //     //     $data = $data->where('sp.staffId', $user->id);
-    //     // }
-
-    //     if (!($roleId == 1 || in_array($jobTitleId, [8, 13]))) {
-    //         $data = $data->where('sp.staffId', $user->id);
-    //     }
-
-    //     if ($request->search) {
-    //         $data = $data->where('sp.name', 'like', '%' . $request->search . '%');
-    //     }
-
-    //     $allowedColumns = [
-    //         'sp.name',
-    //         'sp.payrollDate',
-    //         'sp.basicIncome',
-    //         'sp.totalIncome',
-    //         'sp.totalDeduction',
-    //         'sp.netPay',
-    //         'sp.currentMonthCashAdvance'
-    //     ];
-
-    //     if ($request->startDate) {
-    //         $data = $data->whereDate('sp.payrollDate', '>=', $request->startDate);
-    //     }
-
-    //     if ($request->endDate) {
-    //         $data = $data->whereDate('sp.payrollDate', '<=', $request->endDate);
-    //     }
-
-    //     $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payrollDate';
-    //     $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
-
-    //     $data = $data->orderBy(DB::raw($orderColumn), $orderValue);
-
-    //     $offset = ($page - 1) * $itemPerPage;
-    //     $count_data = $data->count();
-    //     $totalPaging = ceil($count_data / $itemPerPage);
-
-    //     $data = $data->offset($offset)->limit($itemPerPage)->get();
-
-    //     $allowGenerateInvoice = $roleId == 1 && in_array($jobTitleId, [8, 13]);
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Payroll data retrieved successfully.',
-    //         'data' => $data,
-    //         'totalPaging' => $totalPaging,
-    //         'allowGenerateInvoice' => true
-    //     ]);
-    // }
-
-
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage ?? 10;
@@ -125,10 +22,7 @@ class StaffPayrollController
 
         $user = $request->user();
         $jobTitleId = $user->jobTitleId;
-        $roleId = $user->roleId;
 
-        // $allowedJobTitles = [8, 13];
-        // $isPrivileged = $roleId == 1 || in_array($jobTitleId, $allowedJobTitles);
         $isPrivileged = false;
 
         $data = DB::table('staff_payroll as sp')
