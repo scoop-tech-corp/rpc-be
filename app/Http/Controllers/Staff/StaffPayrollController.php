@@ -155,7 +155,7 @@ class StaffPayrollController
         $excludedJobTitles = [8, 20, 13, 14, 15];
 
         if (!in_array($jobTitleId, $excludedJobTitles)) {
-            $data->where('sp.userId', $user->id);
+            $data->where('sp.staffId', $user->id);
             $isPrivileged = true;
         }
 
