@@ -19,6 +19,7 @@ class UsersLocation extends Model
     protected $fillable = [
         'usersId',
         'locationId',
+        'isMainLocation',
         'isDeleted',
         'created_at',
         'updated_at'
