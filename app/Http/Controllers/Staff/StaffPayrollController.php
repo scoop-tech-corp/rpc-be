@@ -230,25 +230,28 @@ class StaffPayrollController
             return response()->json(['message' => 'You are not allowed to create payroll.'], 403);
         }
 
-        switch ($staff->jobTitle->id) {
-            case 1:
-                return $this->createPayrollCashier($request, $staff);
-            case 3:
-                return $this->createPayrollVetNurseGroomer($request, $staff);
-            case 4:
-                return $this->createPayrollParamedic($request, $staff);
-            case 5:
-                return $this->createPayrollVetNurseHelper($request, $staff);
-            case 16:
-                return $this->createPayrollManager($request, $staff);
-            case 17:
-                return $this->createPayrollVetDoctor($request, $staff);
-            case 18:
-                return $this->createPayrollQualityControl($request, $staff);
-            case 19:
-                return $this->createPayrollOfficeStaff($request, $staff);
-            default:
-                return response()->json(['message' => 'Job title not supported for payroll creation.'], 400);
+        if ($staff->jobTitle->id == 1) {
+            return $this->createPayrollCashier($request, $staff);
+        } elseif ($staff->jobTitle->id == 3) {
+            return $this->createPayrollVetNurseGroomer($request, $staff);
+        } elseif ($staff->jobTitle->id == 4) {
+            return $this->createPayrollParamedic($request, $staff);
+        } elseif ($staff->jobTitle->id == 5 || $staff->jobTitle->id == 2) {
+            return $this->createPayrollVetNurseHelper($request, $staff);
+        } elseif ($staff->jobTitle->id == 7 || $staff->jobTitle->id == 12 || $staff->jobTitle->id == 16 || $staff->jobTitle->id == 19 || $staff->jobTitle->id == 20) {
+
+            return $this->createPayrollManager($request, $staff);
+        } elseif ($staff->jobTitle->id == 17) {
+
+            return $this->createPayrollVetDoctor($request, $staff);
+        } elseif ($staff->jobTitle->id == 18) {
+
+            return $this->createPayrollQualityControl($request, $staff);
+        } elseif ($staff->jobTitle->id == 6 || $staff->jobTitle->id == 8 || $staff->jobTitle->id == 9 || $staff->jobTitle->id == 10 || $staff->jobTitle->id == 11) {
+
+            return $this->createPayrollOfficeStaff($request, $staff);
+        } else {
+            return response()->json(['message' => 'Job title not supported for payroll creation.'], 400);
         }
     }
 
