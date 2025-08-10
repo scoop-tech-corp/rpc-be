@@ -1545,9 +1545,13 @@ class StaffPayrollController
                 ->whereDate('sp.startDate', '<=', $request->endDate);
         }
 
-        if ($request->has('locationId')) {
-            $locationIds = is_array($request->locationId) ? $request->locationId : [$request->locationId];
-            $query->whereIn('sp.locationId', $locationIds);
+        $locations = $request->locationId;
+
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+                $locationIds = is_array($request->locationId) ? $request->locationId : [$request->locationId];
+                $query->whereIn('sp.locationId', $locationIds);
+            }
         }
 
         $data = $query->get();
@@ -1563,14 +1567,21 @@ class StaffPayrollController
         }
 
         $locationLabel = '';
-        if ($request->locationId && is_array($request->locationId) && count($request->locationId) > 0) {
-            $locationNames = DB::table('location')
-                ->whereIn('id', $request->locationId)
-                ->pluck('locationName')
-                ->toArray();
 
-            $locationLabel = implode(', ', $locationNames);
+        if (count($locations) > 0) {
+            if (!$locations[0] == null) {
+
+                $locationNames = DB::table('location')
+                    ->whereIn('id', $request->locationId)
+                    ->pluck('locationName')
+                    ->toArray();
+
+                $locationLabel = implode(', ', $locationNames);
+            }
         }
+
+        // if ($request->locationId && is_array($request->locationId) && count($request->locationId) > 0) {
+        // }
 
         $parts = [];
         if (!empty($dateLabel)) $parts[] = $dateLabel;
