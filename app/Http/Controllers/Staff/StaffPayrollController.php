@@ -199,7 +199,7 @@ class StaffPayrollController
             'status' => true,
             'message' => 'Payroll data retrieved successfully.',
             'data' => $data,
-            'totalPaging' => $totalPaging,
+            'totalPagination' => $totalPaging,
             'allowGenerateInvoice' => $isPrivileged
         ]);
     }
