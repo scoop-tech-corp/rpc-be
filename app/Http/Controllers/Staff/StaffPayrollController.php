@@ -80,7 +80,7 @@ class StaffPayrollController
             'sp.currentMonthCashAdvance'
         ];
 
-        $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payrollDate';
+        $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.created_at';
         $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
 
         $data->orderBy(DB::raw($orderColumn), $orderValue);
