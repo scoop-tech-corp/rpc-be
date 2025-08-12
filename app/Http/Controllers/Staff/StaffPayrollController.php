@@ -424,8 +424,11 @@ class StaffPayrollController
             'expense' => 'required|array',
         ]);
 
-        if (strtolower($staff->jobTitle->jobName) !== 'office staff') {
-            return response()->json(['message' => 'Staff is not Office Staff.'], 400);
+        // if (strtolower($staff->jobTitle->jobName) !== 'office staff') {
+        //     return response()->json(['message' => 'Staff is not Office Staff.'], 400);
+        // }
+        if (!str_contains(strtolower($staff->jobTitle->jobName), 'staff')) {
+            return response()->json(['message' => 'Job title must contain "staff".'], 400);
         }
 
         $input = $request->all();
