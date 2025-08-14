@@ -56,6 +56,7 @@ use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 use App\Http\Controllers\Staff\IdentityController;
+use App\Http\Controllers\Staff\OverWorkController;
 use App\Http\Controllers\Staff\RequireSalaryController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -474,6 +475,18 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/identity', [IdentityController::class, 'index']);
         Route::put('/identity', [IdentityController::class, 'update']);
         Route::delete('/identity', [IdentityController::class, 'delete']);
+
+        Route::group(['prefix' => 'overwork'], function () {
+            Route::get('/full-shift', [OverWorkController::class, 'indexFullShift']);
+            Route::post('/full-shift', [OverWorkController::class, 'createFullShift']);
+            Route::put('/full-shift', [OverWorkController::class, 'updateFullShift']);
+            Route::delete('/full-shift', [OverWorkController::class, 'deleteFullShift']);
+
+            Route::get('/long-shift', [OverWorkController::class, 'indexLongShift']);
+            Route::post('/long-shift', [OverWorkController::class, 'createLongShift']);
+            Route::put('/long-shift', [OverWorkController::class, 'updateLongShift']);
+            Route::delete('/long-shift', [OverWorkController::class, 'deleteLongShift']);
+        });
     });
 
 
