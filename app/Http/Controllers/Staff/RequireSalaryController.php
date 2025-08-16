@@ -102,6 +102,34 @@ class RequireSalaryController extends Controller
         }
     }
 
+    public function detail(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:require_salaries,id',
+        ]);
+
+        $data = DB::table('require_salaries as r')
+            ->join('jobTitle as jt', 'r.jobId', 'jt.id')
+            ->select(
+                'r.id',
+                'jt.jobName as jobName',
+            )
+            ->where('r.id', $request->id)
+            ->where('r.isDeleted', 0)
+            ->first();
+
+        $detail = DB::table('require_salary_details as rd')
+            ->join('typeId as t', 'rd.typeId', '=', 't.id')
+            ->select('rd.id', 't.typeName')
+            ->where('rd.requireSallaryId', $request->id)
+            ->where('rd.isDeleted', 0) // Ensure details are not deleted
+            ->get();
+
+        $data->detail = $detail; // Add the details to the main data object
+
+        return response()->json($data, 200);
+    }
+
     public function update(Request $request) // Removed $id parameter from here
     {
         // 1. Validate the incoming request data, including the 'id'
@@ -164,7 +192,6 @@ class RequireSalaryController extends Controller
             DB::commit();
 
             return responseUpdate();
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
