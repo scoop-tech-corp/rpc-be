@@ -121,7 +121,7 @@ class RequireSalaryController extends Controller
 
         $detail = DB::table('require_salary_details as rd')
             ->join('typeId as t', 'rd.typeId', '=', 't.id')
-            ->select('rd.id', 't.typeName')
+            ->select('t.id', 't.typeName')
             ->where('rd.requireSallaryId', $request->id)
             ->where('rd.isDeleted', 0) // Ensure details are not deleted
             ->get();
