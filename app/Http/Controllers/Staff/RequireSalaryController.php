@@ -112,6 +112,7 @@ class RequireSalaryController extends Controller
             ->join('jobTitle as jt', 'r.jobId', 'jt.id')
             ->select(
                 'r.id',
+                'jt.id as jobId',
                 'jt.jobName as jobName',
             )
             ->where('r.id', $request->id)
