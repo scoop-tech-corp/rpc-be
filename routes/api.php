@@ -464,6 +464,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/salary-slip', [StaffPayrollController::class, 'delete']);
         Route::get('/salary-slip/generate-slip', [StaffPayrollController::class, 'generatePayrollSlip']);
 
+        Route::get('/salary-slip/check-personal-data', [StaffPayrollController::class, 'checkPersonalData']);
+
         Route::post('req-salary', [RequireSalaryController::class, 'create']);
         Route::get('/req-salary', [RequireSalaryController::class, 'index']);
         Route::get('/req-salary/export', [RequireSalaryController::class, 'export']);
