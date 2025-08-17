@@ -38,9 +38,8 @@ class IdentityController extends Controller
                 END as statusText"),
                 'r.status',
                 'r.reason',
-                'ua.firstName as approvedBy',
-                DB::raw("DATE_FORMAT(r.approvedAt, '%d/%m/%Y %H:%i:%s') as approvedAt"),
-                'u.firstName as createdBy',
+                'ua.firstName as checkedBy',
+                DB::raw("DATE_FORMAT(r.approvedAt, '%d/%m/%Y %H:%i:%s') as checkedAt"),
                 DB::raw("DATE_FORMAT(r.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
             ->where('ul.isMainLocation', '=', 1)
@@ -201,7 +200,7 @@ class IdentityController extends Controller
     {
         $request->validate([
             'id' => 'required|array',
-            'id.*' => 'integer|exists:usersIdentifications,id',
+            'id.*' => 'required|integer',
         ]);
 
         try {
