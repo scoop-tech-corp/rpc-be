@@ -474,7 +474,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('identity', [IdentityController::class, 'create']);
         Route::get('/identity', [IdentityController::class, 'index']);
         Route::get('/identity/export', [IdentityController::class, 'export']);
-        Route::put('/identity', [IdentityController::class, 'update']);
+        Route::put('/identity', [IdentityController::class, 'approval']);
         Route::delete('/identity', [IdentityController::class, 'delete']);
 
         Route::group(['prefix' => 'overwork'], function () {
