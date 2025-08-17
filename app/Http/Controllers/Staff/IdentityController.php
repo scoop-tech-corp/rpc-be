@@ -65,7 +65,7 @@ class IdentityController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('loc.id', $request->locationId);
+            $data = $data->whereIn('l.id', $request->locationId);
         }
 
         if ($request->jobtitleId) {
@@ -125,9 +125,9 @@ class IdentityController extends Controller
     public function approval(Request $request)
     {
         $request->validate([
-            'id.*' => 'required|array',
+            'id' => 'required|array',
             'status' => 'required|integer',
-            'reason' => 'nullable|string|max:255',
+            'reason' => 'nullable|string',
         ]);
 
         try {
@@ -257,7 +257,7 @@ class IdentityController extends Controller
 
         if ($request->locationId) {
 
-            $data = $data->whereIn('loc.id', $request->locationId);
+            $data = $data->whereIn('l.id', $request->locationId);
         }
 
         if ($request->jobtitleId) {
