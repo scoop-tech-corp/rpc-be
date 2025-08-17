@@ -200,7 +200,7 @@ class IdentityController extends Controller
     {
         $request->validate([
             'id' => 'required|array',
-            'id.*' => 'required|integer',
+            'id.*' => 'integer',
         ]);
 
         try {
