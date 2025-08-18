@@ -56,6 +56,7 @@ use App\Http\Controllers\Report\ExpensesController as ReportExpensesController;
 use App\Http\Controllers\Promotion\{DataStaticController as PromotionDataStaticController, PartnerController, DiscountController as DiscountPromotionController, PromotionDashboardController};
 use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController, TreatmentController, DiagnoseController, FrequencyController, TaskController, CategoryController as ServiceCategoryController, ServiceDashboardController};
 use App\Http\Controllers\Staff\IdentityController;
+use App\Http\Controllers\Staff\OverWorkController;
 use App\Http\Controllers\Staff\RequireSalaryController;
 
 Route::post('login', [ApiController::class, 'login']);
@@ -463,6 +464,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::delete('/salary-slip', [StaffPayrollController::class, 'delete']);
         Route::get('/salary-slip/generate-slip', [StaffPayrollController::class, 'generatePayrollSlip']);
 
+        Route::get('/salary-slip/check-personal-data', [StaffPayrollController::class, 'checkPersonalData']);
+
         Route::post('req-salary', [RequireSalaryController::class, 'create']);
         Route::get('/req-salary', [RequireSalaryController::class, 'index']);
         Route::get('/req-salary/export', [RequireSalaryController::class, 'export']);
@@ -472,8 +475,25 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::post('identity', [IdentityController::class, 'create']);
         Route::get('/identity', [IdentityController::class, 'index']);
-        Route::put('/identity', [IdentityController::class, 'update']);
+        Route::get('/identity/export', [IdentityController::class, 'export']);
+        Route::put('/identity', [IdentityController::class, 'approval']);
         Route::delete('/identity', [IdentityController::class, 'delete']);
+
+        Route::group(['prefix' => 'overwork'], function () {
+            Route::get('/full-shift', [OverWorkController::class, 'indexFullShift']);
+            Route::get('/full-shift/export', [OverWorkController::class, 'exportFullShift']);
+            Route::post('/full-shift', [OverWorkController::class, 'createFullShift']);
+            Route::put('/full-shift', [OverWorkController::class, 'updateFullShift']);
+            Route::put('/full-shift/approval', [OverWorkController::class, 'approvalFullShift']);
+            Route::delete('/full-shift', [OverWorkController::class, 'deleteFullShift']);
+
+            Route::get('/long-shift', [OverWorkController::class, 'indexLongShift']);
+            Route::get('/long-shift/export', [OverWorkController::class, 'exportLongShift']);
+            Route::post('/long-shift', [OverWorkController::class, 'createLongShift']);
+            Route::put('/long-shift', [OverWorkController::class, 'updateLongShift']);
+            Route::put('/long-shift/approval', [OverWorkController::class, 'approvalLongShift']);
+            Route::delete('/long-shift', [OverWorkController::class, 'deleteLongShift']);
+        });
     });
 
 

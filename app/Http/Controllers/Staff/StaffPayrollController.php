@@ -80,7 +80,7 @@ class StaffPayrollController
             'sp.currentMonthCashAdvance'
         ];
 
-        $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.payrollDate';
+        $orderColumn = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'sp.created_at';
         $orderValue = in_array(strtolower($request->orderValue), ['asc', 'desc']) ? $request->orderValue : 'desc';
 
         $data->orderBy(DB::raw($orderColumn), $orderValue);
@@ -101,6 +101,78 @@ class StaffPayrollController
         ]);
     }
 
+    public function checkPersonalData(Request $request)
+    {
+        $user = DB::table('users as u')
+            ->join('jobTitle as j', 'u.jobTitleId', '=', 'j.id')
+            ->select('u.id', 'u.jobTitleId', 'j.jobName')
+            ->where('u.id', $request->user()->id)
+            ->first();
+
+        $req = DB::table('require_salaries as r')
+            ->join('jobTitle as jt', 'r.jobId', 'jt.id')
+            ->join('require_salary_details as rd', 'r.id', '=', 'rd.requireSallaryId')
+            ->join('typeId as t', 'rd.typeId', '=', 't.id')
+            ->select(
+                'rd.typeId',
+                't.typeName',
+            )
+            ->where('r.isDeleted', '=', 0)
+            ->where('rd.isDeleted', '=', 0)
+            ->where('r.jobId', $user->jobTitleId)
+            ->get();
+
+        $typeIds = $req->pluck('typeId')->toArray();
+
+        $check = DB::table('usersIdentifications as ui')
+            ->select(
+                'ui.typeId'
+            )
+            ->where('ui.usersId', $user->id)
+            ->whereIn('ui.typeId', $typeIds)
+            ->where('ui.isDeleted', 0)
+            ->where('ui.status', 2)
+            ->get();
+
+        $availTypeIds = $check->pluck('typeId')->toArray();
+
+        $listNotAvailTypeId = DB::table('require_salaries as r')
+            ->join('jobTitle as jt', 'r.jobId', 'jt.id')
+            ->join('require_salary_details as rd', 'r.id', '=', 'rd.requireSallaryId')
+            ->join('typeId as t', 'rd.typeId', '=', 't.id')
+            ->select(
+                'rd.typeId',
+                't.typeName',
+            )
+            ->where('r.isDeleted', '=', 0)
+            ->where('rd.isDeleted', '=', 0)
+            ->whereNotIn('rd.typeId', $availTypeIds)
+            ->where('r.jobId', $user->jobTitleId)
+            ->get();
+
+        $data = json_decode($listNotAvailTypeId, true);
+
+        $message = '';
+
+        if (count($data) > 0) {
+            foreach ($data as $item) {
+                $incompleteDocuments[] = $item['typeName'];
+            }
+
+            // Menggabungkan nama-nama dokumen menjadi sebuah string
+            if (count($incompleteDocuments) > 0) {
+                $documentList = implode(' dan ', $incompleteDocuments);
+                $message = "Mohon lengkapi dokumen berikut: " . $documentList . ".";
+            }
+        }
+
+        if ($message) {
+            return responseInvalid([$message]);
+        }
+        else {
+            return responseSuccess(['message' => 'Semua dokumen telah lengkap'],'Complete');
+        }
+    }
 
     public function create(Request $request)
     {
@@ -424,8 +496,11 @@ class StaffPayrollController
             'expense' => 'required|array',
         ]);
 
-        if (strtolower($staff->jobTitle->jobName) !== 'office staff') {
-            return response()->json(['message' => 'Staff is not Office Staff.'], 400);
+        // if (strtolower($staff->jobTitle->jobName) !== 'office staff') {
+        //     return response()->json(['message' => 'Staff is not Office Staff.'], 400);
+        // }
+        if (!str_contains(strtolower($staff->jobTitle->jobName), 'staff')) {
+            return response()->json(['message' => 'Job title must contain "staff".'], 400);
         }
 
         $input = $request->all();
@@ -1544,8 +1619,6 @@ class StaffPayrollController
         ]);
     }
 
-
-
     public function delete(Request $request)
     {
         $user = $request->user();
@@ -1570,7 +1643,6 @@ class StaffPayrollController
             'message' => "$count payroll record(s) successfully deleted."
         ], 200);
     }
-
 
     public function generatePayrollSlip(Request $request)
     {
