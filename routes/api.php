@@ -481,13 +481,17 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::group(['prefix' => 'overwork'], function () {
             Route::get('/full-shift', [OverWorkController::class, 'indexFullShift']);
+            Route::get('/full-shift/export', [OverWorkController::class, 'exportFullShift']);
             Route::post('/full-shift', [OverWorkController::class, 'createFullShift']);
             Route::put('/full-shift', [OverWorkController::class, 'updateFullShift']);
+            Route::put('/full-shift/approval', [OverWorkController::class, 'approvalFullShift']);
             Route::delete('/full-shift', [OverWorkController::class, 'deleteFullShift']);
 
             Route::get('/long-shift', [OverWorkController::class, 'indexLongShift']);
+            Route::get('/long-shift/export', [OverWorkController::class, 'exportLongShift']);
             Route::post('/long-shift', [OverWorkController::class, 'createLongShift']);
             Route::put('/long-shift', [OverWorkController::class, 'updateLongShift']);
+            Route::put('/long-shift/approval', [OverWorkController::class, 'approvalLongShift']);
             Route::delete('/long-shift', [OverWorkController::class, 'deleteLongShift']);
         });
     });
