@@ -212,6 +212,10 @@ class OverWorkController extends Controller
             'reason' => 'nullable|string',
         ]);
 
+        if ($request->reason == "" && $request->status == 2) {
+            return response()->json(['message' => 'Reason is required when rejecting.'], 400);
+        }
+
         try {
             DB::beginTransaction();
             //0 = Menunggu Persetujuan
@@ -222,7 +226,7 @@ class OverWorkController extends Controller
                     ->where('id', $id)
                     ->update([
                         'status' => $request->status,
-                        'reason' => $request->reason,
+                        'reasonChecker' => $request->reason,
                         'approvedBy' => $request->user()->id,
                         'approvedAt' => now(),
                         'updated_at' => now(),
@@ -313,6 +317,10 @@ class OverWorkController extends Controller
             'reason' => 'nullable|string',
         ]);
 
+        if ($request->reason == "" && $request->status == 2) {
+            return response()->json(['message' => 'Reason is required when rejecting.'], 400);
+        }
+
         try {
             DB::beginTransaction();
             //0 = Menunggu Persetujuan
@@ -323,7 +331,7 @@ class OverWorkController extends Controller
                     ->where('id', $id)
                     ->update([
                         'status' => $request->status,
-                        'reason' => $request->reason,
+                        'reasonChecker' => $request->reason,
                         'approvedBy' => $request->user()->id,
                         'approvedAt' => now(),
                         'updated_at' => now(),
