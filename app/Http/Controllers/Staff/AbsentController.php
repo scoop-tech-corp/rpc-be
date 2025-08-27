@@ -398,6 +398,9 @@ class AbsentController extends Controller
 
                 $colIndex = 4; // Mulai dari kolom D
                 $currentDate = $dateFrom->copy(); // Gunakan copy() agar $dateFrom tidak berubah
+                $totalmasuk = 0;
+                $totaltelat = 0;
+                $tidakAbsen = 0;
                 while ($currentDate->lessThanOrEqualTo($dateTo)) {
 
                     $absent = DB::table('staffAbsents as sa')
@@ -415,6 +418,7 @@ class AbsentController extends Controller
 
                     if ($absent) {
                         if ($absent->status == 'Terlambat') {
+                            $totaltelat++;
                             $sheet->getStyle(Coordinate::stringFromColumnIndex($colIndex) . $currentRow)->applyFromArray([
                                 'fill' => [
                                     'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
@@ -438,7 +442,9 @@ class AbsentController extends Controller
 
                         $sheet->setCellValueExplicit(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, $formatted, DataType::TYPE_STRING);
                         $colIndex++;
+                        $totalmasuk++;
                     } else {
+                        $tidakAbsen++;
 
                         $sheet->getStyle(Coordinate::stringFromColumnIndex($colIndex) . $currentRow)->applyFromArray([
                             'fill' => [
@@ -472,6 +478,50 @@ class AbsentController extends Controller
                     }
                     $currentDate->addDay();
                 }
+
+                //total masuk
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, $totalmasuk);
+                $colIndex++;
+
+                //total tidak masuk/izin
+                // $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
+                $colIndex++;
+
+                //sakit
+                // $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
+                $colIndex++;
+
+                //cuti
+                // $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
+                $colIndex++;
+
+                //tidak absen
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, $tidakAbsen);
+                $colIndex++;
+
+                //long shift
+                $longShft = DB::table('long_shifts')
+                    ->where('isDeleted', '=', 0)
+                    ->where('userId', '=', $usr->id)
+                    ->whereBetween('longShiftDate', [$request->dateFrom, $request->dateTo])
+                    ->where('status', '=', 1)
+                    ->count();
+
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, $longShft);
+                $colIndex++;
+
+                //full shift
+                $fullShft = DB::table('full_shifts')
+                    ->where('isDeleted', '=', 0)
+                    ->where('userId', '=', $usr->id)
+                    ->whereBetween('fullShiftDate', [$request->dateFrom, $request->dateTo])
+                    ->where('status', '=', 1)
+                    ->count();
+
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, $fullShft);
+                $colIndex++;
+
+                //hard shift tidak ada
 
                 $currentRow++;
                 $tempRow = $currentRow;
