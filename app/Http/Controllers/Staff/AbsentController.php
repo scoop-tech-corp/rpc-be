@@ -483,6 +483,10 @@ class AbsentController extends Controller
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, $totalmasuk);
                 $colIndex++;
 
+                //total libur
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
+                $colIndex++;
+
                 //total tidak masuk/izin
                 $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
                 $colIndex++;
