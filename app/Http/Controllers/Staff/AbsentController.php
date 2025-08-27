@@ -484,15 +484,15 @@ class AbsentController extends Controller
                 $colIndex++;
 
                 //total tidak masuk/izin
-                // $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
                 $colIndex++;
 
                 //sakit
-                // $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
                 $colIndex++;
 
                 //cuti
-                // $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
+                $sheet->setCellValue(Coordinate::stringFromColumnIndex($colIndex) . $currentRow, 0);
                 $colIndex++;
 
                 //tidak absen
