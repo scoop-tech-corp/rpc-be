@@ -168,9 +168,8 @@ class StaffPayrollController
 
         if ($message) {
             return responseInvalid([$message]);
-        }
-        else {
-            return responseSuccess(['message' => 'Semua dokumen telah lengkap'],'Complete');
+        } else {
+            return responseSuccess(['message' => 'Semua dokumen telah lengkap'], 'Complete');
         }
     }
 
@@ -377,7 +376,9 @@ class StaffPayrollController
             'expense' => 'required|array',
         ]);
 
-        if (strtolower($staff->jobTitle->name) !== 'vet nurse groomer') {
+
+        if ($staff->jobTitleId !== "3") {
+            //if (strtolower($staff->jobTitle->name) !== 'Groomer') {
             return response()->json(['message' => 'Staff is not Vet Nurse Groomer.'], 400);
         }
 
