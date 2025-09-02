@@ -1097,7 +1097,7 @@ class TransPetClinicController extends Controller
             'noteGrooming' => 'nullable|string',
 
             'othersNoteAdvice' => 'nullable|string',
-            'nextControlCheckup' => 'required|date',
+            'nextControlCheckup' => 'nullable|date',
 
             'diagnoseDisease' => 'nullable|string',
             'prognoseDisease' => 'nullable|string',
