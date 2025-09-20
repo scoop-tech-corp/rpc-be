@@ -43,14 +43,16 @@ class DiscountController extends Controller
             responseInvalid($errors);
         }
 
-        $ResultLocations = json_decode($request->locations, true);
+        // $ResultLocations = json_decode($request->locations, true);
+        $ResultLocations = $request->locations;
 
         if (!$ResultLocations) {
 
             responseInvalid(['Location cannot be empty!']);
         }
 
-        $ResultCustGroup = json_decode($request->customerGroups, true);
+        // $ResultCustGroup = json_decode($request->customerGroups, true);
+        $ResultCustGroup = $request->customerGroups;
 
         if ($request->type == 1) {
 
@@ -89,7 +91,8 @@ class DiscountController extends Controller
             }
         } elseif ($request->type == 2) {
 
-            $ResultDiscountProducts = json_decode($request->discountProducts, true);
+            // $ResultDiscountProducts = json_decode($request->discountProducts, true);
+            $ResultDiscountProducts = $request->discountProducts;
 
             $validate = Validator::make(
                 $ResultDiscountProducts,
@@ -121,7 +124,8 @@ class DiscountController extends Controller
                 responseInvalid([$errors]);
             }
 
-            $ResultDiscountServices = json_decode($request->discountServices, true);
+            // $ResultDiscountServices = json_decode($request->discountServices, true);
+            $ResultDiscountServices = $request->discountServices;
 
             $validate = Validator::make(
                 $ResultDiscountServices,
@@ -155,7 +159,8 @@ class DiscountController extends Controller
             }
         } elseif ($request->type == 3) {
 
-            $ResultBundle = json_decode($request->bundle, true);
+            $ResultBundle = $request->bundle;
+            // $ResultBundle = json_decode($request->bundle, true);
 
             $validateBundle = Validator::make(
                 $ResultBundle,
@@ -179,8 +184,11 @@ class DiscountController extends Controller
                 responseInvalid([$errors]);
             }
 
-            $bundleDetailProduct = json_decode($request->bundleDetailProducts, true);
-            $bundleDetailService = json_decode($request->bundleDetailServices, true);
+            // $bundleDetailProduct = json_decode($request->bundleDetailProducts, true);
+            $bundleDetailProduct = $request->bundleDetailProducts;
+
+            // $bundleDetailService = json_decode($request->bundleDetailServices, true);
+            $bundleDetailService = $request->bundleDetailServices;
 
             $validateBundleDetailProduct = Validator::make(
                 $bundleDetailProduct,
@@ -221,7 +229,8 @@ class DiscountController extends Controller
             }
         } elseif ($request->type == 4) {
 
-            $ResultBasedSale = json_decode($request->basedSale, true);
+            // $ResultBasedSale = json_decode($request->basedSale, true);
+            $ResultBasedSale = $request->basedSale;
 
             $validateLocation = Validator::make(
                 $ResultBasedSale,
