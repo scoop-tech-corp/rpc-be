@@ -589,21 +589,35 @@ class DiscountController extends Controller
             ->where('pm.id', '=', $request->id)
             ->first();
 
+        // $dataLoc = DB::table('promotionLocations as pl')
+        //     ->join('location as l', 'pl.locationId', 'l.id')
+        //     ->select(DB::raw("GROUP_CONCAT(l.locationName SEPARATOR ', ') as location"))
+        //     ->where('pl.promoMasterId', '=', $request->id)
+        //     ->distinct()
+        //     ->pluck('location')
+        //     ->first();
+
         $dataLoc = DB::table('promotionLocations as pl')
             ->join('location as l', 'pl.locationId', 'l.id')
-            ->select(DB::raw("GROUP_CONCAT(l.locationName SEPARATOR ', ') as location"))
+            ->select('l.id', 'l.locationName')
             ->where('pl.promoMasterId', '=', $request->id)
             ->distinct()
-            ->pluck('location')
-            ->first();
+            ->get();
+
+        // $dataCust = DB::table('promotionCustomerGroups as pc')
+        //     ->join('customerGroups as cg', 'pc.customerGroupId', 'cg.id')
+        //     ->select(DB::raw("GROUP_CONCAT(cg.customerGroup SEPARATOR ', ') as customerGroup"))
+        //     ->where('pc.promoMasterId', '=', $request->id)
+        //     ->distinct()
+        //     ->pluck('customerGroup')
+        //     ->first();
 
         $dataCust = DB::table('promotionCustomerGroups as pc')
             ->join('customerGroups as cg', 'pc.customerGroupId', 'cg.id')
-            ->select(DB::raw("GROUP_CONCAT(cg.customerGroup SEPARATOR ', ') as customerGroup"))
+            ->select('cg.id', 'cg.customerGroup')
             ->where('pc.promoMasterId', '=', $request->id)
             ->distinct()
-            ->pluck('customerGroup')
-            ->first();
+            ->get();
 
         $data->location = $dataLoc;
         $data->customerGroup = $dataCust;
