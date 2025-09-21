@@ -40,7 +40,7 @@ class DiscountController extends Controller
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
 
-            responseInvalid($errors);
+            return responseInvalid($errors);
         }
 
         // $ResultLocations = json_decode($request->locations, true);
@@ -48,7 +48,7 @@ class DiscountController extends Controller
 
         if (!$ResultLocations) {
 
-            responseInvalid(['Location cannot be empty!']);
+            return responseInvalid(['Location cannot be empty!']);
         }
 
         // $ResultCustGroup = json_decode($request->customerGroups, true);
@@ -87,7 +87,7 @@ class DiscountController extends Controller
             if ($validateLocation->fails()) {
                 $errors = $validateLocation->errors()->first();
 
-                responseInvalid([$errors]);
+                return responseInvalid([$errors]);
             }
         } elseif ($request->type == 2) {
 
@@ -121,7 +121,7 @@ class DiscountController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->first();
 
-                responseInvalid([$errors]);
+                return responseInvalid([$errors]);
             }
 
             // $ResultDiscountServices = json_decode($request->discountServices, true);
@@ -155,7 +155,7 @@ class DiscountController extends Controller
             if ($validate->fails()) {
                 $errors = $validate->errors()->first();
 
-                responseInvalid([$errors]);
+                return responseInvalid([$errors]);
             }
         } elseif ($request->type == 3) {
 
@@ -181,7 +181,7 @@ class DiscountController extends Controller
             if ($validateBundle->fails()) {
                 $errors = $validateBundle->errors()->first();
 
-                responseInvalid([$errors]);
+                return responseInvalid([$errors]);
             }
 
             // $bundleDetailProduct = json_decode($request->bundleDetailProducts, true);
@@ -206,7 +206,7 @@ class DiscountController extends Controller
             if ($validateBundleDetailProduct->fails()) {
                 $errors = $validateBundleDetailProduct->errors()->first();
 
-                responseInvalid([$errors]);
+                return responseInvalid([$errors]);
             }
 
             $validateBundleDetailService = Validator::make(
@@ -225,7 +225,7 @@ class DiscountController extends Controller
             if ($validateBundleDetailService->fails()) {
                 $errors = $validateBundleDetailService->errors()->first();
 
-                responseInvalid([$errors]);
+                return responseInvalid([$errors]);
             }
         } elseif ($request->type == 4) {
 
@@ -262,7 +262,7 @@ class DiscountController extends Controller
             if ($validateLocation->fails()) {
                 $errors = $validateLocation->errors()->first();
 
-                responseInvalid([$errors]);
+                return responseInvalid([$errors]);
             }
         }
 
@@ -580,9 +580,10 @@ class DiscountController extends Controller
                 'pm.name',
                 'pm.type as typeId',
                 'pt.typeName as type',
-                DB::raw("DATE_FORMAT(pm.startDate, '%d/%m/%Y') as startDate"),
-                DB::raw("DATE_FORMAT(pm.endDate, '%d/%m/%Y') as endDate"),
+                DB::raw("DATE_FORMAT(pm.startDate, '%Y-%m-%d') as startDate"),
+                DB::raw("DATE_FORMAT(pm.endDate, '%Y-%m-%d') as endDate"),
                 DB::raw("CASE WHEN pm.status = 1 then 'Active' ELSE 'Inactive' END as status"),
+                'pm.status as statusId',
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(pm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt")
             )
@@ -628,44 +629,23 @@ class DiscountController extends Controller
                 ->where('pf.promoMasterId', '=', $request->id)
                 ->first();
 
-            $dataProdBuy = DB::table('products as p')
-                ->select('p.fullName')
+            $dataProdBuy = DB::table('products')
+                ->select('fullName', 'category')
                 ->where('id', '=', $temp->productBuyId)
                 ->first();
 
-            // if ($temp->productBuyType == 'Sell') {
-
-            // } elseif ($temp->productBuyType == 'Clinic') {
-
-            //     $dataProdBuy = DB::table('productClinics as p')
-            //         ->select('p.fullName')
-            //         ->where('id', '=', $temp->productBuyId)
-            //         ->first();
-            // }
-
-
-
-            $dataProdFree = DB::table('products as p')
-                ->select('p.fullName')
+            $dataProdFree = DB::table('products')
+                ->select('fullName', 'category')
                 ->where('id', '=', $temp->productFreeId)
                 ->first();
-            // if ($temp->productFreeType == 'Sell') {
-
-            // } elseif ($temp->productFreeType == 'Clinic') {
-
-            //     $dataProdFree = DB::table('productClinics as p')
-            //         ->select('p.fullName')
-            //         ->where('id', '=', $temp->productFreeId)
-            //         ->first();
-            // }
 
             $data->quantityBuyItem = $temp->quantityBuyItem;
-            //$data->productBuyType = $temp->productBuyType;
+            $data->productBuyType = $dataProdBuy->category;
             $data->productBuyId = $temp->productBuyId;
             $data->productBuyName = $dataProdBuy->fullName;
 
             $data->quantityFreeItem = $temp->quantityFreeItem;
-            //$data->productFreeType = $temp->productFreeType;
+            $data->productFreeType = $dataProdFree->category;
             $data->productFreeId = $temp->productFreeId;
             $data->productFreeName = $dataProdFree->fullName;
 
@@ -787,8 +767,8 @@ class DiscountController extends Controller
                     'pm.name',
                     'pm.type as typeId',
                     'pt.typeName as type',
-                    DB::raw("DATE_FORMAT(pm.startDate, '%d/%m/%Y') as startDate"),
-                    DB::raw("DATE_FORMAT(pm.endDate, '%d/%m/%Y') as endDate"),
+                    DB::raw("DATE_FORMAT(pm.startDate, '%Y-%m-%d') as startDate"),
+                    DB::raw("DATE_FORMAT(pm.endDate, '%Y-%m-%d') as endDate"),
                     DB::raw("CASE WHEN pm.status = 1 then 'Active' ELSE 'Inactive' END as status"),
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(pm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
@@ -828,23 +808,6 @@ class DiscountController extends Controller
 
         return response()->json($data, 200);
     }
-
-    // public function update(Request $request)
-    // {
-    //     $validate = Validator::make($request->all(), [
-    //         'id' => 'required|integer',
-    //         'type' => 'required|integer|in:1,2,3,4',
-    //         'name' => 'required|string',
-    //         'startDate' => 'required|date',
-    //         'endDate' => 'required|date',
-    //         'status' => 'required|bool',
-    //     ]);
-
-    //     if ($validate->fails()) {
-    //         $errors = $validate->errors()->all();
-    //         responseInvalid($errors);
-    //     }
-    // }
 
     public function update(Request $request)
     {
@@ -899,86 +862,6 @@ class DiscountController extends Controller
             ], 500);
         }
     }
-
-    // public function delete(Request $request)
-    // {
-    //     foreach ($request->id as $va) {
-    //         $res = PromotionMaster::find($va);
-    //         if (!$res) {
-    //             responseInvalid(['There is any Data not found!']);
-    //         }
-    //     }
-
-    //     foreach ($request->id as $va) {
-
-    //         $res = PromotionMaster::find($va);
-
-    //         if ($res->type == 1) {
-    //             PromotionFreeItem::where('promoMasterId', '=', $res->id)
-    //                 ->update(
-    //                     [
-    //                         'deletedBy' => $request->user()->id,
-    //                         'isDeleted' => 1,
-    //                         'deletedAt' => Carbon::now()
-    //                     ]
-    //                 );
-    //         } elseif ($res->type == 2) {
-    //             PromotionDiscount::where('promoMasterId', '=', $res->id)
-    //                 ->update(
-    //                     [
-    //                         'deletedBy' => $request->user()->id,
-    //                         'isDeleted' => 1,
-    //                         'deletedAt' => Carbon::now()
-    //                     ]
-    //                 );
-    //         } elseif ($res->type == 3) {
-
-    //             $bundle = PromotionBundle::where('promoMasterId', '=', $res->id)
-    //                 ->first();
-
-    //             PromotionBundleDetail::where('promoBundleId', '=', $bundle->id)
-    //                 ->update(
-    //                     [
-    //                         'deletedBy' => $request->user()->id,
-    //                         'isDeleted' => 1,
-    //                         'deletedAt' => Carbon::now()
-    //                     ]
-    //                 );
-
-    //             PromotionBundle::where('promoMasterId', '=', $res->id)
-    //                 ->update(
-    //                     [
-    //                         'deletedBy' => $request->user()->id,
-    //                         'isDeleted' => 1,
-    //                         'deletedAt' => Carbon::now()
-    //                     ]
-    //                 );
-    //         } elseif ($res->type == 4) {
-    //             PromotionBasedSales::where('promoMasterId', '=', $res->id)
-    //                 ->update(
-    //                     [
-    //                         'deletedBy' => $request->user()->id,
-    //                         'isDeleted' => 1,
-    //                         'deletedAt' => Carbon::now()
-    //                     ]
-    //                 );
-    //         }
-
-    //         PromotionMaster::where('id', '=', $res->id)
-    //             ->update(
-    //                 [
-    //                     'deletedBy' => $request->user()->id,
-    //                     'isDeleted' => 1,
-    //                     'deletedAt' => Carbon::now()
-    //                 ]
-    //             );
-
-    //         return response()->json([
-    //             'message' => 'Delete Data Successful',
-    //         ], 200);
-    //     }
-    // }
-
 
     public function delete(Request $request)
     {
