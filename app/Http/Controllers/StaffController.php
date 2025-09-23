@@ -1729,7 +1729,6 @@ class StaffController extends Controller
         }
     }
 
-
     public function uploadImageStaff(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -1754,94 +1753,92 @@ class StaffController extends Controller
             ->first();
 
         if ($checkIfValueExits === null) {
-
             return response()->json([
                 'message' => 'Failed',
                 'errors' => "Data not exists, please try another user id",
             ], 406);
+        }
+
+        // $checkImages = DB::table('usersIdentifications')
+        //     ->where([
+        //         ['usersId', '=', $request->id],
+        //         ['isDeleted', '=', 0],
+        //     ])
+        //     ->first();
+
+
+        // if ($checkImages) {
+
+        //     File::delete(public_path() . $checkImages->imagePath);
+
+        //     DB::table('usersIdentifications')->where([
+        //         ['usersId', '=', $request->id],
+        //     ])->delete();
+        // }
+
+        $flag = false;
+        $res_data = [];
+        $files[] = $request->file('imageIdentifications');
+        $count = 0;
+
+        $identify = json_decode($request->typeIdentifications, true);
+        //return $request->imageIdentifications;
+        //return 'ts';
+        if ($flag == false) {
+
+            if ($request->hasfile('imageIdentifications')) {
+                //return 'mask';
+                foreach ($files as $file) {
+
+                    foreach ($file as $fil) {
+
+                        $name = $fil->hashName();
+
+                        $fil->move(public_path() . '/UsersIdentificationImages/', $name);
+
+                        $fileName = "/UsersIdentificationImages/" . $name;
+
+                        DB::table('usersIdentifications')
+                            ->insert([
+                                'usersId' => $request->id,
+                                'typeId' => $identify[$count]['typeId'],
+                                'identification' => $identify[$count]['identificationNumber'],
+                                'imagePath' => $fileName,
+                                'status' => 1,
+                                'reason' => '',
+                                'approvedBy' => $request->user()->id,
+                                'approvedAt' => now(),
+                                'isDeleted' => 0,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+
+                        array_push($res_data, $file);
+
+                        $count += 1;
+                    }
+                }
+
+                $flag = true;
+            }
         } else {
 
-            $checkImages = DB::table('usersIdentifications')
-                ->where([
-                    ['usersId', '=', $request->id],
-                    ['isDeleted', '=', 0],
-                ])
-                ->first();
+            foreach ($res_data as $res) {
 
-
-            if ($checkImages) {
-
-                File::delete(public_path() . $checkImages->imagePath);
-
-                DB::table('usersIdentifications')->where([
-                    ['usersId', '=', $request->id],
-                ])->delete();
-            }
-
-            $flag = false;
-            $res_data = [];
-            $files[] = $request->file('imageIdentifications');
-            $count = 0;
-
-            $identify = json_decode($request->typeIdentifications, true);
-            //return $request->imageIdentifications;
-            //return 'ts';
-            if ($flag == false) {
-
-                if ($request->hasfile('imageIdentifications')) {
-                    //return 'mask';
-                    foreach ($files as $file) {
-
-                        foreach ($file as $fil) {
-
-                            $name = $fil->hashName();
-
-                            $fil->move(public_path() . '/UsersIdentificationImages/', $name);
-
-                            $fileName = "/UsersIdentificationImages/" . $name;
-
-                            DB::table('usersIdentifications')
-                                ->insert([
-                                    'usersId' => $request->id,
-                                    'typeId' => $identify[$count]['typeId'],
-                                    'identification' => $identify[$count]['identificationNumber'],
-                                    'imagePath' => $fileName,
-                                    'status' => 1,
-                                    'reason' => '',
-                                    'approvedBy' => $request->user()->id,
-                                    'approvedAt' => now(),
-                                    'isDeleted' => 0,
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
-
-                            array_push($res_data, $file);
-
-                            $count += 1;
-                        }
-                    }
-
-                    $flag = true;
-                }
-            } else {
-
-                foreach ($res_data as $res) {
-
-                    DB::table('usersIdentifications')
-                        ->insert([
-                            'usersId' => $request->id,
-                            'typeId' => $identify[$count]['typeId'],
-                            'identification' => $identify[$count]['identificationNumber'],
-                            'imagePath' => $res['imagePath'],
-                            'status' => 1,
-                            'reason' => '',
-                            'approvedBy' => $request->user()->id,
-                            'approvedAt' => now(),
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
+                DB::table('usersIdentifications')
+                    ->insert([
+                        'usersId' => $request->id,
+                        'typeId' => $identify[$count]['typeId'],
+                        'identification' => $identify[$count]['identificationNumber'],
+                        'imagePath' => $res['imagePath'],
+                        'status' => 1,
+                        'reason' => '',
+                        'approvedBy' => $request->user()->id,
+                        'approvedAt' => now(),
+                        'isDeleted' => 0,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
             }
         }
 
