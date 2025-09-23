@@ -43,16 +43,16 @@ class DiscountController extends Controller
             return responseInvalid($errors);
         }
 
-        $ResultLocations = json_decode($request->locations, true);
-        //$ResultLocations = $request->locations;
+        //$ResultLocations = json_decode($request->locations, true);
+        $ResultLocations = $request->locations;
 
         if (!$ResultLocations) {
 
             return responseInvalid(['Location cannot be empty!']);
         }
 
-        $ResultCustGroup = json_decode($request->customerGroups, true);
-        //$ResultCustGroup = $request->customerGroups;
+        //$ResultCustGroup = json_decode($request->customerGroups, true);
+        $ResultCustGroup = $request->customerGroups;
 
         if ($request->type == 1) {
 
@@ -88,6 +88,31 @@ class DiscountController extends Controller
                 $errors = $validateLocation->errors()->first();
 
                 return responseInvalid([$errors]);
+            }
+
+            foreach ($ResultLocations as $value) {
+
+                $checkDataBuy = DB::table('products as p')
+                    ->join('productLocations as pl', 'p.id', 'pl.productId')
+                    ->select('p.id', 'p.fullName')
+                    ->where('p.id', '=', $ResultFreeItem['productBuyId'])
+                    ->where('pl.locationId', '=', $value)
+                    ->first();
+
+                if (!$checkDataBuy) {
+                    return responseInvalid(['Product Buy available in selected location!']);
+                }
+
+                $chekDataFree = DB::table('products as p')
+                    ->join('productLocations as pl', 'p.id', 'pl.productId')
+                    ->select('p.id', 'p.fullName')
+                    ->where('p.id', '=', $ResultFreeItem['productFreeId'])
+                    ->where('pl.locationId', '=', $value)
+                    ->first();
+
+                if (!$chekDataFree) {
+                    return responseInvalid(['Product Free available in selected location!']);
+                }
             }
         } elseif ($request->type == 2) {
 
