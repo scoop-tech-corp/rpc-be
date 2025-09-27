@@ -383,12 +383,21 @@ class DiscountController extends Controller
                             ->where('pl.locationId', '=', $value)
                             ->first();
 
+                        $percent = 0;
+                        $amount = 0;
+
+                        if ($ResultDiscountProducts['discountType'] == 'percent') {
+                            $percent = $ResultDiscountProducts['percent'];
+                        } else {
+                            $amount = $ResultDiscountProducts['amount'];
+                        }
+
                         promotion_discount_product::create([
                             'promoMasterId' => $idPromo->id,
                             'discountType' => $ResultDiscountProducts['discountType'],
                             'productId' => $listProd->id,
-                            'amount' => $ResultDiscountProducts['amount'],
-                            'percent' => $ResultDiscountProducts['percent'],
+                            'amount' => $amount,
+                            'percent' => $percent,
                             'totalMaxUsage' => $ResultDiscountProducts['totalMaxUsage'],
                             'maxUsagePerCustomer' => $ResultDiscountProducts['maxUsagePerCustomer'],
                             'userId' => $request->user()->id,
@@ -411,12 +420,21 @@ class DiscountController extends Controller
                             ->where('sl.location_id', '=', $value)
                             ->first();
 
+                        $percent = 0;
+                        $amount = 0;
+
+                        if ($ResultDiscountServices['discountType'] == 'percent') {
+                            $percent = $ResultDiscountServices['percent'];
+                        } else {
+                            $amount = $ResultDiscountServices['amount'];
+                        }
+
                         promotion_discount_services::create([
                             'promoMasterId' => $idPromo->id,
                             'discountType' => $ResultDiscountServices['discountType'],
                             'serviceId' => $listService->id,
-                            'amount' => $ResultDiscountServices['amount'],
-                            'percent' => $ResultDiscountServices['percent'],
+                            'amount' => $amount,
+                            'percent' => $percent,
                             'totalMaxUsage' => $ResultDiscountServices['totalMaxUsage'],
                             'maxUsagePerCustomer' => $ResultDiscountServices['maxUsagePerCustomer'],
                             'userId' => $request->user()->id,
