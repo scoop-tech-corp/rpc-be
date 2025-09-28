@@ -43,16 +43,22 @@ class DiscountController extends Controller
             return responseInvalid($errors);
         }
 
-        //$ResultLocations = json_decode($request->locations, true);
-        $ResultLocations = $request->locations;
-
-        if (!$ResultLocations) {
+        if (!$request->locations) {
 
             return responseInvalid(['Location cannot be empty!']);
         }
 
-        //$ResultCustGroup = json_decode($request->customerGroups, true);
-        $ResultCustGroup = $request->customerGroups;
+        if (is_string($request->locations)) {
+            $ResultLocations = json_decode($request->locations, true);
+        } elseif (is_array($request->locations)) {
+            $ResultLocations = $request->locations;
+        }
+
+        if (is_string($request->customerGroups)) {
+            $ResultCustGroup = json_decode($request->customerGroups, true);
+        } elseif (is_array($request->customerGroups)) {
+            $ResultCustGroup = $request->customerGroups;
+        }
 
         if ($request->type == 1) {
 
@@ -372,6 +378,7 @@ class DiscountController extends Controller
                     $dataProd = DB::table('products')
                         ->select('id', 'fullName')
                         ->where('id', '=', $ResultDiscountProducts['productId'])
+                        ->where('isDeleted', '=', 0)
                         ->first();
 
                     foreach ($ResultLocations as $value) {
@@ -409,6 +416,7 @@ class DiscountController extends Controller
                     $dataService = DB::table('services')
                         ->select('id', 'fullName')
                         ->where('id', '=', $ResultDiscountServices['serviceId'])
+                        ->where('isDeleted', '=', 0)
                         ->first();
 
                     foreach ($ResultLocations as $value) {
