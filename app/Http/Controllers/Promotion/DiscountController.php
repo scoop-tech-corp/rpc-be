@@ -870,7 +870,7 @@ class DiscountController extends Controller
                 $temp->amount = $temp_two->amount;
             }
 
-            $data = $temp;
+            $data->basedSales = $temp;
         }
 
         return response()->json($data, 200);
