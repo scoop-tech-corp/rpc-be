@@ -226,42 +226,47 @@ class DiscountController extends Controller
             $bundleDetailService = json_decode($request->bundleDetailServices, true);
             //$bundleDetailService = $request->bundleDetailServices;
 
-            $validateBundleDetailProduct = Validator::make(
-                $bundleDetailProduct,
-                [
-                    '*.productId' => 'nullable|integer',
-                    '*.quantity' => 'required|integer',
-                ],
-                [
-                    '*.productId.integer' => 'Product Id Should be Filled!',
-                    '*.quantity.required' => 'Quantity Should be Required!',
-                    '*.quantity.integer' => 'Quantity Should be Filled!',
-                ]
-            );
+            if ($bundleDetailProduct) {
+                $validateBundleDetailProduct = Validator::make(
+                    $bundleDetailProduct,
+                    [
+                        '*.productId' => 'nullable|integer',
+                        '*.quantity' => 'required|integer',
+                    ],
+                    [
+                        '*.productId.integer' => 'Product Id Should be Filled!',
+                        '*.quantity.required' => 'Quantity Should be Required!',
+                        '*.quantity.integer' => 'Quantity Should be Filled!',
+                    ]
+                );
 
-            if ($validateBundleDetailProduct->fails()) {
-                $errors = $validateBundleDetailProduct->errors()->first();
+                if ($validateBundleDetailProduct->fails()) {
+                    $errors = $validateBundleDetailProduct->errors()->first();
 
-                return responseInvalid([$errors]);
+                    return responseInvalid([$errors]);
+                }
             }
 
-            $validateBundleDetailService = Validator::make(
-                $bundleDetailService,
-                [
-                    '*.serviceId' => 'nullable|integer',
-                    '*.quantity' => 'required|integer',
-                ],
-                [
-                    '*.serviceId.integer' => 'Service Id Should be Filled!',
-                    '*.quantity.required' => 'Quantity Should be Required!',
-                    '*.quantity.integer' => 'Quantity Should be Filled!',
-                ]
-            );
+            if ($bundleDetailService) {
 
-            if ($validateBundleDetailService->fails()) {
-                $errors = $validateBundleDetailService->errors()->first();
+                $validateBundleDetailService = Validator::make(
+                    $bundleDetailService,
+                    [
+                        '*.serviceId' => 'nullable|integer',
+                        '*.quantity' => 'required|integer',
+                    ],
+                    [
+                        '*.serviceId.integer' => 'Service Id Should be Filled!',
+                        '*.quantity.required' => 'Quantity Should be Required!',
+                        '*.quantity.integer' => 'Quantity Should be Filled!',
+                    ]
+                );
 
-                return responseInvalid([$errors]);
+                if ($validateBundleDetailService->fails()) {
+                    $errors = $validateBundleDetailService->errors()->first();
+
+                    return responseInvalid([$errors]);
+                }
             }
         } elseif ($request->type == 4) {
 
@@ -459,33 +464,48 @@ class DiscountController extends Controller
                     'userId' => $request->user()->id,
                 ]);
 
-                foreach ($bundleDetailProduct as $res) {
+                if ($bundleDetailProduct) {
+                    foreach ($bundleDetailProduct as $res) {
 
-                    promotion_bundle_detail_products::create([
-                        'promoBundleId' => $idBundle->id,
-                        'productId' => $res['productId'],
-                        'quantity' => $res['quantity'],
-                        'userId' => $request->user()->id,
-                    ]);
+                        promotion_bundle_detail_products::create([
+                            'promoBundleId' => $idBundle->id,
+                            'productId' => $res['productId'],
+                            'quantity' => $res['quantity'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
                 }
 
-                foreach ($bundleDetailService as $res) {
+                if ($bundleDetailService) {
 
-                    promotion_bundle_detail_services::create([
-                        'promoBundleId' => $idBundle->id,
-                        'serviceId' => $res['serviceId'],
-                        'quantity' => $res['quantity'],
-                        'userId' => $request->user()->id,
-                    ]);
+                    foreach ($bundleDetailService as $res) {
+
+                        promotion_bundle_detail_services::create([
+                            'promoBundleId' => $idBundle->id,
+                            'serviceId' => $res['serviceId'],
+                            'quantity' => $res['quantity'],
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
                 }
             } elseif ($request->type == 4) {
+
+                $percent = 0;
+                $amount = 0;
+
+                if ($ResultBasedSale['percentOrAmount'] == 'percent') {
+                    $percent = $ResultBasedSale['percent'];
+                } else {
+                    $amount = $ResultBasedSale['amount'];
+                }
+
                 PromotionBasedSales::create([
                     'promoMasterId' => $idPromo->id,
                     'minPurchase' => $ResultBasedSale['minPurchase'],
                     'maxPurchase' => $ResultBasedSale['maxPurchase'],
                     'percentOrAmount' => $ResultBasedSale['percentOrAmount'],
-                    'amount' => $ResultBasedSale['amount'],
-                    'percent' => $ResultBasedSale['percent'],
+                    'amount' => $amount,
+                    'percent' => $percent,
                     'totalMaxUsage' => $ResultBasedSale['totalMaxUsage'],
                     'maxUsagePerCustomer' => $ResultBasedSale['maxUsagePerCustomer'],
                     'userId' => $request->user()->id,
@@ -650,13 +670,6 @@ class DiscountController extends Controller
             ->where('pm.id', '=', $request->id)
             ->first();
 
-        // $dataLoc = DB::table('promotionLocations as pl')
-        //     ->join('location as l', 'pl.locationId', 'l.id')
-        //     ->select(DB::raw("GROUP_CONCAT(l.locationName SEPARATOR ', ') as location"))
-        //     ->where('pl.promoMasterId', '=', $request->id)
-        //     ->distinct()
-        //     ->pluck('location')
-        //     ->first();
 
         $dataLoc = DB::table('promotionLocations as pl')
             ->join('location as l', 'pl.locationId', 'l.id')
@@ -664,14 +677,6 @@ class DiscountController extends Controller
             ->where('pl.promoMasterId', '=', $request->id)
             ->distinct()
             ->get();
-
-        // $dataCust = DB::table('promotionCustomerGroups as pc')
-        //     ->join('customerGroups as cg', 'pc.customerGroupId', 'cg.id')
-        //     ->select(DB::raw("GROUP_CONCAT(cg.customerGroup SEPARATOR ', ') as customerGroup"))
-        //     ->where('pc.promoMasterId', '=', $request->id)
-        //     ->distinct()
-        //     ->pluck('customerGroup')
-        //     ->first();
 
         $dataCust = DB::table('promotionCustomerGroups as pc')
             ->join('customerGroups as cg', 'pc.customerGroupId', 'cg.id')
@@ -771,51 +776,46 @@ class DiscountController extends Controller
 
             $customList = [];
 
-            $temp2 = DB::table('promotionBundleDetails as pb')
-                ->where('pb.promoBundleId', '=', $temp->id)
+            $temp1 = DB::table('promotion_bundle_detail_products as pbdp')
+                ->where('pbdp.promoBundleId', '=', $temp->id)
                 ->get();
 
+            $temp2 = DB::table('promotion_bundle_detail_services as pbds')
+                ->where('pbds.promoBundleId', '=', $temp->id)
+                ->get();
+
+            foreach ($temp1 as $value) {
+
+                $dataProd = DB::table('products as p')
+                    ->select('p.fullName', 'p.category')
+                    ->where('id', '=', $value->productId)
+                    ->first();
+
+                $tempList = [
+                    'productOrService' => 'product',
+                    'productType' => $dataProd->category,
+                    'productId' => $value->productId,
+                    'productName' => $dataProd->fullName,
+                    'quantity' => $value->quantity,
+                ];
+
+                $customList[] = $tempList;
+            }
+
             foreach ($temp2 as $value) {
+                $dataService = DB::table('services')
+                    ->select('fullName')
+                    ->where('id', '=', $value->serviceId)
+                    ->first();
 
-                if ($value->productOrService == 'product') {
+                $tempList = [
+                    'productOrService' => 'service',
+                    'serviceId' => $value->serviceId,
+                    'serviceName' => $dataService->fullName,
+                    'quantity' => $value->quantity,
+                ];
 
-                    $dataProd = DB::table('products as p')
-                        ->select('p.fullName')
-                        ->where('id', '=', $value->productId)
-                        ->first();
-
-                    // if ($value->productType == 'Sell') {
-
-                    // } elseif ($value->productType == 'Clinic') {
-                    //     $dataProd = DB::table('productClinics as p')
-                    //         ->select('p.fullName')
-                    //         ->where('id', '=', $value->productId)
-                    //         ->first();
-                    // }
-
-                    $tempList = [
-                        'productOrService' => $value->productOrService,
-                        'productType' => $value->productType,
-                        'productId' => $value->productId,
-                        'productName' => $dataProd->fullName,
-                        'quantity' => $value->quantity,
-                    ];
-
-                    $customList[] = $tempList;
-                } elseif ($value['productOrService'] == 'service') {
-                    $dataService = DB::table('services')
-                        ->select('fullName')
-                        ->where('id', '=', $value['serviceId'])
-                        ->first();
-
-                    $tempList = [
-                        'productOrService' => $value->productOrService,
-                        'serviceId' => $dataService->fullName,
-                        'quantity' => $value->quantity,
-                    ];
-
-                    $customList[] = $tempList;
-                }
+                $customList[] = $tempList;
             }
 
             $data->bundles = $customList;
