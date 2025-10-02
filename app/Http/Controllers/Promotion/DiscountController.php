@@ -1469,7 +1469,14 @@ class DiscountController extends Controller
                     $bundle = PromotionBundle::where('promoMasterId', $res->id)->first();
 
                     if ($bundle) {
-                        PromotionBundleDetail::where('promoBundleId', $bundle->id)
+                        promotion_bundle_detail_products::where('promoBundleId', $bundle->id)
+                            ->update([
+                                'deletedBy' => $userId,
+                                'isDeleted' => 1,
+                                'deletedAt' => Carbon::now()
+                            ]);
+
+                        promotion_bundle_detail_services::where('promoBundleId', $bundle->id)
                             ->update([
                                 'deletedBy' => $userId,
                                 'isDeleted' => 1,
