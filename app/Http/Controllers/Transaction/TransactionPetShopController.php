@@ -1451,14 +1451,16 @@ class TransactionPetShopController
 
                 if ($data->discountType === 'percent') {
                     $amount_discount = ($data->percent / 100) * $value['eachPrice'];
-                    $discountNote = $data->percent . '% discount on ' . $data->item_name . ' (save Rp' . number_format($amount_discount, 0, ',', '.') . ')';
+                    $discountNote = $data->percent . '% diskon produk ' . $data->item_name . ' (hemat Rp' . number_format($amount_discount, 0, ',', '.') . ')';
                     $saved = $amount_discount;
                 } else {
-                    $discountNote = 'Rp' . number_format($data->amount, 0, ',', '.') . ' discount on ' . $data->item_name;
+                    $discountNote = 'Rp' . number_format($data->amount, 0, ',', '.') . ' diskon produk ' . $data->item_name;
                     $saved = $data->amount * $value['quantity'];
                 }
 
-                $results[] = [
+                $itemNameKey = $data->item_name;
+
+                $results[$itemNameKey] = [
                     'item_name' => $data->item_name,
                     'category' => $data->category,
                     'quantity' => $data->quantity,
