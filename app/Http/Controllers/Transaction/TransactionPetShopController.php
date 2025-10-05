@@ -1537,7 +1537,7 @@ class TransactionPetShopController
                 $totalDiscount = $res->totaldiscount;
             }
         } else {
-            $totalPayment = $subtotal;
+            // $totalPayment = $subtotal;
             $discountNote = '';
             // $totalDiscount = 0;
         }
@@ -1547,7 +1547,8 @@ class TransactionPetShopController
             'subtotal' => $subtotal,
             'discount_note' => $discountNote,
             'total_discount' => $totalDiscount,
-            'total_payment' => $totalPayment,
+            'total_payment' => $subtotal - $totalDiscount,
+            // 'total_payment' => $totalPayment,
             'promo_notes' => $promoNotes
         ];
     }
