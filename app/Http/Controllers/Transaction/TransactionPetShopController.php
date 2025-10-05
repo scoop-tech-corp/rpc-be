@@ -1450,7 +1450,8 @@ class TransactionPetShopController
                 if (!$data) continue;
 
                 if ($data->discountType === 'percent') {
-                    $discountNote = $data->percent . '% discount on ' . $data->item_name . ' (save Rp' . number_format($data->amount * $value['quantity'], 0, ',', '.') . ')';
+                    $amount_discount = ($data->percent / 100) * $value['eachPrice'];
+                    $discountNote = $data->percent . '% discount on ' . $data->item_name . ' (save Rp' . number_format($amount_discount, 0, ',', '.') . ')';
                     $saved = $data->amount * $value['quantity'];
                 } else {
                     $discountNote = 'Rp' . number_format($data->amount, 0, ',', '.') . ' discount on ' . $data->item_name;
