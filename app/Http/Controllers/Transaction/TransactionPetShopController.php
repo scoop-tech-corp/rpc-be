@@ -1452,7 +1452,7 @@ class TransactionPetShopController
                 if ($data->discountType === 'percent') {
                     $amount_discount = ($data->percent / 100) * $value['eachPrice'];
                     $discountNote = $data->percent . '% discount on ' . $data->item_name . ' (save Rp' . number_format($amount_discount, 0, ',', '.') . ')';
-                    $saved = $data->amount * $value['quantity'];
+                    $saved = $amount_discount;
                 } else {
                     $discountNote = 'Rp' . number_format($data->amount, 0, ',', '.') . ' discount on ' . $data->item_name;
                     $saved = $data->amount * $value['quantity'];
@@ -1539,7 +1539,7 @@ class TransactionPetShopController
         } else {
             $totalPayment = $subtotal;
             $discountNote = '';
-            $totalDiscount = 0;
+            // $totalDiscount = 0;
         }
 
         return [
@@ -1732,32 +1732,6 @@ class TransactionPetShopController
             'randomName' => $randomName
         ]);
     }
-
-    // public function generateInvoice()
-    // {
-    //     // Menggunakan Eloquent dengan relasi berdasarkan codeLocation
-    //     $locations = Location::with(['telephones' => function ($query) {
-    //         $query->where('usage', 'Utama');
-    //     }])->get();
-
-    //     // Format data lokasi untuk view
-    //     $formattedLocations = [];
-    //     foreach ($locations as $location) {
-    //         $phone = $location->telephones->first();
-    //         $formattedLocations[] = [
-    //             'name' => $location->locationName,
-    //             'description' => $location->description,
-    //             'phone' => $phone ? $phone->phoneNumber : ''
-    //         ];
-    //     }
-
-    //     $data = [
-    //         'locations' => $formattedLocations
-    //     ];
-
-    //     $pdf = Pdf::loadView('/invoice/invoice_petshop', $data);
-    //     return $pdf->download('nota_petshop.pdf');
-    // }
 
     public function generateInvoice($id)
     {
