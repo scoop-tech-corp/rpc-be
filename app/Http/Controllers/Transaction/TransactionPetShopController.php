@@ -1458,20 +1458,41 @@ class TransactionPetShopController
                     $saved = $data->amount * $value['quantity'];
                 }
 
-                $results[] = [
-                    'item_name' => $data->item_name,
-                    'category' => $data->category,
-                    'quantity' => $data->quantity,
-                    'bonus' => $data->bonus,
-                    'discount' => $data->discount,
-                    'total' => $data->total,
-                    'note' => $discountNote,
-                ];
+                if (count($results) == 0) {
+                    $tmp_res = $results->where('item_name', '=', $data->item_name);
 
-                $subtotal += $data->total;
-                $totalDiscount += $saved;
-                $promoNotes[] = $discountNote;
-                $isGetPromo = true;
+                    if (count($tmp_res) == 0) {
+                        $results[] = [
+                            'item_name' => $data->item_name,
+                            'category' => $data->category,
+                            'quantity' => $data->quantity,
+                            'bonus' => $data->bonus,
+                            'discount' => $data->discount,
+                            'total' => $data->total,
+                            'note' => $discountNote,
+                        ];
+
+                        $subtotal += $data->total;
+                        $totalDiscount += $saved;
+                        $promoNotes[] = $discountNote;
+                        $isGetPromo = true;
+                    }
+                } else {
+                    $results[] = [
+                        'item_name' => $data->item_name,
+                        'category' => $data->category,
+                        'quantity' => $data->quantity,
+                        'bonus' => $data->bonus,
+                        'discount' => $data->discount,
+                        'total' => $data->total,
+                        'note' => $discountNote,
+                    ];
+
+                    $subtotal += $data->total;
+                    $totalDiscount += $saved;
+                    $promoNotes[] = $discountNote;
+                    $isGetPromo = true;
+                }
             }
 
             if (!$isGetPromo) {
