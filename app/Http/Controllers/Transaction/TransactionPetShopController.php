@@ -1458,8 +1458,10 @@ class TransactionPetShopController
                     $saved = $data->amount * $value['quantity'];
                 }
 
-                if (count($results) == 0) {
-                    $tmp_res = $results->where('item_name', '=', $data->item_name);
+                if (count($results) > 0) {
+
+                    $collection = collect($results);
+                    $tmp_res = $collection->where('item_name', '=', $data->item_name);
 
                     if (count($tmp_res) == 0) {
                         $results[] = [
@@ -1475,8 +1477,8 @@ class TransactionPetShopController
                         $subtotal += $data->total;
                         $totalDiscount += $saved;
                         $promoNotes[] = $discountNote;
-                        $isGetPromo = true;
                     }
+                    $isGetPromo = true;
                 } else {
                     $results[] = [
                         'item_name' => $data->item_name,
