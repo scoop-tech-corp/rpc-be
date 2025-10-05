@@ -1458,9 +1458,7 @@ class TransactionPetShopController
                     $saved = $data->amount * $value['quantity'];
                 }
 
-                $itemNameKey = $data->item_name;
-
-                $results[$itemNameKey] = [
+                $results[] = [
                     'item_name' => $data->item_name,
                     'category' => $data->category,
                     'quantity' => $data->quantity,
