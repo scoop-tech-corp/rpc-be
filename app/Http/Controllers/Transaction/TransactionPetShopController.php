@@ -1430,17 +1430,17 @@ class TransactionPetShopController
             foreach ($discounts as $disc) {
 
                 $data = DB::table('promotionMasters as pm')
-                    ->join('promotionDiscounts as pd', 'pm.id', 'pd.promoMasterId')
+                    ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
                     ->join('products as p', 'p.id', 'pd.productId')
                     ->select(
                         'p.fullName as item_name',
                         'p.category',
                         DB::raw($value['quantity'] . ' as quantity'),
                         DB::raw('0 as bonus'),
-                        DB::raw("CASE WHEN pd.percentOrAmount = 'percent' THEN pd.percent ELSE pd.amount END as discount"),
+                        DB::raw("CASE WHEN pd.discountType = 'percent' THEN pd.percent ELSE pd.amount END as discount"),
                         DB::raw($value['eachPrice'] . ' as unit_price'),
                         DB::raw($value['priceOverall'] . ' as total'),
-                        'pd.percentOrAmount',
+                        'pd.discountType',
                         'pd.percent',
                         'pd.amount'
                     )
@@ -1449,7 +1449,7 @@ class TransactionPetShopController
 
                 if (!$data) continue;
 
-                if ($data->percentOrAmount === 'percent') {
+                if ($data->discountType === 'percent') {
                     $discountNote = $data->percent . '% discount on ' . $data->item_name . ' (save Rp' . number_format($data->amount * $value['quantity'], 0, ',', '.') . ')';
                     $saved = $data->amount * $value['quantity'];
                 } else {
