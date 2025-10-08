@@ -1430,17 +1430,17 @@ class TransactionPetShopController
             foreach ($discounts as $disc) {
 
                 $data = DB::table('promotionMasters as pm')
-                    ->join('promotionDiscounts as pd', 'pm.id', 'pd.promoMasterId')
+                    ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
                     ->join('products as p', 'p.id', 'pd.productId')
                     ->select(
                         'p.fullName as item_name',
                         'p.category',
                         DB::raw($value['quantity'] . ' as quantity'),
                         DB::raw('0 as bonus'),
-                        DB::raw("CASE WHEN pd.percentOrAmount = 'percent' THEN pd.percent ELSE pd.amount END as discount"),
+                        DB::raw("CASE WHEN pd.discountType = 'percent' THEN pd.percent ELSE pd.amount END as discount"),
                         DB::raw($value['eachPrice'] . ' as unit_price'),
                         DB::raw($value['priceOverall'] . ' as total'),
-                        'pd.percentOrAmount',
+                        'pd.discountType',
                         'pd.percent',
                         'pd.amount'
                     )
@@ -1449,28 +1449,52 @@ class TransactionPetShopController
 
                 if (!$data) continue;
 
-                if ($data->percentOrAmount === 'percent') {
-                    $discountNote = $data->percent . '% discount on ' . $data->item_name . ' (save Rp' . number_format($data->amount * $value['quantity'], 0, ',', '.') . ')';
-                    $saved = $data->amount * $value['quantity'];
+                if ($data->discountType === 'percent') {
+                    $amount_discount = ($data->percent / 100) * $value['eachPrice'];
+                    $discountNote = $data->percent . '% diskon produk ' . $data->item_name . ' (hemat Rp' . number_format($amount_discount, 0, ',', '.') . ')';
+                    $saved = $amount_discount;
                 } else {
-                    $discountNote = 'Rp' . number_format($data->amount, 0, ',', '.') . ' discount on ' . $data->item_name;
+                    $discountNote = 'Rp' . number_format($data->amount, 0, ',', '.') . ' diskon produk ' . $data->item_name;
                     $saved = $data->amount * $value['quantity'];
                 }
 
-                $results[] = [
-                    'item_name' => $data->item_name,
-                    'category' => $data->category,
-                    'quantity' => $data->quantity,
-                    'bonus' => $data->bonus,
-                    'discount' => $data->discount,
-                    'total' => $data->total,
-                    'note' => $discountNote,
-                ];
+                if (count($results) > 0) {
 
-                $subtotal += $data->total;
-                $totalDiscount += $saved;
-                $promoNotes[] = $discountNote;
-                $isGetPromo = true;
+                    $collection = collect($results);
+                    $tmp_res = $collection->where('item_name', '=', $data->item_name);
+
+                    if (count($tmp_res) == 0) {
+                        $results[] = [
+                            'item_name' => $data->item_name,
+                            'category' => $data->category,
+                            'quantity' => $data->quantity,
+                            'bonus' => $data->bonus,
+                            'discount' => $data->discount,
+                            'total' => $data->total,
+                            'note' => $discountNote,
+                        ];
+
+                        $subtotal += $data->total;
+                        $totalDiscount += $saved;
+                        $promoNotes[] = $discountNote;
+                    }
+                    $isGetPromo = true;
+                } else {
+                    $results[] = [
+                        'item_name' => $data->item_name,
+                        'category' => $data->category,
+                        'quantity' => $data->quantity,
+                        'bonus' => $data->bonus,
+                        'discount' => $data->discount,
+                        'total' => $data->total,
+                        'note' => $discountNote,
+                    ];
+
+                    $subtotal += $data->total;
+                    $totalDiscount += $saved;
+                    $promoNotes[] = $discountNote;
+                    $isGetPromo = true;
+                }
             }
 
             if (!$isGetPromo) {
@@ -1536,9 +1560,9 @@ class TransactionPetShopController
                 $totalDiscount = $res->totaldiscount;
             }
         } else {
-            $totalPayment = $subtotal;
+            // $totalPayment = $subtotal;
             $discountNote = '';
-            $totalDiscount = 0;
+            // $totalDiscount = 0;
         }
 
         return [
@@ -1546,7 +1570,8 @@ class TransactionPetShopController
             'subtotal' => $subtotal,
             'discount_note' => $discountNote,
             'total_discount' => $totalDiscount,
-            'total_payment' => $totalPayment,
+            'total_payment' => $subtotal - $totalDiscount,
+            // 'total_payment' => $totalPayment,
             'promo_notes' => $promoNotes
         ];
     }
@@ -1731,32 +1756,6 @@ class TransactionPetShopController
             'randomName' => $randomName
         ]);
     }
-
-    // public function generateInvoice()
-    // {
-    //     // Menggunakan Eloquent dengan relasi berdasarkan codeLocation
-    //     $locations = Location::with(['telephones' => function ($query) {
-    //         $query->where('usage', 'Utama');
-    //     }])->get();
-
-    //     // Format data lokasi untuk view
-    //     $formattedLocations = [];
-    //     foreach ($locations as $location) {
-    //         $phone = $location->telephones->first();
-    //         $formattedLocations[] = [
-    //             'name' => $location->locationName,
-    //             'description' => $location->description,
-    //             'phone' => $phone ? $phone->phoneNumber : ''
-    //         ];
-    //     }
-
-    //     $data = [
-    //         'locations' => $formattedLocations
-    //     ];
-
-    //     $pdf = Pdf::loadView('/invoice/invoice_petshop', $data);
-    //     return $pdf->download('nota_petshop.pdf');
-    // }
 
     public function generateInvoice($id)
     {

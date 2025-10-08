@@ -155,27 +155,12 @@ class ImportCustomerController extends Controller
                     ], 422);
                 }
 
-                // if ($value['nomor_member'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column Nomor Member at row ' . $count_row],
-                //     ], 422);
-                // }
-
                 if ($value['nama_depan'] == "") {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
                         'message' => ['There is any empty cell on column Nama Depan at row ' . $count_row],
                     ], 422);
                 }
-
-                // if ($value['jenis_kelamin'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column Jenis Kelamin at row ' . $count_row],
-                //     ], 422);
-                // }
-
 
                 if (!empty($value['jenis_kelamin']) && !in_array($value['jenis_kelamin'], ['P', 'W'])) {
 
@@ -185,12 +170,6 @@ class ImportCustomerController extends Controller
                     ], 422);
                 }
 
-                // if ($value['id_gelar'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column ID Gelar at row ' . $count_row],
-                //     ], 422);
-                // }
                 if (!empty($value['id_gelar'])) {
                     $title = TitleCustomer::where('id', '=', $value['id_gelar'])->first();
 
@@ -201,14 +180,6 @@ class ImportCustomerController extends Controller
                         ], 422);
                     }
                 }
-
-
-                // if ($value['id_group_pelanggan'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column ID Grup Pelanggan at row ' . $count_row],
-                //     ], 422);
-                // }
 
                 if (!empty($value['id_group_pelanggan'])) {
                     $customer_groups = CustomerGroups::where('id', '=', $value['id_group_pelanggan'])->first();
@@ -240,13 +211,6 @@ class ImportCustomerController extends Controller
                     ], 422);
                 }
 
-                // if ($value['tanggal_join'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column Tanggal Join at row ' . $count_row],
-                //     ], 422);
-                // }
-
                 if (!empty($value['tanggal_join'])) {
                     $checkSerial = $this->isExcelSerialDate($value['tanggal_join']);
                     $status = false;
@@ -264,13 +228,6 @@ class ImportCustomerController extends Controller
                     }
                 }
 
-                // if ($value['id_tipe_identitas'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column ID Tipe Identitas at row ' . $count_row],
-                //     ], 422);
-                // }
-
                 if (!empty($value['id_group_pelanggan'])) {
                     $typeId = TypeIdCustomer::where('id', '=', $value['id_tipe_identitas'])->first();
 
@@ -282,19 +239,6 @@ class ImportCustomerController extends Controller
                     }
                 }
 
-                // if ($value['nomor_kartu_identitas'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column Nomor Kartu Identitas at row ' . $count_row],
-                //     ], 422);
-                // }
-
-                // if ($value['id_pekerjaan'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column ID Pekerjaan at row ' . $count_row],
-                //     ], 422);
-                // }
                 if (!empty($value['id_pekerjaan'])) {
                     $custOccupation = CustomerOccupation::where('id', '=', $value['id_pekerjaan'])->first();
 
@@ -322,20 +266,6 @@ class ImportCustomerController extends Controller
                         ], 422);
                     }
                 }
-
-                // if (!$this->isValidDate($value['tanggal_lahir'])) {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is invalid date format Tanggal Lahir at row ' . $count_row],
-                //     ], 422);
-                // }
-
-                // if ($value['id_referensi'] == "") {
-                //     return response()->json([
-                //         'errors' => 'The given data was invalid.',
-                //         'message' => ['There is any empty cell on column ID Referensi at row ' . $count_row],
-                //     ], 422);
-                // }
 
                 if (!empty($value['tanggal_lahir'])) {
                     $ref = ReferenceCustomer::where('id', '=', $value['id_referensi'])->first();
@@ -519,6 +449,10 @@ class ImportCustomerController extends Controller
                     continue;
                 }
 
+                if ($value['id'] == null && $value['alamat_jalan'] == null) {
+                    break;
+                }
+
                 if ($value['alamat_jalan'] == "") {
                     return response()->json([
                         'errors' => 'The given data was invalid.',
@@ -564,6 +498,10 @@ class ImportCustomerController extends Controller
                 if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
                     $count_row += 2;
                     continue;
+                }
+
+                if ($value['id'] == null && $value['id_pemakaian'] == null) {
+                    break;
                 }
 
                 if ($value['id_pemakaian'] != "") {
@@ -618,6 +556,10 @@ class ImportCustomerController extends Controller
                     continue;
                 }
 
+                if ($value['id'] == null && $value['id_pemakaian'] == null) {
+                    break;
+                }
+
                 if ($value['id_pemakaian'] != "") {
 
                     $usageEmail = DataStaticCustomers::where('id', '=', $value['id_pemakaian'])
@@ -650,6 +592,10 @@ class ImportCustomerController extends Controller
                 if ($value['id'] == "Wajib diisi berdasarkan ID di sheet Detail") {
                     $count_row += 2;
                     continue;
+                }
+
+                if ($value['id'] == null && $value['id_pemakaian'] == null) {
+                    break;
                 }
 
                 if ($value['id_pemakaian'] != "") {
