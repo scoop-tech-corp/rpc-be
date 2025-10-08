@@ -1702,7 +1702,7 @@ class DiscountController extends Controller
             $res = DB::table('promotionMasters as pm')
                 ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
                 ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
-                ->join('promotionDiscounts as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
                 ->join('products as p', 'p.id', 'pd.productId')
                 ->select(
                     'pm.id',
@@ -1712,8 +1712,8 @@ class DiscountController extends Controller
                                 'Pembelian Produk ',
                                 p.fullName,
                                 CASE
-                                    WHEN pd.percentOrAmount = 'percent' THEN CONCAT(' diskon ', pd.percent, '%')
-                                    WHEN pd.percentOrAmount = 'amount' THEN CONCAT(' diskon Rp ', pd.amount)
+                                    WHEN pd.discountType = 'percent' THEN CONCAT(' diskon ', pd.percent, '%')
+                                    WHEN pd.discountType = 'amount' THEN CONCAT(' diskon Rp ', pd.amount)
                                     ELSE ''
                                 END
                             ) as note
