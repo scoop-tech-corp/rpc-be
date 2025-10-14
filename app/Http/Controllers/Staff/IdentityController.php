@@ -106,7 +106,7 @@ class IdentityController extends Controller
             ->select(
                 'u.firstName',
             )
-            ->where('pb.isDeleted', '=', 0);
+            ->where('r.isDeleted', '=', 0);
 
         if ($request->search) {
             $data = $data->where('u.firstName', 'like', '%' . $request->search . '%');
