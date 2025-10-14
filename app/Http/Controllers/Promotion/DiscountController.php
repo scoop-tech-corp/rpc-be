@@ -1741,7 +1741,7 @@ class DiscountController extends Controller
                 ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
                 ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
                 ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
-                ->join('promotionBundleDetails as pbd', 'pb.id', 'pbd.promoBundleId')
+                ->join('promotion_bundle_detail_products as pbd', 'pb.id', 'pbd.promoBundleId')
                 ->join('products as p', 'p.id', 'pbd.productId')
                 ->select(
                     'pbd.promoBundleId',
@@ -1757,7 +1757,7 @@ class DiscountController extends Controller
 
             foreach ($res as $valdtl) {
 
-                $data = DB::table('promotionBundleDetails as b')
+                $data = DB::table('promotion_bundle_detail_products as b')
                     ->join('products as p', 'p.id', 'b.productId')
                     ->join('promotionBundles as pb', 'pb.id', 'b.promoBundleId')
                     ->join('promotionMasters as m', 'pb.promoMasterId', 'm.id')
