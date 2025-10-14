@@ -4336,7 +4336,7 @@ class StaffController extends Controller
             ->join('jobTitle as j', 'j.id', 'u.jobTitleId')
             ->select(
                 'u.id',
-                'u.firstName',
+                'u.nickName as firstName',
             );
 
         if ($value) {
@@ -4350,7 +4350,7 @@ class StaffController extends Controller
 
         $data = $data->where('j.id', '=', 17)   //id job title dokter hewan
             ->where('u.isDeleted', '=', 0)
-            ->groupBy('u.firstName')
+            ->groupBy('u.nickName')
             ->groupBy('u.id')
             ->orderBy('u.id', 'asc')
             ->get();
