@@ -1334,7 +1334,11 @@ class TransPetClinicController extends Controller
             return responseInvalid($errors);
         }
 
-        $dataServices = json_decode($request->services, true);
+        if (is_string($request->services)) {
+            $dataServices = json_decode($request->services, true);
+        } elseif (is_array($request->services)) {
+            $dataServices = $request->services;
+        }
 
         foreach ($dataServices as $val) {
             $find = Service::find($val['serviceId']);
@@ -1343,7 +1347,13 @@ class TransPetClinicController extends Controller
             }
         }
 
-        $ResultRecipe = json_decode($request->recipes, true);
+        // $ResultRecipe = json_decode($request->recipes, true);
+
+        if (is_string($request->recipes)) {
+            $ResultRecipe = json_decode($request->recipes, true);
+        } elseif (is_array($request->recipes)) {
+            $ResultRecipe = $request->recipes;
+        }
 
         foreach ($ResultRecipe as $val) {
             $find = Products::find($val['productId']);
