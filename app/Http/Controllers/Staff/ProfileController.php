@@ -114,18 +114,17 @@ class ProfileController extends Controller
                     'lastName' => 'max:20|min:3|nullable',
                     'nickName' => 'max:20|min:3|nullable',
                     'gender' => 'string|nullable',
-                    'phoneNumberId' => 'required',
+                    // 'phoneNumberId' => 'required',
                     'phoneNumber' => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
                     'emailId' => 'required',
                     'email' => 'string|nullable',
-                    'messengerNumberId' => 'required',
-                    'messengerNumber' => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
-                    'detailAddressId' => 'required',
+                    // 'messengerNumberId' => 'required',
+                    'messengerNumber' => 'required', //['required', 'regex:/^\+?[0-9]{10,15}$/'],
+                    // 'detailAddressId' => 'required',
                     'addressName' => 'string|nullable',
                     'userName' => 'string|nullable',
                 ]
             );
-
 
             if ($validate->fails()) {
 
@@ -134,42 +133,44 @@ class ProfileController extends Controller
                 return responseInvalid($errors);
             }
 
-
             $users =  User::where('id', '=', $request->id)->where('isDeleted', '=', '0')->first();
 
             if ($users == null) {
                 return responseInvalid(['User id not found, please try different id']);
             }
 
-            $checkTelephone =  UsersTelephones::where([
-                ['usersId', '=', $request->id],
-                ['id', '=', $request->phoneNumberId],
-            ])->first();
+            if ($request->phoneNumberId) {
+                $checkTelephone =  UsersTelephones::where([
+                    ['usersId', '=', $request->id],
+                    ['id', '=', $request->phoneNumberId],
+                ])->first();
 
 
-            if ($checkTelephone == null) {
-                return responseInvalid(['User id telephone not found, please try different id']);
+                if ($checkTelephone == null) {
+                    return responseInvalid(['User id telephone not found, please try different id']);
+                }
             }
 
+            if ($request->messengerNumberId) {
+                $checkMessengers =  UsersMessengers::where([
+                    ['usersId', '=', $request->id],
+                    ['id', '=', $request->messengerNumberId],
+                ])->first();
 
-            $checkMessengers =  UsersMessengers::where([
-                ['usersId', '=', $request->id],
-                ['id', '=', $request->messengerNumberId],
-            ])->first();
-
-
-            if ($checkMessengers == null) {
-                return responseInvalid(['User id messenger not found, please try different id']);
+                if ($checkMessengers == null) {
+                    return responseInvalid(['User id messenger not found, please try different id']);
+                }
             }
 
-            $checDetailAddress =  UsersDetailAddresses::where([
-                ['usersId', '=', $request->id],
-                ['id', '=', $request->detailAddressId],
-            ])->first();
+            if ($request->detailAddressId) {
+                $checkDetailAddress =  UsersDetailAddresses::where([
+                    ['usersId', '=', $request->id],
+                    ['id', '=', $request->detailAddressId],
+                ])->first();
 
-
-            if ($checDetailAddress == null) {
-                return responseInvalid(['User id detail address not found, please try different id']);
+                if ($checkDetailAddress == null) {
+                    return responseInvalid(['User id detail address not found, please try different id']);
+                }
             }
 
             $checEmail =  UsersEmails::where([
@@ -181,56 +182,49 @@ class ProfileController extends Controller
                 return responseInvalid(['User id email not found, please try different id']);
             }
 
+            // $latestPhoneNumber = $this->getPhoneLatest();
+            // $latestMessenger = $this->getMessengerLatest();
+            // $latestEmail = $this->getEmailLatest();
+            // $latestAddress = $this->getDetailAddressLatest();
+
+            // $checkDataUser = User::from('users as a')
+            //     ->leftJoinSub($latestPhoneNumber, 'e', function ($join) {
+            //         $join->on('e.usersId', '=', 'a.id');
+            //     })->leftJoinSub($latestMessenger, 'f', function ($join) {
+            //         $join->on('f.usersId', '=', 'a.id');
+            //     })->leftJoinSub($latestEmail, 'g', function ($join) {
+            //         $join->on('g.usersId', '=', 'a.id');
+            //     })->leftJoinSub($latestAddress, 'h', function ($join) {
+            //         $join->on('h.usersId', '=', 'a.id');
+            //     })->select(
+            //         'a.id',
+            //         'e.phoneNumberId as phoneNumberId',
+            //         'f.messengerId as messengerNumberId',
+            //         'g.emailId as emailId',
+            //         'h.detailAddressId as detailAddressId',
+            //     )
+            //     ->where([
+            //         ['a.id', '=', $request->id],
+            //         ['a.isDeleted', '=', '0'],
+            //     ])
+            //     ->first();
 
 
-            $latestPhoneNumber = $this->getPhoneLatest();
-            $latestMessenger = $this->getMessengerLatest();
-            $latestEmail = $this->getEmailLatest();
-            $latestAddress = $this->getDetailAddressLatest();
+            // if ($checkDataUser->phoneNumberId != $request->phoneNumberId) {
+            //     return responseInvalid(['Phone number id is not primary for update, please use id ' . $checkDataUser->phoneNumberId  . ' as phoneNumberId']);
+            // }
 
+            // if ($checkDataUser->messengerNumberId != $request->messengerNumberId) {
+            //     return responseInvalid(['Messenger id is not primary for update, please use id ' . $checkDataUser->messengerNumberId  . ' as messengerNumberId']);
+            // }
 
-            $checkDataUser = User::from('users as a')
-                ->leftJoinSub($latestPhoneNumber, 'e', function ($join) {
-                    $join->on('e.usersId', '=', 'a.id');
-                })->leftJoinSub($latestMessenger, 'f', function ($join) {
-                    $join->on('f.usersId', '=', 'a.id');
-                })->leftJoinSub($latestEmail, 'g', function ($join) {
-                    $join->on('g.usersId', '=', 'a.id');
-                })->leftJoinSub($latestAddress, 'h', function ($join) {
-                    $join->on('h.usersId', '=', 'a.id');
-                })->select(
-                    'a.id',
-                    'e.phoneNumberId as phoneNumberId',
-                    'f.messengerId as messengerNumberId',
-                    'g.emailId as emailId',
-                    'h.detailAddressId as detailAddressId',
-                )
-                ->where([
-                    ['a.id', '=', $request->id],
-                    ['a.isDeleted', '=', '0'],
-                ])
-                ->first();
+            // if ($checkDataUser->emailId != $request->emailId) {
+            //     return responseInvalid(['Email id is not primary for update, please use id ' . $checkDataUser->detailAddressId  . ' as emailId']);
+            // }
 
-
-            if ($checkDataUser->phoneNumberId != $request->phoneNumberId) {
-                return responseInvalid(['Phone number id is not primary for update, please use id ' . $checkDataUser->phoneNumberId  . ' as phoneNumberId']);
-            }
-
-
-            if ($checkDataUser->messengerNumberId != $request->messengerNumberId) {
-                return responseInvalid(['Messenger id is not primary for update, please use id ' . $checkDataUser->messengerNumberId  . ' as messengerNumberId']);
-            }
-
-
-            if ($checkDataUser->emailId != $request->emailId) {
-                return responseInvalid(['Email id is not primary for update, please use id ' . $checkDataUser->detailAddressId  . ' as emailId']);
-            }
-
-
-
-            if ($checkDataUser->detailAddressId != $request->detailAddressId) {
-                return responseInvalid(['Detail address id is not primary for update, please use id ' . $checkDataUser->detailAddressId  . ' as detailAddressId']);
-            }
+            // if ($checkDataUser->detailAddressId != $request->detailAddressId) {
+            //     return responseInvalid(['Detail address id is not primary for update, please use id ' . $checkDataUser->detailAddressId  . ' as detailAddressId']);
+            // }
 
             User::where('id', '=', $request->id)
                 ->update([
@@ -244,41 +238,83 @@ class ProfileController extends Controller
                     'updated_at' => now(),
                 ]);
 
+            if ($request->phoneNumberId) {
+                UsersTelephones::where([
+                    ['usersId', '=', $request->id],
+                    ['id', '=', $request->phoneNumberId],
+                ])->update([
+                    'phoneNumber' => $request->phoneNumber,
+                    'updated_at' => now(),
+                ]);
+            } else {
+                UsersTelephones::create([
+                    'usersId' => $request->id,
+                    'phoneNumber' => $request->phoneNumber,
+                    'type' => 'Whatshapp',
+                    'usage' => 'Utama',
+                    'isDeleted' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
-            UsersTelephones::where([
-                ['usersId', '=', $request->id],
-                ['id', '=', $request->phoneNumberId],
-            ])->update([
-                'phoneNumber' => $request->phoneNumber,
-                'updated_at' => now(),
-            ]);
+            if ($request->messengerNumberId) {
+                UsersMessengers::where([
+                    ['usersId', '=', $request->id],
+                    ['id', '=', $request->messengerNumberId],
+                ])->update([
+                    'messengerNumber' => $request->messengerNumber,
+                    'updated_at' => now(),
+                ]);
+            } else {
+                UsersMessengers::create([
+                    'usersId' => $request->id,
+                    'messengerNumber' => $request->messengerNumber,
+                    'type' => 'Utama',
+                    'usage' => 'Utama',
+                    'isDeleted' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
+            if ($request->detailAddressId) {
+                UsersDetailAddresses::where([
+                    ['usersId', '=', $request->id],
+                    ['id', '=', $request->detailAddressId],
+                ])->update([
+                    'addressName' => $request->addressName,
+                    'updated_at' => now(),
+                ]);
+            } else {
+                UsersDetailAddresses::create([
+                    'usersId' => $request->id,
+                    'addressName' => $request->addressName,
+                    'isPrimary' => 1,
+                    'isDeleted' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
-            UsersMessengers::where([
-                ['usersId', '=', $request->id],
-                ['id', '=', $request->messengerNumberId],
-            ])->update([
-                'messengerNumber' => $request->messengerNumber,
-                'updated_at' => now(),
-            ]);
-
-
-            UsersDetailAddresses::where([
-                ['usersId', '=', $request->id],
-                ['id', '=', $request->detailAddressId],
-            ])->update([
-                'addressName' => $request->addressName,
-                'updated_at' => now(),
-            ]);
-
-            UsersEmails::where([
-                ['usersId', '=', $request->id],
-                ['id', '=', $request->emailId],
-            ])->update([
-                'email' => $request->email,
-                'updated_at' => now(),
-            ]);
-
+            if ($request->emailId) {
+                UsersEmails::where([
+                    ['usersId', '=', $request->id],
+                    ['id', '=', $request->emailId],
+                ])->update([
+                    'email' => $request->email,
+                    'updated_at' => now(),
+                ]);
+            } else {
+                UsersEmails::create([
+                    'usersId' => $request->id,
+                    'email' => $request->email,
+                    'usage' => 'Utama',
+                    'isDeleted' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             DB::commit();
 

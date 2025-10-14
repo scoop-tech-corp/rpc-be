@@ -275,8 +275,8 @@ class DiscountController extends Controller
             $validateLocation = Validator::make(
                 $ResultBasedSale,
                 [
-                    'minPurchase' => 'required|integer',
-                    'maxPurchase' => 'required|integer',
+                    'minPurchase' => 'required|numeric',
+                    'maxPurchase' => 'required|numeric',
                     'percentOrAmount' => 'required|string',
                     'amount' => 'nullable|numeric',
                     'percent' => 'nullable|numeric',
@@ -838,8 +838,8 @@ class DiscountController extends Controller
                     DB::raw("CASE WHEN pm.status = 1 then 'Active' ELSE 'Inactive' END as status"),
                     'u.firstName as createdBy',
                     DB::raw("DATE_FORMAT(pm.created_at, '%d/%m/%Y %H:%i:%s') as createdAt"),
-                    'pb.minPurchase',
-                    'pb.maxPurchase',
+                    DB::raw("TRIM(pb.minPurchase)+0 as minPurchase"),
+                    DB::raw("TRIM(pb.maxPurchase)+0 as maxPurchase"),
                     'pb.percentOrAmount',
                     'pb.totalMaxUsage',
                     'pb.maxUsagePerCustomer',
@@ -861,7 +861,7 @@ class DiscountController extends Controller
 
                 $temp_two = DB::table('promotionBasedSales as pb')
                     ->select(
-                        'pb.amount'
+                        DB::raw("TRIM(pb.amount)+0 as amount"),
                     )
                     ->where('pb.promoMasterId', '=', $request->id)
                     ->first();
@@ -1164,8 +1164,8 @@ class DiscountController extends Controller
             $validateLocation = Validator::make(
                 $ResultBasedSale,
                 [
-                    'minPurchase' => 'required|integer',
-                    'maxPurchase' => 'required|integer',
+                    'minPurchase' => 'required|numeric',
+                    'maxPurchase' => 'required|numeric',
                     'percentOrAmount' => 'required|string',
                     'amount' => 'nullable|numeric',
                     'percent' => 'nullable|numeric',
@@ -1799,12 +1799,13 @@ class DiscountController extends Controller
         }
 
         $findBasedSales = DB::table('promotionMasters as pm')
+            ->select('pm.id', 'bs.percentOrAmount', 'bs.percent', 'bs.minPurchase', 'bs.amount', 'pm.name')
             ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
             ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
             ->join('promotionBasedSales as bs', 'pm.id', 'bs.promoMasterId')
             ->where('pl.locationId', '=', $value['locationId'])
-            ->where('bs.minPurchase', '<', $totalTransaction)
-            ->where('bs.maxPurchase', '>', $totalTransaction)
+            ->where('bs.minPurchase', '<=', $totalTransaction)
+            ->where('bs.maxPurchase', '>=', $totalTransaction)
             ->where('pcg.customerGroupId', '=', $custGroup)
             ->where('pm.startDate', '<=', Carbon::now())
             ->where('pm.endDate', '>=', Carbon::now())
