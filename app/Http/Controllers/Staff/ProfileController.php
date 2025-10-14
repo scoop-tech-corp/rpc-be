@@ -119,7 +119,7 @@ class ProfileController extends Controller
                     'emailId' => 'required',
                     'email' => 'string|nullable',
                     // 'messengerNumberId' => 'required',
-                    'messengerNumber' => ['required', 'regex:/^\+?[0-9]{10,15}$/'],
+                    'messengerNumber' => 'required', //['required', 'regex:/^\+?[0-9]{10,15}$/'],
                     // 'detailAddressId' => 'required',
                     'addressName' => 'string|nullable',
                     'userName' => 'string|nullable',
