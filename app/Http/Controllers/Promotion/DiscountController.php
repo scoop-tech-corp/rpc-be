@@ -14,7 +14,6 @@ use App\Models\promotion_discount_product;
 use App\Models\promotion_discount_services;
 use App\Models\PromotionBasedSales;
 use App\Models\PromotionBundle;
-use App\Models\PromotionBundleDetail;
 use App\Models\PromotionCustomerGroup;
 use App\Models\PromotionDiscount;
 use App\Models\PromotionFreeItem;
