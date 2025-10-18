@@ -19,6 +19,7 @@ class TransactionPetClinicRecipes extends Model
         'dosage',
         'unit',
         'frequency',
+        'duration',
         'giveMedicine',
         'notes',
         'userId',

@@ -1383,6 +1383,7 @@ class TransPetClinicController extends Controller
                     'dosage' => $val['dosage'],
                     'unit' => $val['unit'],
                     'frequency' => $val['frequency'],
+                    'duration' => $val['duration'],
                     'giveMedicine' => $val['giveMedicine'],
                     'notes' => $val['notes'],
                     'userId' => $request->user()->id,
@@ -1447,6 +1448,7 @@ class TransPetClinicController extends Controller
                 'rc.dosage',
                 'rc.unit',
                 'rc.frequency',
+                'rc.duration',
                 'rc.giveMedicine',
                 'rc.notes',
                 'p.price as basedPrice'
