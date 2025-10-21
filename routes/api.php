@@ -630,7 +630,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/serviceandrecipe', [TransPetClinicController::class, 'serviceandrecipe']);
             Route::post('/checkpromo', [TransPetClinicController::class, 'checkPromo']);
             Route::get('/beforepayment', [TransPetClinicController::class, 'showDataBeforePayment']);
-            Route::get('/promo-result', [TransPetClinicController::class, 'promoResult']);
+            Route::post('/discount', [TransPetClinicController::class, 'transactionDiscount']);
             Route::get('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
         });
 
