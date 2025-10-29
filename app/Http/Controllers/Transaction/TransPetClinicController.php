@@ -1878,12 +1878,39 @@ class TransPetClinicController extends Controller
         return response()->json($result);
     }
 
+    protected function ensureIsArray($data): ?array
+    {
+        // Jika data sudah berupa array, kembalikan saja.
+        if (is_array($data)) {
+            return $data;
+        }
+
+        // Jika data berupa string (kemungkinan JSON), coba decode.
+        if (is_string($data)) {
+            $decoded = json_decode($data, true);
+
+            // Pastikan hasil decode adalah array yang valid
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        // Kembalikan null atau array kosong jika input tidak valid
+        return null;
+    }
+
     public function transactionDiscount(Request $request)
     {
-        $products = json_decode($request->products, true);
-        $freeItems = json_decode($request->freeItems, true);
-        $discounts = json_decode($request->discounts, true);
-        $bundles = json_decode($request->bundles, true);
+        $products = $this->ensureIsArray($request->products);
+
+        // Mengambil 'freeItems'
+        $freeItems = $this->ensureIsArray($request->freeItems);
+
+        // Mengambil 'discounts'
+        $discounts = $this->ensureIsArray($request->discounts);
+
+        // Mengambil 'bundles'
+        $bundles = $this->ensureIsArray($request->bundles);
 
         $results = [];
         $promoNotes = [];
@@ -2126,7 +2153,23 @@ class TransPetClinicController extends Controller
         ];
     }
 
+    //pembayara rawat inap
     public function paymentInpatient(Request $request) {}
+
+    //pembayaran rawat jalan
+    public function paymentOutpatient(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionPetClinicId' => 'required|integer',
+            'paymentMethod' => 'required|integer',
+            'paymentMethod' => 'required|string',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+    }
 
     public function createList(Request $request)
     {
