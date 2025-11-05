@@ -1494,9 +1494,9 @@ class TransPetClinicController extends Controller
             $custGroup = $cust->customerGroupId;
         }
 
-        $dataRecipes = json_decode($request->recipes, true);
-        $dataServices = json_decode($request->services, true);
-        $dataProducts = json_decode($request->products, true);
+        $dataRecipes = $this->ensureIsArray($request->recipes);
+        $dataServices = $this->ensureIsArray($request->services);
+        $dataProducts = $this->ensureIsArray($request->products);
 
         $tempFree = [];
         $tempDiscount = [];
