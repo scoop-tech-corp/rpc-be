@@ -1901,6 +1901,10 @@ class TransPetClinicController extends Controller
 
     public function transactionDiscount(Request $request)
     {
+        $services = $this->ensureIsArray($request->services);
+
+        $recipes = $this->ensureIsArray($request->recipes);
+
         $products = $this->ensureIsArray($request->products);
         // Mengambil 'freeItems'
         $freeItems = $this->ensureIsArray($request->freeItems);
@@ -1914,6 +1918,260 @@ class TransPetClinicController extends Controller
         $promoNotes = [];
         $subtotal = 0;
         $totalDiscount = 0;
+
+        foreach ($services as $value) {
+            $isGetPromo = false;
+
+            if ($request->has('discounts')) {
+                foreach ($discounts as $disc) {
+
+                    $data = DB::table('promotionMasters as pm')
+                        ->join('promotion_discount_services as pd', 'pm.id', 'pd.promoMasterId')
+                        ->join('services as s', 's.id', 'pd.serviceId')
+                        ->join('serviceCategory as sc', 'p.type', 'sc.id')
+                        ->select(
+                            's.fullName as item_name',
+                            's.type as category',
+                            DB::raw($value['quantity'] . ' as quantity'),
+                            DB::raw('0 as bonus'),
+                            DB::raw("CASE WHEN pd.discountType = 'percent' THEN pd.percent ELSE pd.amount END as discount"),
+                            DB::raw($value['eachPrice'] . ' as unit_price'),
+                            DB::raw($value['priceOverall'] . ' as total'),
+                            'pd.discountType',
+                            'pd.percent',
+                            'pd.amount'
+                        )
+                        ->where('pm.id', '=', $disc)
+                        ->first();
+
+                    if (!$data) continue;
+
+                    if ($data->discountType === 'percent') {
+                        $amount_discount = ($data->percent / 100) * $value['eachPrice'];
+                        $discountNote = 'Diskon produk ' . $data->item_name . ' sebesar ' . $data->percent . '% (hemat Rp' . number_format($amount_discount, 0, ',', '.') . ')';
+                        $saved = $amount_discount;
+                    } else {
+                        $discountNote = 'Diskon produk ' . $data->item_name . ' sebesar Rp' . number_format($data->amount, 0, ',', '.');
+                        $saved = $data->amount;
+                    }
+
+                    $results[] = [
+                        'item_name' => $data->item_name,
+                        'category' => $data->category,
+                        'quantity' => $data->quantity,
+                        'bonus' => $data->bonus,
+                        'discount' => $data->discount,
+                        'total' => $value['priceOverall'] - $saved,
+                    ];
+
+                    $subtotal += ($value['priceOverall'] - $saved);
+                    $totalDiscount += $saved;
+                    $promoNotes[] = $discountNote;
+                }
+            }
+
+            if ($request->has('bundles')) {
+                foreach ($bundles as $bundle) {
+
+                    $bundleData = DB::table('promotionMasters as pm')
+                        ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                        ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                        ->join('promotion_bundle_detail_services as pbd', 'pm.id', 'pb.promoBundleId')
+                        ->select(
+                            'pm.name as item_name',
+                            DB::raw('"" as category'),
+                            DB::raw('1 as quantity'),
+                            DB::raw('0 as bonus'),
+                            DB::raw('0 as discount'),
+                            'pb.price as total',
+                            'pb.id as promoBundleId',
+                        )
+                        ->where('pm.id', '=', $bundle)
+                        ->where('pl.locationId', '=', $value['locationId'])
+                        ->first();
+
+                    if (!$bundleData) continue;
+
+                    $includedItems = DB::table('promotion_bundle_detail_services as pbd')
+                        ->join('services as s', 's.id', '=', 'pbd.serviceId')
+                        ->join('servicesPrice as sp', 'sp.serviceId', '=', 's.id')
+                        ->where('pbd.promoBundleId', '=', $bundleData->promoBundleId)
+                        ->where('sp.location_id', '=', $value['locationId'])
+                        ->select('s.fullName as name', 'sp.price as normal_price')
+                        ->get()
+                        ->toArray();
+
+                    // Hitung nilai normal total
+                    $normalTotal = array_sum(array_column($includedItems, 'normal_price'));
+                    $bundleNote = $bundleData->item_name . " only Rp" . number_format($bundleData->total, 0, ',', '.') .
+                        " (save Rp" . number_format($normalTotal - $bundleData->total, 0, ',', '.') . ")";
+                }
+            }
+
+            if (!$isGetPromo) {
+                $res = DB::table('services as p')
+                    ->join('serviceCategory as sc', 'p.type', 'sc.id')
+                    ->select(
+                        'p.fullName as item_name',
+                        'sc.type as category',
+                        DB::raw($value['quantity'] . ' as quantity'),
+                        DB::raw('0 as bonus'),
+                        DB::raw('0 as discount'),
+                        DB::raw($value['eachPrice'] . ' as unit_price'),
+                        DB::raw($value['priceOverall'] . ' as total'),
+                        DB::raw("'' as note")
+                    )
+                    ->where('s.id', '=', $value['serviceId'])
+                    ->get();
+
+                foreach ($res as $item) {
+                    $results[] = (array)$item;
+                    $subtotal += $item->total;
+                }
+            }
+        }
+
+        foreach ($recipes as $value) {
+            $isGetPromo = false;
+
+            if ($request->has('freeItems')) {
+                foreach ($freeItems as $free) {
+
+                    $res = DB::table('promotionMasters as pm')
+                        ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
+                        ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
+                        ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
+                        ->select(
+                            'pbuy.fullName as item_name',
+                            'pbuy.id as buy_product_id',
+                            'pfree.id as free_product_id',
+                            'pbuy.category',
+                            'fi.quantityBuyItem as quantity',
+                            'fi.quantityFreeItem as bonus',
+                            DB::raw('0 as discount'),
+                            DB::raw($value['eachPrice'] . ' as unit_price'),
+                            DB::raw($value['priceOverall'] . ' as total'),
+                            DB::raw("CONCAT('Buy ', fi.quantityBuyItem, ' Get ', fi.quantityFreeItem, ' Free for ', pbuy.fullName) as note")
+                        )
+                        ->where('pm.id', '=', $free)
+                        ->where('pbuy.id', '=', $value['productId'])
+                        ->get();
+
+                    if (count($res) > 0) {
+                        $isGetPromo = true;
+                    }
+
+                    foreach ($res as $item) {
+                        $results[] = (array)$item;
+                        $subtotal += $item->total;
+                        $promoNotes[] = $item->note;
+                    }
+                }
+            }
+
+            if ($request->has('bundles')) {
+                foreach ($bundles as $bundle) {
+
+                    $bundleData = DB::table('promotionMasters as pm')
+                        ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                        ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                        ->select(
+                            'pm.name as item_name',
+                            DB::raw('"" as category'),
+                            DB::raw('1 as quantity'),
+                            DB::raw('0 as bonus'),
+                            DB::raw('0 as discount'),
+                            'pb.price as total',
+                            'pb.id as promoBundleId',
+                        )
+                        ->where('pm.id', '=', $bundle)
+                        ->where('pl.locationId', '=', $value['locationId'])
+                        ->first();
+
+                    if (!$bundleData) continue;
+
+                    $includedItems = DB::table('promotion_bundle_detail_products as pbd')
+                        ->join('products as p', 'p.id', '=', 'pbd.productId')
+                        ->where('pbd.promoBundleId', '=', $bundleData->promoBundleId)
+                        ->select('p.fullName as name', 'p.price as normal_price')
+                        ->get()
+                        ->toArray();
+
+                    // Hitung nilai normal total
+                    $normalTotal = array_sum(array_column($includedItems, 'normal_price'));
+                    $bundleNote = $bundleData->item_name . " only Rp" . number_format($bundleData->total, 0, ',', '.') .
+                        " (save Rp" . number_format($normalTotal - $bundleData->total, 0, ',', '.') . ")";
+                }
+            }
+
+            if ($request->has('discounts')) {
+                foreach ($discounts as $disc) {
+
+                    $data = DB::table('promotionMasters as pm')
+                        ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
+                        ->join('products as p', 'p.id', 'pd.productId')
+                        ->select(
+                            'p.fullName as item_name',
+                            'p.category',
+                            DB::raw($value['quantity'] . ' as quantity'),
+                            DB::raw('0 as bonus'),
+                            DB::raw("CASE WHEN pd.discountType = 'percent' THEN pd.percent ELSE pd.amount END as discount"),
+                            DB::raw($value['eachPrice'] . ' as unit_price'),
+                            DB::raw($value['priceOverall'] . ' as total'),
+                            'pd.discountType',
+                            'pd.percent',
+                            'pd.amount'
+                        )
+                        ->where('pm.id', '=', $disc)
+                        ->first();
+
+                    if (!$data) continue;
+
+                    if ($data->discountType === 'percent') {
+                        $amount_discount = ($data->percent / 100) * $value['eachPrice'];
+                        $discountNote = 'Diskon produk ' . $data->item_name . ' sebesar ' . $data->percent . '% (hemat Rp' . number_format($amount_discount, 0, ',', '.') . ')';
+                        $saved = $amount_discount;
+                    } else {
+                        $discountNote = 'Diskon produk ' . $data->item_name . ' sebesar Rp' . number_format($data->amount, 0, ',', '.');
+                        $saved = $data->amount;
+                    }
+
+                    $results[] = [
+                        'item_name' => $data->item_name,
+                        'category' => $data->category,
+                        'quantity' => $data->quantity,
+                        'bonus' => $data->bonus,
+                        'discount' => $data->discount,
+                        'total' => $value['priceOverall'] - $saved,
+                    ];
+
+                    $subtotal += ($value['priceOverall'] - $saved);
+                    $totalDiscount += $saved;
+                    $promoNotes[] = $discountNote;
+                }
+            }
+
+            if (!$isGetPromo) {
+                $res = DB::table('products as p')
+                    ->select(
+                        'p.fullName as item_name',
+                        'p.category',
+                        DB::raw($value['quantity'] . ' as quantity'),
+                        DB::raw('0 as bonus'),
+                        DB::raw('0 as discount'),
+                        DB::raw($value['eachPrice'] . ' as unit_price'),
+                        DB::raw($value['priceOverall'] . ' as total'),
+                        DB::raw("'' as note")
+                    )
+                    ->where('p.id', '=', $value['productId'])
+                    ->get();
+
+                foreach ($res as $item) {
+                    $results[] = (array)$item;
+                    $subtotal += $item->total;
+                }
+            }
+        }
 
         foreach ($products as $value) {
             $isGetPromo = false;
@@ -2142,9 +2400,7 @@ class TransPetClinicController extends Controller
                 $totalDiscount = $res->totaldiscount;
             }
         } else {
-            // $totalPayment = $subtotal;
             $discountNote = '';
-            // $totalDiscount = 0;
         }
 
         return [
