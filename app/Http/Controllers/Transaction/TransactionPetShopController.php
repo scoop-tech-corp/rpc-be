@@ -1397,7 +1397,7 @@ class TransactionPetShopController
 
                 if (!$bundleData) continue;
 
-                $includedItems = DB::table('promotionBundleDetails as pbd')
+                $includedItems = DB::table('promotion_bundle_detail_products as pbd')
                     ->join('products as p', 'p.id', '=', 'pbd.productId')
                     ->where('pbd.promoBundleId', '=', $bundleData->promoBundleId)
                     ->select('p.fullName as name', 'p.price as normal_price')
