@@ -2021,7 +2021,7 @@ class TransPetClinicController extends Controller
                         DB::raw($value['priceOverall'] . ' as total'),
                         DB::raw("'' as note")
                     )
-                    ->where('s.id', '=', $value['serviceId'])
+                    ->where('p.id', '=', $value['serviceId'])
                     ->get();
 
                 foreach ($res as $item) {
