@@ -2156,7 +2156,7 @@ class TransPetClinicController extends Controller
                     ->select(
                         'p.fullName as item_name',
                         'p.category',
-                        DB::raw($value['quantity'] . ' as quantity'),
+                        DB::raw($value['dosage'] * $value['frequency'] * $value['duration'] . ' as quantity'),
                         DB::raw('0 as bonus'),
                         DB::raw('0 as discount'),
                         DB::raw($value['eachPrice'] . ' as unit_price'),
