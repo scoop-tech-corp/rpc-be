@@ -2013,7 +2013,7 @@ class TransPetClinicController extends Controller
                     ->join('serviceCategory as sc', 'p.type', 'sc.id')
                     ->select(
                         'p.fullName as item_name',
-                        'sc.type as category',
+                        'sc.categoryName as category',
                         DB::raw($value['quantity'] . ' as quantity'),
                         DB::raw('0 as bonus'),
                         DB::raw('0 as discount'),
