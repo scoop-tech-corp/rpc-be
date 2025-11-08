@@ -1432,8 +1432,8 @@ class TransPetClinicController extends Controller
             ->select(
                 's.id as serviceId',
                 's.fullName as serviceName',
-                'tpcs.quantity',
-                'sp.price as basedPrice'
+                DB::raw("TRIM(tpcs.quantity)+0 as quantity"),
+                DB::raw("TRIM(sp.price)+0 as basedPrice"),
             )
             ->where('tpcs.transactionPetClinicId', '=', $request->transactionPetClinicId)
             ->where('sp.location_id', '=', $trans->locationId)
@@ -1445,10 +1445,10 @@ class TransPetClinicController extends Controller
             ->select(
                 'p.id as productId',
                 'p.fullName as productName',
-                'rc.dosage',
-                'rc.unit',
-                'rc.frequency',
-                'rc.duration',
+                DB::raw("TRIM(rc.dosage) AS dosage"),
+                DB::raw("TRIM(rc.unit) AS unit"),
+                DB::raw("TRIM(rc.frequency) AS frequency"),
+                DB::raw("TRIM(rc.duration) AS duration"),
                 'rc.giveMedicine',
                 'rc.notes',
                 'p.price as basedPrice'
