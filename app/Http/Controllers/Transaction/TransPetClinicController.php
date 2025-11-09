@@ -1930,7 +1930,7 @@ class TransPetClinicController extends Controller
                         ->join('services as s', 's.id', 'pd.serviceId')
                         ->join('serviceCategory as sc', 's.type', 'sc.id')
                         ->select(
-                            'pm.id',
+                            'pm.id as promoId',
                             's.fullName as item_name',
                             's.type as category',
                             DB::raw($value['quantity'] . ' as quantity'),
@@ -1963,7 +1963,7 @@ class TransPetClinicController extends Controller
                         'bonus' => $data->bonus,
                         'discount' => $data->discount,
                         'total' => $value['priceOverall'] - $saved,
-                        'promoId' => $data->id,
+                        'promoId' => $data->promoId,
                     ];
 
                     $subtotal += ($value['priceOverall'] - $saved);
@@ -1980,7 +1980,7 @@ class TransPetClinicController extends Controller
                         ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
                         ->join('promotion_bundle_detail_services as pbd', 'pm.id', 'pb.promoBundleId')
                         ->select(
-                            'pm.id',
+                            'pm.id as promoId',
                             'pm.name as item_name',
                             DB::raw('"" as category'),
                             DB::raw('1 as quantity'),
@@ -2046,7 +2046,7 @@ class TransPetClinicController extends Controller
                         ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
                         ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
                         ->select(
-                            'pm.id',
+                            'pm.id as promoId',
                             'pbuy.fullName as item_name',
                             'pbuy.id as buy_product_id',
                             'pfree.id as free_product_id',
@@ -2081,7 +2081,7 @@ class TransPetClinicController extends Controller
                         ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
                         ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
                         ->select(
-                            'pm.id',
+                            'pm.id as promoId',
                             'pm.name as item_name',
                             DB::raw('"" as category'),
                             DB::raw('1 as quantity'),
@@ -2117,7 +2117,7 @@ class TransPetClinicController extends Controller
                         ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
                         ->join('products as p', 'p.id', 'pd.productId')
                         ->select(
-                            'pm.id',
+                            'pm.id as promoId',
                             'p.fullName as item_name',
                             'p.category',
                             DB::raw($value['quantity'] . ' as quantity'),
@@ -2150,7 +2150,7 @@ class TransPetClinicController extends Controller
                         'bonus' => $data->bonus,
                         'discount' => $data->discount,
                         'total' => $value['priceOverall'] - $saved,
-                        'promoId' => $data->id,
+                        'promoId' => $data->promoId,
                     ];
 
                     $subtotal += ($value['priceOverall'] - $saved);
@@ -2194,7 +2194,7 @@ class TransPetClinicController extends Controller
                         ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
                         ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
                         ->select(
-                            'pm.id',
+                            'pm.id as promoId',
                             'pbuy.fullName as item_name',
                             'pbuy.id as buy_product_id',
                             'pfree.id as free_product_id',
@@ -2229,7 +2229,7 @@ class TransPetClinicController extends Controller
                         ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
                         ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
                         ->select(
-                            'pm.id',
+                            'pm.id as promoId',
                             'pm.name as item_name',
                             DB::raw('"" as category'),
                             DB::raw('1 as quantity'),
@@ -2266,7 +2266,7 @@ class TransPetClinicController extends Controller
                         'discount' => $bundleData->discount,
                         'total' => $bundleData->total,
                         'included_items' => $includedItems,
-                        'promoId' => $bundleData->id,
+                        'promoId' => $bundleData->promoId,
                     ];
 
                     $subtotal += $bundleData->total;
@@ -2283,7 +2283,7 @@ class TransPetClinicController extends Controller
                         ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
                         ->join('products as p', 'p.id', 'pd.productId')
                         ->select(
-                            'pm.id',
+                            'pm.id as promoId',
                             'p.fullName as item_name',
                             'p.category',
                             DB::raw($value['quantity'] . ' as quantity'),
@@ -2324,7 +2324,7 @@ class TransPetClinicController extends Controller
                                 'discount' => $data->discount,
                                 'total' => $data->total,
                                 'note' => $discountNote,
-                                'promoId' => $data->id,
+                                'promoId' => $data->promoId,
                             ];
 
                             $subtotal += $data->total;
@@ -2342,7 +2342,7 @@ class TransPetClinicController extends Controller
                             'discount' => $data->discount,
                             'total' => $data->total,
                             'note' => $discountNote,
-                            'promoId' => $data->id,
+                            'promoId' => $data->promoId,
                         ];
 
                         $subtotal += $data->total;
