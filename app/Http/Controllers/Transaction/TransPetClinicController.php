@@ -2036,7 +2036,7 @@ class TransPetClinicController extends Controller
                     ->join('serviceCategory as sc', 'p.type', 'sc.id')
                     ->select(
                         DB::raw('NULL as promoId'),
-                        'p.serviceId as serviceId',
+                        'p.id as serviceId',
                         'p.fullName as item_name',
                         'sc.categoryName as category',
                         DB::raw($value['quantity'] . ' as quantity'),
