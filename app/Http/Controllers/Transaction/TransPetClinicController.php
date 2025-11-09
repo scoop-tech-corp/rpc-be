@@ -2022,6 +2022,7 @@ class TransPetClinicController extends Controller
                         'total' => $bundleData->total,
                         'included_items' => $includedItems,
                         'promoId' => $bundleData->promoId,
+                        'promoCategory' => 'bundle',
                     ];
 
                     $subtotal += $bundleData->total;
@@ -2078,7 +2079,7 @@ class TransPetClinicController extends Controller
                             DB::raw($value['eachPrice'] . ' as unit_price'),
                             DB::raw($value['priceOverall'] . ' as total'),
                             DB::raw("CONCAT('Buy ', fi.quantityBuyItem, ' Get ', fi.quantityFreeItem, ' Free for ', pbuy.fullName) as note"),
-                            DB::raw('freeItem as discountType'),
+                            DB::raw("'freeItem' as promoCategory"),
                         )
                         ->where('pm.id', '=', $free)
                         ->where('pbuy.id', '=', $value['productId'])
@@ -2140,6 +2141,7 @@ class TransPetClinicController extends Controller
                         'total' => $bundleData->total,
                         'included_items' => $includedItems,
                         'promoId' => $bundleData->promoId,
+                        'promoCategory' => 'bundle',
                     ];
 
                     $subtotal += $bundleData->total;
@@ -2192,6 +2194,7 @@ class TransPetClinicController extends Controller
                         'total' => $value['priceOverall'] - $saved,
                         'promoId' => $data->promoId,
                         'productId' => $data->productId,
+                        'promoCategory' => 'discount',
                     ];
 
                     $subtotal += ($value['priceOverall'] - $saved);
@@ -2246,7 +2249,8 @@ class TransPetClinicController extends Controller
                             DB::raw('0 as discount'),
                             DB::raw($value['eachPrice'] . ' as unit_price'),
                             DB::raw($value['priceOverall'] . ' as total'),
-                            DB::raw("CONCAT('Buy ', fi.quantityBuyItem, ' Get ', fi.quantityFreeItem, ' Free for ', pbuy.fullName) as note")
+                            DB::raw("CONCAT('Buy ', fi.quantityBuyItem, ' Get ', fi.quantityFreeItem, ' Free for ', pbuy.fullName) as note"),
+                            DB::raw("'freeItem' as promoCategory"),
                         )
                         ->where('pm.id', '=', $free)
                         ->where('pbuy.id', '=', $value['productId'])
@@ -2309,6 +2313,7 @@ class TransPetClinicController extends Controller
                         'total' => $bundleData->total,
                         'included_items' => $includedItems,
                         'promoId' => $bundleData->promoId,
+                        'promoCategory' => 'bundle',
                     ];
 
                     $subtotal += $bundleData->total;
