@@ -1928,7 +1928,7 @@ class TransPetClinicController extends Controller
                     $data = DB::table('promotionMasters as pm')
                         ->join('promotion_discount_services as pd', 'pm.id', 'pd.promoMasterId')
                         ->join('services as s', 's.id', 'pd.serviceId')
-                        ->join('serviceCategory as sc', 'p.type', 'sc.id')
+                        ->join('serviceCategory as sc', 's.type', 'sc.id')
                         ->select(
                             's.fullName as item_name',
                             's.type as category',
