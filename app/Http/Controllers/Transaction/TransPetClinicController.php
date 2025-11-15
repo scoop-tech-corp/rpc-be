@@ -1983,7 +1983,7 @@ class TransPetClinicController extends Controller
                     $bundleData = DB::table('promotionMasters as pm')
                         ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
                         ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
-                        ->join('promotion_bundle_detail_services as pbd', 'pm.id', 'pb.promoBundleId')
+                        ->join('promotion_bundle_detail_services as pbd', 'pm.id', 'pbd.promoBundleId')
                         ->select(
                             'pm.id as promoId',
                             'pm.name as item_name',
