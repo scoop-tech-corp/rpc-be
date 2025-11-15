@@ -1919,6 +1919,7 @@ class TransPetClinicController extends Controller
         $subtotal = 0;
         $totalDiscount = 0;
 
+        $trans = TransactionPetClinic::find($request->transactionPetClinicId);
         foreach ($services as $value) {
             $isGetPromo = false;
 
@@ -1993,7 +1994,6 @@ class TransPetClinicController extends Controller
                             'pb.id as promoBundleId',
                         )
                         ->where('pm.id', '=', $bundle)
-                        ->where('pl.locationId', '=', $value['locationId'])
                         ->first();
 
                     if (!$bundleData) continue;
@@ -2002,7 +2002,6 @@ class TransPetClinicController extends Controller
                         ->join('services as s', 's.id', '=', 'pbd.serviceId')
                         ->join('servicesPrice as sp', 'sp.serviceId', '=', 's.id')
                         ->where('pbd.promoBundleId', '=', $bundleData->promoBundleId)
-                        ->where('sp.location_id', '=', $value['locationId'])
                         ->select('s.id as serviceId', 's.fullName as name', 'sp.price as normal_price')
                         ->get()
                         ->toArray();
@@ -2114,7 +2113,6 @@ class TransPetClinicController extends Controller
                             'pb.id as promoBundleId',
                         )
                         ->where('pm.id', '=', $bundle)
-                        ->where('pl.locationId', '=', $value['locationId'])
                         ->first();
 
                     if (!$bundleData) continue;
@@ -2285,7 +2283,6 @@ class TransPetClinicController extends Controller
                             'pb.id as promoBundleId',
                         )
                         ->where('pm.id', '=', $bundle)
-                        ->where('pl.locationId', '=', $value['locationId'])
                         ->first();
 
                     if (!$bundleData) continue;
