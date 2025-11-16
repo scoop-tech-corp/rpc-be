@@ -2016,7 +2016,6 @@ class TransPetClinicController extends Controller
 
                     $results[] = [
                         'item_name' => $bundleData->item_name,
-                        'free_service_id' => $services->free_service_id,
                         'category' => $bundleData->category,
                         'quantity' => $bundleData->quantity,
                         'bonus' => $bundleData->bonus,
@@ -2135,7 +2134,6 @@ class TransPetClinicController extends Controller
 
                     $results[] = [
                         'item_name' => $bundleData->item_name,
-                        'free_product_id' => $item->free_product_id,
                         'category' => $bundleData->category,
                         'quantity' => $bundleData->quantity,
                         'bonus' => $bundleData->bonus,
@@ -2164,7 +2162,7 @@ class TransPetClinicController extends Controller
                             'p.id as productId',
                             'p.fullName as item_name',
                             'p.category',
-                            DB::raw($value['quantity'] . ' as quantity'),
+                            DB::raw($value['dosage'] * $value['frequenct'] * $value['duration'] . ' as quantity'),
                             DB::raw('0 as bonus'),
                             DB::raw("CASE WHEN pd.discountType = 'percent' THEN pd.percent ELSE pd.amount END as discount"),
                             DB::raw($value['eachPrice'] . ' as unit_price'),
