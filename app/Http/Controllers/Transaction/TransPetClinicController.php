@@ -2162,7 +2162,7 @@ class TransPetClinicController extends Controller
                             'p.id as productId',
                             'p.fullName as item_name',
                             'p.category',
-                            DB::raw($value['dosage'] * $value['frequenct'] * $value['duration'] . ' as quantity'),
+                            DB::raw($value['dosage'] * $value['frequency'] * $value['duration'] . ' as quantity'),
                             DB::raw('0 as bonus'),
                             DB::raw("CASE WHEN pd.discountType = 'percent' THEN pd.percent ELSE pd.amount END as discount"),
                             DB::raw($value['eachPrice'] . ' as unit_price'),
