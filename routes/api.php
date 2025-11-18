@@ -631,7 +631,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/checkpromo', [TransPetClinicController::class, 'checkPromo']);
             Route::get('/beforepayment', [TransPetClinicController::class, 'showDataBeforePayment']);
             Route::post('/discount', [TransPetClinicController::class, 'transactionDiscount']);
-            Route::get('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
+
+            //pembayaran rawat inap
+            Route::post('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
+
+            //pembayaran rawat jalan
+            Route::post('/payment/outpatient', [TransPetClinicController::class, 'paymentOutpatient']);
         });
 
         Route::group(['prefix' => 'petshop'], function () {
