@@ -2438,6 +2438,7 @@ class TransPetClinicController extends Controller
             }
         }
 
+        $discount_based_sales = 0;
         //perhitungan based sales
         $res = DB::table('promotionMasters as pm')
             ->join('promotionBasedSales as pb', 'pm.id', 'pb.promoMasterId')
@@ -2467,13 +2468,14 @@ class TransPetClinicController extends Controller
         if ($res) {
 
             if ($res->discountType == 'amount') {
-                $totalPayment = $subtotal - $res->totaldiscount;
+                $discount_based_sales = $res->totaldiscount;
+                // $totalPayment = $subtotal - $res->totaldiscount;
                 $promoNotes[] = 'Diskon Rp ' . $res->totaldiscount . ' untuk pembelian lebih dari Rp ' . $res->minPurchase;
                 $discountNote = 'Diskon Nominal (Belanja > Rp ' . $res->minPurchase . ')';
                 $totalDiscount = $res->totaldiscount;
             } else if ($res->discountType == 'percent') {
-
-                $totalPayment = $subtotal - ($subtotal * ($res->totaldiscount / 100));
+                $discount_based_sales = $subtotal * ($res->totaldiscount / 100);
+                // $totalPayment = $subtotal - ($subtotal * ($res->totaldiscount / 100));
                 $promoNotes[] = 'Diskon ' . $res->totaldiscount . '% untuk pembelian lebih dari Rp ' . $res->minPurchase;
                 $discountNote = 'Diskon ' . $res->totaldiscount . ' % (Belanja > Rp ' . $res->minPurchase . ')';
                 $totalDiscount = $res->totaldiscount;
@@ -2486,6 +2488,7 @@ class TransPetClinicController extends Controller
             'purchases' => $results,
             'subtotal' => $subtotal,
             'discount_note' => $discountNote,
+            'discount_based_sales' => $discount_based_sales,
             'total_discount' => floatval($totalDiscount),
             'total_payment' => $subtotal - $totalDiscount,
             'promo_notes' => $promoNotes,
