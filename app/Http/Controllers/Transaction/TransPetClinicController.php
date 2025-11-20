@@ -1850,6 +1850,7 @@ class TransPetClinicController extends Controller
             ->leftjoin('promotionCustomerGroups as pcg', 'pm.id', 'pcg.promoMasterId')
             ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
             ->join('promotionBasedSales as bs', 'pm.id', 'bs.promoMasterId')
+            ->select('pm.id', 'pm.name', 'bs.percentOrAmount', 'bs.percent', 'bs.amount', 'bs.minPurchase', 'bs.maxPurchase')
             ->where('pl.locationId', '=', $trans->locationId)
             ->where('bs.minPurchase', '<=', $totalTransaction)
             ->where('bs.maxPurchase', '>=', $totalTransaction)
