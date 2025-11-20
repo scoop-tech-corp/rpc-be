@@ -2488,7 +2488,7 @@ class TransPetClinicController extends Controller
             'purchases' => $results,
             'subtotal' => $subtotal,
             'discount_note' => $discountNote,
-            'discount_based_sales' => $discount_based_sales,
+            'discount_based_sales' => floatval($discount_based_sales),
             'total_discount' => floatval($totalDiscount),
             'total_payment' => $subtotal - $totalDiscount,
             'promo_notes' => $promoNotes,
