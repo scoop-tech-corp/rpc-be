@@ -1711,7 +1711,9 @@ class TransactionPetShopController
             ], 400);
         }
 
-        if ($transaction->paymentMethod == 1) {
+        $payment = DB::table('paymentmethod')->where('id', $transaction->paymentMethod)->first();
+
+        if ($payment->name == 'Cash' || $payment->name == 'cash') {
             return response()->json([
                 'status' => 'warning',
                 'message' => 'Metode pembayaran Cash tidak perlu konfirmasi atau bukti pembayaran.'
