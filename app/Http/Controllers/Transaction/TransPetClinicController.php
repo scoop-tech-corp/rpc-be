@@ -33,6 +33,7 @@ use App\Models\TransactionPetClinicRecipes;
 use App\Models\TransactionPetClinicServices;
 use App\Models\TransactionPetClinicTreatment;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Validator;
@@ -2088,7 +2089,7 @@ class TransPetClinicController extends Controller
                             DB::raw('0 as discount'),
                             DB::raw($value['eachPrice'] . ' as unit_price'),
                             DB::raw($value['priceOverall'] . ' as total'),
-                            DB::raw("CONCAT('Buy ', fi.quantityBuyItem, ' Get ', fi.quantityFreeItem, ' Free for ', pbuy.fullName) as note"),
+                            DB::raw("CONCAT('Beli ', fi.quantityBuyItem, ' ', pbuy.fullname, ' Gratis ', fi.quantityFreeItem, pfree.fullName) as note"),
                             DB::raw("'freeItem' as promoCategory"),
                         )
                         ->where('pm.id', '=', $free)
@@ -2258,7 +2259,7 @@ class TransPetClinicController extends Controller
                             DB::raw('0 as discount'),
                             DB::raw($value['eachPrice'] . ' as unit_price'),
                             DB::raw($value['priceOverall'] . ' as total'),
-                            DB::raw("CONCAT('Buy ', fi.quantityBuyItem, ' Get ', fi.quantityFreeItem, ' Free for ', pbuy.fullName) as note"),
+                            DB::raw("CONCAT('Beli ', fi.quantityBuyItem, ' ', pbuy.fullname, ' Gratis ', fi.quantityFreeItem, pfree.fullName) as note"),
                             DB::raw("'freeItem' as promoCategory"),
                         )
                         ->where('pm.id', '=', $free)
@@ -2735,6 +2736,23 @@ class TransPetClinicController extends Controller
             $total->userId = $request->user()->id;
             $total->save();
 
+            $locationId = $request->locationId;
+            $now = Carbon::now();
+            $tahun = $now->format('Y');
+            $bulan = $now->format('m');
+
+            $jumlahTransaksi = DB::table('transactionPetClinics')
+                ->where('locationId', $locationId)
+                ->whereYear('created_at', $tahun)
+                ->whereMonth('created_at', $bulan)
+                ->count();
+
+            $nomorUrut = str_pad($jumlahTransaksi + 1, 4, '0', STR_PAD_LEFT);
+
+            $notaNumber = "INV/PC/{$locationId}/{$tahun}/{$bulan}/{$nomorUrut}";
+            $trans->nota_number = $notaNumber;
+            $trans->update();
+
             DB::commit();
 
             return responseCreate();
@@ -2807,6 +2825,71 @@ class TransPetClinicController extends Controller
         }
 
         return responseCreate();
+    }
+
+    public function printInvoceOutpatient(Request $request)
+    {
+        $trans = TransactionPetClinic::find($request->transactionPetClinicId);
+
+        if (!$trans) {
+            return responseInvalid(['Transaction not found!']);
+        }
+
+        $locations = DB::table('location')
+            ->leftJoin('location_telephone', 'location.codeLocation', '=', 'location_telephone.codeLocation')
+            ->where(function ($query) {
+                $query->where('location_telephone.usage', 'Utama')
+                    ->orWhereNull('location_telephone.usage');
+            })
+            ->select(
+                'location.locationName',
+                'location.description',
+                'location_telephone.phoneNumber',
+                'location.codeLocation'
+            )
+            ->distinct()
+            ->get();
+
+        $locationGroups = [];
+        foreach ($locations as $location) {
+            $key = $location->codeLocation;
+            if (!isset($locationGroups[$key])) {
+                $locationGroups[$key] = [
+                    'name'        => $location->locationName,
+                    'description' => $location->description,
+                    'phone'       => $location->phoneNumber ?? ''
+                ];
+            }
+        }
+        $formattedLocations = array_values($locationGroups);
+
+        $customer = DB::table('customer as c')
+            ->join('customerTelephones as ct', 'c.id', '=', 'ct.customerId')
+            ->where('c.id', '=', $trans->customerId)
+            ->select('c.firstName', 'ct.phoneNumber', 'c.memberNo')
+            ->first();
+
+        $details = $request->purchases;
+        $namaFile = str_replace('/', '_', $trans->nota_number ?? 'INV') . '.pdf';
+
+        $data = [
+            'locations'      => $formattedLocations,
+            'nota_date'      => Carbon::parse($trans->created_at)->format('d/m/Y'),
+            'no_nota'        => $trans->nota_number ?? '___________',
+            'member_no'      => $customer->memberNo ?? '-',
+            'customer_name'  => $customer->firstName ?? '-',
+            'phone_number'   => $customer->phoneNumber ?? '-',
+            'arrival_time'   => Carbon::parse($trans->created_at)->format('H:i'),
+            'details'        => $details,
+            'total'          => $request->detail_total,
+            'deposit'        => '-',
+            'total_tagihan'  => $request->detail_total['total_payment'],
+        ];
+
+        $pdf = Pdf::loadView('invoice.invoice_petclinic_outpatient', $data);
+        return $pdf->download($namaFile);
+
+        return view('transaction.petclinic.print_invoice_outpatient');
     }
 
     public function listDataWeight()
