@@ -637,6 +637,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
             //pembayaran rawat jalan
             Route::post('/payment/outpatient', [TransPetClinicController::class, 'paymentOutpatient']);
+            Route::post('/invoice/outpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
         });
 
         Route::group(['prefix' => 'petshop'], function () {

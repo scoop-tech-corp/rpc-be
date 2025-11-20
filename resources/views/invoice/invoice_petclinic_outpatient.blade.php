@@ -186,8 +186,12 @@
         }
 
         .services-table .service-name {
-            text-align: left;
+            text-align: center;
             width: 30%;
+        }
+
+        .services-table .item-name{
+            text-align: left;
         }
 
         .services-table .animal-type {
@@ -334,7 +338,7 @@
 
             <!-- Kolom tengah: Judul -->
             <td style="font-weight: bold; font-size: 14px; text-align: center; width: 40%;">
-                NOTA PET SHOP
+                NOTA PET CLINIC
             </td>
 
             <!-- Kolom kanan: No Nota -->
@@ -369,33 +373,96 @@
     <table class="services-table">
         <thead>
             <tr>
-                <th class="service-name">NAMA BARANG</th>
-                <th class="promo">PROMO</th>
-                <th class="quantity">JUMLAH</th>
+                <th class="service-name">ITEM</th>
+                <th class="promo">JUMLAH</th>
+                <th class="quantity">BONUS</th>
+                <th class="quantity">DISKON</th>
                 <th class="price">HARGA</th>
                 <th class="total">TOTAL</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($details as $item)
-            <tr>
-                <td>{{ $item->product_name ?? '-' }}</td>
-                <td>{{ $item->promo_name ?? '-' }}</td>
-                <td>{{ $item->quantity }}</td>
-                <td>{{ number_format($item->price, 0, ',', '.') }}</td>
-                <td>{{ number_format($item->final_price, 0, ',', '.') }}</td>
-            </tr>
+
+                @if ($item['promoId'] === null)
+
+                    @isset($item['serviceId'])
+                    <tr>
+                        <td class="item-name">{{ $item['serviceName'] }}</td>
+                        <td>{{ $item['quantity'] }}</td>
+                        <td>{{ 0 }}</td>
+                        <td>{{ 0 }}</td>
+                        <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
+                        <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
+                    </tr>
+
+                    @elseif(isset($item['productId']))
+                    <tr>
+                        <td class="item-name">{{ $item['productName']}}</td>
+                        <td>{{ $item['quantity'] }}</td>
+                        <td>{{ 0 }}</td>
+                        <td>{{ 0 }}</td>
+                        <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
+                        <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
+                    </tr>
+
+                    @endisset
+
+                @else
+                    @if ($item['promoCategory'] === 'freeItem')
+
+                        <tr>
+                            <td class="item-name">{{ $item['buy_product_name'] }} (Promo: Gratis Produk {{ $item['free_product_name'] }})</td>
+                            <td>{{ $item['quantity_buy'] }}</td>
+                            <td>{{ $item['quantity_free'] }}</td>
+                            <td>{{ number_format($item['discount'], 0, ',', '.') }}</td>
+                            <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
+                            <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
+                        </tr>
+
+                    @elseif($item['promoCategory'] === 'bundle')
+
+                        <tr>
+                            <td class="item-name">{{ $item['item_name'] }}
+                                <ul>
+                                    @foreach($item['included_items'] as $bundleItem)
+                                        <li>{{ $bundleItem['productName'] }}</li>
+                                    @endforeach
+                                </ul>
+                            </td>
+                            <td>{{ 1 }}</td>
+                            <td>{{ 0 }}</td>
+                            <td>{{ number_format(0, 0, ',', '.') }}</td>
+                            <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
+                            <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
+                        </tr>
+
+                    @elseif($item['promoCategory'] === 'discount')
+
+                        <tr>
+                            <td class="item-name">{{ $item['productName'] }} (Promo: Diskon Produk)</td>
+                            <td>{{ $item['quantity'] }}</td>
+                            <td>{{ 0 }}</td>
+                            <td>{{ number_format($item['discount'], 0, ',', '.') }}</td>
+                            <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
+                            <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
+                        </tr>
+
+                    @endif
+
+                @endif
+
             @endforeach
             <tr>
-                <td colspan="4" class="total-row">TOTAL</td>
+                <td colspan="5" class="total-row">TOTAL</td>
                 <td>{{ number_format($total_tagihan, 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <td colspan="4" class="total-row">DEPOSIT</td>
+                <td colspan="5" class="total-row">DEPOSIT</td>
                 <td>-</td>
             </tr>
             <tr>
-                <td colspan="4" class="total-row">TOTAL TAGIHAN</td>
+                <td colspan="5" class="total-row">TOTAL TAGIHAN</td>
                 <td>{{ number_format($total_tagihan, 0, ',', '.') }}</td>
             </tr>
         </tbody>

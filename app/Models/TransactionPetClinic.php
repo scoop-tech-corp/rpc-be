@@ -15,6 +15,7 @@ class TransactionPetClinic extends Model
 
     protected $fillable = [
         'registrationNo',
+        'nota_number',
         'status',
         'isNewCustomer',
         'isNewPet',
