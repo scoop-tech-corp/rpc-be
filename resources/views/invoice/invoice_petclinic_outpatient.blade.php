@@ -440,7 +440,7 @@
                     @elseif($item['promoCategory'] === 'discount')
 
                         <tr>
-                            <td class="item-name">{{ $item['productName'] }} (Promo: Diskon Produk)</td>
+                            <td class="item-name">{{ $item['item_name'] }} (Promo: Diskon Produk)</td>
                             <td>{{ $item['quantity'] }}</td>
                             <td>{{ 0 }}</td>
                             <td>{{ number_format($item['discount'], 0, ',', '.') }}</td>
