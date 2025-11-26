@@ -2898,6 +2898,70 @@ class TransPetClinicController extends Controller
         return view('transaction.petclinic.print_invoice_outpatient');
     }
 
+    public function confirmPayment(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:transactionpetshop,id',
+            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+        ]);
+
+        $transaction = TransactionPetClinic::find($request->id);
+
+        if ($transaction->isPayed == 2) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transaksi sudah dikonfirmasi sebelumnya.'
+            ], 400);
+        }
+
+        if ($transaction->paymentMethod == 1) {
+            return response()->json([
+                'status' => 'warning',
+                'message' => 'Metode pembayaran Cash tidak perlu konfirmasi atau bukti pembayaran.'
+            ], 400);
+        }
+
+        if (!$request->hasFile('proof')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Bukti pembayaran wajib diunggah untuk metode non-tunai.'
+            ], 422);
+        }
+
+        $filePath = null;
+        $originalName = null;
+        $randomName = null;
+
+        if ($request->hasFile('proof')) {
+            $file = $request->file('proof');
+            $originalName = $file->getClientOriginalName();
+            $randomName = 'proof_' . $transaction->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+            if (!Storage::disk('public')->exists('Transaction/Petshop/proof_of_payment')) {
+                Storage::disk('public')->makeDirectory('Transaction/Petshop/proof_of_payment');
+            }
+
+            $filePath = $file->storeAs('Transaction/Petshop/proof_of_payment', $randomName, 'public');
+
+            $transaction->proofOfPayment = $filePath;
+            $transaction->originalName = $originalName;
+            $transaction->proofRandomName = $randomName;
+        }
+
+        $transaction->isPayed = 2;
+        $transaction->updated_at = now();
+        $transaction->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pembayaran berhasil dikonfirmasi.',
+            'isPayed' => 2,
+            'proof' => $filePath,
+            'originalName' => $originalName,
+            'randomName' => $randomName
+        ]);
+    }
+
     public function listDataWeight()
     {
         $data = ListWeightTransaction::select('id', 'name')
