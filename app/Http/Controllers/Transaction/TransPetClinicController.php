@@ -2939,11 +2939,11 @@ class TransPetClinicController extends Controller
             $originalName = $file->getClientOriginalName();
             $randomName = 'proof_' . $transaction->id . '_' . time() . '.' . $file->getClientOriginalExtension();
 
-            if (!Storage::disk('public')->exists('Transaction/Petshop/proof_of_payment')) {
-                Storage::disk('public')->makeDirectory('Transaction/Petshop/proof_of_payment');
+            if (!Storage::disk('public')->exists('Transaction/Petclinic/proof_of_payment')) {
+                Storage::disk('public')->makeDirectory('Transaction/Petclinic/proof_of_payment');
             }
 
-            $filePath = $file->storeAs('Transaction/Petshop/proof_of_payment', $randomName, 'public');
+            $filePath = $file->storeAs('Transaction/Petclinic/proof_of_payment', $randomName, 'public');
 
             $transaction->proofOfPayment = $filePath;
             $transaction->originalName = $originalName;
@@ -2954,14 +2954,7 @@ class TransPetClinicController extends Controller
         $transaction->updated_at = now();
         $transaction->save();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Pembayaran berhasil dikonfirmasi.',
-            'isPayed' => 2,
-            'proof' => $filePath,
-            'originalName' => $originalName,
-            'randomName' => $randomName
-        ]);
+        return responseCreate();
     }
 
     public function listDataWeight()
