@@ -2508,9 +2508,12 @@ class TransPetClinicController extends Controller
     //pembayaran rawat jalan
     public function paymentOutpatient(Request $request)
     {
+        $purchases = $this->ensureIsArray($request->purchases);
+        $payment_method = $this->ensureIsArray($request->payment_method);
+
         $validate = Validator::make($request->all(), [
             'transactionPetClinicId' => 'required|integer',
-            'purchases' => 'required|array|min:1',
+            // 'purchases' => 'required|array|min:1',
 
             'detail_total' => 'required|array',
             'detail_total.subtotal' => 'required|numeric|min:0',
@@ -2518,8 +2521,8 @@ class TransPetClinicController extends Controller
             'detail_total.total_payment' => 'required|numeric|min:0',
             'detail_total.discount_note' => 'nullable|string|max:255',
 
-            'payment_method' => 'required|array',
-            'payment_method.paymentId' => 'required|numeric|exists:paymentmethod,id',
+            // 'payment_method' => 'required|array',
+            // 'payment_method.paymentId' => 'required|numeric|exists:paymentmethod,id',
         ]);
 
         if ($validate->fails()) {
@@ -2535,7 +2538,7 @@ class TransPetClinicController extends Controller
         try {
             DB::beginTransaction();
 
-            foreach ($request->purchases as $value) {
+            foreach ($purchases as $value) {
 
                 if (array_key_exists('serviceId', $value)) {
 
@@ -2705,7 +2708,7 @@ class TransPetClinicController extends Controller
             }
 
             $detail = $request->detail_total;
-            $payment = $request->payment_method;
+            $payment = $payment_method;
 
             if (array_key_exists('promoBasedSaleId', $detail)) {
 
