@@ -28,6 +28,9 @@ class TransactionPetClinic extends Model
         'endDate',
         'doctorId',
         'note',
+        'proofOfPayment',
+        'originalName',
+        'proofRandomName',
         'userId',
         'userUpdateId'
     ];

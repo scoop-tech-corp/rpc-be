@@ -15,6 +15,9 @@ return new class extends Migration
     {
         Schema::table('transactionPetClinics', function (Blueprint $table) {
             $table->string('nota_number')->nullable()->after('registrationNo');
+            $table->string('proofOfPayment')->nullable()->after('note');
+            $table->string('originalName')->nullable()->after('proofOfPayment');
+            $table->string('proofRandomName')->nullable()->after('originalName');
         });
     }
 
@@ -27,6 +30,9 @@ return new class extends Migration
     {
         Schema::table('transactionPetClinics', function (Blueprint $table) {
             $table->dropColumn('nota_number');
+            $table->dropColumn('proofOfPayment');
+            $table->dropColumn('originalName');
+            $table->dropColumn('proofRandomName');
         });
     }
 };
