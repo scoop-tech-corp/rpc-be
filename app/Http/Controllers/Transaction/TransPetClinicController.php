@@ -2509,19 +2509,10 @@ class TransPetClinicController extends Controller
     public function paymentOutpatient(Request $request)
     {
         $purchases = $this->ensureIsArray($request->purchases);
+        $payment = $request->payment_method;
 
         $validate = Validator::make($request->all(), [
             'transactionPetClinicId' => 'required|integer',
-            // 'purchases' => 'required|array|min:1',
-
-            // 'detail_total' => 'required|array',
-            // 'detail_total.subtotal' => 'required|numeric|min:0',
-            // 'detail_total.total_discount' => 'required|numeric|min:0',
-            // 'detail_total.total_payment' => 'required|numeric|min:0',
-            // 'detail_total.discount_note' => 'nullable|string|max:255',
-
-            // 'payment_method' => 'required|array',
-            // 'payment_method.paymentId' => 'required|numeric|exists:paymentmethod,id',
         ]);
 
         if ($validate->fails()) {
@@ -2534,7 +2525,7 @@ class TransPetClinicController extends Controller
             return responseInvalid(['Transaction not found!']);
         }
 
-        try {
+        //try {
             DB::beginTransaction();
 
             foreach ($purchases as $value) {
@@ -2557,7 +2548,7 @@ class TransPetClinicController extends Controller
 
                             $discount = new transaction_pet_clinic_payment_discount_service();
                             $discount->transactionId = $request->transactionPetClinicId;
-                            $discount->paymentMethodId = $request->payment_method['paymentId'];
+                            $discount->paymentMethodId = $payment->paymentId;
                             $discount->serviceId = $value['serviceId'];
                             $discount->quantity = $value['quantity'];
                             $discount->discountType = $value['discountType'];
@@ -2593,7 +2584,7 @@ class TransPetClinicController extends Controller
 
                             $discount = new transaction_pet_clinic_payment_discount_product();
                             $discount->transactionId = $request->transactionPetClinicId;
-                            $discount->paymentMethodId = $request->payment_method['paymentId'];
+                            $discount->paymentMethodId = $payment->paymentId;
                             $discount->productId = $value['productId'];
                             $discount->quantity = $value['quantity'];
                             $discount->discountType = $value['discountType'];
@@ -2707,7 +2698,6 @@ class TransPetClinicController extends Controller
             }
 
             $detail = $request->detail_total;
-            $payment = $request->payment_method;
 
             if (array_key_exists('promoBasedSaleId', $detail)) {
 
@@ -2764,10 +2754,10 @@ class TransPetClinicController extends Controller
             DB::commit();
 
             return responseCreate();
-        } catch (\Throwable $th) {
-            DB::rollback();
-            return responseInvalid([$th->getMessage()]);
-        }
+        //} catch (\Throwable $th) {
+        //    DB::rollback();
+        //    return responseInvalid([$th->getMessage()]);
+        //}
     }
 
     public function createList(Request $request)
