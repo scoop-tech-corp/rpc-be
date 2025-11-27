@@ -2509,7 +2509,6 @@ class TransPetClinicController extends Controller
     public function paymentOutpatient(Request $request)
     {
         $purchases = $this->ensureIsArray($request->purchases);
-        $payment_method = $this->ensureIsArray($request->payment_method);
 
         $validate = Validator::make($request->all(), [
             'transactionPetClinicId' => 'required|integer',
@@ -2708,7 +2707,7 @@ class TransPetClinicController extends Controller
             }
 
             $detail = $request->detail_total;
-            $payment = $payment_method;
+            $payment = $request->payment_method;
 
             if (array_key_exists('promoBasedSaleId', $detail)) {
 
