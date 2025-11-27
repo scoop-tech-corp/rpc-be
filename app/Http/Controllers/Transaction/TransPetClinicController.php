@@ -2514,11 +2514,11 @@ class TransPetClinicController extends Controller
             'transactionPetClinicId' => 'required|integer',
             // 'purchases' => 'required|array|min:1',
 
-            'detail_total' => 'required|array',
-            'detail_total.subtotal' => 'required|numeric|min:0',
-            'detail_total.total_discount' => 'required|numeric|min:0',
-            'detail_total.total_payment' => 'required|numeric|min:0',
-            'detail_total.discount_note' => 'nullable|string|max:255',
+            // 'detail_total' => 'required|array',
+            // 'detail_total.subtotal' => 'required|numeric|min:0',
+            // 'detail_total.total_discount' => 'required|numeric|min:0',
+            // 'detail_total.total_payment' => 'required|numeric|min:0',
+            // 'detail_total.discount_note' => 'nullable|string|max:255',
 
             // 'payment_method' => 'required|array',
             // 'payment_method.paymentId' => 'required|numeric|exists:paymentmethod,id',
