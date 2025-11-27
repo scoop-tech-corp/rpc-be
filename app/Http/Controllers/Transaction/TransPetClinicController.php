@@ -2733,7 +2733,7 @@ class TransPetClinicController extends Controller
             $total->amountPaid = $payment['amountPaid'];
 
             if (array_key_exists('next_payment', $payment)) {
-                $total->nextPayment = $payment['nextPayment'];
+                $total->nextPayment = $payment['next_payment'];
             }
 
             if (array_key_exists('duration', $payment)) {
