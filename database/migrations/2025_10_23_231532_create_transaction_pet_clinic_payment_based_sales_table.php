@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('transaction_pet_clinic_payment_based_sales', function (Blueprint $table) {
             $table->id();
             $table->integer('transactionId');
+            $table->integer('paymentMethodId');
             $table->integer('promoId');
             $table->decimal('amountDiscount', $precision = 18, $scale = 2);
 

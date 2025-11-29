@@ -15,10 +15,12 @@ return new class extends Migration
     {
         Schema::create('transaction_pet_clinic_payment_bundles', function (Blueprint $table) {
             $table->id();
-
-            $table->integer('transactionId');
-            $table->integer('promoId');
-            $table->decimal('amountBundling', $precision = 18, $scale = 2);
+            $table->integer('paymentId');
+            $table->integer('promoId')->nullables();
+            $table->integer('productId')->nullable();
+            $table->integer('serviceId')->nullable();
+            $table->integer('quantity')->nullable();
+            $table->decimal('amount', $precision = 18, $scale = 2);
 
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->integer('userId');
