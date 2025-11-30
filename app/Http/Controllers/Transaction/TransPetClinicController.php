@@ -2545,7 +2545,7 @@ class TransPetClinicController extends Controller
 
                         $trx = new transaction_pet_clinic_payments();
                         $trx->transactionId = $request->transactionPetClinicId;
-                        $trx->paymentMethodId = $payment->paymentId;
+                        $trx->paymentMethodId = $payment['paymentId'];
                         $trx->promoId = $promo->id;
                         $trx->serviceId = $value['serviceId'];
                         $trx->quantity = $value['quantity'];
@@ -2561,7 +2561,7 @@ class TransPetClinicController extends Controller
                 } else {
                     $trx = new transaction_pet_clinic_payments();
                     $trx->transactionId = $request->transactionPetClinicId;
-                    $trx->paymentMethodId = $payment->paymentId;
+                    $trx->paymentMethodId = $payment['paymentId'];
                     $trx->serviceId = $value['serviceId'];
                     $trx->quantity = $value['quantity'];
                     $trx->price = $value['unit_price'];
@@ -2583,7 +2583,7 @@ class TransPetClinicController extends Controller
 
                         $trx = new transaction_pet_clinic_payments();
                         $trx->transactionId = $request->transactionPetClinicId;
-                        $trx->paymentMethodId = $payment->paymentId;
+                        $trx->paymentMethodId = $payment['paymentId'];
                         $trx->promoId = $promo->id;
                         $trx->productId = $value['productId'];
                         $trx->quantity = $value['quantity'];
@@ -2604,7 +2604,7 @@ class TransPetClinicController extends Controller
                 } else {
                     $trx = new transaction_pet_clinic_payments();
                     $trx->transactionId = $request->transactionPetClinicId;
-                    $trx->paymentMethodId = $payment->paymentId;
+                    $trx->paymentMethodId = $payment['paymentId'];
                     $trx->promoId = $promo->id;
                     $trx->productId = $value['productId'];
                     $trx->quantity = $value['quantity'];
@@ -2623,7 +2623,7 @@ class TransPetClinicController extends Controller
 
                 $trx = new transaction_pet_clinic_payments();
                 $trx->transactionId = $request->transactionPetClinicId;
-                $trx->paymentMethodId = $payment->paymentId;
+                $trx->paymentMethodId = $payment['paymentId'];
                 $trx->promoId = $promo->id;
                 $trx->productBuyId = $value['buy_product_id'];
                 $trx->productFreeId = $value['free_product_id'];
@@ -2643,7 +2643,7 @@ class TransPetClinicController extends Controller
 
                 $trx = new transaction_pet_clinic_payments();
                 $trx->transactionId = $request->transactionPetClinicId;
-                $trx->paymentMethodId = $payment->paymentId;
+                $trx->paymentMethodId = $payment['paymentId'];
                 $trx->promoId = $promo->id;
                 $trx->price = $value['unit_price'];
                 $trx->priceOverall = $value['total'];
@@ -2702,7 +2702,7 @@ class TransPetClinicController extends Controller
 
             $sales = new transaction_pet_clinic_payment_based_sales();
             $sales->transactionId = $request->transactionPetClinicId;
-            $sales->paymentMethodId = $payment->paymentId;
+            $sales->paymentMethodId = $payment['paymentId'];
             $sales->promoId = $detail['promoBasedSaleId'];
             $sales->amountDiscount = $detail['discount_based_sales'];
             $sales->userId = $request->user()->id;
@@ -2712,7 +2712,7 @@ class TransPetClinicController extends Controller
         //detail total
         $total = new transaction_pet_clinic_payment_total();
         $total->transactionId = $request->transactionPetClinicId;
-        $total->paymentmethodId = $payment->paymentId;
+        $total->paymentmethodId = $payment['paymentId'];
         $total->amount = $detail['total_payment'];
         $total->amountPaid = $payment['amountPaid'];
 
