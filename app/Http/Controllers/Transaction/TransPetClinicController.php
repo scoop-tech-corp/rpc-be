@@ -2696,7 +2696,7 @@ class TransPetClinicController extends Controller
             }
         }
 
-        $detail = $request->detail_total;
+        $detail = json_decode($request->detail_total, true);
 
         if (array_key_exists('promoBasedSaleId', $detail)) {
 
