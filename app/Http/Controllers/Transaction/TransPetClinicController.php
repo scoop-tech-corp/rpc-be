@@ -2631,7 +2631,7 @@ class TransPetClinicController extends Controller
                 $trx->promoId = $promo->id;
                 $trx->productBuyId = $value['buy_product_id'];
                 $trx->productFreeId = $value['free_product_id'];
-                $trx->quantity = $value['quantity_buy'] + $value['quantity_free'];
+                $trx->quantity = $value['quantity_buy'] + $value['bonus'];
                 $trx->price = $value['unit_price'];
                 $trx->priceOverall = $value['total'];
                 $trx->userId = $request->user()->id;
