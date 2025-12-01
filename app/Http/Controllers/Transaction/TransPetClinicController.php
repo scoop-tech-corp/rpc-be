@@ -2591,11 +2591,11 @@ class TransPetClinicController extends Controller
                         $trx->quantity = $value['quantity'];
                         $trx->discountType = $value['discountType'];
                         if ($value['discountType'] == 'percent') {
-                            $trx->percent = $value['discount'];
-                            $trx->amount = 0;
+                            $trx->discountPercent = $value['discount'];
+                            $trx->discountAmount = 0;
                         } else {
-                            $trx->amount = $value['discount'];
-                            $trx->percent = 0;
+                            $trx->discountAmount = $value['discount'];
+                            $trx->discountPercent = 0;
                         }
                         $trx->price = $value['unit_price'];
                         $trx->priceOverall = $value['total'];
