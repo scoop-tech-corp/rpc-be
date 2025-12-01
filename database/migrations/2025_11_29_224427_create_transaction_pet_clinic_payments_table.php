@@ -25,7 +25,6 @@ return new class extends Migration
             $table->integer('quantity')->nullable();
             $table->integer('quantityBuy')->nullable();
             $table->integer('quantityFree')->nullable();
-            $table->integer('bonus')->nullable();
             $table->string('discountType')->nullable();
             $table->integer('discountAmount')->nullable();
             $table->integer('discountPercent')->nullable();
