@@ -2208,6 +2208,7 @@ class TransPetClinicController extends Controller
                         'promoId' => $data->promoId,
                         'productId' => $data->productId,
                         'promoCategory' => 'discount',
+                        'discountType' => $data->discountType,
                     ];
 
                     $subtotal += ($value['priceOverall'] - $saved);
@@ -2509,7 +2510,8 @@ class TransPetClinicController extends Controller
     public function paymentOutpatient(Request $request)
     {
         $purchases = $this->ensureIsArray($request->purchases);
-        $payment = $request->payment_method;
+        $json_string = $request->payment_method;
+        $payment = json_decode($json_string, true);
 
         $validate = Validator::make($request->all(), [
             'transactionPetClinicId' => 'required|integer',
