@@ -2870,6 +2870,8 @@ class TransPetClinicController extends Controller
         $details = $request->purchases;
         $namaFile = str_replace('/', '_', $trans->nota_number ?? 'INV') . '.pdf';
 
+        $detail = json_decode($request->detail_total, true);
+
         $data = [
             'locations'      => $formattedLocations,
             'nota_date'      => Carbon::parse($trans->created_at)->format('d/m/Y'),
@@ -2881,7 +2883,7 @@ class TransPetClinicController extends Controller
             'details'        => $details,
             'total'          => $request->detail_total,
             'deposit'        => '-',
-            'total_tagihan'  => $request->detail_total['total_payment'],
+            'total_tagihan'  => $detail['total_payment'],
         ];
 
         $pdf = Pdf::loadView('invoice.invoice_petclinic_outpatient', $data);
