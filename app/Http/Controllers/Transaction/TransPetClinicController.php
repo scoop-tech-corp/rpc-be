@@ -2867,7 +2867,7 @@ class TransPetClinicController extends Controller
             ->select('c.firstName', 'ct.phoneNumber', 'c.memberNo')
             ->first();
 
-        $details = $request->purchases;
+        $details = $this->ensureIsArray($request->purchases);
         $namaFile = str_replace('/', '_', $trans->nota_number ?? 'INV') . '.pdf';
 
         $detail = json_decode($request->detail_total, true);
