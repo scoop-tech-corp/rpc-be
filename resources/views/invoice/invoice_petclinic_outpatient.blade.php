@@ -398,7 +398,7 @@
 
                     @elseif(isset($item['productId']))
                     <tr>
-                        <td class="item-name">{{ $item['productName']}}</td>
+                        <td class="item-name">{{ $item['item_name']}}</td>
                         <td>{{ $item['quantity'] }}</td>
                         <td>{{ 0 }}</td>
                         <td>{{ 0 }}</td>
@@ -412,9 +412,9 @@
                     @if ($item['promoCategory'] === 'freeItem')
 
                         <tr>
-                            <td class="item-name">{{ $item['buy_product_name'] }} (Promo: Gratis Produk {{ $item['free_product_name'] }})</td>
-                            <td>{{ $item['quantity_buy'] }}</td>
-                            <td>{{ $item['quantity_free'] }}</td>
+                            <td class="item-name">{{ $item['note'] }}</td>
+                            <td>{{ $item['quantity'] }}</td>
+                            <td>{{ $item['bonus'] }}</td>
                             <td>{{ number_format($item['discount'], 0, ',', '.') }}</td>
                             <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
                             <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
