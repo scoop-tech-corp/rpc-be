@@ -634,12 +634,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
             //pembayaran rawat inap
             Route::post('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
-            Route::post('/invoice/inpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
+            // Route::post('/invoice/inpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
             Route::post('/confirm-payment', [TransPetClinicController::class, 'confirmPayment']);
 
             //pembayaran rawat jalan
             Route::post('/payment/outpatient', [TransPetClinicController::class, 'paymentOutpatient']);
-            Route::post('/invoice/outpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
+            Route::get('/invoice/outpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
         });
 
         Route::group(['prefix' => 'petshop'], function () {
