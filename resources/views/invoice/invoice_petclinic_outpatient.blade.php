@@ -388,7 +388,7 @@
 
                     @isset($item['serviceId'])
                     <tr>
-                        <td class="item-name">{{ $item['item_name'] }}</td>
+                        <td class="item-name">{{ $item['serviceName'] }}</td>
                         <td>{{ $item['quantity'] }}</td>
                         <td>{{ 0 }}</td>
                         <td>{{ 0 }}</td>
