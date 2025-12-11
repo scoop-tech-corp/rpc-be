@@ -2884,7 +2884,7 @@ class TransPetClinicController extends Controller
             'phone_number'   => $customer->phoneNumber ?? '-',
             'arrival_time'   => Carbon::parse($trans->created_at)->format('H:i'),
             'details'        => $details,
-            'total'          => $request->detail_total,
+            'total'          => $detail,
             'deposit'        => '-',
             'total_tagihan'  => $detail['total_payment'],
         ];
