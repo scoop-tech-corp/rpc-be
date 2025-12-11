@@ -228,17 +228,17 @@ if (!function_exists('productTransferLog')) {
     }
 }
 
-if (!function_exists('transactionLog')) {
-    function transactionLog($transactionId, $activity, $remark, $userId)
-    {
-        TransactionLog::create([
-            'transactionId' => $transactionId,
-            'activity' => $activity,
-            'remark' => $remark,
-            'userId' => $userId,
-        ]);
-    }
-}
+// if (!function_exists('transactionLog')) {
+//     function transactionLog($transactionId, $activity, $remark, $userId)
+//     {
+//         TransactionLog::create([
+//             'transactionId' => $transactionId,
+//             'activity' => $activity,
+//             'remark' => $remark,
+//             'userId' => $userId,
+//         ]);
+//     }
+// }
 
 if (!function_exists('transactionPetClinicLog')) {
     function transactionPetClinicLog($transactionId, $activity, $remark, $userId)

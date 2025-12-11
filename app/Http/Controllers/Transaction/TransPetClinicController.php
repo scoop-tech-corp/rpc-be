@@ -387,7 +387,7 @@ class TransPetClinicController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
-            transactionLog($tran->id, 'New Transaction', '', $request->user()->id);
+            transactionPetClinicLog($tran->id, 'New Transaction', '', $request->user()->id);
 
             DB::commit();
             return responseCreate();
@@ -583,9 +583,9 @@ class TransPetClinicController extends Controller
                         if ($customName == 'Dokter yang menangani') {
                             $doctor = User::where([['id', '=', $newValue]])->first();
 
-                            transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$doctor->firstName}", $request->user()->id);
+                            transactionPetClinicLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$doctor->firstName}", $request->user()->id);
                         } else {
-                            transactionLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
+                            transactionPetClinicLog($request->id, 'Update Transaction', "Data '{$customName}' telah diubah menjadi {$newValue}", $request->user()->id);
                         }
                     }
                 }
@@ -622,7 +622,7 @@ class TransPetClinicController extends Controller
             $tran->DeletedAt = Carbon::now();
             $tran->save();
 
-            transactionLog($va, 'Transaction Deleted', '', $request->user()->id);
+            transactionPetClinicLog($va, 'Transaction Deleted', '', $request->user()->id);
         }
 
         return responseDelete();
@@ -1322,6 +1322,8 @@ class TransPetClinicController extends Controller
                 ]
             );
 
+            transactionPetClinicLog($request->transactionPetClinicId, 'Pet Check Already Completed', '', $request->user()->id);
+
             DB::commit();
             return responseCreate();
         } catch (Exception $th) {
@@ -1405,6 +1407,8 @@ class TransPetClinicController extends Controller
                     'userUpdatedId' => $request->user()->id,
                 ]
             );
+
+            transactionPetClinicLog($request->transactionPetClinicId, 'Input Service and Recipe Already Completed', '', $request->user()->id);
 
             DB::commit();
             return responseCreate();
@@ -2748,6 +2752,8 @@ class TransPetClinicController extends Controller
             $total->userId = $request->user()->id;
             $total->save();
 
+            transactionPetClinicLog($request->transactionPetClinicId, 'Payment Process', '', $request->user()->id);
+
             DB::commit();
 
             return responseCreate();
@@ -2902,7 +2908,7 @@ class TransPetClinicController extends Controller
             return responseInvalid(['Transaction is not found!']);
         }
 
-        if ($trans_pay->isPayed == 2) {
+        if ($trans_pay->isPayed == 1) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Transaksi sudah dikonfirmasi sebelumnya.'
@@ -2943,9 +2949,11 @@ class TransPetClinicController extends Controller
             $trans_pay->proofRandomName = $randomName;
         }
 
-        $trans_pay->isPayed = 2;
+        $trans_pay->isPayed = 1;
         $trans_pay->updated_at = now();
         $trans_pay->save();
+
+        transactionPetClinicLog($trans_pay->transactionId, 'Confirm Payment', '', $request->user()->id);
 
         return responseCreate();
     }
