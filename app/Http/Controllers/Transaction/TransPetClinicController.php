@@ -442,7 +442,7 @@ class TransPetClinicController extends Controller
             ->where('t.id', '=', $request->id)
             ->first();
 
-        $log = DB::table('transactionLogs as tl')
+        $log = DB::table('transaction_pet_clinic_logs as tl')
             ->join('transactionPetClinics as t', 't.id', 'tl.transactionId')
             ->join('users as u', 'u.id', 'tl.userId')
             ->select(
