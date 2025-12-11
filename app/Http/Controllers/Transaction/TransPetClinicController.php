@@ -18,10 +18,6 @@ use App\Models\Service;
 use App\Models\Staff\UsersLocation;
 use App\Models\transaction_pet_clinic_payment_based_sales;
 use App\Models\transaction_pet_clinic_payment_bundle;
-use App\Models\transaction_pet_clinic_payment_bundles;
-use App\Models\transaction_pet_clinic_payment_free_item;
-use App\Models\transaction_pet_clinic_payment_product;
-use App\Models\transaction_pet_clinic_payment_service;
 use App\Models\transaction_pet_clinic_payment_total;
 use App\Models\transaction_pet_clinic_payments;
 use App\Models\TransactionPetClinic;
@@ -2731,10 +2727,8 @@ class TransPetClinicController extends Controller
                 $total->tenor = $payment['tenor'];
             }
 
-            $total->userId = $request->user()->id;
-            $total->save();
-
             $locationId = $trans->locationId;
+
             $now = Carbon::now();
             $tahun = $now->format('Y');
             $bulan = $now->format('m');
@@ -2748,8 +2742,10 @@ class TransPetClinicController extends Controller
             $nomorUrut = str_pad($jumlahTransaksi + 1, 4, '0', STR_PAD_LEFT);
 
             $notaNumber = "INV/PC/{$locationId}/{$tahun}/{$bulan}/{$nomorUrut}";
-            $trans->nota_number = $notaNumber;
-            $trans->update();
+            $total->nota_number = $notaNumber;
+
+            $total->userId = $request->user()->id;
+            $total->save();
 
             DB::commit();
 
@@ -2895,20 +2891,24 @@ class TransPetClinicController extends Controller
     public function confirmPayment(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer|exists:transactionpetshop,id',
+            'id' => 'required|integer',
             'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
         ]);
 
-        $transaction = TransactionPetClinic::find($request->id);
+        $trans_pay = transaction_pet_clinic_payment_total::find($request->id);
 
-        if ($transaction->isPayed == 2) {
+        if (!$trans_pay) {
+            return responseInvalid(['Transaction is not found!']);
+        }
+
+        if ($trans_pay->isPayed == 2) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Transaksi sudah dikonfirmasi sebelumnya.'
             ], 400);
         }
 
-        if ($transaction->paymentMethod == 1) {
+        if ($trans_pay->paymentMethodId == 1) {
             return response()->json([
                 'status' => 'warning',
                 'message' => 'Metode pembayaran Cash tidak perlu konfirmasi atau bukti pembayaran.'
@@ -2929,7 +2929,7 @@ class TransPetClinicController extends Controller
         if ($request->hasFile('proof')) {
             $file = $request->file('proof');
             $originalName = $file->getClientOriginalName();
-            $randomName = 'proof_' . $transaction->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $randomName = 'proof_' . $trans_pay->id . '_' . time() . '.' . $file->getClientOriginalExtension();
 
             if (!Storage::disk('public')->exists('Transaction/Petclinic/proof_of_payment')) {
                 Storage::disk('public')->makeDirectory('Transaction/Petclinic/proof_of_payment');
@@ -2937,14 +2937,14 @@ class TransPetClinicController extends Controller
 
             $filePath = $file->storeAs('Transaction/Petclinic/proof_of_payment', $randomName, 'public');
 
-            $transaction->proofOfPayment = $filePath;
-            $transaction->originalName = $originalName;
-            $transaction->proofRandomName = $randomName;
+            $trans_pay->proofOfPayment = $filePath;
+            $trans_pay->originalName = $originalName;
+            $trans_pay->proofRandomName = $randomName;
         }
 
-        $transaction->isPayed = 2;
-        $transaction->updated_at = now();
-        $transaction->save();
+        $trans_pay->isPayed = 2;
+        $trans_pay->updated_at = now();
+        $trans_pay->save();
 
         return responseCreate();
     }
