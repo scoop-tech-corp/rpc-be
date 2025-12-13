@@ -1324,7 +1324,8 @@ class TransPetClinicController extends Controller
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
-            return responseInvalid($errors);
+            $errorMessage = implode(' ', $errors);
+            return responseInvalid($errorMessage);
         }
 
         DB::beginTransaction();
