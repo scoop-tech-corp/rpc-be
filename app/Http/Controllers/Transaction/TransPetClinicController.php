@@ -979,6 +979,179 @@ class TransPetClinicController extends Controller
 
     public function createPetCheck(Request $request)
     {
+        $messages = [
+            // Messages for 'required' rule
+            'required' => 'Kolom :attribute wajib diisi.',
+
+            // Messages for specific attribute rules
+            'transactionPetClinicId.integer' => 'ID Transaksi Klinik Hewan harus berupa bilangan bulat.',
+
+            'petCheckRegistrationNo.string' => 'Nomor Registrasi Pemeriksaan Hewan harus berupa teks.',
+
+            'isAnthelmintic.boolean' => 'Pilihan Obat Cacing harus berupa nilai benar atau salah (true/false).',
+            'anthelminticDate.date' => 'Tanggal Obat Cacing harus berupa format tanggal yang valid.',
+            'anthelminticBrand.string' => 'Merek Obat Cacing harus berupa teks.',
+
+            'isVaccination.boolean' => 'Pilihan Vaksinasi harus berupa nilai benar atau salah (true/false).',
+            'vaccinationDate.date' => 'Tanggal Vaksinasi harus berupa format tanggal yang valid.',
+            'vaccinationBrand.string' => 'Merek Vaksinasi harus berupa teks.',
+
+            'isFleaMedicine.boolean' => 'Pilihan Obat Kutu harus berupa nilai benar atau salah (true/false).',
+            'fleaMedicineDate.date' => 'Tanggal Obat Kutu harus berupa format tanggal yang valid.',
+            'fleaMedicineBrand.string' => 'Merek Obat Kutu harus berupa teks.',
+
+            'previousAction.string' => 'Tindakan Sebelumnya harus berupa teks.',
+            'othersCompalints.string' => 'Keluhan Lainnya harus berupa teks.',
+
+            'weight.numeric' => 'Berat harus berupa angka.',
+            'weightCategory.integer' => 'Kategori Berat harus berupa bilangan bulat.',
+
+            'temperature.numeric' => 'Suhu harus berupa angka.',
+            'temperatureBottom.numeric' => 'Suhu Bawah harus berupa angka.',
+            'temperatureTop.numeric' => 'Suhu Atas harus berupa angka.',
+            'temperatureCategory.integer' => 'Kategori Suhu harus berupa bilangan bulat.',
+
+            'isLice.boolean' => 'Pilihan Kutu Rambut harus berupa nilai benar atau salah (true/false).',
+            'noteLice.string' => 'Catatan Kutu Rambut harus berupa teks.',
+
+            'isFlea.boolean' => 'Pilihan Kutu harus berupa nilai benar atau salah (true/false).',
+            'noteFlea.string' => 'Catatan Kutu harus berupa teks.',
+
+            'isCaplak.boolean' => 'Pilihan Caplak harus berupa nilai benar atau salah (true/false).',
+            'noteCaplak.string' => 'Catatan Caplak harus berupa teks.',
+
+            'isTungau.boolean' => 'Pilihan Tungau harus berupa nilai benar atau salah (true/false).',
+            'noteTungau.string' => 'Catatan Tungau harus berupa teks.',
+
+            'ectoParasitCategory.integer' => 'Kategori Ektoparasit harus berupa bilangan bulat.',
+
+            'isNematoda.boolean' => 'Pilihan Nematoda harus berupa nilai benar atau salah (true/false).',
+            'noteNematoda.string' => 'Catatan Nematoda harus berupa teks.',
+
+            'isTermatoda.boolean' => 'Pilihan Trematoda harus berupa nilai benar atau salah (true/false).',
+            'noteTermatoda.string' => 'Catatan Trematoda harus berupa teks.',
+
+            'isCestode.boolean' => 'Pilihan Cestode harus berupa nilai benar atau salah (true/false).',
+            'noteCestode.string' => 'Catatan Cestode harus berupa teks.',
+
+            'isFungiFound.boolean' => 'Pilihan Ditemukan Jamur harus berupa nilai benar atau salah (true/false).',
+
+            'konjung.string' => 'Konjungtiva harus berupa teks.',
+            'ginggiva.string' => 'Gingiva harus berupa teks.',
+            'ear.string' => 'Telinga harus berupa teks.',
+            'tongue.string' => 'Lidah harus berupa teks.',
+            'nose.string' => 'Hidung harus berupa teks.',
+            'CRT.string' => 'Capillary Refill Time (CRT) harus berupa teks.',
+
+            'genitals.string' => 'Alat Kelamin harus berupa teks.',
+
+            'neurologicalFindings.string' => 'Temuan Neurologis harus berupa teks.',
+            'lokomosiFindings.string' => 'Temuan Lokomosi harus berupa teks.',
+
+            'isSnot.boolean' => 'Pilihan Ingus harus berupa nilai benar atau salah (true/false).',
+            'noteSnot.string' => 'Catatan Ingus harus berupa teks.',
+
+            'breathType.integer' => 'Jenis Napas harus berupa bilangan bulat.',
+            'breathSoundType.integer' => 'Jenis Suara Napas harus berupa bilangan bulat.',
+            'breathSoundNote.string' => 'Catatan Suara Napas harus berupa teks.',
+            'othersFoundBreath.string' => 'Temuan Pernapasan Lainnya harus berupa teks.',
+
+            'pulsus.integer' => 'Pulsus harus berupa bilangan bulat.',
+            'heartSound.integer' => 'Suara Jantung harus berupa bilangan bulat.',
+            'othersFoundHeart.string' => 'Temuan Jantung Lainnya harus berupa teks.',
+
+            'othersFoundSkin.string' => 'Temuan Kulit Lainnya harus berupa teks.',
+            'othersFoundHair.string' => 'Temuan Rambut Lainnya harus berupa teks.',
+
+            'maleTesticles.integer' => 'Testis Jantan harus berupa bilangan bulat.',
+            'othersMaleTesticles.string' => 'Catatan Testis Jantan Lainnya harus berupa teks.',
+            'penisCondition.string' => 'Kondisi Penis harus berupa teks.',
+            'vaginalDischargeType.integer' => 'Jenis Keluaran Vagina harus berupa bilangan bulat.',
+            'urinationType.integer' => 'Jenis Urinasi harus berupa bilangan bulat.',
+            'othersUrination.string' => 'Catatan Urinasi Lainnya harus berupa teks.',
+            'othersFoundUrogenital.string' => 'Temuan Urogenital Lainnya harus berupa teks.',
+
+            'abnormalitasCavumOris.string' => 'Abnormalitas Rongga Mulut harus berupa teks.',
+            'intestinalPeristalsis.string' => 'Peristalsis Usus harus berupa teks.',
+            'perkusiAbdomen.string' => 'Perkusi Abdomen harus berupa teks.',
+            'rektumKloaka.string' => 'Rektum/Kloaka harus berupa teks.',
+            'othersCharacterRektumKloaka.string' => 'Karakter Rektum/Kloaka Lainnya harus berupa teks.',
+
+            'fecesForm.string' => 'Bentuk Feses harus berupa teks.',
+            'fecesColor.string' => 'Warna Feses harus berupa teks.',
+            'fecesWithCharacter.string' => 'Karakteristik Feses harus berupa teks.',
+            'othersFoundDigesti.string' => 'Temuan Pencernaan Lainnya harus berupa teks.',
+
+            'reflectPupil.string' => 'Refleks Pupil harus berupa teks.',
+            'eyeBallCondition.string' => 'Kondisi Bola Mata harus berupa teks.',
+            'othersFoundVision.string' => 'Temuan Penglihatan Lainnya harus berupa teks.',
+
+            'earlobe.string' => 'Daun Telinga harus berupa teks.',
+            'earwax.integer' => 'Kotoran Telinga harus berupa bilangan bulat.',
+            'earwaxCharacter.string' => 'Karakteristik Kotoran Telinga harus berupa teks.',
+            'othersFoundEar.string' => 'Temuan Telinga Lainnya harus berupa teks.',
+
+            'isInpatient.integer' => 'Pilihan Rawat Inap harus berupa bilangan bulat.',
+            'noteInpatient.string' => 'Catatan Rawat Inap harus berupa teks.',
+
+            'isTherapeuticFeed.integer' => 'Pilihan Pakan Terapeutik harus berupa bilangan bulat.',
+            'noteTherapeuticFeed.string' => 'Catatan Pakan Terapeutik harus berupa teks.',
+
+            'imuneBooster.string' => 'Peningkat Imun harus berupa teks.',
+            'suplement.string' => 'Suplemen harus berupa teks.',
+            'desinfeksi.string' => 'Desinfeksi harus berupa teks.',
+            'care.string' => 'Perawatan harus berupa teks.',
+
+            'isGrooming.integer' => 'Pilihan Grooming harus berupa bilangan bulat.',
+            'noteGrooming.string' => 'Catatan Grooming harus berupa teks.',
+
+            'othersNoteAdvice.string' => 'Catatan Saran Lainnya harus berupa teks.',
+            'nextControlCheckup.date' => 'Tanggal Kontrol Berikutnya harus berupa format tanggal yang valid.',
+
+            'diagnoseDisease.string' => 'Diagnosis Penyakit harus berupa teks.',
+            'prognoseDisease.string' => 'Prognosis Penyakit harus berupa teks.',
+            'diseaseProgressOverview.string' => 'Gambaran Kemajuan Penyakit harus berupa teks.',
+
+            'isMicroscope.boolean' => 'Pilihan Mikroskop harus berupa nilai benar atau salah (true/false).',
+            'noteMicroscope.string' => 'Catatan Mikroskop harus berupa teks.',
+
+            'isEye.boolean' => 'Pilihan Mata harus berupa nilai benar atau salah (true/false).',
+            'noteEye.string' => 'Catatan Mata harus berupa teks.',
+
+            'isTeskit.boolean' => 'Pilihan Tes Kit harus berupa nilai benar atau salah (true/false).',
+            'noteTeskit.string' => 'Catatan Tes Kit harus berupa teks.',
+
+            'isUltrasonografi.boolean' => 'Pilihan Ultrasonografi harus berupa nilai benar atau salah (true/false).',
+            'noteUltrasonografi.string' => 'Catatan Ultrasonografi harus berupa teks.',
+
+            'isRontgen.boolean' => 'Pilihan Rontgen harus berupa nilai benar atau salah (true/false).',
+            'noteRontgen.string' => 'Catatan Rontgen harus berupa teks.',
+
+            'isBloodReview.boolean' => 'Pilihan Tinjauan Darah harus berupa nilai benar atau salah (true/false).',
+            'noteBloodReview.string' => 'Catatan Tinjauan Darah harus berupa teks.',
+
+            'isSitologi.boolean' => 'Pilihan Sitologi harus berupa nilai benar atau salah (true/false).',
+            'noteSitologi.string' => 'Catatan Sitologi harus berupa teks.',
+
+            'isVaginalSmear.boolean' => 'Pilihan Vaginal Smear harus berupa nilai benar atau salah (true/false).',
+            'noteVaginalSmear.string' => 'Catatan Vaginal Smear harus berupa teks.',
+
+            'isBloodLab.boolean' => 'Pilihan Lab Darah harus berupa nilai benar atau salah (true/false).',
+            'noteBloodLab.string' => 'Catatan Lab Darah harus berupa teks.',
+
+            'isSurgery.integer' => 'Pilihan Operasi harus berupa bilangan bulat.',
+            'noteSurgery.string' => 'Catatan Operasi harus berupa teks.',
+
+            'infusion.string' => 'Infus harus berupa teks.',
+            'fisioteraphy.string' => 'Fisioterapi harus berupa teks.',
+            'injectionMedicine.string' => 'Obat Suntik harus berupa teks.',
+            'oralMedicine.string' => 'Obat Oral harus berupa teks.',
+            'tropicalMedicine.string' => 'Obat Topikal harus berupa teks.',
+            'vaccination.string' => 'Vaksinasi harus berupa teks.',
+            'othersTreatment.string' => 'Pengobatan Lainnya harus berupa teks.',
+
+        ];
+
         $validate = Validator::make($request->all(), [
             'transactionPetClinicId' => 'required|integer',
             'petCheckRegistrationNo' => 'required|string',
@@ -1147,7 +1320,7 @@ class TransPetClinicController extends Controller
             'tropicalMedicine' => 'nullable|string',
             'vaccination' => 'nullable|string',
             'othersTreatment' => 'nullable|string',
-        ]);
+        ],$messages);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
