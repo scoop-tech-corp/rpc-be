@@ -1322,7 +1322,7 @@ class TransPetClinicController extends Controller
                 ]
             );
 
-            transactionPetClinicLog($request->transactionPetClinicId, 'Pet Check Already Completed', '', $request->user()->id);
+            transactionPetClinicLog($request->transactionPetClinicId, 'Cek kondisi vet sudah selesai', '', $request->user()->id);
 
             DB::commit();
             return responseCreate();
@@ -1400,15 +1400,9 @@ class TransPetClinicController extends Controller
                 ]);
             }
 
-            TransactionPetClinic::updateOrCreate(
-                ['id' => $request->transactionPetClinicId],
-                [
-                    'status' => "Proses Pembayaran",
-                    'userUpdatedId' => $request->user()->id,
-                ]
-            );
+            statusTransactionPetClinic($request->transactionId, 'Proses Pembayaran', $request->user()->id);
 
-            transactionPetClinicLog($request->transactionPetClinicId, 'Input Service and Recipe Already Completed', '', $request->user()->id);
+            transactionPetClinicLog($request->transactionPetClinicId, 'Input Layanan dan Resep Sudah Selesai', '', $request->user()->id);
 
             DB::commit();
             return responseCreate();
@@ -2752,8 +2746,9 @@ class TransPetClinicController extends Controller
             $total->userId = $request->user()->id;
             $total->save();
 
-            transactionPetClinicLog($request->transactionPetClinicId, 'Payment Process', '', $request->user()->id);
+            transactionPetClinicLog($request->transactionPetClinicId, 'Nota diterbitkan', '', $request->user()->id);
 
+            statusTransactionPetClinic($request->transactionId, 'Menunggu konfirmasi pembayaran', $request->user()->id);
             DB::commit();
 
             return responseCreate();
@@ -2953,7 +2948,8 @@ class TransPetClinicController extends Controller
         $trans_pay->updated_at = now();
         $trans_pay->save();
 
-        transactionPetClinicLog($trans_pay->transactionId, 'Confirm Payment', '', $request->user()->id);
+        statusTransactionPetClinic($request->transactionId, 'Selesai', $request->user()->id);
+        transactionPetClinicLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
 
         return responseCreate();
     }
