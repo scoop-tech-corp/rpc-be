@@ -1491,8 +1491,6 @@ class StaffPayrollController
 
     public function export(Request $request)
     {
-
-
         if (!($request->user()->roleId == 1 || in_array($request->user()->jobTitleId, [8, 13]))) {
             return response()->json([
                 'message' => 'Unauthorized. Only admin or specific job titles can export data.'

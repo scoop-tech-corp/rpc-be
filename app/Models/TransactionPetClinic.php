@@ -15,6 +15,7 @@ class TransactionPetClinic extends Model
 
     protected $fillable = [
         'registrationNo',
+        'nota_number',
         'status',
         'isNewCustomer',
         'isNewPet',
@@ -27,6 +28,9 @@ class TransactionPetClinic extends Model
         'endDate',
         'doctorId',
         'note',
+        'proofOfPayment',
+        'originalName',
+        'proofRandomName',
         'userId',
         'userUpdateId'
     ];

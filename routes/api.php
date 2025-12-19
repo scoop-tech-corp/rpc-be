@@ -48,6 +48,7 @@ use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\Transaction\TransPetClinicController;
 use App\Http\Controllers\AccessControl\AccessControlController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
+use App\Http\Controllers\Product\StockOpnameController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Transaction\TransactionPetShopController;
 use App\Http\Controllers\Report\SalesController as ReportSalesController;
@@ -271,6 +272,20 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/bundle', [BundleController::class, 'update']);
         Route::put('/bundle/status', [BundleController::class, 'changeStatus']);
         Route::delete('/bundle', [BundleController::class, 'delete']);
+
+        Route::group(['prefix' => 'stock-opname'], function () {
+
+            Route::get('/', [StockOpnameController::class, 'index']);
+            Route::get('/scan-barcode', [StockOpnameController::class, 'scanBarcode']);
+            Route::post('/', [StockOpnameController::class, 'create']);
+            Route::post('/input-product', [StockOpnameController::class, 'inputProducts']);
+            Route::get('/detail', [StockOpnameController::class, 'detail']);
+            Route::put('/', [StockOpnameController::class, 'update']);
+            Route::put('/finalize', [StockOpnameController::class, 'finalizeStockOpname']);
+            Route::put('/approval', [StockOpnameController::class, 'approvalStockOpname']);
+            Route::delete('/', [StockOpnameController::class, 'delete']);
+            Route::get('/export', [StockOpnameController::class, 'export']);
+        });
 
         Route::get('/datastatic', [ProductController::class, 'indexDataStatic']);
         Route::delete('/datastatic', [ProductController::class, 'deleteDataStatic']);
@@ -615,8 +630,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/serviceandrecipe', [TransPetClinicController::class, 'serviceandrecipe']);
             Route::post('/checkpromo', [TransPetClinicController::class, 'checkPromo']);
             Route::get('/beforepayment', [TransPetClinicController::class, 'showDataBeforePayment']);
-            Route::get('/promo-result', [TransPetClinicController::class, 'promoResult']);
-            Route::get('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
+            Route::post('/discount', [TransPetClinicController::class, 'transactionDiscount']);
+
+            //pembayaran rawat inap
+            Route::post('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
+            // Route::post('/invoice/inpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
+            Route::post('/confirm-payment', [TransPetClinicController::class, 'confirmPayment']);
+
+            //pembayaran rawat jalan
+            Route::post('/payment/outpatient', [TransPetClinicController::class, 'paymentOutpatient']);
+            Route::get('/invoice/outpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
         });
 
         Route::group(['prefix' => 'petshop'], function () {
