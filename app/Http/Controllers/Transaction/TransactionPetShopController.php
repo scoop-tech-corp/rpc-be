@@ -794,7 +794,6 @@ class TransactionPetShopController
     {
         $lowStockWarnings = [];
 
-
         foreach ($productList as $prod) {
             $productLoc = DB::table('productLocations')
                 ->where('locationId', $locationId)
@@ -814,7 +813,6 @@ class TransactionPetShopController
                 $lowStockWarnings[] = "Stok produk '{$prod['productId']}' akan di bawah batas minimum ({$productLoc->lowStock}). Sisa: {$remainingStock}";
             }
         }
-
 
         if (!empty($selectedPromos['freeItems'])) {
             $freeItems = DB::table('promotionFreeItems')
@@ -873,54 +871,6 @@ class TransactionPetShopController
             ->where('productId', $productId)
             ->decrement('diffStock', $quantity);
     }
-
-    // public function update(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'id' => 'required|integer|exists:transactionpetshop,id',
-    //         'registrationNo' => 'required|string',
-    //         'locationId' => 'required|integer',
-    //         'customerId' => 'required|integer',
-    //         'note' => 'nullable|string',
-    //         'paymentMethod' => 'required',
-    //         'totalAmount' => 'required|numeric',
-    //         'totalDiscount' => 'required|numeric',
-    //         'totalPayment' => 'required|numeric',
-    //         'promoNotes' => 'nullable|array',
-    //         'isPayed' => 'required|boolean',
-    //         'totalUsePromo' => 'required|numeric',
-    //     ]);
-
-    //     $user = $request->user();
-
-    //     if (!in_array($user->roleId, [1, 6])) {
-    //         return response()->json(['message' => 'Unauthorized. Only admin and officer can update transactions.'], 403);
-    //     }
-
-    //     $updated = DB::table('transactionpetshop')
-    //         ->where('id', $request->id)
-    //         ->update([
-    //             'registrationNo' => $request->registrationNo,
-    //             'locationId' => $request->locationId,
-    //             'customerId' => $request->customerId,
-    //             'note' => $request->note,
-    //             'paymentMethod' => $request->paymentMethod,
-    //             'userId' => $request->user()->id,
-    //             'totalAmount' => $request->totalAmount,
-    //             'totalDiscount' => $request->totalDiscount,
-    //             'totalPayment' => $request->totalPayment,
-    //             'promoNotes' => !empty($request->promoNotes) ? json_encode($request->promoNotes) : null,
-    //             'isPayed' => $request->isPayed,
-    //             'totalUsePromo' => $request->totalUsePromo,
-    //             'updated_at' => now(),
-    //         ]);
-
-    //     if ($updated) {
-    //         return response()->json(['message' => 'Transaction updated successfully.']);
-    //     } else {
-    //         return response()->json(['message' => 'No changes made or transaction not found.'], 404);
-    //     }
-    // }
 
     private function handleFreeItemsPromo($locationId, $promoIds, $userId, $transactionId)
     {
@@ -1397,7 +1347,7 @@ class TransactionPetShopController
 
                 if (!$bundleData) continue;
 
-                $includedItems = DB::table('promotionBundleDetails as pbd')
+                $includedItems = DB::table('promotion_bundle_detail_products as pbd')
                     ->join('products as p', 'p.id', '=', 'pbd.productId')
                     ->where('pbd.promoBundleId', '=', $bundleData->promoBundleId)
                     ->select('p.fullName as name', 'p.price as normal_price')
@@ -1711,7 +1661,9 @@ class TransactionPetShopController
             ], 400);
         }
 
-        if ($transaction->paymentMethod == 1) {
+        $payment = DB::table('paymentmethod')->where('id', $transaction->paymentMethod)->first();
+
+        if ($payment->name == 'Cash' || $payment->name == 'cash') {
             return response()->json([
                 'status' => 'warning',
                 'message' => 'Metode pembayaran Cash tidak perlu konfirmasi atau bukti pembayaran.'

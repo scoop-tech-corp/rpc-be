@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class StockOpnameUser extends Model
+{
+    protected $table = "stock_opname_users";
+
+    protected $dates = ['created_at', 'DeletedAt'];
+
+    protected $guarded = ['id'];
+
+    protected $fillable = [
+        'stockOpnameId',
+        'usersId',
+        'userId',
+        'userUpdateId'
+    ];
+}
