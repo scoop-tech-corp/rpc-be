@@ -231,7 +231,7 @@ class TransPetClinicController extends Controller
                 'isSterile' => 'required|bool',
                 'typeOfCare' => 'required|int',
                 'doctorId' => 'required|int',
-                'note' => 'nullable|string',
+                'note' => 'required|string',
             ]);
 
             if ($validate->fails()) {
@@ -253,7 +253,7 @@ class TransPetClinicController extends Controller
                 //'isSterile' => 'required|bool',
                 'typeOfCare' => 'required|int',
                 'doctorId' => 'required|int',
-                'note' => 'nullable|string',
+                'note' => 'required|string',
             ]);
 
             if ($validate->fails()) {
