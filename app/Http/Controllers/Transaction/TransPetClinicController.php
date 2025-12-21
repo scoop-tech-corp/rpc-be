@@ -456,7 +456,23 @@ class TransPetClinicController extends Controller
             ->orderBy('tl.id', 'desc')
             ->get();
 
-        $data = ['detail' => $detail, 'transactionLogs' => $log];
+        $paymentLog = DB::table('transaction_pet_clinic_payment_totals as tpt')
+            ->join('transactionPetClinics as t', 't.id', 'tpt.transactionId')
+            ->join('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
+            ->join('users as u', 'u.id', 'tpt.userId')
+            ->select(
+                'tpt.id',
+                'tpt.amount',
+                'tpt.nota_number as notaNumber',
+                'pm.name as paymentMethod',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%m:%s') as date")
+            )
+            ->where('t.id', '=', $request->id)
+            ->orderBy('tpt.id', 'desc')
+            ->get();
+
+        $data = ['detail' => $detail, 'transactionLogs' => $log, 'paymentLogs' => $paymentLog];
 
         return response()->json($data, 200);
     }
@@ -1320,7 +1336,7 @@ class TransPetClinicController extends Controller
             'tropicalMedicine' => 'nullable|string',
             'vaccination' => 'nullable|string',
             'othersTreatment' => 'nullable|string',
-        ],$messages);
+        ], $messages);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
@@ -2906,7 +2922,7 @@ class TransPetClinicController extends Controller
             $tahun = $now->format('Y');
             $bulan = $now->format('m');
 
-            $jumlahTransaksi = DB::table('transactionPetClinics')
+            $jumlahTransaksi = DB::table('transaction_pet_clinic_payment_totals')
                 ->where('locationId', $locationId)
                 ->whereYear('created_at', $tahun)
                 ->whereMonth('created_at', $bulan)
