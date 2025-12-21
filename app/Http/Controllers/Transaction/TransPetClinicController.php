@@ -457,7 +457,6 @@ class TransPetClinicController extends Controller
             ->get();
 
         $paymentLog = DB::table('transaction_pet_clinic_payment_totals as tpt')
-            ->join('transactionPetClinics as t', 't.id', 'tpt.transactionId')
             ->join('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
             ->join('users as u', 'u.id', 'tpt.userId')
             ->select(
@@ -468,7 +467,7 @@ class TransPetClinicController extends Controller
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%m:%s') as date")
             )
-            ->where('t.id', '=', $request->id)
+            ->where('tpt.transactionId', '=', $request->id)
             ->orderBy('tpt.id', 'desc')
             ->get();
 
