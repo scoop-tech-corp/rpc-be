@@ -3099,17 +3099,10 @@ class TransPetClinicController extends Controller
             ], 400);
         }
 
-        if ($trans_pay->paymentMethodId == 1) {
-            return response()->json([
-                'status' => 'warning',
-                'message' => 'Metode pembayaran Cash tidak perlu konfirmasi atau bukti pembayaran.'
-            ], 400);
-        }
-
         if (!$request->hasFile('proof')) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Bukti pembayaran wajib diunggah untuk metode non-tunai.'
+                'message' => 'Bukti pembayaran wajib diunggah!'
             ], 422);
         }
 
@@ -3137,7 +3130,17 @@ class TransPetClinicController extends Controller
         $trans_pay->updated_at = now();
         $trans_pay->save();
 
-        statusTransactionPetClinic($request->transactionId, 'Selesai', $request->user()->id);
+        $trans = transaction_pet_clinic_payment_total::where('transactionId', $trans_pay->transactionId)->first();
+
+        $total_amount = $trans->amount;
+        $amount_paid = transaction_pet_clinic_payment_total::where('transactionId', $trans_pay->transactionId)->sum('amountPaid');
+
+        if ($amount_paid < $total_amount)
+            statusTransactionPetClinic($trans_pay->transactionId, 'Menunggu Pembayaran Berikutnya', $request->user()->id);
+        else
+            statusTransactionPetClinic($trans_pay->transactionId, 'Selesai', $request->user()->id);
+
+
         transactionPetClinicLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
 
         return responseCreate();
