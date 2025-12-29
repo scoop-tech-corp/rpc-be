@@ -634,6 +634,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/beforepayment', [TransPetClinicController::class, 'showDataBeforePayment']);
             Route::post('/discount', [TransPetClinicController::class, 'transactionDiscount']);
 
+            Route::get('/invoice', [TransPetClinicController::class, 'printInvoce']);
             //pembayaran rawat inap
             Route::post('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
             // Route::post('/invoice/inpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);

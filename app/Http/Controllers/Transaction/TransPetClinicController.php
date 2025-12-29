@@ -3012,6 +3012,75 @@ class TransPetClinicController extends Controller
         return responseCreate();
     }
 
+    public function printInvoce(Request $request)
+    {
+        $trans = transaction_pet_clinic_payment_total::find($request->paymentId);
+
+        if (!$trans) {
+            return responseInvalid(['Transaction not found!']);
+        }
+
+        $payment = transaction_pet_clinic_payments::where('transactionId', $trans->transactionId)->get();
+
+        $trx = TransactionPetClinic::find($trans->transactionId);
+
+        $locations = DB::table('location')
+            ->leftJoin('location_telephone', 'location.codeLocation', '=', 'location_telephone.codeLocation')
+            ->where(function ($query) {
+                $query->where('location_telephone.usage', 'Utama')
+                    ->orWhereNull('location_telephone.usage');
+            })
+            ->select(
+                'location.locationName',
+                'location.description',
+                'location_telephone.phoneNumber',
+                'location.codeLocation'
+            )
+            ->distinct()
+            ->get();
+
+        $locationGroups = [];
+        foreach ($locations as $location) {
+            $key = $location->codeLocation;
+            if (!isset($locationGroups[$key])) {
+                $locationGroups[$key] = [
+                    'name'        => $location->locationName,
+                    'description' => $location->description,
+                    'phone'       => $location->phoneNumber ?? ''
+                ];
+            }
+        }
+        $formattedLocations = array_values($locationGroups);
+
+        $customer = DB::table('customer as c')
+            ->join('customerTelephones as ct', 'c.id', '=', 'ct.customerId')
+            ->where('c.id', '=', $trx->customerId)
+            ->select('c.firstName', 'ct.phoneNumber', 'c.memberNo')
+            ->first();
+
+        $details = $payment;
+        $namaFile = $trans->nota_number . '.pdf';
+
+        $detail_total = $trans;
+
+        $data = [
+            'locations'      => $formattedLocations,
+            'nota_date'      => Carbon::parse($trans->created_at)->format('d/m/Y'),
+            'no_nota'        => $trans->nota_number ?? '___________',
+            'member_no'      => $customer->memberNo ?? '-',
+            'customer_name'  => $customer->firstName ?? '-',
+            'phone_number'   => $customer->phoneNumber ?? '-',
+            'arrival_time'   => Carbon::parse($trans->created_at)->format('H:i'),
+            'details'        => $details,
+            'total'          => $detail_total,
+            'deposit'        => '-',
+            'total_tagihan'  => $detail_total['total_payment'],
+        ];
+
+        $pdf = Pdf::loadView('invoice.invoice_petclinic_outpatient', $data);
+        return $pdf->download($namaFile);
+    }
+
     public function printInvoceOutpatient(Request $request)
     {
         $trans = TransactionPetClinic::find($request->transactionPetClinicId);
