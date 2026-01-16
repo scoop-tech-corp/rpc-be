@@ -855,107 +855,107 @@ class PetHotelController extends Controller
             return responseInvalid(['All category must one to filled!']);
         }
 
-        if ($services) {
+        // if ($services) {
 
-            $validateServices = Validator::make(
-                $services,
-                [
-                    '*.id' => 'required|integer',
-                    '*.quantity' => 'required|integer',
-                ],
-                [
-                    '*.id.integer' => 'Id Should be Integer!',
-                    '*.id.required' => 'Id Should be Required!',
-                    '*.quantity.integer' => 'Quantity Should be Integer!',
-                    '*.quantity.required' => 'Quantity Should be Required!',
-                ]
-            );
+        //     $validateServices = Validator::make(
+        //         $services,
+        //         [
+        //             '*.id' => 'required|integer',
+        //             '*.quantity' => 'required|integer',
+        //         ],
+        //         [
+        //             '*.id.integer' => 'Id Should be Integer!',
+        //             '*.id.required' => 'Id Should be Required!',
+        //             '*.quantity.integer' => 'Quantity Should be Integer!',
+        //             '*.quantity.required' => 'Quantity Should be Required!',
+        //         ]
+        //     );
 
-            if ($validateServices->fails()) {
-                $errors = $validateServices->errors()->first();
+        //     if ($validateServices->fails()) {
+        //         $errors = $validateServices->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
-            }
-        }
+        //         return response()->json([
+        //             'message' => 'The given data was invalid.',
+        //             'errors' => [$errors],
+        //         ], 422);
+        //     }
+        // }
 
-        if ($productSell) {
+        // if ($productSell) {
 
-            $validateProductSell = Validator::make(
-                $productSell,
-                [
-                    '*.id' => 'required|integer',
-                    '*.quantity' => 'required|integer',
-                ],
-                [
-                    '*.id.integer' => 'Id Should be Integer!',
-                    '*.id.required' => 'Id Should be Required!',
-                    '*.quantity.integer' => 'Quantity Should be Integer!',
-                    '*.quantity.required' => 'Quantity Should be Required!',
-                ]
-            );
+        //     $validateProductSell = Validator::make(
+        //         $productSell,
+        //         [
+        //             '*.id' => 'required|integer',
+        //             '*.quantity' => 'required|integer',
+        //         ],
+        //         [
+        //             '*.id.integer' => 'Id Should be Integer!',
+        //             '*.id.required' => 'Id Should be Required!',
+        //             '*.quantity.integer' => 'Quantity Should be Integer!',
+        //             '*.quantity.required' => 'Quantity Should be Required!',
+        //         ]
+        //     );
 
-            if ($validateProductSell->fails()) {
-                $errors = $validateProductSell->errors()->first();
+        //     if ($validateProductSell->fails()) {
+        //         $errors = $validateProductSell->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
-            }
-        }
+        //         return response()->json([
+        //             'message' => 'The given data was invalid.',
+        //             'errors' => [$errors],
+        //         ], 422);
+        //     }
+        // }
 
-        if ($productClinic) {
+        // if ($productClinic) {
 
-            $validateProductClinic = Validator::make(
-                $productClinic,
-                [
-                    '*.id' => 'required|integer',
-                    '*.quantity' => 'required|integer',
-                ],
-                [
-                    '*.id.integer' => 'Id Should be Integer!',
-                    '*.id.required' => 'Id Should be Required!',
-                    '*.quantity.integer' => 'Quantity Should be Integer!',
-                    '*.quantity.required' => 'Quantity Should be Required!',
-                ]
-            );
+        //     $validateProductClinic = Validator::make(
+        //         $productClinic,
+        //         [
+        //             '*.id' => 'required|integer',
+        //             '*.quantity' => 'required|integer',
+        //         ],
+        //         [
+        //             '*.id.integer' => 'Id Should be Integer!',
+        //             '*.id.required' => 'Id Should be Required!',
+        //             '*.quantity.integer' => 'Quantity Should be Integer!',
+        //             '*.quantity.required' => 'Quantity Should be Required!',
+        //         ]
+        //     );
 
-            if ($validateProductClinic->fails()) {
-                $errors = $validateProductClinic->errors()->first();
+        //     if ($validateProductClinic->fails()) {
+        //         $errors = $validateProductClinic->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
-            }
-        }
+        //         return response()->json([
+        //             'message' => 'The given data was invalid.',
+        //             'errors' => [$errors],
+        //         ], 422);
+        //     }
+        // }
 
-        if ($treatmentPlans) {
+        // if ($treatmentPlans) {
 
-            $validateTreatmentPlans = Validator::make(
-                ['treatmentPlans' => $treatmentPlans],
-                [
-                    'treatmentPlans' => 'required|array',
-                    'treatmentPlans.*' => 'required|integer',
-                ],
-                [
-                    'treatmentPlans.*.required' => 'Id is required!',
-                    'treatmentPlans.*.integer' => 'Id should be integer!',
-                ]
-            );
+        //     $validateTreatmentPlans = Validator::make(
+        //         ['treatmentPlans' => $treatmentPlans],
+        //         [
+        //             'treatmentPlans' => 'required|array',
+        //             'treatmentPlans.*' => 'required|integer',
+        //         ],
+        //         [
+        //             'treatmentPlans.*.required' => 'Id is required!',
+        //             'treatmentPlans.*.integer' => 'Id should be integer!',
+        //         ]
+        //     );
 
-            if ($validateTreatmentPlans->fails()) {
-                $errors = $validateTreatmentPlans->errors()->first();
+        //     if ($validateTreatmentPlans->fails()) {
+        //         $errors = $validateTreatmentPlans->errors()->first();
 
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => [$errors],
-                ], 422);
-            }
-        }
+        //         return response()->json([
+        //             'message' => 'The given data was invalid.',
+        //             'errors' => [$errors],
+        //         ], 422);
+        //     }
+        // }
 
         //proses insert
         DB::beginTransaction();
