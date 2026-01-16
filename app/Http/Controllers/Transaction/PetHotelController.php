@@ -991,7 +991,7 @@ class PetHotelController extends Controller
             foreach ($treatmentPlans as $value) {
                 TransactionPetHotelTreatmentTreatPlan::create([
                     'transactionId' => $request->transactionId,
-                    'treatmentPlanId' => $value,
+                    'treatmentPlanId' => $value['id'],
                     'userId' => $request->user()->id,
                 ]);
             }
