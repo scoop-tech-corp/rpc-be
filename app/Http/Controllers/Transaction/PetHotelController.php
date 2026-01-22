@@ -8,6 +8,7 @@ use App\Models\Customer\CustomerPets;
 use App\Models\Staff\UsersLocation;
 use App\Models\TransactionPetHotel;
 use App\Models\TransactionPetHotelCheck;
+use App\Models\transactionPetHotelTreatmentCage;
 use App\Models\TransactionPetHotelTreatmentProduct;
 use App\Models\TransactionPetHotelTreatmentService;
 use App\Models\TransactionPetHotelTreatmentTreatPlan;
@@ -849,6 +850,7 @@ class PetHotelController extends Controller
         $productSell = json_decode($request->productSells, true);
         $productClinic = json_decode($request->productClinics, true);
         $treatmentPlans = json_decode($request->treatmentPlans, true);
+        $cages = json_decode($request->cages, true);
 
         if (count($services) == 0 && count($productSell) == 0 && count($productClinic) == 0 && count($treatmentPlans) == 0) {
 
@@ -992,6 +994,14 @@ class PetHotelController extends Controller
                 TransactionPetHotelTreatmentTreatPlan::create([
                     'transactionId' => $request->transactionId,
                     'treatmentPlanId' => $value['id'],
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            foreach ($cages as $value) {
+                transactionPetHotelTreatmentCage::create([
+                    'transactionId' => $request->transactionId,
+                    'cageId' => $value,
                     'userId' => $request->user()->id,
                 ]);
             }
