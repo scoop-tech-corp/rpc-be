@@ -54,6 +54,7 @@ class PetHotelController extends Controller
                 't.id',
                 'l.id as locationId',
                 't.registrationNo',
+                't.isTreatment',
                 'l.locationName',
                 'c.firstName',
                 DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
@@ -821,6 +822,10 @@ class PetHotelController extends Controller
             } else {
                 transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
                 statusTransactionPetHotel($request->transactionId, 'Pet diterima masuk Pet Hotel', $request->user()->id);
+                TransactionPetHotel::where('id', '=', $request->transactionId)
+                ->update([
+                    'isTreatment' => true,
+                ]);
             }
         } else {
             transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel karena ' . $request->reasonReject, $request->user()->id);
@@ -851,7 +856,6 @@ class PetHotelController extends Controller
         $productSell = json_decode($request->productSells, true);
         $productClinic = json_decode($request->productClinics, true);
         $treatmentPlans = json_decode($request->treatmentPlans, true);
-        $cages = json_decode($request->cages, true);
 
         if (count($services) == 0 && count($productSell) == 0 && count($productClinic) == 0 && count($treatmentPlans) == 0) {
 
