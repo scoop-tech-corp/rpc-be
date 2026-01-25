@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Transaction;
 use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
+use App\Models\Customer\CustomerTelephones;
 use App\Models\Staff\UsersLocation;
 use App\Models\TransactionPetHotel;
 use App\Models\TransactionPetHotelCheck;
@@ -1017,5 +1018,78 @@ class PetHotelController extends Controller
                 'errors' => $th,
             ]);
         }
+    }
+
+    public function showDataBeforePayment(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $trans = TransactionPetHotel::find($request->transactionId);
+
+        $cages = TransactionPetHotelTreatmentCage::from('transactionPetHotelTreatmentCages as tpcs')
+            ->join('facility_unit as fu', 'fu.id', '=', 'tpcs.cageId')
+            ->select('fu.id', 'fu.unitName')->where('transactionId', $request->transactionId)
+            ->first();
+
+        if (!$trans) {
+            return responseInvalid(['Transaction is not found!']);
+        }
+
+        $phone = CustomerTelephones::where('customerId', '=', $trans->customerId)
+            ->where('usage', '=', 'Utama')
+            ->first();
+
+        $cust = Customer::find($trans->customerId);
+
+        $dataServices = TransactionPetHotelTreatmentService::from('transactionPetHotelTreatmentServices as tpcs')
+            ->join('services as s', 's.id', '=', 'tpcs.serviceId')
+            ->join('servicesPrice as sp', 's.id', '=', 'sp.service_id')
+            ->select(
+                's.id as serviceId',
+                's.fullName as serviceName',
+                DB::raw("TRIM(tpcs.quantity)+0 as quantity"),
+                DB::raw("TRIM(sp.price)+0 as basedPrice"),
+            )
+            ->where('tpcs.transactionId', '=', $request->transactionId)
+            ->where('sp.location_id', '=', $trans->locationId)
+            ->get();
+
+        $dataProducts = TransactionPetHotelTreatmentProduct::from('transactionPetHotelTreatmentProducts as rc')
+            ->join('products as p', 'p.id', '=', 'rc.productId')
+            ->join('productLocations as pl', 'p.id', '=', 'pl.productId')
+            ->select(
+                'p.id as productId',
+                'p.fullName as productName',
+                DB::raw("CASE WHEN p.category = 'sell' THEN 'Produk Jual' WHEN p.category = 'clinic' THEN 'Produk Klinik' END as productType"),
+                DB::raw("TRIM(rc.quantity)+0 AS quantity"),
+                DB::raw("TRIM(p.price)+0 AS basedPrice")
+            )
+            ->where('rc.transactionId', '=', $request->transactionId)
+            ->where('pl.locationId', '=', $trans->locationId)
+            ->get();
+
+        $data = [
+            'services' => $dataServices,
+            'products' => $dataProducts,
+        ];
+
+        $date = Carbon::parse($trans->endDate);
+        $formatted = $date->locale('id')->isoFormat('dddd, D MMMM YYYY');
+
+        return response()->json([
+            'customerName' => $cust ? $cust->firstName : '',
+            'phoneNumber' => $phone ? $phone->phoneNumber : '',
+            'arrivalTime' => $trans->created_at->locale('id')->translatedFormat('l, j F Y H:i'),
+            'finishTime' => $formatted,
+            'cage' => $cages,
+            'data' => $data,
+        ]);
     }
 }
