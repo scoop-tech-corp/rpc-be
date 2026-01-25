@@ -6,7 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
 use App\Models\Customer\CustomerTelephones;
+use App\Models\PromotionMaster;
 use App\Models\Staff\UsersLocation;
+use App\Models\transaction_pet_hotel_payment_based_sales;
+use App\Models\transaction_pet_hotel_payment_bundle;
+use App\Models\transaction_pet_hotel_payment_total;
+use App\Models\transaction_pet_hotel_payments;
 use App\Models\TransactionPetHotel;
 use App\Models\TransactionPetHotelCheck;
 use App\Models\transactionPetHotelTreatmentCage;
@@ -823,9 +828,9 @@ class PetHotelController extends Controller
                 transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
                 statusTransactionPetHotel($request->transactionId, 'Pet diterima masuk Pet Hotel', $request->user()->id);
                 TransactionPetHotel::where('id', '=', $request->transactionId)
-                ->update([
-                    'isTreatment' => true,
-                ]);
+                    ->update([
+                        'isTreatment' => true,
+                    ]);
             }
         } else {
             transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel karena ' . $request->reasonReject, $request->user()->id);
@@ -1828,5 +1833,262 @@ class PetHotelController extends Controller
         }
 
         return response()->json($response);
+    }
+
+    public function payment(Request $request)
+    {
+        $purchases = $this->ensureIsArray($request->purchases);
+        //$json_string = $request->payment_method;
+        $payment = $this->ensureIsArray($request->payment_method);
+
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+            return responseInvalid($errors);
+        }
+
+        $trans = TransactionPetHotel::find($request->transactionId);
+        if (!$trans) {
+            return responseInvalid(['Transaction not found!']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($purchases as $value) {
+
+                if (array_key_exists('serviceId', $value)) {
+
+                    if ($value['promoId'] != null) {
+
+                        $promo = PromotionMaster::find($value['promoId']);
+                        if (!$promo) {
+                            DB::rollBack();
+                            return responseInvalid(['Promotion not found!']);
+                        }
+
+                        //promo free item
+                        if ($promo->type == 2) {
+
+                            $trx = new transaction_pet_hotel_payments();
+                            $trx->transactionId = $request->transactionId;
+                            $trx->paymentMethodId = $payment['paymentId'];
+                            $trx->promoId = $promo->id;
+                            $trx->serviceId = $value['serviceId'];
+                            $trx->quantity = $value['quantity'];
+                            $trx->discountType = $value['discountType'];
+                            if ($value['discountType'] == 'percent') {
+                                $trx->discountPercent = $value['discount'];
+                            } else {
+                                $trx->discountAmount = $value['discount'];
+                            }
+                            $trx->userId = $request->user()->id;
+                            $trx->save();
+                        }
+                    } else {
+                        $trx = new transaction_pet_hotel_payments();
+                        $trx->transactionId = $request->transactionId;
+                        $trx->paymentMethodId = $payment['paymentId'];
+                        $trx->serviceId = $value['serviceId'];
+                        $trx->quantity = $value['quantity'];
+                        $trx->price = $value['unit_price'];
+                        $trx->priceOverall = $value['total'];
+                        $trx->userId = $request->user()->id;
+                        $trx->save();
+                    }
+                } else if (array_key_exists('productId', $value)) {
+
+                    if ($value['promoId'] != null) {
+
+                        $promo = PromotionMaster::find($value['promoId']);
+                        if (!$promo) {
+                            DB::rollBack();
+                            return responseInvalid(['Promotion not found!']);
+                        }
+
+                        if ($promo->type == 2) {
+
+                            $trx = new transaction_pet_hotel_payments();
+                            $trx->transactionId = $request->transactionId;
+                            $trx->paymentMethodId = $payment['paymentId'];
+                            $trx->promoId = $promo->id;
+                            $trx->productId = $value['productId'];
+                            $trx->quantity = $value['quantity'];
+                            $trx->discountType = $value['discountType'];
+                            if ($value['discountType'] == 'percent') {
+                                $trx->discountPercent = $value['discount'];
+                                $trx->discountAmount = 0;
+                            } else {
+                                $trx->discountAmount = $value['discount'];
+                                $trx->discountPercent = 0;
+                            }
+                            $trx->price = $value['unit_price'];
+                            $trx->priceOverall = $value['total'];
+                            $trx->userId = $request->user()->id;
+                            $trx->save();
+                        } elseif ($promo->type == 3) {
+                            //bundle
+
+                        }
+                    } else {
+                        $trx = new transaction_pet_hotel_payments();
+                        $trx->transactionId = $request->transactionId;
+                        $trx->paymentMethodId = $payment['paymentId'];
+                        $trx->promoId = $promo->id;
+                        $trx->productId = $value['productId'];
+                        $trx->quantity = $value['quantity'];
+                        $trx->price = $value['unit_price'];
+                        $trx->priceOverall = $value['total'];
+                        $trx->userId = $request->user()->id;
+                        $trx->save();
+                    }
+                } else if (array_key_exists('buy_product_id', $value)) {
+
+                    $promo = PromotionMaster::find($value['promoId']);
+                    if (!$promo) {
+                        DB::rollBack();
+                        return responseInvalid(['Promotion not found!']);
+                    }
+
+                    $trx = new transaction_pet_hotel_payments();
+                    $trx->transactionId = $request->transactionId;
+                    $trx->paymentMethodId = $payment['paymentId'];
+                    $trx->promoId = $promo->id;
+                    $trx->productBuyId = $value['buy_product_id'];
+                    $trx->productFreeId = $value['free_product_id'];
+                    $trx->quantity = $value['quantity'] + $value['bonus'];
+                    $trx->quantityBuy = $value['quantity'];
+                    $trx->quantityFree = $value['bonus'];
+                    $trx->price = $value['unit_price'];
+                    $trx->priceOverall = $value['total'];
+                    $trx->userId = $request->user()->id;
+                    $trx->save();
+                } else if ($value['promoId'] != 'null' && $value['promoCategory'] == 'bundle') {
+
+                    //bundle
+                    $promo = PromotionMaster::find($value['promoId']);
+                    if (!$promo) {
+                        DB::rollBack();
+                        return responseInvalid(['Promotion not found!']);
+                    }
+
+                    $trx = new transaction_pet_hotel_payments();
+                    $trx->transactionId = $request->transactionId;
+                    $trx->paymentMethodId = $payment['paymentId'];
+                    $trx->promoId = $promo->id;
+                    $trx->price = $value['unit_price'];
+                    $trx->priceOverall = $value['total'];
+                    $trx->isBundle = true;
+                    $trx->userId = $request->user()->id;
+                    $trx->save();
+
+                    // $amountBundling = $value['total'];
+                    // $amountTotal = 0;
+
+                    // foreach ($value['included_items'] as $item) {
+                    //     $amountTotal += $item['unit_price'];
+                    // }
+
+                    // $normalPriceRatio = $amountBundling / $amountTotal;
+
+                    foreach ($value['included_items'] as $item) {
+                        if (array_key_exists('serviceId', $item)) {
+
+                            $bundle = new transaction_pet_hotel_payment_bundle();
+                            $bundle->paymentId = $trx->id;
+                            $bundle->promoId = $promo->id;
+                            $bundle->serviceId = $item['serviceId'];
+                            $bundle->quantity = $item['quantity'];
+                            $bundle->amount = $item['unit_price'];
+                            //* $normalPriceRatio;
+                            //$bundle->priceOverall = $item['quantity'] * ($item['unit_price'] * $normalPriceRatio);
+                            $bundle->userId = $request->user()->id;
+                            $bundle->save();
+                        } else if (array_key_exists('productId', $item)) {
+
+                            $bundle = new transaction_pet_hotel_payment_bundle();
+                            $bundle->paymentId = $trx->id;
+                            $bundle->promoId = $promo->id;
+                            $bundle->productId = $item['productId'];
+                            $bundle->quantity = $item['quantity'];
+                            $bundle->amount = $item['unit_price'];
+                            //* $normalPriceRatio;
+                            //$bundle->priceOverall = $item['quantity'] * ($item['unit_price'] * $normalPriceRatio);
+                            $bundle->userId = $request->user()->id;
+                            $bundle->save();
+                        }
+                    }
+                }
+            }
+
+            $detail = $this->ensureIsArray($request->detail_total);
+
+            if (array_key_exists('promoBasedSaleId', $detail)) {
+
+                $promo = PromotionMaster::find($detail['promoBasedSaleId']);
+                if (!$promo) {
+                    DB::rollBack();
+                    return responseInvalid(['Promotion based sales not found!']);
+                }
+
+                $sales = new transaction_pet_hotel_payment_based_sales();
+                $sales->transactionId = $request->transactionId;
+                $sales->paymentMethodId = $payment['paymentId'];
+                $sales->promoId = $detail['promoBasedSaleId'];
+                $sales->amountDiscount = $detail['discount_based_sales'];
+                $sales->userId = $request->user()->id;
+                $sales->save();
+            }
+
+            //detail total
+            $total = new transaction_pet_hotel_payment_total();
+            $total->transactionId = $request->transactionId;
+            $total->paymentmethodId = $payment['paymentId'];
+            $total->amount = $detail['total_payment'];
+            $total->amountPaid = $payment['amountPaid'];
+
+            if (array_key_exists('next_payment', $payment)) {
+                $total->nextPayment = $payment['next_payment'];
+            }
+
+            if (array_key_exists('duration', $payment)) {
+                $total->duration = $payment['duration'];
+                $total->tenor = $payment['tenor'];
+            }
+
+            $locationId = $trans->locationId;
+
+            $now = Carbon::now();
+            $tahun = $now->format('Y');
+            $bulan = $now->format('m');
+
+            $jumlahTransaksi = DB::table('transaction_pet_hotel_payment_totals as tp')
+                ->join('transaction_pet_hotels as tpc', 'tp.transactionId', '=', 'tpc.id')
+                ->where('tpc.locationId', $locationId)
+                ->whereYear('tp.created_at', $tahun)
+                ->whereMonth('tp.created_at', $bulan)
+                ->count();
+
+            $nomorUrut = str_pad($jumlahTransaksi + 1, 4, '0', STR_PAD_LEFT);
+
+            $notaNumber = "INV/PH/{$locationId}/{$tahun}/{$bulan}/{$nomorUrut}";
+            $total->nota_number = $notaNumber;
+
+            $total->userId = $request->user()->id;
+            $total->save();
+
+            transactionPetHotelLog($request->transactionId, 'Nota diterbitkan', '', $request->user()->id);
+
+            statusTransactionPetHotel($request->transactionId, 'Menunggu konfirmasi pembayaran', $request->user()->id);
+            DB::commit();
+
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
     }
 }

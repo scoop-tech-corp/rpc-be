@@ -2921,10 +2921,11 @@ class TransPetClinicController extends Controller
             $tahun = $now->format('Y');
             $bulan = $now->format('m');
 
-            $jumlahTransaksi = DB::table('transaction_pet_clinic_payment_totals')
-                ->where('locationId', $locationId)
-                ->whereYear('created_at', $tahun)
-                ->whereMonth('created_at', $bulan)
+            $jumlahTransaksi = DB::table('transaction_pet_clinic_payment_totals as tp')
+                ->join('transaction_pet_clinics as tpc', 'tp.transactionId', '=', 'tpc.id')
+                ->where('tpc.locationId', $locationId)
+                ->whereYear('tp.created_at', $tahun)
+                ->whereMonth('tp.created_at', $bulan)
                 ->count();
 
             $nomorUrut = str_pad($jumlahTransaksi + 1, 4, '0', STR_PAD_LEFT);
