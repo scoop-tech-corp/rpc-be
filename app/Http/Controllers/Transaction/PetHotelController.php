@@ -998,13 +998,15 @@ class PetHotelController extends Controller
                 ]);
             }
 
-            foreach ($cages as $value) {
-                transactionPetHotelTreatmentCage::create([
-                    'transactionId' => $request->transactionId,
-                    'cageId' => $value,
-                    'userId' => $request->user()->id,
-                ]);
-            }
+            transactionPetHotelTreatmentCage::create([
+                'transactionId' => $request->transactionId,
+                'cageId' => $request->cageId,
+                'userId' => $request->user()->id,
+            ]);
+
+            statusTransactionPetHotel($request->transactionId, 'Proses Pembayaran', $request->user()->id);
+
+            transactionPetHotelLog($request->transactionId, 'Input Treatment dan Kandang Sudah Selesai', '', $request->user()->id);
 
             return responseCreate();
         } catch (\Throwable $th) {
