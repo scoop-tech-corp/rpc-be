@@ -1400,4 +1400,17 @@ class FacilityController extends Controller
 
         return responseList($data);
     }
+
+    public function cage(Request $request)
+    {
+        $data = DB::table('facility_unit as f')
+            ->select('f.id', 'f.unitName', 'f.capacity', 'f.amount')
+            ->where('f.isDeleted', '=', 0)
+            ->where('f.status', '=', 1)
+            ->where('f.capacity', '>', 0)
+            ->where('f.locationId', '=', $request->locationId)
+            ->get();
+
+        return responseList($data);
+    }
 }

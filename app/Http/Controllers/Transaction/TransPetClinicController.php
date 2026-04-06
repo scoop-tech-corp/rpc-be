@@ -456,7 +456,22 @@ class TransPetClinicController extends Controller
             ->orderBy('tl.id', 'desc')
             ->get();
 
-        $data = ['detail' => $detail, 'transactionLogs' => $log];
+        $paymentLog = DB::table('transaction_pet_clinic_payment_totals as tpt')
+            ->join('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
+            ->join('users as u', 'u.id', 'tpt.userId')
+            ->select(
+                'tpt.id',
+                'tpt.amount',
+                'tpt.nota_number as notaNumber',
+                'pm.name as paymentMethod',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%m:%s') as date")
+            )
+            ->where('tpt.transactionId', '=', $request->id)
+            ->orderBy('tpt.id', 'desc')
+            ->get();
+
+        $data = ['detail' => $detail, 'transactionLogs' => $log, 'paymentLogs' => $paymentLog];
 
         return response()->json($data, 200);
     }
@@ -1320,7 +1335,7 @@ class TransPetClinicController extends Controller
             'tropicalMedicine' => 'nullable|string',
             'vaccination' => 'nullable|string',
             'othersTreatment' => 'nullable|string',
-        ],$messages);
+        ], $messages);
 
         if ($validate->fails()) {
             $errors = $validate->errors()->all();
@@ -2906,10 +2921,11 @@ class TransPetClinicController extends Controller
             $tahun = $now->format('Y');
             $bulan = $now->format('m');
 
-            $jumlahTransaksi = DB::table('transactionPetClinics')
-                ->where('locationId', $locationId)
-                ->whereYear('created_at', $tahun)
-                ->whereMonth('created_at', $bulan)
+            $jumlahTransaksi = DB::table('transaction_pet_clinic_payment_totals as tp')
+                ->join('transaction_pet_clinics as tpc', 'tp.transactionId', '=', 'tpc.id')
+                ->where('tpc.locationId', $locationId)
+                ->whereYear('tp.created_at', $tahun)
+                ->whereMonth('tp.created_at', $bulan)
                 ->count();
 
             $nomorUrut = str_pad($jumlahTransaksi + 1, 4, '0', STR_PAD_LEFT);
@@ -2924,6 +2940,8 @@ class TransPetClinicController extends Controller
 
             statusTransactionPetClinic($request->transactionId, 'Menunggu konfirmasi pembayaran', $request->user()->id);
             DB::commit();
+
+            updateLastTransaction($trans->customerId);
 
             return responseCreate();
         } catch (\Throwable $th) {
@@ -2995,6 +3013,75 @@ class TransPetClinicController extends Controller
         }
 
         return responseCreate();
+    }
+
+    public function printInvoce(Request $request)
+    {
+        $trans = transaction_pet_clinic_payment_total::find($request->paymentId);
+
+        if (!$trans) {
+            return responseInvalid(['Transaction not found!']);
+        }
+
+        $payment = transaction_pet_clinic_payments::where('transactionId', $trans->transactionId)->get();
+
+        $trx = TransactionPetClinic::find($trans->transactionId);
+
+        $locations = DB::table('location')
+            ->leftJoin('location_telephone', 'location.codeLocation', '=', 'location_telephone.codeLocation')
+            ->where(function ($query) {
+                $query->where('location_telephone.usage', 'Utama')
+                    ->orWhereNull('location_telephone.usage');
+            })
+            ->select(
+                'location.locationName',
+                'location.description',
+                'location_telephone.phoneNumber',
+                'location.codeLocation'
+            )
+            ->distinct()
+            ->get();
+
+        $locationGroups = [];
+        foreach ($locations as $location) {
+            $key = $location->codeLocation;
+            if (!isset($locationGroups[$key])) {
+                $locationGroups[$key] = [
+                    'name'        => $location->locationName,
+                    'description' => $location->description,
+                    'phone'       => $location->phoneNumber ?? ''
+                ];
+            }
+        }
+        $formattedLocations = array_values($locationGroups);
+
+        $customer = DB::table('customer as c')
+            ->join('customerTelephones as ct', 'c.id', '=', 'ct.customerId')
+            ->where('c.id', '=', $trx->customerId)
+            ->select('c.firstName', 'ct.phoneNumber', 'c.memberNo')
+            ->first();
+
+        $details = $payment;
+        $namaFile = $trans->nota_number . '.pdf';
+
+        $detail_total = $trans;
+
+        $data = [
+            'locations'      => $formattedLocations,
+            'nota_date'      => Carbon::parse($trans->created_at)->format('d/m/Y'),
+            'no_nota'        => $trans->nota_number ?? '___________',
+            'member_no'      => $customer->memberNo ?? '-',
+            'customer_name'  => $customer->firstName ?? '-',
+            'phone_number'   => $customer->phoneNumber ?? '-',
+            'arrival_time'   => Carbon::parse($trans->created_at)->format('H:i'),
+            'details'        => $details,
+            'total'          => $detail_total,
+            'deposit'        => '-',
+            'total_tagihan'  => $detail_total['total_payment'],
+        ];
+
+        $pdf = Pdf::loadView('invoice.invoice_petclinic_outpatient', $data);
+        return $pdf->download($namaFile);
     }
 
     public function printInvoceOutpatient(Request $request)
@@ -3084,17 +3171,10 @@ class TransPetClinicController extends Controller
             ], 400);
         }
 
-        if ($trans_pay->paymentMethodId == 1) {
-            return response()->json([
-                'status' => 'warning',
-                'message' => 'Metode pembayaran Cash tidak perlu konfirmasi atau bukti pembayaran.'
-            ], 400);
-        }
-
         if (!$request->hasFile('proof')) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Bukti pembayaran wajib diunggah untuk metode non-tunai.'
+                'message' => 'Bukti pembayaran wajib diunggah!'
             ], 422);
         }
 
@@ -3122,7 +3202,17 @@ class TransPetClinicController extends Controller
         $trans_pay->updated_at = now();
         $trans_pay->save();
 
-        statusTransactionPetClinic($request->transactionId, 'Selesai', $request->user()->id);
+        $trans = transaction_pet_clinic_payment_total::where('transactionId', $trans_pay->transactionId)->first();
+
+        $total_amount = $trans->amount;
+        $amount_paid = transaction_pet_clinic_payment_total::where('transactionId', $trans_pay->transactionId)->sum('amountPaid');
+
+        if ($amount_paid < $total_amount)
+            statusTransactionPetClinic($trans_pay->transactionId, 'Menunggu Pembayaran Berikutnya', $request->user()->id);
+        else
+            statusTransactionPetClinic($trans_pay->transactionId, 'Selesai', $request->user()->id);
+
+
         transactionPetClinicLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
 
         return responseCreate();

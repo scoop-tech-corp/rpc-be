@@ -17,6 +17,7 @@ class TransactionPetHotel extends Model
         'registrationNo',
         'petCheckRegistrationNo',
         'status',
+        'isTreatment',
         'isNewCustomer',
         'isNewPet',
         'locationId',
