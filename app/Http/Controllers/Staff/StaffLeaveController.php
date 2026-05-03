@@ -41,7 +41,6 @@ class StaffLeaveController extends Controller
 
     public function getAllStaffActive()
     {
-
         try {
 
             $getUser = User::select(
@@ -57,109 +56,66 @@ class StaffLeaveController extends Controller
         }
     }
 
-
-
     public function adjustBalance(Request $request)
     {
-
         if (!adminAccess($request->user()->id)) {
             return responseInvalid(['User Access not Authorize!']);
+        }
+
+        $validate = Validator::make($request->all(), [
+            'usersId' => 'required|integer',
+            'balanceTypeId' => 'required|integer',
+            'amount' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        // 1. Mapping tipe balance ke nama kolom database
+        $columns = [
+            1 => 'annualLeaveAllowance',
+            2 => 'annualLeaveAllowanceRemaining',
+            3 => 'annualSickAllowance',
+            4 => 'annualSickAllowanceRemaining',
+        ];
+
+        // 2. Validasi list order / balance type
+        if (!isset($columns[$request->balanceTypeId])) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => 'Balance type id must same within the array',
+                'balanceTypeId' => array_keys($columns),
+            ]);
         }
 
         DB::beginTransaction();
 
         try {
+            // 3. Gunakan exists() karena lebih efisien dari first() jika hanya butuh validasi ada/tidaknya data
+            $userExists = User::where('id', $request->usersId)->where('isDeleted', '0')->exists();
 
-
-            $validate = Validator::make(
-                $request->all(),
-                [
-                    'usersId' => 'required|integer',
-                    'balanceTypeId' => 'required|integer',
-                    'amount' => 'required|integer',
-                ]
-            );
-
-            if ($validate->fails()) {
-                $errors = $validate->errors()->all();
-                return responseInvalid($errors);
-            }
-
-
-            $User =  User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->first();
-
-            if ($User == null) {
-
+            if (!$userExists) {
+                DB::rollBack();
                 return response()->json([
                     'message' => 'Failed',
                     'errors' => 'User id not found, please try different id',
                 ], 422);
-
-                return responseInvalid(['User id not found, please try different id']);
+                // Menghapus dead code: return responseInvalid([...]) yang sebelumnya ada di bawah return json
             }
 
-
-            $listOrder = array(
-                1,
-                2,
-                3,
-                4
-            );
-
-            if (!in_array($request->balanceTypeId, $listOrder)) {
-
-                return response()->json([
-                    'message' =>  'The given data was invalid.',
-                    'errors' => 'Balance type id must same within the array',
-                    'balanceTypeId' => $listOrder,
+            // 4. Update langsung secara dinamis berdasarkan mapping
+            User::where('id', $request->usersId)
+                ->update([
+                    $columns[$request->balanceTypeId] => $request->amount,
                 ]);
-            }
-
-
-            if ($request->balanceTypeId == 1) {
-
-
-
-                User::where('id', '=', $request->usersId)
-                    ->update(
-                        [
-                            'annualLeaveAllowance' => $request->amount,
-                        ],
-                    );
-            } else if ($request->balanceTypeId == 2) {
-
-                User::where('id', '=', $request->usersId)
-                    ->update(
-                        [
-                            'annualLeaveAllowanceRemaining' => $request->amount,
-                        ],
-                    );
-            } else if ($request->balanceTypeId == 3) {
-
-                User::where('id', '=', $request->usersId)
-                    ->update(
-                        [
-                            'annualSickAllowance' => $request->amount,
-                        ],
-                    );
-            } else if ($request->balanceTypeId == 4) {
-
-                User::where('id', '=', $request->usersId)
-                    ->update(
-                        [
-                            'annualSickAllowanceRemaining' => $request->amount,
-                        ],
-                    );
-            }
 
             DB::commit();
 
             return responseUpdate();
-        } catch (Exception $e) {
-
+        } catch (\Exception $e) {
             DB::rollback();
-
-            return responseInvalid([$e]);
+            return responseInvalid([$e->getMessage()]);
         }
     }
 
@@ -415,206 +371,129 @@ class StaffLeaveController extends Controller
         DB::beginTransaction();
 
         try {
-
-            $validate = Validator::make(
-                $request->all(),
-                [
-                    'usersId' => 'required|integer',
-                    'leaveType' => 'required|string',
-                    'fromDate' => 'required|date_format:Y-m-d|after_or_equal:today',
-                    'toDate' => 'required|date_format:Y-m-d',
-                    'totalDays' => 'required|integer',
-                    'workingDays' => 'required',
-                    'remark' => 'required|string',
-
-                ]
-            );
+            $validate = Validator::make($request->all(), [
+                'usersId'     => 'required|integer',
+                'leaveType'   => 'required|string',
+                'fromDate'    => 'required|date_format:Y-m-d',
+                'toDate'      => 'required|date_format:Y-m-d',
+                'totalDays'   => 'required|integer',
+                'workingDays' => 'required',
+                'remark'      => 'required|string',
+            ]);
 
             if ($validate->fails()) {
-                $errors = $validate->errors()->all();
-                return responseInvalid($errors);
+                return responseInvalid($validate->errors()->all());
             }
 
-            $valueDays = null;
-            $json_array_name = json_decode($request->workingDays, true);
+            $user = User::where('id', $request->usersId)->where('isDeleted', 0)->first();
 
-            $hitungNameDays = 0;
+            $joinDate = Carbon::parse($user->joinDate);
+            $now = Carbon::now();
 
-            foreach ($json_array_name as $val) {
+            $yearsOfService = $joinDate->diffInYears($now);
 
-                if (preg_match('/\d+/', $val['name'])) {
+            if ($yearsOfService >= 1) {
+                return responseInvalid(['Cannot request leave, your join date more than 1 year']);
+            }
 
+            $validDays   = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            $workingDays = json_decode($request->workingDays, true);
+            $dayNames    = [];
+
+            foreach ($workingDays as $day) {
+                if (preg_match('/\d+/', $day['name'])) {
                     return responseInvalid(['Working days contain number, please check again']);
-                } else {
-
-
-                    $listOrder = array(
-                        'monday',
-                        'tuesday',
-                        'wednesday',
-                        'thursday',
-                        'friday',
-                    );
-
-                    $listOrderUpper = array(
-                        'Monday',
-                        'Tuesday',
-                        'Wednesday',
-                        'Thursday',
-                        'Friday',
-                    );
-
-                    if (!in_array(strtolower($val['name']), $listOrder)) {
-
-                        return response()->json([
-                            'message' =>  'The given data was invalid.',
-                            'errors' => 'Working days value must same within the array',
-                            'workingDays' => $listOrderUpper,
-                        ]);
-                    }
-
-                    if ($valueDays == null) {
-
-                        $valueDays =  $val['name'];
-                    } else {
-
-                        $valueDays = $valueDays . ',' . $val['name'];
-                    }
-
-                    $hitungNameDays = $hitungNameDays + 1;
                 }
+
+                if (!in_array(strtolower($day['name']), $validDays)) {
+                    return response()->json([
+                        'message'     => 'The given data was invalid.',
+                        'errors'      => 'Working days value must same within the array',
+                        'workingDays' => array_map('ucfirst', $validDays),
+                    ]);
+                }
+
+                $dayNames[] = $day['name'];
             }
 
             $start = Carbon::parse($request->fromDate);
-            $end = Carbon::parse($request->toDate);
+            $end   = Carbon::parse($request->toDate);
 
             if ($end < $start) {
-
                 return responseInvalid(['To date must higher than from date!!']);
             }
 
-
-            $countDays = 0;
-
-            $results = Holidays::whereBetween('date', [$start, $end])->get();
-
-            while ($start <= $end) {
-
-                if ($start->isWeekday()) {
-
-                    if (!$results->contains('date', $start->toDateString())) {
-
-                        $countDays = $countDays + 1;
-                    }
-                }
-
-                $start->addDay();
-            }
-
-            if (User::where('id', '=', $request->usersId)->where('isDeleted', '=', '0')->doesntExist()) {
-
+            if (User::where('id', $request->usersId)->where('isDeleted', 0)->doesntExist()) {
                 return responseInvalid(['User id not found, please try different id']);
-            } else {
-
-                $listOrder = array(
-                    'leave allowance',
-                    'sick allowance',
-                );
-
-                if (!in_array(strtolower($request->leaveType), $listOrder)) {
-
-                    return responseInvalid(['Only leave allowance or sick allowance is allowed']);
-                }
-
-
-                $sickallowance =  $request->user()->annualSickAllowanceRemaining;
-                $leaveallowance =  $request->user()->annualLeaveAllowanceRemaining;
-
-
-                if (str_contains(strtolower($request->leaveType), "sick")) {
-
-                    if ($sickallowance == 0) {
-
-                        return responseInvalid(['You dont have any sick allowance left : ' .  $sickallowance]);
-                    }
-
-
-                    if ($request->totalDays > $sickallowance) {
-
-                        return responseInvalid(['Cannot request higher than your remaining sick allowance, your remaining sick allowance : ' .  $sickallowance]);
-                    }
-                } else {
-
-                    if ($leaveallowance == 0) {
-
-                        return responseInvalid(['You dont have any leave allowance left : ' .  $leaveallowance]);
-                    }
-
-
-                    if ($request->totalDays > $leaveallowance) {
-
-                        return responseInvalid(['Cannot request higher than your remaining leave allowance, your remaining leave allowance : ' .  $leaveallowance]);
-                    }
-                }
-
-                $from_date = $request->fromDate;
-                $to_date = $request->toDate;
-
-                $resultCheckExists =  LeaveRequest::where('usersId', $request->usersId)
-                    ->where('status', 'pending')
-                    ->where('fromDate', '<=', $to_date)
-                    ->where('toDate', '>=', $from_date)
-                    ->exists();
-
-                if ($resultCheckExists) {
-
-                    return responseInvalid(['You already had request leave on the spesific date, please check again.']);
-                }
-
-
-                $dataUserLocation = DB::table('usersLocation as a')
-                    ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
-                    ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
-                    ->groupBy('a.usersId')
-                    ->where('a.isDeleted', '=', 0);
-
-                $userName =  User::from('users as a')
-                    ->leftJoinSub($dataUserLocation, 'b', function ($join) {
-                        $join->on('b.usersId', '=', 'id');
-                    })
-                    ->select(
-                        'jobTitleId',
-                        'b.locationName as locationName',
-                        'b.locationId as locationId',
-                        DB::raw("CONCAT(IFNULL(firstName,'') ,' ', IFNULL(middleName,'') ,' ', IFNULL(lastName,'') ,'(', IFNULL(nickName,'') ,')'  ) as name")
-                    )
-                    ->where('id', '=', $request->usersId)
-                    ->where('isDeleted', '=', '0')
-                    ->first();
-
-                $staffLeave = new LeaveRequest();
-                $staffLeave->usersId = $request->usersId;
-                $staffLeave->requesterName = $userName->name;
-                $staffLeave->jobTitle = $userName->jobTitleId;
-                $staffLeave->locationId =  $userName->locationId;
-                $staffLeave->locationName =  $userName->locationName;
-                $staffLeave->leaveType = $request->leaveType;
-                $staffLeave->fromDate = $request->fromDate;
-                $staffLeave->toDate = $request->toDate;
-                $staffLeave->duration = $request->totalDays;
-                $staffLeave->workingDays = $valueDays;
-                $staffLeave->status = "pending";
-                $staffLeave->remark =  $request->remark;
-                $staffLeave->save();
-
-                DB::commit();
-
-                return responseCreate();
             }
+
+            $allowedTypes = ['leave allowance', 'sick allowance'];
+            if (!in_array(strtolower($request->leaveType), $allowedTypes)) {
+                return responseInvalid(['Only leave allowance or sick allowance is allowed']);
+            }
+
+            $isSick    = str_contains(strtolower($request->leaveType), 'sick');
+            $type      = $isSick ? 'sick' : 'leave';
+            $remaining = $isSick
+                ? $request->user()->annualSickAllowanceRemaining
+                : $request->user()->annualLeaveAllowanceRemaining;
+
+            if ($remaining == 0) {
+                return responseInvalid(["You dont have any {$type} allowance left : {$remaining}"]);
+            }
+
+            if ($request->totalDays > $remaining) {
+                return responseInvalid(["Cannot request higher than your remaining {$type} allowance, your remaining {$type} allowance : {$remaining}"]);
+            }
+
+            $overlapping = LeaveRequest::where('usersId', $request->usersId)
+                ->where('status', 'pending')
+                ->where('fromDate', '<=', $request->toDate)
+                ->where('toDate', '>=', $request->fromDate)
+                ->exists();
+
+            if ($overlapping) {
+                return responseInvalid(['You already had request leave on the spesific date, please check again.']);
+            }
+
+            $dataUserLocation = DB::table('usersLocation as a')
+                ->leftJoin('location as b', 'b.id', '=', 'a.locationId')
+                ->select('a.usersId', DB::raw("GROUP_CONCAT(b.id) as locationId"), DB::raw("GROUP_CONCAT(b.locationName) as locationName"))
+                ->groupBy('a.usersId')
+                ->where('a.isDeleted', 0);
+
+            $userName = User::from('users as a')
+                ->leftJoinSub($dataUserLocation, 'b', fn($join) => $join->on('b.usersId', '=', 'id'))
+                ->select(
+                    'jobTitleId',
+                    'b.locationName as locationName',
+                    'b.locationId as locationId',
+                    DB::raw("CONCAT(IFNULL(firstName,''),' ',IFNULL(middleName,''),' ',IFNULL(lastName,''),'(',IFNULL(nickName,''),')') as name")
+                )
+                ->where('id', $request->usersId)
+                ->where('isDeleted', 0)
+                ->first();
+
+            $staffLeave               = new LeaveRequest();
+            $staffLeave->usersId      = $request->usersId;
+            $staffLeave->requesterName = $userName->name;
+            $staffLeave->jobTitle     = $userName->jobTitleId;
+            $staffLeave->locationId   = $userName->locationId;
+            $staffLeave->locationName = $userName->locationName;
+            $staffLeave->leaveType    = $request->leaveType;
+            $staffLeave->fromDate     = $request->fromDate;
+            $staffLeave->toDate       = $request->toDate;
+            $staffLeave->duration     = $request->totalDays;
+            $staffLeave->workingDays  = implode(',', $dayNames);
+            $staffLeave->status       = 'pending';
+            $staffLeave->remark       = $request->remark;
+            $staffLeave->save();
+
+            DB::commit();
+
+            return responseCreate();
         } catch (Exception $e) {
-
             DB::rollback();
-
             return responseInvalid([$e]);
         }
     }
@@ -695,6 +574,11 @@ class StaffLeaveController extends Controller
                 return responseInvalid(['Please input reason if status is reject']);
             }
 
+            $leave = LeaveRequest::where('id', $request->leaveRequestId)->first();
+            $user = User::where('id', $leave->usersId)->where('isDeleted', 0)->first();
+            if ($user->lineManagerId != $request->user()->id) {
+                return responseInvalid(['You are not authorized to approve or reject this leave request']);
+            }
 
             $leaveRequest = LeaveRequest::where('id', '=', $request->leaveRequestId)
                 ->where('status', '=', 'pending')
@@ -4392,9 +4276,6 @@ class StaffLeaveController extends Controller
                     return $temp_column;
                 }
 
-
-
-
                 $data = LeaveRequest::from('leaveRequest as a')
                     ->leftjoin('jobTitle as b', 'a.jobTitle', '=', 'b.id')
                     ->select(
@@ -4548,7 +4429,6 @@ class StaffLeaveController extends Controller
 
     public function getAllHolidaysDate(Request $request)
     {
-
         try {
 
             $valYear = null;

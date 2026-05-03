@@ -47,6 +47,7 @@ use App\Http\Controllers\Transaction\MaterialDataController;
 use App\Http\Controllers\Customer\TemplateCustomerController;
 use App\Http\Controllers\Transaction\TransPetClinicController;
 use App\Http\Controllers\AccessControl\AccessControlController;
+use App\Http\Controllers\Booking\BookingController as BookingBookingController;
 use App\Http\Controllers\Customer\DataStaticCustomerController;
 use App\Http\Controllers\Finance\DataStaticController as FinanceDataStaticController;
 use App\Http\Controllers\Finance\ExpensesController;
@@ -138,6 +139,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
 
+
+    Route::group(['prefix' => 'booking'], function () {
+        Route::post('/', [BookingBookingController::class, 'create']);
+        Route::put('/', [BookingBookingController::class, 'update']);
+        Route::get('/', [BookingBookingController::class, 'index']);
+        Route::get('/detail', [BookingBookingController::class, 'detail']);
+        Route::put('/cancel', [BookingBookingController::class, 'cancelBooking']);
+        Route::delete('/', [BookingBookingController::class, 'delete']);
+    });
     //MODULE PRODUCT
     //list produk
     Route::group(['prefix' => 'product'], function () {
@@ -843,9 +853,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/', [FinanceDashboardController::class, 'index']);
         });
 
-        Route::group(['prefix' => 'expenses'], function () {
-            Route::get('/export', [ExpensesController::class, 'export']);
+        Route::group(['prefix' => 'expense'], function () {
             Route::get('/', [ExpensesController::class, 'index']);
+            Route::post('/', [ExpensesController::class, 'create']);
+            Route::get('/detail', [ExpensesController::class, 'detail']);
+            Route::post('/approval', [ExpensesController::class, 'approval']);
+            Route::get('/export', [ExpensesController::class, 'export']);
+            Route::delete('/', [ExpensesController::class, 'delete']);
         });
 
         Route::group(['prefix' => 'data-static'], function () {
