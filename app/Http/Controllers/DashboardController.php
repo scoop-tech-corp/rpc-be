@@ -150,8 +150,8 @@ class DashboardController extends Controller
 
         // Mengembalikan 3 value dalam bentuk array asosiatif
         return [
-            'newCustomer' =>(string) $newCustomer,
-            'percentageNewCustomer' =>(string) round($percentageNewCustomer, 2), // Dibulatkan agar rapi di UI
+            'newCustomer' => (string) $newCustomer,
+            'percentageNewCustomer' => (string) round($percentageNewCustomer, 2), // Dibulatkan agar rapi di UI
             'isLoss' => $newCustomer >= $prevNewCustomer ? 0 : 1
         ];
     }
@@ -216,150 +216,142 @@ class DashboardController extends Controller
 
         // Mengembalikan 3 value dalam bentuk array asosiatif
         return [
-            'bookings' =>(string) $bookings,
-            'percentageBookings' =>(string) round($percentageBookings, 2), // Dibulatkan agar rapi di UI
+            'bookings' => (string) $bookings,
+            'percentageBookings' => (string) round($percentageBookings, 2), // Dibulatkan agar rapi di UI
             'isLoss' => $bookings >= $prevBookings ? 0 : 1
         ];
     }
 
-    public function upcomingBookInpatien(Request $request)
+    public function upcomingBookingHotel(Request $request)
     {
         if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
             return responseUnauthorize();
         }
 
-        $data = [
-            'totalPagination' => 1,
-            'data' => [
-                [
-                    'id' => 9,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '05/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 8,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 7,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 6,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 5,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-            ],
-        ];
+        $data = DB::table('bookings as b')
+            ->join('bookingsPetHotels as p', 'b.id', 'p.bookingId')
+            ->join('location as l', 'l.id', 'b.locationId')
+            ->join('customer as c', 'c.id', 'b.customerId')
+            ->join('users as u', 'u.id', 'b.doctorId')
+            ->select([
+                'b.id',
+                DB::raw("DATE_FORMAT(b.bookingTime, '%d/%m/%Y') as bookingTime"),
+                'l.locationName as location',
+                DB::raw("CONCAT(c.firstName, IFNULL(CONCAT(' ', c.lastName), '')) as customer"),
+                DB::raw("'Pet Hotel' as serviceName"),
+                'u.firstName as staff',
+                'b.status',
+                'p.additionalInfo as bookingNote',
+            ])
+            ->where('b.isDeleted', '=', 0)
+            ->where('b.status', '=', 0);
 
-        return response()->json($data);
+        if ($request->filled('locationId')) {
+            $data = $data->where('b.locationId', $request->locationId);
+        }
+
+        return response()->json([
+            'data' => $data->get(),
+        ]);
     }
 
-    public function upcomingBookOutpatien(Request $request)
+    public function upcomingBookingClinic(Request $request)
     {
         if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
             return responseUnauthorize();
         }
 
-        $data = [
-            'totalPagination' => 1,
-            'data' => [
-                [
-                    'id' => 9,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '05/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 8,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 7,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 6,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 5,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-            ],
-        ];
+        $data = DB::table('bookings as b')
+            ->join('bookingsPetClinics as p', 'b.id', 'p.bookingId')
+            ->join('location as l', 'l.id', 'b.locationId')
+            ->join('customer as c', 'c.id', 'b.customerId')
+            ->join('users as u', 'u.id', 'b.doctorId')
+            ->select([
+                'b.id',
+                DB::raw("DATE_FORMAT(b.bookingTime, '%d/%m/%Y') as bookingTime"),
+                'l.locationName as location',
+                DB::raw("CONCAT(c.firstName, IFNULL(CONCAT(' ', c.lastName), '')) as customer"),
+                DB::raw("'Pet Clinic' as serviceName"),
+                'u.firstName as staff',
+                'b.status',
+                'p.additionalInfo as bookingNote',
+            ])
+            ->where('b.isDeleted', '=', 0)
+            ->where('b.status', '=', 0);
 
-        return response()->json($data);
+        if ($request->filled('locationId')) {
+            $data = $data->where('b.locationId', $request->locationId);
+        }
+
+        return response()->json([
+            'data' => $data->get(),
+        ]);
+    }
+
+    public function upcomingBookingSalon(Request $request)
+    {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
+        $data = DB::table('bookings as b')
+            ->join('bookingsPetSalons as p', 'b.id', 'p.bookingId')
+            ->join('location as l', 'l.id', 'b.locationId')
+            ->join('customer as c', 'c.id', 'b.customerId')
+            ->join('users as u', 'u.id', 'b.doctorId')
+            ->select([
+                'b.id',
+                DB::raw("DATE_FORMAT(b.bookingTime, '%d/%m/%Y') as bookingTime"),
+                'l.locationName as location',
+                DB::raw("CONCAT(c.firstName, IFNULL(CONCAT(' ', c.lastName), '')) as customer"),
+                DB::raw("'Pet Salon' as serviceName"),
+                'u.firstName as staff',
+                'b.status',
+                'p.additionalInfo as bookingNote',
+            ])
+            ->where('b.isDeleted', '=', 0)
+            ->where('b.status', '=', 0);
+
+        if ($request->filled('locationId')) {
+            $data = $data->where('b.locationId', $request->locationId);
+        }
+
+        return response()->json([
+            'data' => $data->get(),
+        ]);
+    }
+
+    public function upcomingBookingBreeding(Request $request)
+    {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
+        $data = DB::table('bookings as b')
+            ->join('bookingsBreedings as p', 'b.id', 'p.bookingId')
+            ->join('location as l', 'l.id', 'b.locationId')
+            ->join('customer as c', 'c.id', 'b.customerId')
+            ->join('users as u', 'u.id', 'b.doctorId')
+            ->select([
+                'b.id',
+                DB::raw("DATE_FORMAT(b.bookingTime, '%d/%m/%Y') as bookingTime"),
+                'l.locationName as location',
+                DB::raw("CONCAT(c.firstName, IFNULL(CONCAT(' ', c.lastName), '')) as customer"),
+                DB::raw("'Breeding' as serviceName"),
+                'u.firstName as staff',
+                'b.status',
+                'p.additionalInfo as bookingNote',
+            ])
+            ->where('b.isDeleted', '=', 0)
+            ->where('b.status', '=', 0);
+
+        if ($request->filled('locationId')) {
+            $data = $data->where('b.locationId', $request->locationId);
+        }
+
+        return response()->json([
+            'data' => $data->get(),
+        ]);
     }
 
     public function recentActivity(Request $request)

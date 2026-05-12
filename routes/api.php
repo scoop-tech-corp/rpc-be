@@ -84,8 +84,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('/overview', [DashboardController::class, 'overview']);
-        Route::get('/upbookinpatient', [DashboardController::class, 'upcomingBookInpatien']);
-        Route::get('/upbookoutpatient', [DashboardController::class, 'upcomingBookOutpatien']);
+        Route::get('/upcomingbookingclinic', [DashboardController::class, 'upcomingBookingClinic']);
+        Route::get('/upcomingbookinghotel', [DashboardController::class, 'upcomingBookingHotel']);
+        Route::get('/upcomingbookingsalon', [DashboardController::class, 'upcomingBookingSalon']);
+        Route::get('/upcomingbookingbreeding', [DashboardController::class, 'upcomingBookingBreeding']);
         Route::get('/activity', [DashboardController::class, 'recentActivity']);
     });
 
