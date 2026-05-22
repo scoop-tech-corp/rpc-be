@@ -87,30 +87,6 @@ class TransferProductController
                 $number = 'RPC-TRF-' . $number->format('Ymd') . str_pad($findData + 1, 5, 0, STR_PAD_LEFT);
             }
 
-            //find product id destination
-            // if ($request->productType == 'productSell') {
-
-
-            // } elseif ($request->productType == 'productClinic') {
-
-            //     $prodOrigin = ProductClinic::find($request->productId);
-
-            //     if ($prodOrigin) {
-
-            //         $prodDest = DB::table('productClinics as pc')
-            //             ->join('productClinicLocations as pcl', 'pc.id', 'pcl.productClinicId')
-            //             ->select('pc.*', 'pcl.diffStock')
-            //             ->where('pcl.locationId', '=', $request->locationId)
-            //             ->where('pc.fullName', '=', $prodOrigin->fullName)
-            //             ->first();
-            //     } else {
-            //         return response()->json([
-            //             'message' => 'The given data was invalid.',
-            //             'errors' => ['Product does not exist!'],
-            //         ], 422);
-            //     }
-            // }
-
             $prodOrigin = Product::find($request->productId);
 
             if ($prodOrigin) {
@@ -1637,7 +1613,7 @@ class TransferProductController
             return responseInvalid(['Product Transfer are not found!']);
         }
 
-        $datas = json_decode($request->productTranfers, true);
+        $datas = json_decode($request->productTransfers, true) ?? json_decode($request->productTranfers, true);
 
         $validate = Validator::make(
             $datas,
@@ -1841,11 +1817,11 @@ class TransferProductController
                         }
                     }
 
-                    $prodReminder = ProductReminders::where('productId', '=', $detail->productIdOrigin)->get();
+                    $prodReminders = ProductReminders::where('productId', '=', $detail->productIdOrigin)->get();
 
-                    foreach ($prodReminder as $res) {
+                    foreach ($prodReminders as $res) {
 
-                        $prodReminder = ProductReminder::find($res['id']);
+                        $prodReminder = ProductReminders::find($res['id']);
 
                         if ($prodReminder) {
                             $newProductReminder = $prodReminder->replicate();
@@ -1909,7 +1885,7 @@ class TransferProductController
                     'productId' => $detail->productIdDestination,
                     'productRestockId' => 0,
                     'productTransferId' => $master->id,
-                    'productTransferDetailId' => $request->productTransferDetailId,
+                    'productTransferDetailId' => $value['productTransferDetailId'],
                     'transferNumber' => $master->transferNumber,
                     'productRestockDetailId' => 0,
                     'purchaseRequestNumber' => '',

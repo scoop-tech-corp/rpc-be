@@ -202,15 +202,8 @@ class FacilityController extends Controller
                         ], 422);
                     }
                     if ($check->fails()) {
-
                         $errors = $check->errors()->all();
-
-                        foreach ($errors as $checkisu) {
-
-                            if (!(in_array($checkisu, $data_item))) {
-                                array_push($data_item, $checkisu);
-                            }
-                        }
+                        $data_item = array_unique(array_merge($data_item, $errors));
                     }
 
                     $filtered[$key['unitName']][] = $key;
@@ -370,53 +363,44 @@ class FacilityController extends Controller
         }
 
         try {
-            $data_item = [];
+            $existingFacilities = Facility::whereIn('locationId', $request->locationId)
+                ->where('isDeleted', 0)
+                ->pluck('locationId')
+                ->toArray();
 
-            foreach ($request->locationId as $val) {
+            $missingFacilities = array_diff($request->locationId, $existingFacilities);
 
-                $checkIfDataExits = Facility::where([
-                    ['locationId', '=', $val],
-                    ['isDeleted', '=', '0']
-                ])->first();
+            if (!empty($missingFacilities)) {
+                $data_item = array_map(function ($val) {
+                    return 'locationId : ' . $val . ' not found, please try different locationId';
+                }, $missingFacilities);
 
-                if (!$checkIfDataExits) {
-                    array_push($data_item, 'locationId : ' . $val . ' not found, please try different locationId');
-                }
-            }
-
-            if ($data_item) {
                 return response()->json([
                     'message' => 'Inputed data is not valid',
-                    'errors' => $data_item,
+                    'errors' => array_values($data_item),
                 ], 422);
             }
 
-            foreach ($request->locationId as $val) {
+            Facility::whereIn('locationId', $request->locationId)
+                ->where('isDeleted', 0)
+                ->update(['isDeleted' => 1, 'updated_at' => now()]);
 
-                Facility::where([
-                    ['locationId', '=', $val],
-                    ['isDeleted', '=', '0']
-                ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+            FacilityUnit::whereIn('locationId', $request->locationId)
+                ->where('isDeleted', 0)
+                ->update(['isDeleted' => 1, 'updated_at' => now()]);
 
-                FacilityUnit::where([
-                    ['locationId', '=', $val],
-                    ['isDeleted', '=', '0']
-                ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+            FacilityImages::whereIn('locationId', $request->locationId)
+                ->where('isDeleted', 0)
+                ->update(['isDeleted' => 1, 'updated_at' => now()]);
 
-                FacilityImages::where([
-                    ['locationId', '=', $val],
-                    ['isDeleted', '=', '0']
-                ])->update(['isDeleted' => 1, 'updated_at' => now()]);
+            recentActivity(
+                $request->user()->id,
+                'Facility',
+                'Delete Facility',
+                'Deleted Facility'
+            );
 
-                recentActivity(
-                    $request->user()->id,
-                    'Facility',
-                    'Delete Facility',
-                    'Deleted Facility'
-                );
-
-                DB::commit();
-            }
+            DB::commit();
 
             return response()->json([
                 'result' => 'success',
@@ -678,15 +662,8 @@ class FacilityController extends Controller
                         }
 
                         if ($check->fails()) {
-
                             $errors = $check->errors()->all();
-
-                            foreach ($errors as $checkisu) {
-
-                                if (!(in_array($checkisu, $data_item))) {
-                                    array_push($data_item, $checkisu);
-                                }
-                            }
+                            $data_item = array_unique(array_merge($data_item, $errors));
                         }
 
                         $filtered[$key['unitName']][] = $key;

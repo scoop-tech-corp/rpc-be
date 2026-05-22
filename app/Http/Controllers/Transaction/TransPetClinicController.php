@@ -123,10 +123,7 @@ class TransPetClinicController extends Controller
                 }
             } else {
                 $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                return responseIndex(0, $data);
             }
         }
 
@@ -321,7 +318,7 @@ class TransPetClinicController extends Controller
                 $cust = Customer::select('id', 'isDeleted')->where('id', $request->customerId)->where('isDeleted', 0)->first();
 
                 if (!$cust) {
-                    responseInvalid(['Customer is Not Found']);
+                    return responseInvalid(['Customer is Not Found']);
                 }
 
                 if ($request->isNewPet == true) {
@@ -617,26 +614,23 @@ class TransPetClinicController extends Controller
     public function delete(Request $request)
     {
 
-        foreach ($request->id as $va) {
-            $res = TransactionPetClinic::find($va);
+        $existingTransactions = TransactionPetClinic::whereIn('id', $request->id)->pluck('id')->toArray();
+        $missingTransactions = array_diff($request->id, $existingTransactions);
 
-            if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
-            }
+        if (!empty($missingTransactions)) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['There is any Data not found!'],
+            ], 422);
         }
 
+        TransactionPetClinic::whereIn('id', $request->id)->update([
+            'DeletedBy' => $request->user()->id,
+            'isDeleted' => true,
+            'DeletedAt' => Carbon::now()
+        ]);
+
         foreach ($request->id as $va) {
-
-            $tran = TransactionPetClinic::find($va);
-
-            $tran->DeletedBy = $request->user()->id;
-            $tran->isDeleted = true;
-            $tran->DeletedAt = Carbon::now();
-            $tran->save();
-
             transactionPetClinicLog($va, 'Transaction Deleted', '', $request->user()->id);
         }
 
