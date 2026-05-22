@@ -293,6 +293,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/', [StockOpnameController::class, 'index']);
             Route::get('/scan-barcode', [StockOpnameController::class, 'scanBarcode']);
             Route::post('/', [StockOpnameController::class, 'create']);
+            Route::get('/generate-so-number', [StockOpnameController::class, 'generateSONumber']);
             Route::post('/input-product', [StockOpnameController::class, 'inputProducts']);
             Route::get('/detail', [StockOpnameController::class, 'detail']);
             Route::put('/', [StockOpnameController::class, 'update']);

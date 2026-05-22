@@ -103,6 +103,37 @@ class StockOpnameController extends Controller
         }
     }
 
+    public function GenerateSONumber(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $locationId = $request->locationId;
+        $locationPart = str_pad($locationId, 3, '0', STR_PAD_LEFT);
+        $prefix = "RPC-SO-{$locationPart}-";
+
+        $lastRecord = StockOpnameMaster::where('locationId', $locationId)
+            ->where('stockOpnameNumber', 'like', "{$prefix}%")
+            ->orderBy('stockOpnameNumber', 'desc')
+            ->first();
+
+        if ($lastRecord) {
+            $lastNumber = (int) substr($lastRecord->stockOpnameNumber, -5);
+            $newNumber = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '00001';
+        }
+
+        return response()->json([
+            'stockOpnameNumber' => "{$prefix}{$newNumber}"
+        ], 200);
+    }
+
     public function create(Request $request)
     {
         $validate = Validator::make($request->all(), [
