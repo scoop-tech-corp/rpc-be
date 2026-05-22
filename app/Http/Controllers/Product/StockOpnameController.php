@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Product;
 use App\Http\Controllers\Controller;
 use App\Models\ProductAdjustment;
 use App\Models\ProductLocations;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\StockOpnameDetail;
 use App\Models\StockOpnameLog;
 use App\Models\StockOpnameMaster;
@@ -387,6 +388,87 @@ class StockOpnameController extends Controller
         $data->logs = $logs;
 
         return response()->json($data, 200);
+    }
+
+    public function printPdf(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:stock_opname_masters,id',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $stockOpname = DB::table('stock_opname_masters as sm')
+            ->join('users as u', 'sm.userId', 'u.id')
+            ->join('location as l', 'sm.locationId', 'l.id')
+            ->select(
+                'sm.id',
+                'sm.stockOpnameNumber',
+                'sm.title',
+                DB::raw("DATE_FORMAT(sm.startTime, '%Y-%m-%d %H:%i:%s') as startTime"),
+                'l.locationName',
+                'sm.status as statusId',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(sm.updated_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('sm.isDeleted', 0)
+            ->where('sm.id', $request->id)
+            ->first();
+
+        if (!$stockOpname) {
+            return responseInvalid(['Stock Opname not found.']);
+        }
+
+        $users = DB::table('stock_opname_users as su')
+            ->join('users as u', 'su.usersId', 'u.id')
+            ->select('u.id', 'u.firstName as name')
+            ->where('su.isDeleted', 0)
+            ->where('su.stockOpnameId', $request->id)
+            ->get();
+
+        $products = DB::table('stock_opname_details as sd')
+            ->join('products as p', 'sd.productId', 'p.id')
+            ->select(
+                'sd.id',
+                'sd.productId',
+                'p.sku',
+                'p.fullName',
+                'sd.stockSystem',
+                'sd.stockPhysical',
+                'sd.difference',
+                'sd.status',
+                'sd.note',
+                'sd.inputedBy',
+                DB::raw("DATE_FORMAT(sd.inputedAt, '%Y-%m-%d %H:%i:%s') as inputedAt")
+            )
+            ->where('sd.isDeleted', 0)
+            ->where('sd.stockOpnameId', $request->id)
+            ->get();
+
+        $logs = DB::table('stock_opname_logs as sl')
+            ->join('users as u', 'sl.userId', 'u.id')
+            ->select(
+                'sl.event',
+                'sl.details',
+                DB::raw("CONCAT(u.firstName, ' ', COALESCE(u.lastName, '')) as performedBy"),
+                DB::raw("DATE_FORMAT(sl.created_at, '%Y-%m-%d %H:%i:%s') as createdAt")
+            )
+            ->where('sl.stockOpnameId', $request->id)
+            ->orderBy('sl.created_at', 'asc')
+            ->get();
+
+        $pdf = Pdf::loadView('stock-opname-pdf', [
+            'stockOpname' => $stockOpname,
+            'users'       => $users,
+            'products'    => $products,
+            'logs'        => $logs,
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'Stock-Opname-' . $stockOpname->stockOpnameNumber . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function update(Request $request)
