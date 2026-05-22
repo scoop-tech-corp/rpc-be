@@ -408,6 +408,31 @@ class StockOpnameController extends Controller
         }
     }
 
+    public function startStockOpname(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:stock_opname_masters,id',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return responseInvalid($errors);
+        }
+
+        $stockOpname = StockOpnameMaster::where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$stockOpname) {
+            return responseInvalid(['Stock Opname not found.']);
+        }
+
+        $stockOpname->update([
+            'status' => 2, // Update status to "Validated" or appropriate status
+        ]);
+
+        return responseUpdate();
+    }
+
     public function finalizeStockOpname(Request $request)
     {
         $validate = Validator::make($request->all(), [

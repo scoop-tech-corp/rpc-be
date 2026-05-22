@@ -529,75 +529,47 @@ class LocationController extends Controller
 
             // DB::commit();
 
-            $data_item = [];
-            foreach ($request->codeLocation as $val) {
+            $existingLocations = DB::table('location')
+                ->whereIn('codeLocation', $request->codeLocation)
+                ->where('isDeleted', 0)
+                ->pluck('codeLocation')
+                ->toArray();
 
-                $checkIfDataExits = DB::table('location')
-                    ->where([
-                        ['codeLocation', '=', $val],
-                        ['isDeleted', '=', '0']
-                    ])
-                    ->first();
+            $missingLocations = array_diff($request->codeLocation, $existingLocations);
 
-                if (!$checkIfDataExits) {
-                    array_push($data_item, 'code location : ' . $val . ' not found, please try different code location');
-                }
-            }
+            if (!empty($missingLocations)) {
+                $data_item = array_map(function ($val) {
+                    return 'code location : ' . $val . ' not found, please try different code location';
+                }, $missingLocations);
 
-            if ($data_item) {
                 return response()->json([
                     'message' => 'Inputed data is not valid',
-                    'errors' => $data_item,
+                    'errors' => array_values($data_item),
                 ], 422);
             }
 
-            foreach ($request->codeLocation as $val) {
+            DB::table('location')->whereIn('codeLocation', $request->codeLocation)->update(['isDeleted' => 1]);
+            DB::table('location_detail_address')->whereIn('codeLocation', $request->codeLocation)->update(['isDeleted' => 1]);
+            DB::table('location_email')->whereIn('codeLocation', $request->codeLocation)->update(['isDeleted' => 1]);
+            DB::table('location_messenger')->whereIn('codeLocation', $request->codeLocation)->update(['isDeleted' => 1]);
+            DB::table('location_telephone')->whereIn('codeLocation', $request->codeLocation)->update(['isDeleted' => 1]);
 
-                DB::table('location')
-                    ->where('codeLocation', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('location_detail_address')
-                    ->where('codeLocation', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('location_images')
-                    ->where('codeLocation', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('location_email')
-                    ->where('codeLocation', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('location_messenger')
-                    ->where('codeLocation', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-                DB::table('location_telephone')
-                    ->where('codeLocation', '=', $val)
-                    ->update(['isDeleted' => 1]);
-
-
-
-                $checkImages = DB::table('location_images')
-                    ->where([
-                        ['codeLocation', '=', $val]
-                    ])
-                    ->first();
-
-                if ($checkImages != null) {
-                    File::delete(public_path() . $checkImages->imagePath);
+            $images = DB::table('location_images')->whereIn('codeLocation', $request->codeLocation)->get();
+            foreach ($images as $img) {
+                if ($img->imagePath) {
+                    File::delete(public_path() . $img->imagePath);
                 }
-
-                recentActivity(
-                    $request->user()->id,
-                    'Location',
-                    'Delete Location',
-                    'Deleted Location'
-                );
-
-                DB::commit();
             }
+            DB::table('location_images')->whereIn('codeLocation', $request->codeLocation)->update(['isDeleted' => 1]);
+
+            recentActivity(
+                $request->user()->id,
+                'Location',
+                'Delete Location',
+                'Deleted Location'
+            );
+
+            DB::commit();
 
             return response()->json([
                 'result' => 'success',
