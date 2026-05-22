@@ -209,6 +209,9 @@ class StockOpnameController extends Controller
         try {
             DB::beginTransaction();
 
+            $stockOpnameId = $request->data[0]['stockOpnameId'];
+            StockOpnameDetail::where('stockOpnameId', $stockOpnameId)->delete();
+
             foreach ($request->data as $item) {
                 StockOpnameDetail::create([
                     'stockOpnameId' => $item['stockOpnameId'],
