@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
+use App\Models\ProductAdjustment;
+use App\Models\ProductLocations;
 use App\Models\StockOpnameDetail;
 use App\Models\StockOpnameLog;
 use App\Models\StockOpnameMaster;
@@ -542,14 +544,55 @@ class StockOpnameController extends Controller
         }
 
         if ($request->isApproved == true) {
-            $stockOpname->update(['status' => 5, 'reason' => $request->reason]);
+            DB::beginTransaction();
+            try {
+                $stockOpname->update(['status' => 5, 'reason' => $request->reason]);
 
-            StockOpnameLog::create([
-                'stockOpnameId' => $request->id,
-                'event' => 'Approval Director - Approved',
-                'details' => 'Disetujui oleh Director.',
-                'userId' => $request->user()->id,
-            ]);
+                $details = StockOpnameDetail::where('stockOpnameId', $stockOpname->id)
+                    ->where('isDeleted', false)
+                    ->get();
+
+                foreach ($details as $detail) {
+                    $productLocation = ProductLocations::where('productId', $detail->productId)
+                        ->where('locationId', $stockOpname->locationId)
+                        ->first();
+
+                    if ($productLocation) {
+                        $oldStock = $productLocation->inStock;
+                        $productLocation->update([
+                            'inStock' => $detail->stockPhysical,
+                            'userUpdateId' => $request->user()->id,
+                        ]);
+
+                        $product = DB::table('products')->where('id', $detail->productId)->first();
+                        $productType = $product && $product->category === 'clinic' ? 'productClinic' : 'productSell';
+
+                        ProductAdjustment::create([
+                            'productId' => $detail->productId,
+                            'productType' => $productType,
+                            'adjustment' => $detail->difference >= 0 ? 'increase' : 'decrease',
+                            'totalAdjustment' => abs($detail->difference),
+                            'remark' => 'Stock Opname ' . $stockOpname->stockOpnameNumber . '. Stok lama: ' . $oldStock . ', Stok baru: ' . $detail->stockPhysical,
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+
+                StockOpnameLog::create([
+                    'stockOpnameId' => $request->id,
+                    'event' => 'Approval Director - Approved',
+                    'details' => 'Disetujui oleh Director. Stok ' . $details->count() . ' produk telah diperbarui.',
+                    'userId' => $request->user()->id,
+                ]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Failed to approve.',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
         } else {
             $stockOpname->update(['status' => 6, 'reason' => $request->reason]);
 
