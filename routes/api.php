@@ -296,6 +296,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/input-product', [StockOpnameController::class, 'inputProducts']);
             Route::get('/detail', [StockOpnameController::class, 'detail']);
             Route::put('/', [StockOpnameController::class, 'update']);
+            Route::put('/start', [StockOpnameController::class, 'startStockOpname']);
             Route::put('/finalize', [StockOpnameController::class, 'finalizeStockOpname']);
             Route::put('/approval', [StockOpnameController::class, 'approvalStockOpname']);
             Route::delete('/', [StockOpnameController::class, 'delete']);
