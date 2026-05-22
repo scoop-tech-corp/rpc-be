@@ -187,15 +187,17 @@ class StockOpnameController extends Controller
     public function inputProducts(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            '*.stockOpnameId' => 'required|integer',
-            '*.productId' => 'required|integer',
-            '*.stockSystem' => 'required|numeric',
-            '*.stockPhysical' => 'required|numeric',
-            '*.difference' => 'required|numeric',
-            '*.status' => 'required|integer',
-            '*.note' => 'nullable|string|max:255',
-            '*.inputedBy' => 'required|integer',
-            '*.inputedAt' => 'required|date',
+            'type' => 'required|string',
+            'data' => 'required|array',
+            'data.*.stockOpnameId' => 'required|integer',
+            'data.*.productId' => 'required|integer',
+            'data.*.stockSystem' => 'required|numeric',
+            'data.*.stockPhysical' => 'required|numeric',
+            'data.*.difference' => 'required|numeric',
+            'data.*.status' => 'required|integer',
+            'data.*.note' => 'nullable|string|max:255',
+            'data.*.inputedBy' => 'required|integer',
+            'data.*.inputedAt' => 'required|date',
         ]);
 
         if ($validate->fails()) {
@@ -207,7 +209,7 @@ class StockOpnameController extends Controller
         try {
             DB::beginTransaction();
 
-            foreach ($request->all() as $item) {
+            foreach ($request->data as $item) {
                 StockOpnameDetail::create([
                     'stockOpnameId' => $item['stockOpnameId'],
                     'productId' => $item['productId'],
@@ -222,10 +224,12 @@ class StockOpnameController extends Controller
                 ]);
             }
 
-            $stockOpname = StockOpnameMaster::where('id', $request->id)->where('isDeleted', false)->first();
-            if ($stockOpname) {
+            $stockOpnameId = $request->data[0]['stockOpnameId'];
+            $stockOpname = StockOpnameMaster::where('id', $stockOpnameId)->where('isDeleted', false)->first();
+
+            if ($request->type === 'submit') {
                 $stockOpname->update([
-                    'status' => 2, // Update status to "Proses Input Data" or appropriate status
+                    'status' => 3, // Update status to "Proses Input Data" or appropriate status
                 ]);
             }
             DB::commit();
