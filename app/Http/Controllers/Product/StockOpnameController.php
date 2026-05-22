@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
 use App\Models\StockOpnameDetail;
+use App\Models\StockOpnameLog;
 use App\Models\StockOpnameMaster;
 use App\Models\StockOpnameUser;
 use Illuminate\Http\Request;
@@ -171,6 +172,13 @@ class StockOpnameController extends Controller
                 ]);
             }
 
+            StockOpnameLog::create([
+                'stockOpnameId' => $stockOpname->id,
+                'event' => 'Created',
+                'details' => 'Stock Opname ' . $stockOpname->stockOpnameNumber . ' dibuat.',
+                'userId' => $request->user()->id,
+            ]);
+
             DB::commit();
 
             return responseCreate();
@@ -230,11 +238,26 @@ class StockOpnameController extends Controller
             $stockOpnameId = $request->data[0]['stockOpnameId'];
             $stockOpname = StockOpnameMaster::where('id', $stockOpnameId)->where('isDeleted', false)->first();
 
+            $productCount = count($request->data);
+
             if ($request->type === 'submit') {
-                $stockOpname->update([
-                    'status' => 3, // Update status to "Proses Input Data" or appropriate status
+                $stockOpname->update(['status' => 3]);
+
+                StockOpnameLog::create([
+                    'stockOpnameId' => $stockOpnameId,
+                    'event' => 'Submit Input Produk',
+                    'details' => $productCount . ' produk disubmit untuk approval.',
+                    'userId' => $request->user()->id,
+                ]);
+            } else {
+                StockOpnameLog::create([
+                    'stockOpnameId' => $stockOpnameId,
+                    'event' => 'Draft Input Produk',
+                    'details' => $productCount . ' produk disimpan sebagai draft.',
+                    'userId' => $request->user()->id,
                 ]);
             }
+
             DB::commit();
 
             return responseCreate();
@@ -346,6 +369,21 @@ class StockOpnameController extends Controller
 
         $data->products = $products;
 
+        $logs = DB::table('stock_opname_logs as sl')
+            ->join('users as u', 'sl.userId', 'u.id')
+            ->select(
+                'sl.id',
+                'sl.event',
+                'sl.details',
+                DB::raw("CONCAT(u.firstName, ' ', COALESCE(u.lastName, '')) as performedBy"),
+                DB::raw("DATE_FORMAT(sl.created_at, '%Y-%m-%d %H:%i:%s') as createdAt")
+            )
+            ->where('sl.stockOpnameId', $request->id)
+            ->orderBy('sl.created_at', 'asc')
+            ->get();
+
+        $data->logs = $logs;
+
         return response()->json($data, 200);
     }
 
@@ -433,6 +471,13 @@ class StockOpnameController extends Controller
                 StockOpnameDetail::insert($preparedDetailsToInsert);
             }
 
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Updated',
+                'details' => 'Data stock opname diperbarui.',
+                'userId' => $request->user()->id,
+            ]);
+
             DB::commit();
 
             return responseUpdate();
@@ -464,39 +509,19 @@ class StockOpnameController extends Controller
             return responseInvalid(['Stock Opname not found.']);
         }
 
-        $stockOpname->update([
-            'status' => 2, // Update status to "Validated" or appropriate status
+        $stockOpname->update(['status' => 2]);
+
+        StockOpnameLog::create([
+            'stockOpnameId' => $request->id,
+            'event' => 'Started',
+            'details' => 'Stock opname dimulai / status diubah ke Process Input Data.',
+            'userId' => $request->user()->id,
         ]);
 
         return responseUpdate();
     }
 
-    public function finalizeStockOpname(Request $request)
-    {
-        $validate = Validator::make($request->all(), [
-            'id' => 'required|integer|exists:stock_opname_masters,id',
-        ]);
-
-        if ($validate->fails()) {
-            $errors = $validate->errors()->all();
-
-            return responseInvalid($errors);
-        }
-
-        $stockOpname = StockOpnameMaster::where('id', $request->id)->where('isDeleted', false)->first();
-
-        if (!$stockOpname) {
-            return responseInvalid(['Stock Opname not found.']);
-        }
-
-        $stockOpname->update([
-            'status' => 3, // Update status to "Validated" or appropriate status
-        ]);
-
-        return responseUpdate();
-    }
-
-    public function approvalStockOpname(Request $request)
+    public function approvalDirector(Request $request)
     {
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer|exists:stock_opname_masters,id',
@@ -517,20 +542,69 @@ class StockOpnameController extends Controller
         }
 
         if ($request->isApproved == true) {
-            $stockOpname->update([
-                'status' => 4, // Revert status to "In Progress" or appropriate status
-                'reason' => $request->reason,
-            ]);
+            $stockOpname->update(['status' => 5, 'reason' => $request->reason]);
 
-            return responseUpdate();
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Approval Director - Approved',
+                'details' => 'Disetujui oleh Director.',
+                'userId' => $request->user()->id,
+            ]);
         } else {
-            $stockOpname->update([
-                'status' => 5, // Revert status to "In Progress" or appropriate status
-                'reason' => $request->reason,
-            ]);
+            $stockOpname->update(['status' => 6, 'reason' => $request->reason]);
 
-            return responseUpdate();
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Approval Director - Rejected',
+                'details' => 'Ditolak oleh Director. Alasan: ' . ($request->reason ?? '-'),
+                'userId' => $request->user()->id,
+            ]);
         }
+
+        return responseUpdate();
+    }
+
+    public function approvalChecker(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:stock_opname_masters,id',
+            'isApproved' => 'required|boolean',
+            'reason' => 'required_if:isApproved,false|nullable|string|max:255',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return responseInvalid($errors);
+        }
+
+        $stockOpname = StockOpnameMaster::where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$stockOpname) {
+            return responseInvalid(['Stock Opname not found.']);
+        }
+
+        if ($request->isApproved == true) {
+            $stockOpname->update(['status' => 4, 'reason' => $request->reason]);
+
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Approval Checker - Approved',
+                'details' => 'Disetujui oleh Checker.',
+                'userId' => $request->user()->id,
+            ]);
+        } else {
+            $stockOpname->update(['status' => 6, 'reason' => $request->reason]);
+
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Approval Checker - Rejected',
+                'details' => 'Ditolak oleh Checker. Alasan: ' . ($request->reason ?? '-'),
+                'userId' => $request->user()->id,
+            ]);
+        }
+
+        return responseUpdate();
     }
 
     public function delete(Request $request)
@@ -584,6 +658,13 @@ class StockOpnameController extends Controller
                     'deletedAt' => Carbon::now()
                 ]
             );
+
+            StockOpnameLog::create([
+                'stockOpnameId' => $stock->id,
+                'event' => 'Deleted',
+                'details' => 'Stock Opname ' . $stock->stockOpnameNumber . ' dihapus.',
+                'userId' => $request->user()->id,
+            ]);
 
             recentActivity(
                 $request->user()->id,

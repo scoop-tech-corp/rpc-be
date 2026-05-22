@@ -64,6 +64,7 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 use App\Http\Controllers\Staff\IdentityController;
 use App\Http\Controllers\Staff\OverWorkController;
 use App\Http\Controllers\Staff\RequireSalaryController;
+use App\Http\Controllers\Product\LoanProductController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -298,10 +299,23 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/detail', [StockOpnameController::class, 'detail']);
             Route::put('/', [StockOpnameController::class, 'update']);
             Route::put('/start', [StockOpnameController::class, 'startStockOpname']);
-            Route::put('/finalize', [StockOpnameController::class, 'finalizeStockOpname']);
-            Route::put('/approval', [StockOpnameController::class, 'approvalStockOpname']);
+            Route::put('/approval-director', [StockOpnameController::class, 'approvalDirector']);
+            Route::put('/approval-checker', [StockOpnameController::class, 'approvalChecker']);
             Route::delete('/', [StockOpnameController::class, 'delete']);
             Route::get('/export', [StockOpnameController::class, 'export']);
+        });
+
+        Route::group(['prefix' => 'loan-product'], function () {
+            Route::get('/generate-loan-number', [LoanProductController::class, 'generateLoanNumber']);
+            Route::get('/', [LoanProductController::class, 'index']);
+            Route::get('/detail', [LoanProductController::class, 'detail']);
+            Route::post('/', [LoanProductController::class, 'create']);
+            Route::put('/', [LoanProductController::class, 'update']);
+            Route::delete('/', [LoanProductController::class, 'delete']);
+            Route::post('/submit', [LoanProductController::class, 'submit']);
+            Route::post('/approval', [LoanProductController::class, 'approval']);
+            Route::post('/loan-out', [LoanProductController::class, 'loanOut']);
+            Route::post('/return', [LoanProductController::class, 'returnLoan']);
         });
 
         Route::get('/datastatic', [ProductController::class, 'indexDataStatic']);
