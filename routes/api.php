@@ -303,6 +303,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::put('/approval-checker', [StockOpnameController::class, 'approvalChecker']);
             Route::delete('/', [StockOpnameController::class, 'delete']);
             Route::get('/export', [StockOpnameController::class, 'export']);
+            Route::get('/print', [StockOpnameController::class, 'printPdf']);
         });
 
         Route::group(['prefix' => 'loan-product'], function () {
