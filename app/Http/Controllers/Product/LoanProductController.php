@@ -1,0 +1,722 @@
+<?php
+
+namespace App\Http\Controllers\Product;
+
+use App\Models\LoanProduct;
+use App\Models\LoanProductDetail;
+use App\Models\LoanProductLog;
+use App\Models\ProductLocations;
+use App\Models\ProductSellLocation;
+use App\Models\ProductClinicLocation;
+use App\Models\ProductLog;
+use App\Models\ProductSellLog;
+use App\Models\ProductClinicLog;
+use App\Models\Products;
+use App\Models\ProductSell;
+use App\Models\ProductClinic;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Validator;
+
+class LoanProductController
+{
+    // ─────────────────────────────────────────
+    // Generate Loan Number
+    // ─────────────────────────────────────────
+    public function generateLoanNumber(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $locationPart = str_pad($request->locationId, 3, '0', STR_PAD_LEFT);
+        $prefix = "RPC-LP-{$locationPart}-";
+
+        $lastRecord = LoanProduct::where('locationId', $request->locationId)
+            ->where('loanNumber', 'like', "{$prefix}%")
+            ->orderBy('loanNumber', 'desc')
+            ->first();
+
+        if ($lastRecord) {
+            $lastNumber = (int) substr($lastRecord->loanNumber, -5);
+            $newNumber = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '00001';
+        }
+
+        return response()->json([
+            'loanNumber' => "{$prefix}{$newNumber}",
+        ], 200);
+    }
+
+    // ─────────────────────────────────────────
+    // Index – list with filters
+    // ─────────────────────────────────────────
+    public function index(Request $request)
+    {
+        $query = LoanProduct::with(['staff:id,name', 'location:id,locationName', 'approver:id,name'])
+            ->where('isDeleted', false);
+
+        if ($request->filled('locationId')) {
+            $query->where('locationId', $request->locationId);
+        }
+
+        if ($request->filled('staffId')) {
+            $query->where('staffId', $request->staffId);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('loanNumber', 'like', "%{$search}%")
+                    ->orWhere('eventName', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('startDate') && $request->filled('endDate')) {
+            $query->whereBetween('eventDate', [$request->startDate, $request->endDate]);
+        }
+
+        $query->orderBy('created_at', 'desc');
+
+        if ($request->filled('limit')) {
+            $data = $query->paginate($request->limit);
+        } else {
+            $data = $query->get();
+        }
+
+        return response()->json($data, 200);
+    }
+
+    // ─────────────────────────────────────────
+    // Detail
+    // ─────────────────────────────────────────
+    public function detail(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $data = LoanProduct::with([
+            'staff:id,name',
+            'location:id,locationName',
+            'approver:id,name',
+            'details',
+            'logs.user:id,name',
+        ])
+            ->where('id', $request->id)
+            ->where('isDeleted', false)
+            ->first();
+
+        if (!$data) {
+            return responseInvalid(['Loan Product not found!']);
+        }
+
+        return response()->json($data, 200);
+    }
+
+    // ─────────────────────────────────────────
+    // Create (draft)
+    // ─────────────────────────────────────────
+    public function create(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'loanNumber'   => 'required|string|unique:loanProducts,loanNumber',
+            'staffId'      => 'required|integer',
+            'locationId'   => 'required|integer',
+            'eventName'    => 'required|string',
+            'eventDate'    => 'required|date',
+            'eventAddress' => 'nullable|string',
+            'returnDeadline' => 'nullable|date',
+            'note'         => 'nullable|string',
+            'details'      => 'required|array|min:1',
+            'details.*.productType' => 'required|string|in:sell,clinic,product',
+            'details.*.productId'   => 'required|integer',
+            'details.*.loanedQty'   => 'required|integer|min:1',
+            'details.*.suggestedPrice' => 'nullable|numeric|min:0',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        DB::beginTransaction();
+        try {
+            $totalLoanedQty = 0;
+            $detailsData = [];
+
+            foreach ($request->details as $item) {
+                [$product, $stockCheck] = $this->resolveProduct($item['productType'], $item['productId'], $request->locationId);
+
+                if (!$product) {
+                    DB::rollBack();
+                    return responseInvalid(["Product ID {$item['productId']} (type: {$item['productType']}) not found!"]);
+                }
+
+                if ($stockCheck !== null && $stockCheck->inStock < $item['loanedQty']) {
+                    DB::rollBack();
+                    return responseInvalid([
+                        "Insufficient stock for product '{$product->fullName}'. Available: {$stockCheck->inStock}, Requested: {$item['loanedQty']}"
+                    ]);
+                }
+
+                $totalLoanedQty += $item['loanedQty'];
+
+                $detailsData[] = [
+                    'productType'    => $item['productType'],
+                    'productId'      => $item['productId'],
+                    'productName'    => $product->fullName,
+                    'sku'            => $product->sku ?? null,
+                    'loanedQty'      => $item['loanedQty'],
+                    'costPrice'      => $product->costPrice ?? 0,
+                    'suggestedPrice' => $item['suggestedPrice'] ?? ($product->price ?? 0),
+                    'returnStatus'   => 'pending',
+                ];
+            }
+
+            $loan = LoanProduct::create([
+                'loanNumber'     => $request->loanNumber,
+                'staffId'        => $request->staffId,
+                'locationId'     => $request->locationId,
+                'eventName'      => $request->eventName,
+                'eventDate'      => $request->eventDate,
+                'eventAddress'   => $request->eventAddress,
+                'returnDeadline' => $request->returnDeadline,
+                'status'         => 'draft',
+                'totalItems'     => count($detailsData),
+                'totalLoanedQty' => $totalLoanedQty,
+                'note'           => $request->note,
+                'isDeleted'      => false,
+                'userId'         => $request->user()->id,
+            ]);
+
+            foreach ($detailsData as $detail) {
+                $detail['loanProductId'] = $loan->id;
+                LoanProductDetail::create($detail);
+            }
+
+            LoanProductLog::create([
+                'loanProductId' => $loan->id,
+                'action'        => 'created',
+                'description'   => "Loan product created with number {$loan->loanNumber}",
+                'userId'        => $request->user()->id,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Loan Product created successfully.',
+                'data'    => $loan->load('details'),
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // Update (only when draft)
+    // ─────────────────────────────────────────
+    public function update(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id'           => 'required|integer',
+            'eventName'    => 'nullable|string',
+            'eventDate'    => 'nullable|date',
+            'eventAddress' => 'nullable|string',
+            'returnDeadline' => 'nullable|date',
+            'note'         => 'nullable|string',
+            'details'      => 'nullable|array|min:1',
+            'details.*.productType' => 'required_with:details|string|in:sell,clinic,product',
+            'details.*.productId'   => 'required_with:details|integer',
+            'details.*.loanedQty'   => 'required_with:details|integer|min:1',
+            'details.*.suggestedPrice' => 'nullable|numeric|min:0',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $loan = LoanProduct::where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$loan) {
+            return responseInvalid(['Loan Product not found!']);
+        }
+
+        if ($loan->status !== 'draft') {
+            return responseInvalid(['Only draft Loan Products can be updated.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $loan->update([
+                'eventName'      => $request->eventName ?? $loan->eventName,
+                'eventDate'      => $request->eventDate ?? $loan->eventDate,
+                'eventAddress'   => $request->eventAddress ?? $loan->eventAddress,
+                'returnDeadline' => $request->returnDeadline ?? $loan->returnDeadline,
+                'note'           => $request->note ?? $loan->note,
+                'userUpdateId'   => $request->user()->id,
+            ]);
+
+            if ($request->filled('details')) {
+                LoanProductDetail::where('loanProductId', $loan->id)->delete();
+
+                $totalLoanedQty = 0;
+                foreach ($request->details as $item) {
+                    [$product, $stockCheck] = $this->resolveProduct($item['productType'], $item['productId'], $loan->locationId);
+
+                    if (!$product) {
+                        DB::rollBack();
+                        return responseInvalid(["Product ID {$item['productId']} (type: {$item['productType']}) not found!"]);
+                    }
+
+                    if ($stockCheck !== null && $stockCheck->inStock < $item['loanedQty']) {
+                        DB::rollBack();
+                        return responseInvalid([
+                            "Insufficient stock for product '{$product->fullName}'. Available: {$stockCheck->inStock}, Requested: {$item['loanedQty']}"
+                        ]);
+                    }
+
+                    $totalLoanedQty += $item['loanedQty'];
+
+                    LoanProductDetail::create([
+                        'loanProductId'  => $loan->id,
+                        'productType'    => $item['productType'],
+                        'productId'      => $item['productId'],
+                        'productName'    => $product->fullName,
+                        'sku'            => $product->sku ?? null,
+                        'loanedQty'      => $item['loanedQty'],
+                        'costPrice'      => $product->costPrice ?? 0,
+                        'suggestedPrice' => $item['suggestedPrice'] ?? ($product->price ?? 0),
+                        'returnStatus'   => 'pending',
+                    ]);
+                }
+
+                $loan->update([
+                    'totalItems'     => count($request->details),
+                    'totalLoanedQty' => $totalLoanedQty,
+                ]);
+            }
+
+            LoanProductLog::create([
+                'loanProductId' => $loan->id,
+                'action'        => 'updated',
+                'description'   => 'Loan product updated.',
+                'userId'        => $request->user()->id,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Loan Product updated successfully.',
+                'data'    => $loan->fresh()->load('details'),
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // Submit (draft → pending)
+    // ─────────────────────────────────────────
+    public function submit(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $loan = LoanProduct::where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$loan) {
+            return responseInvalid(['Loan Product not found!']);
+        }
+
+        if ($loan->status !== 'draft') {
+            return responseInvalid(['Only draft Loan Products can be submitted.']);
+        }
+
+        $loan->update([
+            'status'       => 'pending',
+            'userUpdateId' => $request->user()->id,
+        ]);
+
+        LoanProductLog::create([
+            'loanProductId' => $loan->id,
+            'action'        => 'submitted',
+            'description'   => 'Loan product submitted for approval.',
+            'userId'        => $request->user()->id,
+        ]);
+
+        return response()->json(['message' => 'Loan Product submitted for approval.'], 200);
+    }
+
+    // ─────────────────────────────────────────
+    // Approval (pending → approved / cancelled)
+    // ─────────────────────────────────────────
+    public function approval(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id'             => 'required|integer',
+            'isApproved'     => 'required|boolean',
+            'rejectedReason' => 'required_if:isApproved,false|nullable|string',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $loan = LoanProduct::where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$loan) {
+            return responseInvalid(['Loan Product not found!']);
+        }
+
+        if ($loan->status !== 'pending') {
+            return responseInvalid(['Only pending Loan Products can be approved or rejected.']);
+        }
+
+        if ($request->isApproved) {
+            $loan->update([
+                'status'       => 'approved',
+                'approvedBy'   => $request->user()->id,
+                'approvedAt'   => Carbon::now(),
+                'userUpdateId' => $request->user()->id,
+            ]);
+
+            LoanProductLog::create([
+                'loanProductId' => $loan->id,
+                'action'        => 'approved',
+                'description'   => 'Loan product approved.',
+                'userId'        => $request->user()->id,
+            ]);
+
+            return response()->json(['message' => 'Loan Product approved.'], 200);
+        } else {
+            $loan->update([
+                'status'         => 'cancelled',
+                'rejectedReason' => $request->rejectedReason,
+                'userUpdateId'   => $request->user()->id,
+            ]);
+
+            LoanProductLog::create([
+                'loanProductId' => $loan->id,
+                'action'        => 'rejected',
+                'description'   => "Loan product rejected. Reason: {$request->rejectedReason}",
+                'userId'        => $request->user()->id,
+            ]);
+
+            return response()->json(['message' => 'Loan Product rejected.'], 200);
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // Loan Out – produk keluar, deduct stock (approved → active)
+    // ─────────────────────────────────────────
+    public function loanOut(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id'       => 'required|integer',
+            'loanDate' => 'required|date',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $loan = LoanProduct::with('details')->where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$loan) {
+            return responseInvalid(['Loan Product not found!']);
+        }
+
+        if ($loan->status !== 'approved') {
+            return responseInvalid(['Only approved Loan Products can be loaned out.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($loan->details as $detail) {
+                [$product, $stockRecord] = $this->resolveProduct($detail->productType, $detail->productId, $loan->locationId);
+
+                if ($stockRecord !== null) {
+                    if ($stockRecord->inStock < $detail->loanedQty) {
+                        DB::rollBack();
+                        return responseInvalid([
+                            "Insufficient stock for '{$detail->productName}'. Available: {$stockRecord->inStock}, Required: {$detail->loanedQty}"
+                        ]);
+                    }
+
+                    $newStock = $stockRecord->inStock - $detail->loanedQty;
+                    $stockRecord->update(['inStock' => $newStock]);
+
+                    $this->createProductLog($detail->productType, $detail->productId, [
+                        'transaction' => 'Loan Out',
+                        'remark'      => "Loan Out - {$loan->loanNumber} | Event: {$loan->eventName}",
+                        'quantity'    => -$detail->loanedQty,
+                        'balance'     => $newStock,
+                        'userId'      => $request->user()->id,
+                    ]);
+                }
+            }
+
+            $loan->update([
+                'status'       => 'active',
+                'loanDate'     => $request->loanDate,
+                'userUpdateId' => $request->user()->id,
+            ]);
+
+            LoanProductLog::create([
+                'loanProductId' => $loan->id,
+                'action'        => 'loaned',
+                'description'   => "Products loaned out on {$request->loanDate}.",
+                'userId'        => $request->user()->id,
+            ]);
+
+            DB::commit();
+
+            return response()->json(['message' => 'Products loaned out successfully. Stock deducted.'], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // Return – input hasil penjualan & kembalikan stok (active → returned)
+    // ─────────────────────────────────────────
+    public function returnLoan(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id'         => 'required|integer',
+            'returnDate' => 'required|date',
+            'returnNote' => 'nullable|string',
+            'details'    => 'required|array|min:1',
+            'details.*.id'                 => 'required|integer',
+            'details.*.soldQty'            => 'required|integer|min:0',
+            'details.*.actualSellingPrice' => 'required|numeric|min:0',
+            'details.*.itemNote'           => 'nullable|string',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $loan = LoanProduct::with('details')->where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$loan) {
+            return responseInvalid(['Loan Product not found!']);
+        }
+
+        if ($loan->status !== 'active') {
+            return responseInvalid(['Only active Loan Products can be returned.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $totalSoldQty     = 0;
+            $totalReturnedQty = 0;
+            $totalRevenue     = 0;
+
+            foreach ($request->details as $item) {
+                $detail = LoanProductDetail::where('id', $item['id'])
+                    ->where('loanProductId', $loan->id)
+                    ->first();
+
+                if (!$detail) {
+                    DB::rollBack();
+                    return responseInvalid(["Detail ID {$item['id']} not found in this Loan Product."]);
+                }
+
+                if ($item['soldQty'] > $detail->loanedQty) {
+                    DB::rollBack();
+                    return responseInvalid([
+                        "Sold qty ({$item['soldQty']}) cannot exceed loaned qty ({$detail->loanedQty}) for '{$detail->productName}'."
+                    ]);
+                }
+
+                $returnedQty = $detail->loanedQty - $item['soldQty'];
+                $revenue     = $item['soldQty'] * $item['actualSellingPrice'];
+
+                $detail->update([
+                    'soldQty'            => $item['soldQty'],
+                    'actualSellingPrice' => $item['actualSellingPrice'],
+                    'returnedQty'        => $returnedQty,
+                    'revenue'            => $revenue,
+                    'itemNote'           => $item['itemNote'] ?? null,
+                    'returnStatus'       => 'returned',
+                ]);
+
+                // Return unsold stock back
+                if ($returnedQty > 0) {
+                    [$product, $stockRecord] = $this->resolveProduct($detail->productType, $detail->productId, $loan->locationId);
+
+                    if ($stockRecord !== null) {
+                        $newStock = $stockRecord->inStock + $returnedQty;
+                        $stockRecord->update(['inStock' => $newStock]);
+
+                        $this->createProductLog($detail->productType, $detail->productId, [
+                            'transaction' => 'Loan Return',
+                            'remark'      => "Loan Return - {$loan->loanNumber} | Event: {$loan->eventName} | Sold: {$item['soldQty']}, Returned: {$returnedQty}",
+                            'quantity'    => $returnedQty,
+                            'balance'     => $newStock,
+                            'userId'      => $request->user()->id,
+                        ]);
+                    }
+                }
+
+                $totalSoldQty     += $item['soldQty'];
+                $totalReturnedQty += $returnedQty;
+                $totalRevenue     += $revenue;
+            }
+
+            $loan->update([
+                'status'           => 'returned',
+                'returnDate'       => $request->returnDate,
+                'returnNote'       => $request->returnNote,
+                'totalSoldQty'     => $totalSoldQty,
+                'totalReturnedQty' => $totalReturnedQty,
+                'totalRevenue'     => $totalRevenue,
+                'userUpdateId'     => $request->user()->id,
+            ]);
+
+            LoanProductLog::create([
+                'loanProductId' => $loan->id,
+                'action'        => 'returned',
+                'description'   => "Products returned on {$request->returnDate}. Sold: {$totalSoldQty}, Returned: {$totalReturnedQty}, Revenue: {$totalRevenue}",
+                'userId'        => $request->user()->id,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Loan Product returned successfully.',
+                'data'    => $loan->fresh()->load('details'),
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // Delete (soft delete, only draft/cancelled)
+    // ─────────────────────────────────────────
+    public function delete(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $loan = LoanProduct::where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$loan) {
+            return responseInvalid(['Loan Product not found!']);
+        }
+
+        if (!in_array($loan->status, ['draft', 'cancelled'])) {
+            return responseInvalid(['Only draft or cancelled Loan Products can be deleted.']);
+        }
+
+        $loan->update([
+            'isDeleted'    => true,
+            'deletedBy'    => $request->user()->name ?? $request->user()->id,
+            'deletedAt'    => Carbon::now(),
+            'userUpdateId' => $request->user()->id,
+        ]);
+
+        LoanProductLog::create([
+            'loanProductId' => $loan->id,
+            'action'        => 'cancelled',
+            'description'   => 'Loan product deleted.',
+            'userId'        => $request->user()->id,
+        ]);
+
+        return response()->json(['message' => 'Loan Product deleted successfully.'], 200);
+    }
+
+    // ─────────────────────────────────────────
+    // Private Helpers
+    // ─────────────────────────────────────────
+
+    /**
+     * Resolve product and its stock record by type and locationId.
+     * Returns [product, stockRecord] — stockRecord may be null if no location stock entry exists.
+     */
+    private function resolveProduct(string $type, int $productId, int $locationId): array
+    {
+        switch ($type) {
+            case 'sell':
+                $product     = ProductSell::find($productId);
+                $stockRecord = $product
+                    ? ProductSellLocation::where('productSellId', $productId)
+                        ->where('locationId', $locationId)
+                        ->first()
+                    : null;
+                break;
+
+            case 'clinic':
+                $product     = ProductClinic::find($productId);
+                $stockRecord = $product
+                    ? ProductClinicLocation::where('productClinicId', $productId)
+                        ->where('locationId', $locationId)
+                        ->first()
+                    : null;
+                break;
+
+            case 'product':
+            default:
+                $product     = Products::find($productId);
+                $stockRecord = $product
+                    ? ProductLocations::where('productId', $productId)
+                        ->where('locationId', $locationId)
+                        ->first()
+                    : null;
+                break;
+        }
+
+        return [$product, $stockRecord];
+    }
+
+    /**
+     * Create a stock movement log entry for the appropriate product type.
+     */
+    private function createProductLog(string $type, int $productId, array $data): void
+    {
+        switch ($type) {
+            case 'sell':
+                ProductSellLog::create(array_merge(['productSellId' => $productId], $data));
+                break;
+
+            case 'clinic':
+                ProductClinicLog::create(array_merge(['productClinicId' => $productId], $data));
+                break;
+
+            case 'product':
+            default:
+                ProductLog::create(array_merge(['productId' => $productId], $data));
+                break;
+        }
+    }
+}
