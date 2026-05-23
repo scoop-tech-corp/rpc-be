@@ -53,7 +53,7 @@ class LoanProductController
     // ─────────────────────────────────────────
     public function index(Request $request)
     {
-        $query = LoanProduct::with(['staff:id,firstName', 'location:id,locationName', 'approver:id,firstName'])
+        $query = LoanProduct::with(['users:id,firstName', 'location:id,locationName', 'approver:id,firstName'])
             ->where('isDeleted', false);
 
         if ($request->filled('locationId')) {
@@ -105,7 +105,7 @@ class LoanProductController
         }
 
         $data = LoanProduct::with([
-            'staff:id,firstName',
+            'users:id,firstName',
             'location:id,locationName',
             'approver:id,firstName',
             'details',
