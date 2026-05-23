@@ -6,12 +6,7 @@ use App\Models\DeliveryAgent;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
 use App\Models\DeliveryOrderLog;
-use App\Models\ProductLocations;
-use App\Models\ProductSellLocation;
-use App\Models\ProductClinicLocation;
 use App\Models\Products;
-use App\Models\ProductSell;
-use App\Models\ProductClinic;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -148,8 +143,7 @@ class DeliveryOrderController
             'scheduledAt'     => 'nullable|date',
             'orderId'         => 'nullable|integer',
             'note'            => 'nullable|string',
-            'details'         => 'required|array|min:1',
-            'details.*.productType' => 'required|string|in:sell,clinic,product',
+            'details'               => 'required|array|min:1',
             'details.*.productId'   => 'required|integer',
             'details.*.qty'         => 'required|integer|min:1',
             'details.*.unitPrice'   => 'nullable|numeric|min:0',
@@ -169,15 +163,15 @@ class DeliveryOrderController
             $totalAmount  = 0;
 
             foreach ($request->details as $item) {
-                $product = $this->resolveProduct($item['productType'], $item['productId']);
+                $product = Products::find($item['productId']);
 
                 if (!$product) {
                     DB::rollBack();
-                    return responseInvalid(["Product ID {$item['productId']} (type: {$item['productType']}) not found!"]);
+                    return responseInvalid(["Product ID {$item['productId']} not found!"]);
                 }
 
                 $unitPrice = $item['unitPrice'] ?? ($product->price ?? 0);
-                $weight    = $item['weight'] ?? 0;
+                $weight    = $item['weight'] ?? ($product->weight ?? 0);
                 $subtotal  = $item['qty'] * $unitPrice;
 
                 $totalItems++;
@@ -185,7 +179,6 @@ class DeliveryOrderController
                 $totalAmount += $subtotal;
 
                 $detailsData[] = [
-                    'productType' => $item['productType'],
                     'productId'   => $item['productId'],
                     'productName' => $product->fullName,
                     'sku'         => $product->sku ?? null,
@@ -257,8 +250,7 @@ class DeliveryOrderController
             'deliveryTime'    => 'nullable|date_format:H:i',
             'scheduledAt'     => 'nullable|date',
             'note'            => 'nullable|string',
-            'details'         => 'nullable|array|min:1',
-            'details.*.productType' => 'required_with:details|string|in:sell,clinic,product',
+            'details'               => 'nullable|array|min:1',
             'details.*.productId'   => 'required_with:details|integer',
             'details.*.qty'         => 'required_with:details|integer|min:1',
             'details.*.unitPrice'   => 'nullable|numeric|min:0',
@@ -302,15 +294,15 @@ class DeliveryOrderController
                 $totalAmount = 0;
 
                 foreach ($request->details as $item) {
-                    $product = $this->resolveProduct($item['productType'], $item['productId']);
+                    $product = Products::find($item['productId']);
 
                     if (!$product) {
                         DB::rollBack();
-                        return responseInvalid(["Product ID {$item['productId']} (type: {$item['productType']}) not found!"]);
+                        return responseInvalid(["Product ID {$item['productId']} not found!"]);
                     }
 
                     $unitPrice = $item['unitPrice'] ?? ($product->price ?? 0);
-                    $weight    = $item['weight'] ?? 0;
+                    $weight    = $item['weight'] ?? ($product->weight ?? 0);
                     $subtotal  = $item['qty'] * $unitPrice;
 
                     $totalItems++;
@@ -319,7 +311,6 @@ class DeliveryOrderController
 
                     DeliveryOrderDetail::create([
                         'deliveryOrderId' => $order->id,
-                        'productType'     => $item['productType'],
                         'productId'       => $item['productId'],
                         'productName'     => $product->fullName,
                         'sku'             => $product->sku ?? null,
@@ -646,19 +637,4 @@ class DeliveryOrderController
         return response()->json(['message' => 'Delivery Order deleted successfully.'], 200);
     }
 
-    // ─────────────────────────────────────────
-    // Private Helper – resolve product by type
-    // ─────────────────────────────────────────
-    private function resolveProduct(string $type, int $productId)
-    {
-        switch ($type) {
-            case 'sell':
-                return ProductSell::find($productId);
-            case 'clinic':
-                return ProductClinic::find($productId);
-            case 'product':
-            default:
-                return Products::find($productId);
-        }
-    }
 }

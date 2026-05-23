@@ -11,7 +11,7 @@ class DeliveryOrderDetail extends Model
     protected $guarded = ['id'];
 
     protected $fillable = [
-        'deliveryOrderId', 'productType', 'productId',
+        'deliveryOrderId', 'productId',
         'productName', 'sku', 'qty', 'unitPrice', 'subtotal', 'weight', 'note',
     ];
 
