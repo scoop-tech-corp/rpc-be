@@ -345,6 +345,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/complete', [DeliveryOrderController::class, 'complete']);
             Route::post('/failed', [DeliveryOrderController::class, 'failed']);
             Route::post('/cancel', [DeliveryOrderController::class, 'cancel']);
+            Route::get('/download-pdf', [DeliveryOrderController::class, 'downloadPdf']);
         });
 
         Route::get('/datastatic', [ProductController::class, 'indexDataStatic']);
