@@ -113,7 +113,7 @@ class DeliveryOrderController
             'agent:id,name,phone,vehicleType,vehiclePlate',
             'creator:id,firstName',
             'details',
-            'logs.user:id,name',
+            'logs.user:id,firstName',
         ])
             ->where('id', $request->id)
             ->where('isDeleted', false)
@@ -622,7 +622,7 @@ class DeliveryOrderController
 
         $order->update([
             'isDeleted'    => true,
-            'deletedBy'    => $request->user()->name ?? $request->user()->id,
+            'deletedBy'    => $request->user()->firstName ?? $request->user()->id,
             'deletedAt'    => Carbon::now(),
             'userUpdateId' => $request->user()->id,
         ]);
