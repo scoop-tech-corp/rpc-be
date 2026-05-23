@@ -53,42 +53,93 @@ class LoanProductController
     // ─────────────────────────────────────────
     public function index(Request $request)
     {
-        $query = LoanProduct::with(['users:id,firstName', 'location:id,locationName', 'approver:id,firstName'])
-            ->where('isDeleted', false);
+        $itemPerPage = $request->rowPerPage;
+        $page        = $request->goToPage;
 
-        if ($request->filled('locationId')) {
-            $query->where('locationId', $request->locationId);
-        }
+        $data = DB::table('loanProducts as lp')
+            ->join('users as u', 'lp.staffId', 'u.id')
+            ->join('location as l', 'lp.locationId', 'l.id')
+            ->leftJoin('users as a', 'lp.approvedBy', 'a.id')
+            ->select(
+                'lp.id',
+                'lp.loanNumber',
+                'lp.staffId',
+                'u.firstName as staffName',
+                'lp.locationId',
+                'l.locationName',
+                'lp.eventName',
+                'lp.eventDate',
+                'lp.eventAddress',
+                'lp.loanDate',
+                'lp.returnDeadline',
+                'lp.returnDate',
+                'lp.status',
+                'lp.approvedBy',
+                'a.firstName as approverName',
+                'lp.approvedAt',
+                'lp.rejectedReason',
+                'lp.totalItems',
+                'lp.totalLoanedQty',
+                'lp.totalSoldQty',
+                'lp.totalReturnedQty',
+                'lp.totalRevenue',
+                'lp.note',
+                'lp.returnNote',
+                DB::raw("DATE_FORMAT(lp.created_at, '%d/%m/%Y %H:%i') as createdAt")
+            )
+            ->where('lp.isDeleted', false);
 
-        if ($request->filled('staffId')) {
-            $query->where('staffId', $request->staffId);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('search')) {
+        if ($request->search) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('loanNumber', 'like', "%{$search}%")
-                    ->orWhere('eventName', 'like', "%{$search}%");
+            $data   = $data->where(function ($q) use ($search) {
+                $q->where('lp.loanNumber', 'like', "%{$search}%")
+                    ->orWhere('lp.eventName', 'like', "%{$search}%")
+                    ->orWhere('u.firstName', 'like', "%{$search}%");
             });
         }
 
-        if ($request->filled('startDate') && $request->filled('endDate')) {
-            $query->whereBetween('eventDate', [$request->startDate, $request->endDate]);
+        if ($request->locationId) {
+            $data = $data->whereIn('lp.locationId', $request->locationId);
         }
 
-        $query->orderBy('created_at', 'desc');
+        if ($request->staffId) {
+            $data = $data->whereIn('lp.staffId', $request->staffId);
+        }
 
-        if ($request->filled('limit')) {
-            $data = $query->paginate($request->limit);
+        if ($request->status) {
+            $data = $data->where('lp.status', $request->status);
+        }
+
+        if ($request->startDate && $request->endDate) {
+            $data = $data->whereBetween('lp.eventDate', [$request->startDate, $request->endDate]);
+        }
+
+        if ($request->orderValue) {
+            $data = $data->orderBy($request->orderColumn, $request->orderValue);
         } else {
-            $data = $query->get();
+            $data = $data->orderBy('lp.created_at', 'desc');
         }
 
-        return response()->json($data, 200);
+        if ($itemPerPage) {
+            $offset       = ($page - 1) * $itemPerPage;
+            $count_data   = $data->count();
+            $count_result = $count_data - $offset;
+
+            if ($count_result < 0) {
+                $data = $data->offset(0)->limit($itemPerPage)->get();
+            } else {
+                $data = $data->offset($offset)->limit($itemPerPage)->get();
+            }
+
+            $totalPaging = $count_data / $itemPerPage;
+
+            return response()->json([
+                'totalPagination' => ceil($totalPaging),
+                'data'            => $data,
+            ], 200);
+        }
+
+        return response()->json($data->get(), 200);
     }
 
     // ─────────────────────────────────────────
@@ -105,7 +156,7 @@ class LoanProductController
         }
 
         $data = LoanProduct::with([
-            'users:id,firstName',
+            'staff:id,firstName',
             'location:id,locationName',
             'approver:id,firstName',
             'details',
@@ -633,7 +684,7 @@ class LoanProductController
 
         $loan->update([
             'isDeleted'    => true,
-            'deletedBy'    => $request->user()->firstName ?? $request->user()->id,
+            'deletedBy'    => $request->user()->name ?? $request->user()->id,
             'deletedAt'    => Carbon::now(),
             'userUpdateId' => $request->user()->id,
         ]);
