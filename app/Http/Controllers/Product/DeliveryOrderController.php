@@ -7,6 +7,7 @@ use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
 use App\Models\DeliveryOrderLog;
 use App\Models\Products;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -595,6 +596,42 @@ class DeliveryOrderController
         ]);
 
         return response()->json(['message' => 'Delivery Order cancelled.'], 200);
+    }
+
+    // ─────────────────────────────────────────
+    // Download PDF
+    // ─────────────────────────────────────────
+    public function downloadPdf(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $order = DeliveryOrder::with([
+            'location:id,locationName',
+            'agent:id,name,phone,vehicleType,vehiclePlate',
+            'creator:id,firstName',
+            'details',
+            'logs.user:id,firstName',
+        ])
+            ->where('id', $request->id)
+            ->where('isDeleted', false)
+            ->first();
+
+        if (!$order) {
+            return responseInvalid(['Delivery Order not found!']);
+        }
+
+        $pdf = Pdf::loadView('delivery-order-pdf', ['order' => $order])
+            ->setPaper('a4', 'portrait');
+
+        $filename = "delivery-order-{$order->deliveryNumber}.pdf";
+
+        return $pdf->download($filename);
     }
 
     // ─────────────────────────────────────────
