@@ -53,7 +53,7 @@ class LoanProductController
     // ─────────────────────────────────────────
     public function index(Request $request)
     {
-        $query = LoanProduct::with(['staff:id,name', 'location:id,locationName', 'approver:id,name'])
+        $query = LoanProduct::with(['staff:id,firstName', 'location:id,locationName', 'approver:id,firstName'])
             ->where('isDeleted', false);
 
         if ($request->filled('locationId')) {
@@ -105,11 +105,11 @@ class LoanProductController
         }
 
         $data = LoanProduct::with([
-            'staff:id,name',
+            'staff:id,firstName',
             'location:id,locationName',
-            'approver:id,name',
+            'approver:id,firstName',
             'details',
-            'logs.user:id,name',
+            'logs.user:id,firstName',
         ])
             ->where('id', $request->id)
             ->where('isDeleted', false)
@@ -633,7 +633,7 @@ class LoanProductController
 
         $loan->update([
             'isDeleted'    => true,
-            'deletedBy'    => $request->user()->name ?? $request->user()->id,
+            'deletedBy'    => $request->user()->firstName ?? $request->user()->id,
             'deletedAt'    => Carbon::now(),
             'userUpdateId' => $request->user()->id,
         ]);
