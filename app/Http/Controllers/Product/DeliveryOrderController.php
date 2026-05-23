@@ -55,7 +55,7 @@ class DeliveryOrderController
         $query = DeliveryOrder::with([
             'location:id,locationName',
             'agent:id,name,phone,vehicleType,vehiclePlate',
-            'creator:id,name',
+            'creator:id,firstName',
         ])->where('isDeleted', false);
 
         if ($request->filled('locationId')) {
@@ -111,7 +111,7 @@ class DeliveryOrderController
         $data = DeliveryOrder::with([
             'location:id,locationName',
             'agent:id,name,phone,vehicleType,vehiclePlate',
-            'creator:id,name',
+            'creator:id,firstName',
             'details',
             'logs.user:id,name',
         ])
