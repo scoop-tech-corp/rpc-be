@@ -6,14 +6,8 @@ use App\Models\LoanProduct;
 use App\Models\LoanProductDetail;
 use App\Models\LoanProductLog;
 use App\Models\ProductLocations;
-use App\Models\ProductSellLocation;
-use App\Models\ProductClinicLocation;
 use App\Models\ProductLog;
-use App\Models\ProductSellLog;
-use App\Models\ProductClinicLog;
 use App\Models\Products;
-use App\Models\ProductSell;
-use App\Models\ProductClinic;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -143,7 +137,6 @@ class LoanProductController
             'returnDeadline' => 'nullable|date',
             'note'         => 'nullable|string',
             'details'      => 'required|array|min:1',
-            'details.*.productType' => 'required|string|in:sell,clinic,product',
             'details.*.productId'   => 'required|integer',
             'details.*.loanedQty'   => 'required|integer|min:1',
             'details.*.suggestedPrice' => 'nullable|numeric|min:0',
@@ -159,11 +152,11 @@ class LoanProductController
             $detailsData = [];
 
             foreach ($request->details as $item) {
-                [$product, $stockCheck] = $this->resolveProduct($item['productType'], $item['productId'], $request->locationId);
+                [$product, $stockCheck] = $this->resolveProduct($item['productId'], $request->locationId);
 
                 if (!$product) {
                     DB::rollBack();
-                    return responseInvalid(["Product ID {$item['productId']} (type: {$item['productType']}) not found!"]);
+                    return responseInvalid(["Product ID {$item['productId']} not found!"]);
                 }
 
                 if ($stockCheck !== null && $stockCheck->inStock < $item['loanedQty']) {
@@ -176,7 +169,7 @@ class LoanProductController
                 $totalLoanedQty += $item['loanedQty'];
 
                 $detailsData[] = [
-                    'productType'    => $item['productType'],
+                    'productType'    => $product->category,
                     'productId'      => $item['productId'],
                     'productName'    => $product->fullName,
                     'sku'            => $product->sku ?? null,
@@ -240,7 +233,6 @@ class LoanProductController
             'returnDeadline' => 'nullable|date',
             'note'         => 'nullable|string',
             'details'      => 'nullable|array|min:1',
-            'details.*.productType' => 'required_with:details|string|in:sell,clinic,product',
             'details.*.productId'   => 'required_with:details|integer',
             'details.*.loanedQty'   => 'required_with:details|integer|min:1',
             'details.*.suggestedPrice' => 'nullable|numeric|min:0',
@@ -276,11 +268,11 @@ class LoanProductController
 
                 $totalLoanedQty = 0;
                 foreach ($request->details as $item) {
-                    [$product, $stockCheck] = $this->resolveProduct($item['productType'], $item['productId'], $loan->locationId);
+                    [$product, $stockCheck] = $this->resolveProduct($item['productId'], $loan->locationId);
 
                     if (!$product) {
                         DB::rollBack();
-                        return responseInvalid(["Product ID {$item['productId']} (type: {$item['productType']}) not found!"]);
+                        return responseInvalid(["Product ID {$item['productId']} not found!"]);
                     }
 
                     if ($stockCheck !== null && $stockCheck->inStock < $item['loanedQty']) {
@@ -294,7 +286,7 @@ class LoanProductController
 
                     LoanProductDetail::create([
                         'loanProductId'  => $loan->id,
-                        'productType'    => $item['productType'],
+                        'productType'    => $product->category,
                         'productId'      => $item['productId'],
                         'productName'    => $product->fullName,
                         'sku'            => $product->sku ?? null,
@@ -454,7 +446,7 @@ class LoanProductController
         DB::beginTransaction();
         try {
             foreach ($loan->details as $detail) {
-                [$product, $stockRecord] = $this->resolveProduct($detail->productType, $detail->productId, $loan->locationId);
+                [$product, $stockRecord] = $this->resolveProduct($detail->productId, $loan->locationId);
 
                 if ($stockRecord !== null) {
                     if ($stockRecord->inStock < $detail->loanedQty) {
@@ -467,7 +459,7 @@ class LoanProductController
                     $newStock = $stockRecord->inStock - $detail->loanedQty;
                     $stockRecord->update(['inStock' => $newStock]);
 
-                    $this->createProductLog($detail->productType, $detail->productId, [
+                    $this->createProductLog($detail->productId, [
                         'transaction' => 'Loan Out',
                         'remark'      => "Loan Out - {$loan->loanNumber} | Event: {$loan->eventName}",
                         'quantity'    => -$detail->loanedQty,
@@ -566,13 +558,13 @@ class LoanProductController
 
                 // Return unsold stock back
                 if ($returnedQty > 0) {
-                    [$product, $stockRecord] = $this->resolveProduct($detail->productType, $detail->productId, $loan->locationId);
+                    [$product, $stockRecord] = $this->resolveProduct($detail->productId, $loan->locationId);
 
                     if ($stockRecord !== null) {
                         $newStock = $stockRecord->inStock + $returnedQty;
                         $stockRecord->update(['inStock' => $newStock]);
 
-                        $this->createProductLog($detail->productType, $detail->productId, [
+                        $this->createProductLog($detail->productId, [
                             'transaction' => 'Loan Return',
                             'remark'      => "Loan Return - {$loan->loanNumber} | Event: {$loan->eventName} | Sold: {$item['soldQty']}, Returned: {$returnedQty}",
                             'quantity'    => $returnedQty,
@@ -664,59 +656,20 @@ class LoanProductController
      * Resolve product and its stock record by type and locationId.
      * Returns [product, stockRecord] — stockRecord may be null if no location stock entry exists.
      */
-    private function resolveProduct(string $type, int $productId, int $locationId): array
+    private function resolveProduct(int $productId, int $locationId): array
     {
-        switch ($type) {
-            case 'sell':
-                $product     = ProductSell::find($productId);
-                $stockRecord = $product
-                    ? ProductSellLocation::where('productSellId', $productId)
-                        ->where('locationId', $locationId)
-                        ->first()
-                    : null;
-                break;
-
-            case 'clinic':
-                $product     = ProductClinic::find($productId);
-                $stockRecord = $product
-                    ? ProductClinicLocation::where('productClinicId', $productId)
-                        ->where('locationId', $locationId)
-                        ->first()
-                    : null;
-                break;
-
-            case 'product':
-            default:
-                $product     = Products::find($productId);
-                $stockRecord = $product
-                    ? ProductLocations::where('productId', $productId)
-                        ->where('locationId', $locationId)
-                        ->first()
-                    : null;
-                break;
-        }
+        $product     = Products::find($productId);
+        $stockRecord = $product
+            ? ProductLocations::where('productId', $productId)
+                ->where('locationId', $locationId)
+                ->first()
+            : null;
 
         return [$product, $stockRecord];
     }
 
-    /**
-     * Create a stock movement log entry for the appropriate product type.
-     */
-    private function createProductLog(string $type, int $productId, array $data): void
+    private function createProductLog(int $productId, array $data): void
     {
-        switch ($type) {
-            case 'sell':
-                ProductSellLog::create(array_merge(['productSellId' => $productId], $data));
-                break;
-
-            case 'clinic':
-                ProductClinicLog::create(array_merge(['productClinicId' => $productId], $data));
-                break;
-
-            case 'product':
-            default:
-                ProductLog::create(array_merge(['productId' => $productId], $data));
-                break;
-        }
+        ProductLog::create(array_merge(['productId' => $productId], $data));
     }
 }

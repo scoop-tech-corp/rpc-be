@@ -428,7 +428,7 @@ class CustomerController extends Controller
     }
 
 
-    private function buildCustomerBaseQuery($request)
+    private function buildCustomerBaseQuery(Request $request)
     {
         $query = DB::table('customer as a')
             ->leftjoin(
@@ -464,7 +464,7 @@ class CustomerController extends Controller
         return $query;
     }
 
-    private function Search($request)
+    private function Search(Request $request)
     {
         $searchableColumns = [
             'customerName', 'memberNo', 'totalPet', 'location',
@@ -1056,6 +1056,7 @@ class CustomerController extends Controller
 
 
             $flag = false;
+            $files = [];
 
             if ($request->hasfile('images')) {
 
@@ -2359,51 +2360,66 @@ class CustomerController extends Controller
             } else {
 
 
-                $param_customer = DB::table('customer')
+                $param_customer = DB::table('customer as c')
+                    ->leftJoin('titleCustomer as tc', 'tc.id', '=', 'c.titleCustomerId')
+                    ->leftJoin('customerGroups as cg', 'cg.id', '=', 'c.customerGroupId')
+                    ->leftJoin('location as loc', 'loc.id', '=', 'c.locationId')
+                    ->leftJoin('customerOccupation as co', 'co.id', '=', 'c.occupationId')
+                    ->leftJoin('referenceCustomer as rc', 'rc.id', '=', 'c.referenceCustomerId')
+                    ->leftJoin('typeIdCustomer as tic', 'tic.id', '=', 'c.typeId')
                     ->select(
-                        'id',
-                        'memberNo',
-                        'firstName',
-                        'middleName',
-                        'lastName',
-                        'nickName',
-                        'gender',
-                        'titleCustomerId',
-                        'customerGroupId',
-                        'locationId',
-                        'notes',
-                        'colorType',
-                        DB::raw("DATE_FORMAT(joinDate, '%Y-%m-%d') as joinDate"),
-                        'typeId',
-                        'numberId',
-                        'occupationId',
-                        DB::raw("IFNULL(DATE_FORMAT(birthDate, '%Y-%m-%d'),'') as birthDate"),
-                        'referenceCustomerId',
-                        'isReminderBooking',
-                        'isReminderPayment'
+                        'c.id',
+                        'c.memberNo',
+                        'c.firstName',
+                        'c.middleName',
+                        'c.lastName',
+                        'c.nickName',
+                        'c.gender',
+                        'c.titleCustomerId',
+                        DB::raw("IFNULL(tc.titleName, '') as titleCustomerName"),
+                        'c.customerGroupId',
+                        DB::raw("IFNULL(cg.customerGroup, '') as customerGroupName"),
+                        'c.locationId',
+                        DB::raw("IFNULL(loc.locationName, '') as locationName"),
+                        'c.notes',
+                        'c.colorType',
+                        DB::raw("DATE_FORMAT(c.joinDate, '%Y-%m-%d') as joinDate"),
+                        'c.typeId',
+                        DB::raw("IFNULL(tic.typeName, '') as typeIdName"),
+                        'c.numberId',
+                        'c.occupationId',
+                        DB::raw("IFNULL(co.occupationName, '') as occupationName"),
+                        DB::raw("IFNULL(DATE_FORMAT(c.birthDate, '%Y-%m-%d'),'') as birthDate"),
+                        'c.referenceCustomerId',
+                        DB::raw("IFNULL(rc.referenceName, '') as referenceCustomerName"),
+                        'c.isReminderBooking',
+                        'c.isReminderPayment',
+                        DB::raw("IFNULL(DATE_FORMAT(c.lastTransaction, '%Y-%m-%d %H:%i:%s'), '') as lastTransactionDate")
                     )
-                    ->where('id', '=', $customerId)
+                    ->where('c.id', '=', $customerId)
                     ->first();
 
-                $customerPets = DB::table('customerPets')
+                $customerPets = DB::table('customerPets as cp')
+                    ->leftJoin('petCategory as pc', 'pc.id', '=', 'cp.petCategoryId')
                     ->select(
-                        'id',
-                        'petName',
-                        'petCategoryId',
-                        'races',
-                        'condition',
-                        'color',
-                        DB::raw("CASE WHEN dateOfBirth is null then 'Month and Year' else 'Birth Date' end as isbirthDate"),
-                        'petMonth',
-                        'petYear',
-                        DB::raw("IFNULL(DATE_FORMAT(dateOfBirth, '%Y-%m-%d'),'') as dateOfBirth"),
-                        'petGender',
-                        'isSteril',
-                        'remark'
+                        'cp.id',
+                        'cp.petName',
+                        'cp.petCategoryId',
+                        DB::raw("IFNULL(pc.petCategoryName, '') as petCategoryName"),
+                        'cp.races',
+                        'cp.condition',
+                        'cp.color',
+                        DB::raw("CASE WHEN cp.dateOfBirth is null then 'Month and Year' else 'Birth Date' end as isbirthDate"),
+                        'cp.petMonth',
+                        'cp.petYear',
+                        DB::raw("IFNULL(DATE_FORMAT(cp.dateOfBirth, '%Y-%m-%d'),'') as dateOfBirth"),
+                        'cp.petGender',
+                        'cp.isSteril',
+                        'cp.remark'
                     )
                     ->where([
-                        ['customerId', '=', $customerId],
-                        ['isDeleted', '=', '0']
+                        ['cp.customerId', '=', $customerId],
+                        ['cp.isDeleted', '=', '0']
                     ])
                     ->get();
 
@@ -2530,10 +2546,238 @@ class CustomerController extends Controller
                 $param_customer->images = $customeImages;
 
 
+                $totalBooking = DB::table('bookings')
+                    ->where('customerId', $customerId)
+                    ->where('isDeleted', 0)
+                    ->where('isCancelled', 0)
+                    ->count();
+
+                $summary = DB::selectOne("
+                    SELECT
+                        (SELECT COUNT(*) FROM transactionPetClinics   WHERE customerId = :id1  AND isDeleted = 0) +
+                        (SELECT COUNT(*) FROM transaction_pet_hotels  WHERE customerId = :id2  AND isDeleted = 0) +
+                        (SELECT COUNT(*) FROM transaction_breedings   WHERE customerId = :id3  AND isDeleted = 0) +
+                        (SELECT COUNT(*) FROM transactionpetsalon     WHERE customerId = :id4  AND isDeleted = 0) +
+                        (SELECT COUNT(*) FROM transactionpetshop      WHERE customerId = :id5  AND isDeleted = 0) AS totalTransaction,
+
+                        COALESCE((SELECT SUM(pt.amountPaid) FROM transaction_pet_clinic_payment_totals pt
+                                    JOIN transactionPetClinics t ON pt.transactionId = t.id
+                                   WHERE t.customerId = :id6  AND pt.isPayed = 1 AND pt.isDeleted = 0), 0) +
+                        COALESCE((SELECT SUM(pt.amountPaid) FROM transaction_pet_hotel_payment_totals pt
+                                    JOIN transaction_pet_hotels t ON pt.transactionId = t.id
+                                   WHERE t.customerId = :id7  AND pt.isPayed = 1 AND pt.isDeleted = 0), 0) +
+                        COALESCE((SELECT SUM(pt.amountPaid) FROM transaction_breeding_payment_totals pt
+                                    JOIN transaction_breedings t ON pt.transactionId = t.id
+                                   WHERE t.customerId = :id8  AND pt.isPayed = 1 AND pt.isDeleted = 0), 0) +
+                        COALESCE((SELECT SUM(pt.amountPaid) FROM transaction_pet_salon_payment_totals pt
+                                    JOIN transactionpetsalon t ON pt.transactionId = t.id
+                                   WHERE t.customerId = :id9  AND pt.isPayed = 1 AND pt.isDeleted = 0), 0) +
+                        COALESCE((SELECT SUM(totalPayment) FROM transactionpetshop
+                                   WHERE customerId = :id10 AND isPayed = 1 AND isDeleted = 0), 0) AS totalSpending
+                ", [
+                    'id1'  => $customerId, 'id2'  => $customerId,
+                    'id3'  => $customerId, 'id4'  => $customerId,
+                    'id5'  => $customerId, 'id6'  => $customerId,
+                    'id7'  => $customerId, 'id8'  => $customerId,
+                    'id9'  => $customerId, 'id10' => $customerId,
+                ]);
+
+                $param_customer->transactionSummary = [
+                    'totalBooking'     => $totalBooking,
+                    'totalTransaction' => $summary ? (int) $summary->totalTransaction : 0,
+                    'totalSpending'    => $summary ? (float) $summary->totalSpending  : 0.0,
+                ];
+
+
+                $visitHistory = DB::select("
+                    SELECT
+                        h.id,
+                        h.registrationNo,
+                        h.serviceType,
+                        h.petId,
+                        IFNULL(cp.petName, '') AS petName,
+                        IFNULL(DATE_FORMAT(h.startDate, '%Y-%m-%d'), '') AS startDate,
+                        h.status,
+                        DATE_FORMAT(h.created_at, '%Y-%m-%d %H:%i:%s') AS createdAt
+                    FROM (
+                        SELECT id, registrationNo, 'Klinik'   AS serviceType, petId, startDate, status, created_at FROM transactionPetClinics  WHERE customerId = ? AND isDeleted = 0
+                        UNION ALL
+                        SELECT id, registrationNo, 'Hotel'    AS serviceType, petId, startDate, status, created_at FROM transaction_pet_hotels WHERE customerId = ? AND isDeleted = 0
+                        UNION ALL
+                        SELECT id, registrationNo, 'Breeding' AS serviceType, petId, startDate, status, created_at FROM transaction_breedings   WHERE customerId = ? AND isDeleted = 0
+                        UNION ALL
+                        SELECT id, registrationNo, 'Salon'    AS serviceType, petId, startDate, status, created_at FROM transactionpetsalon     WHERE customerId = ? AND isDeleted = 0
+                        UNION ALL
+                        SELECT id, registrationNo, 'Petshop'  AS serviceType,
+                               NULL AS petId, NULL AS startDate,
+                               CASE WHEN isPayed = 1 THEN 'Selesai' ELSE 'Belum Lunas' END AS status,
+                               created_at FROM transactionpetshop WHERE customerId = ? AND isDeleted = 0
+                    ) AS h
+                    LEFT JOIN customerPets cp ON cp.id = h.petId AND cp.isDeleted = 0
+                    ORDER BY h.created_at DESC
+                    LIMIT 10
+                ", [$customerId, $customerId, $customerId, $customerId, $customerId]);
+
+                $param_customer->visitHistory = $visitHistory;
+
+
                 return response()->json($param_customer, 200);
             }
-        } else { // untuk view edit disini
+        } else { // edit mode
 
+            $checkIfValueExits = Customer::where([
+                ['id', '=', $request->input('customerId')],
+                ['isDeleted', '=', '0']
+            ])->first();
+
+            if ($checkIfValueExits === null) {
+                return response()->json([
+                    'message' => 'Failed',
+                    'errors' => "Data not exists, please try another customer id",
+                ]);
+            }
+
+            $param_customer = DB::table('customer as c')
+                ->leftJoin('titleCustomer as tc', 'tc.id', '=', 'c.titleCustomerId')
+                ->leftJoin('customerGroups as cg', 'cg.id', '=', 'c.customerGroupId')
+                ->leftJoin('location as loc', 'loc.id', '=', 'c.locationId')
+                ->leftJoin('customerOccupation as co', 'co.id', '=', 'c.occupationId')
+                ->leftJoin('referenceCustomer as rc', 'rc.id', '=', 'c.referenceCustomerId')
+                ->leftJoin('typeIdCustomer as tic', 'tic.id', '=', 'c.typeId')
+                ->select(
+                    'c.id',
+                    'c.memberNo',
+                    'c.firstName',
+                    'c.middleName',
+                    'c.lastName',
+                    'c.nickName',
+                    'c.gender',
+                    'c.titleCustomerId',
+                    DB::raw("IFNULL(tc.titleName, '') as titleCustomerName"),
+                    'c.customerGroupId',
+                    DB::raw("IFNULL(cg.customerGroup, '') as customerGroupName"),
+                    'c.locationId',
+                    DB::raw("IFNULL(loc.locationName, '') as locationName"),
+                    'c.notes',
+                    'c.colorType',
+                    DB::raw("DATE_FORMAT(c.joinDate, '%Y-%m-%d') as joinDate"),
+                    'c.typeId',
+                    DB::raw("IFNULL(tic.typeName, '') as typeIdName"),
+                    'c.numberId',
+                    'c.occupationId',
+                    DB::raw("IFNULL(co.occupationName, '') as occupationName"),
+                    DB::raw("IFNULL(DATE_FORMAT(c.birthDate, '%Y-%m-%d'),'') as birthDate"),
+                    'c.referenceCustomerId',
+                    DB::raw("IFNULL(rc.referenceName, '') as referenceCustomerName"),
+                    'c.isReminderBooking',
+                    'c.isReminderPayment'
+                )
+                ->where('c.id', '=', $customerId)
+                ->first();
+
+            $customerPets = DB::table('customerPets as cp')
+                ->leftJoin('petCategory as pc', 'pc.id', '=', 'cp.petCategoryId')
+                ->select(
+                    'cp.id',
+                    'cp.petName',
+                    'cp.petCategoryId',
+                    DB::raw("IFNULL(pc.petCategoryName, '') as petCategoryName"),
+                    'cp.races',
+                    'cp.condition',
+                    'cp.color',
+                    DB::raw("CASE WHEN cp.dateOfBirth is null then 'Month and Year' else 'Birth Date' end as isbirthDate"),
+                    'cp.petMonth',
+                    'cp.petYear',
+                    DB::raw("IFNULL(DATE_FORMAT(cp.dateOfBirth, '%Y-%m-%d'),'') as dateOfBirth"),
+                    'cp.petGender',
+                    'cp.isSteril',
+                    'cp.remark',
+                    DB::raw("'' as command")
+                )
+                ->where([
+                    ['cp.customerId', '=', $customerId],
+                    ['cp.isDeleted', '=', '0']
+                ])
+                ->get();
+
+            $param_customer->customerPets = $customerPets;
+
+            $reminderBooking = CustomerReminder::select('id', 'sourceId', 'unit', 'timing', 'status')
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['type', '=', 'B'],
+                    ['isDeleted', '=', '0']
+                ])->get();
+
+            $param_customer->reminderBooking = $reminderBooking;
+
+            $reminderPayment = CustomerReminder::select('sourceId', 'unit', 'timing', 'status')
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['type', '=', 'P'],
+                    ['isDeleted', '=', '0']
+                ])->get();
+
+            $param_customer->reminderPayment = $reminderPayment;
+
+            $reminderLatePayment = CustomerReminder::select('sourceId', 'unit', 'timing', 'status')
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['type', '=', 'LP'],
+                    ['isDeleted', '=', '0']
+                ])->get();
+
+            $param_customer->reminderLatePayment = $reminderLatePayment;
+
+            $detailAddresses = CustomerAddresses::select(
+                'id',
+                'addressName',
+                'additionalInfo',
+                'provinceCode',
+                'cityCode',
+                'postalCode',
+                'country',
+                'isPrimary'
+            )->where([
+                ['customerId', '=', $customerId],
+                ['isDeleted', '=', '0']
+            ])->get();
+
+            $param_customer->detailAddresses = $detailAddresses;
+
+            $telephones = CustomerTelephones::select('id', 'phoneNumber', 'type', 'usage')
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])->get();
+
+            $param_customer->telephones = $telephones;
+
+            $emails = CustomerEmails::select('id', 'email', 'usage')
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])->get();
+
+            $param_customer->emails = $emails;
+
+            $messengers = CustomerMessengers::select('id', 'messengerNumber', 'type', 'usage')
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])->get();
+
+            $param_customer->messengers = $messengers;
+
+            $customeImages = CustomerImages::select('id', 'labelName', 'imagePath')
+                ->where([
+                    ['customerId', '=', $customerId],
+                    ['isDeleted', '=', '0']
+                ])->get();
+
+            $param_customer->images = $customeImages;
+
+            return response()->json($param_customer, 200);
         }
     }
 

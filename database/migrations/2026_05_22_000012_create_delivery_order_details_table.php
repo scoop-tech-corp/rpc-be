@@ -10,7 +10,6 @@ return new class extends Migration {
         Schema::create('deliveryOrderDetails', function (Blueprint $table) {
             $table->id();
             $table->integer('deliveryOrderId');
-            $table->string('productType'); // sell|clinic|product
             $table->integer('productId');
             $table->string('productName');
             $table->string('sku')->nullable();
