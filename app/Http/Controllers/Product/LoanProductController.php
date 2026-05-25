@@ -8,6 +8,7 @@ use App\Models\LoanProductLog;
 use App\Models\ProductLocations;
 use App\Models\ProductLog;
 use App\Models\Products;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -697,6 +698,42 @@ class LoanProductController
         ]);
 
         return response()->json(['message' => 'Loan Product deleted successfully.'], 200);
+    }
+
+    // ─────────────────────────────────────────
+    // Download PDF
+    // ─────────────────────────────────────────
+    public function downloadPdf(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $loan = LoanProduct::with([
+            'staff:id,firstName',
+            'location:id,locationName',
+            'approver:id,firstName',
+            'details',
+            'logs.user:id,firstName',
+        ])
+            ->where('id', $request->id)
+            ->where('isDeleted', false)
+            ->first();
+
+        if (!$loan) {
+            return responseInvalid(['Loan Product not found!']);
+        }
+
+        $pdf = Pdf::loadView('loan-product-pdf', ['loan' => $loan])
+            ->setPaper('a4', 'portrait');
+
+        $filename = "loan-produk-{$loan->loanNumber}.pdf";
+
+        return $pdf->download($filename);
     }
 
     // ─────────────────────────────────────────

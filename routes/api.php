@@ -325,6 +325,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/approval', [LoanProductController::class, 'approval']);
             Route::post('/loan-out', [LoanProductController::class, 'loanOut']);
             Route::post('/return', [LoanProductController::class, 'returnLoan']);
+            Route::get('/download-pdf', [LoanProductController::class, 'downloadPdf']);
         });
 
         Route::group(['prefix' => 'delivery-agent'], function () {
