@@ -255,7 +255,7 @@ class LoanProductController
             LoanProductLog::create([
                 'loanProductId' => $loan->id,
                 'action'        => 'created',
-                'description'   => "Loan product created with number {$loan->loanNumber}",
+                'description'   => "Loan produk dibuat dengan nomor {$loan->loanNumber}",
                 'userId'        => $request->user()->id,
             ]);
 
@@ -357,7 +357,7 @@ class LoanProductController
             LoanProductLog::create([
                 'loanProductId' => $loan->id,
                 'action'        => 'updated',
-                'description'   => 'Loan product updated.',
+                'description'   => 'Loan produk berhasil diperbarui.',
                 'userId'        => $request->user()->id,
             ]);
 
@@ -404,7 +404,7 @@ class LoanProductController
         LoanProductLog::create([
             'loanProductId' => $loan->id,
             'action'        => 'submitted',
-            'description'   => 'Loan product submitted for approval.',
+            'description'   => 'Loan produk diajukan untuk persetujuan.',
             'userId'        => $request->user()->id,
         ]);
 
@@ -447,7 +447,7 @@ class LoanProductController
             LoanProductLog::create([
                 'loanProductId' => $loan->id,
                 'action'        => 'approved',
-                'description'   => 'Loan product approved.',
+                'description'   => 'Loan produk telah disetujui.',
                 'userId'        => $request->user()->id,
             ]);
 
@@ -462,7 +462,7 @@ class LoanProductController
             LoanProductLog::create([
                 'loanProductId' => $loan->id,
                 'action'        => 'rejected',
-                'description'   => "Loan product rejected. Reason: {$request->rejectedReason}",
+                'description'   => "Loan produk ditolak. Alasan: {$request->rejectedReason}",
                 'userId'        => $request->user()->id,
             ]);
 
@@ -529,7 +529,7 @@ class LoanProductController
             LoanProductLog::create([
                 'loanProductId' => $loan->id,
                 'action'        => 'loaned',
-                'description'   => "Products loaned out on {$request->loanDate}.",
+                'description'   => "Produk telah dipinjamkan pada tanggal {$request->loanDate}.",
                 'userId'        => $request->user()->id,
             ]);
 
@@ -643,7 +643,7 @@ class LoanProductController
             LoanProductLog::create([
                 'loanProductId' => $loan->id,
                 'action'        => 'returned',
-                'description'   => "Products returned on {$request->returnDate}. Sold: {$totalSoldQty}, Returned: {$totalReturnedQty}, Revenue: {$totalRevenue}",
+                'description'   => "Produk dikembalikan pada tanggal {$request->returnDate}. Terjual: {$totalSoldQty}, Dikembalikan: {$totalReturnedQty}, Pendapatan: {$totalRevenue}",
                 'userId'        => $request->user()->id,
             ]);
 
@@ -692,7 +692,7 @@ class LoanProductController
         LoanProductLog::create([
             'loanProductId' => $loan->id,
             'action'        => 'cancelled',
-            'description'   => 'Loan product deleted.',
+            'description'   => 'Loan produk telah dihapus.',
             'userId'        => $request->user()->id,
         ]);
 

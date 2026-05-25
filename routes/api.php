@@ -54,6 +54,7 @@ use App\Http\Controllers\Finance\DataStaticController as FinanceDataStaticContro
 use App\Http\Controllers\Finance\ExpensesController;
 use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Product\BatchController;
 use App\Http\Controllers\Product\StockOpnameController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Transaction\TransactionPetShopController;
@@ -291,6 +292,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/bundle', [BundleController::class, 'update']);
         Route::put('/bundle/status', [BundleController::class, 'changeStatus']);
         Route::delete('/bundle', [BundleController::class, 'delete']);
+
+        Route::group(['prefix' => 'batch'], function () {
+            Route::get('/list-batch', [BatchController::class, 'ListBatch']);
+        });
 
         Route::group(['prefix' => 'stock-opname'], function () {
 
