@@ -376,6 +376,30 @@ class BookingController extends Controller
         return responseUpdate();
     }
 
+    public function getList(Request $request)
+    {
+        $data = DB::table('bookings as e')
+            ->join('customer as c', 'e.customerId', '=', 'c.id')
+            ->join('customerPets as p', 'e.petId', '=', 'p.id')
+            ->select([
+                'e.id',
+                DB::raw("CONCAT(e.serviceType, ' - ', COALESCE(CONCAT(c.firstName, ' ', c.lastName), ''), ' (', COALESCE(p.petName, ''), ') - ', DATE_FORMAT(e.bookingTime, '%d/%m/%Y %H:%i')) as label"),
+            ])
+            ->where('e.isDeleted', 0)
+            ->where('e.isCancelled', 0)
+            ->orderBy('e.bookingTime', 'desc');
+
+        if ($request->filled('locationId')) {
+            $data = $data->where('e.locationId', $request->locationId);
+        }
+
+        if ($request->filled('serviceType')) {
+            $data = $data->where('e.serviceType', $request->serviceType);
+        }
+
+        return response()->json($data->get(), 200);
+    }
+
     function delete(Request $request)
     {
         if (!$request->id) {

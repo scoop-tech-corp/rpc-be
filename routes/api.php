@@ -154,6 +154,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/detail', [BookingBookingController::class, 'detail']);
         Route::put('/cancel', [BookingBookingController::class, 'cancelBooking']);
         Route::delete('/', [BookingBookingController::class, 'delete']);
+        Route::get('/list', [BookingBookingController::class, 'getList']);
     });
     //MODULE PRODUCT
     //list produk
@@ -295,6 +296,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
         Route::group(['prefix' => 'batch'], function () {
             Route::get('/list-batch', [BatchController::class, 'ListBatch']);
+            Route::get('/detail', [BatchController::class, 'DetailBatch']);
+            Route::get('/list-batch-transfer', [BatchController::class, 'ListBatchTransfer']);
+            Route::get('/detail-transfer', [BatchController::class, 'DetailBatchTransfer']);
         });
 
         Route::group(['prefix' => 'stock-opname'], function () {
