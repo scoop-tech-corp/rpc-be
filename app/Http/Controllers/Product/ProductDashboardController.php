@@ -46,9 +46,11 @@ class ProductDashboardController extends Controller
             ],
 
             'topSeller' => DB::table('products')
-                ->where('isDeleted', 0)
-                ->select('id as productId', 'fullName as productName', 'category as productType', DB::raw('0 as total'))
-                ->orderBy('fullName')
+                ->join('productLocations as pl', 'products.id', 'pl.productId')
+                ->join('location as l', 'pl.locationId', 'l.id')
+                ->where('products.isDeleted', 0)
+                ->select('products.id as productId', 'products.fullName as productName', 'products.category as productType', 'l.locationName', DB::raw('0 as total'))
+                ->orderBy('products.fullName')
                 ->get(),
 
             'salesByCategory' => [
