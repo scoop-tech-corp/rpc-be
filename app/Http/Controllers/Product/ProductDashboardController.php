@@ -51,6 +51,7 @@ class ProductDashboardController extends Controller
                 ->where('products.isDeleted', 0)
                 ->select('products.id as productId', 'products.fullName as productName', 'products.category as productType', 'l.locationName', DB::raw('0 as total'))
                 ->orderBy('products.fullName')
+                ->limit(8)
                 ->get(),
 
             'salesByCategory' => [
