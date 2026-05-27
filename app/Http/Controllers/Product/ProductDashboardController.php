@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Product;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ProductDashboardController extends Controller
 {
@@ -44,32 +45,11 @@ class ProductDashboardController extends Controller
                 'isLoss' => 1
             ],
 
-            'topSeller' => [
-                [
-                    'productId' => 30,
-                    'productType' => 'productClinic',
-                    'productName' => 'Vosea',
-                    'total' => 120,
-                ],
-                [
-                    'productId' => 29,
-                    'productType' => 'productClinic',
-                    'productName' => 'Kaotin',
-                    'total' => 111,
-                ],
-                [
-                    'productId' => 11,
-                    'productType' => 'productClinic',
-                    'productName' => 'Doxy',
-                    'total' => 15,
-                ],
-                [
-                    'productId' => 16,
-                    'productType' => 'productSell',
-                    'productName' => 'Whiskas 1kg',
-                    'total' => 90,
-                ],
-            ],
+            'topSeller' => DB::table('products')
+                ->where('isDeleted', 0)
+                ->select('id as productId', 'fullName as productName', 'productType', DB::raw('0 as total'))
+                ->orderBy('fullName')
+                ->get(),
 
             'salesByCategory' => [
                 'labels' => ['Vaksin', 'Obat Klinik Oral', 'Obat Klinik Tropikal', 'Cat Food'],
