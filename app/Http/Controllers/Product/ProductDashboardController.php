@@ -47,7 +47,7 @@ class ProductDashboardController extends Controller
 
             'topSeller' => DB::table('products')
                 ->where('isDeleted', 0)
-                ->select('id as productId', 'fullName as productName', 'productType', DB::raw('0 as total'))
+                ->select('id as productId', 'fullName as productName', 'category as productType', DB::raw('0 as total'))
                 ->orderBy('fullName')
                 ->get(),
 
