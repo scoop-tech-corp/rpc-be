@@ -46,18 +46,26 @@ class ProductDashboardController extends Controller
 
             'topSeller' => [
                 [
+                    'productId' => 1,
+                    'productType' => 'productClinic',
                     'productName' => 'Vosea',
                     'total' => 120,
                 ],
                 [
+                    'productId' => 2,
+                    'productType' => 'productClinic',
                     'productName' => 'Kaotin',
                     'total' => 111,
                 ],
                 [
+                    'productId' => 3,
+                    'productType' => 'productClinic',
                     'productName' => 'Doxy',
                     'total' => 15,
                 ],
                 [
+                    'productId' => 4,
+                    'productType' => 'productSell',
                     'productName' => 'Whiskas 1kg',
                     'total' => 90,
                 ],
