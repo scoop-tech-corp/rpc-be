@@ -2039,11 +2039,11 @@ class PetHotelController extends Controller
         $total_amount = $trans->amount;
         $amount_paid = transaction_pet_hotel_payment_total::where('transactionId', $trans_pay->transactionId)->sum('amountPaid');
 
-        if ($amount_paid < $total_amount)
+        if ($amount_paid < $total_amount) {
             statusTransactionPetHotel($trans_pay->transactionId, 'Menunggu Pembayaran Berikutnya', $request->user()->id);
-        else
+        } else {
             statusTransactionPetHotel($trans_pay->transactionId, 'Selesai', $request->user()->id);
-
+        }
 
         transactionPetHotelLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
         DB::commit();
