@@ -240,6 +240,7 @@ class PetHotelController extends Controller
                 $cust = Customer::select('id', 'isDeleted')->where('id', $request->customerId)->where('isDeleted', 0)->first();
 
                 if (!$cust) {
+                    DB::rollback();
                     return responseInvalid(['Customer is Not Found']);
                 }
 
@@ -266,6 +267,7 @@ class PetHotelController extends Controller
                     $pet = CustomerPets::select('id', 'isDeleted')->where('id', $request->petId)->where('customerId', $request->customerId)->where('isDeleted', 0)->first();
 
                     if (!$pet) {
+                        DB::rollback();
                         return responseInvalid(['Pet is Not Found']);
                     }
                 }
@@ -282,6 +284,7 @@ class PetHotelController extends Controller
                 ->first();
 
             if (!$doctorId) {
+                DB::rollback();
                 return responseInvalid(['Doctor is Not Found']);
             }
 
@@ -310,7 +313,7 @@ class PetHotelController extends Controller
 
             DB::commit();
             return responseCreate();
-        } catch (Exception $th) {
+        } catch (\Throwable $th) {
             DB::rollback();
             return responseInvalid([$th->getMessage()]);
         }
@@ -793,108 +796,6 @@ class PetHotelController extends Controller
             return responseInvalid(['All category must one to filled!']);
         }
 
-        // if ($services) {
-
-        //     $validateServices = Validator::make(
-        //         $services,
-        //         [
-        //             '*.id' => 'required|integer',
-        //             '*.quantity' => 'required|integer',
-        //         ],
-        //         [
-        //             '*.id.integer' => 'Id Should be Integer!',
-        //             '*.id.required' => 'Id Should be Required!',
-        //             '*.quantity.integer' => 'Quantity Should be Integer!',
-        //             '*.quantity.required' => 'Quantity Should be Required!',
-        //         ]
-        //     );
-
-        //     if ($validateServices->fails()) {
-        //         $errors = $validateServices->errors()->first();
-
-        //         return response()->json([
-        //             'message' => 'The given data was invalid.',
-        //             'errors' => [$errors],
-        //         ], 422);
-        //     }
-        // }
-
-        // if ($productSell) {
-
-        //     $validateProductSell = Validator::make(
-        //         $productSell,
-        //         [
-        //             '*.id' => 'required|integer',
-        //             '*.quantity' => 'required|integer',
-        //         ],
-        //         [
-        //             '*.id.integer' => 'Id Should be Integer!',
-        //             '*.id.required' => 'Id Should be Required!',
-        //             '*.quantity.integer' => 'Quantity Should be Integer!',
-        //             '*.quantity.required' => 'Quantity Should be Required!',
-        //         ]
-        //     );
-
-        //     if ($validateProductSell->fails()) {
-        //         $errors = $validateProductSell->errors()->first();
-
-        //         return response()->json([
-        //             'message' => 'The given data was invalid.',
-        //             'errors' => [$errors],
-        //         ], 422);
-        //     }
-        // }
-
-        // if ($productClinic) {
-
-        //     $validateProductClinic = Validator::make(
-        //         $productClinic,
-        //         [
-        //             '*.id' => 'required|integer',
-        //             '*.quantity' => 'required|integer',
-        //         ],
-        //         [
-        //             '*.id.integer' => 'Id Should be Integer!',
-        //             '*.id.required' => 'Id Should be Required!',
-        //             '*.quantity.integer' => 'Quantity Should be Integer!',
-        //             '*.quantity.required' => 'Quantity Should be Required!',
-        //         ]
-        //     );
-
-        //     if ($validateProductClinic->fails()) {
-        //         $errors = $validateProductClinic->errors()->first();
-
-        //         return response()->json([
-        //             'message' => 'The given data was invalid.',
-        //             'errors' => [$errors],
-        //         ], 422);
-        //     }
-        // }
-
-        // if ($treatmentPlans) {
-
-        //     $validateTreatmentPlans = Validator::make(
-        //         ['treatmentPlans' => $treatmentPlans],
-        //         [
-        //             'treatmentPlans' => 'required|array',
-        //             'treatmentPlans.*' => 'required|integer',
-        //         ],
-        //         [
-        //             'treatmentPlans.*.required' => 'Id is required!',
-        //             'treatmentPlans.*.integer' => 'Id should be integer!',
-        //         ]
-        //     );
-
-        //     if ($validateTreatmentPlans->fails()) {
-        //         $errors = $validateTreatmentPlans->errors()->first();
-
-        //         return response()->json([
-        //             'message' => 'The given data was invalid.',
-        //             'errors' => [$errors],
-        //         ], 422);
-        //     }
-        // }
-
         //proses insert
         DB::beginTransaction();
         try {
@@ -944,6 +845,7 @@ class PetHotelController extends Controller
 
             transactionPetHotelLog($request->transactionId, 'Input Treatment dan Kandang Sudah Selesai', '', $request->user()->id);
 
+            DB::commit();
             return responseCreate();
         } catch (\Throwable $th) {
             DB::rollback();
@@ -1028,7 +930,7 @@ class PetHotelController extends Controller
         ]);
     }
 
-    protected function ensureIsArray($data): ?array
+    protected function ensureIsArray(mixed $data): ?array
     {
         // Jika data sudah berupa array, kembalikan saja.
         if (is_array($data)) {
@@ -1106,7 +1008,7 @@ class PetHotelController extends Controller
                 ->where('pm.status', '=', 1)
                 ->get()
                 ->toArray();
-            
+
             $tempFree = array_merge($tempFree, $resFree);
 
             // Discount products
@@ -1138,7 +1040,7 @@ class PetHotelController extends Controller
                 ->where('pm.status', '=', 1)
                 ->get()
                 ->toArray();
-                
+
             $tempDiscount = array_merge($tempDiscount, $resDiscProd);
 
             // Bundle products
@@ -1169,7 +1071,7 @@ class PetHotelController extends Controller
                     ->select('pb.id', 'p.fullName', 'b.quantity', 'pb.price', 'm.name')
                     ->where('b.promoBundleId', '=', $valdtl->promoBundleId)
                     ->get();
-                    
+
                 $kalimat = 'paket bundling produk ';
                 for ($i = 0; $i < count($data); $i++) {
                     if (count($data) == 1) {
@@ -1221,7 +1123,7 @@ class PetHotelController extends Controller
                 ->where('pm.status', '=', 1)
                 ->get()
                 ->toArray();
-                
+
             $tempDiscount = array_merge($tempDiscount, $resDiscServ);
 
             // Bundle services
@@ -1252,7 +1154,7 @@ class PetHotelController extends Controller
                     ->select('pb.id', 'p.fullName', 'b.quantity', 'pb.price', 'm.name')
                     ->where('b.promoBundleId', '=', $valdtl->promoBundleId)
                     ->get();
-                    
+
                 $kalimat = 'paket bundling layanan ';
                 for ($i = 0; $i < count($data); $i++) {
                     if (count($data) == 1) {
@@ -1379,7 +1281,7 @@ class PetHotelController extends Controller
                 ->whereIn('pbd.serviceId', $serviceIds)
                 ->where('pl.locationId', '=', $trans->locationId)
                 ->get();
-                
+
             foreach ($data as $d) {
                 $includedItems = DB::table('promotion_bundle_detail_services as pbd')
                     ->join('services as s', 's.id', '=', 'pbd.serviceId')
@@ -1425,7 +1327,7 @@ class PetHotelController extends Controller
                 ->whereIn('pbd.productId', $productIds)
                 ->where('pl.locationId', '=', $trans->locationId)
                 ->get();
-                
+
             foreach ($data as $d) {
                 $includedItems = DB::table('promotion_bundle_detail_products as pbd')
                     ->join('products as p', 'p.id', '=', 'pbd.productId')
@@ -1556,7 +1458,7 @@ class PetHotelController extends Controller
                 foreach ($freeItems as $free) {
                     if (isset($promoProductFreeItems[$value['productId']][$free])) {
                         $data = $promoProductFreeItems[$value['productId']][$free];
-                        
+
                         $note = 'Beli ' . $data->quantityBuyItem . ' ' . $data->item_name . ' Gratis ' . $data->quantityFreeItem . ' ' . $data->free_product_name;
 
                         $results[] = [
@@ -1573,7 +1475,7 @@ class PetHotelController extends Controller
                             'note' => $note,
                             'promoCategory' => 'freeItem',
                         ];
-                        
+
                         $subtotal += $value['priceOverall'];
                         $promoNotes[] = $note;
                         $isGetPromo = true;
@@ -1714,7 +1616,7 @@ class PetHotelController extends Controller
             'total_payment' => $subtotal - $totalDiscount,
             'promo_notes' => $promoNotes,
         ];
-        
+
         if ($request->basedSale) {
             $response['promoBasedSaleId'] = $request->basedSale;
         }

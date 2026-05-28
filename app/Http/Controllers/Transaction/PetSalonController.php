@@ -17,6 +17,7 @@ use App\Models\transaction_pet_salon_payment_bundle;
 use App\Models\transaction_pet_salon_payment_total;
 use App\Models\transactionpetsalon;
 use App\Models\transactionpetsaloncheck;
+use App\Models\transactionPetSalonTreatmentCage;
 use App\Models\TransactionPetSalonTreatmentProduct;
 use App\Models\TransactionPetSalonTreatmentService;
 use App\Models\User;
@@ -922,15 +923,15 @@ class PetSalonController extends Controller
                 ]);
             }
 
-            // transactionBreedingTreatmentCage::create([
-            //     'transactionId' => $request->transactionId,
-            //     'cageId' => $request->cageId,
-            //     'userId' => $request->user()->id,
-            // ]);
+            transactionPetSalonTreatmentCage::create([
+                'transactionId' => $request->transactionId,
+                'cageId' => $request->cageId,
+                'userId' => $request->user()->id,
+            ]);
 
             statusTransactionPetSalon($request->transactionId, 'Proses Pembayaran', $request->user()->id);
 
-            transactionPetSalonLog($request->transactionId, 'Input Treatment Sudah Selesai', '', $request->user()->id);
+            transactionPetSalonLog($request->transactionId, 'Input Treatment dan Kandang Sudah Selesai', '', $request->user()->id);
 
             return responseCreate();
         } catch (\Throwable $th) {
@@ -956,10 +957,11 @@ class PetSalonController extends Controller
 
         $trans = TransactionPetSalon::find($request->transactionId);
 
-        // $cages = TransactionBreedingTreatmentCage::from('transactionBreedingTreatmentCages as tpcs')
-        //     ->join('facility_unit as fu', 'fu.id', '=', 'tpcs.cageId')
-        //     ->select('fu.id', 'fu.unitName')->where('transactionId', $request->transactionId)
-        //     ->first();
+        $cages = transactionPetSalonTreatmentCage::from('transactionPetSalonTreatmentCages as tpcs')
+            ->join('facility_unit as fu', 'fu.id', '=', 'tpcs.cageId')
+            ->select('fu.id', 'fu.unitName')
+            ->where('tpcs.transactionId', $request->transactionId)
+            ->first();
 
         if (!$trans) {
             return responseInvalid(['Transaction is not found!']);
@@ -1011,7 +1013,7 @@ class PetSalonController extends Controller
             'phoneNumber' => $phone ? $phone->phoneNumber : '',
             'arrivalTime' => $trans->created_at->locale('id')->translatedFormat('l, j F Y H:i'),
             'finishTime' => $formatted,
-            // 'cage' => $cages,
+            'cage' => $cages,
             'data' => $data,
         ]);
     }

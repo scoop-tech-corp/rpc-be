@@ -235,7 +235,8 @@ class BreedingController extends Controller
                 $cust = Customer::select('id', 'isDeleted')->where('id', $request->customerId)->where('isDeleted', 0)->first();
 
                 if (!$cust) {
-                    responseInvalid(['Customer is Not Found']);
+                    DB::rollback();
+                    return responseInvalid(['Customer is Not Found']);
                 }
 
                 if ($request->isNewPet == true) {
@@ -261,6 +262,7 @@ class BreedingController extends Controller
                     $pet = CustomerPets::select('id', 'isDeleted')->where('id', $request->petId)->where('customerId', $request->customerId)->where('isDeleted', 0)->first();
 
                     if (!$pet) {
+                        DB::rollback();
                         return responseInvalid(['Pet is Not Found']);
                     }
                 }
@@ -277,6 +279,7 @@ class BreedingController extends Controller
                 ->first();
 
             if (!$doctorId) {
+                DB::rollback();
                 return responseInvalid(['Doctor is Not Found']);
             }
 
@@ -305,7 +308,7 @@ class BreedingController extends Controller
 
             DB::commit();
             return responseCreate();
-        } catch (Exception $th) {
+        } catch (\Throwable $th) {
             DB::rollback();
             return responseInvalid([$th->getMessage()]);
         }
@@ -1020,7 +1023,7 @@ class BreedingController extends Controller
         ]);
     }
 
-    protected function ensureIsArray($data): ?array
+    protected function ensureIsArray(mixed $data): ?array
     {
         // Jika data sudah berupa array, kembalikan saja.
         if (is_array($data)) {
@@ -1643,6 +1646,7 @@ class BreedingController extends Controller
         }
 
         $discount_based_sales = 0;
+        $discountNote = '';
         //perhitungan based sales
         $res = DB::table('promotionMasters as pm')
             ->join('promotionBasedSales as pb', 'pm.id', 'pb.promoMasterId')
