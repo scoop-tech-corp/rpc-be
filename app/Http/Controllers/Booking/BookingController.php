@@ -161,6 +161,7 @@ class BookingController extends Controller
             'customerId'  => $request->customerId,
             'petId'       => $request->petId,
             'serviceType'    => $request->services,
+            'status'    => 'waiting confirmation',
             'bookingTime' => $request->bookingTime,
             'realImageName' => $realName,
             'imagePath' => '/BookingImages/' . $hashedName,
@@ -405,12 +406,107 @@ class BookingController extends Controller
                 $bookingDetail->update([
                     'consultationType'     => $data['consultationType'],
                     'drugAllergy'          => $data['drugAllergy'] ?? null,
-                    'emergencyPhoneNumber' => $data['emergencyPhoneNumber'],
                     'additionalInfo'       => $data['additionalInfo'] ?? null,
                     'userUpdateId'         => $request->user()->id,
                 ]);
             }
         }
+
+        return responseUpdate();
+    }
+
+    public function acceptBooking(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ], [
+            'id.required' => 'ID booking wajib diisi.',
+            'id.integer'  => 'ID booking harus berupa angka.',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json([
+                'message' => 'Data yang diberikan tidak valid.',
+                'errors'  => $validate->errors()->all(),
+            ], 422);
+        }
+
+        $booking = bookings::where('id', $request->id)->where('isDeleted', false)->first();
+        if (!$booking) {
+            return response()->json([
+                'message' => 'Booking tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($booking->isCancelled) {
+            return response()->json([
+                'message' => 'Booking sudah dibatalkan, tidak dapat diproses.',
+            ], 422);
+        }
+
+        if ($booking->isRejected) {
+            return response()->json([
+                'message' => 'Booking sudah ditolak, tidak dapat diproses.',
+            ], 422);
+        }
+
+        $booking->update([
+            'isAccepted'     => true,
+            'status'         => 'accepted',
+            'acceptedByName' => $request->user()->name,
+            'acceptedDate'   => now(),
+            'userUpdateId'   => $request->user()->id,
+        ]);
+
+        return responseUpdate();
+    }
+
+    public function rejectBooking(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id'             => 'required|integer',
+            'rejectionReason' => 'required|string',
+        ], [
+            'id.required'              => 'ID booking wajib diisi.',
+            'id.integer'               => 'ID booking harus berupa angka.',
+            'rejectionReason.required' => 'Alasan penolakan wajib diisi.',
+            'rejectionReason.string'   => 'Alasan penolakan harus berupa teks.',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json([
+                'message' => 'Data yang diberikan tidak valid.',
+                'errors'  => $validate->errors()->all(),
+            ], 422);
+        }
+
+        $booking = bookings::where('id', $request->id)->where('isDeleted', false)->first();
+        if (!$booking) {
+            return response()->json([
+                'message' => 'Booking tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($booking->isCancelled) {
+            return response()->json([
+                'message' => 'Booking sudah dibatalkan, tidak dapat diproses.',
+            ], 422);
+        }
+
+        if ($booking->isAccepted) {
+            return response()->json([
+                'message' => 'Booking sudah diterima, tidak dapat ditolak.',
+            ], 422);
+        }
+
+        $booking->update([
+            'isRejected'      => true,
+            'status'          => 'rejected',
+            'rejectionReason' => $request->rejectionReason,
+            'rejectedByName'  => $request->user()->name,
+            'rejectionDate'   => now(),
+            'userUpdateId'    => $request->user()->id,
+        ]);
 
         return responseUpdate();
     }
