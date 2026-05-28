@@ -2216,7 +2216,7 @@ class TransPetClinicController extends Controller
 
             // Menghitung jumlah untuk nomor nota (Lock row untuk menghindari duplikat di waktu bersamaan)
             $jumlahTransaksi = DB::table('transaction_pet_clinic_payment_totals as tp')
-                ->join('transaction_pet_clinics as tpc', 'tp.transactionId', '=', 'tpc.id')
+                ->join('transactionPetClinics as tpc', 'tp.transactionId', '=', 'tpc.id')
                 ->where('tpc.locationId', $trans->locationId)
                 ->whereYear('tp.created_at', $tahun)
                 ->whereMonth('tp.created_at', $bulan)
