@@ -576,7 +576,7 @@ class BookingController extends Controller
             ->orderBy('e.bookingTime', 'desc');
 
         if ($request->filled('locationId')) {
-            $data = $data->where('e.locationId', $request->locationId);
+            $data = $data->whereIn('e.locationId', (array) $request->locationId);
         }
 
         if ($request->filled('serviceType')) {
