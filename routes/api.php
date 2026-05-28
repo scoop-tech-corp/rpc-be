@@ -753,6 +753,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/payment', [PetHotelController::class, 'payment']);
 
             Route::get('/invoice', [PetHotelController::class, 'printInvoce']);
+            Route::post('/confirm-payment', [PetHotelController::class, 'confirmPayment']);
         });
 
         Route::group(['prefix' => 'breeding'], function () {
