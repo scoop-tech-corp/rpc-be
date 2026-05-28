@@ -17,6 +17,7 @@ class bookingsPetHotel extends Model
         'bookingId',
         'socializationType',
         'emergencyContactName',
+        'emergencyPhoneNumber',
         'inventoryProducts',
         'additionalInfo',
         'userId',
