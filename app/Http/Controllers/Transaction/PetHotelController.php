@@ -99,8 +99,8 @@ class PetHotelController extends Controller
         if ($request->search) {
             $data = $data->where(function ($q) use ($request) {
                 $q->where('t.registrationNo', 'like', '%' . $request->search . '%')
-                  ->orWhere('c.firstName', 'like', '%' . $request->search . '%')
-                  ->orWhere('u.firstName', 'like', '%' . $request->search . '%');
+                    ->orWhere('c.firstName', 'like', '%' . $request->search . '%')
+                    ->orWhere('u.firstName', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -377,7 +377,22 @@ class PetHotelController extends Controller
             ->orderBy('tl.id', 'desc')
             ->get();
 
-        $data = ['detail' => $detail, 'transactionLogs' => $log];
+        $paymentLog = DB::table('transaction_pet_hotel_payment_totals as tpt')
+            ->join('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
+            ->join('users as u', 'u.id', 'tpt.userId')
+            ->select(
+                'tpt.id',
+                'tpt.amount',
+                'tpt.nota_number as notaNumber',
+                'pm.name as paymentMethod',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%m:%s') as date")
+            )
+            ->where('tpt.transactionId', '=', $request->id)
+            ->orderBy('tpt.id', 'desc')
+            ->get();
+
+        $data = ['detail' => $detail, 'transactionLogs' => $log, 'paymentLogs' => $paymentLog];
 
         return response()->json($data, 200);
     }
@@ -1258,8 +1273,13 @@ class PetHotelController extends Controller
                 ->join('services as s', 's.id', 'pd.serviceId')
                 ->join('serviceCategory as sc', 's.type', 'sc.id')
                 ->select(
-                    'pm.id as promoId', 's.id as serviceId', 's.fullName as item_name', 's.type as category',
-                    'pd.discountType', 'pd.percent', 'pd.amount'
+                    'pm.id as promoId',
+                    's.id as serviceId',
+                    's.fullName as item_name',
+                    's.type as category',
+                    'pd.discountType',
+                    'pd.percent',
+                    'pd.amount'
                 )
                 ->whereIn('pm.id', $discounts)
                 ->whereIn('pd.serviceId', $serviceIds)
@@ -1304,8 +1324,14 @@ class PetHotelController extends Controller
                 ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
                 ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
                 ->select(
-                    'pm.id as promoId', 'pbuy.fullName as item_name', 'pbuy.id as buy_product_id', 'pfree.id as free_product_id',
-                    'pbuy.category', 'fi.quantityBuyItem', 'fi.quantityFreeItem', 'pfree.fullName as free_product_name'
+                    'pm.id as promoId',
+                    'pbuy.fullName as item_name',
+                    'pbuy.id as buy_product_id',
+                    'pfree.id as free_product_id',
+                    'pbuy.category',
+                    'fi.quantityBuyItem',
+                    'fi.quantityFreeItem',
+                    'pfree.fullName as free_product_name'
                 )
                 ->whereIn('pm.id', $freeItems)
                 ->whereIn('pbuy.id', $productIds)
@@ -1347,8 +1373,13 @@ class PetHotelController extends Controller
                 ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
                 ->join('products as p', 'p.id', 'pd.productId')
                 ->select(
-                    'pm.id as promoId', 'p.id as productId', 'p.fullName as item_name', 'p.category',
-                    'pd.discountType', 'pd.percent', 'pd.amount'
+                    'pm.id as promoId',
+                    'p.id as productId',
+                    'p.fullName as item_name',
+                    'p.category',
+                    'pd.discountType',
+                    'pd.percent',
+                    'pd.amount'
                 )
                 ->whereIn('pm.id', $discounts)
                 ->whereIn('pd.productId', $productIds)
@@ -1525,7 +1556,7 @@ class PetHotelController extends Controller
                             $saved = $data->amount * $value['quantity'];
                         }
 
-                        $existingIdx = collect($results)->search(function($item) use ($data) {
+                        $existingIdx = collect($results)->search(function ($item) use ($data) {
                             return $item['item_name'] === $data->item_name && isset($item['promoCategory']) && $item['promoCategory'] == 'discount';
                         });
 
@@ -1583,7 +1614,8 @@ class PetHotelController extends Controller
             $res = DB::table('promotionMasters as pm')
                 ->join('promotionBasedSales as pb', 'pm.id', 'pb.promoMasterId')
                 ->select(
-                    'pm.name', 'pb.minPurchase',
+                    'pm.name',
+                    'pb.minPurchase',
                     DB::raw("CASE WHEN percentOrAmount = 'amount' THEN 'amount' WHEN percentOrAmount = 'percent' THEN 'percent' ELSE '' END as discountType"),
                     DB::raw("CASE WHEN percentOrAmount = 'amount' THEN amount WHEN percentOrAmount = 'percent' THEN percent ELSE 0 END as totaldiscount")
                 )
