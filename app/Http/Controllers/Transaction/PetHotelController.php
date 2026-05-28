@@ -1725,7 +1725,6 @@ class PetHotelController extends Controller
                         $trx = new transaction_pet_hotel_payments();
                         $trx->transactionId = $request->transactionId;
                         $trx->paymentMethodId = $payment['paymentId'];
-                        $trx->promoId = $promo->id;
                         $trx->productId = $value['productId'];
                         $trx->quantity = $value['quantity'];
                         $trx->price = $value['unit_price'];
@@ -1814,7 +1813,7 @@ class PetHotelController extends Controller
 
             $detail = $this->ensureIsArray($request->detail_total);
 
-            if (array_key_exists('promoBasedSaleId', $detail)) {
+            if (array_key_exists('promoBasedSaleId', $detail) && !is_null($detail['promoBasedSaleId'])) {
 
                 $promo = PromotionMaster::find($detail['promoBasedSaleId']);
                 if (!$promo) {
