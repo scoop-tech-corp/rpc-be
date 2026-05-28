@@ -74,7 +74,6 @@ class BookingController extends Controller
             'petId'                => 'required|integer',
             'services'             => 'required|in:Pet Hotel,Pet Salon,Breeding,Pet Clinic',
             'bookingTime'          => 'required|date',
-            'emergencyPhoneNumber' => 'required|string',
             'image'                => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
 
@@ -86,18 +85,21 @@ class BookingController extends Controller
                 'emergencyContactName' => 'required|string',
                 'inventoryProducts'    => 'required|string',
                 'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Pet Salon' => [
                 'furCondition'         => 'required|string',
                 'skinSensitivity'      => 'required|string',
                 'emergencyContactName' => 'required|string',
                 'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Breeding' => [
                 'stambum'              => 'required|string',
                 'healthClearance'      => 'required|string',
                 'emergencyContactName' => 'required|string',
                 'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Pet Clinic' => [
                 'consultationType' => 'required|string',
@@ -127,6 +129,7 @@ class BookingController extends Controller
             'socializationType.required'     => 'Tipe sosialisasi wajib diisi.',
             'emergencyContactName.required'  => 'Nama kontak darurat wajib diisi.',
             'emergencyPhoneNumber.required'  => 'Nomor telepon kontak darurat wajib diisi.',
+            'emergencyPhoneNumber.regex'     => 'Nomor telepon kontak darurat hanya boleh berisi angka.',
             'inventoryProducts.required'     => 'Produk inventaris wajib diisi.',
             'furCondition.required'          => 'Kondisi bulu wajib diisi.',
             'skinSensitivity.required'       => 'Sensitivitas kulit wajib diisi.',
@@ -279,7 +282,6 @@ class BookingController extends Controller
             'petId'                => 'required|integer',
             'services'             => 'required|in:Pet Hotel,Pet Salon,Breeding,Pet Clinic',
             'bookingTime'          => 'required|date',
-            'emergencyPhoneNumber' => 'required|string',
         ];
 
         // Use $request->json() consistently everywhere
@@ -292,18 +294,21 @@ class BookingController extends Controller
                 'emergencyContactName' => 'required|string',
                 'inventoryProducts'    => 'required|string',
                 'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Pet Salon' => [
                 'furCondition'         => 'required|string',
                 'skinSensitivity'      => 'required|string',
                 'emergencyContactName' => 'required|string',
                 'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Breeding' => [
                 'stambum'              => 'required|string',
                 'healthClearance'      => 'required|string',
                 'emergencyContactName' => 'required|string',
                 'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Pet Clinic' => [
                 'consultationType' => 'required|string',
@@ -331,6 +336,7 @@ class BookingController extends Controller
             'socializationType.required'     => 'Tipe sosialisasi wajib diisi.',
             'emergencyContactName.required'  => 'Nama kontak darurat wajib diisi.',
             'emergencyPhoneNumber.required'  => 'Nomor telepon kontak darurat wajib diisi.',
+            'emergencyPhoneNumber.regex'     => 'Nomor telepon kontak darurat hanya boleh berisi angka.',
             'inventoryProducts.required'     => 'Produk inventaris wajib diisi.',
             'furCondition.required'          => 'Kondisi bulu wajib diisi.',
             'skinSensitivity.required'       => 'Sensitivitas kulit wajib diisi.',
