@@ -1981,4 +1981,71 @@ class PetHotelController extends Controller
 
         return view('transaction.pethotel.print_invoice_pethotel');
     }
+
+    public function confirmPayment(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer',
+            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+        ]);
+
+        $trans_pay = transaction_pet_hotel_payment_total::find($request->id);
+
+        if (!$trans_pay) {
+            return responseInvalid(['Transaction is not found!']);
+        }
+
+        if ($trans_pay->isPayed == 1) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transaksi sudah dikonfirmasi sebelumnya.'
+            ], 400);
+        }
+
+        if (!$request->hasFile('proof')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Bukti pembayaran wajib diunggah!'
+            ], 422);
+        }
+
+        $filePath = null;
+        $originalName = null;
+        $randomName = null;
+
+        if ($request->hasFile('proof')) {
+            $file = $request->file('proof');
+            $originalName = $file->getClientOriginalName();
+            $randomName = 'proof_' . $trans_pay->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+            if (!Storage::disk('public')->exists('Transaction/Pethotel/proof_of_payment')) {
+                Storage::disk('public')->makeDirectory('Transaction/Pethotel/proof_of_payment');
+            }
+
+            $filePath = $file->storeAs('Transaction/Pethotel/proof_of_payment', $randomName, 'public');
+
+            $trans_pay->proofOfPayment = $filePath;
+            $trans_pay->originalName = $originalName;
+            $trans_pay->proofRandomName = $randomName;
+        }
+
+        $trans_pay->isPayed = 1;
+        $trans_pay->updated_at = now();
+        $trans_pay->save();
+
+        $trans = transaction_pet_hotel_payment_total::where('transactionId', $trans_pay->transactionId)->first();
+
+        $total_amount = $trans->amount;
+        $amount_paid = transaction_pet_hotel_payment_total::where('transactionId', $trans_pay->transactionId)->sum('amountPaid');
+
+        if ($amount_paid < $total_amount)
+            statusTransactionPetHotel($trans_pay->transactionId, 'Menunggu Pembayaran Berikutnya', $request->user()->id);
+        else
+            statusTransactionPetHotel($trans_pay->transactionId, 'Selesai', $request->user()->id);
+
+
+        transactionPetHotelLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
+
+        return responseCreate();
+    }
 }
