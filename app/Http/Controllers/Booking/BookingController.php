@@ -42,7 +42,8 @@ class BookingController extends Controller
                 WHEN 'Pet Clinic' THEN '#FFFFFF'
                 ELSE '#000000' END as textColor"),
 
-                DB::raw("'' as description")
+                DB::raw("'' as description"),
+                'e.status',
             ])
             ->where('e.isDeleted', '=', 0);
 
