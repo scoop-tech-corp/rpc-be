@@ -1856,25 +1856,20 @@ class TransPetClinicController extends Controller
         ]);
     }
 
-    protected function ensureIsArray($data): ?array
+    protected function ensureIsArray($data): array
     {
-        // Jika data sudah berupa array, kembalikan saja.
         if (is_array($data)) {
             return $data;
         }
 
-        // Jika data berupa string (kemungkinan JSON), coba decode.
         if (is_string($data)) {
             $decoded = json_decode($data, true);
-
-            // Pastikan hasil decode adalah array yang valid
             if (is_array($decoded)) {
                 return $decoded;
             }
         }
 
-        // Kembalikan null atau array kosong jika input tidak valid
-        return null;
+        return [];
     }
 
     public function transactionDiscount(Request $request)
