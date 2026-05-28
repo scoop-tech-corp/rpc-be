@@ -60,6 +60,10 @@ class BookingController extends Controller
             $data = $data->where('e.doctorId', $request->doctorId);
         }
 
+        if ($request->filled('serviceType')) {
+            $data = $data->where('e.serviceType', $request->serviceType);
+        }
+
         return response()->json([
             'data' => $data->get(),
         ]);
