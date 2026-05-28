@@ -25,6 +25,7 @@ use DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Storage;
 
 class PetHotelController extends Controller
 {
