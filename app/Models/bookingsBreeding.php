@@ -17,6 +17,8 @@ class bookingsBreeding extends Model
         'bookingId',
         'stambum',
         'healthClearance',
+        'emergencyContactName',
+        'emergencyPhoneNumber',
         'additionalInfo',
         'userId',
         'userUpdateId'
