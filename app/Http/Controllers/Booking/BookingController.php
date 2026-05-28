@@ -139,7 +139,7 @@ class BookingController extends Controller
 
         if ($validate->fails()) {
             return response()->json([
-                'message' => 'Data yang diberikan tidak valid.',
+                'message' => $validate->errors()->first(),
                 'errors'  => $validate->errors()->all(),
             ], 422);
         }
@@ -343,7 +343,7 @@ class BookingController extends Controller
 
         if ($validate->fails()) {
             return response()->json([
-                'message' => 'Data yang diberikan tidak valid.',
+                'message' => $validate->errors()->first(),
                 'errors'  => $validate->errors()->all(),
             ], 422);
         }
@@ -428,7 +428,7 @@ class BookingController extends Controller
 
         if ($validate->fails()) {
             return response()->json([
-                'message' => 'Data yang diberikan tidak valid.',
+                'message' => $validate->errors()->first(),
                 'errors'  => $validate->errors()->all(),
             ], 422);
         }
@@ -477,7 +477,7 @@ class BookingController extends Controller
 
         if ($validate->fails()) {
             return response()->json([
-                'message' => 'Data yang diberikan tidak valid.',
+                'message' => $validate->errors()->first(),
                 'errors'  => $validate->errors()->all(),
             ], 422);
         }
@@ -527,7 +527,7 @@ class BookingController extends Controller
 
         if ($validate->fails()) {
             return response()->json([
-                'message' => 'Data yang diberikan tidak valid.',
+                'message' => $validate->errors()->first(),
                 'errors'  => $validate->errors()->all(),
             ], 422);
         }
