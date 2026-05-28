@@ -1995,7 +1995,7 @@ class PetHotelController extends Controller
             return responseInvalid(['Transaction is not found!']);
         }
 
-        if ($trans_pay->isPayed) {
+        if ($trans_pay->isPayed === true) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Transaksi sudah dikonfirmasi sebelumnya.'
@@ -2045,7 +2045,7 @@ class PetHotelController extends Controller
 
 
         transactionPetHotelLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
-
+        DB::commit();
         return responseCreate();
     }
 }
