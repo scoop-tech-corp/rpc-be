@@ -161,7 +161,7 @@ class BookingController extends Controller
             'customerId'  => $request->customerId,
             'petId'       => $request->petId,
             'serviceType'    => $request->services,
-            'status'    => 'waiting confirmation',
+            'status'    => 0,
             'bookingTime' => $request->bookingTime,
             'realImageName' => $realName,
             'imagePath' => '/BookingImages/' . $hashedName,
@@ -360,6 +360,7 @@ class BookingController extends Controller
             'customerId'   => $data['customerId'],
             'petId'        => $data['petId'],
             'serviceType'  => $data['services'],
+            'status'         => 0,
             'bookingTime'  => $data['bookingTime'],
             'userUpdateId' => $request->user()->id,
         ]);
@@ -452,7 +453,7 @@ class BookingController extends Controller
 
         $booking->update([
             'isAccepted'     => true,
-            'status'         => 'accepted',
+            'status'         => 1,
             'acceptedByName' => $request->user()->name,
             'acceptedDate'   => now(),
             'userUpdateId'   => $request->user()->id,
@@ -501,7 +502,7 @@ class BookingController extends Controller
 
         $booking->update([
             'isRejected'      => true,
-            'status'          => 'rejected',
+            'status'          => 2,
             'rejectionReason' => $request->rejectionReason,
             'rejectedByName'  => $request->user()->name,
             'rejectionDate'   => now(),
