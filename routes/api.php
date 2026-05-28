@@ -153,6 +153,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [BookingBookingController::class, 'index']);
         Route::get('/detail', [BookingBookingController::class, 'detail']);
         Route::put('/cancel', [BookingBookingController::class, 'cancelBooking']);
+        Route::put('/accept', [BookingBookingController::class, 'acceptBooking']);
+        Route::put('/reject', [BookingBookingController::class, 'rejectBooking']);
         Route::delete('/', [BookingBookingController::class, 'delete']);
         Route::get('/list', [BookingBookingController::class, 'getList']);
     });
