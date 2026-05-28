@@ -570,7 +570,9 @@ class BookingController extends Controller
                 DB::raw("CONCAT(e.serviceType, ' - ', COALESCE(CONCAT(c.firstName, ' ', c.lastName), ''), ' (', COALESCE(p.petName, ''), ') - ', DATE_FORMAT(e.bookingTime, '%d/%m/%Y %H:%i')) as label"),
             ])
             ->where('e.isDeleted', 0)
+            ->where('e.status', 1)
             ->where('e.isCancelled', 0)
+            ->whereDate('e.bookingTime', now()->toDateString())
             ->orderBy('e.bookingTime', 'desc');
 
         if ($request->filled('locationId')) {
