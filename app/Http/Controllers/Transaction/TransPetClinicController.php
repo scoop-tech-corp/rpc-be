@@ -2093,18 +2093,21 @@ class TransPetClinicController extends Controller
     public function paymentOutpatient(Request $request)
     {
         // 1. Validasi Awal & Parsing Data
+        // Parse purchases dulu sebelum validasi — data bisa datang sebagai JSON string dari frontend
+        $request->merge(['purchases' => $this->ensureIsArray($request->purchases)]);
+
         $validate = Validator::make($request->all(), [
             'transactionPetClinicId' => 'required|integer',
-            'payment_method' => 'required',
-            'detail_total' => 'required',
-            'purchases' => 'required|array'
+            'payment_method'         => 'required',
+            'detail_total'           => 'required',
+            'purchases'              => 'required|array',
         ]);
 
         if ($validate->fails()) return responseInvalid($validate->errors()->all());
 
-        $payment = json_decode($request->payment_method, true);
-        $detail = json_decode($request->detail_total, true);
-        $purchases = $this->ensureIsArray($request->purchases);
+        $payment   = json_decode($request->payment_method, true);
+        $detail    = json_decode($request->detail_total, true);
+        $purchases = $request->purchases;
         $userId = $request->user()->id;
         $transId = $request->transactionPetClinicId;
 
