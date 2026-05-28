@@ -1995,7 +1995,7 @@ class PetHotelController extends Controller
             return responseInvalid(['Transaction is not found!']);
         }
 
-        if ($trans_pay->isPayed == 1) {
+        if ($trans_pay->isPayed) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Transaksi sudah dikonfirmasi sebelumnya.'
