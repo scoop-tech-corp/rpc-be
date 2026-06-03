@@ -42,7 +42,8 @@ class BookingController extends Controller
                 WHEN 'Pet Clinic' THEN '#FFFFFF'
                 ELSE '#000000' END as textColor"),
 
-                DB::raw("'' as description")
+                DB::raw("'' as description"),
+                'e.status',
             ])
             ->where('e.isDeleted', '=', 0);
 
@@ -59,6 +60,10 @@ class BookingController extends Controller
             $data = $data->where('e.doctorId', $request->doctorId);
         }
 
+        if ($request->filled('serviceType')) {
+            $data = $data->where('e.serviceType', $request->serviceType);
+        }
+
         return response()->json([
             'data' => $data->get(),
         ]);
@@ -67,47 +72,81 @@ class BookingController extends Controller
     public function create(Request $request)
     {
         $baseRules = [
-            'locationId'  => 'required|integer',
-            'doctorId'  => 'required|integer',
-            'customerId'  => 'required|integer',
-            'petId'       => 'required|integer',
-            'services'    => 'required|in:Pet Hotel,Pet Salon,Breeding,Pet Clinic',
-            'bookingTime' => 'required|date',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'locationId'           => 'required|integer',
+            'doctorId'             => 'required|integer',
+            'customerId'           => 'required|integer',
+            'petId'                => 'required|integer',
+            'services'             => 'required|in:Pet Hotel,Pet Salon,Breeding,Pet Clinic',
+            'bookingTime'          => 'required|date',
+            'image'                => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ];
 
         $service = $request->input('services');
 
         $extraRules = match ($service) {
             'Pet Hotel' => [
-                'socializationType'   => 'required|string',
-                'emergencyContactName'  => 'required|string',
-                'inventoryProducts'      => 'required|string',
-                'additionalInfo'   => 'nullable|string',
+                'socializationType'    => 'required|string',
+                'emergencyContactName' => 'required|string',
+                'inventoryProducts'    => 'required|string',
+                'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Pet Salon' => [
-                'furCondition'  => 'required|string',
+                'furCondition'         => 'required|string',
                 'skinSensitivity'      => 'required|string',
-                'additionalInfo'   => 'nullable|string',
+                'emergencyContactName' => 'required|string',
+                'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Breeding' => [
-                'stambum'  => 'required|string',
-                'healthClearance'     => 'required|string',
-                'additionalInfo'   => 'nullable|string',
+                'stambum'              => 'required|string',
+                'healthClearance'      => 'required|string',
+                'emergencyContactName' => 'required|string',
+                'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Pet Clinic' => [
-                'consultationType'     => 'required|string',
-                'drugAllergy'         => 'nullable|string',
+                'consultationType' => 'required|string',
+                'drugAllergy'      => 'nullable|string',
                 'additionalInfo'   => 'nullable|string',
             ],
             default => [],
         };
 
-        $validate = Validator::make($request->all(), array_merge($baseRules, $extraRules));
+        $messages = [
+            'locationId.required'            => 'Lokasi wajib diisi.',
+            'locationId.integer'             => 'Lokasi harus berupa angka.',
+            'doctorId.required'              => 'Dokter wajib diisi.',
+            'doctorId.integer'               => 'Dokter harus berupa angka.',
+            'customerId.required'            => 'Pelanggan wajib diisi.',
+            'customerId.integer'             => 'Pelanggan harus berupa angka.',
+            'petId.required'                 => 'Hewan peliharaan wajib diisi.',
+            'petId.integer'                  => 'Hewan peliharaan harus berupa angka.',
+            'services.required'              => 'Jenis layanan wajib diisi.',
+            'services.in'                    => 'Jenis layanan tidak valid. Pilih salah satu: Pet Hotel, Pet Salon, Breeding, Pet Clinic.',
+            'bookingTime.required'           => 'Waktu booking wajib diisi.',
+            'bookingTime.date'               => 'Waktu booking harus berupa tanggal yang valid.',
+            'image.required'                 => 'Foto wajib diunggah.',
+            'image.image'                    => 'File yang diunggah harus berupa gambar.',
+            'image.mimes'                    => 'Format gambar harus berupa: jpeg, png, jpg, gif, atau svg.',
+            'image.max'                      => 'Ukuran gambar maksimal 2MB.',
+            'socializationType.required'     => 'Tipe sosialisasi wajib diisi.',
+            'emergencyContactName.required'  => 'Nama kontak darurat wajib diisi.',
+            'emergencyPhoneNumber.required'  => 'Nomor telepon kontak darurat wajib diisi.',
+            'emergencyPhoneNumber.regex'     => 'Nomor telepon kontak darurat hanya boleh berisi angka.',
+            'inventoryProducts.required'     => 'Produk inventaris wajib diisi.',
+            'furCondition.required'          => 'Kondisi bulu wajib diisi.',
+            'skinSensitivity.required'       => 'Sensitivitas kulit wajib diisi.',
+            'stambum.required'               => 'Stambum wajib diisi.',
+            'healthClearance.required'       => 'Sertifikat kesehatan wajib diisi.',
+            'consultationType.required'      => 'Tipe konsultasi wajib diisi.',
+        ];
+
+        $validate = Validator::make($request->all(), array_merge($baseRules, $extraRules), $messages);
 
         if ($validate->fails()) {
             return response()->json([
-                'message' => 'The given data was invalid.',
+                'message' => $validate->errors()->first(),
                 'errors'  => $validate->errors()->all(),
             ], 422);
         }
@@ -130,6 +169,7 @@ class BookingController extends Controller
             'customerId'  => $request->customerId,
             'petId'       => $request->petId,
             'serviceType'    => $request->services,
+            'status'    => 0,
             'bookingTime' => $request->bookingTime,
             'realImageName' => $realName,
             'imagePath' => '/BookingImages/' . $hashedName,
@@ -138,36 +178,41 @@ class BookingController extends Controller
 
         if ($request->services === 'Pet Hotel') {
             bookingsPetHotel::create([
-                'bookingId' => $booking->id,
-                'socializationType' => $request->socializationType,
+                'bookingId'            => $booking->id,
+                'socializationType'    => $request->socializationType,
                 'emergencyContactName' => $request->emergencyContactName,
-                'inventoryProducts' => $request->inventoryProducts,
-                'additionalInfo' => $request->additionalInfo,
-                'userId' => $request->user()->id,
+                'emergencyPhoneNumber' => $request->emergencyPhoneNumber,
+                'inventoryProducts'    => $request->inventoryProducts,
+                'additionalInfo'       => $request->additionalInfo,
+                'userId'               => $request->user()->id,
             ]);
         } else if ($request->services === 'Pet Salon') {
             bookingsPetSalon::create([
-                'bookingId' => $booking->id,
-                'furCondition' => $request->furCondition,
-                'skinSensitivity' => $request->skinSensitivity,
-                'additionalInfo' => $request->additionalInfo,
-                'userId' => $request->user()->id,
+                'bookingId'            => $booking->id,
+                'furCondition'         => $request->furCondition,
+                'skinSensitivity'      => $request->skinSensitivity,
+                'emergencyContactName' => $request->emergencyContactName,
+                'emergencyPhoneNumber' => $request->emergencyPhoneNumber,
+                'additionalInfo'       => $request->additionalInfo,
+                'userId'               => $request->user()->id,
             ]);
         } else if ($request->services === 'Breeding') {
             bookingsBreeding::create([
-                'bookingId' => $booking->id,
-                'stambum' => $request->stambum,
-                'healthClearance' => $request->healthClearance,
-                'additionalInfo' => $request->additionalInfo,
-                'userId' => $request->user()->id,
+                'bookingId'            => $booking->id,
+                'stambum'              => $request->stambum,
+                'healthClearance'      => $request->healthClearance,
+                'emergencyContactName' => $request->emergencyContactName,
+                'emergencyPhoneNumber' => $request->emergencyPhoneNumber,
+                'additionalInfo'       => $request->additionalInfo,
+                'userId'               => $request->user()->id,
             ]);
         } else if ($request->services === 'Pet Clinic') {
             bookingsPetClinic::create([
-                'bookingId' => $booking->id,
-                'consultationType' => $request->consultationType,
-                'drugAllergy' => $request->drugAllergy,
-                'additionalInfo' => $request->additionalInfo,
-                'userId' => $request->user()->id,
+                'bookingId'            => $booking->id,
+                'consultationType'     => $request->consultationType,
+                'drugAllergy'          => $request->drugAllergy,
+                'additionalInfo'       => $request->additionalInfo,
+                'userId'               => $request->user()->id,
             ]);
         }
 
@@ -211,7 +256,7 @@ class BookingController extends Controller
 
         if (!$booking) {
             return response()->json([
-                'message' => 'Booking not found.',
+                'message' => 'Booking tidak ditemukan.',
             ], 404);
         }
 
@@ -234,13 +279,13 @@ class BookingController extends Controller
     public function update(Request $request)
     {
         $baseRules = [
-            'id'          => 'required|integer',
-            'locationId'  => 'required|integer',
-            'doctorId'  => 'required|integer',
-            'customerId'  => 'required|integer',
-            'petId'       => 'required|integer',
-            'services'    => 'required|in:Pet Hotel,Pet Salon,Breeding,Pet Clinic',
-            'bookingTime' => 'required|date',
+            'id'                   => 'required|integer',
+            'locationId'           => 'required|integer',
+            'doctorId'             => 'required|integer',
+            'customerId'           => 'required|integer',
+            'petId'                => 'required|integer',
+            'services'             => 'required|in:Pet Hotel,Pet Salon,Breeding,Pet Clinic',
+            'bookingTime'          => 'required|date',
         ];
 
         // Use $request->json() consistently everywhere
@@ -253,16 +298,21 @@ class BookingController extends Controller
                 'emergencyContactName' => 'required|string',
                 'inventoryProducts'    => 'required|string',
                 'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Pet Salon' => [
-                'furCondition'    => 'required|string',
-                'skinSensitivity' => 'required|string',
-                'additionalInfo'  => 'nullable|string',
+                'furCondition'         => 'required|string',
+                'skinSensitivity'      => 'required|string',
+                'emergencyContactName' => 'required|string',
+                'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Breeding' => [
-                'stambum'        => 'required|string',
-                'healthClearance' => 'required|string',
-                'additionalInfo'  => 'nullable|string',
+                'stambum'              => 'required|string',
+                'healthClearance'      => 'required|string',
+                'emergencyContactName' => 'required|string',
+                'additionalInfo'       => 'nullable|string',
+                'emergencyPhoneNumber' => ['required', 'regex:/^[0-9]+$/'],
             ],
             'Pet Clinic' => [
                 'consultationType' => 'required|string',
@@ -272,11 +322,38 @@ class BookingController extends Controller
             default => [],
         };
 
-        $validate = Validator::make($data, array_merge($baseRules, $extraRules));
+        $messages = [
+            'id.required'                    => 'ID booking wajib diisi.',
+            'id.integer'                     => 'ID booking harus berupa angka.',
+            'locationId.required'            => 'Lokasi wajib diisi.',
+            'locationId.integer'             => 'Lokasi harus berupa angka.',
+            'doctorId.required'              => 'Dokter wajib diisi.',
+            'doctorId.integer'               => 'Dokter harus berupa angka.',
+            'customerId.required'            => 'Pelanggan wajib diisi.',
+            'customerId.integer'             => 'Pelanggan harus berupa angka.',
+            'petId.required'                 => 'Hewan peliharaan wajib diisi.',
+            'petId.integer'                  => 'Hewan peliharaan harus berupa angka.',
+            'services.required'              => 'Jenis layanan wajib diisi.',
+            'services.in'                    => 'Jenis layanan tidak valid. Pilih salah satu: Pet Hotel, Pet Salon, Breeding, Pet Clinic.',
+            'bookingTime.required'           => 'Waktu booking wajib diisi.',
+            'bookingTime.date'               => 'Waktu booking harus berupa tanggal yang valid.',
+            'socializationType.required'     => 'Tipe sosialisasi wajib diisi.',
+            'emergencyContactName.required'  => 'Nama kontak darurat wajib diisi.',
+            'emergencyPhoneNumber.required'  => 'Nomor telepon kontak darurat wajib diisi.',
+            'emergencyPhoneNumber.regex'     => 'Nomor telepon kontak darurat hanya boleh berisi angka.',
+            'inventoryProducts.required'     => 'Produk inventaris wajib diisi.',
+            'furCondition.required'          => 'Kondisi bulu wajib diisi.',
+            'skinSensitivity.required'       => 'Sensitivitas kulit wajib diisi.',
+            'stambum.required'               => 'Stambum wajib diisi.',
+            'healthClearance.required'       => 'Sertifikat kesehatan wajib diisi.',
+            'consultationType.required'      => 'Tipe konsultasi wajib diisi.',
+        ];
+
+        $validate = Validator::make($data, array_merge($baseRules, $extraRules), $messages);
 
         if ($validate->fails()) {
             return response()->json([
-                'message' => 'The given data was invalid.',
+                'message' => $validate->errors()->first(),
                 'errors'  => $validate->errors()->all(),
             ], 422);
         }
@@ -284,7 +361,7 @@ class BookingController extends Controller
         $booking = bookings::find($data['id']);
         if (!$booking) {
             return response()->json([
-                'message' => 'Booking not found.',
+                'message' => 'Booking tidak ditemukan.',
             ], 404);
         }
 
@@ -294,6 +371,7 @@ class BookingController extends Controller
             'customerId'   => $data['customerId'],
             'petId'        => $data['petId'],
             'serviceType'  => $data['services'],
+            'status'         => 0,
             'bookingTime'  => $data['bookingTime'],
             'userUpdateId' => $request->user()->id,
         ]);
@@ -304,6 +382,7 @@ class BookingController extends Controller
                 $bookingDetail->update([
                     'socializationType'    => $data['socializationType'],
                     'emergencyContactName' => $data['emergencyContactName'],
+                    'emergencyPhoneNumber' => $data['emergencyPhoneNumber'],
                     'inventoryProducts'    => $data['inventoryProducts'],
                     'additionalInfo'       => $data['additionalInfo'] ?? null,
                     'userUpdateId'         => $request->user()->id,
@@ -313,30 +392,34 @@ class BookingController extends Controller
             $bookingDetail = bookingsPetSalon::where('bookingId', $data['id'])->first();
             if ($bookingDetail) {
                 $bookingDetail->update([
-                    'furCondition'    => $data['furCondition'],
-                    'skinSensitivity' => $data['skinSensitivity'],
-                    'additionalInfo'  => $data['additionalInfo'] ?? null,
-                    'userUpdateId'    => $request->user()->id,
+                    'furCondition'         => $data['furCondition'],
+                    'skinSensitivity'      => $data['skinSensitivity'],
+                    'emergencyContactName' => $data['emergencyContactName'],
+                    'emergencyPhoneNumber' => $data['emergencyPhoneNumber'],
+                    'additionalInfo'       => $data['additionalInfo'] ?? null,
+                    'userUpdateId'         => $request->user()->id,
                 ]);
             }
         } elseif ($service === 'Breeding') {
             $bookingDetail = bookingsBreeding::where('bookingId', $data['id'])->first();
             if ($bookingDetail) {
                 $bookingDetail->update([
-                    'stambum'         => $data['stambum'],
-                    'healthClearance' => $data['healthClearance'],
-                    'additionalInfo'  => $data['additionalInfo'] ?? null,
-                    'userUpdateId'    => $request->user()->id,
+                    'stambum'              => $data['stambum'],
+                    'healthClearance'      => $data['healthClearance'],
+                    'emergencyContactName' => $data['emergencyContactName'],
+                    'emergencyPhoneNumber' => $data['emergencyPhoneNumber'],
+                    'additionalInfo'       => $data['additionalInfo'] ?? null,
+                    'userUpdateId'         => $request->user()->id,
                 ]);
             }
         } elseif ($service === 'Pet Clinic') {
             $bookingDetail = bookingsPetClinic::where('bookingId', $data['id'])->first();
             if ($bookingDetail) {
                 $bookingDetail->update([
-                    'consultationType' => $data['consultationType'],
-                    'drugAllergy'      => $data['drugAllergy'] ?? null,
-                    'additionalInfo'   => $data['additionalInfo'] ?? null,
-                    'userUpdateId'     => $request->user()->id,
+                    'consultationType'     => $data['consultationType'],
+                    'drugAllergy'          => $data['drugAllergy'] ?? null,
+                    'additionalInfo'       => $data['additionalInfo'] ?? null,
+                    'userUpdateId'         => $request->user()->id,
                 ]);
             }
         }
@@ -344,16 +427,18 @@ class BookingController extends Controller
         return responseUpdate();
     }
 
-    public function cancelBooking(Request $request)
+    public function acceptBooking(Request $request)
     {
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
-            'cancellationReason' => 'required|string',
+        ], [
+            'id.required' => 'ID booking wajib diisi.',
+            'id.integer'  => 'ID booking harus berupa angka.',
         ]);
 
         if ($validate->fails()) {
             return response()->json([
-                'message' => 'The given data was invalid.',
+                'message' => $validate->errors()->first(),
                 'errors'  => $validate->errors()->all(),
             ], 422);
         }
@@ -361,7 +446,106 @@ class BookingController extends Controller
         $booking = bookings::where('id', $request->id)->where('isDeleted', false)->first();
         if (!$booking) {
             return response()->json([
-                'message' => 'Booking not found.',
+                'message' => 'Booking tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($booking->isCancelled) {
+            return response()->json([
+                'message' => 'Booking sudah dibatalkan, tidak dapat diproses.',
+            ], 422);
+        }
+
+        if ($booking->isRejected) {
+            return response()->json([
+                'message' => 'Booking sudah ditolak, tidak dapat diproses.',
+            ], 422);
+        }
+
+        $booking->update([
+            'isAccepted'     => true,
+            'status'         => 1,
+            'acceptedByName' => $request->user()->name,
+            'acceptedDate'   => now(),
+            'userUpdateId'   => $request->user()->id,
+        ]);
+
+        return responseUpdate();
+    }
+
+    public function rejectBooking(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id'             => 'required|integer',
+            'rejectionReason' => 'required|string',
+        ], [
+            'id.required'              => 'ID booking wajib diisi.',
+            'id.integer'               => 'ID booking harus berupa angka.',
+            'rejectionReason.required' => 'Alasan penolakan wajib diisi.',
+            'rejectionReason.string'   => 'Alasan penolakan harus berupa teks.',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json([
+                'message' => $validate->errors()->first(),
+                'errors'  => $validate->errors()->all(),
+            ], 422);
+        }
+
+        $booking = bookings::where('id', $request->id)->where('isDeleted', false)->first();
+        if (!$booking) {
+            return response()->json([
+                'message' => 'Booking tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($booking->isCancelled) {
+            return response()->json([
+                'message' => 'Booking sudah dibatalkan, tidak dapat diproses.',
+            ], 422);
+        }
+
+        if ($booking->isAccepted) {
+            return response()->json([
+                'message' => 'Booking sudah diterima, tidak dapat ditolak.',
+            ], 422);
+        }
+
+        $booking->update([
+            'isRejected'      => true,
+            'status'          => 2,
+            'rejectionReason' => $request->rejectionReason,
+            'rejectedByName'  => $request->user()->name,
+            'rejectionDate'   => now(),
+            'userUpdateId'    => $request->user()->id,
+        ]);
+
+        return responseUpdate();
+    }
+
+    public function cancelBooking(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id'                 => 'required|integer',
+            'cancellationReason' => 'required|string',
+        ], [
+            'id.required'                  => 'ID booking wajib diisi.',
+            'id.integer'                   => 'ID booking harus berupa angka.',
+            'cancellationReason.required'  => 'Alasan pembatalan wajib diisi.',
+            'cancellationReason.string'    => 'Alasan pembatalan harus berupa teks.',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json([
+                'message' => $validate->errors()->first(),
+                'errors'  => $validate->errors()->all(),
+            ], 422);
+        }
+
+        $booking = bookings::where('id', $request->id)->where('isDeleted', false)->first();
+        if (!$booking) {
+            return response()->json([
+                'message' => 'Booking tidak ditemukan.',
             ], 404);
         }
 
@@ -376,12 +560,38 @@ class BookingController extends Controller
         return responseUpdate();
     }
 
+    public function getList(Request $request)
+    {
+        $data = DB::table('bookings as e')
+            ->join('customer as c', 'e.customerId', '=', 'c.id')
+            ->join('customerPets as p', 'e.petId', '=', 'p.id')
+            ->select([
+                'e.id',
+                DB::raw("CONCAT(e.serviceType, ' - ', COALESCE(CONCAT(c.firstName, ' ', c.lastName), ''), ' (', COALESCE(p.petName, ''), ') - ', DATE_FORMAT(e.bookingTime, '%d/%m/%Y %H:%i')) as label"),
+            ])
+            ->where('e.isDeleted', 0)
+            ->where('e.status', 1)
+            ->where('e.isCancelled', 0)
+            ->whereDate('e.bookingTime', now()->toDateString())
+            ->orderBy('e.bookingTime', 'desc');
+
+        if ($request->filled('locationId')) {
+            $data = $data->whereIn('e.locationId', (array) $request->locationId);
+        }
+
+        if ($request->filled('serviceType')) {
+            $data = $data->where('e.serviceType', $request->serviceType);
+        }
+
+        return response()->json($data->get(), 200);
+    }
+
     function delete(Request $request)
     {
         if (!$request->id) {
             return response()->json([
-                'message' => 'The given data was invalid.',
-                'errors' => ['There is no any Data to delete!'],
+                'message' => 'Data yang diberikan tidak valid.',
+                'errors' => ['Tidak ada data yang dipilih untuk dihapus.'],
             ], 422);
         }
 
@@ -390,8 +600,8 @@ class BookingController extends Controller
 
             if (!$res) {
                 return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Booking not found!'],
+                    'message' => 'Data yang diberikan tidak valid.',
+                    'errors' => ['Booking tidak ditemukan.'],
                 ], 422);
             }
         }

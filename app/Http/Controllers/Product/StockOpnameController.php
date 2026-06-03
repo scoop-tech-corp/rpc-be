@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Product;
 
 use App\Http\Controllers\Controller;
+use App\Models\ProductAdjustment;
+use App\Models\ProductLocations;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\StockOpnameDetail;
+use App\Models\StockOpnameLog;
 use App\Models\StockOpnameMaster;
 use App\Models\StockOpnameUser;
 use Illuminate\Http\Request;
@@ -103,6 +107,37 @@ class StockOpnameController extends Controller
         }
     }
 
+    public function GenerateSONumber(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $locationId = $request->locationId;
+        $locationPart = str_pad($locationId, 3, '0', STR_PAD_LEFT);
+        $prefix = "RPC-SO-{$locationPart}-";
+
+        $lastRecord = StockOpnameMaster::where('locationId', $locationId)
+            ->where('stockOpnameNumber', 'like', "{$prefix}%")
+            ->orderBy('stockOpnameNumber', 'desc')
+            ->first();
+
+        if ($lastRecord) {
+            $lastNumber = (int) substr($lastRecord->stockOpnameNumber, -5);
+            $newNumber = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '00001';
+        }
+
+        return response()->json([
+            'stockOpnameNumber' => "{$prefix}{$newNumber}"
+        ], 200);
+    }
+
     public function create(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -140,6 +175,13 @@ class StockOpnameController extends Controller
                 ]);
             }
 
+            StockOpnameLog::create([
+                'stockOpnameId' => $stockOpname->id,
+                'event' => 'Created',
+                'details' => 'Stock Opname ' . $stockOpname->stockOpnameNumber . ' dibuat.',
+                'userId' => $request->user()->id,
+            ]);
+
             DB::commit();
 
             return responseCreate();
@@ -156,15 +198,17 @@ class StockOpnameController extends Controller
     public function inputProducts(Request $request)
     {
         $validate = Validator::make($request->all(), [
-            '*.stockOpnameId' => 'required|integer',
-            '*.productId' => 'required|integer',
-            '*.stockSystem' => 'required|numeric',
-            '*.stockPhysical' => 'required|numeric',
-            '*.difference' => 'required|numeric',
-            '*.status' => 'required|integer',
-            '*.note' => 'nullable|string|max:255',
-            '*.inputedBy' => 'required|integer',
-            '*.inputedAt' => 'required|date',
+            'type' => 'required|string',
+            'data' => 'required|array',
+            'data.*.stockOpnameId' => 'required|integer',
+            'data.*.productId' => 'required|integer',
+            'data.*.stockSystem' => 'required|numeric',
+            'data.*.stockPhysical' => 'required|numeric',
+            'data.*.difference' => 'required|numeric',
+            'data.*.status' => 'required|integer',
+            'data.*.note' => 'nullable|string|max:255',
+            'data.*.inputedBy' => 'required|integer',
+            'data.*.inputedAt' => 'required|date',
         ]);
 
         if ($validate->fails()) {
@@ -176,7 +220,10 @@ class StockOpnameController extends Controller
         try {
             DB::beginTransaction();
 
-            foreach ($request->all() as $item) {
+            $stockOpnameId = $request->data[0]['stockOpnameId'];
+            StockOpnameDetail::where('stockOpnameId', $stockOpnameId)->delete();
+
+            foreach ($request->data as $item) {
                 StockOpnameDetail::create([
                     'stockOpnameId' => $item['stockOpnameId'],
                     'productId' => $item['productId'],
@@ -191,12 +238,29 @@ class StockOpnameController extends Controller
                 ]);
             }
 
-            $stockOpname = StockOpnameMaster::where('id', $request->id)->where('isDeleted', false)->first();
-            if ($stockOpname) {
-                $stockOpname->update([
-                    'status' => 2, // Update status to "Proses Input Data" or appropriate status
+            $stockOpnameId = $request->data[0]['stockOpnameId'];
+            $stockOpname = StockOpnameMaster::where('id', $stockOpnameId)->where('isDeleted', false)->first();
+
+            $productCount = count($request->data);
+
+            if ($request->type === 'submit') {
+                $stockOpname->update(['status' => 3]);
+
+                StockOpnameLog::create([
+                    'stockOpnameId' => $stockOpnameId,
+                    'event' => 'Submit Input Produk',
+                    'details' => $productCount . ' produk disubmit untuk approval.',
+                    'userId' => $request->user()->id,
+                ]);
+            } else {
+                StockOpnameLog::create([
+                    'stockOpnameId' => $stockOpnameId,
+                    'event' => 'Draft Input Produk',
+                    'details' => $productCount . ' produk disimpan sebagai draft.',
+                    'userId' => $request->user()->id,
                 ]);
             }
+
             DB::commit();
 
             return responseCreate();
@@ -308,7 +372,103 @@ class StockOpnameController extends Controller
 
         $data->products = $products;
 
+        $logs = DB::table('stock_opname_logs as sl')
+            ->join('users as u', 'sl.userId', 'u.id')
+            ->select(
+                'sl.id',
+                'sl.event',
+                'sl.details',
+                DB::raw("CONCAT(u.firstName, ' ', COALESCE(u.lastName, '')) as performedBy"),
+                DB::raw("DATE_FORMAT(sl.created_at, '%Y-%m-%d %H:%i:%s') as createdAt")
+            )
+            ->where('sl.stockOpnameId', $request->id)
+            ->orderBy('sl.created_at', 'asc')
+            ->get();
+
+        $data->logs = $logs;
+
         return response()->json($data, 200);
+    }
+
+    public function printPdf(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:stock_opname_masters,id',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $stockOpname = DB::table('stock_opname_masters as sm')
+            ->join('users as u', 'sm.userId', 'u.id')
+            ->join('location as l', 'sm.locationId', 'l.id')
+            ->select(
+                'sm.id',
+                'sm.stockOpnameNumber',
+                'sm.title',
+                DB::raw("DATE_FORMAT(sm.startTime, '%Y-%m-%d %H:%i:%s') as startTime"),
+                'l.locationName',
+                'sm.status as statusId',
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(sm.updated_at, '%d/%m/%Y') as createdAt")
+            )
+            ->where('sm.isDeleted', 0)
+            ->where('sm.id', $request->id)
+            ->first();
+
+        if (!$stockOpname) {
+            return responseInvalid(['Stock Opname not found.']);
+        }
+
+        $users = DB::table('stock_opname_users as su')
+            ->join('users as u', 'su.usersId', 'u.id')
+            ->select('u.id', 'u.firstName as name')
+            ->where('su.isDeleted', 0)
+            ->where('su.stockOpnameId', $request->id)
+            ->get();
+
+        $products = DB::table('stock_opname_details as sd')
+            ->join('products as p', 'sd.productId', 'p.id')
+            ->select(
+                'sd.id',
+                'sd.productId',
+                'p.sku',
+                'p.fullName',
+                'sd.stockSystem',
+                'sd.stockPhysical',
+                'sd.difference',
+                'sd.status',
+                'sd.note',
+                'sd.inputedBy',
+                DB::raw("DATE_FORMAT(sd.inputedAt, '%Y-%m-%d %H:%i:%s') as inputedAt")
+            )
+            ->where('sd.isDeleted', 0)
+            ->where('sd.stockOpnameId', $request->id)
+            ->get();
+
+        $logs = DB::table('stock_opname_logs as sl')
+            ->join('users as u', 'sl.userId', 'u.id')
+            ->select(
+                'sl.event',
+                'sl.details',
+                DB::raw("CONCAT(u.firstName, ' ', COALESCE(u.lastName, '')) as performedBy"),
+                DB::raw("DATE_FORMAT(sl.created_at, '%Y-%m-%d %H:%i:%s') as createdAt")
+            )
+            ->where('sl.stockOpnameId', $request->id)
+            ->orderBy('sl.created_at', 'asc')
+            ->get();
+
+        $pdf = Pdf::loadView('stock-opname-pdf', [
+            'stockOpname' => $stockOpname,
+            'users'       => $users,
+            'products'    => $products,
+            'logs'        => $logs,
+        ])->setPaper('a4', 'landscape');
+
+        $filename = 'Stock-Opname-' . $stockOpname->stockOpnameNumber . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function update(Request $request)
@@ -395,6 +555,13 @@ class StockOpnameController extends Controller
                 StockOpnameDetail::insert($preparedDetailsToInsert);
             }
 
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Updated',
+                'details' => 'Data stock opname diperbarui.',
+                'userId' => $request->user()->id,
+            ]);
+
             DB::commit();
 
             return responseUpdate();
@@ -408,7 +575,7 @@ class StockOpnameController extends Controller
         }
     }
 
-    public function finalizeStockOpname(Request $request)
+    public function startStockOpname(Request $request)
     {
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer|exists:stock_opname_masters,id',
@@ -426,14 +593,19 @@ class StockOpnameController extends Controller
             return responseInvalid(['Stock Opname not found.']);
         }
 
-        $stockOpname->update([
-            'status' => 3, // Update status to "Validated" or appropriate status
+        $stockOpname->update(['status' => 2]);
+
+        StockOpnameLog::create([
+            'stockOpnameId' => $request->id,
+            'event' => 'Started',
+            'details' => 'Stock opname dimulai / status diubah ke Process Input Data.',
+            'userId' => $request->user()->id,
         ]);
 
         return responseUpdate();
     }
 
-    public function approvalStockOpname(Request $request)
+    public function approvalDirector(Request $request)
     {
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer|exists:stock_opname_masters,id',
@@ -454,20 +626,110 @@ class StockOpnameController extends Controller
         }
 
         if ($request->isApproved == true) {
-            $stockOpname->update([
-                'status' => 4, // Revert status to "In Progress" or appropriate status
-                'reason' => $request->reason,
-            ]);
+            DB::beginTransaction();
+            try {
+                $stockOpname->update(['status' => 5, 'reason' => $request->reason]);
 
-            return responseUpdate();
+                $details = StockOpnameDetail::where('stockOpnameId', $stockOpname->id)
+                    ->where('isDeleted', false)
+                    ->get();
+
+                foreach ($details as $detail) {
+                    $productLocation = ProductLocations::where('productId', $detail->productId)
+                        ->where('locationId', $stockOpname->locationId)
+                        ->first();
+
+                    if ($productLocation) {
+                        $oldStock = $productLocation->inStock;
+                        $productLocation->update([
+                            'inStock' => $detail->stockPhysical,
+                            'userUpdateId' => $request->user()->id,
+                        ]);
+
+                        $product = DB::table('products')->where('id', $detail->productId)->first();
+                        $productType = $product && $product->category === 'clinic' ? 'productClinic' : 'productSell';
+
+                        ProductAdjustment::create([
+                            'productId' => $detail->productId,
+                            'productType' => $productType,
+                            'adjustment' => $detail->difference >= 0 ? 'increase' : 'decrease',
+                            'totalAdjustment' => abs($detail->difference),
+                            'remark' => 'Stock Opname ' . $stockOpname->stockOpnameNumber . '. Stok lama: ' . $oldStock . ', Stok baru: ' . $detail->stockPhysical,
+                            'userId' => $request->user()->id,
+                        ]);
+                    }
+                }
+
+                StockOpnameLog::create([
+                    'stockOpnameId' => $request->id,
+                    'event' => 'Approval Director - Approved',
+                    'details' => 'Disetujui oleh Director. Stok ' . $details->count() . ' produk telah diperbarui.',
+                    'userId' => $request->user()->id,
+                ]);
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Failed to approve.',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
         } else {
-            $stockOpname->update([
-                'status' => 5, // Revert status to "In Progress" or appropriate status
-                'reason' => $request->reason,
-            ]);
+            $stockOpname->update(['status' => 6, 'reason' => $request->reason]);
 
-            return responseUpdate();
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Approval Director - Rejected',
+                'details' => 'Ditolak oleh Director. Alasan: ' . ($request->reason ?? '-'),
+                'userId' => $request->user()->id,
+            ]);
         }
+
+        return responseUpdate();
+    }
+
+    public function approvalChecker(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer|exists:stock_opname_masters,id',
+            'isApproved' => 'required|boolean',
+            'reason' => 'required_if:isApproved,false|nullable|string|max:255',
+        ]);
+
+        if ($validate->fails()) {
+            $errors = $validate->errors()->all();
+
+            return responseInvalid($errors);
+        }
+
+        $stockOpname = StockOpnameMaster::where('id', $request->id)->where('isDeleted', false)->first();
+
+        if (!$stockOpname) {
+            return responseInvalid(['Stock Opname not found.']);
+        }
+
+        if ($request->isApproved == true) {
+            $stockOpname->update(['status' => 4, 'reason' => $request->reason]);
+
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Approval Checker - Approved',
+                'details' => 'Disetujui oleh Checker.',
+                'userId' => $request->user()->id,
+            ]);
+        } else {
+            $stockOpname->update(['status' => 6, 'reason' => $request->reason]);
+
+            StockOpnameLog::create([
+                'stockOpnameId' => $request->id,
+                'event' => 'Approval Checker - Rejected',
+                'details' => 'Ditolak oleh Checker. Alasan: ' . ($request->reason ?? '-'),
+                'userId' => $request->user()->id,
+            ]);
+        }
+
+        return responseUpdate();
     }
 
     public function delete(Request $request)
@@ -521,6 +783,13 @@ class StockOpnameController extends Controller
                     'deletedAt' => Carbon::now()
                 ]
             );
+
+            StockOpnameLog::create([
+                'stockOpnameId' => $stock->id,
+                'event' => 'Deleted',
+                'details' => 'Stock Opname ' . $stock->stockOpnameNumber . ' dihapus.',
+                'userId' => $request->user()->id,
+            ]);
 
             recentActivity(
                 $request->user()->id,

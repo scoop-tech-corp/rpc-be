@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class transaction_pet_hotel_payment_total extends Model
 {
     use HasFactory;
+
+    protected $casts = [
+        'isPayed'   => 'boolean',
+        'isDeleted' => 'boolean',
+    ];
 }

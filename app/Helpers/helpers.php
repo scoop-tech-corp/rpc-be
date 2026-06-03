@@ -27,7 +27,7 @@ use App\Models\transactionPetSalonLog;
 use Carbon\Carbon;
 
 if (!function_exists('adminAccess')) {
-    function adminAccess($id)
+    function adminAccess(int $id): bool
     {
         $status = false;
 
@@ -46,7 +46,7 @@ if (!function_exists('adminAccess')) {
 }
 
 if (!function_exists('officeAccess')) {
-    function officeAccess($id)
+    function officeAccess(int $id): bool
     {
 
         $user = DB::table('users as u')
@@ -65,7 +65,7 @@ if (!function_exists('officeAccess')) {
 
 
 if (!function_exists('managerAccess')) {
-    function managerAccess($id)
+    function managerAccess(int $id): bool
     {
         $user = DB::table('users as u')
             ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
@@ -82,7 +82,7 @@ if (!function_exists('managerAccess')) {
 }
 
 if (!function_exists('staffAccess')) {
-    function staffAccess($id)
+    function staffAccess(int $id): bool
     {
         $user = DB::table('users as u')
             ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
@@ -99,7 +99,7 @@ if (!function_exists('staffAccess')) {
 }
 
 if (!function_exists('customerAccess')) {
-    function customerAccess($id)
+    function customerAccess(int $id): bool
     {
         $user = DB::table('users as u')
             ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
@@ -116,7 +116,7 @@ if (!function_exists('customerAccess')) {
 }
 
 if (!function_exists('intershipAccess')) {
-    function intershipAccess($id)
+    function intershipAccess(int $id): bool
     {
         $user = DB::table('users as u')
             ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
@@ -133,7 +133,7 @@ if (!function_exists('intershipAccess')) {
 }
 
 if (!function_exists('role')) {
-    function role($id)
+    function role(int $id): string
     {
         $user = DB::table('users as u')
             ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
@@ -148,7 +148,7 @@ if (!function_exists('role')) {
 
 
 if (!function_exists('roleStaffLeave')) {
-    function roleStaffLeave($id)
+    function roleStaffLeave(int $id): int
     {
         $user = DB::table('users as u')
             ->leftjoin('usersRoles as ur', 'ur.id', 'u.roleId')
@@ -168,18 +168,19 @@ if (!function_exists('roleStaffLeave')) {
 
 
 if (!function_exists('convertTrueFalse')) {
-    function convertTrueFalse($value)
+    function convertTrueFalse(mixed $value): ?int
     {
         if ($value == 'true' || $value == 'TRUE') {
             return 1;
         } elseif ($value == 'false' || $value == 'FALSE') {
             return 0;
         }
+        return null;
     }
 }
 
 if (!function_exists('productSellLog')) {
-    function productSellLog($productId, $transaction, $remark, $quantity, $balance, $userId)
+    function productSellLog(int $productId, string $transaction, string $remark, int $quantity, int|float $balance, int $userId): void
     {
         ProductLog::create([
             'productId' => $productId,
@@ -193,7 +194,7 @@ if (!function_exists('productSellLog')) {
 }
 
 if (!function_exists('productClinicLog')) {
-    function productClinicLog($productId, $transaction, $remark, $quantity, $balance, $userId)
+    function productClinicLog(int $productId, string $transaction, string $remark, int $quantity, int|float $balance, int $userId): void
     {
         ProductLog::create([
             'productId' => $productId,
@@ -207,7 +208,7 @@ if (!function_exists('productClinicLog')) {
 }
 
 if (!function_exists('productRestockLog')) {
-    function productRestockLog($productRestockId, $event, $detail, $userId)
+    function productRestockLog(int $productRestockId, string $event, string $detail, int $userId): void
     {
         productRestockLog::create([
             'productRestockId' => $productRestockId,
@@ -219,7 +220,7 @@ if (!function_exists('productRestockLog')) {
 }
 
 if (!function_exists('productTransferLog')) {
-    function productTransferLog($productTransferId, $event, $detail, $userId)
+    function productTransferLog(int $productTransferId, string $event, string $detail, int $userId): void
     {
         productTransferLog::create([
             'productTransferId' => $productTransferId,
@@ -243,7 +244,7 @@ if (!function_exists('productTransferLog')) {
 // }
 
 if (!function_exists('transactionPetClinicLog')) {
-    function transactionPetClinicLog($transactionId, $activity, $remark, $userId)
+    function transactionPetClinicLog(int $transactionId, string $activity, string $remark, int $userId): void
     {
         TransactionPetClinicLog::create([
             'transactionId' => $transactionId,
@@ -256,7 +257,7 @@ if (!function_exists('transactionPetClinicLog')) {
 
 
 if (!function_exists('transactionPetHotelLog')) {
-    function transactionPetHotelLog($transactionId, $activity, $remark, $userId)
+    function transactionPetHotelLog(int $transactionId, string $activity, string $remark, int $userId): void
     {
         TransactionPetHotelLog::create([
             'transactionId' => $transactionId,
@@ -268,7 +269,7 @@ if (!function_exists('transactionPetHotelLog')) {
 }
 
 if (!function_exists('transactionBreedingLog')) {
-    function transactionBreedingLog($transactionId, $activity, $remark, $userId)
+    function transactionBreedingLog(int $transactionId, string $activity, string $remark, int $userId): void
     {
         TransactionBreedingLog::create([
             'transactionId' => $transactionId,
@@ -280,7 +281,7 @@ if (!function_exists('transactionBreedingLog')) {
 }
 
 if (!function_exists('transactionPetSalonLog')) {
-    function transactionPetSalonLog($transactionId, $activity, $remark, $userId)
+    function transactionPetSalonLog(int $transactionId, string $activity, string $remark, int $userId): void
     {
         transactionPetSalonLog::create([
             'transactionId' => $transactionId,
@@ -292,7 +293,7 @@ if (!function_exists('transactionPetSalonLog')) {
 }
 
 if (!function_exists('statusTransactionPetClinic')) {
-    function statusTransactionPetClinic($transactionId, $status, $doctorId)
+    function statusTransactionPetClinic(int $transactionId, string $status, int $doctorId): void
     {
         if ($status == 'Cek Kondisi Pet') {
             TransactionPetClinic::where('id', '=', $transactionId)
@@ -311,7 +312,7 @@ if (!function_exists('statusTransactionPetClinic')) {
 }
 
 if (!function_exists('updateLastTransaction')) {
-    function updateLastTransaction($customerId)
+    function updateLastTransaction(int $customerId): void
     {
         Customer::where('id', '=', $customerId)
             ->update([
@@ -322,7 +323,7 @@ if (!function_exists('updateLastTransaction')) {
 }
 
 if (!function_exists('transactionPetshopLog')) {
-    function transactionPetshopLog($transactionId, $activity, $remark, $userId)
+    function transactionPetshopLog(int $transactionId, string $activity, string $remark, int $userId): void
     {
         TransactionPetshopLog::create([
             'transactionId' => $transactionId,
@@ -335,7 +336,7 @@ if (!function_exists('transactionPetshopLog')) {
 
 
 if (!function_exists('statusTransaction')) {
-    function statusTransaction($transactionId, $status)
+    function statusTransaction(int $transactionId, string $status): void
     {
         TransactionPetClinic::where('id', '=', $transactionId)
             ->update([
@@ -345,7 +346,7 @@ if (!function_exists('statusTransaction')) {
 }
 
 if (!function_exists('statusTransactionPetHotel')) {
-    function statusTransactionPetHotel($transactionId, $status, $doctorId)
+    function statusTransactionPetHotel(int $transactionId, string $status, int $doctorId): void
     {
         if ($status == 'Cek Kondisi Pet') {
             TransactionPetHotel::where('id', '=', $transactionId)
@@ -363,7 +364,7 @@ if (!function_exists('statusTransactionPetHotel')) {
 }
 
 if (!function_exists('statusTransactionBreeding')) {
-    function statusTransactionBreeding($transactionId, $status, $doctorId)
+    function statusTransactionBreeding(int $transactionId, string $status, int $doctorId): void
     {
 
         if ($status == 'Cek Kondisi Pet') {
@@ -382,7 +383,7 @@ if (!function_exists('statusTransactionBreeding')) {
 }
 
 if (!function_exists('statusTransactionPetSalon')) {
-    function statusTransactionPetSalon($transactionId, $status, $doctorId)
+    function statusTransactionPetSalon(int $transactionId, string $status, int $doctorId): void
     {
         if ($status == 'Cek Kondisi Pet') {
             transactionpetsalon::where('id', '=', $transactionId)
@@ -400,7 +401,7 @@ if (!function_exists('statusTransactionPetSalon')) {
 }
 
 if (!function_exists('recentActivities')) {
-    function recentActivities($module, $event, $detail, $userId)
+    function recentActivities(string $module, string $event, string $detail, int $userId): void
     {
         recentActivity::create([
             'module' => $module,
@@ -412,7 +413,7 @@ if (!function_exists('recentActivities')) {
 }
 
 if (!function_exists('responseInvalid')) {
-    function responseInvalid($errors)
+    function responseInvalid(array $errors): \Illuminate\Http\JsonResponse
     {
         return response()->json([
             'message' => $errors,
@@ -422,7 +423,7 @@ if (!function_exists('responseInvalid')) {
 }
 
 if (!function_exists('responseCreate')) {
-    function responseCreate()
+    function responseCreate(): \Illuminate\Http\JsonResponse
     {
         return response()->json(
             [
@@ -434,7 +435,7 @@ if (!function_exists('responseCreate')) {
 }
 
 if (!function_exists('responseUpdate')) {
-    function responseUpdate()
+    function responseUpdate(): \Illuminate\Http\JsonResponse
     {
         return response()->json([
             'message' => 'Update Data Successful',
@@ -443,7 +444,7 @@ if (!function_exists('responseUpdate')) {
 }
 
 if (!function_exists('responseDelete')) {
-    function responseDelete()
+    function responseDelete(): \Illuminate\Http\JsonResponse
     {
         return response()->json([
             'message' => 'Delete Data Successful',
@@ -452,7 +453,7 @@ if (!function_exists('responseDelete')) {
 }
 
 if (!function_exists('responseIndex')) {
-    function responseIndex($paging, $data)
+    function responseIndex(int $paging, mixed $data): \Illuminate\Http\JsonResponse
     {
         return response()->json([
             'totalPagination' => $paging,
@@ -462,14 +463,14 @@ if (!function_exists('responseIndex')) {
 }
 
 if (!function_exists('responseList')) {
-    function responseList($data)
+    function responseList(mixed $data): \Illuminate\Http\JsonResponse
     {
         return response()->json($data, 200);
     }
 }
 
 if (!function_exists('paginateData')) {
-    function paginateData($query,  $request)
+    function paginateData(mixed $query, \Illuminate\Http\Request $request): \Illuminate\Support\Collection
     {
         $itemPerPage = $request->rowPerPage;
         // dd($request->all());
@@ -501,8 +502,9 @@ if (!function_exists('paginateData')) {
         ]);
     }
 }
+
 if (!function_exists('responseSuccess')) {
-    function responseSuccess($data = [], $msg = 'Insert Data Successful!')
+    function responseSuccess(mixed $data = [], string $msg = 'Insert Data Successful!'): \Illuminate\Http\JsonResponse
     {
         return response()->json(
             [
@@ -513,8 +515,9 @@ if (!function_exists('responseSuccess')) {
         );
     }
 }
+
 if (!function_exists('responseErrorValidation')) {
-    function responseErrorValidation($errors, $msg = 'The given data was invalid.')
+    function responseErrorValidation(mixed $errors, string $msg = 'The given data was invalid.'): \Illuminate\Http\JsonResponse
     {
         return response()->json(
             [
@@ -525,8 +528,9 @@ if (!function_exists('responseErrorValidation')) {
         );
     }
 }
+
 if (!function_exists('responseError')) {
-    function responseError($errors, $msg = 'The given data was invalid.')
+    function responseError(mixed $errors, string $msg = 'The given data was invalid.'): \Illuminate\Http\JsonResponse
     {
         return response()->json(
             [
@@ -539,7 +543,7 @@ if (!function_exists('responseError')) {
 }
 
 if (!function_exists('responseUnauthorize')) {
-    function responseUnauthorize($errors = 'User Access not Authorize!', $msg = 'The given data was invalid.')
+    function responseUnauthorize(string $errors = 'User Access not Authorize!', string $msg = 'The given data was invalid.'): \Illuminate\Http\JsonResponse
     {
         return response()->json(
             [
@@ -551,8 +555,27 @@ if (!function_exists('responseUnauthorize')) {
     }
 }
 
+if (!function_exists('sendNotification')) {
+    function sendNotification(int $userId, string $menuName, string $message, string $type = 'info'): void
+    {
+        \App\Models\PushNotification\PushNotification::create([
+            'usersId'  => $userId,
+            'menuName' => $menuName,
+            'message'  => $message,
+            'type'     => $type,
+            'isRead'   => false,
+        ]);
+
+        try {
+            broadcast(new \App\Events\MessageCreated($message, $type, $userId));
+        } catch (\Exception $e) {
+            // Pusher gagal tidak menghentikan proses utama
+        }
+    }
+}
+
 if (!function_exists('checkAccessIndex')) {
-    function checkAccessIndex($identify, $roleId)
+    function checkAccessIndex(string $identify, int $roleId): bool
     {
         $menuId = 0;
 
@@ -572,7 +595,7 @@ if (!function_exists('checkAccessIndex')) {
             ->where('ac.roleId', '=', $roleId)
             ->first();
 
-        if ($data->accessTypeId == 3) {
+        if ($data && $data->accessTypeId == 3) {
             $res = false;
         }
 
@@ -581,7 +604,7 @@ if (!function_exists('checkAccessIndex')) {
 }
 
 if (!function_exists('checkAccessModify')) {
-    function checkAccessModify($identify, $roleId)
+    function checkAccessModify(string $identify, int $roleId): bool
     {
         $menuId = 0;
 
@@ -601,7 +624,7 @@ if (!function_exists('checkAccessModify')) {
             ->where('ac.roleId', '=', $roleId)
             ->first();
 
-        if ($data->accessTypeId == 1 || $data->accessTypeId == 3) {
+        if ($data && ($data->accessTypeId == 1 || $data->accessTypeId == 3)) {
             $res = false;
         }
 
@@ -610,7 +633,7 @@ if (!function_exists('checkAccessModify')) {
 }
 
 if (!function_exists('checkAccessDelete')) {
-    function checkAccessDelete($identify, $roleId)
+    function checkAccessDelete(string $identify, int $roleId): bool
     {
         $menuId = 0;
 
@@ -630,7 +653,7 @@ if (!function_exists('checkAccessDelete')) {
             ->where('ac.roleId', '=', $roleId)
             ->first();
 
-        if ($data->accessTypeId == 1 || $data->accessTypeId == 3 || $data->accessTypeId == 2) {
+        if ($data && ($data->accessTypeId == 1 || $data->accessTypeId == 2 || $data->accessTypeId == 3)) {
             $res = false;
         }
 
@@ -638,7 +661,7 @@ if (!function_exists('checkAccessDelete')) {
     }
 }
 
-function updateDiffStock($locationId, $productId)
+function updateDiffStock(int $locationId, int $productId): void
 {
     $productLoc = DB::table('productLocations')
         ->where('locationId', $locationId)
@@ -654,7 +677,7 @@ function updateDiffStock($locationId, $productId)
     }
 }
 
-function recentActivity($userId, $module, $event, $detail)
+function recentActivity(int $userId, string $module, string $event, string $detail): void
 {
     recentActivity::create([
         'userId' => $userId,

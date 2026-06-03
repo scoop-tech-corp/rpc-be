@@ -17,6 +17,8 @@ class bookingsPetSalon extends Model
         'bookingId',
         'furCondition',
         'skinSensitivity',
+        'emergencyContactName',
+        'emergencyPhoneNumber',
         'additionalInfo',
         'userId',
         'userUpdateId'

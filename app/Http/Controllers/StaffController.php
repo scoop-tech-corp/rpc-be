@@ -23,6 +23,8 @@ use App\Models\Staff\UsersRoles;
 use App\Models\Staff\UsersTelephones;
 use App\Models\staffcontract;
 use App\Models\User;
+use App\Http\Requests\StoreStaffRequest;
+use App\Services\StaffService;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -33,715 +35,39 @@ class StaffController extends Controller
     private $api_key;
     private $country;
 
-    public function insertStaff(Request $request)
+    public function __construct()
     {
-        if (!checkAccessModify('staff-list', $request->user()->roleId)) {
-            return responseUnauthorize();
-        }
-        DB::beginTransaction();
+        $this->client = new Client([
+            'base_uri' => 'https://calendarific.com/api/v2/',
+        ]);
+        $this->api_key = '40a18b1a57c593a8ba3e949ce44420e52b610171';
+        $this->country = 'ID';
+    }
 
+    public function insertStaff(StoreStaffRequest $request, StaffService $staffService)
+    {
         try {
-
-            $validate = Validator::make(
-                $request->all(),
-                [
-                    'firstName' => 'required|max:20|min:3',
-                    'middleName' => 'max:20|min:3|nullable',
-                    'lastName' => 'max:20|min:3|nullable',
-                    'nickName' => 'max:20|min:3|nullable',
-                    'gender' => 'string|nullable',
-                    'status' => 'required|integer',
-                    'lineManagerId' => 'required|integer',
-                    'jobTitleId' => 'required|integer',
-                    'startDate' => 'required|date',
-                    'endDate' => 'required|date|after:startDate',
-                    'registrationNo' => 'string|max:20|min:5|nullable',
-                    'designation' => 'string|max:20|min:5|nullable',
-                    'locationId' => 'required',
-                    'annualSickAllowance' => 'integer|nullable',
-                    'annualLeaveAllowance' => 'integer|nullable',
-                    'payPeriodId' => 'required|integer',
-                    'payAmount' => 'numeric|nullable',
-                    //'typeId' => 'required',
-                    //'identificationNumber' => 'string|nullable|max:30',
-                    'additionalInfo' => 'string|nullable|max:100',
-                    'generalCustomerCanSchedule' => 'integer|nullable',
-                    'generalCustomerReceiveDailyEmail' => 'integer|nullable',
-                    'generalAllowMemberToLogUsingEmail' => 'integer|nullable',
-                    'reminderEmail' => 'integer|nullable',
-                    'reminderWhatsapp' => 'integer|nullable',
-                    'roleId' => 'integer|nullable',
-                ]
-            );
-
-            if ($validate->fails()) {
-                $errors = $validate->errors()->all();
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => $errors,
-                ], 422);
+            $files = [];
+            if ($request->hasfile('imageIdentifications')) {
+                $files[] = $request->file('imageIdentifications');
             }
 
-            $start = Carbon::parse($request->startDate);
-            $end = Carbon::parse($request->endDate);
-            $data_item = [];
-
-            if ($request->detailAddress) {
-
-                $arrayDetailAddress = json_decode($request->detailAddress, true);
-
-                $messageAddress = [
-                    'addressName.required' => 'Address name on tab Address is required',
-                    'provinceCode.required' => 'Province code on tab Address is required',
-                    'cityCode.required' => 'City code on tab Address is required',
-                    'country.required' => 'Country on tab Address is required',
-                ];
-
-
-                $primaryCount = 0;
-                foreach ($arrayDetailAddress as $item) {
-                    if (isset($item['isPrimary']) && $item['isPrimary'] == 1) {
-                        $primaryCount++;
-                    }
-                }
-
-                if ($primaryCount == 0) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Detail address must have at least 1 primary address',
-                    ], 422);
-                } elseif ($primaryCount > 1) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Detail address have 2 primary address, please check again',
-                    ], 422);
-                }
-
-                foreach ($arrayDetailAddress as $key) {
-
-                    $validateDetail = Validator::make(
-                        $key,
-                        [
-                            'addressName' => 'required',
-                            'provinceCode' => 'required',
-                            'cityCode' => 'required',
-                            'country' => 'required',
-                        ],
-                        $messageAddress
-                    );
-
-                    if ($validateDetail->fails()) {
-
-                        $errors = $validateDetail->errors()->all();
-
-                        foreach ($errors as $checkisu) {
-
-                            if (!(in_array($checkisu, $data_item))) {
-                                array_push($data_item, $checkisu);
-                            }
-                        }
-                    }
-                }
-
-                if ($data_item) {
-
-                    return response()->json([
-                        'message' =>  'Inputed data is not valid',
-                        'errors' => $data_item,
-                    ], 422);
-                }
-            } else {
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Detail address can not be empty!'],
-                ], 422);
-            }
-
-
-
-            $checkusageUtama = 0;
-            $data_telephone = [];
-
-            if ($request->telephone) {
-
-                $arraytelephone = json_decode($request->telephone, true);
-
-                $messagePhone = [
-                    'phoneNumber.required' => 'Phone Number on tab telephone is required',
-                    'type.required' => 'Type on tab telephone is required',
-                    'usage.required' => 'Usage on tab telephone is required',
-                ];
-
-                foreach ($arraytelephone as $key) {
-
-                    $validateTelephone = Validator::make(
-                        $key,
-                        [
-                            'phoneNumber' => 'required',
-                            'type' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messagePhone
-                    );
-
-
-                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
-                        $checkusageUtama = $checkusageUtama + 1;
-                    }
-
-                    if ($checkusageUtama > 1) {
-                        return responseInvalid(['Usage utama on phone must only one!']);
-                    }
-
-
-                    if ($validateTelephone->fails()) {
-
-                        $errors = $validateTelephone->errors()->all();
-
-                        foreach ($errors as $checkisu) {
-
-                            if (!(in_array($checkisu, $data_telephone))) {
-                                array_push($data_telephone, $checkisu);
-                            }
-                        }
-                    }
-
-                    if (strtolower($key['type']) == "whatshapp") {
-
-                        if (!(substr($key['phoneNumber'], 0, 2) === "62")) {
-                            return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
-                            ], 422);
-                        }
-                    }
-                }
-
-                if ($data_telephone) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $data_telephone,
-                    ], 422);
-                }
-
-                $checkTelephone = [];
-
-                foreach ($arraytelephone as $val) {
-
-                    $checkIfTelephoneAlreadyExists = DB::table('usersTelephones')
-                        ->where([
-                            ['phoneNumber', '=', $val['phoneNumber'],],
-                            ['isDeleted', '=', '0']
-                        ])
-                        ->first();
-
-                    if ($checkIfTelephoneAlreadyExists) {
-                        array_push($checkTelephone, 'Phonenumber : ' . $val['phoneNumber'] . ' already exists, please try different number');
-                    }
-                }
-
-
-                if ($checkTelephone) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkTelephone,
-                    ], 422);
-                }
-            }
-
-            $checkEmailUtama = 0;
-            $data_error_email = [];
-            $insertEmailUsers = '';
-            if ($request->email) {
-
-                $arrayemail = json_decode($request->email, true);
-
-                $messageEmail = [
-                    'email.required' => 'Email on tab email is required',
-                    'usage.required' => 'Usage on tab email is required',
-                ];
-
-                foreach ($arrayemail as $key) {
-
-                    $validateEmail = Validator::make(
-                        $key,
-                        [
-                            'email' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messageEmail
-                    );
-
-
-                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
-                        $checkEmailUtama = $checkEmailUtama + 1;
-                    }
-
-                    if ($checkEmailUtama > 1) {
-                        return responseInvalid(['Usage utama on email must only one!']);
-                    }
-
-                    if ($validateEmail->fails()) {
-
-                        $errors = $validateEmail->errors()->all();
-
-                        foreach ($errors as $checkisu) {
-
-                            if (!(in_array($checkisu, $data_error_email))) {
-                                array_push($data_error_email, $checkisu);
-                            }
-                        }
-                    }
-                }
-
-
-                if ($data_error_email) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' =>  $data_error_email,
-                    ], 422);
-                }
-
-                $checkUsageEmail = false;
-                $checkEmail = [];
-                foreach ($arrayemail as $val) {
-
-                    $checkIfEmailExists = DB::table('usersEmails')
-                        ->where([
-                            ['email', '=', $val['email'],],
-                            ['isDeleted', '=', '0']
-                        ])
-                        ->first();
-
-                    if ($checkIfEmailExists) {
-                        array_push($checkEmail, 'Email : ' . $val['email'] . ' already exists, please try different email address');
-                    }
-
-                    if ($val['usage'] == 'Utama') {
-                        $checkUsageEmail = true;
-                        $insertEmailUsers = $val['email'];
-                    }
-                }
-
-                if ($checkEmail) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkEmail,
-                    ], 422);
-                }
-
-                if ($checkUsageEmail == false) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => 'Must have one primary email',
-                    ], 422);
-                }
-            } else {
-
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['Email can not be empty!'],
-                ], 422);
-            }
-
-
-            $data_error_messenger = [];
-
-            if ($request->messenger) {
-
-                $arraymessenger = json_decode($request->messenger, true);
-
-                $messageMessenger = [
-                    'messengerNumber.required' => 'messenger number on tab messenger is required',
-                    'type.required' => 'Type on tab messenger is required',
-                    'usage.required' => 'Usage on tab messenger is required',
-                ];
-
-
-
-                $checkMessengerUtama = 0;
-
-                foreach ($arraymessenger as $key) {
-
-                    $validateMessenger = Validator::make(
-                        $key,
-                        [
-                            'messengerNumber' => 'required',
-                            'type' => 'required',
-                            'usage' => 'required',
-                        ],
-                        $messageMessenger
-                    );
-
-
-                    if (strtolower($key['usage']) == "utama" || strtolower($key['usage']) == "primary") {
-                        $checkMessengerUtama = $checkMessengerUtama + 1;
-                    }
-
-
-                    if ($checkMessengerUtama > 1) {
-                        return responseInvalid(['Usage utama on messenger must only one!']);
-                    }
-
-                    if ($validateMessenger->fails()) {
-
-                        $errors = $validateMessenger->errors()->all();
-
-                        foreach ($errors as $checkisu) {
-
-                            if (!(in_array($checkisu, $data_error_messenger))) {
-                                array_push($data_error_messenger, $checkisu);
-                            }
-                        }
-                    }
-
-
-                    if (strtolower($key['type']) == "whatshapp") {
-
-                        if (!(substr($key['messengerNumber'], 0, 3) === "62")) {
-
-                            return response()->json([
-                                'message' => 'Inputed data is not valid',
-                                'errors' => 'Please check your phone number, for type whatshapp must start with 62',
-                            ], 422);
-                        }
-                    }
-                }
-
-
-                if ($data_error_messenger) {
-                    return response()->json([
-                        'message' => 'The given data was invalid.',
-                        'errors' => $data_error_messenger,
-                    ], 422);
-                }
-
-                $checkMessenger = [];
-                foreach ($arraymessenger as $val) {
-
-                    $checkifMessengerExists = DB::table('usersMessengers')
-                        ->where([
-                            ['messengerNumber', '=', $val['messengerNumber'],],
-                            ['isDeleted', '=', '0']
-                        ])
-                        ->first();
-
-                    if ($checkifMessengerExists) {
-                        array_push($checkMessenger, 'Messenger number  : ' . $val['messengerNumber'] . ' already exists, please try different number');
-                    }
-                }
-
-                if ($checkMessenger) {
-                    return response()->json([
-                        'message' => 'Inputed data is not valid',
-                        'errors' => $checkMessenger,
-                    ], 422);
-                }
-            }
-
-            $lastInsertedID = DB::table('users')
-                ->insertGetId([
-                    'firstName' => $request->firstName,
-                    'middleName' => $request->middleName,
-                    'lastName' => $request->lastName,
-                    'nickName' => $request->nickName,
-                    'gender' => $request->gender,
-                    'status' => $request->status,
-                    'lineManagerId' => $request->lineManagerId,
-                    'jobTitleId' => $request->jobTitleId,
-                    'startDate' =>  $start,
-                    'endDate' => $end,
-                    'joinDate' => $start,
-                    'registrationNo' => $request->registrationNo,
-                    'designation' => $request->designation,
-                    'annualSickAllowance' => $request->annualSickAllowance,
-                    'annualSickAllowanceRemaining' => $request->annualSickAllowance,
-                    'annualLeaveAllowance' => $request->annualLeaveAllowance,
-                    'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
-                    'payPeriodId' => $request->payPeriodId,
-                    'payAmount' => $request->payAmount,
-                    'typeId' => 0,
-                    'identificationNumber' => '',
-                    'additionalInfo' => $request->additionalInfo,
-                    'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
-                    'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
-                    'generalAllowMemberToLogUsingEmail' => $request->generalAllowMemberToLogUsingEmail,
-                    'reminderEmail' => $request->reminderEmail,
-                    'reminderWhatsapp' => $request->reminderWhatsapp,
-                    'roleId' => $request->roleId,
-                    'isDeleted' => 0,
-                    'createdBy' => $request->user()->firstName,
-                    'email' => $insertEmailUsers,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                    'password' => null,
-                    'isLogin' => 0,
-                ]);
-
-            recentActivity(
-                $request->user()->id,
-                'Staff',
-                'Add Staff',
-                'Add new staff'
-            );
-
-            staffcontract::create([
-                'staffId' => $lastInsertedID,
-                'startDate' => $start,
-                'endDate' => $end,
-                'userId' => $request->user()->id,
-            ]);
-
-            $locationId = json_decode($request->locationId, true);
-
-            if ($locationId) {
-                foreach ($locationId as $val) {
-
-                    DB::table('usersLocation')
-                        ->insert([
-                            'usersId' => $lastInsertedID,
-                            'locationId' => $val,
-                            'isMainLocation' => 1,
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
-
-
-            if ($request->detailAddress) {
-
-                foreach ($arrayDetailAddress as $val) {
-
-                    DB::table('usersDetailAddresses')
-                        ->insert([
-                            'usersId' => $lastInsertedID,
-                            'addressName' => $val['addressName'],
-                            'additionalInfo' => $val['additionalInfo'],
-                            'provinceCode' => $val['provinceCode'],
-                            'cityCode' => $val['cityCode'],
-                            'postalCode' => $val['postalCode'],
-                            'country' => $val['country'],
-                            'isPrimary' => $val['isPrimary'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
-
-
-            $identify = json_decode($request->typeIdentifications, true);
-
-            $flag = false;
-            $res_data = [];
-            $files[] = $request->file('imageIdentifications');
-            $count = 0;
-
-            if ($flag == false) {
-
-                if ($request->hasfile('imageIdentifications')) {
-
-                    foreach ($files as $file) {
-
-                        foreach ($file as $fil) {
-
-                            $name = $fil->hashName();
-
-                            $fil->move(public_path() . '/UsersIdentificationImages/', $name);
-
-                            $fileName = "/UsersIdentificationImages/" . $name;
-
-                            DB::table('usersIdentifications')
-                                ->insert([
-                                    'usersId' => $lastInsertedID,
-                                    'typeId' => $identify[$count]['typeId'],
-                                    'identification' => $identify[$count]['identificationNumber'],
-                                    'imagePath' => $fileName,
-                                    'status' => 1,
-                                    'reason' => '',
-                                    'approvedBy' => $request->user()->id,
-                                    'approvedAt' => now(),
-                                    'isDeleted' => 0,
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ]);
-
-                            array_push($res_data, $file);
-
-                            $count += 1;
-                        }
-                    }
-
-                    $flag = true;
-                }
-            } else {
-
-                foreach ($res_data as $res) {
-
-                    DB::table('usersIdentifications')
-                        ->insert([
-                            'usersId' => $lastInsertedID,
-                            'typeId' => $identify[$count]['typeId'],
-                            'identification' => $identify[$count]['identificationNumber'],
-                            'imagePath' => $res['imagePath'],
-                            'status' => 1,
-                            'reason' => '',
-                            'approvedBy' => $request->user()->id,
-                            'approvedAt' => now(),
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
-
-            if ($request->messenger) {
-
-                foreach ($arraymessenger as $val) {
-
-                    DB::table('usersMessengers')
-                        ->insert([
-                            'usersId' => $lastInsertedID,
-                            'messengerNumber' => $val['messengerNumber'],
-                            'type' => $val['type'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
-
-            if ($request->email) {
-
-                foreach ($arrayemail as $val) {
-
-                    DB::table('usersEmails')
-                        ->insert([
-                            'usersId' => $lastInsertedID,
-                            'email' => $val['email'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
-
-            if ($request->telephone) {
-
-                foreach ($arraytelephone as $val) {
-
-                    DB::table('usersTelephones')
-                        ->insert([
-                            'usersId' => $lastInsertedID,
-                            'phoneNumber' => $val['phoneNumber'],
-                            'type' => $val['type'],
-                            'usage' => $val['usage'],
-                            'isDeleted' => 0,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
-
-            if ($request->status == 1) {
-
-                $sendEmailPrimary = DB::table('usersEmails as usersEmails')
-                    ->leftjoin('users as users', 'users.id', '=', 'usersEmails.usersId')
-                    ->select(
-                        'usersEmails.usersId',
-                        'usersEmails.email',
-                        DB::raw("
-                        REPLACE(
-                            TRIM(
-                                REPLACE(
-                                    CONCAT(
-                                        IFNULL(users.firstName, ''),
-                                        IF(users.middleName IS NOT NULL AND users.middleName != '', CONCAT(' ', users.middleName), ''),
-                                        IFNULL(CONCAT(' ', users.lastName), ''),
-                                        IFNULL(CONCAT(' (', users.nickName, ')'), '')
-                                    ),
-                                    '  (',
-                                    '('
-                                )
-                            ),
-                            ' (',
-                            '('
-                        ) AS name
-                        "),
-                    )
-                    ->where([
-                        ['usersEmails.usersId', '=', $lastInsertedID],
-                        ['usersEmails.isDeleted', '=', '0'],
-                        ['usersEmails.usage', '=', 'Utama']
-                    ])
-                    ->first();
-
-                $jobtitleName = DB::table('jobTitle')
-                    ->select('jobName')
-                    ->where([
-                        ['id', '=', $request->jobTitleId],
-                        ['isActive', '=', 1]
-                    ])
-                    ->first();
-
-                $data = [
-                    'subject' => 'RPC Petshop',
-                    'body' => 'Please verify your account',
-                    'isi' => 'This e-mail was sent from a notification-only address that cannot accept incoming e-mails. Please do not reply to this message.',
-                    'name' => $sendEmailPrimary->name,
-                    'email' => $sendEmailPrimary->email,
-                    'jobTitle' => $jobtitleName->jobName,
-                    'usersId' => $sendEmailPrimary->usersId,
-                ];
-
-                Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
-
-                DB::commit();
-
-                return response()->json(
-                    [
-                        'result' => 'success',
-                        'message' => 'Insert Data Users Successful! Please check your email for verification',
-                    ],
-                    200
-                );
-            } else {
-
-                DB::commit();
-
-                return response()->json(
-                    [
-                        'result' => 'success',
-                        'message' => 'Insert Data Users Successful!',
-                    ],
-                    200
-                );
-            }
-
-
-            DB::commit();
-
-            return response()->json(
-                [
-                    'result' => 'success',
-                    'message' => 'Insert Data Users Successful!',
-                ],
-                200
-            );
-        } catch (Exception $e) {
-
-            DB::rollback();
+            $staffService->createStaff($request->all(), $request->user(), $files);
+
+            return response()->json([
+                'result' => 'success',
+                'message' => $request->status == 1 
+                    ? 'Insert Data Users Successful! Please check your email for verification' 
+                    : 'Insert Data Users Successful!',
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Error inserting staff: ' . $e->getMessage());
 
             return response()->json([
                 'result' => 'failed',
-                'message' => $e,
-            ], 422);
+                'message' => 'Terjadi kesalahan pada server. Silakan coba beberapa saat lagi.',
+            ], 500);
         }
     }
 
@@ -771,79 +97,62 @@ class StaffController extends Controller
         DB::beginTransaction();
         try {
 
-            $checkIfDataExits = DB::table('users')
-                ->where([
-                    ['id', '=', $request->id],
-                    ['isDeleted', '=', 0],
-                ])
+            $user = DB::table('users')
+                ->select('id', 'status', 'password')
+                ->where('id', $request->id)
+                ->where('isDeleted', 0)
                 ->first();
 
-            if (!$checkIfDataExits) {
+            if (!$user) {
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => ['Data not found! try different ID'],
                 ], 422);
             }
 
-
-            $users = DB::table('users')
-                ->select(
-                    'status',
-                    'password',
-                )
-                ->where('id', '=', $request->id)
-                ->first();
-
-            if ($users->status == 0) {
+            if ($user->status == 0) {
                 return response()->json([
                     'message' => 'Failed',
                     'errors' => 'Please activated your account first',
                 ], 406);
-            } else {
-
-
-                if ($users->password != null) {
-                    return response()->json([
-                        'message' => 'failed',
-                        'errors' => 'Your account password has been set and verified within email',
-                    ], 406);
-                } else {
-
-                    $sendEmailPrimary = DB::table('users')
-                        ->select(
-                            'jobTitleId',
-                            'email',
-                            DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.middleName,'') ,' ', IFNULL(users.lastName,'') ,'(', IFNULL(users.nickName,'') ,')'  ) as name"),
-                        )
-                        ->where([
-                            ['id', '=', $request->id],
-                            ['isDeleted', '=', 0],
-
-                        ])
-                        ->first();
-
-
-                    $jobtitleName = DB::table('jobTitle')
-                        ->select('jobName')
-                        ->where([
-                            ['id', '=', $sendEmailPrimary->jobTitleId],
-                            ['isActive', '=', 1]
-                        ])
-                        ->first();
-
-                    $data = [
-                        'subject' => 'RPC Petshop',
-                        'body' => 'Please verify your account',
-                        'isi' => 'This e-mail was sent from a notification-only address that cannot accept incoming e-mails. Please do not reply to this message.',
-                        'name' => $sendEmailPrimary->name,
-                        'email' => $sendEmailPrimary->email,
-                        'jobTitle' => $jobtitleName->jobName,
-                        'usersId' => $request->id,
-                    ];
-
-                    Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
-                }
             }
+
+            if ($user->password != null) {
+                return response()->json([
+                    'message' => 'failed',
+                    'errors' => 'Your account password has been set and verified within email',
+                ], 406);
+            }
+
+            $sendEmailPrimary = DB::table('users')
+                ->select(
+                    'jobTitleId',
+                    'email',
+                    DB::raw("CONCAT(IFNULL(users.firstName,'') ,' ', IFNULL(users.middleName,'') ,' ', IFNULL(users.lastName,'') ,'(', IFNULL(users.nickName,'') ,')'  ) as name"),
+                )
+                ->where('id', $request->id)
+                ->where('isDeleted', 0)
+                ->first();
+
+            $jobtitleName = DB::table('jobTitle')
+                ->select('jobName')
+                ->where([
+                    ['id', '=', $sendEmailPrimary->jobTitleId],
+                    ['isActive', '=', 1]
+                ])
+                ->first();
+
+            $data = [
+                'subject' => 'RPC Petshop',
+                'body' => 'Please verify your account',
+                'isi' => 'This e-mail was sent from a notification-only address that cannot accept incoming e-mails. Please do not reply to this message.',
+                'name' => $sendEmailPrimary->name,
+                'email' => $sendEmailPrimary->email,
+                'jobTitle' => $jobtitleName->jobName,
+                'usersId' => $request->id,
+            ];
+
+            Mail::to($sendEmailPrimary->email)->send(new SendEmail($data));
 
             return response()->json([
                 'result' => 'success',
@@ -887,50 +196,38 @@ class StaffController extends Controller
         DB::beginTransaction();
         try {
 
-            $checkIfDataExits = DB::table('users')
-                ->where([
-                    ['id', '=', $request->id],
-                    ['isDeleted', '=', 0],
-                ])
+            $users = DB::table('users')
+                ->select('id', 'status')
+                ->where('id', $request->id)
+                ->where('isDeleted', 0)
                 ->first();
 
-            if (!$checkIfDataExits) {
+            if (!$users) {
                 return response()->json([
                     'message' => 'The given data was invalid.',
                     'errors' => ['Data not found! try different ID'],
                 ], 422);
             }
 
-            $users = DB::table('users')
-                ->select('status')
-                ->where('id', '=', $request->id)
-                ->first();
-
             if ($users->status == 1) {
                 return response()->json([
                     'message' => 'failed',
                     'errors' => 'Your account already been activated',
                 ], 406);
-            } else {
-
-                $users = DB::table('users')
-                    ->select('status')
-                    ->where('id', '=', $request->id)
-                    ->first();
-
-                DB::table('users')
-                    ->where('id', '=', $request->id)
-                    ->update([
-                        'status' => 1,
-                    ]);
-
-                DB::commit();
-
-                return response()->json([
-                    'result' => 'success',
-                    'message' => 'Successfuly activated your account, you can send email for setting your password',
-                ], 200);
             }
+
+            DB::table('users')
+                ->where('id', '=', $request->id)
+                ->update([
+                    'status' => 1,
+                ]);
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'success',
+                'message' => 'Successfuly activated your account, you can send email for setting your password',
+            ], 200);
         } catch (Exception $e) {
 
             DB::rollback();
@@ -1022,16 +319,6 @@ class StaffController extends Controller
     }
 
 
-    public function __construct()
-    {
-        $this->client = new Client([
-            'base_uri' => 'https://calendarific.com/api/v2/',
-        ]);
-        $this->api_key = '40a18b1a57c593a8ba3e949ce44420e52b610171';
-        $this->country = 'ID';
-    }
-
-
     public function getRoleStaff(Request $request)
     {
 
@@ -1059,27 +346,9 @@ class StaffController extends Controller
 
     public function getRoleName(Request $request)
     {
-
-        try {
-
-            $getRole = DB::table('usersRoles')
-                ->select(
-                    'id',
-                    'roleName'
-                )
-                ->where([['isActive', '=', '1']])
-                ->orderBy('id', 'asc')
-                ->get();
-
-            return response()->json($getRole, 200);
-        } catch (Exception $e) {
-
-            return response()->json([
-                'message' => 'Failed',
-                'errors' => $e,
-            ], 422);
-        }
+        return $this->getRoleStaff($request);
     }
+
     public function getDataIndex()
     {
 
@@ -1122,6 +391,7 @@ class StaffController extends Controller
                 DB::raw("CONCAT(d.phoneNumber) as phoneNumber"),
                 DB::raw("CASE WHEN lower(d.type)='whatshapp' then true else false end as isWhatsapp"),
                 DB::raw("CASE WHEN a.status=1 then 'Active' else 'Non Active' end as status"),
+                'a.jobTitleId as jobTitleId',
                 'e.locationName as location',
                 'e.locationId as locationId',
                 'a.createdBy as createdBy',
@@ -1165,6 +435,10 @@ class StaffController extends Controller
                         $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
                     }
                 });
+            }
+
+            if ($request->jobTitleId) {
+                $data = $data->whereIn('jobTitleId', $request->jobTitleId);
             }
 
             if ($request->search) {
@@ -1320,394 +594,42 @@ class StaffController extends Controller
     }
 
 
-    private function Search($request)
+    private function Search($request): string
     {
+        $columns = [
+            'id', 'name', 'jobTitle', 'emailAddress', 'phoneNumber',
+            'isWhatsapp', 'status', 'location', 'createdBy', 'createdAt',
+        ];
 
-        $data = $this->getDataIndex();
+        $locationIds = $request->locationId;
+        $jobTitleIds = $request->jobTitleId;
 
-        if ($request->locationId) {
+        foreach ($columns as $column) {
+            $base = $this->getDataIndex();
 
-            $test = $request->locationId;
+            if ($locationIds) {
+                $base = $base->where(function ($query) use ($locationIds) {
+                    foreach ($locationIds as $id) {
+                        $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
+                    }
+                });
+            }
 
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
+            if ($jobTitleIds) {
+                $base = $base->whereIn('jobTitleId', $jobTitleIds);
+            }
+
+            $found = DB::table($base)
+                ->select($columns)
+                ->where($column, 'like', '%' . $request->search . '%')
+                ->exists();
+
+            if ($found) {
+                return $column;
+            }
         }
 
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('id', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'id';
-            return $temp_column;
-        }
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('name', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'name';
-            return $temp_column;
-        }
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('jobTitle', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'jobTitle';
-            return $temp_column;
-        }
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('emailAddress', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'emailAddress';
-            return $temp_column;
-        }
-
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('phoneNumber', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'phoneNumber';
-            return $temp_column;
-        }
-
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('isWhatsapp', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'isWhatsapp';
-            return $temp_column;
-        }
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('status', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'status';
-            return $temp_column;
-        }
-
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('location', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'location';
-            return $temp_column;
-        }
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('createdBy', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'createdBy';
-            return $temp_column;
-        }
-
-        $data = $this->getDataIndex();
-
-        if ($request->locationId) {
-
-            $test = $request->locationId;
-
-            $data = $data->where(function ($query) use ($test) {
-                foreach ($test as $id) {
-                    $query->orWhereRaw("FIND_IN_SET(?, a.locationId)", [$id]);
-                }
-            });
-        }
-
-
-        $data = DB::table($data)
-            ->select(
-                'id',
-                'name',
-                'jobTitle',
-                'emailAddress',
-                'phoneNumber',
-                'isWhatsapp',
-                'status',
-                'location',
-                'createdBy',
-                'createdAt'
-            );
-
-        if ($request->search) {
-            $data = $data->where('createdAt', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $data->get();
-
-        if (count($data)) {
-            $temp_column = 'createdAt';
-            return $temp_column;
-        }
+        return '';
     }
 
     public function uploadImageStaff(Request $request)
@@ -1801,25 +723,6 @@ class StaffController extends Controller
                 }
 
                 $flag = true;
-            }
-        } else {
-
-            foreach ($res_data as $res) {
-
-                DB::table('usersIdentifications')
-                    ->insert([
-                        'usersId' => $request->id,
-                        'typeId' => $identify[$count]['typeId'],
-                        'identification' => $identify[$count]['identificationNumber'],
-                        'imagePath' => $res['imagePath'],
-                        'status' => 1,
-                        'reason' => '',
-                        'approvedBy' => $request->user()->id,
-                        'approvedAt' => now(),
-                        'isDeleted' => 0,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
             }
         }
 
@@ -2129,7 +1032,6 @@ class StaffController extends Controller
                         ->where('id', '=', $value['line_manager'])->where('isDeleted', '=', 0)->first();
 
                     if (!$lineManager) {
-                        return 'msk';
                         return response()->json([
                             'errors' => 'The given data was invalid.',
                             'message' => ['There is no any Line Manager at system at row ' . $count_row],
@@ -3467,354 +2369,99 @@ class StaffController extends Controller
             $start = Carbon::parse($request->startDate);
             $end = Carbon::parse($request->endDate);
 
+            $existingUser = DB::table('users')->where('id', $request->id)->first();
+
+            if ($existingUser->startDate != $start) {
+                staffcontract::create([
+                    'staffId' => $request->id,
+                    'startDate' => $start,
+                    'endDate' => $end,
+                    'userId' => $request->user()->id,
+                ]);
+            }
+
+            $userPayload = [
+                'firstName' => $request->firstName,
+                'middleName' => $request->middleName,
+                'lastName' => $request->lastName,
+                'nickName' => $request->nickName,
+                'gender' => $request->gender,
+                'status' => $request->status,
+                'lineManagerId' => $request->lineManagerId,
+                'jobTitleId' => $request->jobTitleId,
+                'startDate' => $start,
+                'endDate' => $end,
+                'registrationNo' => $request->registrationNo,
+                'designation' => $request->designation,
+                'annualSickAllowance' => $request->annualSickAllowance,
+                'annualSickAllowanceRemaining' => $request->annualSickAllowance,
+                'annualLeaveAllowance' => $request->annualLeaveAllowance,
+                'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
+                'payPeriodId' => $request->payPeriodId,
+                'payAmount' => $request->payAmount,
+                'typeId' => 0,
+                'identificationNumber' => '',
+                'additionalInfo' => $request->additionalInfo,
+                'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
+                'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
+                'generalAllowMemberToLogUsingEmail' => $request->generalAllowMemberToLogUsingEmail,
+                'reminderEmail' => $request->reminderEmail,
+                'reminderWhatsapp' => $request->reminderWhatsapp,
+                'roleId' => $request->roleId,
+                'createdBy' => $request->user()->firstName,
+                'updated_at' => now(),
+            ];
+
             if ($insertEmailUsers) {
+                $userPayload['password'] = null;
+                $userPayload['email'] = $insertEmailUsers;
+            }
 
-                $user = DB::table('users')
-                    ->where([
-                        ['id', '=', $request->id]
-                    ])
-                    ->first();
+            DB::table('users')->where('id', $request->id)->update($userPayload);
 
-                if ($user->startDate != $start) {
-                    staffcontract::create([
-                        'staffId' => $request->id,
-                        'startDate' => $start,
-                        'endDate' => $end,
-                        'userId' => $request->user()->id,
-                    ]);
-                }
-
-                DB::table('users')
-                    ->where('id', '=', $request->id)
-                    ->update([
-                        'firstName' => $request->firstName,
-                        'middleName' => $request->middleName,
-                        'lastName' => $request->lastName,
-                        'nickName' => $request->nickName,
-                        'gender' => $request->gender,
-                        'status' => $request->status,
-                        'lineManagerId' => $request->lineManagerId,
-                        'jobTitleId' => $request->jobTitleId,
-                        'startDate' => $start,
-                        'endDate' => $end,
-                        'registrationNo' => $request->registrationNo,
-                        'designation' => $request->designation,
-                        'annualSickAllowance' => $request->annualSickAllowance,
-                        'annualSickAllowanceRemaining' => $request->annualSickAllowance,
-                        'annualLeaveAllowance' => $request->annualLeaveAllowance,
-                        'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
-                        'payPeriodId' => $request->payPeriodId,
-                        'payAmount' => $request->payAmount,
-                        'typeId' => 0,
-                        'identificationNumber' => '',
-                        'additionalInfo' => $request->additionalInfo,
-                        'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
-                        'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
-                        'generalAllowMemberToLogUsingEmail' => $request->generalAllowMemberToLogUsingEmail,
-                        'reminderEmail' => $request->reminderEmail,
-                        'reminderWhatsapp' => $request->reminderWhatsapp,
-                        'roleId' => $request->roleId,
-                        'createdBy' => $request->user()->firstName,
-                        'updated_at' => now(),
-                        'password' => null,
-                        'email' => $insertEmailUsers,
-                    ]);
-
+            if ($insertEmailUsers) {
                 recentActivity(
                     $request->user()->id,
                     'Staff',
                     'Add Staff',
                     'Update staff'
                 );
+            }
 
+            $this->updateStaffSubData($request->id, $request, !$insertEmailUsers);
 
-
-                if ($request->locationId) {
-
-                    DB::table('usersLocation')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->locationId as $val) {
-
-                        DB::table('usersLocation')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'locationId' => $val,
-                                'isMainLocation' => 1,
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-
-                if ($request->detailAddress) {
-
-                    DB::table('usersDetailAddresses')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->detailAddress as $val) {
-
-                        DB::table('usersDetailAddresses')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'addressName' => $val['addressName'],
-                                'additionalInfo' => $val['additionalInfo'],
-                                'provinceCode' => $val['provinceCode'],
-                                'cityCode' => $val['cityCode'],
-                                'postalCode' => $val['postalCode'],
-                                'country' => $val['country'],
-                                'isPrimary' => $val['isPrimary'],
-                                'isDeleted' => 0,
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-                if ($request->messenger) {
-
-                    DB::table('usersMessengers')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->messenger as $val) {
-                        DB::table('usersMessengers')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'messengerNumber' => $val['messengerNumber'],
-                                'type' => $val['type'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-                if ($request->email) {
-
-                    DB::table('usersEmails')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->email as $val) {
-                        DB::table('usersEmails')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'email' => $val['email'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-
-
-                if ($request->telephone) {
-
-                    DB::table('usersTelephones')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->telephone as $val) {
-                        DB::table('usersTelephones')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'phoneNumber' => $val['phoneNumber'],
-                                'type' => $val['type'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-                if ($request->status == 0) {
-
-                    DB::commit();
-                    return response()->json([
-                        'result' => 'success',
-                        'message' => 'successfuly update user ',
-                    ]);
-                } else {
-
-
-                    $jobtitleName = DB::table('jobTitle')
-                        ->select('jobName')
-                        ->where([
-                            ['id', '=', $request->jobTitleId],
-                            ['isActive', '=', 1]
-                        ])
-                        ->first();
-
-
-                    $data = [
-                        'subject' => 'RPC Petshop',
-                        'body' => 'Please verify your account',
-                        'isi' => 'This e-mail was sent from a notification-only address that cannot accept incoming e-mails. Please do not reply to this message.',
-                        'name' => $request->firstName,
-                        'email' => $insertEmailUsers,
-                        'jobTitle' => $jobtitleName->jobName,
-                        'usersId' => $request->id,
-                    ];
-
-                    Mail::to($insertEmailUsers)->send(new SendEmail($data));
-
-                    DB::commit();
-
-                    return response()->json([
-                        'result' => 'success',
-                        'message' => 'successfuly update user, your primary email has updated, please check your new email to verify your password',
-                    ]);
-                }
-            } else {
-
-                $user = DB::table('users')
-                    ->where([
-                        ['id', '=', $request->id]
-                    ])
+            if ($insertEmailUsers && $request->status != 0) {
+                $jobtitleName = DB::table('jobTitle')
+                    ->select('jobName')
+                    ->where([['id', '=', $request->jobTitleId], ['isActive', '=', 1]])
                     ->first();
 
-                if ($user->startDate != $start) {
-                    staffcontract::create([
-                        'staffId' => $request->id,
-                        'startDate' => $start,
-                        'endDate' => $end,
-                        'userId' => $request->user()->id,
-                    ]);
-                }
+                $emailData = [
+                    'subject' => 'RPC Petshop',
+                    'body' => 'Please verify your account',
+                    'isi' => 'This e-mail was sent from a notification-only address that cannot accept incoming e-mails. Please do not reply to this message.',
+                    'name' => $request->firstName,
+                    'email' => $insertEmailUsers,
+                    'jobTitle' => $jobtitleName->jobName,
+                    'usersId' => $request->id,
+                ];
 
-
-                DB::table('users')
-                    ->where('id', '=', $request->id)
-                    ->update([
-                        'firstName' => $request->firstName,
-                        'middleName' => $request->middleName,
-                        'lastName' => $request->lastName,
-                        'nickName' => $request->nickName,
-                        'gender' => $request->gender,
-                        'status' => $request->status,
-                        'lineManagerId' => $request->lineManagerId,
-                        'jobTitleId' => $request->jobTitleId,
-                        'startDate' => $start,
-                        'endDate' => $end,
-                        'registrationNo' => $request->registrationNo,
-                        'designation' => $request->designation,
-                        'annualSickAllowance' => $request->annualSickAllowance,
-                        'annualSickAllowanceRemaining' => $request->annualSickAllowance,
-                        'annualLeaveAllowance' => $request->annualLeaveAllowance,
-                        'annualLeaveAllowanceRemaining' => $request->annualLeaveAllowance,
-                        'payPeriodId' => $request->payPeriodId,
-                        'payAmount' => $request->payAmount,
-                        'typeId' => 0,
-                        'identificationNumber' => '',
-                        'additionalInfo' => $request->additionalInfo,
-                        'generalCustomerCanSchedule' => $request->generalCustomerCanSchedule,
-                        'generalCustomerReceiveDailyEmail' => $request->generalCustomerReceiveDailyEmail,
-                        'generalAllowMemberToLogUsingEmail' => $request->generalAllowMemberToLogUsingEmail,
-                        'reminderEmail' => $request->reminderEmail,
-                        'reminderWhatsapp' => $request->reminderWhatsapp,
-                        'roleId' => $request->roleId,
-                        'createdBy' => $request->user()->firstName,
-                        'updated_at' => now(),
-
-                    ]);
-
-
-                if ($request->locationId) {
-
-                    DB::table('usersLocation')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->locationId as $val) {
-
-                        DB::table('usersLocation')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'locationId' => $val,
-                                'isMainLocation' => 1,
-                                'isDeleted' => 0,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-
-
-                if ($request->detailAddress) {
-
-                    DB::table('usersDetailAddresses')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->detailAddress as $val) {
-
-                        DB::table('usersDetailAddresses')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'addressName' => $val['addressName'],
-                                'additionalInfo' => $val['additionalInfo'],
-                                'provinceCode' => $val['provinceCode'],
-                                'cityCode' => $val['cityCode'],
-                                'postalCode' => $val['postalCode'],
-                                'country' => $val['country'],
-                                'isPrimary' => $val['isPrimary'],
-                                'isDeleted' => 0,
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-
-                if ($request->messenger) {
-
-                    DB::table('usersMessengers')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->messenger as $val) {
-                        DB::table('usersMessengers')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'messengerNumber' => $val['messengerNumber'],
-                                'type' => $val['type'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-                if ($request->email) {
-
-                    DB::table('usersEmails')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->email as $val) {
-                        DB::table('usersEmails')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'email' => $val['email'],
-                                'usage' => $val['usage'],
-                                'email_verified_at' => now(),
-                                'isDeleted' => 0,
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
-
-                if ($request->telephone) {
-
-                    DB::table('usersTelephones')->where('usersId', '=', $request->id)->delete();
-
-                    foreach ($request->telephone as $val) {
-                        DB::table('usersTelephones')
-                            ->insert([
-                                'usersId' => $request->id,
-                                'phoneNumber' => $val['phoneNumber'],
-                                'type' => $val['type'],
-                                'usage' => $val['usage'],
-                                'isDeleted' => 0,
-                                'updated_at' => now(),
-                            ]);
-                    }
-                }
+                Mail::to($insertEmailUsers)->send(new SendEmail($emailData));
 
                 DB::commit();
 
                 return response()->json([
                     'result' => 'success',
-                    'message' => 'successfuly update user',
+                    'message' => 'successfuly update user, your primary email has updated, please check your new email to verify your password',
                 ]);
             }
+
+            DB::commit();
+
+            return response()->json([
+                'result' => 'success',
+                'message' => $insertEmailUsers ? 'successfuly update user ' : 'successfuly update user',
+            ]);
         } catch (Exception $e) {
 
             DB::rollback();
@@ -3823,6 +2470,86 @@ class StaffController extends Controller
                 'message' => 'failed',
                 'errors' => $e,
             ], 422);
+        }
+    }
+
+    private function updateStaffSubData(int $userId, Request $request, bool $verifyEmail = true): void
+    {
+        if ($request->locationId) {
+            DB::table('usersLocation')->where('usersId', $userId)->delete();
+            foreach ($request->locationId as $val) {
+                DB::table('usersLocation')->insert([
+                    'usersId' => $userId,
+                    'locationId' => $val,
+                    'isMainLocation' => 1,
+                    'isDeleted' => 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        if ($request->detailAddress) {
+            DB::table('usersDetailAddresses')->where('usersId', $userId)->delete();
+            foreach ($request->detailAddress as $val) {
+                DB::table('usersDetailAddresses')->insert([
+                    'usersId' => $userId,
+                    'addressName' => $val['addressName'],
+                    'additionalInfo' => $val['additionalInfo'],
+                    'provinceCode' => $val['provinceCode'],
+                    'cityCode' => $val['cityCode'],
+                    'postalCode' => $val['postalCode'],
+                    'country' => $val['country'],
+                    'isPrimary' => $val['isPrimary'],
+                    'isDeleted' => 0,
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        if ($request->messenger) {
+            DB::table('usersMessengers')->where('usersId', $userId)->delete();
+            foreach ($request->messenger as $val) {
+                DB::table('usersMessengers')->insert([
+                    'usersId' => $userId,
+                    'messengerNumber' => $val['messengerNumber'],
+                    'type' => $val['type'],
+                    'usage' => $val['usage'],
+                    'isDeleted' => 0,
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        if ($request->email) {
+            DB::table('usersEmails')->where('usersId', $userId)->delete();
+            foreach ($request->email as $val) {
+                $row = [
+                    'usersId' => $userId,
+                    'email' => $val['email'],
+                    'usage' => $val['usage'],
+                    'isDeleted' => 0,
+                    'updated_at' => now(),
+                ];
+                if ($verifyEmail) {
+                    $row['email_verified_at'] = now();
+                }
+                DB::table('usersEmails')->insert($row);
+            }
+        }
+
+        if ($request->telephone) {
+            DB::table('usersTelephones')->where('usersId', $userId)->delete();
+            foreach ($request->telephone as $val) {
+                DB::table('usersTelephones')->insert([
+                    'usersId' => $userId,
+                    'phoneNumber' => $val['phoneNumber'],
+                    'type' => $val['type'],
+                    'usage' => $val['usage'],
+                    'isDeleted' => 0,
+                    'updated_at' => now(),
+                ]);
+            }
         }
     }
 
@@ -4653,6 +3380,12 @@ class StaffController extends Controller
                 'eachLate' => 50000, // jumlah keterlambatan
                 'late' => $late * 50000, // jumlah keterlambatan
             ];
+        }
+
+        if (!isset($data)) {
+            return response()->json([
+                'message' => 'Salary template not configured for this job title',
+            ], 422);
         }
 
         return response()->json([

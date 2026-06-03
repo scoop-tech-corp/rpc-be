@@ -123,10 +123,7 @@ class TransPetClinicController extends Controller
                 }
             } else {
                 $data = [];
-                return response()->json([
-                    'totalPagination' => 0,
-                    'data' => $data
-                ], 200);
+                return responseIndex(0, $data);
             }
         }
 
@@ -321,7 +318,7 @@ class TransPetClinicController extends Controller
                 $cust = Customer::select('id', 'isDeleted')->where('id', $request->customerId)->where('isDeleted', 0)->first();
 
                 if (!$cust) {
-                    responseInvalid(['Customer is Not Found']);
+                    return responseInvalid(['Customer is Not Found']);
                 }
 
                 if ($request->isNewPet == true) {
@@ -617,26 +614,23 @@ class TransPetClinicController extends Controller
     public function delete(Request $request)
     {
 
-        foreach ($request->id as $va) {
-            $res = TransactionPetClinic::find($va);
+        $existingTransactions = TransactionPetClinic::whereIn('id', $request->id)->pluck('id')->toArray();
+        $missingTransactions = array_diff($request->id, $existingTransactions);
 
-            if (!$res) {
-                return response()->json([
-                    'message' => 'The given data was invalid.',
-                    'errors' => ['There is any Data not found!'],
-                ], 422);
-            }
+        if (!empty($missingTransactions)) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['There is any Data not found!'],
+            ], 422);
         }
 
+        TransactionPetClinic::whereIn('id', $request->id)->update([
+            'DeletedBy' => $request->user()->id,
+            'isDeleted' => true,
+            'DeletedAt' => Carbon::now()
+        ]);
+
         foreach ($request->id as $va) {
-
-            $tran = TransactionPetClinic::find($va);
-
-            $tran->DeletedBy = $request->user()->id;
-            $tran->isDeleted = true;
-            $tran->DeletedAt = Carbon::now();
-            $tran->save();
-
             transactionPetClinicLog($va, 'Transaction Deleted', '', $request->user()->id);
         }
 
@@ -1862,25 +1856,20 @@ class TransPetClinicController extends Controller
         ]);
     }
 
-    protected function ensureIsArray($data): ?array
+    protected function ensureIsArray($data): array
     {
-        // Jika data sudah berupa array, kembalikan saja.
         if (is_array($data)) {
             return $data;
         }
 
-        // Jika data berupa string (kemungkinan JSON), coba decode.
         if (is_string($data)) {
             $decoded = json_decode($data, true);
-
-            // Pastikan hasil decode adalah array yang valid
             if (is_array($decoded)) {
                 return $decoded;
             }
         }
 
-        // Kembalikan null atau array kosong jika input tidak valid
-        return null;
+        return [];
     }
 
     public function transactionDiscount(Request $request)
@@ -2104,18 +2093,21 @@ class TransPetClinicController extends Controller
     public function paymentOutpatient(Request $request)
     {
         // 1. Validasi Awal & Parsing Data
+        // Parse purchases dulu sebelum validasi — data bisa datang sebagai JSON string dari frontend
+        $request->merge(['purchases' => $this->ensureIsArray($request->purchases)]);
+
         $validate = Validator::make($request->all(), [
             'transactionPetClinicId' => 'required|integer',
-            'payment_method' => 'required',
-            'detail_total' => 'required',
-            'purchases' => 'required|array'
+            'payment_method'         => 'required',
+            'detail_total'           => 'required',
+            'purchases'              => 'required|array',
         ]);
 
         if ($validate->fails()) return responseInvalid($validate->errors()->all());
 
-        $payment = json_decode($request->payment_method, true);
-        $detail = json_decode($request->detail_total, true);
-        $purchases = $this->ensureIsArray($request->purchases);
+        $payment   = json_decode($request->payment_method, true);
+        $detail    = json_decode($request->detail_total, true);
+        $purchases = $request->purchases;
         $userId = $request->user()->id;
         $transId = $request->transactionPetClinicId;
 
@@ -2224,7 +2216,7 @@ class TransPetClinicController extends Controller
 
             // Menghitung jumlah untuk nomor nota (Lock row untuk menghindari duplikat di waktu bersamaan)
             $jumlahTransaksi = DB::table('transaction_pet_clinic_payment_totals as tp')
-                ->join('transaction_pet_clinics as tpc', 'tp.transactionId', '=', 'tpc.id')
+                ->join('transactionPetClinics as tpc', 'tp.transactionId', '=', 'tpc.id')
                 ->where('tpc.locationId', $trans->locationId)
                 ->whereYear('tp.created_at', $tahun)
                 ->whereMonth('tp.created_at', $bulan)

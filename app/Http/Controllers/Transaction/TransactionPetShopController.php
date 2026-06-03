@@ -1147,22 +1147,23 @@ class TransactionPetShopController
 
         $deletedIds = [];
 
-        foreach ($transaksis as $tran) {
-            $tran->deletedBy = $request->user()->id;
-            $tran->isDeleted = true;
-            $tran->deletedAt = Carbon::now();
-            $tran->save();
+        TransactionPetShop::whereIn('id', $ids)->update([
+            'deletedBy' => $request->user()->id,
+            'isDeleted' => true,
+            'deletedAt' => Carbon::now()
+        ]);
 
-            DB::table('transactionpetshopdetail')
-                ->where('transactionpetshopId', $tran->id)
-                ->update([
-                    'isDeleted' => true,
-                    'userUpdateId' => $request->user()->id,
-                    'updated_at' => now(),
-                ]);
+        DB::table('transactionpetshopdetail')
+            ->whereIn('transactionpetshopId', $ids)
+            ->update([
+                'isDeleted' => true,
+                'userUpdateId' => $request->user()->id,
+                'updated_at' => now(),
+            ]);
 
-            transactionPetshopLog($tran->id, 'Transaction Deleted', '', $request->user()->id);
-            $deletedIds[] = $tran->id;
+        foreach ($ids as $id) {
+            transactionPetshopLog($id, 'Transaction Deleted', '', $request->user()->id);
+            $deletedIds[] = $id;
         }
 
         return response()->json([
@@ -1205,20 +1206,25 @@ class TransactionPetShopController
             )
             ->get();
 
+        $transactionIds = $data->pluck('id')->toArray();
+        
+        $detailsStats = DB::table('transactionpetshopdetail')
+            ->whereIn('transactionpetshopId', $transactionIds)
+            ->select(
+                'transactionpetshopId',
+                DB::raw('SUM(CASE WHEN promoId IS NOT NULL THEN 1 ELSE 0 END) as totalUsePromo'),
+                DB::raw('SUM(quantity) as totalItem'),
+                DB::raw('SUM(quantity * price) as totalAmount')
+            )
+            ->groupBy('transactionpetshopId')
+            ->get()
+            ->keyBy('transactionpetshopId');
+
         foreach ($data as $item) {
-            $item->totalUsePromo = DB::table('transactionpetshopdetail')
-                ->where('transactionpetshopId', $item->id)
-                ->whereNotNull('promoId')
-                ->count();
-
-            $item->totalItem = DB::table('transactionpetshopdetail')
-                ->where('transactionpetshopId', $item->id)
-                ->sum('quantity');
-
-            $item->totalAmount = DB::table('transactionpetshopdetail')
-                ->where('transactionpetshopId', $item->id)
-                ->select(DB::raw('SUM(quantity * price) as total'))
-                ->value('total');
+            $stats = $detailsStats->get($item->id);
+            $item->totalUsePromo = $stats ? $stats->totalUsePromo : 0;
+            $item->totalItem = $stats ? $stats->totalItem : 0;
+            $item->totalAmount = $stats ? $stats->totalAmount : 0;
         }
 
         $spreadsheet = IOFactory::load(public_path() . '/template/transaction/' . 'Template_Export_Transaction_Pet_Shop.xlsx');

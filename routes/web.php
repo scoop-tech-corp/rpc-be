@@ -42,6 +42,6 @@ Route::get('/send-event', function (){
     $data = Chat::find(1);
     broadcast(new \App\Events\SendMessage($data));
 });
-Route::resource('/posts/{id}', \App\Http\Controllers\VerifyUserandPasswordController::class);
+Route::resource('/posts', \App\Http\Controllers\VerifyUserandPasswordController::class);
 Route::post('/posts', '\App\Http\Controllers\VerifyUserandPasswordController@store')->name('reset.password.store');
 // Route::post('/holidays', '\App\Http\Controllers\StaffController@getAllHolidaysDate');

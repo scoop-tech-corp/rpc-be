@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\LocationController;
@@ -53,6 +54,7 @@ use App\Http\Controllers\Finance\DataStaticController as FinanceDataStaticContro
 use App\Http\Controllers\Finance\ExpensesController;
 use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Product\BatchController;
 use App\Http\Controllers\Product\StockOpnameController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
 use App\Http\Controllers\Transaction\TransactionPetShopController;
@@ -64,6 +66,9 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 use App\Http\Controllers\Staff\IdentityController;
 use App\Http\Controllers\Staff\OverWorkController;
 use App\Http\Controllers\Staff\RequireSalaryController;
+use App\Http\Controllers\Product\LoanProductController;
+use App\Http\Controllers\Product\DeliveryAgentController;
+use App\Http\Controllers\Product\DeliveryOrderController;
 
 Route::post('login', [ApiController::class, 'login']);
 Route::post('register', [ApiController::class, 'register']);
@@ -84,8 +89,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('/overview', [DashboardController::class, 'overview']);
-        Route::get('/upbookinpatient', [DashboardController::class, 'upcomingBookInpatien']);
-        Route::get('/upbookoutpatient', [DashboardController::class, 'upcomingBookOutpatien']);
+        Route::get('/upbookingclinic', [DashboardController::class, 'upcomingBookingClinic']);
+        Route::get('/upbookinghotel', [DashboardController::class, 'upcomingBookingHotel']);
+        Route::get('/upbookingsalon', [DashboardController::class, 'upcomingBookingSalon']);
+        Route::get('/upbookingbreeding', [DashboardController::class, 'upcomingBookingBreeding']);
         Route::get('/activity', [DashboardController::class, 'recentActivity']);
     });
 
@@ -146,7 +153,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/', [BookingBookingController::class, 'index']);
         Route::get('/detail', [BookingBookingController::class, 'detail']);
         Route::put('/cancel', [BookingBookingController::class, 'cancelBooking']);
+        Route::put('/accept', [BookingBookingController::class, 'acceptBooking']);
+        Route::put('/reject', [BookingBookingController::class, 'rejectBooking']);
         Route::delete('/', [BookingBookingController::class, 'delete']);
+        Route::get('/list', [BookingBookingController::class, 'getList']);
     });
     //MODULE PRODUCT
     //list produk
@@ -286,18 +296,68 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/bundle/status', [BundleController::class, 'changeStatus']);
         Route::delete('/bundle', [BundleController::class, 'delete']);
 
+        Route::group(['prefix' => 'batch'], function () {
+            Route::get('/list-batch', [BatchController::class, 'ListBatch']);
+            Route::get('/detail', [BatchController::class, 'DetailBatch']);
+            Route::get('/list-batch-transfer', [BatchController::class, 'ListBatchTransfer']);
+            Route::get('/detail-transfer', [BatchController::class, 'DetailBatchTransfer']);
+        });
+
         Route::group(['prefix' => 'stock-opname'], function () {
 
             Route::get('/', [StockOpnameController::class, 'index']);
             Route::get('/scan-barcode', [StockOpnameController::class, 'scanBarcode']);
             Route::post('/', [StockOpnameController::class, 'create']);
+            Route::get('/generate-so-number', [StockOpnameController::class, 'generateSONumber']);
             Route::post('/input-product', [StockOpnameController::class, 'inputProducts']);
             Route::get('/detail', [StockOpnameController::class, 'detail']);
             Route::put('/', [StockOpnameController::class, 'update']);
-            Route::put('/finalize', [StockOpnameController::class, 'finalizeStockOpname']);
-            Route::put('/approval', [StockOpnameController::class, 'approvalStockOpname']);
+            Route::put('/start', [StockOpnameController::class, 'startStockOpname']);
+            Route::put('/approval-director', [StockOpnameController::class, 'approvalDirector']);
+            Route::put('/approval-checker', [StockOpnameController::class, 'approvalChecker']);
             Route::delete('/', [StockOpnameController::class, 'delete']);
             Route::get('/export', [StockOpnameController::class, 'export']);
+            Route::get('/print', [StockOpnameController::class, 'printPdf']);
+        });
+
+        Route::group(['prefix' => 'loan-product'], function () {
+            Route::get('/generate-loan-number', [LoanProductController::class, 'generateLoanNumber']);
+            Route::get('/', [LoanProductController::class, 'index']);
+            Route::get('/detail', [LoanProductController::class, 'detail']);
+            Route::post('/', [LoanProductController::class, 'create']);
+            Route::put('/', [LoanProductController::class, 'update']);
+            Route::delete('/', [LoanProductController::class, 'delete']);
+            Route::post('/submit', [LoanProductController::class, 'submit']);
+            Route::post('/approval', [LoanProductController::class, 'approval']);
+            Route::post('/loan-out', [LoanProductController::class, 'loanOut']);
+            Route::post('/return', [LoanProductController::class, 'returnLoan']);
+            Route::get('/download-pdf', [LoanProductController::class, 'downloadPdf']);
+        });
+
+        Route::group(['prefix' => 'delivery-agent'], function () {
+            Route::get('/', [DeliveryAgentController::class, 'index']);
+            Route::get('/detail', [DeliveryAgentController::class, 'detail']);
+            Route::get('/dropdown', [DeliveryAgentController::class, 'dropdown']);
+            Route::post('/', [DeliveryAgentController::class, 'create']);
+            Route::put('/', [DeliveryAgentController::class, 'update']);
+            Route::put('/status', [DeliveryAgentController::class, 'changeStatus']);
+            Route::delete('/', [DeliveryAgentController::class, 'delete']);
+        });
+
+        Route::group(['prefix' => 'delivery-order'], function () {
+            Route::get('/generate-number', [DeliveryOrderController::class, 'generateDeliveryNumber']);
+            Route::get('/', [DeliveryOrderController::class, 'index']);
+            Route::get('/detail', [DeliveryOrderController::class, 'detail']);
+            Route::post('/', [DeliveryOrderController::class, 'create']);
+            Route::put('/', [DeliveryOrderController::class, 'update']);
+            Route::delete('/', [DeliveryOrderController::class, 'delete']);
+            Route::post('/assign', [DeliveryOrderController::class, 'assign']);
+            Route::post('/pickup', [DeliveryOrderController::class, 'pickup']);
+            Route::post('/start', [DeliveryOrderController::class, 'startDelivery']);
+            Route::post('/complete', [DeliveryOrderController::class, 'complete']);
+            Route::post('/failed', [DeliveryOrderController::class, 'failed']);
+            Route::post('/cancel', [DeliveryOrderController::class, 'cancel']);
+            Route::get('/download-pdf', [DeliveryOrderController::class, 'downloadPdf']);
         });
 
         Route::get('/datastatic', [ProductController::class, 'indexDataStatic']);
@@ -569,6 +629,13 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/read', [ChatController::class, 'read']);
     });
 
+    // Notifications
+    Route::group(['prefix' => 'notifications'], function () {
+        Route::get('/',           [NotificationController::class, 'index']);
+        Route::post('/read/{id}', [NotificationController::class, 'markRead']);
+        Route::post('/read-all',  [NotificationController::class, 'markAllRead']);
+    });
+
     Route::group(['prefix' => 'menu'], function () {
 
         Route::get('/last-order-menu-group', [MenuManagementController::class, 'lastOrderMenuGroup']);
@@ -686,6 +753,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/payment', [PetHotelController::class, 'payment']);
 
             Route::get('/invoice', [PetHotelController::class, 'printInvoce']);
+            Route::post('/confirm-payment', [PetHotelController::class, 'confirmPayment']);
         });
 
         Route::group(['prefix' => 'breeding'], function () {

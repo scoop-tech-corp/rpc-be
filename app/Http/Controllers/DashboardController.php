@@ -15,24 +15,19 @@ class DashboardController extends Controller
             return responseUnauthorize();
         }
 
-        $now = Carbon::now();
+        $periods    = $this->resolvePeriods($request);
+        $currentStart = $periods['currentStart'];
+        $currentEnd   = $periods['currentEnd'];
+        $prevStart    = $periods['prevStart'];
+        $prevEnd      = $periods['prevEnd'];
 
-        $startOfCurrentMonth = $now->copy()->startOfMonth();
-        $endOfCurrentMonth = $now->copy();
+        $branchesId = $request->filled('branchesId') ? $request->branchesId : null;
 
-        $startOfLastMonth = $now->copy()->subMonth()->startOfMonth();
-        $endOfLastMonthCompare = $now->copy()->subMonth();
-
-        $chartsBookingCategory = $this->chartsBookingCategory();
-
-        $reportingGroup = $this->reportingGroup();
-        $reportingGroup = collect($reportingGroup);
-
-        $bookings = $this->bookings($startOfCurrentMonth, $endOfCurrentMonth, $startOfLastMonth, $endOfLastMonthCompare);
-
-        $newCustomer = $this->newCustomer($startOfCurrentMonth, $endOfCurrentMonth, $startOfLastMonth, $endOfLastMonthCompare);
-
-        $rebookRate = $this->calculateRebookRateTrend($startOfCurrentMonth, $endOfCurrentMonth, $startOfLastMonth, $endOfLastMonthCompare);
+        $chartsBookingCategory = $this->chartsBookingCategory($branchesId, $currentStart, $currentEnd);
+        $reportingGroup        = collect($this->reportingGroup($branchesId, $currentStart, $currentEnd));
+        $bookings              = $this->bookings($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId);
+        $newCustomer           = $this->newCustomer($currentStart, $currentEnd, $prevStart, $prevEnd);
+        $rebookRate            = $this->calculateRebookRateTrend($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId);
 
         $data = [
             'chartsBookingCategory' => [
@@ -45,50 +40,71 @@ class DashboardController extends Controller
             ],
             'bookings' => [
                 'percentage' => (string) $bookings['percentageBookings'],
-                'total' => (string) $bookings['bookings'],
-                'isLoss' => $bookings['isLoss']
+                'total'      => (string) $bookings['bookings'],
+                'isLoss'     => $bookings['isLoss']
             ],
             'totalSaleValue' => [
                 'percentage' => '27.5',
-                'total' => '250',
-                'isLoss' => 0
+                'total'      => '250',
+                'isLoss'     => 0
             ],
             'newCustomer' => [
                 'percentage' => (string) $newCustomer['percentageNewCustomer'],
-                'total' => (string) $newCustomer['newCustomer'],
-                'isLoss' => $newCustomer['isLoss']
+                'total'      => (string) $newCustomer['newCustomer'],
+                'isLoss'     => $newCustomer['isLoss']
             ],
             'rebookRate' => [
                 'percentage' => (string) $rebookRate['percentage'],
-                'total' => (string) $rebookRate['rebookCount'],
-                'isLoss' => $rebookRate['isLoss']
+                'total'      => (string) $rebookRate['rebookCount'],
+                'isLoss'     => $rebookRate['isLoss']
             ],
             'customerRetention' => [
                 'percentage' => '40',
-                'total' => '400',
-                'isLoss' => 1
+                'total'      => '400',
+                'isLoss'     => 1
             ],
             'avgSaleValue' => [
                 'percentage' => '68',
-                'total' => '1,400',
-                'isLoss' => 0
+                'total'      => '1,400',
+                'isLoss'     => 0
             ],
         ];
 
         return response()->json($data);
     }
 
-    private function calculateRebookRateTrend($startOfCurrentMonth, $endOfCurrentMonth, $startOfLastMonth, $endOfLastMonthCompare)
+    private function resolvePeriods(Request $request): array
     {
-        // 1. Hitung Rate Bulan Ini
-        $currentData = $this->getRebookMetrics($startOfCurrentMonth, $endOfCurrentMonth);
-        $currentRate = $currentData['rate']; // misal 22.5%
+        $now = Carbon::now();
 
-        // 2. Hitung Rate Bulan Lalu
-        $prevData = $this->getRebookMetrics($startOfLastMonth, $endOfLastMonthCompare);
-        $prevRate = $prevData['rate']; // misal 18.3%
+        if ($request->dateRange === 'dateRange') {
+            $currentStart = Carbon::parse($request->dateFrom)->startOfDay();
+            $currentEnd   = Carbon::parse($request->dateTo)->endOfDay();
+            $days         = $currentStart->diffInDays($currentEnd);
+            $prevEnd      = $currentStart->copy()->subDay()->endOfDay();
+            $prevStart    = $prevEnd->copy()->subDays($days)->startOfDay();
+        } else {
+            $year  = $request->year  ?? $now->year;
+            $month = $request->month ?? $now->month;
+            $isCurrentMonth = ($year == $now->year && $month == $now->month);
+            $firstOfMonth   = Carbon::createFromDate($year, $month, 1);
+            $currentStart   = $firstOfMonth->copy()->startOfMonth();
+            $currentEnd     = $isCurrentMonth ? $now->copy() : $firstOfMonth->copy()->endOfMonth();
+            $prevStart      = $firstOfMonth->copy()->subMonth()->startOfMonth();
+            $prevEnd        = $isCurrentMonth ? $now->copy()->subMonth() : $firstOfMonth->copy()->subMonth()->endOfMonth();
+        }
 
-        // 3. Hitung Persentase Kenaikan Tren (Relative Growth)
+        return compact('currentStart', 'currentEnd', 'prevStart', 'prevEnd');
+    }
+
+    private function calculateRebookRateTrend(Carbon $startOfCurrentMonth, Carbon $endOfCurrentMonth, Carbon $startOfLastMonth, Carbon $endOfLastMonthCompare, ?array $branchesId = null)
+    {
+        $currentData = $this->getRebookMetrics($startOfCurrentMonth, $endOfCurrentMonth, $branchesId);
+        $currentRate = $currentData['rate'];
+
+        $prevData = $this->getRebookMetrics($startOfLastMonth, $endOfLastMonthCompare, $branchesId);
+        $prevRate = $prevData['rate'];
+
         $trendPercentage = 0;
         if ($prevRate > 0) {
             $trendPercentage = (($currentRate - $prevRate) / $prevRate) * 100;
@@ -97,19 +113,20 @@ class DashboardController extends Controller
         }
 
         return [
-            'rebookCount' => (string) $currentData['rebooked_count'], // Angka 200 di chart
-            'percentage' => (string) round($trendPercentage, 1), // Angka 22.5% di label biru
-            'isLoss' => $currentRate >= $prevRate ? 0 : 1
+            'rebookCount' => (string) $currentData['rebooked_count'],
+            'percentage'  => (string) round($trendPercentage, 1),
+            'isLoss'      => $currentRate >= $prevRate ? 0 : 1
         ];
     }
 
-    private function getRebookMetrics($startDate, $endDate)
+    private function getRebookMetrics(Carbon $startDate, Carbon $endDate, ?array $branchesId = null)
     {
-        $totalUnique = Bookings::whereBetween('created_at', [$startDate, $endDate])
-            ->distinct('customerId')
-            ->count('customerId');
+        $baseQuery = fn() => Bookings::whereBetween('created_at', [$startDate, $endDate])
+            ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId));
 
-        $rebookedCount = Bookings::whereBetween('created_at', [$startDate, $endDate])
+        $totalUnique = $baseQuery()->distinct('customerId')->count('customerId');
+
+        $rebookedCount = $baseQuery()
             ->select('customerId')
             ->groupBy('customerId')
             ->havingRaw('COUNT(customerId) > 1')
@@ -118,29 +135,20 @@ class DashboardController extends Controller
 
         return [
             'rebooked_count' => $rebookedCount,
-            'rate' => $totalUnique > 0 ? ($rebookedCount / $totalUnique) * 100 : 0
+            'rate'           => $totalUnique > 0 ? ($rebookedCount / $totalUnique) * 100 : 0
         ];
     }
 
-    private function newCustomer($startOfCurrentMonth, $endOfCurrentMonth, $startOfLastMonth, $endOfLastMonthCompare)
+    private function newCustomer(Carbon $startOfCurrentMonth, Carbon $endOfCurrentMonth, Carbon $startOfLastMonth, Carbon $endOfLastMonthCompare)
     {
-        // 1. Ambil data jumlah customer periode sekarang
         $newCustomer = DB::table('customer')
-            ->whereBetween('created_at', [
-                $startOfCurrentMonth,
-                $endOfCurrentMonth
-            ])
+            ->whereBetween('created_at', [$startOfCurrentMonth, $endOfCurrentMonth])
             ->count();
 
-        // 2. Ambil data jumlah customer periode sebelumnya
         $prevNewCustomer = DB::table('customer')
-            ->whereBetween('created_at', [
-                $startOfLastMonth,
-                $endOfLastMonthCompare
-            ])
+            ->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonthCompare])
             ->count();
 
-        // 3. Hitung Persentase Tren
         $percentageNewCustomer = 0;
         if ($prevNewCustomer > 0) {
             $percentageNewCustomer = (($newCustomer - $prevNewCustomer) / $prevNewCustomer) * 100;
@@ -148,27 +156,34 @@ class DashboardController extends Controller
             $percentageNewCustomer = 100;
         }
 
-        // Mengembalikan 3 value dalam bentuk array asosiatif
         return [
-            'newCustomer' =>(string) $newCustomer,
-            'percentageNewCustomer' =>(string) round($percentageNewCustomer, 2), // Dibulatkan agar rapi di UI
-            'isLoss' => $newCustomer >= $prevNewCustomer ? 0 : 1
+            'newCustomer'           => (string) $newCustomer,
+            'percentageNewCustomer' => (string) round($percentageNewCustomer, 2),
+            'isLoss'                => $newCustomer >= $prevNewCustomer ? 0 : 1
         ];
     }
 
-    private function reportingGroup()
+    private function reportingGroup($branchesId = null, $start = null, $end = null)
     {
         return DB::query()
-            ->from(function ($query) {
+            ->from(function ($query) use ($branchesId, $start, $end) {
                 $query->select('customerId')->from('transactionPetClinics')
-                    ->unionAll(function ($q) {
-                        $q->select('customerId')->from('transaction_pet_hotels');
+                    ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId))
+                    ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]))
+                    ->unionAll(function ($q) use ($branchesId, $start, $end) {
+                        $q->select('customerId')->from('transaction_pet_hotels')
+                            ->when($branchesId, fn($q2) => $q2->whereIn('locationId', $branchesId))
+                            ->when($start && $end, fn($q2) => $q2->whereBetween('created_at', [$start, $end]));
                     })
-                    ->unionAll(function ($q) {
-                        $q->select('customerId')->from('transaction_breedings');
+                    ->unionAll(function ($q) use ($branchesId, $start, $end) {
+                        $q->select('customerId')->from('transaction_breedings')
+                            ->when($branchesId, fn($q2) => $q2->whereIn('locationId', $branchesId))
+                            ->when($start && $end, fn($q2) => $q2->whereBetween('created_at', [$start, $end]));
                     })
-                    ->unionAll(function ($q) {
-                        $q->select('customerId')->from('transaction_pet_salons');
+                    ->unionAll(function ($q) use ($branchesId, $start, $end) {
+                        $q->select('customerId')->from('transaction_pet_salons')
+                            ->when($branchesId, fn($q2) => $q2->whereIn('locationId', $branchesId))
+                            ->when($start && $end, fn($q2) => $q2->whereBetween('created_at', [$start, $end]));
                     });
             }, 'transactions')
             ->join('customer as b', 'transactions.customerId', 'b.id')
@@ -181,32 +196,26 @@ class DashboardController extends Controller
             ->get();
     }
 
-    private function chartsBookingCategory()
+    private function chartsBookingCategory($branchesId = null, $start = null, $end = null)
     {
         return DB::table('bookings')
-            ->select(
-                'serviceType',
-                DB::raw('COUNT(*) as total')
-            )
+            ->select('serviceType', DB::raw('COUNT(*) as total'))
+            ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId))
+            ->when($start && $end, fn($q) => $q->whereBetween('created_at', [$start, $end]))
             ->groupBy('serviceType')
             ->get();
     }
 
-    private function bookings($startOfCurrentMonth, $endOfCurrentMonth, $startOfLastMonth, $endOfLastMonthCompare)
+    private function bookings(Carbon $startOfCurrentMonth, Carbon $endOfCurrentMonth, Carbon $startOfLastMonth, Carbon $endOfLastMonthCompare, ?array $branchesId = null)
     {
-        // 1. Ambil data jumlah booking periode sekarang
-        $bookings = Bookings::whereBetween('created_at', [
-            $startOfCurrentMonth,
-            $endOfCurrentMonth
-        ])->count();
+        $bookings = Bookings::whereBetween('created_at', [$startOfCurrentMonth, $endOfCurrentMonth])
+            ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId))
+            ->count();
 
-        // 2. Ambil data jumlah booking periode sebelumnya
-        $prevBookings = Bookings::whereBetween('created_at', [
-            $startOfLastMonth,
-            $endOfLastMonthCompare
-        ])->count();
+        $prevBookings = Bookings::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonthCompare])
+            ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId))
+            ->count();
 
-        // 3. Hitung Persentase Tren
         $percentageBookings = 0;
         if ($prevBookings > 0) {
             $percentageBookings = (($bookings - $prevBookings) / $prevBookings) * 100;
@@ -214,152 +223,147 @@ class DashboardController extends Controller
             $percentageBookings = 100;
         }
 
-        // Mengembalikan 3 value dalam bentuk array asosiatif
         return [
-            'bookings' =>(string) $bookings,
-            'percentageBookings' =>(string) round($percentageBookings, 2), // Dibulatkan agar rapi di UI
-            'isLoss' => $bookings >= $prevBookings ? 0 : 1
+            'bookings'           => (string) $bookings,
+            'percentageBookings' => (string) round($percentageBookings, 2),
+            'isLoss'             => $bookings >= $prevBookings ? 0 : 1
         ];
     }
 
-    public function upcomingBookInpatien(Request $request)
+    public function upcomingBookingHotel(Request $request)
     {
         if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
             return responseUnauthorize();
         }
 
-        $data = [
-            'totalPagination' => 1,
-            'data' => [
-                [
-                    'id' => 9,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '05/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 8,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 7,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 6,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 5,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-            ],
-        ];
+        $branchesId = $request->filled('branchesId') ? $request->branchesId : null;
+        $periods    = $this->resolvePeriods($request);
 
-        return response()->json($data);
+        $data = DB::table('bookings as b')
+            ->join('bookingsPetHotels as p', 'b.id', 'p.bookingId')
+            ->join('location as l', 'l.id', 'b.locationId')
+            ->join('customer as c', 'c.id', 'b.customerId')
+            ->join('users as u', 'u.id', 'b.doctorId')
+            ->select([
+                'b.id',
+                DB::raw("DATE_FORMAT(b.bookingTime, '%d/%m/%Y') as bookingTime"),
+                'l.locationName as location',
+                DB::raw("CONCAT(c.firstName, IFNULL(CONCAT(' ', c.lastName), '')) as customer"),
+                DB::raw("'Pet Hotel' as serviceName"),
+                'u.firstName as staff',
+                'b.status',
+                'p.additionalInfo as bookingNote',
+            ])
+            ->where('b.isDeleted', '=', 0)
+            ->where('b.status', '=', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('b.locationId', $branchesId))
+            ->whereBetween('b.bookingTime', [$periods['currentStart'], $periods['currentEnd']]);
+
+        return response()->json([
+            'data' => $data->get(),
+        ]);
     }
 
-    public function upcomingBookOutpatien(Request $request)
+    public function upcomingBookingClinic(Request $request)
     {
         if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
             return responseUnauthorize();
         }
 
-        $data = [
-            'totalPagination' => 1,
-            'data' => [
-                [
-                    'id' => 9,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '05/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 8,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 7,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 6,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-                [
-                    'id' => 5,
-                    'startTime' => '03/12/2024 9:00 AM',
-                    'endTime' => '06/12/2024 9:00 AM',
-                    'location' => 'RPC Hankam',
-                    'customer' => 'Rusli',
-                    'serviceName' => 'Operasi',
-                    'staff' => 'Yusuf',
-                    'status' => 'On Progress',
-                    'bookingNote' => '',
-                ],
-            ],
-        ];
+        $branchesId = $request->filled('branchesId') ? $request->branchesId : null;
+        $periods    = $this->resolvePeriods($request);
 
-        return response()->json($data);
+        $data = DB::table('bookings as b')
+            ->join('bookingsPetClinics as p', 'b.id', 'p.bookingId')
+            ->join('location as l', 'l.id', 'b.locationId')
+            ->join('customer as c', 'c.id', 'b.customerId')
+            ->join('users as u', 'u.id', 'b.doctorId')
+            ->select([
+                'b.id',
+                DB::raw("DATE_FORMAT(b.bookingTime, '%d/%m/%Y') as bookingTime"),
+                'l.locationName as location',
+                DB::raw("CONCAT(c.firstName, IFNULL(CONCAT(' ', c.lastName), '')) as customer"),
+                DB::raw("'Pet Clinic' as serviceName"),
+                'u.firstName as staff',
+                'b.status',
+                'p.additionalInfo as bookingNote',
+            ])
+            ->where('b.isDeleted', '=', 0)
+            ->where('b.status', '=', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('b.locationId', $branchesId))
+            ->whereBetween('b.bookingTime', [$periods['currentStart'], $periods['currentEnd']]);
+
+        return response()->json([
+            'data' => $data->get(),
+        ]);
+    }
+
+    public function upcomingBookingSalon(Request $request)
+    {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
+        $branchesId = $request->filled('branchesId') ? $request->branchesId : null;
+        $periods    = $this->resolvePeriods($request);
+
+        $data = DB::table('bookings as b')
+            ->join('bookingsPetSalons as p', 'b.id', 'p.bookingId')
+            ->join('location as l', 'l.id', 'b.locationId')
+            ->join('customer as c', 'c.id', 'b.customerId')
+            ->join('users as u', 'u.id', 'b.doctorId')
+            ->select([
+                'b.id',
+                DB::raw("DATE_FORMAT(b.bookingTime, '%d/%m/%Y') as bookingTime"),
+                'l.locationName as location',
+                DB::raw("CONCAT(c.firstName, IFNULL(CONCAT(' ', c.lastName), '')) as customer"),
+                DB::raw("'Pet Salon' as serviceName"),
+                'u.firstName as staff',
+                'b.status',
+                'p.additionalInfo as bookingNote',
+            ])
+            ->where('b.isDeleted', '=', 0)
+            ->where('b.status', '=', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('b.locationId', $branchesId))
+            ->whereBetween('b.bookingTime', [$periods['currentStart'], $periods['currentEnd']]);
+
+        return response()->json([
+            'data' => $data->get(),
+        ]);
+    }
+
+    public function upcomingBookingBreeding(Request $request)
+    {
+        if (!checkAccessIndex('dashboard-menu', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
+        $branchesId = $request->filled('branchesId') ? $request->branchesId : null;
+        $periods    = $this->resolvePeriods($request);
+
+        $data = DB::table('bookings as b')
+            ->join('bookingsBreedings as p', 'b.id', 'p.bookingId')
+            ->join('location as l', 'l.id', 'b.locationId')
+            ->join('customer as c', 'c.id', 'b.customerId')
+            ->join('users as u', 'u.id', 'b.doctorId')
+            ->select([
+                'b.id',
+                DB::raw("DATE_FORMAT(b.bookingTime, '%d/%m/%Y') as bookingTime"),
+                'l.locationName as location',
+                DB::raw("CONCAT(c.firstName, IFNULL(CONCAT(' ', c.lastName), '')) as customer"),
+                DB::raw("'Breeding' as serviceName"),
+                'u.firstName as staff',
+                'b.status',
+                'p.additionalInfo as bookingNote',
+            ])
+            ->where('b.isDeleted', '=', 0)
+            ->where('b.status', '=', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('b.locationId', $branchesId))
+            ->whereBetween('b.bookingTime', [$periods['currentStart'], $periods['currentEnd']]);
+
+        return response()->json([
+            'data' => $data->get(),
+        ]);
     }
 
     public function recentActivity(Request $request)
@@ -369,8 +373,9 @@ class DashboardController extends Controller
         }
 
         $itemPerPage = $request->rowPerPage;
-
-        $page = $request->goToPage;
+        $page        = $request->goToPage;
+        $branchesId  = $request->filled('branchesId') ? $request->branchesId : null;
+        $periods     = $this->resolvePeriods($request);
 
         $data = DB::table('recentActivities as ra')
             ->join('users as u', 'ra.userId', 'u.id')
@@ -381,12 +386,9 @@ class DashboardController extends Controller
                 'ra.details as detail',
                 'u.firstName as staff',
                 DB::raw("DATE_FORMAT(ra.created_at, '%d %b, %Y %l:%i %p') as date")
-            );
-
-        if ($request->locationId) {
-
-            $data = $data->whereIn('loc.id', $request->locationId);
-        }
+            )
+            ->whereBetween('ra.created_at', [$periods['currentStart'], $periods['currentEnd']])
+            ->when($branchesId, fn($q) => $q->whereIn('ra.locationId', $branchesId));
 
         if ($request->search) {
             $res = $this->Search($request);
@@ -394,18 +396,15 @@ class DashboardController extends Controller
                 $data = $data->where($res[0], 'like', '%' . $request->search . '%');
 
                 for ($i = 1; $i < count($res); $i++) {
-
                     $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
                 }
             } else {
-                $data = [];
                 return response()->json([
                     'totalPagination' => 0,
-                    'data' => $data
+                    'data'            => []
                 ], 200);
             }
         }
-
 
         if ($request->orderValue) {
             $data = $data->orderBy($request->orderColumn, $request->orderValue);
@@ -413,9 +412,8 @@ class DashboardController extends Controller
 
         $data = $data->orderBy('ra.updated_at', 'desc');
 
-        $offset = ($page - 1) * $itemPerPage;
-
-        $count_data = $data->count();
+        $offset       = ($page - 1) * $itemPerPage;
+        $count_data   = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
@@ -428,7 +426,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'totalPagination' => ceil($totalPaging),
-            'data' => $data
+            'data'            => $data
         ], 200);
     }
 }
