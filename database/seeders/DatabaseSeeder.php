@@ -8,6 +8,7 @@ use Database\Seeders\Service\frequencySeeder;
 use Database\Seeders\Service\PetHotelServiceSeeder;
 use Database\Seeders\Service\PetHotelTreatmentPlanSeeder;
 use Database\Seeders\Cage\CageSeeder;
+use Database\Seeders\QueueMenuSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -23,5 +24,6 @@ class DatabaseSeeder extends Seeder
         $this->call(CageSeeder::class);
         $this->call(PetHotelServiceSeeder::class);
         $this->call(PetHotelTreatmentPlanSeeder::class);
+        $this->call(QueueMenuSeeder::class);
     }
 }

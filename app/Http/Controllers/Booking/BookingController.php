@@ -44,8 +44,10 @@ class BookingController extends Controller
 
                 DB::raw("'' as description"),
                 'e.status',
+                'e.isCancelled',
             ])
-            ->where('e.isDeleted', '=', 0);
+            ->where('e.isDeleted', '=', 0)
+            ->where('e.isCancelled', '=', 0);
 
         if ($request->filled('monthBooking') && $request->filled('yearBooking')) {
             $data = $data->whereMonth('e.bookingTime', $request->monthBooking)
