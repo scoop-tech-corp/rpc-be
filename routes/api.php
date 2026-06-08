@@ -6,6 +6,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\Queue\QueueController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\CageManagementController;
 use App\Http\Controllers\LocationController;
@@ -82,6 +83,9 @@ Route::put('user/{user}/online', [ApiController::class, 'online']);
 // Route::post('/realtime/auth', function(){
 //     return true;
 // });
+
+// Queue Display — public endpoint (token-based, no auth required)
+Route::get('/queue/display', [QueueController::class, 'display']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
 
@@ -184,6 +188,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/reject', [BookingBookingController::class, 'rejectBooking']);
         Route::delete('/', [BookingBookingController::class, 'delete']);
         Route::get('/list', [BookingBookingController::class, 'getList']);
+    });
+
+    Route::group(['prefix' => 'queue'], function () {
+        Route::get('/', [QueueController::class, 'index']);
+        Route::post('/', [QueueController::class, 'store']);
+        Route::post('/convert', [QueueController::class, 'convertFromBooking']);
+        Route::put('/status', [QueueController::class, 'updateStatus']);
+        Route::delete('/', [QueueController::class, 'destroy']);
+        Route::put('/reset', [QueueController::class, 'reset']);
+        Route::get('/booking-candidates', [QueueController::class, 'bookingCandidates']);
     });
     //MODULE PRODUCT
     //list produk

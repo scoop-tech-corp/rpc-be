@@ -58,6 +58,8 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'queue_display_token' => env('QUEUE_DISPLAY_TOKEN', ''),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
