@@ -7,6 +7,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\CageManagementController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataStaticController;
@@ -87,6 +88,9 @@ Route::group(['middleware' => ['jwt.verify']], function () {
     //location
     Route::post('logout', [ApiController::class, 'logout']);
 
+    // Dropdown metode pembayaran — dipakai global di checkout hotel/salon/breeding
+    Route::get('payment-method/list', [MaterialDataController::class, 'listPaymentMethodForTransaction']);
+
     Route::group(['prefix' => 'dashboard'], function () {
         Route::get('/overview', [DashboardController::class, 'overview']);
         Route::get('/upbookingclinic', [DashboardController::class, 'upcomingBookingClinic']);
@@ -133,6 +137,29 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::post('/facility/import', [FacilityController::class, 'import']);
 
         Route::get('/facility/location', [FacilityController::class, 'listFacilityWithLocation']);
+
+        // ── Cage Management ──────────────────────────────────────
+        Route::prefix('cage-management')->group(function () {
+            Route::get('/',                [CageManagementController::class, 'index']);
+            Route::post('/',               [CageManagementController::class, 'store']);
+            Route::get('/detail',          [CageManagementController::class, 'show']);
+            Route::put('/',                [CageManagementController::class, 'update']);
+            Route::delete('/',             [CageManagementController::class, 'destroy']);
+
+            Route::get('/inspection',      [CageManagementController::class, 'getInspections']);
+            Route::post('/inspection',     [CageManagementController::class, 'storeInspection']);
+
+            Route::get('/maintenance',     [CageManagementController::class, 'getMaintenances']);
+            Route::post('/maintenance',    [CageManagementController::class, 'storeMaintenance']);
+            Route::put('/maintenance',     [CageManagementController::class, 'updateMaintenance']);
+
+            Route::get('/cleaning-log',    [CageManagementController::class, 'getCleaningLogs']);
+            Route::post('/cleaning-log',   [CageManagementController::class, 'storeCleaningLog']);
+
+            Route::get('/export',          [CageManagementController::class, 'export']);
+            Route::get('/import-template', [CageManagementController::class, 'downloadTemplate']);
+            Route::post('/import',         [CageManagementController::class, 'import']);
+        });
 
         //data static
         Route::get('/datastatic', [DataStaticController::class, 'datastatic']);
@@ -742,8 +769,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/reassign', [PetHotelController::class, 'reassignDoctor']);
 
             Route::post('/petcheck', [PetHotelController::class, 'createPetCheck']);
-            Route::get('/load-petcheck', [PetHotelController::class, 'loadDataPetCheck']);
-            Route::post('/serviceandrecipe', [PetHotelController::class, 'serviceandrecipe']);
+            Route::get('/check-condition', [PetHotelController::class, 'getCheckCondition']);
             Route::post('/treatment', [PetHotelController::class, 'Treatment']);
 
             Route::get('/beforepayment', [PetHotelController::class, 'showDataBeforePayment']);
@@ -753,7 +779,31 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/payment', [PetHotelController::class, 'payment']);
 
             Route::get('/invoice', [PetHotelController::class, 'printInvoce']);
+            Route::get('/checkout/invoice', [PetHotelController::class, 'checkoutInvoice']);
             Route::post('/confirm-payment', [PetHotelController::class, 'confirmPayment']);
+
+            Route::get('/papan-kerja-harian', [PetHotelController::class, 'getPapanKerjaHarian']);
+            Route::post('/papan-kerja-harian/done', [PetHotelController::class, 'markPapanKerjaHarianDone']);
+            Route::get('/papan-kerja-vetnurse', [PetHotelController::class, 'getPapanKerjaVetnurse']);
+            Route::post('/papan-kerja-vetnurse/done', [PetHotelController::class, 'markPapanKerjaVetnurseDone']);
+
+            Route::get('/available-items', [PetHotelController::class, 'getAvailableItems']);
+            Route::get('/additional-treatment', [PetHotelController::class, 'getAdditionalTreatments']);
+            Route::post('/additional-treatment', [PetHotelController::class, 'addAdditionalTreatment']);
+            Route::delete('/additional-treatment/{id}', [PetHotelController::class, 'deleteAdditionalTreatment']);
+            Route::post('/extend-stay', [PetHotelController::class, 'extendStay']);
+
+            Route::get('/prepayment', [PetHotelController::class, 'getPrepayments']);
+            Route::post('/prepayment', [PetHotelController::class, 'addPrepayment']);
+            Route::get('/prepayment/{id}/receipt', [PetHotelController::class, 'prepaymentReceipt']);
+
+            Route::get('/policies', [PetHotelController::class, 'getPoliciesForAgreement']);
+            Route::post('/policy-agreement', [PetHotelController::class, 'savePolicyAgreement']);
+
+            Route::post('/checkout/initiate', [PetHotelController::class, 'initiateCheckOut']);
+            Route::get('/checkout/summary', [PetHotelController::class, 'getCheckoutSummary']);
+            Route::put('/checkout/discount', [PetHotelController::class, 'updateCheckoutDiscount']);
+            Route::post('/checkout/payment', [PetHotelController::class, 'checkoutPayment']);
         });
 
         Route::group(['prefix' => 'breeding'], function () {
@@ -869,7 +919,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/', [TreatmentController::class, 'store']);
             Route::put('/', [TreatmentController::class, 'update']);
             Route::put('/item', [TreatmentController::class, 'manageItem']);
-            Route::get('/detail', [TreatmentController::class, 'detail']);
+            // BUG 7 FIX: removed duplicate GET /detail route (was on line 888)
             Route::delete('/', [TreatmentController::class, 'destroy']);
         });
 

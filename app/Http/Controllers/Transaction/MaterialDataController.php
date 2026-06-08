@@ -389,4 +389,23 @@ class MaterialDataController extends Controller
 
         return responseList($data);
     }
+
+    /**
+     * GET /api/transaction/payment-method/list
+     * Dipakai FE (service-global.jsx → getPaymentMethodList) untuk dropdown
+     * metode pembayaran di checkout hotel, breeding, salon, dll.
+     *
+     * Return kolom `paymentMethodName` agar sesuai mapping FE:
+     *   getResp.data.map((dt) => ({ label: dt.paymentMethodName, value: +dt.id }))
+     */
+    public function listPaymentMethodForTransaction()
+    {
+        $data = DB::table('paymentmethod')
+            ->select('id', 'name as paymentMethodName')
+            ->where('isDeleted', false)
+            ->orderBy('id')
+            ->get();
+
+        return responseList($data);
+    }
 }

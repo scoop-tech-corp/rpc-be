@@ -14,9 +14,7 @@
             margin: 0;
         }
 
-        .header {
-            margin-bottom: 15px;
-        }
+        .header { margin-bottom: 15px; }
 
         .header-title {
             text-align: center;
@@ -29,26 +27,6 @@
             text-decoration: underline;
         }
 
-        .header-content {
-            display: flex;
-            align-items: center;
-        }
-
-        .alamat-section {
-            flex: 1;
-        }
-
-        .alamat-info {
-            font-size: 8px;
-            line-height: 1.4;
-            text-align: left;
-        }
-
-        .alamat-info p {
-            margin: 2px 0;
-            padding: 0;
-        }
-
         .location-table {
             width: 100%;
             border-collapse: collapse;
@@ -56,71 +34,8 @@
         }
 
         .location-table td {
-            /* border: 1px solid #000; */
             padding: 3px;
             vertical-align: top;
-        }
-
-        .logo-cell {
-            width: 15%;
-            text-align: center;
-        }
-
-        .logo-text {
-            /* border: 1px solid #000; */
-            padding: 2px;
-            font-size: 8px;
-            font-weight: bold;
-            margin-bottom: 3px;
-        }
-
-        .logo {
-            width: 70px;
-            height: auto;
-        }
-
-        .locations-cell {
-            width: 85%;
-            line-height: 1.3;
-        }
-
-        .location-row {
-            margin-bottom: 2px;
-            font-size: 7px;
-        }
-
-        .locations-container {
-            display: flex;
-            gap: 8px;
-        }
-
-        .location-column {
-            flex: 1;
-            padding: 0 2px;
-        }
-
-        .nota-header {
-            text-align: center;
-            margin: 15px 0 10px 0;
-            position: relative;
-        }
-
-        .nota-date {
-            position: absolute;
-            left: 0;
-            font-size: 11px;
-        }
-
-        .nota-title {
-            font-size: 14px;
-            font-weight: bold;
-            display: inline-block;
-        }
-
-        .nota-number {
-            position: absolute;
-            right: 0;
-            font-size: 11px;
         }
 
         .nota-header {
@@ -132,34 +47,9 @@
             padding-bottom: 5px;
         }
 
-        .left {
-            display: flex;
-            flex-direction: column;
-        }
+        .customer-info { margin: 10px 0; }
 
-        .nota-date {
-            font-size: 10px;
-            color: #333;
-        }
-
-        .nota-title {
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .nota-number {
-            font-size: 12px;
-        }
-
-
-        .customer-info {
-            margin: 10px 0;
-        }
-
-        .customer-info table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+        .customer-info table { width: 100%; border-collapse: collapse; }
 
         .customer-info td {
             padding: 2px 0;
@@ -185,69 +75,21 @@
             font-weight: bold;
         }
 
-        .services-table .service-name {
-            text-align: center;
-            width: 30%;
-        }
-
-        .services-table .item-name {
-            text-align: left;
-        }
-
-        .services-table .animal-type {
-            width: 20%;
-        }
-
-        .services-table .quantity {
-            width: 10%;
-        }
-
-        .services-table .price {
-            width: 20%;
-        }
-
-        .services-table .total {
-            width: 20%;
-        }
-
-        .groomer-info {
-            margin: 15px 0;
-            font-size: 11px;
-        }
-
-        .groomer-line {
-            margin: 3px 0;
-        }
+        .services-table .item-name { text-align: left; }
+        .services-table .quantity  { width: 10%; }
+        .services-table .price     { width: 20%; }
+        .services-table .total     { width: 20%; }
 
         .notes {
             margin: 15px 0;
             font-size: 9px;
         }
 
-        .notes strong {
-            font-size: 10px;
-        }
+        .notes strong { font-size: 10px; }
 
         .payment-info {
             margin: 15px 0;
             font-size: 9px;
-        }
-
-        .signature-section {
-            margin-top: 20px;
-            text-align: right;
-            font-size: 11px;
-        }
-
-        .signature-box {
-            margin-top: 30px;
-            text-align: center;
-        }
-
-        .dotted-line {
-            border-bottom: 1px dotted #000;
-            display: inline-block;
-            min-width: 200px;
         }
 
         .total-row {
@@ -261,288 +103,265 @@
             margin: 10px 0;
         }
 
-        img {
-            display: block;
-        }
+        img { display: block; }
     </style>
 </head>
 
 <body>
+    {{-- ── Header ── --}}
     <div class="header">
         <div class="header-title">
             <h3>ALAMAT RADHIYAN PET AND CARE</h3>
         </div>
 
-        <div class="header-content">
-            <table class="location-table" width="100%">
-                <tr>
-                    <td class="logo-cell" width="25%" valign="top" align="center">
-                        <div style="padding: 1px; font-size: 8px; font-weight: bold; margin-bottom: 5px;">
-                            RADHIYAN PET AND CARE
-                        </div>
-                        <img src="{{ public_path() . '/asset/logo-rpc-full-min.webp' }}" alt="Logo" style="width: 120px;">
-                    </td>
-
-                    <td class="locations-cell" width="75%">
-                        <table width="100%">
-                            <tr>
-                                @php
-                                $total = count($locations);
-                                $part = ceil($total / 3);
-                                $firstThird = array_slice($locations, 0, $part);
-                                $secondThird = array_slice($locations, $part, $part);
-                                $thirdThird = array_slice($locations, $part * 2);
-                                @endphp
-                                <td width="30%" valign="top">
-                                    @foreach($firstThird as $location)
-                                    <div style="font-size: 6px; line-height: 1.4; margin-bottom: 2px;">
-                                        <strong>{{ $location['name'] }}</strong> - {{ $location['description'] }} - {{ $location['phone'] }}
-                                    </div>
-                                    @endforeach
-                                </td>
-                                <td width="30%" valign="top">
-                                    @foreach($secondThird as $location)
-                                    <div style="font-size: 6px; line-height: 1.4; margin-bottom: 2px;">
-                                        <strong>{{ $location['name'] }}</strong> - {{ $location['description'] }} - {{ $location['phone'] }}
-                                    </div>
-                                    @endforeach
-                                </td>
-                                <td width="40%" valign="top">
-                                    @foreach($thirdThird as $location)
-                                    <div style="font-size: 6px; line-height: 1.4; margin-bottom: 2px;">
-                                        <strong>{{ $location['name'] }}</strong> - {{ $location['description'] }} - {{ $location['phone'] }}
-                                    </div>
-                                    @endforeach
-
-                                    <div style="font-size: 7px; margin-top: 5px;">
-                                        <strong>Call Center:</strong> 081312245500
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-
-        </div>
-    </div>
-
-    <hr>
-
-    <table width="100%" style="margin-bottom: 10px;">
-        <tr>
-            <!-- Kolom kiri: Tanggal -->
-            <td style="font-size: 10px; text-align: left; width: 30%;">
-                {{ $nota_date }}
-            </td>
-
-            <!-- Kolom tengah: Judul -->
-            <td style="font-weight: bold; font-size: 14px; text-align: center; width: 40%;">
-                NOTA PET CLINIC
-            </td>
-
-            <!-- Kolom kanan: No Nota -->
-            <td style="font-size: 10px; text-align: right; width: 30%; white-space: nowrap;">
-                No.Nota: {{ $no_nota }}
-            </td>
-        </tr>
-    </table>
-
-
-    <div class="customer-info">
-        <table>
+        <table class="location-table" width="100%">
             <tr>
-                <td style="width: 150px;">Nomor Kartu</td>
-                <td>: <span>{{ $member_no }}</span></td>
-            </tr>
-            <tr>
-                <td>Nama Pemilik</td>
-                <td>: <span>{{ $customer_name }}</span></td>
-            </tr>
-            <tr>
-                <td>No.Telp (WA)</td>
-                <td>: <span>{{ $phone_number }}</span></td>
-            </tr>
-            <tr>
-                <td>Jam Kedatangan</td>
-                <td>: <span>{{ $arrival_time }}</span></td>
+                <td width="25%" valign="top" align="center">
+                    <div style="font-size: 8px; font-weight: bold; margin-bottom: 5px;">RADHIYAN PET AND CARE</div>
+                    <img src="{{ public_path() . '/asset/logo-rpc-full-min.webp' }}" alt="Logo" style="width: 120px;">
+                </td>
+                <td width="75%" valign="top">
+                    @php
+                        $total   = count($locations);
+                        $part    = ceil($total / 3);
+                        $col1    = array_slice($locations, 0, $part);
+                        $col2    = array_slice($locations, $part, $part);
+                        $col3    = array_slice($locations, $part * 2);
+                    @endphp
+                    <table width="100%">
+                        <tr>
+                            <td width="30%" valign="top">
+                                @foreach($col1 as $loc)
+                                <div style="font-size: 6px; line-height: 1.4; margin-bottom: 2px;">
+                                    <strong>{{ $loc['name'] }}</strong> - {{ $loc['description'] }} - {{ $loc['phone'] }}
+                                </div>
+                                @endforeach
+                            </td>
+                            <td width="30%" valign="top">
+                                @foreach($col2 as $loc)
+                                <div style="font-size: 6px; line-height: 1.4; margin-bottom: 2px;">
+                                    <strong>{{ $loc['name'] }}</strong> - {{ $loc['description'] }} - {{ $loc['phone'] }}
+                                </div>
+                                @endforeach
+                            </td>
+                            <td width="40%" valign="top">
+                                @foreach($col3 as $loc)
+                                <div style="font-size: 6px; line-height: 1.4; margin-bottom: 2px;">
+                                    <strong>{{ $loc['name'] }}</strong> - {{ $loc['description'] }} - {{ $loc['phone'] }}
+                                </div>
+                                @endforeach
+                                <div style="font-size: 7px; margin-top: 5px;">
+                                    <strong>Call Center:</strong> 081312245500
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
             </tr>
         </table>
     </div>
 
+    <hr>
+
+    {{-- ── Nota header ── --}}
+    <table width="100%" style="margin-bottom: 10px;">
+        <tr>
+            <td style="font-size: 10px; text-align: left; width: 30%;">{{ $nota_date }}</td>
+            <td style="font-weight: bold; font-size: 14px; text-align: center; width: 40%;">NOTA PET HOTEL</td>
+            <td style="font-size: 10px; text-align: right; width: 30%; white-space: nowrap;">No.Nota: {{ $no_nota }}</td>
+        </tr>
+    </table>
+
+    {{-- ── Info customer & hewan ── --}}
+    <div class="customer-info">
+        <table>
+            <tr>
+                <td style="width: 150px;">Nomor Kartu</td>
+                <td>: {{ $member_no }}</td>
+            </tr>
+            <tr>
+                <td>Nama Pemilik</td>
+                <td>: {{ $customer_name }}</td>
+            </tr>
+            <tr>
+                <td>No.Telp (WA)</td>
+                <td>: {{ $phone_number }}</td>
+            </tr>
+            <tr>
+                <td>Nama Hewan</td>
+                <td>: {{ $pet_name }}</td>
+            </tr>
+            <tr>
+                <td>Kandang</td>
+                <td>: {{ $cage_name }}</td>
+            </tr>
+            <tr>
+                <td>Check-In</td>
+                <td>: {{ $checkin_date }}</td>
+            </tr>
+            <tr>
+                <td>Check-Out</td>
+                <td>: {{ $checkout_date }}</td>
+            </tr>
+            <tr>
+                <td>Lama Menginap</td>
+                <td>: {{ $days_stayed }} hari</td>
+            </tr>
+        </table>
+    </div>
+
+    {{-- ── Tabel item ── --}}
     <table class="services-table">
         <thead>
             <tr>
-                <th class="service-name">ITEM</th>
-                <th class="promo">JUMLAH</th>
-                <th class="quantity">BONUS</th>
-                <th class="quantity">DISKON</th>
-                <th class="price">HARGA</th>
+                <th class="item-name" style="width: 40%; text-align: left;">ITEM</th>
+                <th class="quantity">QTY</th>
+                <th class="price">HARGA SATUAN</th>
                 <th class="total">TOTAL</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($details as $item)
-
-            @if ($item['promoId'] === null)
-
-            @isset($item['serviceId'])
+            {{-- Masa menginap --}}
             <tr>
-                <td class="item-name">{{ $item['item_name'] }}</td>
-                <td>{{ $item['quantity'] }}</td>
-                <td>{{ 0 }}</td>
-                <td>{{ 0 }}</td>
-                <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
-                <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
-            </tr>
-
-            @elseif(isset($item['productId']))
-            <tr>
-                <td class="item-name">{{ $item['item_name']}}</td>
-                <td>{{ $item['quantity'] }}</td>
-                <td>{{ 0 }}</td>
-                <td>{{ 0 }}</td>
-                <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
-                <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
-            </tr>
-
-            @endisset
-
-            @else
-            @if ($item['promoCategory'] === 'freeItem')
-
-            <tr>
-                <td class="item-name">{{ $item['item_name'] }}</td>
-                <td>{{ $item['quantity_buy'] }}</td>
-                <td>{{ $item['quantity_free'] }}</td>
-                <td>{{ number_format($item['discount'], 0, ',', '.') }}</td>
-                <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
-                <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
-            </tr>
-
-            @elseif($item['promoCategory'] === 'bundle')
-
-            <tr>
-                <td class="item-name">{{ $item['item_name'] }}
-                    <ul>
-                        @foreach($item['included_items'] as $bundleItem)
-                        <li>{{ $bundleItem['item_name'] }}</li>
-                        @endforeach
-                    </ul>
+                <td class="item-name" colspan="4" style="background:#f9f9f9; font-weight:bold; font-size:9px;">
+                    MASA MENGINAP
                 </td>
-                <td>{{ 1 }}</td>
-                <td>{{ 0 }}</td>
-                <td>{{ number_format(0, 0, ',', '.') }}</td>
-                <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
-                <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td class="item-name">{{ $stay_service_name }} ({{ $days_stayed }} hari)</td>
+                <td>{{ $days_stayed }}</td>
+                <td>{{ number_format($price_per_day, 0, ',', '.') }}</td>
+                <td>{{ number_format($subtotal_stay, 0, ',', '.') }}</td>
             </tr>
 
-            @elseif($item['promoCategory'] === 'discount')
-
+            {{-- Treatment awal --}}
+            @if(count($services) > 0 || count($products) > 0)
             <tr>
-                <td class="item-name">{{ $item['item_name'] }} (Promo: Diskon Produk)</td>
+                <td class="item-name" colspan="4" style="background:#f9f9f9; font-weight:bold; font-size:9px;">
+                    TREATMENT AWAL
+                </td>
+            </tr>
+            @foreach($services as $item)
+            <tr>
+                <td class="item-name">{{ $item['name'] }}</td>
                 <td>{{ $item['quantity'] }}</td>
-                <td>{{ 0 }}</td>
-                <td>{{ number_format($item['discount'], 0, ',', '.') }}</td>
-                <td>{{ number_format($item['unit_price'], 0, ',', '.') }}</td>
+                <td>{{ number_format($item['price'], 0, ',', '.') }}</td>
                 <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
             </tr>
-
-            @endif
-
-            @endif
-
             @endforeach
+            @foreach($products as $item)
             <tr>
-                <td colspan="5" class="total-row">TOTAL</td>
-                <td>{{ number_format($subtotal, 0, ',', '.') }}</td>
+                <td class="item-name">{{ $item['name'] }}</td>
+                <td>{{ $item['quantity'] }}</td>
+                <td>{{ number_format($item['price'], 0, ',', '.') }}</td>
+                <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
+            </tr>
+            @endforeach
+            @endif
+
+            {{-- Treatment tambahan --}}
+            @if(count($additional) > 0)
+            <tr>
+                <td class="item-name" colspan="4" style="background:#f9f9f9; font-weight:bold; font-size:9px;">
+                    ITEM TAMBAHAN
+                </td>
+            </tr>
+            @foreach($additional as $item)
+            <tr>
+                <td class="item-name">{{ $item['name'] }}{{ $item['catatan'] ? ' - ' . $item['catatan'] : '' }}</td>
+                <td>{{ $item['quantity'] }}</td>
+                <td>{{ number_format($item['price'], 0, ',', '.') }}</td>
+                <td>{{ number_format($item['total'], 0, ',', '.') }}</td>
+            </tr>
+            @endforeach
+            @endif
+
+            {{-- Summary bawah --}}
+            <tr>
+                <td colspan="3" class="total-row">SUBTOTAL</td>
+                <td>{{ number_format($subtotal_before_discount, 0, ',', '.') }}</td>
+            </tr>
+            @if($total_prepaid > 0)
+            <tr>
+                <td colspan="3" class="total-row">DP / PEMBAYARAN AWAL</td>
+                <td>- {{ number_format($total_prepaid, 0, ',', '.') }}</td>
+            </tr>
+            @endif
+            @if($total_discount > 0)
+            <tr>
+                <td colspan="3" class="total-row">DISKON PROMO</td>
+                <td>- {{ number_format($total_discount, 0, ',', '.') }}</td>
+            </tr>
+            @endif
+            <tr>
+                <td colspan="3" class="total-row" style="font-size:12px;">TOTAL TAGIHAN</td>
+                <td style="font-weight:bold; font-size:12px;">{{ number_format($grand_total, 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <td colspan="5" class="total-row">DISKON</td>
-                <td>{{ number_format($total_discount, 0, ',', '.') }}</td>
+                <td colspan="3" class="total-row">DIBAYAR</td>
+                <td>{{ number_format($amount_paid, 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <td colspan="5" class="total-row">DEPOSIT</td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td colspan="5" class="total-row">TOTAL TAGIHAN</td>
-                <td>{{ number_format($total_payment, 0, ',', '.') }}</td>
+                <td colspan="3" class="total-row">METODE PEMBAYARAN</td>
+                <td>{{ $payment_method }}</td>
             </tr>
         </tbody>
     </table>
 
-
-    <!-- <div class="groomer-info">
-        <div class="groomer-line">
-            Nama Groomer : <span class="dotted-line" style="min-width: 250px;"></span> (_____ ekor)
-        </div>
-        <div class="groomer-line">
-            Nama Groomer : <span class="dotted-line" style="min-width: 250px;"></span> (_____ ekor)
-        </div>
-    </div> -->
-
     <div class="notes">
         <strong>Catatan:</strong><br>
-        <!-- -Kumpulkan nota bukti grooming & penitipan (*tunjukkan kepada pegawai kasir)<br> -->
         -Khusus VIP Member diskon 10%<br>
-        <!-- -Penitipan minimal 10 hari, gratis grooming sehat 1x -->
+        @if($note)
+        <em>{{ $note }}</em>
+        @endif
     </div>
 
-    <table style="width: 100%; font-size: 12px; line-height: 1.4; border-collapse: collapse;">
+    {{-- ── Info bank transfer + tanda tangan ── --}}
+    <table style="width: 100%; font-size: 11px; line-height: 1.4; border-collapse: collapse; margin-top: 10px;">
         <tr>
-            <!-- Kolom kiri: Info Pembayaran -->
             <td style="width: 65%; vertical-align: top;">
-                <div class="payment-info">
-                    <strong>Pembayaran via transfer ke:</strong><br><br>
-
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                        <tr>
-                            <td style="width: 130px; vertical-align: top; font-weight: bold;">No. Rek BCA</td>
-                            <td style="vertical-align: top; font-weight: bold;">599-096-0005</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight: bold;">a.n</td>
-                            <td style="padding-bottom: 4px; font-weight: bold;">Radhiyan Fadiar Sahistya</td>
-                        </tr>
-                        <tr>
-                            <td style="vertical-align: top;">Cabang</td>
-                            <td style="padding-bottom: 12px;">
-                                Kp. Gading, Pulogebang, Tanjung Duren, Buaran, Sukmajaya, Sawangan, Hankam Pondokgede, Lippo Cikarang, Kalangtenah Karawaci Ketintang Surabaya, Waru Sidoarjo, Kenten Palembang
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td style="width: 130px; vertical-align: top; font-weight: bold;">No. Rek BCA</td>
-                            <td style="vertical-align: top; font-weight: bold;">599-093-0009</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight: bold;">a.n</td>
-                            <td style="padding-bottom: 4px; font-weight: bold;">Dharmawijaya Widyatama</td>
-                        </tr>
-                        <tr>
-                            <td style="vertical-align: top;">Cabang</td>
-                            <td style="padding-bottom: 12px;">Condet & Rawamangun</td>
-                        </tr>
-                    </table>
-
-                    <div style="margin-top: 10px; font-weight: bold;">
-                        Pembayaran akan dianggap sah setelah masuk ke rekening yang ada di atas
-                    </div>
+                <strong>Pembayaran via transfer ke:</strong><br><br>
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <tr>
+                        <td style="width: 130px; font-weight: bold;">No. Rek BCA</td>
+                        <td style="font-weight: bold;">599-096-0005</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">a.n</td>
+                        <td style="padding-bottom: 4px; font-weight: bold;">Radhiyan Fadiar Sahistya</td>
+                    </tr>
+                    <tr>
+                        <td>Cabang</td>
+                        <td style="padding-bottom: 12px; font-size: 9px;">
+                            Kp. Gading, Pulogebang, Tanjung Duren, Buaran, Sukmajaya, Sawangan,
+                            Hankam Pondokgede, Lippo Cikarang, Kalangtenah Karawaci, Ketintang Surabaya, Waru Sidoarjo, Kenten Palembang
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">No. Rek BCA</td>
+                        <td style="font-weight: bold;">599-093-0009</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">a.n</td>
+                        <td style="padding-bottom: 4px; font-weight: bold;">Dharmawijaya Widyatama</td>
+                    </tr>
+                    <tr>
+                        <td>Cabang</td>
+                        <td style="padding-bottom: 12px;">Condet & Rawamangun</td>
+                    </tr>
+                </table>
+                <div style="margin-top: 8px; font-weight: bold; font-size: 10px;">
+                    Pembayaran akan dianggap sah setelah masuk ke rekening yang ada di atas
                 </div>
             </td>
 
-            <!-- Kolom kanan: Tanda tangan -->
-            <td style="width: 35%; vertical-align: top; padding-top: 20px;">
-                <div class="signature-section" style="width: 100%; text-align: center;">
-                    Mengetahui,<br><br><br><br>
-                    ( _________________ )<br>
-                    <strong>Kasir</strong>
-                </div>
+            <td style="width: 35%; vertical-align: top; padding-top: 20px; text-align: center;">
+                Mengetahui,<br><br><br><br>
+                ( _________________ )<br>
+                <strong>Kasir</strong>
             </td>
         </tr>
     </table>
 
 </body>
-
 </html>

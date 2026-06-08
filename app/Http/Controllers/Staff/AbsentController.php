@@ -563,6 +563,8 @@ class AbsentController extends Controller
             ->where('isDeleted', '=', 0)
             ->get();
 
+
+
         if (count($keeper) > 1) {
             $validate = Validator::make($request->all(), [
                 'shift' => 'required|integer|in:1,2',
@@ -644,6 +646,10 @@ class AbsentController extends Controller
         $shift = "";
 
         $keeperRes = Timekeeper::where('jobtitleId', '=', $users->jobTitleId)->where('isDeleted', '=', 0);
+
+        if (!$keeperRes) {
+            return response()->json(['message' => 'Timekeeper not found for this job title'], 404);
+        }
 
         if (count($keeper) > 1) {
             $keeperRes = $keeperRes->where('shiftId', '=', $request->shift);
