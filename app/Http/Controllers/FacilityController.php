@@ -1380,12 +1380,65 @@ class FacilityController extends Controller
 
     public function cage(Request $request)
     {
-        $data = DB::table('facility_unit as f')
-            ->select('f.id', 'f.unitName', 'f.capacity', 'f.amount')
-            ->where('f.isDeleted', '=', 0)
-            ->where('f.status', '=', 1)
-            ->where('f.capacity', '>', 0)
-            ->where('f.locationId', '=', $request->locationId)
+        $terminalStatuses = ['Selesai', 'Batal'];
+
+        $isPregnant  = (bool) $request->isPregnant;
+        $isParent    = (bool) $request->isParent;
+        $minCapacity = max(1, (int) $request->minCapacity);
+
+        if ($isPregnant) {
+            $allowedTypes = ['maternal', 'general'];
+        } elseif ($isParent) {
+            $allowedTypes = ['hotel', 'maternal', 'general'];
+        } else {
+            $allowedTypes = ['hotel', 'general'];
+        }
+
+        // Hitung jumlah occupant aktif per kandang dari semua jenis transaksi
+        $occupancySubquery = DB::table(DB::raw("(
+            SELECT c.cageId, COUNT(*) as cnt
+            FROM transactionPetHotelTreatmentCages c
+            JOIN transaction_pet_hotels t ON t.id = c.transactionId
+            WHERE t.status NOT IN ('Selesai','Batal') AND c.isDeleted = 0 AND t.isDeleted = 0
+            GROUP BY c.cageId
+            UNION ALL
+            SELECT c.cageId, COUNT(*) as cnt
+            FROM transactionBreedingTreatmentCages c
+            JOIN transaction_breedings t ON t.id = c.transactionId
+            WHERE t.status NOT IN ('Selesai','Batal') AND c.isDeleted = 0 AND t.isDeleted = 0
+            GROUP BY c.cageId
+            UNION ALL
+            SELECT c.cageId, COUNT(*) as cnt
+            FROM transactionPetSalonTreatmentCages c
+            JOIN transaction_pet_salons t ON t.id = c.transactionId
+            WHERE t.status NOT IN ('Selesai','Batal') AND c.isDeleted = 0 AND t.isDeleted = 0
+            GROUP BY c.cageId
+        ) as all_occ"))
+            ->select('cageId', DB::raw('SUM(cnt) as total'))
+            ->groupBy('cageId');
+
+        $data = DB::table('cages as c')
+            ->leftJoinSub($occupancySubquery, 'occ', 'occ.cageId', '=', 'c.id')
+            ->select(
+                'c.id',
+                'c.cageName as unitName',
+                'c.cageName',
+                'c.capacity',
+                DB::raw('COALESCE(occ.total, 0) as occupiedCount'),
+                DB::raw('(c.capacity - COALESCE(occ.total, 0)) as remainingCapacity'),
+                'c.amount',
+                'c.type',
+                'c.size',
+                'c.conditionStatus'
+            )
+            ->where('c.isDeleted', '=', 0)
+            ->where('c.status', '=', 1)
+            ->where('c.locationId', '=', $request->locationId)
+            ->whereIn('c.type', $allowedTypes)
+            // Tampilkan hanya kandang yang masih punya sisa kapasitas >= minCapacity
+            ->whereRaw('(c.capacity - COALESCE(occ.total, 0)) >= ?', [$minCapacity])
+            ->orderBy('c.type')
+            ->orderBy('c.cageName')
             ->get();
 
         return responseList($data);

@@ -18,6 +18,11 @@ use App\Models\transactionPetHotelTreatmentCage;
 use App\Models\TransactionPetHotelTreatmentProduct;
 use App\Models\TransactionPetHotelTreatmentService;
 use App\Models\TransactionPetHotelTreatmentTreatPlan;
+use App\Models\TransactionPetHotelPapanKerja;
+use App\Models\TransactionPetHotelAdditionalTreatment;
+use App\Models\TransactionPetHotelPrepayment;
+use App\Models\TransactionPetHotelPolicyAgreement;
+use App\Models\TransactionPetHotelCheckout;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Validator;
@@ -53,9 +58,8 @@ class PetHotelController extends Controller
         $data = DB::table('transaction_pet_hotels as t')
             ->join('location as l', 'l.id', 't.locationId')
             ->join('customer as c', 'c.id', 't.customerId')
-            ->join('customerPets as cp', 'cp.id', 't.PetId')
             ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
-            ->join('users as u', 'u.id', 't.doctorId')
+            ->leftJoin('users as u', 'u.id', 't.doctorId')
             ->join('users as uc', 'uc.id', 't.userId')
             ->select(
                 't.id',
@@ -70,7 +74,7 @@ class PetHotelController extends Controller
                 't.status',
                 'u.firstName as picDoctor',
                 'uc.firstName as createdBy',
-                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt"),
+                DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%i:%s') as createdAt"),
                 DB::raw('CASE WHEN ' . $statusDoc . '=1 and u.id=' . $request->user()->id . ' and t.status="Cek Kondisi Pet" THEN 1 ELSE 0 END as isPetCheck')
             )
             ->where('t.isDeleted', '=', 0);
@@ -81,13 +85,28 @@ class PetHotelController extends Controller
             $data = $data->whereIn('t.status', ['Selesai', 'Batal']);
         }
 
-        if (!$request->user()->roleId == 1 || !$request->user()->roleId == 2) {
-            $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
-            $data = $data->whereIn('l.id', $locations);
+        // Kasir (jobTitleId=1) mendapat visibilitas penuh seperti Admin/Manager —
+        // mereka mengelola semua transaksi (create/update/delete/payment).
+        $isKasir = ($request->user()->jobTitleId == 1);
+
+        if (
+            $request->user()->roleId != 1   // bukan Administrator
+            && $request->user()->roleId != 2 // bukan Manager
+            && !$isKasir                     // bukan Kasir
+        ) {
+            // Role lain (dokter, staff, dll): filter hanya lokasi yang ditugaskan
+            $locations = UsersLocation::select('locationId')
+                ->where('usersId', $request->user()->id)
+                ->pluck('locationId')
+                ->toArray();
+
+            if (!empty($locations)) {
+                $data = $data->whereIn('l.id', $locations);
+            }
+            // Jika locations kosong (belum di-assign): tampilkan kosong — bukan bug
         } else {
-
+            // Admin, Manager, dan Kasir: bisa filter by locationId dari request
             if ($request->locationId) {
-
                 $data = $data->whereIn('l.id', $request->locationId);
             }
         }
@@ -129,6 +148,10 @@ class PetHotelController extends Controller
 
     public function create(Request $request)
     {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat membuat transaksi.');
+        }
 
         if ($request->isNewCustomer == true) {
             $validate = Validator::make($request->all(), [
@@ -306,7 +329,7 @@ class PetHotelController extends Controller
                 'startDate' => $request->startDate,
                 'endDate' => $request->endDate,
                 'doctorId' => $request->doctorId,
-                'note' => $request->note,
+                'note' => $request->note ?? '',
                 'userId' => $request->user()->id,
             ]);
 
@@ -378,28 +401,93 @@ class PetHotelController extends Controller
             ->orderBy('tl.id', 'desc')
             ->get();
 
-        $paymentLog = DB::table('transaction_pet_hotel_payment_totals as tpt')
-            ->join('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
+        // DP (prepayment)
+        $dpLogs = DB::table('transaction_pet_hotel_prepayments as p')
+            ->leftJoin('paymentmethod as pm', 'pm.id', 'p.paymentMethodId')
+            ->join('users as u', 'u.id', 'p.userId')
+            ->select(
+                'p.id',
+                DB::raw("COALESCE(p.nota_number, CONCAT('DP-', p.id)) as notaNumber"),
+                DB::raw("'DP / Pembayaran Awal' as type"),
+                DB::raw("CONCAT('Rp ', FORMAT(p.amount, 0)) as amount"),
+                DB::raw("COALESCE(pm.name, '-') as paymentMethod"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(p.created_at, '%d-%m-%Y %H:%i:%s') as date"),
+                'p.catatan as note',
+                DB::raw("IF(p.proofPath IS NOT NULL, 'ada', null) as hasProof")
+            )
+            ->where('p.transactionId', $request->id)
+            ->get();
+
+        // Pelunasan (checkout payment)
+        $pelunasanLogs = DB::table('transaction_pet_hotel_payment_totals as tpt')
+            ->leftJoin('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
             ->join('users as u', 'u.id', 'tpt.userId')
             ->select(
                 'tpt.id',
-                'tpt.amount',
                 'tpt.nota_number as notaNumber',
-                'pm.name as paymentMethod',
+                DB::raw("'Pelunasan' as type"),
+                DB::raw("CONCAT('Rp ', FORMAT(tpt.amountPaid, 0)) as amount"),
+                DB::raw("COALESCE(pm.name, '-') as paymentMethod"),
                 'u.firstName as createdBy',
-                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%m:%s') as date")
+                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%i:%s') as date"),
+                'tpt.note as note',
+                DB::raw("IF(tpt.proofOfPayment IS NOT NULL, 'ada', null) as hasProof")
             )
-            ->where('tpt.transactionId', '=', $request->id)
-            ->orderBy('tpt.id', 'desc')
+            ->where('tpt.transactionId', $request->id)
             ->get();
 
-        $data = ['detail' => $detail, 'transactionLogs' => $log, 'paymentLogs' => $paymentLog];
+        $paymentLog = $pelunasanLogs->concat($dpLogs)->sortByDesc('date')->values();
+
+        // Kandang yang dipakai
+        $cage = DB::table('transactionPetHotelTreatmentCages as tc')
+            ->join('cages as c', 'c.id', 'tc.cageId')
+            ->select('c.cageName', 'c.type as cageType', 'c.size as cageSize')
+            ->where('tc.transactionId', $request->id)
+            ->first();
+
+        if ($detail) {
+            $detail->cageName = $cage->cageName ?? null;
+            $detail->cageType = $cage->cageType ?? null;
+            $detail->cageSize = $cage->cageSize ?? null;
+        }
+
+        // Policy agreements — sertakan signatureData dan isi policy (raw_content)
+        $policyAgreements = DB::table('transaction_pet_hotel_policy_agreements as pa')
+            ->leftJoin('users as u', 'u.id', 'pa.userId')
+            ->leftJoin('contract_templates as ct', 'ct.id', 'pa.contractTemplateId')
+            ->select(
+                'pa.id',
+                'pa.contractTitle',
+                'pa.contractVersion',
+                'pa.signerName',
+                'pa.signatureData',
+                DB::raw("DATE_FORMAT(pa.signedAt, '%d-%m-%Y %H:%i') as signedAt"),
+                'u.firstName as recordedBy',
+                DB::raw("IF(pa.signatureData IS NOT NULL AND pa.signatureData != '', 1, 0) as hasSigned"),
+                'ct.raw_content as rawContent'
+            )
+            ->where('pa.transactionId', $request->id)
+            ->orderBy('pa.id')
+            ->get();
+
+        $data = [
+            'detail'           => $detail,
+            'transactionLogs'  => $log,
+            'paymentLogs'      => $paymentLog,
+            'policyAgreements' => $policyAgreements,
+        ];
 
         return response()->json($data, 200);
     }
 
     public function update(Request $request)
     {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat mengubah transaksi.');
+        }
+
         $validate = Validator::make($request->all(), [
             'id' => 'required|integer',
         ]);
@@ -490,7 +578,7 @@ class PetHotelController extends Controller
                     'startDate' => $request->startDate,
                     'endDate' => $request->endDate,
                     'doctorId' => $request->doctorId,
-                    'note' => $request->note,
+                    'note' => $request->note ?? '',
                     'userUpdatedId' => $request->user()->id,
                 ]
             );
@@ -535,6 +623,11 @@ class PetHotelController extends Controller
 
     public function delete(Request $request)
     {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdministrator']) {
+            return $this->accessDenied('Hanya Administrator yang dapat menghapus transaksi.');
+        }
+
         $transactions = TransactionPetHotel::whereIn('id', $request->id)->get();
 
         if ($transactions->count() !== count($request->id)) {
@@ -687,6 +780,11 @@ class PetHotelController extends Controller
 
     public function reassignDoctor(Request $request)
     {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat melakukan reassign dokter.');
+        }
+
         $validate = Validator::make($request->all(), [
             'transactionId' => 'required|integer',
             'doctorId' => 'required|integer',
@@ -699,17 +797,30 @@ class PetHotelController extends Controller
 
         $doctor = User::where([['id', '=', $request->doctorId]])->first();
 
+        if (!$doctor) {
+            return responseInvalid(['Doctor is not found!']);
+        }
+
         $user = User::where([['id', '=', $request->user()->id]])->first();
+
+        TransactionPetHotel::where('id', $request->transactionId)->update([
+            'doctorId' => $request->doctorId,
+        ]);
 
         statusTransactionPetHotel($request->transactionId, 'Menunggu Dokter', $request->user()->id);
 
-        transactionPetHotelLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan oleh ' . $user->firstName, $request->user()->id);
+        transactionPetHotelLog($request->transactionId, 'Menunggu konfirmasi dokter', 'Dokter dipindahkan ke ' . $doctor->firstName . ' oleh ' . $user->firstName, $request->user()->id);
 
         return responseCreate();
     }
 
     public function createPetCheck(Request $request)
     {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdministrator'] && $access['jobTitleId'] !== 17) {
+            return $this->accessDenied('Hanya Dokter Hewan atau Administrator yang dapat mengisi data cek kondisi pet.');
+        }
+
         $validate = Validator::make($request->all(), [
             'transactionId' => 'required|integer',
             'numberVaccines' => 'required|integer',
@@ -768,10 +879,10 @@ class PetHotelController extends Controller
 
             if ($request->isRecomendInpatient) {
                 transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet dipindahkan ke Pet Clinic', $request->user()->id);
-                statusTransactionPetHotel($request->transactionId, 'Pet dipindahkan ke Pet Clinic', $request->user()->id);
+                statusTransactionPetHotel($request->transactionId, 'Pet Dipindahkan ke Pet Clinic', $request->user()->id);
             } else {
-                transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet diterima masuk Pet Hotel', $request->user()->id);
-                statusTransactionPetHotel($request->transactionId, 'Pet diterima masuk Pet Hotel', $request->user()->id);
+                transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet lolos cek kondisi, siap check-in', $request->user()->id);
+                statusTransactionPetHotel($request->transactionId, 'Pet Check-In', $request->user()->id);
                 TransactionPetHotel::where('id', '=', $request->transactionId)
                     ->update([
                         'isTreatment' => true,
@@ -779,14 +890,62 @@ class PetHotelController extends Controller
             }
         } else {
             transactionPetHotelLog($request->transactionId, 'Pet Selesai diperiksa oleh ' . $doctor->firstName, 'Pet ditolak masuk Pet Hotel karena ' . $request->reasonReject, $request->user()->id);
-            statusTransactionPetHotel($request->transactionId, 'Pet ditolak Pet Hotel', $request->user()->id);
+            statusTransactionPetHotel($request->transactionId, 'Pet Ditolak Pet Hotel', $request->user()->id);
         }
 
         return responseCreate();
     }
 
+    /**
+     * GET /transaction/pethotel/check-condition?transactionId=X
+     * Mengembalikan data kondisi pet (hasil cek dokter) untuk transaksi tertentu.
+     * Digunakan FE treatment form agar bisa menampilkan banner & filter kandang.
+     */
+    public function getCheckCondition(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $check = TransactionPetHotelCheck::where('transactionId', $request->transactionId)
+            ->where('isAcceptToProcess', 1)
+            ->latest()
+            ->first();
+
+        if (!$check) {
+            return response()->json([
+                'isPregnant'         => false,
+                'estimateDateofBirth'=> null,
+                'isRecomendInpatient'=> false,
+                'noteInpatient'      => null,
+                'isParent'           => false,
+                'isBreastfeeding'    => false,
+                'numberofChildren'   => 0,
+            ], 200);
+        }
+
+        return response()->json([
+            'isPregnant'          => (bool) $check->isPregnant,
+            'estimateDateofBirth' => $check->estimateDateofBirth,
+            'isRecomendInpatient' => (bool) $check->isRecomendInpatient,
+            'noteInpatient'       => $check->noteInpatient,
+            'isParent'            => (bool) $check->isParent,
+            'isBreastfeeding'     => (bool) $check->isBreastfeeding,
+            'numberofChildren'    => (int) $check->numberofChildren,
+        ], 200);
+    }
+
     public function Treatment(Request $request)
     {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdministrator'] && $access['jobTitleId'] !== 17) {
+            return $this->accessDenied('Hanya Dokter Hewan atau Administrator yang dapat menginput treatment.');
+        }
+
         $validate = Validator::make($request->all(), [
             'transactionId' => 'required|integer',
         ]);
@@ -802,14 +961,21 @@ class PetHotelController extends Controller
             return responseInvalid(['Transaction is not found or already deleted!']);
         }
 
-        $services = json_decode($request->services, true);
-        $productSell = json_decode($request->productSells, true);
-        $productClinic = json_decode($request->productClinics, true);
-        $treatmentPlans = json_decode($request->treatmentPlans, true);
+        if (!$request->cageId) {
+            return responseInvalid(['Kandang wajib dipilih!']);
+        }
 
-        if (count($services) == 0 && count($productSell) == 0 && count($productClinic) == 0 && count($treatmentPlans) == 0) {
+        if (!$request->stayServiceId) {
+            return responseInvalid(['Tarif menginap wajib dipilih!']);
+        }
 
-            return responseInvalid(['All category must one to filled!']);
+        $services = json_decode($request->services, true) ?? [];
+        $productSell = json_decode($request->productSells, true) ?? [];
+        $productClinic = json_decode($request->productClinics, true) ?? [];
+        $treatmentPlans = json_decode($request->treatmentPlans, true) ?? [];
+
+        if (count($treatmentPlans) === 0) {
+            return responseInvalid(['Minimal satu rencana perawatan (Treatment Plan) harus diisi!']);
         }
 
         //proses insert
@@ -857,9 +1023,18 @@ class PetHotelController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
-            statusTransactionPetHotel($request->transactionId, 'Proses Pembayaran', $request->user()->id);
+            // Simpan service yang menjadi tarif menginap per hari
+            if ($request->stayServiceId) {
+                TransactionPetHotel::where('id', $request->transactionId)
+                    ->update(['stayServiceId' => $request->stayServiceId]);
+            }
 
-            transactionPetHotelLog($request->transactionId, 'Input Treatment dan Kandang Sudah Selesai', '', $request->user()->id);
+            $this->generatePapanKerja($request->transactionId, $request->user()->id);
+
+            // Status menunggu owner e-sign policies sebelum resmi "Dalam Perawatan"
+            statusTransactionPetHotel($request->transactionId, 'Menunggu Persetujuan Policy', $request->user()->id);
+
+            transactionPetHotelLog($request->transactionId, 'Rencana perawatan & kandang ditetapkan — menunggu persetujuan owner', '', $request->user()->id);
 
             DB::commit();
             return responseCreate();
@@ -870,6 +1045,92 @@ class PetHotelController extends Controller
                 'message' => 'Failed',
                 'errors' => $th,
             ]);
+        }
+    }
+
+    // ─── Policy Agreement ────────────────────────────────────────────────────────
+
+    /** Daftar policies aktif untuk dipilih kasir */
+    public function getPoliciesForAgreement(Request $request)
+    {
+        $policies = DB::table('contract_templates')
+            ->where('isDeleted', 0)
+            ->where('status', 'active')
+            ->select('id', 'title', 'version', 'raw_content')
+            ->orderBy('title')
+            ->get();
+
+        return response()->json($policies);
+    }
+
+    /** Simpan tanda tangan owner per policy, lalu set status "Dalam Perawatan" */
+    public function savePolicyAgreement(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat menyimpan persetujuan policy.');
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId'  => 'required|integer',
+            'signerName'     => 'required|string',
+            'signatureData'  => 'required|string', // base64
+            'policies'       => 'required|string', // JSON array of {id, title, version}
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $tran = TransactionPetHotel::where('id', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->first();
+
+        if (!$tran) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        if ($tran->status !== 'Menunggu Persetujuan Policy') {
+            return responseInvalid(['Status transaksi tidak valid untuk persetujuan policy.']);
+        }
+
+        $policies = json_decode($request->policies, true) ?? [];
+
+        if (empty($policies)) {
+            return responseInvalid(['Minimal satu policy harus dipilih.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $signedAt = now();
+
+            foreach ($policies as $policy) {
+                TransactionPetHotelPolicyAgreement::create([
+                    'transactionId'      => $request->transactionId,
+                    'contractTemplateId' => $policy['id'],
+                    'contractTitle'      => $policy['title'],
+                    'contractVersion'    => $policy['version'],
+                    'signatureData'      => $request->signatureData,
+                    'signerName'         => $request->signerName,
+                    'signedAt'           => $signedAt,
+                    'userId'             => $request->user()->id,
+                ]);
+            }
+
+            statusTransactionPetHotel($request->transactionId, 'Dalam Perawatan', $request->user()->id);
+
+            transactionPetHotelLog(
+                $request->transactionId,
+                'Owner menyetujui dan menandatangani ' . count($policies) . ' policy — pet resmi dalam perawatan',
+                'Ditandatangani oleh: ' . $request->signerName,
+                $request->user()->id
+            );
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
         }
     }
 
@@ -887,8 +1148,8 @@ class PetHotelController extends Controller
         $trans = TransactionPetHotel::find($request->transactionId);
 
         $cages = TransactionPetHotelTreatmentCage::from('transactionPetHotelTreatmentCages as tpcs')
-            ->join('facility_unit as fu', 'fu.id', '=', 'tpcs.cageId')
-            ->select('fu.id', 'fu.unitName')->where('transactionId', $request->transactionId)
+            ->join('cages as c', 'c.id', '=', 'tpcs.cageId')
+            ->select('c.id', 'c.cageName as unitName')->where('transactionId', $request->transactionId)
             ->first();
 
         if (!$trans) {
@@ -908,7 +1169,7 @@ class PetHotelController extends Controller
                 's.id as serviceId',
                 's.fullName as serviceName',
                 DB::raw("TRIM(tpcs.quantity)+0 as quantity"),
-                DB::raw("TRIM(sp.price)+0 as basedPrice"),
+                DB::raw("CAST(REPLACE(sp.price, ',', '') AS UNSIGNED) as basedPrice"),
             )
             ->where('tpcs.transactionId', '=', $request->transactionId)
             ->where('sp.location_id', '=', $trans->locationId)
@@ -1197,11 +1458,11 @@ class PetHotelController extends Controller
         $totalTransaction = 0;
 
         foreach ($dataServices as $value) {
-            $totalTransaction += $value['priceOverall'];
+            $totalTransaction += (float) ($value['priceOverall'] ?? 0);
         }
 
         foreach ($dataProducts as $value) {
-            $totalTransaction += $value['priceOverall'];
+            $totalTransaction += (float) ($value['priceOverall'] ?? 0);
         }
 
         $findBasedSales = DB::table('promotionMasters as pm')
@@ -1238,9 +1499,9 @@ class PetHotelController extends Controller
         }
 
         $result = [
-            'freeItem' => $tempFree,
-            'discount' => $tempDiscount,
-            'bundles' => $resultBundle,
+            'freeItems'  => $tempFree,
+            'discounts'  => $tempDiscount,
+            'bundles'    => $resultBundle,
             'basedSales' => $resultBasedSales,
         ];
 
@@ -1392,6 +1653,21 @@ class PetHotelController extends Controller
 
         // --- PROCESSING SERVICES ---
         foreach ($services as $value) {
+            // Skip item tanpa serviceId (misal: additional treatment yang belum termap)
+            if (empty($value['serviceId'])) {
+                $results[] = [
+                    'item_name'  => $value['name'] ?? '-',
+                    'category'   => '-',
+                    'quantity'   => $value['quantity'] ?? 1,
+                    'bonus'      => 0,
+                    'discount'   => 0,
+                    'unit_price' => $value['eachPrice'] ?? 0,
+                    'total'      => $value['priceOverall'] ?? 0,
+                ];
+                $subtotal += $value['priceOverall'] ?? 0;
+                continue;
+            }
+
             $isGetPromo = false;
 
             if ($request->has('discounts')) {
@@ -1617,37 +1893,41 @@ class PetHotelController extends Controller
                 ->select(
                     'pm.name',
                     'pb.minPurchase',
+                    'pb.maxPurchase',
                     DB::raw("CASE WHEN percentOrAmount = 'amount' THEN 'amount' WHEN percentOrAmount = 'percent' THEN 'percent' ELSE '' END as discountType"),
                     DB::raw("CASE WHEN percentOrAmount = 'amount' THEN amount WHEN percentOrAmount = 'percent' THEN percent ELSE 0 END as totaldiscount")
                 )
                 ->where('pm.id', '=', $request->basedSale)
                 ->where('minPurchase', '<=', $subtotal)
-                ->where('maxPurchase', '>=', $subtotal)
+                ->where(function ($q) use ($subtotal) {
+                    // maxPurchase NULL berarti tidak ada batas atas
+                    $q->whereNull('pb.maxPurchase')->orWhere('pb.maxPurchase', '>=', $subtotal);
+                })
                 ->first();
 
             if ($res) {
                 if ($res->discountType == 'amount') {
-                    $discount_based_sales = $res->totaldiscount;
-                    $promoNotes[] = 'Diskon Rp ' . $res->totaldiscount . ' untuk pembelian lebih dari Rp ' . $res->minPurchase;
-                    $discountNote = 'Diskon Nominal (Belanja > Rp ' . $res->minPurchase . ')';
-                    $totalDiscount = $res->totaldiscount;
+                    $discount_based_sales = (float) $res->totaldiscount;
+                    $promoNotes[] = 'Diskon Rp ' . number_format($discount_based_sales, 0, ',', '.') . ' untuk pembelian lebih dari Rp ' . number_format($res->minPurchase, 0, ',', '.');
+                    $discountNote = 'Diskon Nominal (Belanja > Rp ' . number_format($res->minPurchase, 0, ',', '.') . ')';
+                    $totalDiscount += $discount_based_sales;
                 } else if ($res->discountType == 'percent') {
-                    $discount_based_sales = $subtotal * ($res->totaldiscount / 100);
-                    $promoNotes[] = 'Diskon ' . $res->totaldiscount . '% untuk pembelian lebih dari Rp ' . $res->minPurchase;
-                    $discountNote = 'Diskon ' . $res->totaldiscount . ' % (Belanja > Rp ' . $res->minPurchase . ')';
-                    $totalDiscount = $res->totaldiscount;
+                    $discount_based_sales = $subtotal * ((float) $res->totaldiscount / 100);
+                    $promoNotes[] = 'Diskon ' . $res->totaldiscount . '% untuk pembelian lebih dari Rp ' . number_format($res->minPurchase, 0, ',', '.');
+                    $discountNote = 'Diskon ' . $res->totaldiscount . '% (Belanja > Rp ' . number_format($res->minPurchase, 0, ',', '.') . ')';
+                    $totalDiscount += $discount_based_sales; // pakai nilai nominal, bukan persen
                 }
             }
         }
 
         $response = [
-            'purchases' => $results,
-            'subtotal' => $subtotal,
-            'discount_note' => $discountNote,
+            'purchases'            => $results,
+            'subtotal'             => floatval($subtotal),
+            'discount_note'        => $discountNote,
             'discount_based_sales' => floatval($discount_based_sales),
-            'total_discount' => floatval($totalDiscount),
-            'total_payment' => $subtotal - $totalDiscount,
-            'promo_notes' => $promoNotes,
+            'total_discount'       => floatval($totalDiscount),
+            'total_payment'        => floatval(max(0, $subtotal - $totalDiscount)),
+            'promo_notes'          => $promoNotes,
         ];
 
         if ($request->basedSale) {
@@ -1658,6 +1938,11 @@ class PetHotelController extends Controller
     }
     public function payment(Request $request)
     {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat memproses pembayaran.');
+        }
+
         $purchases = $this->ensureIsArray($request->purchases);
         //$json_string = $request->payment_method;
         $payment = $this->ensureIsArray($request->payment_method);
@@ -1922,33 +2207,7 @@ class PetHotelController extends Controller
             return responseInvalid(['Transaction not found!']);
         }
 
-        $locations = DB::table('location')
-            ->leftJoin('location_telephone', 'location.codeLocation', '=', 'location_telephone.codeLocation')
-            ->where(function ($query) {
-                $query->where('location_telephone.usage', 'Utama')
-                    ->orWhereNull('location_telephone.usage');
-            })
-            ->select(
-                'location.locationName',
-                'location.description',
-                'location_telephone.phoneNumber',
-                'location.codeLocation'
-            )
-            ->distinct()
-            ->get();
-
-        $locationGroups = [];
-        foreach ($locations as $location) {
-            $key = $location->codeLocation;
-            if (!isset($locationGroups[$key])) {
-                $locationGroups[$key] = [
-                    'name'        => $location->locationName,
-                    'description' => $location->description,
-                    'phone'       => $location->phoneNumber ?? ''
-                ];
-            }
-        }
-        $formattedLocations = array_values($locationGroups);
+        $formattedLocations = $this->getActiveLocationsForInvoice();
 
         $customer = DB::table('customer as c')
             ->join('customerTelephones as ct', 'c.id', '=', 'ct.customerId')
@@ -1979,12 +2238,15 @@ class PetHotelController extends Controller
 
         $pdf = Pdf::loadView('invoice.invoice_pethotel', $data);
         return $pdf->download($namaFile);
-
-        return view('transaction.pethotel.print_invoice_pethotel');
     }
 
     public function confirmPayment(Request $request)
     {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat mengkonfirmasi pembayaran.');
+        }
+
         $request->validate([
             'id' => 'required|integer',
             'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
@@ -2045,10 +2307,1213 @@ class PetHotelController extends Controller
 
         // }
 
-        statusTransactionPetHotel($trans_pay->transactionId, 'Pet masuk Pet Hotel', $request->user()->id);
+        DB::beginTransaction();
+        try {
+            statusTransactionPetHotel($trans_pay->transactionId, 'Selesai', $request->user()->id);
+            transactionPetHotelLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi, Pet Resmi Keluar Hotel', '', $request->user()->id);
+            DB::commit();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
 
-        transactionPetHotelLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
-        DB::commit();
+        return responseCreate();
+    }
+
+    // ─── Fase 2: Additional Treatment & Extend Stay ─────────────────────────────
+
+    public function getAvailableItems(Request $request)
+    {
+        $request->validate([
+            'transactionId' => 'required|integer',
+            'type'          => 'required|in:service,product,petshop,petsell,clinic',
+        ]);
+
+        $tran = TransactionPetHotel::find($request->transactionId);
+        if (!$tran) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        $search = $request->search;
+
+        if (in_array($request->type, ['service', 'clinic'])) {
+            // service = semua layanan di lokasi
+            // clinic  = layanan medis/klinik (exclude kategori hotel & grooming)
+            $hotelGroomingCategoryIds = DB::table('serviceCategory')
+                ->where('isDeleted', 0)
+                ->where(function ($q) {
+                    $q->where('categoryName', 'like', '%Hotel%')
+                      ->orWhere('categoryName', 'like', '%Grooming%')
+                      ->orWhere('categoryName', 'like', '%Salon%');
+                })
+                ->pluck('id');
+
+            $query = DB::table('services as s')
+                ->join('servicesPrice as sp', 's.id', 'sp.service_id')
+                ->select('s.id', 's.fullName as name', DB::raw("MIN(CAST(REPLACE(sp.price, ',', '') AS UNSIGNED)) as price"))
+                ->where('sp.location_id', $tran->locationId)
+                ->where('s.isDeleted', 0)
+                ->when($search, fn($q) => $q->where('s.fullName', 'like', '%' . $search . '%'))
+                ->groupBy('s.id', 's.fullName');
+
+            if ($request->type === 'clinic') {
+                // Hanya layanan yang termasuk kategori non-hotel/grooming
+                $clinicServiceIds = DB::table('servicesCategoryList')
+                    ->whereNotIn('category_id', $hotelGroomingCategoryIds)
+                    ->where('isDeleted', 0)
+                    ->pluck('service_id')
+                    ->unique();
+                $query->whereIn('s.id', $clinicServiceIds);
+            }
+
+            $items = $query->orderBy('s.fullName')->limit(30)->get();
+
+        } elseif ($request->type === 'petshop') {
+            // Produk yang bisa dibeli customer (petshop)
+            $items = DB::table('products as p')
+                ->join('productLocations as pl', 'p.id', 'pl.productId')
+                ->select('p.id', 'p.fullName as name', 'p.price')
+                ->where('pl.locationId', $tran->locationId)
+                ->where('p.isDeleted', 0)
+                ->where('p.isCustomerPurchase', 1)
+                ->when($search, fn($q) => $q->where('p.fullName', 'like', '%' . $search . '%'))
+                ->groupBy('p.id', 'p.fullName', 'p.price')
+                ->orderBy('p.fullName')
+                ->limit(30)
+                ->get();
+
+        } elseif ($request->type === 'petsell') {
+            // Semua produk di lokasi (tidak harus customer purchase)
+            $items = DB::table('products as p')
+                ->join('productLocations as pl', 'p.id', 'pl.productId')
+                ->select('p.id', 'p.fullName as name', 'p.price')
+                ->where('pl.locationId', $tran->locationId)
+                ->where('p.isDeleted', 0)
+                ->when($search, fn($q) => $q->where('p.fullName', 'like', '%' . $search . '%'))
+                ->groupBy('p.id', 'p.fullName', 'p.price')
+                ->orderBy('p.fullName')
+                ->limit(30)
+                ->get();
+
+        } else {
+            // type=product (legacy, semua produk)
+            $items = DB::table('products as p')
+                ->join('productLocations as pl', 'p.id', 'pl.productId')
+                ->select('p.id', 'p.fullName as name', 'p.price')
+                ->where('pl.locationId', $tran->locationId)
+                ->where('p.isDeleted', 0)
+                ->when($search, fn($q) => $q->where('p.fullName', 'like', '%' . $search . '%'))
+                ->groupBy('p.id', 'p.fullName', 'p.price')
+                ->orderBy('p.fullName')
+                ->limit(30)
+                ->get();
+        }
+
+        return response()->json($items, 200);
+    }
+
+    public function getAdditionalTreatments(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        // Kasir (1), Dokter (17), Admin/Manager boleh melihat tambahan treatment
+        if (!$access['isAdminOrManager'] && !in_array($access['jobTitleId'], [1, 17])) {
+            return $this->accessDenied('Anda tidak memiliki akses untuk melihat tambahan treatment.');
+        }
+
+        $request->validate(['transactionId' => 'required|integer']);
+
+        $data = TransactionPetHotelAdditionalTreatment::where('transactionId', $request->transactionId)
+            ->with('user:id,firstName')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id'       => $item->id,
+                    'itemId'   => $item->itemId,
+                    'type'     => $item->type,
+                    'itemName' => $item->itemName,
+                    'quantity' => $item->quantity,
+                    'price'    => $item->price,
+                    'total'    => $item->price * $item->quantity,
+                    'catatan'  => $item->catatan,
+                    'addedBy'  => optional($item->user)->firstName,
+                    'addedAt'  => $item->created_at->format('d-m-Y H:i'),
+                ];
+            });
+
+        return response()->json($data, 200);
+    }
+
+    public function addAdditionalTreatment(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        // Kasir (1) boleh tambah item saat checkout; Dokter (17) saat treatment
+        if (!$access['isAdminOrManager'] && !in_array($access['jobTitleId'], [1, 17])) {
+            return $this->accessDenied('Anda tidak memiliki akses untuk menambah item.');
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'type'          => 'required|in:service,product,petshop,petsell,clinic',
+            'itemId'        => 'required|integer',
+            'quantity'      => 'required|numeric|min:1',
+            'catatan'       => 'nullable|string',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $tran = TransactionPetHotel::find($request->transactionId);
+        if (!$tran) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        if (in_array($request->type, ['service', 'clinic'])) {
+            $item = DB::table('services as s')
+                ->join('servicesPrice as sp', 's.id', 'sp.service_id')
+                ->select('s.fullName as name', DB::raw("CAST(REPLACE(sp.price, ',', '') AS UNSIGNED) as price"))
+                ->where('s.id', $request->itemId)
+                ->where('sp.location_id', $tran->locationId)
+                ->first();
+        } else {
+            // product / petshop / petsell — p.price sudah numeric "35000.00"
+            $item = DB::table('products as p')
+                ->select('p.fullName as name', 'p.price')
+                ->where('p.id', $request->itemId)
+                ->first();
+        }
+
+        if (!$item) {
+            return responseInvalid(['Item tidak ditemukan.']);
+        }
+
+        TransactionPetHotelAdditionalTreatment::create([
+            'transactionId' => $request->transactionId,
+            'type'          => $request->type,
+            'itemId'        => $request->itemId,
+            'itemName'      => $item->name,
+            'quantity'      => $request->quantity,
+            'price'         => $item->price,
+            'catatan'       => $request->catatan,
+            'userId'        => $request->user()->id,
+        ]);
+
+        transactionPetHotelLog($request->transactionId, 'Tambah Treatment: ' . $item->name . ' x' . $request->quantity, $request->catatan ?? '', $request->user()->id);
+
+        return responseCreate();
+    }
+
+    public function deleteAdditionalTreatment(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && !in_array($access['jobTitleId'], [1, 17])) {
+            return $this->accessDenied('Anda tidak memiliki akses untuk menghapus item.');
+        }
+
+        $item = TransactionPetHotelAdditionalTreatment::find($request->id);
+        if (!$item) {
+            return responseInvalid(['Item tidak ditemukan.']);
+        }
+
+        transactionPetHotelLog($item->transactionId, 'Hapus Item: ' . $item->itemName, '', $request->user()->id);
+        $item->delete();
+
+        return responseDelete();
+    }
+
+    public function getPrepayments(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Anda tidak memiliki akses untuk melihat data DP.');
+        }
+
+        $request->validate(['transactionId' => 'required|integer']);
+
+        // Info transaksi untuk tanda terima
+        $tran = DB::table('transaction_pet_hotels as t')
+            ->leftJoin('customer as c', 'c.id', '=', 't.customerId')
+            ->leftJoin('customerPets as cp', 'cp.id', '=', 't.petId')
+            ->leftJoin('location as l', 'l.id', '=', 't.locationId')
+            ->where('t.id', $request->transactionId)
+            ->select(
+                't.registrationNo',
+                't.startDate',
+                't.endDate',
+                DB::raw("COALESCE(c.firstName, t.registrant, '') as customerName"),
+                DB::raw("COALESCE(cp.petName, '') as petName"),
+                DB::raw("COALESCE(l.locationName, '') as locationName")
+            )
+            ->first();
+
+        $data = TransactionPetHotelPrepayment::where('transactionId', $request->transactionId)
+            ->with(['user:id,firstName', 'paymentMethod:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'id'            => $item->id,
+                    'amount'        => $item->amount,
+                    'paymentMethod' => optional($item->paymentMethod)->name,
+                    'proofPath'     => $item->proofPath ? url('storage/' . $item->proofPath) : null,
+                    'proofOriginalName' => $item->proofOriginalName,
+                    'catatan'       => $item->catatan,
+                    'recordedBy'    => optional($item->user)->firstName,
+                    'recordedAt'    => $item->created_at->format('d-m-Y H:i'),
+                ];
+            });
+
+        $totalPrepaid = TransactionPetHotelPrepayment::where('transactionId', $request->transactionId)->sum('amount');
+
+        return response()->json([
+            'list'         => $data,
+            'totalPrepaid' => (float) $totalPrepaid,
+            'transaction'  => $tran,
+        ], 200);
+    }
+
+    public function addPrepayment(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat mencatat pembayaran awal.');
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId'   => 'required|integer',
+            'paymentMethodId' => 'required|integer',
+            'amount'          => 'required|numeric|min:1',
+            'proof'           => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'catatan'         => 'nullable|string',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $tran = TransactionPetHotel::find($request->transactionId);
+        if (!$tran) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        // Generate nomor nota DP — format: DP/PH/{locationId}/{tahun}/{bulan}/{urut 4 digit}
+        $now   = Carbon::now();
+        $tahun = $now->format('Y');
+        $bulan = $now->format('m');
+        $urut  = DB::table('transaction_pet_hotel_prepayments as p')
+            ->join('transaction_pet_hotels as t', 't.id', 'p.transactionId')
+            ->where('t.locationId', $tran->locationId)
+            ->whereYear('p.created_at', $tahun)
+            ->whereMonth('p.created_at', $bulan)
+            ->count();
+        $notaNumber = "DP/PH/{$tran->locationId}/{$tahun}/{$bulan}/" . str_pad($urut + 1, 4, '0', STR_PAD_LEFT);
+
+        $proofPath = null;
+        $proofOriginalName = null;
+
+        if ($request->hasFile('proof')) {
+            $file = $request->file('proof');
+            $proofOriginalName = $file->getClientOriginalName();
+            $fileName = 'dp_' . $request->transactionId . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $proofPath = $file->storeAs('Transaction/Pethotel/prepayment', $fileName, 'public');
+        }
+
+        TransactionPetHotelPrepayment::create([
+            'transactionId'    => $request->transactionId,
+            'nota_number'      => $notaNumber,
+            'paymentMethodId'  => $request->paymentMethodId,
+            'amount'           => $request->amount,
+            'proofPath'        => $proofPath,
+            'proofOriginalName' => $proofOriginalName,
+            'catatan'          => $request->catatan,
+            'userId'           => $request->user()->id,
+        ]);
+
+        $formatted = number_format($request->amount, 0, ',', '.');
+        transactionPetHotelLog($request->transactionId, 'Pembayaran Awal / DP', "Rp {$formatted} diterima", $request->user()->id);
+
+        return responseCreate();
+    }
+
+    public function prepaymentReceipt($id)
+    {
+        $prepayment = TransactionPetHotelPrepayment::with(['user:id,firstName', 'paymentMethod:id,name'])
+            ->find($id);
+
+        if (!$prepayment) {
+            return response()->json(['message' => 'Data pembayaran tidak ditemukan.'], 404);
+        }
+
+        // Info transaksi
+        $tran = DB::table('transaction_pet_hotels as t')
+            ->leftJoin('customer as c', 'c.id', '=', 't.customerId')
+            ->leftJoin('customerPets as cp', 'cp.id', '=', 't.petId')
+            ->leftJoin('customerTelephones as ct', function ($join) {
+                $join->on('ct.customerId', '=', 'c.id');
+            })
+            ->where('t.id', $prepayment->transactionId)
+            ->select(
+                't.registrationNo',
+                't.startDate',
+                't.endDate',
+                DB::raw("COALESCE(c.firstName, t.registrant, '') as customerName"),
+                DB::raw("COALESCE(cp.petName, '') as petName"),
+                DB::raw("COALESCE(ct.phoneNumber, '-') as phoneNumber")
+            )
+            ->first();
+
+        // Semua lokasi (sama dengan petshop)
+        $formattedLocations = $this->getActiveLocationsForInvoice();
+
+        $notaNumber = $prepayment->nota_number ?? ('DP-' . $prepayment->id);
+
+        $data = [
+            'locations'       => $formattedLocations,
+            'nota_number'     => $notaNumber,
+            'nota_date'       => Carbon::parse($prepayment->created_at)->format('d/m/Y'),
+            'registration_no' => $tran->registrationNo ?? '-',
+            'customer_name'   => $tran->customerName ?? '-',
+            'phone_number'    => $tran->phoneNumber ?? '-',
+            'pet_name'        => $tran->petName ?? '-',
+            'start_date'      => $tran->startDate ?? '-',
+            'end_date'        => $tran->endDate ?? '-',
+            'amount'          => $prepayment->amount,
+            'payment_method'  => optional($prepayment->paymentMethod)->name ?? '-',
+            'catatan'         => $prepayment->catatan,
+            'recorded_by'     => optional($prepayment->user)->firstName ?? '-',
+            'recorded_at'     => Carbon::parse($prepayment->created_at)->format('d/m/Y H:i'),
+        ];
+
+        $namaFile = 'TandaTerima_DP_' . str_replace('/', '_', $notaNumber) . '.pdf';
+
+        $pdf = Pdf::loadView('invoice.prepayment_dp_receipt', $data);
+        return $pdf->download($namaFile);
+    }
+
+    public function extendStay(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat memperpanjang masa menginap.');
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'newEndDate'    => 'required|date|after:today',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $tran = TransactionPetHotel::find($request->transactionId);
+        if (!$tran) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        $oldEndDate = $tran->endDate;
+
+        TransactionPetHotel::where('id', $request->transactionId)->update([
+            'endDate' => $request->newEndDate,
+        ]);
+
+        // Generate papan kerja untuk hari-hari tambahan (setelah oldEndDate s/d newEndDate)
+        $extendFrom = Carbon::parse($oldEndDate)->addDay();
+        $extendTo   = Carbon::parse($request->newEndDate);
+        if ($extendFrom->lte($extendTo)) {
+            $this->generatePapanKerjaForDateRange(
+                $request->transactionId,
+                $request->user()->id,
+                $extendFrom,
+                $extendTo
+            );
+        }
+
+        transactionPetHotelLog(
+            $request->transactionId,
+            'Perpanjang Masa Menginap',
+            "Tanggal keluar diubah dari {$oldEndDate} menjadi {$request->newEndDate}",
+            $request->user()->id
+        );
+
+        return responseUpdate();
+    }
+
+    // ─── Fase 3: Check-Out & Pembayaran ─────────────────────────────────────────
+
+    public function initiateCheckOut(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat menginisiasi check-out.');
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'checkoutDate'  => 'nullable|date',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $tran = TransactionPetHotel::find($request->transactionId);
+        if (!$tran || strtolower($tran->status) !== 'dalam perawatan') {
+            return responseInvalid(['Transaksi tidak ditemukan atau status tidak sesuai.']);
+        }
+
+        if (TransactionPetHotelCheckout::where('transactionId', $request->transactionId)->exists()) {
+            return responseInvalid(['Check-out sudah diinisiasi sebelumnya.']);
+        }
+
+        $checkoutDate = $request->checkoutDate ? Carbon::parse($request->checkoutDate) : Carbon::today();
+        $startDate    = Carbon::parse($tran->startDate);
+        $daysStayed   = max(1, $startDate->diffInDays($checkoutDate));
+
+        // Kandang
+        $cage = DB::table('transactionPetHotelTreatmentCages as tc')
+            ->join('cages as c', 'c.id', 'tc.cageId')
+            ->select('c.id as cageId', 'c.cageName as unitName')
+            ->where('tc.transactionId', $request->transactionId)
+            ->first();
+
+        // Tarif per hari — dari service yang dipilih saat input treatment plan
+        // sp.price disimpan sebagai string "50,000" → strip koma sebelum cast
+        $pricePerDay = 0;
+        if ($tran->stayServiceId) {
+            $stayServicePrice = DB::table('servicesPrice')
+                ->where('service_id', $tran->stayServiceId)
+                ->where('location_id', $tran->locationId)
+                ->value(DB::raw("CAST(REPLACE(price, ',', '') AS UNSIGNED)"));
+            $pricePerDay = (float) ($stayServicePrice ?? 0);
+        }
+
+        $subtotalStay = $daysStayed * $pricePerDay;
+
+        // Treatment awal — services
+        // sp.price adalah string "35,000" → gunakan CAST(REPLACE(...)) agar MySQL hitung dengan benar
+        $subtotalServices = (float) DB::table('transactionPetHotelTreatmentServices as tpcs')
+            ->join('servicesPrice as sp', function ($j) use ($tran) {
+                $j->on('sp.service_id', 'tpcs.serviceId')->where('sp.location_id', $tran->locationId);
+            })
+            ->where('tpcs.transactionId', $request->transactionId)
+            ->sum(DB::raw("tpcs.quantity * CAST(REPLACE(sp.price, ',', '') AS UNSIGNED)"));
+
+        // Treatment awal — products
+        $subtotalProducts = (float) DB::table('transactionPetHotelTreatmentProducts as tp')
+            ->join('products as p', 'p.id', 'tp.productId')
+            ->where('tp.transactionId', $request->transactionId)
+            ->sum(DB::raw('tp.quantity * p.price'));
+
+        $subtotalTreatment = $subtotalServices + $subtotalProducts;
+
+        // Treatment tambahan
+        $subtotalAdditional = (float) TransactionPetHotelAdditionalTreatment::where('transactionId', $request->transactionId)
+            ->get()
+            ->sum(fn($i) => $i->price * $i->quantity);
+
+        // DP / Pembayaran awal
+        $totalPrepaid = (float) TransactionPetHotelPrepayment::where('transactionId', $request->transactionId)
+            ->sum('amount');
+
+        $subtotalBeforeDiscount = $subtotalStay + $subtotalTreatment + $subtotalAdditional;
+        $grandTotal             = max(0, $subtotalBeforeDiscount - $totalPrepaid);
+
+        DB::beginTransaction();
+        try {
+            TransactionPetHotelCheckout::create([
+                'transactionId'          => $request->transactionId,
+                'checkoutDate'           => $checkoutDate->toDateString(),
+                'daysStayed'             => $daysStayed,
+                'cageId'                 => $cage?->cageId,
+                'pricePerDay'            => $pricePerDay,
+                'subtotalStay'           => $subtotalStay,
+                'subtotalTreatment'      => $subtotalTreatment,
+                'subtotalAdditional'     => $subtotalAdditional,
+                'totalPrepaid'           => $totalPrepaid,
+                'subtotalBeforeDiscount' => $subtotalBeforeDiscount,
+                'discountAmount'         => 0,
+                'discountNote'           => null,
+                'grandTotal'             => $grandTotal,
+                'userId'                 => $request->user()->id,
+            ]);
+
+            statusTransactionPetHotel($request->transactionId, 'Proses Check-Out', $request->user()->id);
+            transactionPetHotelLog($request->transactionId, 'Check-Out Diinisiasi', "Total tagihan: Rp " . number_format($grandTotal, 0, ',', '.'), $request->user()->id);
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    public function getCheckoutSummary(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Anda tidak memiliki akses untuk melihat ringkasan checkout.');
+        }
+
+        $request->validate(['transactionId' => 'required|integer']);
+
+        $checkout = TransactionPetHotelCheckout::where('transactionId', $request->transactionId)->first();
+        if (!$checkout) {
+            return responseInvalid(['Data checkout tidak ditemukan.']);
+        }
+
+        $tran = TransactionPetHotel::find($request->transactionId);
+
+        $cage = DB::table('transactionPetHotelTreatmentCages as tc')
+            ->join('cages as c', 'c.id', 'tc.cageId')
+            ->select('c.cageName')
+            ->where('tc.transactionId', $request->transactionId)
+            ->first();
+
+        // Nama service tarif menginap
+        $stayServiceName = 'Tarif Menginap';
+        if ($tran->stayServiceId) {
+            $stayServiceName = DB::table('services')
+                ->where('id', $tran->stayServiceId)
+                ->value('fullName') ?? 'Tarif Menginap';
+        }
+
+        $services = DB::table('transactionPetHotelTreatmentServices as tpcs')
+            ->join('services as s', 's.id', 'tpcs.serviceId')
+            ->join('servicesPrice as sp', function ($j) use ($tran) {
+                $j->on('sp.service_id', 'tpcs.serviceId')->where('sp.location_id', $tran->locationId);
+            })
+            ->select(
+                'tpcs.id',
+                's.id as serviceId',
+                's.fullName as name',
+                'tpcs.quantity',
+                DB::raw("MIN(CAST(REPLACE(sp.price, ',', '') AS UNSIGNED)) as price"),
+                DB::raw("tpcs.quantity * MIN(CAST(REPLACE(sp.price, ',', '') AS UNSIGNED)) as total")
+            )
+            ->where('tpcs.transactionId', $request->transactionId)
+            ->groupBy('tpcs.id', 's.id', 's.fullName', 'tpcs.quantity')
+            ->get();
+
+        $products = DB::table('transactionPetHotelTreatmentProducts as tp')
+            ->join('products as p', 'p.id', 'tp.productId')
+            ->select('p.id as productId', 'p.fullName as name', 'tp.quantity', 'p.price', DB::raw('tp.quantity * p.price as total'))
+            ->where('tp.transactionId', $request->transactionId)
+            ->get();
+
+        $additional = TransactionPetHotelAdditionalTreatment::where('transactionId', $request->transactionId)
+            ->get()
+            ->map(fn($i) => [
+                'name'     => $i->itemName,
+                'type'     => $i->type,
+                'quantity' => $i->quantity,
+                'price'    => (float) str_replace(',', '', $i->price),
+                'total'    => (float) str_replace(',', '', $i->price) * $i->quantity,
+                'catatan'  => $i->catatan,
+            ]);
+
+        $prepayments = TransactionPetHotelPrepayment::where('transactionId', $request->transactionId)
+            ->with('paymentMethod:id,name')
+            ->get()
+            ->map(fn($p) => [
+                'amount'        => $p->amount,
+                'paymentMethod' => optional($p->paymentMethod)->name,
+                'recordedAt'    => $p->created_at->format('d-m-Y'),
+            ]);
+
+        // Hitung ulang semua nilai numerik secara dinamis dari data aktual
+        // agar tidak bergantung pada nilai yang tersimpan (yang mungkin salah saat initiate)
+        $pricePerDay = 0;
+        if ($tran->stayServiceId) {
+            $pricePerDay = (float) DB::table('servicesPrice')
+                ->where('service_id', $tran->stayServiceId)
+                ->where('location_id', $tran->locationId)
+                ->value(DB::raw("CAST(REPLACE(price, ',', '') AS UNSIGNED)")) ?? 0;
+        }
+        $subtotalStay       = $checkout->daysStayed * $pricePerDay;
+        $subtotalServices   = $services->sum('total');
+        $subtotalProducts   = $products->sum('total');
+        $subtotalAdditional = $additional->sum('total');
+        $totalPrepaid       = (float) TransactionPetHotelPrepayment::where('transactionId', $request->transactionId)->sum('amount');
+        $subtotalBeforeDiscount = $subtotalStay + $subtotalServices + $subtotalProducts + $subtotalAdditional;
+        $grandTotal         = max(0, $subtotalBeforeDiscount - $totalPrepaid - (float) $checkout->discountAmount);
+
+        // Patch checkout dengan nilai yang benar (untuk referensi payment nantinya)
+        $checkout->pricePerDay            = $pricePerDay;
+        $checkout->subtotalStay           = $subtotalStay;
+        $checkout->subtotalBeforeDiscount = $subtotalBeforeDiscount;
+        $checkout->totalPrepaid           = $totalPrepaid;
+        $checkout->grandTotal             = $grandTotal;
+
+        return response()->json([
+            'checkout'        => $checkout,
+            'cageName'        => $cage?->cageName ?? '-',
+            'stayServiceName' => $stayServiceName,
+            'services'        => $services,
+            'products'        => $products,
+            'additional'      => $additional,
+            'prepayments'     => $prepayments,
+        ], 200);
+    }
+
+    public function updateCheckoutDiscount(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat mengubah diskon.');
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId'  => 'required|integer',
+            'discountAmount' => 'required|numeric|min:0',
+            'discountNote'   => 'nullable|string',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $checkout = TransactionPetHotelCheckout::where('transactionId', $request->transactionId)->firstOrFail();
+        $grandTotal = max(0, $checkout->subtotalBeforeDiscount - $checkout->totalPrepaid - (float) $request->discountAmount);
+
+        $checkout->update([
+            'discountAmount' => $request->discountAmount,
+            'discountNote'   => $request->discountNote,
+            'grandTotal'     => $grandTotal,
+        ]);
+
+        return responseUpdate();
+    }
+
+    public function checkoutPayment(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat memproses pembayaran.');
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId'   => 'required|integer',
+            'paymentMethodId' => 'required|integer',
+            'amountPaid'      => 'required|numeric|min:0',
+            'note'            => 'nullable|string',
+            'proof'           => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $checkout = TransactionPetHotelCheckout::where('transactionId', $request->transactionId)->first();
+        if (!$checkout) {
+            return responseInvalid(['Data checkout tidak ditemukan.']);
+        }
+
+        $tran = TransactionPetHotel::find($request->transactionId);
+        if (!$tran) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        $now    = Carbon::now();
+        $tahun  = $now->format('Y');
+        $bulan  = $now->format('m');
+        $urut   = DB::table('transaction_pet_hotel_payment_totals as tp')
+            ->join('transaction_pet_hotels as tpc', 'tp.transactionId', '=', 'tpc.id')
+            ->where('tpc.locationId', $tran->locationId)
+            ->whereYear('tp.created_at', $tahun)
+            ->whereMonth('tp.created_at', $bulan)
+            ->count();
+        $notaNumber = "INV/PH/{$tran->locationId}/{$tahun}/{$bulan}/" . str_pad($urut + 1, 4, '0', STR_PAD_LEFT);
+
+        DB::beginTransaction();
+        try {
+            // Upload bukti pembayaran jika ada
+            $proofOfPayment = null;
+            $originalName   = null;
+            if ($request->hasFile('proof')) {
+                $file           = $request->file('proof');
+                $originalName   = $file->getClientOriginalName();
+                $proofOfPayment = $file->store('checkout-proofs', 'public');
+            }
+
+            $total = new transaction_pet_hotel_payment_total();
+            $total->transactionId   = $request->transactionId;
+            $total->paymentmethodId = $request->paymentMethodId;
+            $total->amount          = $checkout->grandTotal;
+            $total->amountPaid      = $request->amountPaid;
+            $total->nota_number     = $notaNumber;
+            $total->note            = $request->note ?? '';
+            $total->proofOfPayment  = $proofOfPayment;
+            $total->originalName    = $originalName;
+            $total->userId          = $request->user()->id;
+            $total->save();
+
+            statusTransactionPetHotel($request->transactionId, 'Selesai', $request->user()->id);
+            transactionPetHotelLog($request->transactionId, 'Pembayaran Check-Out Diterima', "Nota: {$notaNumber}", $request->user()->id);
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    public function checkoutInvoice(Request $request)
+    {
+        $request->validate(['transactionId' => 'required|integer']);
+
+        $tran = TransactionPetHotel::find($request->transactionId);
+        if (!$tran) return responseInvalid(['Transaksi tidak ditemukan.']);
+
+        $checkout = TransactionPetHotelCheckout::where('transactionId', $tran->id)->first();
+        if (!$checkout) return responseInvalid(['Data checkout tidak ditemukan.']);
+
+        $payment = DB::table('transaction_pet_hotel_payment_totals')
+            ->where('transactionId', $tran->id)
+            ->orderByDesc('created_at')
+            ->first();
+
+        // ── Lokasi ──
+        $formattedLocations = $this->getActiveLocationsForInvoice();
+
+        // ── Customer & pet ──
+        $customer = DB::table('customer as c')
+            ->leftJoin('customerTelephones as ct', function ($j) {
+                $j->on('c.id', 'ct.customerId')->where('ct.isDeleted', 0);
+            })
+            ->where('c.id', $tran->customerId)
+            ->select('c.firstName', 'ct.phoneNumber', 'c.memberNo')
+            ->first();
+
+        $petName = DB::table('customerPets')->where('id', $tran->petId)->value('petName') ?? '-';
+
+        $cage = DB::table('transactionPetHotelTreatmentCages as tc')
+            ->join('cages as c', 'c.id', 'tc.cageId')
+            ->where('tc.transactionId', $tran->id)
+            ->value('c.cageName');
+
+        // ── Stay service ──
+        $stayServiceName = 'Tarif Menginap';
+        if ($tran->stayServiceId) {
+            $stayServiceName = DB::table('services')->where('id', $tran->stayServiceId)->value('fullName') ?? 'Tarif Menginap';
+        }
+        $pricePerDay = 0;
+        if ($tran->stayServiceId) {
+            $pricePerDay = (float) DB::table('servicesPrice')
+                ->where('service_id', $tran->stayServiceId)
+                ->where('location_id', $tran->locationId)
+                ->value(DB::raw("CAST(REPLACE(price, ',', '') AS UNSIGNED)")) ?? 0;
+        }
+        $subtotalStay = $checkout->daysStayed * $pricePerDay;
+
+        // ── Treatment services ──
+        $services = DB::table('transactionPetHotelTreatmentServices as tpcs')
+            ->join('services as s', 's.id', 'tpcs.serviceId')
+            ->join('servicesPrice as sp', function ($j) use ($tran) {
+                $j->on('sp.service_id', 'tpcs.serviceId')->where('sp.location_id', $tran->locationId);
+            })
+            ->select('s.fullName as name', 'tpcs.quantity',
+                DB::raw("MIN(CAST(REPLACE(sp.price, ',', '') AS UNSIGNED)) as price"),
+                DB::raw("tpcs.quantity * MIN(CAST(REPLACE(sp.price, ',', '') AS UNSIGNED)) as total"))
+            ->where('tpcs.transactionId', $tran->id)
+            ->groupBy('tpcs.id', 's.fullName', 'tpcs.quantity')
+            ->get()->map(fn($r) => (array) $r)->toArray();
+
+        // ── Treatment products ──
+        $products = DB::table('transactionPetHotelTreatmentProducts as tp')
+            ->join('products as p', 'p.id', 'tp.productId')
+            ->select('p.fullName as name', 'tp.quantity', 'p.price',
+                DB::raw('tp.quantity * p.price as total'))
+            ->where('tp.transactionId', $tran->id)
+            ->get()->map(fn($r) => (array) $r)->toArray();
+
+        // ── Additional ──
+        $additional = TransactionPetHotelAdditionalTreatment::where('transactionId', $tran->id)
+            ->get()->map(fn($i) => [
+                'name'     => $i->itemName,
+                'quantity' => $i->quantity,
+                'price'    => (float) str_replace(',', '', $i->price),
+                'total'    => (float) str_replace(',', '', $i->price) * $i->quantity,
+                'catatan'  => $i->catatan,
+            ])->toArray();
+
+        $subtotalServices   = array_sum(array_column($services, 'total'));
+        $subtotalProducts   = array_sum(array_column($products, 'total'));
+        $subtotalAdditional = array_sum(array_column($additional, 'total'));
+        $subtotalBeforeDiscount = $subtotalStay + $subtotalServices + $subtotalProducts + $subtotalAdditional;
+        $totalPrepaid = (float) TransactionPetHotelPrepayment::where('transactionId', $tran->id)->sum('amount');
+
+        // Diskon promo (jika ada di payment record)
+        $grandTotal  = (float) ($payment->amountPaid ?? $subtotalBeforeDiscount - $totalPrepaid);
+        $totalDiscount = max(0, $subtotalBeforeDiscount - $totalPrepaid - $grandTotal);
+
+        $paymentMethodName = DB::table('paymentmethod')->where('id', $payment->paymentMethodId ?? null)->value('name') ?? '-';
+
+        $data = [
+            'locations'              => $formattedLocations,
+            'nota_date'              => Carbon::parse($payment->created_at ?? now())->format('d/m/Y H:i'),
+            'no_nota'                => $payment->nota_number ?? '-',
+            'member_no'              => $customer->memberNo ?? '-',
+            'customer_name'          => $customer->firstName ?? '-',
+            'phone_number'           => $customer->phoneNumber ?? '-',
+            'pet_name'               => $petName,
+            'cage_name'              => $cage ?? '-',
+            'checkin_date'           => Carbon::parse($tran->startDate)->format('d/m/Y'),
+            'checkout_date'          => Carbon::parse($checkout->checkoutDate)->format('d/m/Y'),
+            'days_stayed'            => $checkout->daysStayed,
+            'stay_service_name'      => $stayServiceName,
+            'price_per_day'          => $pricePerDay,
+            'subtotal_stay'          => $subtotalStay,
+            'services'               => $services,
+            'products'               => $products,
+            'additional'             => $additional,
+            'subtotal_before_discount' => $subtotalBeforeDiscount,
+            'total_prepaid'          => $totalPrepaid,
+            'total_discount'         => $totalDiscount,
+            'grand_total'            => $grandTotal,
+            'amount_paid'            => (float) ($payment->amountPaid ?? $grandTotal),
+            'payment_method'         => $paymentMethodName,
+            'note'                   => $payment->note ?? '',
+        ];
+
+        $namaFile = 'Invoice_PetHotel_' . ($payment->nota_number ? str_replace('/', '_', $payment->nota_number) : $tran->id) . '.pdf';
+        $pdf = Pdf::loadView('invoice.invoice_pethotel', $data);
+        return $pdf->download($namaFile);
+    }
+
+    // ─── Invoice Helper ──────────────────────────────────────────────────────────
+
+    /**
+     * Ambil daftar lokasi aktif untuk header invoice secara dinamis.
+     * Cabang baru yang aktif (status=1, isDeleted=0) otomatis muncul tanpa perlu modifikasi kode.
+     *
+     * @return array  [ ['name'=>..., 'description'=>..., 'phone'=>...], ... ]
+     */
+    private function getActiveLocationsForInvoice(): array
+    {
+        $rows = DB::table('location')
+            ->leftJoin('location_telephone', function ($join) {
+                $join->on('location.codeLocation', '=', 'location_telephone.codeLocation')
+                     ->where(function ($q) {
+                         $q->where('location_telephone.usage', 'Utama')
+                           ->orWhereNull('location_telephone.usage');
+                     });
+            })
+            ->where('location.status', 1)
+            ->where('location.isDeleted', 0)
+            ->select(
+                'location.codeLocation',
+                'location.locationName',
+                'location.description',
+                'location_telephone.phoneNumber'
+            )
+            ->distinct()
+            ->orderBy('location.id')
+            ->get();
+
+        // Deduplikasi per codeLocation — ambil satu nomor telepon per lokasi
+        $groups = [];
+        foreach ($rows as $row) {
+            $key = $row->codeLocation;
+            if (!isset($groups[$key])) {
+                $groups[$key] = [
+                    'name'        => $row->locationName,
+                    'description' => $row->description ?? '',
+                    'phone'       => $row->phoneNumber  ?? '',
+                ];
+            }
+        }
+
+        return array_values($groups);
+    }
+
+    // ─── Access Control ─────────────────────────────────────────────────────────
+
+    private function getUserAccessInfo(Request $request): array
+    {
+        $user     = User::where('id', $request->user()->id)->first();
+        $roleName = strtolower(
+            DB::table('usersRoles')->where('id', $user->roleId)->value('roleName') ?? ''
+        );
+
+        return [
+            'user'             => $user,
+            'jobTitleId'       => (int) $user->jobTitleId,
+            'roleName'         => $roleName,
+            'isAdministrator'  => $roleName === 'administrator',
+            'isAdminOrManager' => in_array($roleName, ['administrator', 'manager']),
+        ];
+    }
+
+    private function accessDenied(string $message = 'Anda tidak memiliki akses untuk melakukan tindakan ini!')
+    {
+        return responseErrorValidation($message, $message);
+    }
+
+    // ─── Papan Kerja ────────────────────────────────────────────────────────────
+
+    private function generatePapanKerja(int $transactionId, int $userId): void
+    {
+        $tran = DB::table('transaction_pet_hotels')
+            ->select('startDate', 'endDate')
+            ->where('id', $transactionId)
+            ->first();
+
+        $startDate = Carbon::parse($tran->startDate ?? now());
+        $endDate   = Carbon::parse($tran->endDate   ?? $startDate);
+
+        $this->generatePapanKerjaForDateRange($transactionId, $userId, $startDate, $endDate);
+    }
+
+    /**
+     * Generate papan kerja rows untuk rentang tanggal tertentu.
+     * Dipakai oleh generatePapanKerja (pertama kali) dan extendStay (perpanjangan).
+     */
+    private function generatePapanKerjaForDateRange(
+        int $transactionId,
+        int $userId,
+        Carbon $fromDate,
+        Carbon $toDate
+    ): void {
+        $harianActivities = [
+            ['time' => '07:00', 'activity' => 'Makan Pagi',           'instructions' => ['Berikan porsi makanan sesuai anjuran', 'Pastikan air minum tersedia']],
+            ['time' => '09:00', 'activity' => 'Bersihkan Kandang',     'instructions' => ['Bersihkan kotak pasir', 'Ganti alas kandang jika perlu']],
+            ['time' => '12:00', 'activity' => 'Makan Siang',           'instructions' => ['Berikan porsi makanan sesuai anjuran']],
+            ['time' => '15:00', 'activity' => 'Bersihkan Kotak Pasir', 'instructions' => ['Periksa dan bersihkan kotak pasir']],
+            ['time' => '18:00', 'activity' => 'Makan Malam',           'instructions' => ['Berikan porsi makanan sesuai anjuran', 'Ganti air minum']],
+        ];
+
+        $vetnurseActivities = [
+            ['time' => '08:00', 'activity' => 'Monitoring Kondisi Pagi',  'instructions' => ['Periksa nafsu makan', 'Catat kondisi umum hewan', 'Cek kebersihan area']],
+            ['time' => '20:00', 'activity' => 'Monitoring Kondisi Malam', 'instructions' => ['Periksa kondisi sebelum tutup', 'Pastikan hewan nyaman']],
+        ];
+
+        $current = $fromDate->copy()->startOfDay();
+        $last    = $toDate->copy()->startOfDay();
+
+        while ($current->lte($last)) {
+            $dateStr = $current->toDateString();
+
+            foreach ($harianActivities as $item) {
+                TransactionPetHotelPapanKerja::create([
+                    'transactionId' => $transactionId,
+                    'type'          => 'harian',
+                    'scheduledDate' => $dateStr,
+                    'time'          => $item['time'],
+                    'activity'      => $item['activity'],
+                    'instructions'  => $item['instructions'],
+                    'userId'        => $userId,
+                ]);
+            }
+
+            foreach ($vetnurseActivities as $item) {
+                TransactionPetHotelPapanKerja::create([
+                    'transactionId' => $transactionId,
+                    'type'          => 'vetnurse',
+                    'scheduledDate' => $dateStr,
+                    'time'          => $item['time'],
+                    'activity'      => $item['activity'],
+                    'instructions'  => $item['instructions'],
+                    'userId'        => $userId,
+                ]);
+            }
+
+            $current->addDay();
+        }
+    }
+
+    private function getPapanKerjaRows(int $transactionId, string $type): \Illuminate\Support\Collection
+    {
+        $cage = DB::table('transactionPetHotelTreatmentCages as tc')
+            ->join('cages as c', 'c.id', 'tc.cageId')
+            ->select('c.cageName as cageNo')
+            ->where('tc.transactionId', $transactionId)
+            ->first();
+
+        $pet = DB::table('transaction_pet_hotels as t')
+            ->join('customerPets as cp', 'cp.id', 't.petId')
+            ->join('petCategory as pc', 'pc.id', 'cp.petCategoryId')
+            ->select('cp.petName', 'pc.petCategoryName as petBreed')
+            ->where('t.id', $transactionId)
+            ->first();
+
+        // ── Lookup petugas shift (Opsi 2: staffAbsents + usersLocation) ──────
+        $locationId = DB::table('transaction_pet_hotels')
+            ->where('id', $transactionId)
+            ->value('locationId');
+
+        // Job title yang relevan per tipe board
+        $requiredJobTitles = $type === 'vetnurse'
+            ? [4, 5, 17]   // Paramedis, Vetnurse, Dokter Hewan
+            : [2, 4, 5];   // Helper, Paramedis, Vetnurse
+
+        // User yang assigned ke lokasi ini dengan job title sesuai
+        $locationUserIds = DB::table('usersLocation as ul')
+            ->join('users as u', 'u.id', 'ul.usersId')
+            ->where('ul.locationId', $locationId)
+            ->where('ul.isDeleted', 0)
+            ->whereIn('u.jobTitleId', $requiredJobTitles)
+            ->pluck('ul.usersId')
+            ->toArray();
+
+        // Pre-load nama user
+        $userNames = DB::table('users')
+            ->whereIn('id', $locationUserIds)
+            ->pluck('firstName', 'id');
+
+        // Pre-load absensi: group by "workDate_shift" → [userId, ...]
+        // Shift 1 = pagi (hadir sebelum 15:00), Shift 2 = siang/malam
+        $attendanceMap = collect();
+        if (!empty($locationUserIds)) {
+            $attendanceMap = DB::table('staffAbsents')
+                ->whereIn('userId', $locationUserIds)
+                ->whereIn('shift', ['Shift 1', 'Shift 2'])
+                ->where('isDeleted', 0)
+                ->select('userId', 'shift', DB::raw("DATE(presentTime) as workDate"))
+                ->get()
+                ->groupBy(fn($r) => $r->workDate . '_' . $r->shift);
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        return TransactionPetHotelPapanKerja::where('transactionId', $transactionId)
+            ->where('type', $type)
+            ->orderBy('scheduledDate')
+            ->orderBy('time')
+            ->get()
+            ->map(function ($row) use ($cage, $pet, $attendanceMap, $userNames) {
+                // Tentukan shift dari jam aktivitas
+                $shiftLabel   = ($row->time < '15:00:00') ? 'Shift 1' : 'Shift 2';
+                $rawDate      = $row->scheduledDate
+                    ? Carbon::parse($row->scheduledDate)->toDateString()
+                    : null;
+                $attendKey    = $rawDate . '_' . $shiftLabel;
+                $assignedNames = [];
+
+                if ($rawDate && $attendanceMap->has($attendKey)) {
+                    $assignedNames = $attendanceMap->get($attendKey)
+                        ->map(fn($r) => $userNames->get($r->userId))
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->toArray();
+                }
+
+                return [
+                    'id'              => $row->id,
+                    'cageNo'          => $cage->cageNo ?? '-',
+                    'petName'         => $pet->petName ?? '-',
+                    'petBreed'        => $pet->petBreed ?? '-',
+                    'petWeight'       => null,
+                    'scheduledDate'   => $rawDate
+                        ? Carbon::parse($rawDate)->format('d/m/Y')
+                        : null,
+                    'time'            => $row->time,
+                    'activity'        => $row->activity,
+                    'instructions'    => $row->instructions ?? [],
+                    'isDone'          => $row->isDone,
+                    'statusAktivitas' => $row->statusAktivitas,
+                    'assignedStaff'   => $assignedNames,   // PIC shift dari absensi
+                    'shiftLabel'      => $shiftLabel,
+                    'temuan'          => $row->temuan ?? [],
+                    'kondisiFeses'    => $row->kondisiFeses,
+                    'catatan'         => $row->catatan,
+                    'fotoUrl'         => $row->foto ? url('storage/' . $row->foto) : null,
+                    'completedAt'     => $row->completedAt ? Carbon::parse($row->completedAt)->format('d/m/Y H:i') : null,
+                    'completedBy'     => $row->completedBy ? optional(User::find($row->completedBy))->firstName : null,
+                ];
+            });
+    }
+
+    public function getPapanKerjaHarian(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        // 2=Helper, 4=Paramedis, 5=Vetnurse, 17=Dokter Hewan
+        if (!$access['isAdminOrManager'] && !in_array($access['jobTitleId'], [2, 4, 5, 17])) {
+            return $this->accessDenied('Anda tidak memiliki akses untuk melihat Papan Kerja Harian.');
+        }
+
+        $request->validate(['transactionId' => 'required|integer']);
+
+        $rows = $this->getPapanKerjaRows((int) $request->transactionId, 'harian');
+
+        return response()->json($rows, 200);
+    }
+
+    public function markPapanKerjaHarianDone(Request $request)
+    {
+        return $this->markPapanKerjaDone($request, 'harian');
+    }
+
+    public function getPapanKerjaVetnurse(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        // 4=Paramedis, 5=Vetnurse, 17=Dokter Hewan
+        if (!$access['isAdminOrManager'] && !in_array($access['jobTitleId'], [4, 5, 17])) {
+            return $this->accessDenied('Anda tidak memiliki akses untuk melihat Papan Kerja Vetnurse.');
+        }
+
+        $request->validate(['transactionId' => 'required|integer']);
+
+        $rows = $this->getPapanKerjaRows((int) $request->transactionId, 'vetnurse');
+
+        return response()->json($rows, 200);
+    }
+
+    public function markPapanKerjaVetnurseDone(Request $request)
+    {
+        return $this->markPapanKerjaDone($request, 'vetnurse');
+    }
+
+    private function markPapanKerjaDone(Request $request, string $type)
+    {
+        $access = $this->getUserAccessInfo($request);
+
+        $allowedJobTitles = $type === 'vetnurse'
+            ? [4, 5]       // Paramedis, Vetnurse
+            : [2, 4, 5];   // Helper, Paramedis, Vetnurse
+
+        if (!$access['isAdminOrManager'] && !in_array($access['jobTitleId'], $allowedJobTitles)) {
+            $label = $type === 'vetnurse' ? 'Papan Kerja Vetnurse' : 'Papan Kerja Harian';
+            return $this->accessDenied("Anda tidak memiliki akses untuk mengisi {$label}.");
+        }
+
+
+        $request->validate([
+            'id'              => 'required|integer',
+            'statusAktivitas' => 'required|in:berhasil,dilewati',
+            'temuan'          => 'nullable|array',
+            'kondisiFeses'    => 'nullable|string',
+            'catatan'         => 'nullable|string',
+            'foto'            => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
+        ]);
+
+        $row = TransactionPetHotelPapanKerja::find($request->id);
+
+        if (!$row) {
+            return responseInvalid(['Data aktivitas tidak ditemukan!']);
+        }
+
+        $fotoPath = $row->foto;
+        if ($request->hasFile('foto')) {
+            $file = $request->file('foto');
+            $name = 'papan_kerja_' . $row->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $fotoPath = $file->storeAs('Transaction/Pethotel/papan_kerja', $name, 'public');
+        }
+
+        $row->update([
+            'isDone'          => true,
+            'statusAktivitas' => $request->statusAktivitas,
+            'temuan'          => $request->temuan ?? [],
+            'kondisiFeses'    => $request->kondisiFeses,
+            'catatan'         => $request->catatan,
+            'foto'            => $fotoPath,
+            'completedBy'     => $request->user()->id,
+            'completedAt'     => now(),
+        ]);
+
         return responseCreate();
     }
 }

@@ -27,6 +27,7 @@ class TransactionPetHotel extends Model
         'startDate',
         'endDate',
         'doctorId',
+        'stayServiceId',
         'note',
         'userId',
         'userUpdateId'

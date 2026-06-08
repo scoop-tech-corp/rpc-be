@@ -111,49 +111,33 @@ class TransactionPetShopController
     private function Search(Request $request)
     {
         $temp_column = [];
+        $searchTerm = '%' . $request->search . '%';
 
-
+        // Optimize: Single query instead of 3 separate queries
         $data = DB::table('transactionpetshop as tp')
-            ->select('tp.registrationNo')
-            ->where('tp.isDeleted', '=', 0);
+            ->leftJoin('customer as c', 'c.id', '=', 'tp.customerId')
+            ->leftJoin('location as l', 'l.id', '=', 'tp.locationId')
+            ->where('tp.isDeleted', '=', 0)
+            ->where(function($query) use ($searchTerm) {
+                $query->where('tp.registrationNo', 'like', $searchTerm)
+                      ->orWhere('c.firstName', 'like', $searchTerm)
+                      ->orWhere('l.locationName', 'like', $searchTerm);
+            })
+            ->select(
+                DB::raw('CASE WHEN tp.registrationNo LIKE ? THEN "tp.registrationNo" END as col1'),
+                DB::raw('CASE WHEN c.firstName LIKE ? THEN "c.firstName" END as col2'),
+                DB::raw('CASE WHEN l.locationName LIKE ? THEN "l.locationName" END as col3')
+            )
+            ->setBindings([$searchTerm, $searchTerm, $searchTerm])
+            ->get();
 
-        if ($request->search) {
-            $data = $data->where('tp.registrationNo', 'like', '%' . $request->search . '%');
+        foreach ($data as $item) {
+            if ($item->col1) $temp_column[] = 'tp.registrationNo';
+            if ($item->col2) $temp_column[] = 'c.firstName';
+            if ($item->col3) $temp_column[] = 'l.locationName';
         }
 
-        if ($data->exists()) {
-            $temp_column[] = 'tp.registrationNo';
-        }
-
-
-        $data = DB::table('transactionpetshop as tp')
-            ->join('customer as c', 'c.id', '=', 'tp.customerId')
-            ->select('c.firstName')
-            ->where('tp.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('c.firstName', 'like', '%' . $request->search . '%');
-        }
-
-        if ($data->exists()) {
-            $temp_column[] = 'c.firstName';
-        }
-
-
-        $data = DB::table('transactionpetshop as tp')
-            ->join('location as l', 'l.id', '=', 'tp.locationId')
-            ->select('l.locationName')
-            ->where('tp.isDeleted', '=', 0);
-
-        if ($request->search) {
-            $data = $data->where('l.locationName', 'like', '%' . $request->search . '%');
-        }
-
-        if ($data->exists()) {
-            $temp_column[] = 'l.locationName';
-        }
-
-        return $temp_column;
+        return array_unique($temp_column);
     }
 
     public function create(Request $request)
@@ -408,6 +392,9 @@ class TransactionPetShopController
             //     (empty($promoResult) || empty($promoResult['purchases']))
             // )
 
+            // Optimize: Index discountedProducts by productId for O(1) lookup
+            $discountedByProduct = collect($discountedProducts)->keyBy('productId')->toArray();
+
             foreach ($request->productList as $prod) {
                 $unitPrice = $prod['price'];
                 $quantity = $prod['quantity'];
@@ -415,8 +402,8 @@ class TransactionPetShopController
                 $finalPrice = $unitPrice;
                 $promoId = $prod['promoId'] ?? null;
 
-                $discountProduct = collect($discountedProducts)->firstWhere('productId', $prod['productId']);
-                if ($discountProduct) {
+                if (isset($discountedByProduct[$prod['productId']])) {
+                    $discountProduct = $discountedByProduct[$prod['productId']];
                     $discount = $discountProduct['discount'];
                     $finalPrice = $discountProduct['finalPrice'];
                     $promoId = $discountProduct['promoId'];
@@ -440,15 +427,14 @@ class TransactionPetShopController
                     'updated_at' => now(),
                 ]);
 
+                // Optimize: Single update instead of 2 decrements
                 DB::table('productLocations')
                     ->where('locationId', $request->locationId)
                     ->where('productId', $prod['productId'])
-                    ->decrement('inStock', $quantity);
-
-                DB::table('productLocations')
-                    ->where('locationId', $request->locationId)
-                    ->where('productId', $prod['productId'])
-                    ->decrement('diffStock', $quantity);
+                    ->update([
+                        'inStock' => DB::raw('inStock - ' . $quantity),
+                        'diffStock' => DB::raw('diffStock - ' . $quantity)
+                    ]);
 
                 $totalItem += $quantity;
             }
@@ -600,6 +586,9 @@ class TransactionPetShopController
             }
 
 
+            // Optimize: Index discountedProducts by productId for O(1) lookup
+            $discountedByProduct = collect($discountedProducts)->keyBy('productId')->toArray();
+
             foreach ($request->productList as $prod) {
                 $unitPrice = $prod['price'];
                 $quantity = $prod['quantity'];
@@ -607,15 +596,14 @@ class TransactionPetShopController
                 $finalPrice = $unitPrice;
                 $promoId = $prod['promoId'] ?? null;
 
-                $discountProduct = collect($discountedProducts)->firstWhere('productId', $prod['productId']);
-                if ($discountProduct) {
+                if (isset($discountedByProduct[$prod['productId']])) {
+                    $discountProduct = $discountedByProduct[$prod['productId']];
                     $discount = $discountProduct['discount'];
                     $finalPrice = $discountProduct['finalPrice'];
                     $promoId = $discountProduct['promoId'];
                 }
 
                 $totalFinalPrice = $quantity * $finalPrice;
-
 
                 DB::table('transactionpetshopdetail')->insert([
                     'transactionpetshopId' => $request->id,
@@ -796,15 +784,20 @@ class TransactionPetShopController
     {
         $lowStockWarnings = [];
 
-        foreach ($productList as $prod) {
-            $productLoc = DB::table('productLocations')
-                ->where('locationId', $locationId)
-                ->where('productId', $prod['productId'])
-                ->first();
+        // Optimize: Batch load all product locations instead of querying in loop
+        $productIds = collect($productList)->pluck('productId')->unique()->toArray();
+        $productLocations = DB::table('productLocations')
+            ->where('locationId', $locationId)
+            ->whereIn('productId', $productIds)
+            ->get()
+            ->keyBy('productId');
 
-            if (!$productLoc) {
+        foreach ($productList as $prod) {
+            if (!$productLocations->has($prod['productId'])) {
                 throw new \Exception("Produk ID {$prod['productId']} tidak ditemukan di cabang ini.");
             }
+
+            $productLoc = $productLocations->get($prod['productId']);
 
             if ($prod['quantity'] > $productLoc->inStock) {
                 throw new \Exception("Stok produk '{$prod['productId']}' tidak mencukupi. Tersedia: {$productLoc->inStock}, Diminta: {$prod['quantity']}");
@@ -863,15 +856,14 @@ class TransactionPetShopController
 
     private function updateProductStock($locationId, $productId, $quantity)
     {
+        // Optimize: Single update query instead of 2 separate decrements
         DB::table('productLocations')
             ->where('locationId', $locationId)
             ->where('productId', $productId)
-            ->decrement('inStock', $quantity);
-
-        DB::table('productLocations')
-            ->where('locationId', $locationId)
-            ->where('productId', $productId)
-            ->decrement('diffStock', $quantity);
+            ->update([
+                'inStock' => DB::raw('inStock - ' . $quantity),
+                'diffStock' => DB::raw('diffStock - ' . $quantity)
+            ]);
     }
 
     private function handleFreeItemsPromo($locationId, $promoIds, $userId, $transactionId)
@@ -883,11 +875,16 @@ class TransactionPetShopController
             ->whereIn('promotionMasters.id', $promoIds)
             ->get();
 
+        // Optimize: Batch load product locations
+        $productIds = $freeItems->pluck('productFreeId')->unique()->toArray();
+        $productLocations = DB::table('productLocations')
+            ->where('locationId', $locationId)
+            ->whereIn('productId', $productIds)
+            ->get()
+            ->keyBy('productId');
+
         foreach ($freeItems as $freeItem) {
-            $productLoc = DB::table('productLocations')
-                ->where('locationId', $locationId)
-                ->where('productId', $freeItem->productFreeId)
-                ->first();
+            $productLoc = $productLocations->get($freeItem->productFreeId);
 
             if (!$productLoc) {
                 throw new \Exception("Produk bonus ID {$freeItem->productFreeId} tidak ditemukan di cabang ini.");
@@ -1113,8 +1110,8 @@ class TransactionPetShopController
             throw new \Exception("Tidak ada promo basedSales yang memenuhi syarat untuk total belanja Rp" . number_format($baseTotal, 2));
         }
 
-
-        DB::table('promotionFreeItems')
+        // Fix: Bug - should update promotionBasedSales not promotionFreeItems
+        DB::table('promotionBasedSales')
             ->where('id', $promo->id)
             ->where('totalMaxUsage', '>', 0)
             ->decrement('totalMaxUsage', 1);
@@ -1207,7 +1204,7 @@ class TransactionPetShopController
             ->get();
 
         $transactionIds = $data->pluck('id')->toArray();
-        
+
         $detailsStats = DB::table('transactionpetshopdetail')
             ->whereIn('transactionpetshopId', $transactionIds)
             ->select(
@@ -1480,6 +1477,7 @@ class TransactionPetShopController
         }
 
         //perhitungan based sales
+        $discountNote = '';
         $res = DB::table('promotionMasters as pm')
             ->join('promotionBasedSales as pb', 'pm.id', 'pb.promoMasterId')
             ->select(
@@ -1591,24 +1589,28 @@ class TransactionPetShopController
 
         $promoIds = $products->pluck('promoId')->filter()->unique()->values()->all();
 
-
+        // Optimize: Batch query all promo types in single queries
         $promoBundles = DB::table('promotionBundles')
             ->whereIn('promoMasterId', $promoIds)
+            ->distinct('promoMasterId')
             ->pluck('promoMasterId')
             ->toArray();
 
         $promoDiscounts = DB::table('promotionDiscounts')
             ->whereIn('promoMasterId', $promoIds)
+            ->distinct('promoMasterId')
             ->pluck('promoMasterId')
             ->toArray();
 
         $promoFreeItems = DB::table('promotionFreeItems')
             ->whereIn('promoMasterId', $promoIds)
+            ->distinct('promoMasterId')
             ->pluck('promoMasterId')
             ->toArray();
 
         $promoBasedSales = DB::table('promotionBasedSales')
             ->whereIn('promoMasterId', $promoIds)
+            ->distinct('promoMasterId')
             ->pluck('promoMasterId')
             ->toArray();
 
