@@ -75,13 +75,24 @@ class PetSalonController extends Controller
             $data = $data->whereIn('t.status', ['Selesai', 'Batal']);
         }
 
-        if (!$request->user()->roleId == 1 || !$request->user()->roleId == 2) {
-            $locations = UsersLocation::select('id')->where('usersId', $request->user()->id)->get()->pluck('id')->toArray();
-            $data = $data->whereIn('l.id', $locations);
+        // Kasir (jobTitleId=1) mendapat visibilitas penuh seperti Admin/Manager
+        $isKasir = ($request->user()->jobTitleId == 1);
+
+        if (
+            $request->user()->roleId != 1
+            && $request->user()->roleId != 2
+            && !$isKasir
+        ) {
+            $locations = UsersLocation::select('locationId')
+                ->where('usersId', $request->user()->id)
+                ->pluck('locationId')
+                ->toArray();
+
+            if (!empty($locations)) {
+                $data = $data->whereIn('l.id', $locations);
+            }
         } else {
-
             if ($request->locationId) {
-
                 $data = $data->whereIn('l.id', $request->locationId);
             }
         }

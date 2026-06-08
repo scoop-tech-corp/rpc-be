@@ -778,22 +778,32 @@ class TransactionController extends Controller
             $tran = TransactionBreeding::where('id', '=', $request->transactionId)->first();
         }
 
-        //tanggal start rawat inap
-        $date1 = Carbon::parse($tran->startDate); // today or reference date
-        $date2 = Carbon::parse($request->estimateDateofBirth); // HPL
+        if (!$tran) {
+            return responseError('not found', 'Transaksi tidak ditemukan.');
+        }
 
-        $diffInDays = $date1->diffInDays($date2, false); // false means keep sign
+        // Hitung jarak dari HARI INI ke HPL (bukan dari startDate)
+        $today = Carbon::today();
+        $hpl   = Carbon::parse($request->estimateDateofBirth);
 
-        $status = "";
+        // diffInDays(false): positif = HPL belum lewat, negatif = HPL sudah lewat
+        $diffInDays = $today->diffInDays($hpl, false);
 
-        if ($diffInDays <= 5 && $diffInDays >= 0) {
+        if ($diffInDays < 0) {
+            // HPL sudah lewat — kemungkinan sudah melahirkan
+            $status = 'HPL Sudah Lewat';
+        } elseif ($diffInDays <= 5) {
+            // HPL dalam 5 hari ke depan
             $status = 'HPL Sudah Dekat';
         } else {
             $status = 'HPL Masih Jauh';
         }
 
         return response()->json([
-            'status' => $status,
+            'status'      => $status,
+            'diffInDays'  => $diffInDays,
+            'hpl'         => $hpl->format('d/m/Y'),
+            'today'       => $today->format('d/m/Y'),
         ]);
     }
 
