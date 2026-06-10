@@ -707,11 +707,13 @@ class ProductController
     {
         $arr = $request->locationId;
 
+        $unitSubquery = DB::raw('(SELECT unit FROM productClinicDosages WHERE productClinicId = pc.id AND isDeleted = 0 LIMIT 1) as unit');
+
         if (count($arr) == 0) {
 
             $data = DB::table('products as pc')
                 ->join('productLocations as pcl', 'pc.id', 'pcl.productId')
-                ->select('pc.id', 'pc.fullName')
+                ->select('pc.id', 'pc.fullName', $unitSubquery)
                 ->where('pc.isDeleted', '=', 0)
                 ->where('pc.category', '=', 'clinic')
                 ->distinct()
@@ -719,7 +721,7 @@ class ProductController
         } else {
             $data = DB::table('products as pc')
                 ->join('productLocations as pcl', 'pc.id', 'pcl.productId')
-                ->select('pc.id', 'pc.fullName')
+                ->select('pc.id', 'pc.fullName', $unitSubquery)
                 ->wherein('pcl.locationId', $arr)
                 ->where('pc.isDeleted', '=', 0)
                 ->where('pc.category', '=', 'clinic')
