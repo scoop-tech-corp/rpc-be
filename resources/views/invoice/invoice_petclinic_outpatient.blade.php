@@ -426,7 +426,7 @@
                             <td class="item-name">{{ $item['item_name'] }}
                                 <ul>
                                     @foreach($item['included_items'] as $bundleItem)
-                                        <li>{{ $bundleItem['productName'] }}</li>
+                                        <li>{{ $bundleItem['item_name'] ?? $bundleItem['name'] ?? '' }}</li>
                                     @endforeach
                                 </ul>
                             </td>

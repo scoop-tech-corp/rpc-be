@@ -1535,6 +1535,121 @@ class DiscountController extends Controller
         return response()->json($data, 200);
     }
 
+    public function activeTodayPromos(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'locationId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $now = Carbon::now();
+
+        // Ambil semua promo aktif hari ini untuk lokasi ini
+        $promos = DB::table('promotionMasters as pm')
+            ->join('promotionTypes as pt', 'pm.type', 'pt.id')
+            ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+            ->where('pm.status', 1)
+            ->where('pm.isDeleted', 0)
+            ->where('pm.startDate', '<=', $now)
+            ->where('pm.endDate', '>=', $now)
+            ->where('pl.locationId', $request->locationId)
+            ->select('pm.id', 'pm.name', 'pt.typeName as type',
+                DB::raw("DATE_FORMAT(pm.endDate, '%d/%m/%Y') as endDate"))
+            ->groupBy('pm.id', 'pm.name', 'pt.typeName', 'pm.endDate')
+            ->orderBy('pm.name')
+            ->get();
+
+        // Enrich setiap promo dengan deskripsi singkat
+        $result = $promos->map(function ($promo) {
+            $note = match ($promo->type) {
+                'Free Item' => $this->buildFreeItemNote($promo->id),
+                'Discount'  => $this->buildDiscountNote($promo->id),
+                'Bundle'    => $this->buildBundleNote($promo->id),
+                'Based Sales' => $this->buildBasedSalesNote($promo->id),
+                default     => '',
+            };
+            return [
+                'id'      => $promo->id,
+                'name'    => $promo->name,
+                'type'    => $promo->type,
+                'endDate' => $promo->endDate,
+                'note'    => $note,
+            ];
+        });
+
+        return response()->json($result, 200);
+    }
+
+    private function buildFreeItemNote(int $promoId): string
+    {
+        $items = DB::table('promotionFreeItems as fi')
+            ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
+            ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
+            ->where('fi.promoMasterId', $promoId)
+            ->select('fi.quantityBuyItem', 'pbuy.fullName as buyName',
+                     'fi.quantityFreeItem', 'pfree.fullName as freeName')
+            ->get();
+
+        return $items->map(fn($i) =>
+            "Beli {$i->quantityBuyItem} {$i->buyName} gratis {$i->quantityFreeItem} {$i->freeName}"
+        )->implode(' | ');
+    }
+
+    private function buildDiscountNote(int $promoId): string
+    {
+        $prodNotes = DB::table('promotion_discount_products as pd')
+            ->join('products as p', 'p.id', 'pd.productId')
+            ->where('pd.promoMasterId', $promoId)
+            ->selectRaw("CONCAT(p.fullName, CASE WHEN pd.discountType='percent' THEN CONCAT(' diskon ', pd.percent, '%') ELSE CONCAT(' diskon Rp ', pd.amount) END) as note")
+            ->pluck('note');
+
+        $svcNotes = DB::table('promotion_discount_services as pd')
+            ->join('services as s', 's.id', 'pd.serviceId')
+            ->where('pd.promoMasterId', $promoId)
+            ->selectRaw("CONCAT(s.fullName, CASE WHEN pd.discountType='percent' THEN CONCAT(' diskon ', pd.percent, '%') ELSE CONCAT(' diskon Rp ', pd.amount) END) as note")
+            ->pluck('note');
+
+        return $prodNotes->merge($svcNotes)->implode(' | ');
+    }
+
+    private function buildBundleNote(int $promoId): string
+    {
+        $bundles = DB::table('promotionBundles as pb')
+            ->where('pb.promoMasterId', $promoId)
+            ->select('pb.id', 'pb.price')
+            ->get();
+
+        return $bundles->map(function ($bundle) {
+            $prods = DB::table('promotion_bundle_detail_products as p')
+                ->join('products as pr', 'pr.id', 'p.productId')
+                ->where('p.promoBundleId', $bundle->id)
+                ->selectRaw("CONCAT(p.quantity, ' ', pr.fullName) as item")
+                ->pluck('item');
+
+            $svcs = DB::table('promotion_bundle_detail_services as s')
+                ->join('services as sv', 'sv.id', 's.serviceId')
+                ->where('s.promoBundleId', $bundle->id)
+                ->selectRaw("CONCAT(s.quantity, ' ', sv.fullName) as item")
+                ->pluck('item');
+
+            $items = $prods->merge($svcs)->implode(' + ');
+            return "Paket [{$items}] Rp " . number_format($bundle->price, 0, ',', '.');
+        })->implode(' | ');
+    }
+
+    private function buildBasedSalesNote(int $promoId): string
+    {
+        $sales = DB::table('promotionBasedSales')
+            ->where('promoMasterId', $promoId)
+            ->get();
+
+        return $sales->map(fn($s) =>
+            $s->percentOrAmount === 'percent'
+                ? "Min. Rp " . number_format($s->minPurchase, 0, ',', '.') . " diskon {$s->percent}%"
+                : "Min. Rp " . number_format($s->minPurchase, 0, ',', '.') . " potongan Rp " . number_format($s->amount, 0, ',', '.')
+        )->implode(' | ');
+    }
+
     function export(Request $request)
     {
         $spreadsheet = IOFactory::load(public_path() . '/template/' . 'Template_Export_Discount.xlsx');

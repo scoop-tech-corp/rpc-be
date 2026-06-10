@@ -208,7 +208,7 @@ class CustomerController extends Controller
                 ]);
 
             if ($request->locationId) {
-                $data = $data->whereIn('a.locationid', $request->locationId);
+                $data = $data->whereIn('a.locationid', (array)$request->locationId);
             }
 
             if ($request->customerGroupId) {
@@ -382,7 +382,7 @@ class CustomerController extends Controller
 
                     $location = DB::table('location')
                         ->select('locationName')
-                        ->whereIn('id', $request->locationId)
+                        ->whereIn('id', (array)$request->locationId)
                         ->get();
 
                     if ($location) {
@@ -458,7 +458,7 @@ class CustomerController extends Controller
             ->where('a.isDeleted', '=', '0');
 
         if ($request->locationId) {
-            $query->whereIn('a.locationId', $request->locationId);
+            $query->whereIn('a.locationId', (array)$request->locationId);
         }
 
         return $query;
@@ -2557,7 +2557,7 @@ class CustomerController extends Controller
                         (SELECT COUNT(*) FROM transactionPetClinics   WHERE customerId = :id1  AND isDeleted = 0) +
                         (SELECT COUNT(*) FROM transaction_pet_hotels  WHERE customerId = :id2  AND isDeleted = 0) +
                         (SELECT COUNT(*) FROM transaction_breedings   WHERE customerId = :id3  AND isDeleted = 0) +
-                        (SELECT COUNT(*) FROM transactionpetsalon     WHERE customerId = :id4  AND isDeleted = 0) +
+                        (SELECT COUNT(*) FROM transaction_pet_salons  WHERE customerId = :id4  AND isDeleted = 0) +
                         (SELECT COUNT(*) FROM transactionpetshop      WHERE customerId = :id5  AND isDeleted = 0) AS totalTransaction,
 
                         COALESCE((SELECT SUM(pt.amountPaid) FROM transaction_pet_clinic_payment_totals pt
@@ -2570,7 +2570,7 @@ class CustomerController extends Controller
                                     JOIN transaction_breedings t ON pt.transactionId = t.id
                                    WHERE t.customerId = :id8  AND pt.isPayed = 1 AND pt.isDeleted = 0), 0) +
                         COALESCE((SELECT SUM(pt.amountPaid) FROM transaction_pet_salon_payment_totals pt
-                                    JOIN transactionpetsalon t ON pt.transactionId = t.id
+                                    JOIN transaction_pet_salons t ON pt.transactionId = t.id
                                    WHERE t.customerId = :id9  AND pt.isPayed = 1 AND pt.isDeleted = 0), 0) +
                         COALESCE((SELECT SUM(totalPayment) FROM transactionpetshop
                                    WHERE customerId = :id10 AND isPayed = 1 AND isDeleted = 0), 0) AS totalSpending
@@ -2606,7 +2606,7 @@ class CustomerController extends Controller
                         UNION ALL
                         SELECT id, registrationNo, 'Breeding' AS serviceType, petId, startDate, status, created_at FROM transaction_breedings   WHERE customerId = ? AND isDeleted = 0
                         UNION ALL
-                        SELECT id, registrationNo, 'Salon'    AS serviceType, petId, startDate, status, created_at FROM transactionpetsalon     WHERE customerId = ? AND isDeleted = 0
+                        SELECT id, registrationNo, 'Salon'    AS serviceType, petId, startDate, status, created_at FROM transaction_pet_salons  WHERE customerId = ? AND isDeleted = 0
                         UNION ALL
                         SELECT id, registrationNo, 'Petshop'  AS serviceType,
                                NULL AS petId, NULL AS startDate,

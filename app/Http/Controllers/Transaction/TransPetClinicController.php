@@ -940,6 +940,52 @@ class TransPetClinicController extends Controller
         return responseCreate();
     }
 
+    public function getCheckCondition(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $id = $request->id;
+
+        $anamnesis = DB::table('transactionPetClinicAnamnesis')
+            ->where('transactionPetClinicId', $id)
+            ->where('isDeleted', 0)
+            ->first();
+
+        $checkUpResult = DB::table('transactionPetClinicCheckUpResults')
+            ->where('transactionPetClinicId', $id)
+            ->where('isDeleted', 0)
+            ->first();
+
+        $diagnose = DB::table('transactionPetClinicDiagnoses')
+            ->where('transactionPetClinicId', $id)
+            ->where('isDeleted', 0)
+            ->first();
+
+        $treatment = DB::table('transactionPetClinicTreatments')
+            ->where('transactionPetClinicId', $id)
+            ->where('isDeleted', 0)
+            ->first();
+
+        $advice = DB::table('transactionPetClinicAdvice')
+            ->where('transactionPetClinicId', $id)
+            ->where('isDeleted', 0)
+            ->first();
+
+        return response()->json([
+            'anamnesis'     => $anamnesis,
+            'checkUpResult' => $checkUpResult,
+            'diagnose'      => $diagnose,
+            'treatment'     => $treatment,
+            'advice'        => $advice,
+        ], 200);
+    }
+
     public function loadDataPetCheck(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -1583,7 +1629,7 @@ class TransPetClinicController extends Controller
                 ]);
             }
 
-            statusTransactionPetClinic($request->transactionId, 'Proses Pembayaran', $request->user()->id);
+            statusTransactionPetClinic($request->transactionPetClinicId, 'Proses Pembayaran', $request->user()->id);
 
             transactionPetClinicLog($request->transactionPetClinicId, 'Input Layanan dan Resep Sudah Selesai', '', $request->user()->id);
 
@@ -1621,7 +1667,7 @@ class TransPetClinicController extends Controller
                 's.id as serviceId',
                 's.fullName as serviceName',
                 DB::raw("TRIM(tpcs.quantity)+0 as quantity"),
-                DB::raw("TRIM(sp.price)+0 as basedPrice"),
+                DB::raw("TRIM(REPLACE(sp.price, '.', ''))+0 as basedPrice"),
             )
             ->where('tpcs.transactionPetClinicId', '=', $request->transactionPetClinicId)
             ->where('sp.location_id', '=', $trans->locationId)
@@ -1670,7 +1716,7 @@ class TransPetClinicController extends Controller
         $trans = TransactionPetClinic::find($request->transactionPetClinicId);
         if (!$trans) return responseInvalid(['Transaction not found!']);
 
-        $custGroup = $trans->customerId ? Customer::find($trans->customerId)->customerGroupId ?? "" : "";
+        $custGroup = $trans->customerId ? (Customer::find($trans->customerId)?->customerGroupId ?? "") : "";
 
         // 2. Ekstraksi Data (Hindari Loop yang berulang)
         $dataRecipes = collect($this->ensureIsArray($request->recipes));
@@ -1697,7 +1743,10 @@ class TransPetClinicController extends Controller
                 ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
                 ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
                 ->whereIn('fi.productBuyId', $productIds) // Ambil semua promo sekaligus
-                ->where('pl.locationId', $locId)->where('pcg.customerGroupId', $custGroup)
+                ->where('pl.locationId', $locId)
+                ->where(function ($q) use ($custGroup) {
+                    $q->whereNull('pcg.customerGroupId')->orWhere('pcg.customerGroupId', $custGroup);
+                })
                 ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
                 ->where('pm.status', 1)
                 ->select('pm.id', 'pm.name', DB::raw("CONCAT('Pembelian ', fi.quantityBuyItem, ' ', pbuy.fullName, ' gratis ', fi.quantityFreeItem, ' ', pfree.fullName) as note"))
@@ -1716,7 +1765,10 @@ class TransPetClinicController extends Controller
                 ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
                 ->join('products as p', 'p.id', 'pd.productId')
                 ->whereIn('pd.productId', $productIds)
-                ->where('pl.locationId', $locId)->where('pcg.customerGroupId', $custGroup)
+                ->where('pl.locationId', $locId)
+                ->where(function ($q) use ($custGroup) {
+                    $q->whereNull('pcg.customerGroupId')->orWhere('pcg.customerGroupId', $custGroup);
+                })
                 ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
                 ->where('pm.status', 1)
                 ->select('pm.id', 'pm.name', DB::raw("CONCAT('Pembelian Produk ', p.fullName, CASE WHEN pd.discountType = 'percent' THEN CONCAT(' diskon ', pd.percent, '%') WHEN pd.discountType = 'amount' THEN CONCAT(' diskon Rp ', pd.amount) ELSE '' END) as note"))
@@ -1732,7 +1784,10 @@ class TransPetClinicController extends Controller
                 ->join('promotion_discount_services as pd', 'pm.id', 'pd.promoMasterId')
                 ->join('services as p', 'p.id', 'pd.serviceId') // [FIX BUG] Menggunakan services, bukan products
                 ->whereIn('pd.serviceId', $serviceIds)
-                ->where('pl.locationId', $locId)->where('pcg.customerGroupId', $custGroup)
+                ->where('pl.locationId', $locId)
+                ->where(function ($q) use ($custGroup) {
+                    $q->whereNull('pcg.customerGroupId')->orWhere('pcg.customerGroupId', $custGroup);
+                })
                 ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
                 ->where('pm.status', 1)
                 ->select('pm.id', 'pm.name', DB::raw("CONCAT('Pembelian Layanan ', p.fullName, CASE WHEN pd.discountType = 'percent' THEN CONCAT(' diskon ', pd.percent, '%') WHEN pd.discountType = 'amount' THEN CONCAT(' diskon Rp ', pd.amount) ELSE '' END) as note"))
@@ -1752,7 +1807,10 @@ class TransPetClinicController extends Controller
                 ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
                 ->join('promotion_bundle_detail_products as pbd', 'pb.id', 'pbd.promoBundleId')
                 ->whereIn('pbd.productId', $productIds)
-                ->where('pl.locationId', $locId)->where('pcg.customerGroupId', $custGroup)
+                ->where('pl.locationId', $locId)
+                ->where(function ($q) use ($custGroup) {
+                    $q->whereNull('pcg.customerGroupId')->orWhere('pcg.customerGroupId', $custGroup);
+                })
                 ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
                 ->where('pm.status', 1)->pluck('pbd.promoBundleId'));
         }
@@ -1765,7 +1823,10 @@ class TransPetClinicController extends Controller
                 ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
                 ->join('promotion_bundle_detail_services as pbd', 'pb.id', 'pbd.promoBundleId')
                 ->whereIn('pbd.serviceId', $serviceIds)
-                ->where('pl.locationId', $locId)->where('pcg.customerGroupId', $custGroup)
+                ->where('pl.locationId', $locId)
+                ->where(function ($q) use ($custGroup) {
+                    $q->whereNull('pcg.customerGroupId')->orWhere('pcg.customerGroupId', $custGroup);
+                })
                 ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
                 ->where('pm.status', 1)->pluck('pbd.promoBundleId'));
         }
@@ -1893,6 +1954,16 @@ class TransPetClinicController extends Controller
 
         $allPromos = $this->getLookupPromos($promoIds, $locationId);
 
+        // Pre-fetch nama produk & layanan untuk item tanpa promo (hindari N+1)
+        $fetchProductIds = $recipes->pluck('productId')->merge($products->pluck('productId'))->filter()->unique()->toArray();
+        $fetchServiceIds = $services->pluck('serviceId')->filter()->unique()->toArray();
+        $productNames = !empty($fetchProductIds)
+            ? DB::table('products')->whereIn('id', $fetchProductIds)->pluck('fullName', 'id')
+            : collect();
+        $serviceNames = !empty($fetchServiceIds)
+            ? DB::table('services')->whereIn('id', $fetchServiceIds)->pluck('fullName', 'id')
+            : collect();
+
         $results = [];
         $promoNotes = [];
         $subtotal = 0;
@@ -1955,6 +2026,7 @@ class TransPetClinicController extends Controller
                             'quantity' => 1,
                             'bonus' => 0,
                             'discount' => 0,
+                            'unit_price' => $promo->bundlePrice,
                             'total' => $promo->bundlePrice,
                             'included_items' => $included,
                             'promoId' => $promo->promoId,
@@ -1979,7 +2051,8 @@ class TransPetClinicController extends Controller
                             ? ($promo->percent / 100) * $item['eachPrice']
                             : $promo->amount;
 
-                        $saved = ($promo->discountType === 'percent') ? $discountValue : ($promo->amount * $item['quantity']);
+                        // percent: discount per unit × quantity; amount: fixed per unit × quantity
+                        $saved = $discountValue * ($item['quantity'] ?? 1);
 
                         $results[] = [
                             'item_name' => $promo->item_name,
@@ -2004,19 +2077,24 @@ class TransPetClinicController extends Controller
 
             // D. Tanpa Promo
             if (!$isGetPromo) {
+                // Gunakan ?: bukan ?? agar fallback juga untuk empty string dari DB
+                $itemName = $type === 'service'
+                    ? (($serviceNames[$itemId] ?? '') ?: ($item['name'] ?? 'Layanan'))
+                    : (($productNames[$itemId] ?? '') ?: ($item['name'] ?? 'Produk'));
+
                 $results[] = [
                     'promoId' => null,
                     $type . 'Id' => $itemId,
-                    'item_name' => $item['fullName'] ?? $item['name'] ?? 'Item',
+                    'item_name' => $itemName,
                     'category' => $item['category'] ?? '',
                     'quantity' => $item['quantity'],
                     'bonus' => 0,
                     'discount' => 0,
-                    'unit_price' => $item['eachPrice'],
-                    'total' => $item['priceOverall'],
+                    'unit_price' => $item['eachPrice'] ?? 0,
+                    'total' => $item['priceOverall'] ?? 0,
                     'note' => ''
                 ];
-                $subtotal += $item['priceOverall'];
+                $subtotal += $item['priceOverall'] ?? 0;
             }
         }
 
@@ -2074,9 +2152,16 @@ class TransPetClinicController extends Controller
                 ->where('pl.locationId', $locationId)
                 ->select('pm.id as promoId', 'pm.name as item_name', 'pb.price as bundlePrice', 'pb.id as bundleId')->get(),
 
-            'bundleDetails' => DB::table('promotionBundleDetails as pbd')
+            'bundleDetails' => DB::table('promotion_bundle_detail_products as pbd')
                 ->join('products as p', 'p.id', 'pbd.productId')
-                ->select('pbd.promoBundleId', 'p.id as productId', 'p.fullName as name', 'p.price as normal_price')->get(),
+                ->select('pbd.promoBundleId', 'p.id as productId', 'p.fullName as name', 'p.price as normal_price')
+                ->get()
+                ->concat(
+                    DB::table('promotion_bundle_detail_services as pbd')
+                        ->join('services as s', 's.id', 'pbd.serviceId')
+                        ->select('pbd.promoBundleId', DB::raw('null as productId'), 's.fullName as name', DB::raw('null as normal_price'))
+                        ->get()
+                ),
 
             'freeItems' => DB::table('promotionMasters as pm')
                 ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
@@ -2235,7 +2320,7 @@ class TransPetClinicController extends Controller
             DB::commit();
 
             updateLastTransaction($trans->customerId);
-            return responseCreate();
+            return response()->json(['id' => $total->id, 'message' => 'Add Data Successful!'], 200);
         } catch (\Throwable $th) {
             DB::rollback();
             return responseInvalid([$th->getMessage() . " at line " . $th->getLine()]);
@@ -2412,35 +2497,137 @@ class TransPetClinicController extends Controller
         }
         $formattedLocations = array_values($locationGroups);
 
-        $customer = DB::table('customer as c')
-            ->join('customerTelephones as ct', 'c.id', '=', 'ct.customerId')
-            ->where('c.id', '=', $trans->customerId)
-            ->select('c.firstName', 'ct.phoneNumber', 'c.memberNo')
+        // Ambil data customer dan telepon secara terpisah (pola yang sama dengan getBeforePayment)
+        $cust  = $trans->customerId ? Customer::find($trans->customerId) : null;
+        $phone = $trans->customerId
+            ? CustomerTelephones::where('customerId', $trans->customerId)
+                ->where('usage', 'Utama')
+                ->where('isDeleted', 0)
+                ->first()
+            : null;
+
+        // ── Baca nota & total dari DB (bukan dari request) ──────────────────────
+        $paymentTotal = DB::table('transaction_pet_clinic_payment_totals')
+            ->where('transactionId', $trans->id)
+            ->orderByDesc('created_at')
             ->first();
 
-        $details = $this->ensureIsArray($request->purchases);
-        $namaFile = str_replace('/', '_', $trans->nota_number ?? 'INV') . '.pdf';
+        $notaNumber  = $paymentTotal?->nota_number ?? null;
+        $namaFile    = str_replace('/', '_', $notaNumber ?? 'INV') . '.pdf';
+        $totalTagihan = (float)($paymentTotal?->amount ?? 0);
 
-        $detail_total = $this->ensureIsArray($request->detail_total);
+        // ── Baca item pembayaran dari DB ─────────────────────────────────────
+        $payments = DB::table('transaction_pet_clinic_payments as tp')
+            ->leftJoin('services as s', 's.id', '=', 'tp.serviceId')
+            ->leftJoin('products as p', 'p.id', '=', 'tp.productId')
+            ->leftJoin('products as pbuy', 'pbuy.id', '=', 'tp.productBuyId')
+            ->leftJoin('promotionMasters as pm', 'pm.id', '=', 'tp.promoId')
+            ->where('tp.transactionId', $trans->id)
+            ->where(function ($q) {
+                $q->where('tp.isDeleted', 0)->orWhereNull('tp.isDeleted');
+            })
+            ->select(
+                'tp.id', 'tp.serviceId', 'tp.productId', 'tp.promoId',
+                'tp.quantity', 'tp.quantityBuy', 'tp.quantityFree',
+                'tp.price', 'tp.priceOverall', 'tp.isBundle',
+                'tp.productBuyId', 'tp.productFreeId',
+                'tp.discountType', 'tp.discountAmount', 'tp.discountPercent',
+                's.fullName as serviceName',
+                'p.fullName as productName',
+                'pbuy.fullName as productBuyName',
+                'pm.name as promoName'
+            )
+            ->orderBy('tp.id')
+            ->get();
+
+        // ── Baca bundle detail items ─────────────────────────────────────────
+        $bundlePaymentIds = $payments->where('isBundle', 1)->pluck('id')->toArray();
+        $bundleItemsMap   = collect();
+        if (!empty($bundlePaymentIds)) {
+            $bundleItemsMap = DB::table('transaction_pet_clinic_payment_bundles as tpb')
+                ->leftJoin('services as s', 's.id', '=', 'tpb.serviceId')
+                ->leftJoin('products as p', 'p.id', '=', 'tpb.productId')
+                ->whereIn('tpb.paymentId', $bundlePaymentIds)
+                ->where(function ($q) {
+                    $q->where('tpb.isDeleted', 0)->orWhereNull('tpb.isDeleted');
+                })
+                ->select('tpb.paymentId', 'tpb.serviceId', 'tpb.productId',
+                         'tpb.quantity', 'tpb.amount',
+                         's.fullName as serviceName', 'p.fullName as productName')
+                ->get()
+                ->groupBy('paymentId');
+        }
+
+        // ── Bangun array $details untuk blade ───────────────────────────────
+        $details = [];
+        foreach ($payments as $pay) {
+            $baseItemName = $pay->serviceId
+                ? (($pay->serviceName ?: null) ?? 'Layanan')
+                : (($pay->productName ?: null) ?? 'Produk');
+
+            $detail = [
+                'promoId'    => $pay->promoId,
+                'quantity'   => (int)$pay->quantity,
+                'bonus'      => 0,
+                'discount'   => 0,
+                'unit_price' => (float)$pay->price,
+                'total'      => (float)$pay->priceOverall,
+                'note'       => '',
+                'item_name'  => $baseItemName,
+            ];
+
+            if ($pay->serviceId) $detail['serviceId'] = $pay->serviceId;
+            if ($pay->productId) $detail['productId'] = $pay->productId;
+
+            if ($pay->isBundle) {
+                // ── Bundle ──────────────────────────────────────────────────
+                $includedRaw = $bundleItemsMap->get($pay->id) ?? collect();
+                $included = $includedRaw->map(fn($bi) => [
+                    'name'      => $bi->serviceName ?: ($bi->productName ?: 'Item'),
+                    'item_name' => $bi->serviceName ?: ($bi->productName ?: 'Item'),
+                ])->values()->toArray();
+
+                $detail['item_name']      = $pay->promoName ?? 'Bundle';
+                $detail['unit_price']     = (float)$pay->priceOverall;
+                $detail['promoCategory']  = 'bundle';
+                $detail['included_items'] = $included;
+
+            } elseif ($pay->productBuyId) {
+                // ── Free Item ───────────────────────────────────────────────
+                $detail['promoCategory'] = 'freeItem';
+                $detail['bonus']         = (int)($pay->quantityFree ?? 0);
+                $detail['note']          = "Beli {$pay->quantityBuy} {$baseItemName} Gratis {$pay->quantityFree}";
+
+            } elseif ($pay->promoId && $pay->discountType) {
+                // ── Discount ────────────────────────────────────────────────
+                $detail['promoCategory'] = 'discount';
+                $detail['discount']      = $pay->discountType === 'percent'
+                    ? ($pay->discountPercent ?? 0)
+                    : ($pay->discountAmount ?? 0);
+
+            } else {
+                // ── Tanpa Promo: pastikan promoId null ──────────────────────
+                $detail['promoId'] = null;
+            }
+
+            $details[] = $detail;
+        }
 
         $data = [
             'locations'      => $formattedLocations,
             'nota_date'      => Carbon::parse($trans->created_at)->format('d/m/Y'),
-            'no_nota'        => $trans->nota_number ?? '___________',
-            'member_no'      => $customer->memberNo ?? '-',
-            'customer_name'  => $customer->firstName ?? '-',
-            'phone_number'   => $customer->phoneNumber ?? '-',
+            'no_nota'        => $notaNumber ?? '___________',
+            'member_no'      => $cust?->memberNo ?? '-',
+            'customer_name'  => $cust ? (trim(implode(' ', array_filter([$cust->firstName, $cust->middleName ?? '', $cust->lastName ?? '']))) ?: '-') : '-',
+            'phone_number'   => $phone?->phoneNumber ?? '-',
             'arrival_time'   => Carbon::parse($trans->created_at)->format('H:i'),
             'details'        => $details,
-            'total'          => $detail_total,
             'deposit'        => '-',
-            'total_tagihan'  => $detail_total['total_payment'],
+            'total_tagihan'  => $totalTagihan,
         ];
 
         $pdf = Pdf::loadView('invoice.invoice_petclinic_outpatient', $data);
         return $pdf->download($namaFile);
-
-        return view('transaction.petclinic.print_invoice_outpatient');
     }
 
     public function confirmPayment(Request $request)
