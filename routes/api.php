@@ -6,6 +6,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\Queue\QueueController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\CageManagementController;
 use App\Http\Controllers\LocationController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\Product\CategoryController;
 use App\Http\Controllers\Product\SupplierController;
 use App\Http\Controllers\Staff\StaffLeaveController;
 use App\Http\Controllers\Customer\CustomerController;
+use App\Http\Controllers\Customer\CustomerMergeController;
 
 use App\Http\Controllers\Staff\StaffPayrollController;
 
@@ -82,6 +84,9 @@ Route::put('user/{user}/online', [ApiController::class, 'online']);
 // Route::post('/realtime/auth', function(){
 //     return true;
 // });
+
+// Queue Display — public endpoint (token-based, no auth required)
+Route::get('/queue/display', [QueueController::class, 'display']);
 
 Route::group(['middleware' => ['jwt.verify']], function () {
 
@@ -184,6 +189,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::put('/reject', [BookingBookingController::class, 'rejectBooking']);
         Route::delete('/', [BookingBookingController::class, 'delete']);
         Route::get('/list', [BookingBookingController::class, 'getList']);
+    });
+
+    Route::group(['prefix' => 'queue'], function () {
+        Route::get('/', [QueueController::class, 'index']);
+        Route::post('/', [QueueController::class, 'store']);
+        Route::post('/convert', [QueueController::class, 'convertFromBooking']);
+        Route::put('/status', [QueueController::class, 'updateStatus']);
+        Route::delete('/', [QueueController::class, 'destroy']);
+        Route::put('/reset', [QueueController::class, 'reset']);
+        Route::get('/booking-candidates', [QueueController::class, 'bookingCandidates']);
     });
     //MODULE PRODUCT
     //list produk
@@ -430,7 +445,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/petlist', [CustomerController::class, 'petListWithCustomer']);
 
         Route::group(['prefix' => 'merge'], function () {
-            Route::get('/', [CustomerController::class, 'getSourceCustomer']);
+            Route::get('/preview', [CustomerMergeController::class, 'preview']);
+            Route::post('/execute', [CustomerMergeController::class, 'execute']);
+            Route::get('/history', [CustomerMergeController::class, 'history']);
+            Route::get('/export', [CustomerMergeController::class, 'exportHistory']);
         });
 
         Route::group(['prefix' => 'template'], function () {
@@ -465,6 +483,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/', [DiscountPromotionController::class, 'index']);
             Route::get('/export', [DiscountPromotionController::class, 'export']);
             Route::get('/list-type', [DiscountPromotionController::class, 'listType']);
+            Route::get('/active-today', [DiscountPromotionController::class, 'activeTodayPromos']);
             Route::get('/detail', [DiscountPromotionController::class, 'detail']);
             Route::put('/', [DiscountPromotionController::class, 'update']);
             Route::delete('/', [DiscountPromotionController::class, 'delete']);
@@ -729,6 +748,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
             Route::post('/petcheck', [TransPetClinicController::class, 'createPetCheck']);
             Route::get('/load-petcheck', [TransPetClinicController::class, 'loadDataPetCheck']);
+            Route::get('/check-condition', [TransPetClinicController::class, 'getCheckCondition']);
             Route::post('/serviceandrecipe', [TransPetClinicController::class, 'serviceandrecipe']);
             Route::post('/checkpromo', [TransPetClinicController::class, 'checkPromo']);
             Route::get('/beforepayment', [TransPetClinicController::class, 'showDataBeforePayment']);
@@ -742,7 +762,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
             //pembayaran rawat jalan
             Route::post('/payment/outpatient', [TransPetClinicController::class, 'paymentOutpatient']);
-            Route::get('/invoice/outpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
+            Route::post('/invoice/outpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
         });
 
         Route::group(['prefix' => 'petshop'], function () {
