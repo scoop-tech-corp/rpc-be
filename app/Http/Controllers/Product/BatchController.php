@@ -11,8 +11,8 @@ class BatchController extends Controller
 {
     public function ListBatch(Request $request)
     {
-        $itemPerPage = $request->rowPerPage;
-        $page = $request->goToPage;
+        $itemPerPage = $request->rowPerPage ?? 10;
+        $page = $request->goToPage ?? 1;
 
         $data = DB::table('productBatches as pb')
             ->join('products as p', 'pb.productId', 'p.id')
@@ -117,8 +117,8 @@ class BatchController extends Controller
 
     public function ListBatchTransfer(Request $request)
     {
-        $itemPerPage = $request->rowPerPage;
-        $page = $request->goToPage;
+        $itemPerPage = $request->rowPerPage ?? 10;
+        $page = $request->goToPage ?? 1;
 
         $data = DB::table('productBatches as pb')
             ->join('products as p', 'pb.productId', 'p.id')
