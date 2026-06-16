@@ -28,6 +28,7 @@ use App\Http\Controllers\Product\SupplierController;
 use App\Http\Controllers\Staff\StaffLeaveController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Customer\CustomerMergeController;
+use App\Http\Controllers\Customer\CustomerDashboardController;
 
 use App\Http\Controllers\Staff\StaffPayrollController;
 
@@ -38,6 +39,7 @@ use App\Http\Controllers\ReportMenuManagementController;
 use App\Http\Controllers\Transaction\BreedingController;
 use App\Http\Controllers\Transaction\PetHotelController;
 use App\Http\Controllers\Transaction\PetSalonController;
+use App\Http\Controllers\Transaction\TransactionDashboardController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\Staff\DataStaticStaffController;
@@ -57,6 +59,11 @@ use App\Http\Controllers\Finance\DataStaticController as FinanceDataStaticContro
 use App\Http\Controllers\Finance\ExpensesController;
 use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Finance\QuotationController;
+use App\Http\Controllers\Finance\FinanceSalesController;
+use App\Http\Controllers\Finance\FinancePaymentRecordController;
+use App\Http\Controllers\Finance\FinancePiutangController;
+use App\Http\Controllers\Finance\FinanceRefundController;
 use App\Http\Controllers\Product\BatchController;
 use App\Http\Controllers\Product\StockOpnameController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
@@ -69,6 +76,7 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 use App\Http\Controllers\Staff\IdentityController;
 use App\Http\Controllers\Staff\OverWorkController;
 use App\Http\Controllers\Staff\RequireSalaryController;
+use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Product\LoanProductController;
 use App\Http\Controllers\Product\DeliveryAgentController;
 use App\Http\Controllers\Product\DeliveryOrderController;
@@ -417,7 +425,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/export', [CustomerController::class, 'exportCustomer']); //add
         Route::get('/typeid', [CustomerController::class, 'getTypeIdCustomer']);
         Route::post('/typeid', [CustomerController::class, 'insertTypeIdCustomer']);
-        Route::get('/dashboard', [CustomerController::class, 'index']);
+        Route::get('/dashboard', [CustomerDashboardController::class, 'index']);
 
 
         Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
@@ -517,6 +525,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     //STAFF
     Route::group(['prefix' => 'staff'], function () {
+
+        Route::get('/dashboard', [StaffDashboardController::class, 'index']);
 
         Route::get('/rolesid', [StaffController::class, 'getRoleName']);
         Route::post('/', [StaffController::class, 'insertStaff']);
@@ -731,6 +741,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     // Transaction
     Route::group(['prefix' => 'transaction'], function () {
+        Route::get('/dashboard', [TransactionDashboardController::class, 'index']);
         Route::get('/category', [TransactionController::class, 'TransactionCategory']);
 
         Route::group(['prefix' => 'petclinic'], function () {
@@ -740,6 +751,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::put('/', [TransPetClinicController::class, 'update']);
             Route::delete('/', [TransPetClinicController::class, 'delete']);
             Route::get('/export', [TransPetClinicController::class, 'export']);
+            Route::get('/stats', [TransPetClinicController::class, 'getStats']);
 
             Route::get('/ordernumber', [TransPetClinicController::class, 'orderNumber']);
 
@@ -750,11 +762,43 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/load-petcheck', [TransPetClinicController::class, 'loadDataPetCheck']);
             Route::get('/check-condition', [TransPetClinicController::class, 'getCheckCondition']);
             Route::post('/serviceandrecipe', [TransPetClinicController::class, 'serviceandrecipe']);
-            Route::post('/checkpromo', [TransPetClinicController::class, 'checkPromo']);
+            Route::post('/checkpromo', [TransPetClinicController::class, 'checkPromo']); // deprecated, use /calculate
             Route::get('/beforepayment', [TransPetClinicController::class, 'showDataBeforePayment']);
-            Route::post('/discount', [TransPetClinicController::class, 'transactionDiscount']);
+            Route::post('/discount', [TransPetClinicController::class, 'transactionDiscount']); // deprecated, use /calculate
+
+            // New unified promo + calculation endpoint
+            Route::post('/calculate', [TransPetClinicController::class, 'calculate']);
+            Route::get('/payment-methods', [TransPetClinicController::class, 'getPaymentMethods']);
 
             Route::get('/invoice', [TransPetClinicController::class, 'printInvoce']);
+            // ===== RAWAT INAP =====
+            // Treatment Plan
+            Route::post('/inpatient/treatment-plan', [TransPetClinicController::class, 'storeTreatmentPlan']);
+            Route::get('/inpatient/treatment-plan', [TransPetClinicController::class, 'getTreatmentPlan']);
+
+            // Policy Agreement
+            Route::get('/inpatient/policies', [TransPetClinicController::class, 'getPoliciesForAgreement']);
+            Route::post('/inpatient/policy-agreement', [TransPetClinicController::class, 'savePolicyAgreement']);
+
+            // Papan Kerja Harian
+            Route::get('/inpatient/papan-kerja', [TransPetClinicController::class, 'getPapanKerjaHarian']);
+            Route::match(['post', 'put'], '/inpatient/papan-kerja/done', [TransPetClinicController::class, 'markPapanKerjaHarianDone']);
+
+            // Additional Treatments
+            Route::get('/inpatient/additional-treatments', [TransPetClinicController::class, 'getAdditionalTreatments']);
+            Route::post('/inpatient/additional-treatments', [TransPetClinicController::class, 'addAdditionalTreatment']);
+            Route::get('/inpatient/available-items', [TransPetClinicController::class, 'getAvailableItems']);
+
+            // Prepayments (DP)
+            Route::get('/inpatient/prepayments', [TransPetClinicController::class, 'getPrepayments']);
+            Route::post('/inpatient/prepayments', [TransPetClinicController::class, 'addPrepayment']);
+            Route::get('/inpatient/prepayments/receipt', [TransPetClinicController::class, 'prepaymentReceipt']);
+            Route::get('/inpatient/estimated-cost', [TransPetClinicController::class, 'getEstimatedCost']);
+
+            // Inpatient Detail & Checkout
+            Route::get('/inpatient/detail', [TransPetClinicController::class, 'getInpatient']);
+            Route::post('/inpatient/checkout', [TransPetClinicController::class, 'initiateCheckout']);
+
             //pembayaran rawat inap
             Route::post('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
             // Route::post('/invoice/inpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
@@ -762,6 +806,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
             //pembayaran rawat jalan
             Route::post('/payment/outpatient', [TransPetClinicController::class, 'paymentOutpatient']);
+            Route::get('/payment/outpatient/history', [TransPetClinicController::class, 'getPaymentHistory']);
             Route::post('/invoice/outpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
         });
 
@@ -795,10 +840,15 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/beforepayment', [PetHotelController::class, 'showDataBeforePayment']);
             Route::post('/checkpromo', [PetHotelController::class, 'checkPromo']);
 
+            Route::post('/calculate', [PetHotelController::class, 'calculate']);
+            Route::get('/payment-methods', [PetHotelController::class, 'getPaymentMethods']);
+            Route::get('/payment/history', [PetHotelController::class, 'getPaymentHistory']);
+
             Route::post('/discount', [PetHotelController::class, 'transactionDiscount']);
             Route::post('/payment', [PetHotelController::class, 'payment']);
 
             Route::get('/invoice', [PetHotelController::class, 'printInvoce']);
+            Route::post('/invoice/outpatient', [PetHotelController::class, 'printInvoceOutpatient']);
             Route::get('/checkout/invoice', [PetHotelController::class, 'checkoutInvoice']);
             Route::post('/confirm-payment', [PetHotelController::class, 'confirmPayment']);
 
@@ -866,6 +916,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/petcheck', [PetSalonController::class, 'createPetCheck']);
 
             Route::post('/treatment', [PetSalonController::class, 'Treatment']);
+
+            // Policy Agreement
+            Route::get('/policies', [PetSalonController::class, 'getPoliciesForAgreement']);
+            Route::post('/policy-agreement', [PetSalonController::class, 'savePolicyAgreement']);
+
+            // Groomer tandai selesai + assign kandang + kirim WA
+            Route::post('/salon-done', [PetSalonController::class, 'markSalonDone']);
+
+            // Customer hadir → inisiasi pembayaran
+            Route::post('/checkout', [PetSalonController::class, 'initiateCheckout']);
 
             Route::get('/beforepayment', [PetSalonController::class, 'showDataBeforePayment']);
             Route::post('/checkpromo', [PetSalonController::class, 'checkPromo']);
@@ -1003,6 +1063,54 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::group(['prefix' => 'data-static'], function () {
             Route::get('/', [FinanceDataStaticController::class, 'index']);
             Route::delete('/', [FinanceDataStaticController::class, 'delete']);
+        });
+
+        Route::group(['prefix' => 'quotation'], function () {
+            Route::get('/', [QuotationController::class, 'index']);
+            Route::post('/', [QuotationController::class, 'create']);
+            Route::put('/', [QuotationController::class, 'update']);
+            Route::delete('/', [QuotationController::class, 'delete']);
+            Route::get('/detail', [QuotationController::class, 'detail']);
+            Route::post('/status', [QuotationController::class, 'updateStatus']);
+            Route::post('/duplicate', [QuotationController::class, 'duplicate']);
+            Route::post('/convert', [QuotationController::class, 'convertToTransaction']);
+            Route::get('/print', [QuotationController::class, 'printQuotation']);
+            Route::get('/export-excel', [QuotationController::class, 'exportExcel']);
+            Route::get('/customer-dropdown', [QuotationController::class, 'customerDropdown']);
+            Route::get('/pet-dropdown', [QuotationController::class, 'petDropdown']);
+            Route::get('/discount-options', [QuotationController::class, 'discountOptions']);
+            Route::post('/calculate-discount', [QuotationController::class, 'calculateDiscount']);
+        });
+
+        Route::group(['prefix' => 'sales'], function () {
+            Route::get('/', [FinanceSalesController::class, 'index']);
+            Route::get('/summary', [FinanceSalesController::class, 'summary']);
+            Route::get('/export', [FinanceSalesController::class, 'exportExcel']);
+            Route::get('/payment-methods', [FinanceSalesController::class, 'paymentMethods']);
+            Route::get('/payment-detail', [FinanceSalesController::class, 'paymentDetail']);
+            Route::post('/add-payment', [FinanceSalesController::class, 'addPayment']);
+        });
+
+        Route::group(['prefix' => 'payment-records'], function () {
+            Route::get('/', [FinancePaymentRecordController::class, 'index']);
+            Route::get('/export', [FinancePaymentRecordController::class, 'exportExcel']);
+            Route::get('/payment-methods', [FinancePaymentRecordController::class, 'paymentMethods']);
+        });
+
+        Route::group(['prefix' => 'piutang'], function () {
+            Route::get('/', [FinancePiutangController::class, 'index']);
+            Route::get('/aging-summary', [FinancePiutangController::class, 'agingSummary']);
+            Route::get('/export', [FinancePiutangController::class, 'exportExcel']);
+        });
+
+        Route::group(['prefix' => 'refund'], function () {
+            Route::get('/',                  [FinanceRefundController::class, 'index']);
+            Route::get('/summary',           [FinanceRefundController::class, 'summary']);
+            Route::get('/invoice-lookup',    [FinanceRefundController::class, 'invoiceLookup']);
+            Route::get('/payment-methods',   [FinanceRefundController::class, 'paymentMethods']);
+            Route::get('/export',            [FinanceRefundController::class, 'exportExcel']);
+            Route::post('/',                 [FinanceRefundController::class, 'store']);
+            Route::delete('/{id}',           [FinanceRefundController::class, 'destroy']);
         });
     });
 

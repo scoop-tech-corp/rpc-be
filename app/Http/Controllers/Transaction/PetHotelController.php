@@ -1936,6 +1936,447 @@ class PetHotelController extends Controller
 
         return response()->json($response);
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // PAYMENT FLOW — Same as Pet Clinic
+    // ──────────────────────────────────────────────────────────────────────────
+
+    public function calculate(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $trans = TransactionPetHotel::find($request->transactionId);
+        if (!$trans) return responseInvalid(['Transaction not found!']);
+
+        $locId = $trans->locationId;
+        $now   = Carbon::now();
+
+        $services = collect($this->ensureIsArray($request->services));
+        $products = collect($this->ensureIsArray($request->products));
+
+        $productIds       = $products->pluck('productId')->filter()->unique()->toArray();
+        $serviceIds       = $services->pluck('serviceId')->filter()->unique()->toArray();
+        $totalTransaction = $services->sum('priceOverall') + $products->sum('priceOverall');
+
+        $rawSelected    = is_array($request->selectedPromos) ? $request->selectedPromos : $this->ensureIsArray($request->selectedPromos ?? '{}');
+        $selFreeItems   = $rawSelected['freeItems']   ?? [];
+        $selDiscounts   = $rawSelected['discounts']   ?? [];
+        $selBundles     = $rawSelected['bundles']     ?? [];
+        $selBasedSaleId = $rawSelected['basedSaleId'] ?? null;
+
+        // 1. Available promos
+        $availablePromos = $this->fetchAvailablePromos($productIds, $serviceIds, $locId, $now, $totalTransaction);
+
+        // 2. Apply selected promos
+        $allPromoIds = array_unique(array_merge($selFreeItems, $selDiscounts, $selBundles));
+        $allPromos   = !empty($allPromoIds) ? $this->getLookupPromos($allPromoIds, $locId) : [
+            'freeItems'     => collect(),
+            'svcDiscounts'  => collect(),
+            'prodDiscounts' => collect(),
+            'bundles'       => collect(),
+            'bundleDetails' => collect(),
+        ];
+
+        $productNames = !empty($productIds) ? DB::table('products')->whereIn('id', $productIds)->pluck('fullName', 'id') : collect();
+        $serviceNames = !empty($serviceIds) ? DB::table('services')->whereIn('id', $serviceIds)->pluck('fullName', 'id') : collect();
+
+        $allPurchaseItems = $services->map(fn($i) => array_merge((array)$i, ['_type' => 'service']))
+            ->concat($products->map(fn($i) => array_merge((array)$i, ['_type' => 'product'])));
+
+        $results       = [];
+        $promoNotes    = [];
+        $subtotal      = 0;
+        $totalDiscount = 0;
+
+        // ── PHASE 1: Bundle ──────────────────────────────────────────────────
+        $bundleConsumedProductIds = [];
+        $bundleConsumedServiceIds = [];
+
+        foreach ($selBundles as $bId) {
+            $promo = $allPromos['bundles']->first(fn($b) => (int)($b->promoId ?? 0) === (int)$bId);
+            if (!$promo) continue;
+
+            $bundleId = (int) $promo->bundleId;
+
+            $includedProducts = DB::table('promotion_bundle_detail_products as pbd')
+                ->join('products as p', 'p.id', 'pbd.productId')
+                ->where('pbd.promoBundleId', $bundleId)
+                ->select('pbd.promoBundleId', 'p.id as productId', DB::raw('null as serviceId'), 'p.fullName as name', DB::raw('p.price+0 as normal_price'), 'pbd.quantity')
+                ->get();
+
+            $includedServices = DB::table('promotion_bundle_detail_services as pbd')
+                ->join('services as s', 's.id', 'pbd.serviceId')
+                ->where('pbd.promoBundleId', $bundleId)
+                ->select('pbd.promoBundleId', DB::raw('null as productId'), 's.id as serviceId', 's.fullName as name', DB::raw('null as normal_price'), 'pbd.quantity')
+                ->get();
+
+            $included    = $includedProducts->concat($includedServices)->map(fn($d) => (array) $d)->toArray();
+            $normalTotal = array_sum(array_column($included, 'normal_price'));
+
+            foreach ($included as $bItem) {
+                if (!empty($bItem['productId'])) $bundleConsumedProductIds[] = (int) $bItem['productId'];
+                if (!empty($bItem['serviceId'])) $bundleConsumedServiceIds[] = (int) $bItem['serviceId'];
+            }
+
+            $results[]    = [
+                'item_name'      => $promo->item_name,
+                'category'       => '',
+                'quantity'       => 1,
+                'bonus'          => 0,
+                'discount'       => 0,
+                'unit_price'     => $promo->bundlePrice,
+                'total'          => $promo->bundlePrice,
+                'included_items' => $included,
+                'promoId'        => $promo->promoId,
+                'promoCategory'  => 'bundle',
+            ];
+            $subtotal    += $promo->bundlePrice;
+            $promoNotes[] = "{$promo->item_name} only Rp " . number_format($promo->bundlePrice) . " (Save Rp " . number_format(max(0, $normalTotal - $promo->bundlePrice)) . ")";
+        }
+
+        // ── PHASE 2: Loop items ──────────────────────────────────────────────
+        foreach ($allPurchaseItems as $item) {
+            $isGetPromo = false;
+            $type       = $item['_type'];
+            $itemId     = $type === 'service' ? ($item['serviceId'] ?? null) : ($item['productId'] ?? null);
+
+            if ($type === 'product' && in_array((int) $itemId, $bundleConsumedProductIds)) continue;
+            if ($type === 'service' && in_array((int) $itemId, $bundleConsumedServiceIds)) continue;
+
+            // A. Free Item
+            if ($type === 'product' && !empty($selFreeItems)) {
+                foreach ($selFreeItems as $fId) {
+                    $promo = $allPromos['freeItems']->where('promoId', $fId)->where('productBuyId', $itemId)->first();
+                    if ($promo) {
+                        $results[] = [
+                            'promoId'         => $promo->promoId,
+                            'item_name'       => $promo->item_name,
+                            'buy_product_id'  => $promo->productBuyId,
+                            'free_product_id' => $promo->productFreeId,
+                            'category'        => $promo->category,
+                            'quantity'        => $promo->quantityBuy,
+                            'bonus'           => $promo->quantityFree,
+                            'discount'        => 0,
+                            'unit_price'      => $item['eachPrice'] ?? 0,
+                            'total'           => $item['priceOverall'] ?? 0,
+                            'promoCategory'   => 'freeItem',
+                            'note'            => "Beli {$promo->quantityBuy} {$promo->item_name} Gratis {$promo->quantityFree}",
+                        ];
+                        $subtotal     += $item['priceOverall'] ?? 0;
+                        $promoNotes[]  = "Beli {$promo->quantityBuy} Gratis {$promo->quantityFree}";
+                        $isGetPromo    = true;
+                        break;
+                    }
+                }
+            }
+
+            // C. Discount
+            if (!$isGetPromo && !empty($selDiscounts)) {
+                foreach ($selDiscounts as $dId) {
+                    $lookupTable = $type === 'service' ? $allPromos['svcDiscounts'] : $allPromos['prodDiscounts'];
+                    $promo       = $lookupTable->where('promoId', $dId)->where($type . 'Id', $itemId)->first();
+                    if ($promo) {
+                        $discountValue = $promo->discountType === 'percent'
+                            ? ($promo->percent / 100) * ($item['eachPrice'] ?? 0)
+                            : $promo->amount;
+                        $saved       = $discountValue * ($item['quantity'] ?? 1);
+                        $results[]   = [
+                            'item_name'     => $promo->item_name,
+                            'category'      => $promo->category,
+                            'quantity'      => $item['quantity'] ?? 1,
+                            'bonus'         => 0,
+                            'discount'      => $promo->discountType === 'percent' ? $promo->percent : $promo->amount,
+                            'discountType'  => $promo->discountType,
+                            'unit_price'    => $item['eachPrice'] ?? 0,
+                            'total'         => ($item['priceOverall'] ?? 0) - $saved,
+                            'promoId'       => $promo->promoId,
+                            $type . 'Id'    => $itemId,
+                            'promoCategory' => 'discount',
+                        ];
+                        $subtotal      += ($item['priceOverall'] ?? 0) - $saved;
+                        $totalDiscount += $saved;
+                        $promoNotes[]   = "Diskon {$promo->item_name} sebesar " . ($promo->discountType === 'percent' ? $promo->percent . '%' : 'Rp ' . number_format($promo->amount));
+                        $isGetPromo     = true;
+                        break;
+                    }
+                }
+            }
+
+            // D. No Promo
+            if (!$isGetPromo) {
+                $itemName  = $type === 'service'
+                    ? (($serviceNames[$itemId] ?? '') ?: ($item['name'] ?? 'Layanan'))
+                    : (($productNames[$itemId] ?? '') ?: ($item['name'] ?? 'Produk'));
+                $results[] = [
+                    'promoId'    => null,
+                    $type . 'Id' => $itemId,
+                    'item_name'  => $itemName,
+                    'category'   => $item['category'] ?? '',
+                    'quantity'   => $item['quantity'] ?? 1,
+                    'bonus'      => 0,
+                    'discount'   => 0,
+                    'unit_price' => $item['eachPrice'] ?? 0,
+                    'total'      => $item['priceOverall'] ?? 0,
+                    'note'       => '',
+                ];
+                $subtotal += $item['priceOverall'] ?? 0;
+            }
+        }
+
+        // Based Sale
+        $discountBasedSales = 0;
+        $discountNote       = '';
+        if ($selBasedSaleId) {
+            $sale = DB::table('promotionMasters as pm')
+                ->join('promotionBasedSales as pb', 'pm.id', 'pb.promoMasterId')
+                ->where('pm.id', $selBasedSaleId)
+                ->where('pb.minPurchase', '<=', $subtotal)
+                ->where('pb.maxPurchase', '>=', $subtotal)
+                ->first();
+            if ($sale) {
+                $isPercent          = $sale->percentOrAmount === 'percent';
+                $discountBasedSales = $isPercent ? ($subtotal * ($sale->percent / 100)) : $sale->amount;
+                $totalDiscount      = $discountBasedSales;
+                $discountNote       = "Diskon " . ($isPercent ? $sale->percent . ' %' : 'Nominal') . " (Belanja > Rp " . number_format($sale->minPurchase) . ")";
+                $promoNotes[]       = "Diskon Belanja > Rp " . number_format($sale->minPurchase);
+            }
+        }
+
+        return response()->json([
+            'purchases'       => $results,
+            'availablePromos' => $availablePromos,
+            'summary'         => [
+                'subtotal'               => (float) $subtotal,
+                'total_discount'         => (float) $totalDiscount,
+                'discount_based_sales'   => (float) $discountBasedSales,
+                'discount_note'          => $discountNote,
+                'total_payment'          => (float) ($subtotal - $totalDiscount),
+                'promo_notes'            => $promoNotes,
+                'selected_based_sale_id' => $selBasedSaleId,
+            ],
+        ]);
+    }
+
+    public function getPaymentMethods()
+    {
+        $methods = DB::table('paymentMethodFinances')
+            ->where('isDeleted', 0)
+            ->select('id', 'paymentMethod as name')
+            ->orderBy('paymentMethod')
+            ->get();
+        return response()->json($methods);
+    }
+
+    public function getPaymentHistory(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $transId = $request->transactionId;
+
+        $totals = DB::table('transaction_pet_hotel_payment_totals as t')
+            ->leftJoin('paymentMethodFinances as pm', 'pm.id', 't.paymentMethodId')
+            ->where('t.transactionId', $transId)
+            ->where(function ($q) {
+                $q->where('t.isDeleted', 0)->orWhereNull('t.isDeleted');
+            })
+            ->select(
+                't.id',
+                't.nota_number',
+                't.amount',
+                't.amountPaid',
+                't.nextPayment',
+                'pm.paymentMethod as payment_method_name',
+                't.created_at'
+            )
+            ->orderBy('t.created_at')
+            ->get();
+
+        $totalTagihan = $totals->first()?->amount ?? 0;
+        $totalPaid    = $totals->sum('amountPaid');
+        $remaining    = max(0, (float)$totalTagihan - (float)$totalPaid);
+
+        return response()->json([
+            'total_tagihan' => (float) $totalTagihan,
+            'total_paid'    => (float) $totalPaid,
+            'remaining'     => (float) $remaining,
+            'is_paid_off'   => $remaining <= 0,
+            'payments'      => $totals,
+        ]);
+    }
+
+    public function printInvoceOutpatient(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $trans = TransactionPetHotel::find($request->transactionId);
+        if (!$trans) return responseInvalid(['Transaction not found!']);
+
+        $formattedLocations = $this->getActiveLocationsForInvoice();
+
+        $cust  = $trans->customerId ? Customer::find($trans->customerId) : null;
+        $phone = $trans->customerId
+            ? CustomerTelephones::where('customerId', $trans->customerId)
+                ->where('usage', 'Utama')
+                ->first()
+            : null;
+
+        // Baca nota & total dari DB
+        $paymentTotal = DB::table('transaction_pet_hotel_payment_totals')
+            ->where('transactionId', $trans->id)
+            ->orderByDesc('created_at')
+            ->first();
+
+        $notaNumber = $paymentTotal?->nota_number ?? null;
+        $namaFile   = str_replace('/', '_', $notaNumber ?? 'INV') . '.pdf';
+
+        // Payment method name (dari paymentMethodFinances)
+        $paymentMethodName = '-';
+        if ($paymentTotal?->paymentMethodId) {
+            $paymentMethodName = DB::table('paymentMethodFinances')
+                ->where('id', $paymentTotal->paymentMethodId)
+                ->value('paymentMethod') ?? '-';
+        }
+
+        // Baca item pembayaran dari DB
+        $payments = DB::table('transaction_pet_hotel_payments as tp')
+            ->leftJoin('services as s', 's.id', 'tp.serviceId')
+            ->leftJoin('products as p', 'p.id', 'tp.productId')
+            ->leftJoin('products as pbuy', 'pbuy.id', 'tp.productBuyId')
+            ->leftJoin('promotionMasters as pm', 'pm.id', 'tp.promoId')
+            ->where('tp.transactionId', $trans->id)
+            ->where(function ($q) {
+                $q->where('tp.isDeleted', 0)->orWhereNull('tp.isDeleted');
+            })
+            ->select(
+                'tp.id', 'tp.serviceId', 'tp.productId', 'tp.promoId',
+                'tp.quantity', 'tp.quantityBuy', 'tp.quantityFree',
+                'tp.price', 'tp.priceOverall', 'tp.isBundle',
+                'tp.productBuyId', 'tp.productFreeId',
+                'tp.discountType', 'tp.discountAmount', 'tp.discountPercent',
+                's.fullName as serviceName',
+                'p.fullName as productName',
+                'pbuy.fullName as productBuyName',
+                'pm.name as promoName'
+            )
+            ->orderBy('tp.id')
+            ->get();
+
+        // Bundle detail items
+        $bundlePaymentIds = $payments->where('isBundle', 1)->pluck('id')->toArray();
+        $bundleItemsMap   = collect();
+        if (!empty($bundlePaymentIds)) {
+            $bundleItemsMap = DB::table('transaction_pet_hotel_payment_bundles as tpb')
+                ->leftJoin('services as s', 's.id', 'tpb.serviceId')
+                ->leftJoin('products as p', 'p.id', 'tpb.productId')
+                ->whereIn('tpb.paymentId', $bundlePaymentIds)
+                ->where(function ($q) {
+                    $q->where('tpb.isDeleted', 0)->orWhereNull('tpb.isDeleted');
+                })
+                ->select('tpb.paymentId', 'tpb.serviceId', 'tpb.productId', 'tpb.quantity', 'tpb.amount',
+                         's.fullName as serviceName', 'p.fullName as productName')
+                ->get()
+                ->groupBy('paymentId');
+        }
+
+        // Build $details array for blade
+        $details = [];
+        foreach ($payments as $pay) {
+            if ($pay->isBundle) {
+                $bundleItems = $bundleItemsMap[$pay->id] ?? collect();
+                $details[] = [
+                    'item_name'     => $pay->promoName ?? 'Bundle',
+                    'category'      => '',
+                    'quantity'      => 1,
+                    'bonus'         => 0,
+                    'discount'      => 0,
+                    'unit_price'    => (float) $pay->price,
+                    'total'         => (float) $pay->priceOverall,
+                    'promoId'       => $pay->promoId,
+                    'promoCategory' => 'bundle',
+                    'included_items'=> $bundleItems->map(fn($b) => [
+                        'name'         => $b->serviceName ?? $b->productName ?? 'Item',
+                        'quantity'     => $b->quantity,
+                        'normal_price' => (float) $b->amount,
+                        'serviceId'    => $b->serviceId,
+                        'productId'    => $b->productId,
+                    ])->toArray(),
+                ];
+            } elseif ($pay->productBuyId) {
+                $details[] = [
+                    'item_name'      => $pay->promoName ?? ($pay->productBuyName ?? 'Produk'),
+                    'buy_product_id' => $pay->productBuyId,
+                    'free_product_id'=> $pay->productFreeId,
+                    'category'       => '',
+                    'quantity'       => (int) $pay->quantityBuy,
+                    'bonus'          => (int) $pay->quantityFree,
+                    'discount'       => 0,
+                    'unit_price'     => (float) $pay->price,
+                    'total'          => (float) $pay->priceOverall,
+                    'promoId'        => $pay->promoId,
+                    'promoCategory'  => 'freeItem',
+                ];
+            } else {
+                $itemName = $pay->serviceName ?? $pay->productName ?? 'Item';
+                $details[] = [
+                    'item_name'  => $pay->promoName ? "{$itemName} ({$pay->promoName})" : $itemName,
+                    'category'   => $pay->serviceId ? 'layanan' : 'produk',
+                    'quantity'   => (int) $pay->quantity,
+                    'bonus'      => 0,
+                    'discount'   => $pay->discountType === 'percent' ? (float) $pay->discountPercent : (float) $pay->discountAmount,
+                    'unit_price' => (float) $pay->price,
+                    'total'      => (float) $pay->priceOverall,
+                    'promoId'    => $pay->promoId,
+                    'serviceId'  => $pay->serviceId,
+                    'productId'  => $pay->productId,
+                    'promoCategory' => $pay->promoId ? 'discount' : null,
+                ];
+            }
+        }
+
+        // Diskon based sales
+        $basedSalesDiscount = (float) DB::table('transaction_pet_hotel_payment_based_sales')
+            ->where('transactionId', $trans->id)
+            ->sum('amountDiscount');
+
+        $totalTagihan    = (float)($paymentTotal?->amount ?? 0);
+        $amountPaid      = (float)($paymentTotal?->amountPaid ?? 0);
+        $subtotalDisplay = $totalTagihan + $basedSalesDiscount;
+
+        $data = [
+            'locations'     => $formattedLocations,
+            'nota_date'     => Carbon::parse($paymentTotal?->created_at ?? now())->format('d/m/Y H:i'),
+            'no_nota'       => $notaNumber ?? '-',
+            'member_no'     => $cust?->memberNo ?? '-',
+            'customer_name' => $cust ? $cust->firstName : '-',
+            'phone_number'  => $phone?->phoneNumber ?? '-',
+            'arrival_time'  => Carbon::parse($trans->created_at)->format('H:i'),
+            'details'       => $details,
+            'total' => [
+                'total_payment'  => $totalTagihan,
+                'total_discount' => $basedSalesDiscount,
+                'subtotal'       => $subtotalDisplay,
+            ],
+            'deposit'        => '-',
+            'total_payment'  => $totalTagihan,
+            'total_discount' => $basedSalesDiscount,
+            'subtotal'       => $subtotalDisplay,
+            'amount_paid'    => $amountPaid,
+            'payment_method' => $paymentMethodName,
+        ];
+
+        $pdf = Pdf::loadView('invoice.invoice_petclinic_outpatient', $data);
+        return $pdf->download($namaFile);
+    }
+
     public function payment(Request $request)
     {
         $access = $this->getUserAccessInfo($request);
@@ -1981,7 +2422,7 @@ class PetHotelController extends Controller
 
                             $trx = new transaction_pet_hotel_payments();
                             $trx->transactionId = $request->transactionId;
-                            $trx->paymentMethodId = $payment['paymentId'];
+                            $trx->paymentMethodId = $payment['paymentMethodId'];
                             $trx->promoId = $promo->id;
                             $trx->serviceId = $value['serviceId'];
                             $trx->quantity = $value['quantity'];
@@ -1997,7 +2438,7 @@ class PetHotelController extends Controller
                     } else {
                         $trx = new transaction_pet_hotel_payments();
                         $trx->transactionId = $request->transactionId;
-                        $trx->paymentMethodId = $payment['paymentId'];
+                        $trx->paymentMethodId = $payment['paymentMethodId'];
                         $trx->serviceId = $value['serviceId'];
                         $trx->quantity = $value['quantity'];
                         $trx->price = $value['unit_price'];
@@ -2019,7 +2460,7 @@ class PetHotelController extends Controller
 
                             $trx = new transaction_pet_hotel_payments();
                             $trx->transactionId = $request->transactionId;
-                            $trx->paymentMethodId = $payment['paymentId'];
+                            $trx->paymentMethodId = $payment['paymentMethodId'];
                             $trx->promoId = $promo->id;
                             $trx->productId = $value['productId'];
                             $trx->quantity = $value['quantity'];
@@ -2042,7 +2483,7 @@ class PetHotelController extends Controller
                     } else {
                         $trx = new transaction_pet_hotel_payments();
                         $trx->transactionId = $request->transactionId;
-                        $trx->paymentMethodId = $payment['paymentId'];
+                        $trx->paymentMethodId = $payment['paymentMethodId'];
                         $trx->productId = $value['productId'];
                         $trx->quantity = $value['quantity'];
                         $trx->price = $value['unit_price'];
@@ -2060,7 +2501,7 @@ class PetHotelController extends Controller
 
                     $trx = new transaction_pet_hotel_payments();
                     $trx->transactionId = $request->transactionId;
-                    $trx->paymentMethodId = $payment['paymentId'];
+                    $trx->paymentMethodId = $payment['paymentMethodId'];
                     $trx->promoId = $promo->id;
                     $trx->productBuyId = $value['buy_product_id'];
                     $trx->productFreeId = $value['free_product_id'];
@@ -2071,7 +2512,7 @@ class PetHotelController extends Controller
                     $trx->priceOverall = $value['total'];
                     $trx->userId = $request->user()->id;
                     $trx->save();
-                } else if ($value['promoId'] != 'null' && $value['promoCategory'] == 'bundle') {
+                } else if (isset($value['promoCategory']) && $value['promoCategory'] === 'bundle') {
 
                     //bundle
                     $promo = PromotionMaster::find($value['promoId']);
@@ -2082,7 +2523,7 @@ class PetHotelController extends Controller
 
                     $trx = new transaction_pet_hotel_payments();
                     $trx->transactionId = $request->transactionId;
-                    $trx->paymentMethodId = $payment['paymentId'];
+                    $trx->paymentMethodId = $payment['paymentMethodId'];
                     $trx->promoId = $promo->id;
                     $trx->price = $value['unit_price'];
                     $trx->priceOverall = $value['total'];
@@ -2090,41 +2531,16 @@ class PetHotelController extends Controller
                     $trx->userId = $request->user()->id;
                     $trx->save();
 
-                    // $amountBundling = $value['total'];
-                    // $amountTotal = 0;
-
-                    // foreach ($value['included_items'] as $item) {
-                    //     $amountTotal += $item['unit_price'];
-                    // }
-
-                    // $normalPriceRatio = $amountBundling / $amountTotal;
-
                     foreach ($value['included_items'] as $item) {
-                        if (array_key_exists('serviceId', $item)) {
-
-                            $bundle = new transaction_pet_hotel_payment_bundle();
-                            $bundle->paymentId = $trx->id;
-                            $bundle->promoId = $promo->id;
-                            $bundle->serviceId = $item['serviceId'];
-                            $bundle->quantity = $item['quantity'];
-                            $bundle->amount = $item['unit_price'];
-                            //* $normalPriceRatio;
-                            //$bundle->priceOverall = $item['quantity'] * ($item['unit_price'] * $normalPriceRatio);
-                            $bundle->userId = $request->user()->id;
-                            $bundle->save();
-                        } else if (array_key_exists('productId', $item)) {
-
-                            $bundle = new transaction_pet_hotel_payment_bundle();
-                            $bundle->paymentId = $trx->id;
-                            $bundle->promoId = $promo->id;
-                            $bundle->productId = $item['productId'];
-                            $bundle->quantity = $item['quantity'];
-                            $bundle->amount = $item['unit_price'];
-                            //* $normalPriceRatio;
-                            //$bundle->priceOverall = $item['quantity'] * ($item['unit_price'] * $normalPriceRatio);
-                            $bundle->userId = $request->user()->id;
-                            $bundle->save();
-                        }
+                        $bundle = new transaction_pet_hotel_payment_bundle();
+                        $bundle->paymentId = $trx->id;
+                        $bundle->promoId = $promo->id;
+                        $bundle->serviceId = $item['serviceId'] ?? null;
+                        $bundle->productId = $item['productId'] ?? null;
+                        $bundle->quantity = $item['quantity'];
+                        $bundle->amount = $item['normal_price'] ?? 0;
+                        $bundle->userId = $request->user()->id;
+                        $bundle->save();
                     }
                 }
             }
@@ -2141,7 +2557,7 @@ class PetHotelController extends Controller
 
                 $sales = new transaction_pet_hotel_payment_based_sales();
                 $sales->transactionId = $request->transactionId;
-                $sales->paymentMethodId = $payment['paymentId'];
+                $sales->paymentMethodId = $payment['paymentMethodId'];
                 $sales->promoId = $detail['promoBasedSaleId'];
                 $sales->amountDiscount = $detail['discount_based_sales'];
                 $sales->userId = $request->user()->id;
@@ -2151,7 +2567,7 @@ class PetHotelController extends Controller
             //detail total
             $total = new transaction_pet_hotel_payment_total();
             $total->transactionId = $request->transactionId;
-            $total->paymentmethodId = $payment['paymentId'];
+            $total->paymentMethodId = $payment['paymentMethodId'];
             $total->amount = $detail['total_payment'];
             $total->amountPaid = $payment['amountPaid'];
 
@@ -2185,18 +2601,197 @@ class PetHotelController extends Controller
             $total->userId = $request->user()->id;
             $total->save();
 
-            transactionPetHotelLog($request->transactionId, 'Nota diterbitkan', '', $request->user()->id);
+            transactionPetHotelLog($request->transactionId, 'Nota diterbitkan', $total->nota_number, $request->user()->id);
 
             statusTransactionPetHotel($request->transactionId, 'Menunggu konfirmasi pembayaran', $request->user()->id);
             DB::commit();
 
             updateLastTransaction($trans->customerId);
 
-            return responseCreate();
+            return response()->json(['id' => $total->id, 'message' => 'Add Data Successful!'], 200);
         } catch (\Throwable $th) {
             DB::rollback();
-            return responseInvalid([$th->getMessage()]);
+            return responseInvalid([$th->getMessage() . ' at line ' . $th->getLine()]);
         }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Private helpers — Promo lookup (mirroring TransPetClinicController)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private function getLookupPromos($ids, $locationId)
+    {
+        return [
+            'svcDiscounts' => DB::table('promotionMasters as pm')
+                ->join('promotion_discount_services as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('services as s', 's.id', 'pd.serviceId')
+                ->whereIn('pm.id', $ids)
+                ->select('pm.id as promoId', 's.id as serviceId', 's.fullName as item_name', 's.type as category', 'pd.*')->get(),
+
+            'prodDiscounts' => DB::table('promotionMasters as pm')
+                ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('products as p', 'p.id', 'pd.productId')
+                ->whereIn('pm.id', $ids)
+                ->select('pm.id as promoId', 'p.id as productId', 'p.fullName as item_name', 'p.category', 'pd.*')->get(),
+
+            'bundles' => DB::table('promotionMasters as pm')
+                ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->whereIn('pm.id', $ids)
+                ->where('pl.locationId', $locationId)
+                ->select('pm.id as promoId', 'pm.name as item_name', 'pb.price as bundlePrice', 'pb.id as bundleId')->get(),
+
+            'bundleDetails' => DB::table('promotion_bundle_detail_products as pbd')
+                ->join('products as p', 'p.id', 'pbd.productId')
+                ->select('pbd.promoBundleId', 'p.id as productId', DB::raw('null as serviceId'), 'p.fullName as name', 'p.price as normal_price', 'pbd.quantity')
+                ->get()
+                ->concat(
+                    DB::table('promotion_bundle_detail_services as pbd')
+                        ->join('services as s', 's.id', 'pbd.serviceId')
+                        ->select('pbd.promoBundleId', DB::raw('null as productId'), 's.id as serviceId', 's.fullName as name', DB::raw('null as normal_price'), 'pbd.quantity')
+                        ->get()
+                ),
+
+            'freeItems' => DB::table('promotionMasters as pm')
+                ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
+                ->join('products as p', 'p.id', 'fi.productBuyId')
+                ->whereIn('pm.id', $ids)
+                ->select('pm.id as promoId', 'p.fullName as item_name', 'p.category', 'fi.productBuyId', 'fi.productFreeId', 'fi.quantityBuyItem as quantityBuy', 'fi.quantityFreeItem as quantityFree')->get(),
+        ];
+    }
+
+    private function fetchAvailablePromos(array $productIds, array $serviceIds, int $locId, $now, float $totalTransaction): array
+    {
+        // Free Items
+        $freeItems = [];
+        if (!empty($productIds)) {
+            $freeItems = DB::table('promotionMasters as pm')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionFreeItems as fi', 'pm.id', 'fi.promoMasterId')
+                ->join('products as pbuy', 'pbuy.id', 'fi.productBuyId')
+                ->join('products as pfree', 'pfree.id', 'fi.productFreeId')
+                ->whereIn('fi.productBuyId', $productIds)
+                ->where('pl.locationId', $locId)
+                ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
+                ->where('pm.status', 1)
+                ->select('pm.id', 'pm.name', DB::raw("CONCAT('Pembelian ', fi.quantityBuyItem, ' ', pbuy.fullName, ' gratis ', fi.quantityFreeItem, ' ', pfree.fullName) as note"))
+                ->distinct()->get()->toArray();
+        }
+
+        // Discounts
+        $discounts = [];
+        if (!empty($productIds)) {
+            $discountProds = DB::table('promotionMasters as pm')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotion_discount_products as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('products as p', 'p.id', 'pd.productId')
+                ->whereIn('pd.productId', $productIds)
+                ->where('pl.locationId', $locId)
+                ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
+                ->where('pm.status', 1)
+                ->select('pm.id', 'pm.name', DB::raw("CONCAT('Pembelian Produk ', p.fullName, CASE WHEN pd.discountType = 'percent' THEN CONCAT(' diskon ', pd.percent, '%') WHEN pd.discountType = 'amount' THEN CONCAT(' diskon Rp ', pd.amount) ELSE '' END) as note"))
+                ->distinct()->get()->toArray();
+            $discounts = array_merge($discounts, $discountProds);
+        }
+        if (!empty($serviceIds)) {
+            $discountServs = DB::table('promotionMasters as pm')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotion_discount_services as pd', 'pm.id', 'pd.promoMasterId')
+                ->join('services as p', 'p.id', 'pd.serviceId')
+                ->whereIn('pd.serviceId', $serviceIds)
+                ->where('pl.locationId', $locId)
+                ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
+                ->where('pm.status', 1)
+                ->select('pm.id', 'pm.name', DB::raw("CONCAT('Pembelian Layanan ', p.fullName, CASE WHEN pd.discountType = 'percent' THEN CONCAT(' diskon ', pd.percent, '%') WHEN pd.discountType = 'amount' THEN CONCAT(' diskon Rp ', pd.amount) ELSE '' END) as note"))
+                ->distinct()->get()->toArray();
+            $discounts = array_merge($discounts, $discountServs);
+        }
+
+        // Bundles
+        $resultBundle = [];
+        $bundleIds    = collect();
+        if (!empty($productIds)) {
+            $bundleIds = $bundleIds->merge(DB::table('promotionMasters as pm')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                ->join('promotion_bundle_detail_products as pbd', 'pb.id', 'pbd.promoBundleId')
+                ->whereIn('pbd.productId', $productIds)
+                ->where('pl.locationId', $locId)
+                ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
+                ->where('pm.status', 1)->pluck('pbd.promoBundleId'));
+        }
+        if (!empty($serviceIds)) {
+            $bundleIds = $bundleIds->merge(DB::table('promotionMasters as pm')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionBundles as pb', 'pm.id', 'pb.promoMasterId')
+                ->join('promotion_bundle_detail_services as pbd', 'pb.id', 'pbd.promoBundleId')
+                ->whereIn('pbd.serviceId', $serviceIds)
+                ->where('pl.locationId', $locId)
+                ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
+                ->where('pm.status', 1)->pluck('pbd.promoBundleId'));
+        }
+
+        $bundleIds = $bundleIds->unique()->toArray();
+        if (!empty($bundleIds)) {
+            $bundleProds = DB::table('promotion_bundle_detail_products as b')
+                ->join('products as p', 'p.id', 'b.productId')
+                ->join('promotionBundles as pb', 'pb.id', 'b.promoBundleId')
+                ->join('promotionMasters as m', 'pb.promoMasterId', 'm.id')
+                ->whereIn('b.promoBundleId', $bundleIds)
+                ->select('pb.id', 'b.promoBundleId', 'p.fullName', 'b.quantity', 'pb.price', 'm.name', 'm.id as promoMasterId')->get();
+            $bundleServs = DB::table('promotion_bundle_detail_services as b')
+                ->join('services as p', 'p.id', 'b.serviceId')
+                ->join('promotionBundles as pb', 'pb.id', 'b.promoBundleId')
+                ->join('promotionMasters as m', 'pb.promoMasterId', 'm.id')
+                ->whereIn('b.promoBundleId', $bundleIds)
+                ->select('pb.id', 'b.promoBundleId', 'p.fullName', 'b.quantity', 'pb.price', 'm.name', 'm.id as promoMasterId')->get();
+
+            $allBundleDetails = collect($bundleProds)->merge($bundleServs)->groupBy('promoBundleId');
+            foreach ($allBundleDetails as $items) {
+                $kalimat    = 'paket bundling ';
+                $itemsCount = $items->count();
+                foreach ($items->values() as $i => $item) {
+                    if ($itemsCount == 1) {
+                        $kalimat .= $item->quantity . ' ' . $item->fullName;
+                    } elseif ($i == $itemsCount - 1) {
+                        $kalimat .= 'dan ' . $item->quantity . ' ' . $item->fullName;
+                    } else {
+                        $kalimat .= $item->quantity . ' ' . $item->fullName . ', ';
+                    }
+                }
+                $firstItem      = $items->first();
+                $kalimat       .= ' sebesar Rp ' . $firstItem->price;
+                $resultBundle[] = ['id' => $firstItem->promoMasterId, 'name' => $firstItem->name, 'note' => $kalimat];
+            }
+        }
+
+        // Based Sales
+        $basedSales = [];
+        if ($totalTransaction > 0) {
+            $findBasedSales = DB::table('promotionMasters as pm')
+                ->join('promotionLocations as pl', 'pm.id', 'pl.promoMasterId')
+                ->join('promotionBasedSales as bs', 'pm.id', 'bs.promoMasterId')
+                ->where('pl.locationId', $locId)
+                ->where('bs.minPurchase', '<=', $totalTransaction)
+                ->where('bs.maxPurchase', '>=', $totalTransaction)
+                ->where('pm.startDate', '<=', $now)->where('pm.endDate', '>=', $now)
+                ->where('pm.status', 1)
+                ->select('pm.id', 'pm.name', 'bs.percentOrAmount', 'bs.percent', 'bs.amount', 'bs.minPurchase')
+                ->distinct()->get();
+            foreach ($findBasedSales as $sale) {
+                $text         = $sale->percentOrAmount == 'percent'
+                    ? "Diskon {$sale->percent} % setiap pembelian minimal Rp {$sale->minPurchase}"
+                    : "Potongan harga sebesar Rp {$sale->amount} setiap pembelian minimal Rp {$sale->minPurchase}";
+                $basedSales[] = ['id' => $sale->id, 'name' => $sale->name, 'note' => $text];
+            }
+        }
+
+        return [
+            'freeItems'  => array_values($freeItems),
+            'discounts'  => array_values($discounts),
+            'bundles'    => $resultBundle,
+            'basedSales' => $basedSales,
+        ];
     }
 
     public function printInvoce(Request $request)

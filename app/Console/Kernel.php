@@ -26,6 +26,8 @@ class Kernel extends ConsoleKernel
         $schedule->call('App\Http\Controllers\CustomerController@updatePetAge')->dailyAt('06:00');
         $schedule->call('App\Http\Controllers\Staff\AccessControlSchedulesController@setSchedulerProgress')->everyMinute();
         $schedule->command('absent:update')->dailyAt('23:59');
+        // Cek setiap jam: salon "Menunggu Penjemputan" > 6 jam → "Dialihkan ke Pet Hotel"
+        $schedule->command('salon:auto-hotel')->hourly();
         // $schedule->call(function(){
         //         info('call every minute');
         //     })->everyMinute();

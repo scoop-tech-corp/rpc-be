@@ -29,63 +29,6 @@ use App\Models\Customer\CustomerTelephones;
 
 class CustomerController extends Controller
 {
-    public function index()
-    {
-        $months = collect(range(1, 12))->map(function ($month) {
-            return Carbon::create()->month($month)->format('M');
-        });
-
-        $data = [
-            'chartsCustomerGrowth' => [
-                'series' => [
-                    [
-                        'name' => 'Previous',
-                        'data' => [10, 15, 12, 18, 20, 25, 22, 30, 28, 26, 24, 29],
-                    ],
-                    [
-                        'name' => 'Current',
-                        'data' => [12, 18, 14, 20, 22, 30, 25, 35, 32, 30, 27, 33],
-                    ],
-                ],
-                'categories' => $months,
-            ],
-
-            'chartsTotalCustomer' => [
-                'series' => [
-                    [
-                        'name' => 'Previous',
-                        'data' => [10, 15, 12, 18, 20, 25, 22, 30, 28, 26, 24, 29],
-                    ],
-                    [
-                        'name' => 'Current',
-                        'data' => [12, 18, 14, 20, 22, 30, 25, 35, 32, 30, 27, 33],
-                    ],
-                ],
-                'categories' => $months,
-            ],
-
-            'newCustomer' => [
-                'percentage' => '59.3',
-                'total' => '42000',
-                'isLoss' => 0
-            ],
-            'feedback' => [
-                'percentage' => '59.3',
-                'total' => '42000',
-                'isLoss' => 0
-            ],
-            'supportRequested' => [
-                'percentage' => '59.3',
-                'total' => '42000',
-                'isLoss' => 0
-            ],
-
-
-        ];
-
-        return response()->json($data);
-    }
-
     public function insertTypeIdCustomer(Request $request)
     {
         $request->validate([
@@ -3442,4 +3385,5 @@ class CustomerController extends Controller
 
         return response()->json($data, 200);
     }
+
 }

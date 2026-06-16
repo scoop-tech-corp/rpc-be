@@ -19,6 +19,6 @@ class PushNotification extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'usersId', 'message', 'type', 'created_at', 'updated_at'
+        'usersId', 'menuName', 'message', 'type', 'isRead', 'created_at', 'updated_at'
     ];
 }
