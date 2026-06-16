@@ -455,12 +455,19 @@
             @endforeach
             <tr>
                 <td colspan="5" class="total-row">TOTAL</td>
-                <td>{{ number_format($total_tagihan, 0, ',', '.') }}</td>
+                <td>{{ number_format($total_bruto ?? $total_tagihan, 0, ',', '.') }}</td>
             </tr>
+            @if (!empty($deposit) && $deposit > 0)
+            <tr>
+                <td colspan="5" class="total-row">DEPOSIT</td>
+                <td>{{ number_format($deposit, 0, ',', '.') }}</td>
+            </tr>
+            @else
             <tr>
                 <td colspan="5" class="total-row">DEPOSIT</td>
                 <td>-</td>
             </tr>
+            @endif
             <tr>
                 <td colspan="5" class="total-row">TOTAL TAGIHAN</td>
                 <td>{{ number_format($total_tagihan, 0, ',', '.') }}</td>

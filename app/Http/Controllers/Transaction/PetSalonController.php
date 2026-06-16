@@ -18,8 +18,10 @@ use App\Models\transaction_pet_salon_payment_total;
 use App\Models\transactionpetsalon;
 use App\Models\transactionpetsaloncheck;
 use App\Models\transactionPetSalonTreatmentCage;
+use App\Models\TransactionPetSalonPolicyAgreement;
 use App\Models\TransactionPetSalonTreatmentProduct;
 use App\Models\TransactionPetSalonTreatmentService;
+use App\Models\TransactionPetSalonTreatmentTreatPlan;
 use App\Models\User;
 
 class PetSalonController extends Controller
@@ -928,21 +930,16 @@ class PetSalonController extends Controller
 
             foreach ($treatmentPlans as $value) {
                 TransactionPetSalonTreatmentTreatPlan::create([
-                    'transactionId' => $request->transactionId,
+                    'transactionId'   => $request->transactionId,
                     'treatmentPlanId' => $value['id'],
-                    'userId' => $request->user()->id,
+                    'userId'          => $request->user()->id,
                 ]);
             }
 
-            transactionPetSalonTreatmentCage::create([
-                'transactionId' => $request->transactionId,
-                'cageId' => $request->cageId,
-                'userId' => $request->user()->id,
-            ]);
+            // Kandang di-assign di step "Tandai Selesai" (markSalonDone), bukan di sini
+            statusTransactionPetSalon($request->transactionId, 'Menunggu Persetujuan Policy', $request->user()->id);
 
-            statusTransactionPetSalon($request->transactionId, 'Proses Pembayaran', $request->user()->id);
-
-            transactionPetSalonLog($request->transactionId, 'Input Treatment dan Kandang Sudah Selesai', '', $request->user()->id);
+            transactionPetSalonLog($request->transactionId, 'Input treatment selesai — menunggu persetujuan policy owner.', '', $request->user()->id);
 
             return responseCreate();
         } catch (\Throwable $th) {
@@ -1947,5 +1944,252 @@ class PetSalonController extends Controller
         return $pdf->download($namaFile);
 
         return view('transaction.pet_salon.print_invoice_pet_salon');
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  POLICY AGREEMENT
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * GET list policy / contract template aktif.
+     * Dipakai untuk mengisi opsi policy di dialog persetujuan.
+     */
+    public function getPoliciesForAgreement(Request $request)
+    {
+        $policies = DB::table('contract_templates')
+            ->where('isDeleted', 0)
+            ->where('status', 'active')
+            ->select('id', 'title', 'version', 'raw_content')
+            ->orderBy('title')
+            ->get();
+
+        return response()->json($policies);
+    }
+
+    /**
+     * POST simpan tanda tangan owner → status: Proses Salon.
+     * Role: Kasir (jobTitleId=1), Admin, atau Manager.
+     */
+    public function savePolicyAgreement(Request $request)
+    {
+        $user = $request->user();
+
+        $isKasir          = ($user->jobTitleId == 1);
+        $isAdminOrManager = in_array($user->roleId, [1, 2]);
+
+        if (!$isKasir && !$isAdminOrManager) {
+            return response()->json(['message' => 'Hanya Kasir, Manager, atau Administrator yang dapat menyimpan persetujuan policy.'], 403);
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'signerName'    => 'required|string',
+            'signatureData' => 'required|string',
+            'policies'      => 'required|string', // JSON array of {id, title, version}
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $trans = transactionpetsalon::where('id', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->first();
+
+        if (!$trans) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        if ($trans->status !== 'Menunggu Persetujuan Policy') {
+            return responseInvalid(['Status transaksi tidak valid untuk persetujuan policy.']);
+        }
+
+        $policies = json_decode($request->policies, true) ?? [];
+
+        if (empty($policies)) {
+            return responseInvalid(['Minimal satu policy harus dipilih.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $signedAt = now();
+
+            foreach ($policies as $policy) {
+                TransactionPetSalonPolicyAgreement::create([
+                    'transactionId'      => $trans->id,
+                    'contractTemplateId' => $policy['id'],
+                    'contractTitle'      => $policy['title'],
+                    'contractVersion'    => $policy['version'],
+                    'signatureData'      => $request->signatureData,
+                    'signerName'         => $request->signerName,
+                    'signedAt'           => $signedAt,
+                    'userId'             => $user->id,
+                ]);
+            }
+
+            statusTransactionPetSalon($trans->id, 'Proses Salon', $user->id);
+
+            transactionPetSalonLog(
+                $trans->id,
+                'Owner menyetujui ' . count($policies) . ' policy — proses salon dimulai.',
+                'Ditandatangani oleh: ' . $request->signerName,
+                $user->id
+            );
+
+            // Notifikasi internal ke Groomer (id=3) di lokasi
+            $petName = DB::table('customerPets')->where('id', $trans->petId)->value('petName') ?? 'Pet';
+            sendNotificationToStaffAtLocation(
+                $trans->locationId,
+                [3], // Groomer
+                'petsalon',
+                "{$petName} siap diproses. Policy sudah ditandatangani.",
+                'info'
+            );
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  TANDAI SELESAI (GROOMER)
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * POST groomer menandai salon selesai + assign kandang + kirim WA ke customer.
+     * Role: Groomer (jobTitleId=3), Admin, atau Manager.
+     */
+    public function markSalonDone(Request $request)
+    {
+        $user = $request->user();
+
+        $isGroomer        = ($user->jobTitleId == 3);
+        $isAdminOrManager = in_array($user->roleId, [1, 2]);
+
+        if (!$isGroomer && !$isAdminOrManager) {
+            return response()->json(['message' => 'Hanya Groomer, Manager, atau Administrator yang dapat menandai salon selesai.'], 403);
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'cageId'        => 'required|integer',
+            'note'          => 'nullable|string',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $trans = transactionpetsalon::where('id', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->first();
+
+        if (!$trans) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        if ($trans->status !== 'Proses Salon') {
+            return responseInvalid(['Hanya transaksi berstatus "Proses Salon" yang dapat ditandai selesai.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Assign kandang
+            transactionPetSalonTreatmentCage::create([
+                'transactionId' => $trans->id,
+                'cageId'        => $request->cageId,
+                'userId'        => $user->id,
+            ]);
+
+            statusTransactionPetSalon($trans->id, 'Menunggu Penjemputan', $user->id);
+
+            transactionPetSalonLog(
+                $trans->id,
+                'Proses salon selesai — pet ditempatkan di kandang dan menunggu penjemputan.',
+                $request->note ?? '',
+                $user->id
+            );
+
+            // Kirim WA ke customer
+            $customerData = DB::table('customer as c')
+                ->join('customerPets as cp', 'cp.customerId', 'c.id')
+                ->leftJoin('customerTelephones as ct', function ($join) {
+                    $join->on('ct.customerId', 'c.id')
+                        ->where('ct.usage', 'Utama')
+                        ->where('ct.isDeleted', 0);
+                })
+                ->where('cp.id', $trans->petId)
+                ->select('c.firstName as ownerName', 'cp.name as petName', 'ct.phoneNumber')
+                ->first();
+
+            if ($customerData && $customerData->phoneNumber) {
+                $petName   = $customerData->petName ?? 'pet Anda';
+                $ownerName = $customerData->ownerName ?? 'Owner';
+                $message   = "Halo {$ownerName},\n\nProses grooming untuk *{$petName}* sudah selesai 🎉\n"
+                    . "Silakan datang untuk menjemput. Pet akan menunggu maksimal 6 jam.\n\n"
+                    . "Terima kasih telah mempercayakan perawatan kepada kami. 🐾";
+                sendWhatsApp($customerData->phoneNumber, $message);
+            }
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  INISIASI PEMBAYARAN
+    // ─────────────────────────────────────────────────────────────────
+
+    /**
+     * POST customer sudah hadir → ubah status ke "Proses Pembayaran".
+     * Role: Kasir (jobTitleId=1), Admin, atau Manager.
+     */
+    public function initiateCheckout(Request $request)
+    {
+        $user = $request->user();
+
+        $isKasir          = ($user->jobTitleId == 1);
+        $isAdminOrManager = in_array($user->roleId, [1, 2]);
+
+        if (!$isKasir && !$isAdminOrManager) {
+            return response()->json(['message' => 'Hanya Kasir, Manager, atau Administrator yang dapat memulai proses pembayaran.'], 403);
+        }
+
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $trans = transactionpetsalon::where('id', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->first();
+
+        if (!$trans) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        if ($trans->status !== 'Menunggu Penjemputan') {
+            return responseInvalid(['Hanya transaksi berstatus "Menunggu Penjemputan" yang dapat diproses pembayaran.']);
+        }
+
+        statusTransactionPetSalon($trans->id, 'Proses Pembayaran', $user->id);
+
+        transactionPetSalonLog(
+            $trans->id,
+            'Customer hadir — proses pembayaran dimulai.',
+            '',
+            $user->id
+        );
+
+        return responseCreate();
     }
 }

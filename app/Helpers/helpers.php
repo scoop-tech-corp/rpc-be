@@ -574,6 +574,70 @@ if (!function_exists('sendNotification')) {
     }
 }
 
+if (!function_exists('sendWhatsApp')) {
+    /**
+     * Kirim pesan WhatsApp ke customer via gateway (Fonnte).
+     * Fire-and-forget — kegagalan tidak menghentikan proses utama.
+     */
+    function sendWhatsApp(string $phone, string $message): void
+    {
+        $token = env('WA_GATEWAY_TOKEN', '');
+        $url   = env('WA_GATEWAY_URL', 'https://api.fonnte.com/send');
+
+        if (!$token || !$phone) {
+            return;
+        }
+
+        // Normalkan format nomor: hilangkan karakter non-digit, ganti 08 → 628
+        $phone = preg_replace('/\D/', '', $phone);
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
+        }
+
+        try {
+            \Illuminate\Support\Facades\Http::timeout(5)
+                ->withHeaders(['Authorization' => $token])
+                ->post($url, [
+                    'target'  => $phone,
+                    'message' => $message,
+                ]);
+        } catch (\Throwable $e) {
+            // WA gateway gagal tidak menghentikan proses utama
+        }
+    }
+}
+
+if (!function_exists('sendNotificationToStaffAtLocation')) {
+    /**
+     * Kirim push notification internal ke semua staff
+     * dengan jobTitleId tertentu di sebuah lokasi.
+     *
+     * @param int    $locationId
+     * @param array  $jobTitleIds  e.g. [1 (Kasir), 17 (Dokter)]
+     * @param string $menuName
+     * @param string $message
+     * @param string $type
+     */
+    function sendNotificationToStaffAtLocation(
+        int $locationId,
+        array $jobTitleIds,
+        string $menuName,
+        string $message,
+        string $type = 'info'
+    ): void {
+        $staffIds = DB::table('users as u')
+            ->join('usersLocation as ul', 'ul.usersId', 'u.id')
+            ->where('ul.locationId', $locationId)
+            ->where('u.isDeleted', 0)
+            ->whereIn('u.jobTitleId', $jobTitleIds)
+            ->pluck('u.id');
+
+        foreach ($staffIds as $userId) {
+            sendNotification($userId, $menuName, $message, $type);
+        }
+    }
+}
+
 if (!function_exists('checkAccessIndex')) {
     function checkAccessIndex(string $identify, int $roleId): bool
     {
