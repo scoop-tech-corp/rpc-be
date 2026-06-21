@@ -314,6 +314,8 @@ class FinanceRefundController extends Controller
 
             DB::commit();
 
+            sendNotificationToStaffAtLocation($locationId, [1, 13], 'refund', "Refund {$refundNumber} sebesar Rp " . number_format($amount, 0, ',', '.') . " berhasil dicatat.", 'warning');
+
             return response()->json([
                 'message'      => "Refund {$refundNumber} berhasil dicatat.",
                 'refundNumber' => $refundNumber,

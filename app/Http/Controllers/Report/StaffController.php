@@ -12,9 +12,11 @@ class StaffController extends Controller
 {
     public function indexStaffLogin(Request $request)
     {
-        $itemPerPage = $request->rowPerPage;
+        $itemPerPage = max(1, (int) $request->rowPerPage);
+        $page = max(1, (int) $request->goToPage);
 
-        $page = $request->goToPage;
+        $allowedColumns = ['name', 'date', 'time', 'ipAddress', 'device'];
+        $allowedDirections = ['asc', 'desc'];
 
         $data = DB::table('staffLogins as s')
             ->join('users as u', 'u.id', 's.staffId')
@@ -30,47 +32,42 @@ class StaffController extends Controller
             ->where('ul.isMainLocation', '=', 1);
 
         if ($request->dateFrom && $request->dateTo) {
-
             $data = $data->whereBetween(DB::raw('DATE(s.created_at)'), [$request->dateFrom, $request->dateTo]);
         }
 
         if ($request->locationId) {
-
             $data = $data->whereIn('ul.locationId', $request->locationId);
         }
 
         if ($request->staffId) {
-
             $data = $data->whereIn('u.id', $request->staffId);
         }
 
-        if ($request->orderValue) {
+        $orderColumn = $request->orderColumn;
+        $orderValue = in_array(strtolower($request->orderValue), $allowedDirections) ? $request->orderValue : 'asc';
 
-            if ($request->orderColumn == 'name') {
-                $data = $data->orderBy('u.firstName', $request->orderValue);
-            } elseif ($request->orderValue == 'date' || $request->orderValue == 'time') {
-                $data = $data->orderBy('s.created_at', $request->orderValue);
-            } else {
-                $data = $data->orderBy($request->orderColumn, $request->orderValue);
+        if ($orderColumn && in_array($orderColumn, $allowedColumns)) {
+            if ($orderColumn === 'name') {
+                $data = $data->orderBy('u.firstName', $orderValue);
+            } elseif ($orderColumn === 'date' || $orderColumn === 'time') {
+                $data = $data->orderBy('s.created_at', $orderValue);
+            } elseif ($orderColumn === 'ipAddress') {
+                $data = $data->orderBy('s.ipAddress', $orderValue);
+            } elseif ($orderColumn === 'device') {
+                $data = $data->orderBy('s.device', $orderValue);
             }
         }
 
         $data = $data->orderBy('s.updated_at', 'desc');
 
-        $offset = ($page - 1) * $itemPerPage;
-
         $count_data = $data->count();
-        $count_result = $count_data - $offset;
+        $offset = max(0, ($page - 1) * $itemPerPage);
 
-        if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
-        } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
-        }
+        $data = $data->limit($itemPerPage)->offset($offset)->get();
 
-        $totalPaging = $count_data / $itemPerPage;
+        $totalPaging = $count_data > 0 ? ceil($count_data / $itemPerPage) : 1;
 
-        return responseIndex(ceil($totalPaging), $data);
+        return responseIndex($totalPaging, $data);
     }
 
     public function exportStaffLogin(Request $request)
@@ -272,21 +269,29 @@ class StaffController extends Controller
 
         $table = $table->orderBy('sa.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $dataTemp = $table->get();
 
         $count_data = $dataTemp->count();
 
-        $count_result = $count_data - $offset;
-
-        if ($count_result < 0) {
-            $table = $table->offset(0)->limit($itemPerPage)->get();
+        if (!$itemPerPage) {
+            $table = $dataTemp;
+            $totalPaging = 0;
         } else {
-            $table = $table->offset($offset)->limit($itemPerPage)->get();
-        }
+            $count_result = $count_data - $offset;
 
-        $totalPaging = $count_data / $itemPerPage;
+            if ($count_result < 0) {
+                $table = $table->limit($itemPerPage)->offset(0)->get();
+            } else {
+                $table = $table->limit($itemPerPage)->offset($offset)->get();
+            }
+
+            $totalPaging = $count_data / $itemPerPage;
+        }
 
         $graph = DB::table('location')
             ->select('id', 'locationName');
@@ -528,21 +533,29 @@ class StaffController extends Controller
 
         $table = $table->orderBy('lr.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $dataTemp = $table->get();
 
         $count_data = $dataTemp->count();
 
-        $count_result = $count_data - $offset;
-
-        if ($count_result < 0) {
-            $table = $table->offset(0)->limit($itemPerPage)->get();
+        if (!$itemPerPage) {
+            $table = $dataTemp;
+            $totalPaging = 0;
         } else {
-            $table = $table->offset($offset)->limit($itemPerPage)->get();
-        }
+            $count_result = $count_data - $offset;
 
-        $totalPaging = $count_data / $itemPerPage;
+            if ($count_result < 0) {
+                $table = $table->limit($itemPerPage)->offset(0)->get();
+            } else {
+                $table = $table->limit($itemPerPage)->offset($offset)->get();
+            }
+
+            $totalPaging = $count_data / $itemPerPage;
+        }
 
         $data = [
             'charts' => [

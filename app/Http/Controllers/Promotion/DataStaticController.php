@@ -112,20 +112,28 @@ class DataStaticController extends Controller
 
         $data = $data->orderBy('createdAt', 'desc');
 
+        if (!$itemPerPage) {
+            $result = $data->get();
+            return responseIndex(0, $result);
+        }
+
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $result = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $result = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
 
-        return responseIndex(ceil($totalPaging), $data);
+        return responseIndex(ceil($totalPaging), $result);
     }
 
     function listTypeMessenger()

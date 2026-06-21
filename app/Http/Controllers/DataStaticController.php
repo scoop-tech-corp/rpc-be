@@ -10,6 +10,12 @@ class DataStaticController extends Controller
 
     public function datastaticlocation(Request $Request)
     {
+        if (!is_array($Request->id) || empty($Request->id)) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['id field is required and must be an array.'],
+            ], 422);
+        }
 
         DB::beginTransaction();
         try {
@@ -98,15 +104,18 @@ class DataStaticController extends Controller
 
         $goToPage = $request->goToPage;
 
+        if (!$defaultRowPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($goToPage - 1) * $defaultRowPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+            $data = $data->limit($defaultRowPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+            $data = $data->limit($defaultRowPerPage)->offset($offset)->get();
         }
 
         $total_paging = $count_data / $defaultRowPerPage;

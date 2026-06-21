@@ -127,9 +127,9 @@ class LoanProductController
             $count_result = $count_data - $offset;
 
             if ($count_result < 0) {
-                $data = $data->offset(0)->limit($itemPerPage)->get();
+                $data = $data->limit($itemPerPage)->offset(0)->get();
             } else {
-                $data = $data->offset($offset)->limit($itemPerPage)->get();
+                $data = $data->limit($itemPerPage)->offset($offset)->get();
             }
 
             $totalPaging = $count_data / $itemPerPage;

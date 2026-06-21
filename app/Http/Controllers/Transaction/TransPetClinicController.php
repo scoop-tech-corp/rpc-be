@@ -47,6 +47,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class TransPetClinicController extends Controller
 {
+    use \App\Http\Controllers\Transaction\Traits\PaymentVerificationTrait;
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
@@ -156,18 +157,13 @@ class TransPetClinicController extends Controller
         }
 
         if ($request->search) {
-            $res = $this->Search($request);
-            if ($res) {
-                $data = $data->where($res[0], 'like', '%' . $request->search . '%');
-
-                for ($i = 1; $i < count($res); $i++) {
-
-                    $data = $data->orWhere($res[$i], 'like', '%' . $request->search . '%');
-                }
-            } else {
-                $data = [];
-                return responseIndex(0, $data);
-            }
+            $data = $data->where(function ($q) use ($request) {
+                $q->where('t.registrationNo', 'like', '%' . $request->search . '%')
+                  ->orWhere('c.firstName', 'like', '%' . $request->search . '%')
+                  ->orWhere('c.lastName', 'like', '%' . $request->search . '%')
+                  ->orWhere('cp.petName', 'like', '%' . $request->search . '%')
+                  ->orWhere('u.firstName', 'like', '%' . $request->search . '%');
+            });
         }
 
         if ($request->orderValue) {
@@ -176,15 +172,18 @@ class TransPetClinicController extends Controller
 
         $data = $data->orderBy('t.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
@@ -338,22 +337,24 @@ class TransPetClinicController extends Controller
                 return responseInvalid($errors);
             }
         } else {
-            $validate = Validator::make($request->all(), [
+            $rules = [
                 'isNewCustomer' => 'required|bool',
                 'locationId' => 'required|integer',
                 'customerId' => 'nullable|integer',
-                //'customerName' => 'nullable|string',
                 'registrant' => 'nullable|string',
                 'petId' => 'nullable|integer',
-                //'petName' => 'required|string',
-                //'petCategory' => 'required|integer',
-                //'condition' => 'required|string',
-                //'petGender' => 'required|string|in:J,B',
-                //'isSterile' => 'required|bool',
                 'typeOfCare' => 'required|int',
                 'doctorId' => 'required|int',
                 'note' => 'required|string',
-            ]);
+            ];
+            // If adding a new pet for existing customer, validate pet fields
+            if ($request->isNewPet == true) {
+                $rules['petName']     = 'required|string';
+                $rules['petCategory'] = 'required|integer';
+                $rules['petGender']   = 'required|string|in:J,B';
+                $rules['isSterile']   = 'required|bool';
+            }
+            $validate = Validator::make($request->all(), $rules);
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
@@ -469,7 +470,17 @@ class TransPetClinicController extends Controller
 
             $regisNo = 'RPC.TRX.' . $request->locationId . '.' . str_pad($trx + 1, 8, 0, STR_PAD_LEFT);
 
+            // Resolve bookingId via queueId (nullable — tidak wajib)
+            $bookingId = null;
+            if ($request->filled('queueId')) {
+                $bookingId = DB::table('queues')
+                    ->where('id', $request->queueId)
+                    ->where('isDeleted', 0)
+                    ->value('bookingId');
+            }
+
             $tran = TransactionPetClinic::create([
+                'bookingId' => $bookingId,
                 'registrationNo' => $regisNo,
                 'status' => 'Menunggu Dokter',
                 'isNewCustomer' => $request->isNewCustomer,
@@ -487,6 +498,15 @@ class TransPetClinicController extends Controller
             ]);
 
             transactionPetClinicLog($tran->id, 'New Transaction', '', $request->user()->id);
+
+            $petName = DB::table('customerPets')->where('id', $tran->petId)->value('petName') ?? 'Pet';
+            sendNotificationToStaffAtLocation(
+                $request->locationId,
+                [17], // Dokter Hewan
+                'petclinic',
+                "Transaksi baru: {$petName} menunggu pemeriksaan dokter.",
+                'info'
+            );
 
             DB::commit();
             return responseCreate();
@@ -558,13 +578,24 @@ class TransPetClinicController extends Controller
         $paymentLog = DB::table('transaction_pet_clinic_payment_totals as tpt')
             ->join('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
             ->join('users as u', 'u.id', 'tpt.userId')
+            ->leftJoin('users as uu', 'uu.id', 'tpt.uploadedBy')
+            ->leftJoin('users as cu', 'cu.id', 'tpt.confirmedBy')
             ->select(
                 'tpt.id',
                 'tpt.amount',
                 'tpt.nota_number as notaNumber',
                 'pm.name as paymentMethod',
                 'u.firstName as createdBy',
-                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%m:%s') as date")
+                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%i:%s') as date"),
+                'tpt.isPayed',
+                'tpt.proofOfPayment',
+                'tpt.uploadedBy',
+                'tpt.confirmedBy',
+                'tpt.verificationStatus',
+                'tpt.verificationNote',
+                'tpt.verifiedAt',
+                'uu.firstName as uploadedByName',
+                'cu.firstName as confirmedByName'
             )
             ->where('tpt.transactionId', '=', $request->id)
             ->orderBy('tpt.id', 'desc')
@@ -609,22 +640,23 @@ class TransPetClinicController extends Controller
                 return responseInvalid($errors);
             }
         } else {
-            $validate = Validator::make($request->all(), [
+            $updateRules = [
                 'isNewCustomer' => 'required|bool',
                 'locationId' => 'required|integer',
                 'customerId' => 'nullable|integer',
-                //'customerName' => 'nullable|string',
                 'registrant' => 'nullable|string',
                 'petId' => 'nullable|integer',
-                //'petName' => 'required|string',
-                //'petCategory' => 'required|integer',
-                //'condition' => 'required|string',
-                //'petGender' => 'required|string|in:J,B',
-                //'isSterile' => 'required|bool',
                 'typeOfCare' => 'required|int',
                 'doctorId' => 'required|int',
                 'notes' => 'nullable|string',
-            ]);
+            ];
+            if ($request->isNewPet == true) {
+                $updateRules['petName']     = 'required|string';
+                $updateRules['petCategory'] = 'required|integer';
+                $updateRules['petGender']   = 'required|string|in:J,B';
+                $updateRules['isSterile']   = 'required|bool';
+            }
+            $validate = Validator::make($request->all(), $updateRules);
 
             if ($validate->fails()) {
                 $errors = $validate->errors()->all();
@@ -997,11 +1029,21 @@ class TransPetClinicController extends Controller
 
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
 
+        $petName = DB::table('customerPets')->where('id', $tran->petId)->value('petName') ?? 'Pet';
+
         if ($request->status == 1) {
 
             statusTransactionPetClinic($request->transactionId, 'Cek Kondisi Pet', $request->user()->id);
 
             transactionPetClinicLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+
+            sendNotificationToStaffAtLocation(
+                $tran->locationId,
+                [1, 4, 5], // Kasir, Paramedis, Vetnurse
+                'petclinic',
+                "Dr. {$doctor->firstName} menerima pasien {$petName} — sedang diperiksa.",
+                'success'
+            );
         } else {
 
             $validate = Validator::make($request->all(), [
@@ -1016,6 +1058,14 @@ class TransPetClinicController extends Controller
             statusTransactionPetClinic($request->transactionId, 'Ditolak Dokter', $request->user()->id);
 
             transactionPetClinicLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+
+            sendNotificationToStaffAtLocation(
+                $tran->locationId,
+                [1], // Kasir
+                'petclinic',
+                "Pasien {$petName} ditolak oleh Dr. {$doctor->firstName} — perlu tindak lanjut.",
+                'warning'
+            );
         }
 
         return responseCreate();
@@ -3202,64 +3252,69 @@ class TransPetClinicController extends Controller
         return $pdf->download($namaFile);
     }
 
-    public function confirmPayment(Request $request)
+    public function uploadPaymentProof(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer',
-            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+            'id'    => 'required|integer',
+            'proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $trans_pay = transaction_pet_clinic_payment_total::find($request->id);
 
-        if (!$trans_pay) {
-            return responseInvalid(['Transaction is not found!']);
+        return $this->handleUploadProof(
+            $trans_pay,
+            $request,
+            'Transaction/Petclinic/proof_of_payment',
+            'transaction_pet_clinic_payment_totals'
+        );
+    }
+
+    public function confirmPayment(Request $request)
+    {
+        $request->validate(['id' => 'required|integer']);
+
+        $trans_pay = transaction_pet_clinic_payment_total::find($request->id);
+
+        $result = $this->handleConfirmProof($trans_pay, $request);
+        if (!$result['ok']) {
+            return $result['response'];
         }
 
-        if (!$request->hasFile('proof')) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Bukti pembayaran wajib diunggah!'
-            ], 422);
-        }
-
-        $filePath = null;
-        $originalName = null;
-        $randomName = null;
-
-        if ($request->hasFile('proof')) {
-            $file = $request->file('proof');
-            $originalName = $file->getClientOriginalName();
-            $randomName = 'proof_' . $trans_pay->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-
-            if (!Storage::disk('public')->exists('Transaction/Petclinic/proof_of_payment')) {
-                Storage::disk('public')->makeDirectory('Transaction/Petclinic/proof_of_payment');
-            }
-
-            $filePath = $file->storeAs('Transaction/Petclinic/proof_of_payment', $randomName, 'public');
-
-            $trans_pay->proofOfPayment = $filePath;
-            $trans_pay->originalName = $originalName;
-            $trans_pay->proofRandomName = $randomName;
-        }
-
-        $trans_pay->isPayed = 1;
+        $trans_pay = $result['record'];
+        $trans_pay->isPayed   = 1;
         $trans_pay->updated_at = now();
         $trans_pay->save();
 
-        $trans = transaction_pet_clinic_payment_total::where('transactionId', $trans_pay->transactionId)->first();
-
-        $total_amount = $trans->amount;
-        $amount_paid = transaction_pet_clinic_payment_total::where('transactionId', $trans_pay->transactionId)->sum('amountPaid');
+        $total_amount = transaction_pet_clinic_payment_total::where('transactionId', $trans_pay->transactionId)->sum('amount');
+        $amount_paid  = transaction_pet_clinic_payment_total::where('transactionId', $trans_pay->transactionId)
+            ->where('isPayed', 1)->sum('amountPaid');
 
         if ($amount_paid < $total_amount)
             statusTransactionPetClinic($trans_pay->transactionId, 'Menunggu Pembayaran Berikutnya', $request->user()->id);
         else
             statusTransactionPetClinic($trans_pay->transactionId, 'Selesai', $request->user()->id);
 
-
         transactionPetClinicLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
 
         return responseCreate();
+    }
+
+    public function rejectPayment(Request $request)
+    {
+        $request->validate([
+            'id'   => 'required|integer',
+            'note' => 'required|string|max:500',
+        ]);
+
+        $trans_pay = transaction_pet_clinic_payment_total::find($request->id);
+
+        $resp = $this->handleRejectProof($trans_pay, $request);
+
+        if (isset($resp->original['status']) && $resp->original['status'] === 'success') {
+            transactionPetClinicLog($trans_pay->transactionId, 'Bukti Pembayaran Ditolak', $request->note, $request->user()->id);
+        }
+
+        return $resp;
     }
 
     public function listDataWeight()
@@ -3617,11 +3672,11 @@ class TransPetClinicController extends Controller
                 $user->id
             );
 
-            // Notif internal → Dokter + Vetnurse di lokasi
+            // Notif internal → Dokter, Paramedis, Vetnurse di lokasi
             $petName = DB::table('customerPets')->where('id', $trans->petId)->value('petName') ?? 'Pasien';
             sendNotificationToStaffAtLocation(
                 $trans->locationId,
-                [17], // Dokter
+                [17, 4, 5], // Dokter Hewan, Paramedis, Vetnurse
                 'petclinic',
                 "{$petName} resmi dalam perawatan. Cek Papan Kerja Harian.",
                 'success'

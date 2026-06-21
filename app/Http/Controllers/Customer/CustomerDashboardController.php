@@ -23,8 +23,8 @@ class CustomerDashboardController extends Controller
             'chartsCustomerGrowth' => $this->buildGrowthChart($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId),
             'chartsTotalCustomer'  => $this->buildTotalCustomerChart($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId),
             'newCustomer'          => $this->calcCardMetric($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId),
-            'feedback'             => ['percentage' => '0', 'total' => '0', 'isLoss' => 0],
-            'supportRequested'     => ['percentage' => '0', 'total' => '0', 'isLoss' => 0],
+            'feedback'             => $this->calcFeedbackMetric($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId),
+            'supportRequested'     => $this->calcSupportMetric($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId),
         ];
 
         return response()->json($data);
@@ -176,5 +176,64 @@ class CustomerDashboardController extends Controller
         }
 
         return $labels;
+    }
+
+    /**
+     * Jumlah feedback yang masuk dalam periode (current vs prev).
+     */
+    private function calcFeedbackMetric(Carbon $cs, Carbon $ce, Carbon $ps, Carbon $pe, ?array $branchesId): array
+    {
+        $current = DB::table('customer_feedbacks')
+            ->whereBetween('created_at', [$cs, $ce])
+            ->where('isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId))
+            ->count();
+
+        $prev = DB::table('customer_feedbacks')
+            ->whereBetween('created_at', [$ps, $pe])
+            ->where('isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId))
+            ->count();
+
+        return $this->buildTrendCard($current, $prev);
+    }
+
+    /**
+     * Jumlah permintaan support dalam periode (current vs prev).
+     */
+    private function calcSupportMetric(Carbon $cs, Carbon $ce, Carbon $ps, Carbon $pe, ?array $branchesId): array
+    {
+        $current = DB::table('customer_support_requests')
+            ->whereBetween('created_at', [$cs, $ce])
+            ->where('isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId))
+            ->count();
+
+        $prev = DB::table('customer_support_requests')
+            ->whereBetween('created_at', [$ps, $pe])
+            ->where('isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('locationId', $branchesId))
+            ->count();
+
+        return $this->buildTrendCard($current, $prev);
+    }
+
+    /**
+     * Helper: bangun array { total, percentage, isLoss } dari dua nilai.
+     */
+    private function buildTrendCard(int $current, int $prev): array
+    {
+        $percentage = 0;
+        if ($prev > 0) {
+            $percentage = (($current - $prev) / $prev) * 100;
+        } elseif ($current > 0) {
+            $percentage = 100;
+        }
+
+        return [
+            'total'      => (string) $current,
+            'percentage' => (string) round(abs($percentage), 2),
+            'isLoss'     => $current >= $prev ? 0 : 1,
+        ];
     }
 }

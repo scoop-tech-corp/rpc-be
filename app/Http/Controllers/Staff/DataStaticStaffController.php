@@ -585,6 +585,9 @@ class DataStaticStaffController extends Controller
 
             $goToPage = $request->goToPage;
 
+            if (!$defaultRowPerPage) {
+                return responseIndex(0, []);
+            }
             $offset = ($goToPage - 1) * $defaultRowPerPage;
 
             $count_data = $data->count();
@@ -592,9 +595,9 @@ class DataStaticStaffController extends Controller
 
             if ($count_result < 0) {
 
-                $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+                $data = $data->limit($defaultRowPerPage)->offset(0)->get();
             } else {
-                $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+                $data = $data->limit($defaultRowPerPage)->offset($offset)->get();
             }
 
             $total_paging = $count_data / $defaultRowPerPage;

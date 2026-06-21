@@ -489,6 +489,11 @@ class StaffLeaveController extends Controller
             $staffLeave->remark       = $request->remark;
             $staffLeave->save();
 
+            $locationIds = array_filter(array_map('intval', explode(',', $staffLeave->locationId ?? '')));
+            foreach ($locationIds as $locId) {
+                sendNotificationToStaffAtLocation($locId, [8, 20], 'leave', "Pengajuan cuti baru dari {$staffLeave->requesterName} menunggu persetujuan.", 'info');
+            }
+
             DB::commit();
 
             return responseCreate();
@@ -635,6 +640,12 @@ class StaffLeaveController extends Controller
             $leaveRequest->save();
             $users->save();
 
+            if (strtolower($request->status) === 'approve') {
+                sendNotification($leaveRequest->usersId, 'leave', "Pengajuan cuti Anda disetujui oleh {$userName}.", 'success');
+            } else {
+                sendNotification($leaveRequest->usersId, 'leave', "Pengajuan cuti Anda ditolak oleh {$userName}. Alasan: {$request->reason}", 'error');
+            }
+
             DB::commit();
 
             return responseUpdate();
@@ -730,15 +741,18 @@ class StaffLeaveController extends Controller
 
         $goToPage = $request->goToPage;
 
+        if (!$defaultRowPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($goToPage - 1) * $defaultRowPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+            $data = $data->limit($defaultRowPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+            $data = $data->limit($defaultRowPerPage)->offset($offset)->get();
         }
 
         $total_paging = $count_data / $defaultRowPerPage;
@@ -1590,6 +1604,7 @@ class StaffLeaveController extends Controller
                         ],
                     );
                 $users->save();
+                sendNotification($leaveRequest->usersId, 'leave', "Pengajuan cuti Anda disetujui oleh {$userName}.", 'success');
                 DB::commit();
             }
 
@@ -1646,6 +1661,7 @@ class StaffLeaveController extends Controller
 
             foreach ($request->leaveRequestId as $val) {
 
+                $leaveForNotif = LeaveRequest::find($val);
                 LeaveRequest::where('id', '=', $val)
                     ->update(
                         [
@@ -1655,6 +1671,9 @@ class StaffLeaveController extends Controller
                             'rejectedReason' => 'Rejected by admin'
                         ],
                     );
+                if ($leaveForNotif) {
+                    sendNotification($leaveForNotif->usersId, 'leave', "Pengajuan cuti Anda ditolak oleh {$userName}.", 'error');
+                }
 
                 DB::commit();
             }

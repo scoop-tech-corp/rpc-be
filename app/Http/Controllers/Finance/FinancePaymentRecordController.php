@@ -240,6 +240,9 @@ class FinancePaymentRecordController extends Controller
         $countQuery = clone $query;
         $countData  = $countQuery->count();
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
         if ($offset > $countData) $offset = 0;
 

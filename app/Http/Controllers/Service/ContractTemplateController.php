@@ -9,6 +9,7 @@ use App\Models\contract_template;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ContractTemplateController extends Controller
 {
@@ -59,6 +60,9 @@ class ContractTemplateController extends Controller
 
         // --- EKSEKUSI DATA ---
         if ($itemPerPage) {
+            if (!$itemPerPage) {
+                return responseIndex(0, []);
+            }
             $offset = ($page - 1) * $itemPerPage;
 
             // Gunakan get() dulu baru count() dari collection jika groupBy bermasalah pada count query builder
@@ -101,18 +105,30 @@ class ContractTemplateController extends Controller
 
     public function create(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'title'       => 'required|string|max:255',
+            'raw_content' => 'required|string',
+            'status'      => 'required|string',
+            'version'     => 'nullable|string|max:20',
+            'categories'  => 'nullable|array',
+            'categories.*' => 'integer',
+        ]);
+
+        if ($validate->fails()) {
+            return responseErrorValidation($validate->errors()->all());
+        }
+
         $data = new contract_template();
 
-        $data->title = $request->title;
+        $data->title       = $request->title;
         $data->raw_content = $request->raw_content;
-        $data->status = $request->status;
-        $data->version = $request->version;
-
-        $data->userId = auth()->user()->id;
+        $data->status      = $request->status;
+        $data->version     = $request->version ?? '1.0';
+        $data->userId      = auth()->user()->id;
 
         if ($data->save()) {
 
-            foreach ($request->categories as $value) {
+            foreach ((array) $request->categories as $value) {
                 $data_detail = new category_contract_templates();
                 $data_detail->categoryId = $value;
                 $data_detail->contractTemplateId = $data->id;
@@ -121,11 +137,9 @@ class ContractTemplateController extends Controller
             }
 
             return responseCreate();
-        } else {
-            return response()->json([
-                'message' => 'Failed to create Contract Template'
-            ], 500);
         }
+
+        return response()->json(['message' => 'Failed to create Contract Template'], 500);
     }
 
     public function Search($request)
