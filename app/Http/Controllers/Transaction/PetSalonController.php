@@ -23,9 +23,42 @@ use App\Models\TransactionPetSalonTreatmentProduct;
 use App\Models\TransactionPetSalonTreatmentService;
 use App\Models\TransactionPetSalonTreatmentTreatPlan;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 class PetSalonController extends Controller
 {
+    use \App\Http\Controllers\Transaction\Traits\PaymentVerificationTrait;
+
+    public function getStats(Request $request)
+    {
+        $user           = $request->user();
+        $finishedStatus = ['Selesai', 'Batal'];
+
+        $base = DB::table('transaction_pet_salons as t')
+            ->join('location as l', 'l.id', 't.locationId')
+            ->where('t.isDeleted', 0);
+
+        $isAdmin = in_array($user->roleId, [1, 2]);
+        if (!$isAdmin) {
+            $locationIds = \App\Models\Staff\UsersLocation::where('usersId', $user->id)
+                ->pluck('locationId')
+                ->toArray();
+            if (!empty($locationIds)) {
+                $base = $base->whereIn('l.id', $locationIds);
+            }
+        }
+
+        $activeBase   = (clone $base)->whereNotIn('t.status', $finishedStatus);
+        $finishedBase = (clone $base)->whereIn('t.status', $finishedStatus);
+
+        return response()->json([
+            'antrianGrooming'  => (clone $activeBase)->whereIn('t.status', ['Menunggu Dokter', 'Cek Kondisi Pet', 'Menunggu Persetujuan Policy'])->count(),
+            'prosesSalon'      => (clone $activeBase)->whereIn('t.status', ['Proses Salon', 'Menunggu Penjemputan'])->count(),
+            'finishedToday'    => (clone $finishedBase)->whereDate('t.updated_at', \Carbon\Carbon::today())->count(),
+            'prosesPembayaran' => (clone $activeBase)->where('t.status', 'Menunggu konfirmasi pembayaran')->count(),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
@@ -60,6 +93,7 @@ class PetSalonController extends Controller
                 't.registrationNo',
                 'l.locationName',
                 'c.firstName',
+                'cp.petName',
                 DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
                 DB::raw("IFNULL(t.startDate,'') as startDate"),
                 DB::raw("IFNULL(t.endDate,'') as endDate"),
@@ -108,6 +142,8 @@ class PetSalonController extends Controller
             $data = $data->where(function ($q) use ($request) {
                 $q->where('t.registrationNo', 'like', '%' . $request->search . '%')
                   ->orWhere('c.firstName', 'like', '%' . $request->search . '%')
+                  ->orWhere('c.lastName', 'like', '%' . $request->search . '%')
+                  ->orWhere('cp.petName', 'like', '%' . $request->search . '%')
                   ->orWhere('u.firstName', 'like', '%' . $request->search . '%');
             });
         }
@@ -118,15 +154,18 @@ class PetSalonController extends Controller
 
         $data = $data->orderBy('t.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
@@ -297,7 +336,17 @@ class PetSalonController extends Controller
 
             $regisNo = 'RPC.TRX.' . $request->locationId . '.' . str_pad($trx + 1, 8, 0, STR_PAD_LEFT);
 
+            // Resolve bookingId via queueId (nullable — tidak wajib)
+            $bookingId = null;
+            if ($request->filled('queueId')) {
+                $bookingId = DB::table('queues')
+                    ->where('id', $request->queueId)
+                    ->where('isDeleted', 0)
+                    ->value('bookingId');
+            }
+
             $tran = transactionpetsalon::create([
+                'bookingId' => $bookingId,
                 'registrationNo' => $regisNo,
                 'petCheckRegistrationNo' => $petCheckRegistrationNo,
                 'status' => 'Menunggu Dokter',
@@ -315,6 +364,15 @@ class PetSalonController extends Controller
             ]);
 
             transactionPetSalonLog($tran->id, 'New Transaction', '', $request->user()->id);
+
+            $petName = DB::table('customerPets')->where('id', $tran->petId)->value('petName') ?? 'Pet';
+            sendNotificationToStaffAtLocation(
+                $request->locationId,
+                [17], // Dokter Hewan
+                'petsalon',
+                "Transaksi salon baru: {$petName} menunggu pemeriksaan dokter.",
+                'info'
+            );
 
             DB::commit();
             return responseCreate();
@@ -382,7 +440,61 @@ class PetSalonController extends Controller
             ->orderBy('tl.id', 'desc')
             ->get();
 
-        $data = ['detail' => $detail, 'transactionLogs' => $log];
+        // ── Payment Log (Pelunasan dari payment_totals) ──
+        $paymentLogs = DB::table('transaction_pet_salon_payment_totals as tpt')
+            ->leftJoin('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
+            ->join('users as u', 'u.id', 'tpt.userId')
+            ->leftJoin('users as uu', 'uu.id', 'tpt.uploadedBy')
+            ->leftJoin('users as cu', 'cu.id', 'tpt.confirmedBy')
+            ->select(
+                'tpt.id',
+                'tpt.nota_number as notaNumber',
+                DB::raw("'Pelunasan' as type"),
+                DB::raw("CONCAT('Rp ', FORMAT(tpt.amountPaid, 0)) as amount"),
+                DB::raw("COALESCE(pm.name, '-') as paymentMethod"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%i:%s') as date"),
+                DB::raw("NULL as note"),
+                'tpt.isPayed',
+                'tpt.proofOfPayment',
+                'tpt.uploadedBy',
+                'tpt.confirmedBy',
+                'tpt.verificationStatus',
+                'tpt.verificationNote',
+                'tpt.verifiedAt',
+                'uu.firstName as uploadedByName',
+                'cu.firstName as confirmedByName',
+                DB::raw("IF(tpt.proofOfPayment IS NOT NULL, 'ada', null) as hasProof")
+            )
+            ->where('tpt.transactionId', $request->id)
+            ->orderByDesc('tpt.created_at')
+            ->get();
+
+        // ── Policy Agreements ──
+        $policyAgreements = DB::table('transaction_pet_salon_policy_agreements as pa')
+            ->leftJoin('users as u', 'u.id', 'pa.userId')
+            ->leftJoin('contract_templates as ct', 'ct.id', 'pa.contractTemplateId')
+            ->select(
+                'pa.id',
+                'pa.contractTitle',
+                'pa.contractVersion',
+                'pa.signerName',
+                'pa.signatureData',
+                DB::raw("DATE_FORMAT(pa.signedAt, '%d-%m-%Y %H:%i') as signedAt"),
+                'u.firstName as recordedBy',
+                DB::raw("IF(pa.signatureData IS NOT NULL AND pa.signatureData != '', 1, 0) as hasSigned"),
+                'ct.raw_content as rawContent'
+            )
+            ->where('pa.transactionId', $request->id)
+            ->orderBy('pa.id')
+            ->get();
+
+        $data = [
+            'detail'           => $detail,
+            'transactionLogs'  => $log,
+            'paymentLogs'      => $paymentLogs,
+            'policyAgreements' => $policyAgreements,
+        ];
 
         return response()->json($data, 200);
     }
@@ -647,12 +759,25 @@ class PetSalonController extends Controller
         }
 
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
+        $tranSalon = transactionpetsalon::find($request->transactionId);
+        $petName = $tranSalon ? (DB::table('customerPets')->where('id', $tranSalon->petId)->value('petName') ?? 'Pet') : 'Pet';
+        $locationId = $tranSalon ? $tranSalon->locationId : null;
 
         if ($request->status == 1) {
 
             statusTransactionPetSalon($request->transactionId, 'Cek Kondisi Pet', $request->user()->id);
 
             transactionPetSalonLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+
+            if ($locationId) {
+                sendNotificationToStaffAtLocation(
+                    $locationId,
+                    [1, 3], // Kasir, Groomer
+                    'petsalon',
+                    "Dr. {$doctor->firstName} menerima {$petName} untuk grooming — sedang diperiksa.",
+                    'success'
+                );
+            }
         } else {
 
             $validate = Validator::make($request->all(), [
@@ -667,6 +792,16 @@ class PetSalonController extends Controller
             statusTransactionPetSalon($request->transactionId, 'Ditolak Dokter', $request->user()->id);
 
             transactionPetSalonLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+
+            if ($locationId) {
+                sendNotificationToStaffAtLocation(
+                    $locationId,
+                    [1], // Kasir
+                    'petsalon',
+                    "{$petName} ditolak oleh Dr. {$doctor->firstName} — perlu tindak lanjut.",
+                    'warning'
+                );
+            }
         }
 
         return responseCreate();
@@ -1870,7 +2005,10 @@ class PetSalonController extends Controller
 
             updateLastTransaction($trans->customerId);
 
-            return responseCreate();
+            return response()->json([
+                'message' => 'Add Data Successful!',
+                'data'    => ['id' => $total->id],
+            ], 200);
         } catch (\Throwable $th) {
             DB::rollback();
             return responseInvalid([$th->getMessage()]);
@@ -2134,6 +2272,15 @@ class PetSalonController extends Controller
                 sendWhatsApp($customerData->phoneNumber, $message);
             }
 
+            $groomingPetName = DB::table('customerPets')->where('id', $trans->petId)->value('petName') ?? 'Pet';
+            sendNotificationToStaffAtLocation(
+                $trans->locationId,
+                [1], // Kasir
+                'petsalon',
+                "Grooming {$groomingPetName} selesai — menunggu penjemputan.",
+                'info'
+            );
+
             DB::commit();
             return responseCreate();
         } catch (\Throwable $th) {
@@ -2191,5 +2338,64 @@ class PetSalonController extends Controller
         );
 
         return responseCreate();
+    }
+
+    // ── Secure Payment: Upload → Verify (4-Eyes) ─────────────────────────────
+
+    public function uploadPaymentProof(Request $request)
+    {
+        $request->validate([
+            'id'    => 'required|integer',
+            'proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $trans_pay = transaction_pet_salon_payment_total::find($request->id);
+
+        return $this->handleUploadProof(
+            $trans_pay,
+            $request,
+            'Transaction/Petsalon/proof_of_payment',
+            'transaction_pet_salon_payment_totals'
+        );
+    }
+
+    public function confirmPayment(Request $request)
+    {
+        $request->validate(['id' => 'required|integer']);
+
+        $trans_pay = transaction_pet_salon_payment_total::find($request->id);
+
+        $result = $this->handleConfirmProof($trans_pay, $request);
+        if (!$result['ok']) {
+            return $result['response'];
+        }
+
+        $trans_pay = $result['record'];
+        $trans_pay->isPayed    = 1;
+        $trans_pay->updated_at = now();
+        $trans_pay->save();
+
+        statusTransactionPetSalon($trans_pay->transactionId, 'Selesai', $request->user()->id);
+        transactionPetSalonLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
+
+        return responseCreate();
+    }
+
+    public function rejectPayment(Request $request)
+    {
+        $request->validate([
+            'id'   => 'required|integer',
+            'note' => 'required|string|max:500',
+        ]);
+
+        $trans_pay = transaction_pet_salon_payment_total::find($request->id);
+
+        $resp = $this->handleRejectProof($trans_pay, $request);
+
+        if (isset($resp->original['status']) && $resp->original['status'] === 'success') {
+            transactionPetSalonLog($trans_pay->transactionId, 'Bukti Pembayaran Ditolak', $request->note, $request->user()->id);
+        }
+
+        return $resp;
     }
 }

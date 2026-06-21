@@ -218,6 +218,9 @@ class BookingController extends Controller
             ]);
         }
 
+        $petName = DB::table('customerPets')->where('id', $request->petId)->value('petName') ?? 'Pet';
+        sendNotificationToStaffAtLocation($request->locationId, [1], 'booking', "Booking baru: {$petName} ({$request->services}) menunggu konfirmasi.", 'info');
+
         return responseCreate();
     }
 
@@ -472,6 +475,9 @@ class BookingController extends Controller
             'userUpdateId'   => $request->user()->id,
         ]);
 
+        $petName = DB::table('customerPets')->where('id', $booking->petId)->value('petName') ?? 'Pet';
+        sendNotificationToStaffAtLocation($booking->locationId, [17], 'booking', "Booking {$petName} ({$booking->serviceType}) dikonfirmasi — menunggu kedatangan.", 'success');
+
         return responseUpdate();
     }
 
@@ -521,6 +527,9 @@ class BookingController extends Controller
             'rejectionDate'   => now(),
             'userUpdateId'    => $request->user()->id,
         ]);
+
+        $petName = DB::table('customerPets')->where('id', $booking->petId)->value('petName') ?? 'Pet';
+        sendNotificationToStaffAtLocation($booking->locationId, [1], 'booking', "Booking {$petName} ({$booking->serviceType}) ditolak — perlu tindak lanjut.", 'warning');
 
         return responseUpdate();
     }

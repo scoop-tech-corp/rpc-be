@@ -86,11 +86,14 @@ class StaffPayrollController
         $data->orderBy(DB::raw($orderColumn), $orderValue);
 
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
         $countData = $data->count();
         $totalPaging = ceil($countData / $itemPerPage);
 
-        $data = $data->offset($offset)->limit($itemPerPage)->get();
+        $data = $data->limit($itemPerPage)->offset($offset)->get();
 
         return response()->json([
             'status' => true,

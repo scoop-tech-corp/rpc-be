@@ -118,6 +118,8 @@ class QueueController extends Controller
             'createdBy'      => $request->user()->id,
         ]);
 
+        sendNotificationToStaffAtLocation($request->locationId, [17], 'queue', "Pasien baru dalam antrian: {$queue->queueNumber} ({$queue->serviceType}) — harap bersiap.", 'info');
+
         return response()->json([
             'message' => 'Antrian berhasil ditambahkan.',
             'data'    => $queue,
@@ -217,6 +219,12 @@ class QueueController extends Controller
         }
 
         $queue->update($updateData);
+
+        if ($request->status === 'called') {
+            sendNotificationToStaffAtLocation($queue->locationId, [17], 'queue', "Pasien {$queue->queueNumber} ({$queue->serviceType}) dipanggil — silakan bersiap.", 'info');
+        } elseif ($request->status === 'done') {
+            sendNotificationToStaffAtLocation($queue->locationId, [1], 'queue', "Pasien {$queue->queueNumber} selesai dilayani.", 'success');
+        }
 
         return response()->json([
             'message' => 'Status antrian berhasil diperbarui.',

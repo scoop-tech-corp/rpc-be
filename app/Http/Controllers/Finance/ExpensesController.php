@@ -85,14 +85,17 @@ class ExpensesController extends Controller
 
         // 6. Pagination dan Response
         if ($itemPerPage) {
+            if (!$itemPerPage) {
+                return responseIndex(0, []);
+            }
             $offset = ($page - 1) * $itemPerPage;
             $count_data = $data->count();
             $count_result = $count_data - $offset;
 
             if ($count_result < 0) {
-                $result_data = $data->offset(0)->limit($itemPerPage)->get();
+                $result_data = $data->limit($itemPerPage)->offset(0)->get();
             } else {
-                $result_data = $data->offset($offset)->limit($itemPerPage)->get();
+                $result_data = $data->limit($itemPerPage)->offset($offset)->get();
             }
 
             $totalPaging = ceil($count_data / $itemPerPage);

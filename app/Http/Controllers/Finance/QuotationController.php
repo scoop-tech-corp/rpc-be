@@ -211,6 +211,7 @@ class QuotationController extends Controller
             ]);
 
             DB::commit();
+            sendNotificationToStaffAtLocation($request->locationId, [13], 'quotation', "Quotation baru {$quotation->quotationNo} ({$request->typeOfService}) dibuat — menunggu pengiriman ke customer.", 'info');
             return response()->json(['id' => $quotation->id, 'quotationNo' => $quotation->quotationNo, 'message' => 'Quotation created successfully.'], 200);
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -425,6 +426,15 @@ class QuotationController extends Controller
                     $emailFailed = true;
                 }
             }
+        }
+
+        // Notifikasi Finance sesuai perubahan status
+        if ($request->status === 'sent') {
+            sendNotificationToStaffAtLocation($quotation->locationId, [13], 'quotation', "Quotation {$quotation->quotationNo} telah dikirim ke customer — menunggu konfirmasi.", 'info');
+        } elseif ($request->status === 'accepted') {
+            sendNotificationToStaffAtLocation($quotation->locationId, [13], 'quotation', "Quotation {$quotation->quotationNo} diterima oleh customer.", 'success');
+        } elseif ($request->status === 'rejected') {
+            sendNotificationToStaffAtLocation($quotation->locationId, [13], 'quotation', "Quotation {$quotation->quotationNo} ditolak oleh customer.", 'warning');
         }
 
         // Response dengan info email

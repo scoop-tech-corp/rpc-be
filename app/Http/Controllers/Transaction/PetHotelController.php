@@ -34,6 +34,37 @@ use Storage;
 
 class PetHotelController extends Controller
 {
+    public function getStats(Request $request)
+    {
+        $user         = $request->user();
+        $finishedStatus = ['Selesai', 'Batal'];
+
+        $base = DB::table('transaction_pet_hotels as t')
+            ->join('location as l', 'l.id', 't.locationId')
+            ->where('t.isDeleted', 0);
+
+        // Filter lokasi berdasarkan role
+        $isAdmin = in_array($user->roleId, [1, 2]);
+        if (!$isAdmin) {
+            $locationIds = \App\Models\Staff\UsersLocation::where('usersId', $user->id)
+                ->pluck('locationId')
+                ->toArray();
+            if (!empty($locationIds)) {
+                $base = $base->whereIn('l.id', $locationIds);
+            }
+        }
+
+        $activeBase   = (clone $base)->whereNotIn('t.status', $finishedStatus);
+        $finishedBase = (clone $base)->whereIn('t.status', $finishedStatus);
+
+        return response()->json([
+            'menginap'           => (clone $activeBase)->where('t.status', 'Dalam Perawatan')->count(),
+            'prosesCheckout'     => (clone $activeBase)->whereIn('t.status', ['Proses Pembayaran', 'Menunggu konfirmasi pembayaran'])->count(),
+            'finishedToday'      => (clone $finishedBase)->whereDate('t.updated_at', \Carbon\Carbon::today())->count(),
+            'menungguKonfirmasi' => (clone $activeBase)->where('t.status', 'Menunggu konfirmasi pembayaran')->count(),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
@@ -58,6 +89,7 @@ class PetHotelController extends Controller
         $data = DB::table('transaction_pet_hotels as t')
             ->join('location as l', 'l.id', 't.locationId')
             ->join('customer as c', 'c.id', 't.customerId')
+            ->join('customerPets as cp', 'cp.id', 't.petId')
             ->leftjoin('customerGroups as cg', 'cg.id', 'c.customerGroupId')
             ->leftJoin('users as u', 'u.id', 't.doctorId')
             ->join('users as uc', 'uc.id', 't.userId')
@@ -68,6 +100,7 @@ class PetHotelController extends Controller
                 't.isTreatment',
                 'l.locationName',
                 'c.firstName',
+                'cp.petName',
                 DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
                 DB::raw("IFNULL(t.startDate,'') as startDate"),
                 DB::raw("IFNULL(t.endDate,'') as endDate"),
@@ -120,6 +153,8 @@ class PetHotelController extends Controller
             $data = $data->where(function ($q) use ($request) {
                 $q->where('t.registrationNo', 'like', '%' . $request->search . '%')
                     ->orWhere('c.firstName', 'like', '%' . $request->search . '%')
+                    ->orWhere('c.lastName', 'like', '%' . $request->search . '%')
+                    ->orWhere('cp.petName', 'like', '%' . $request->search . '%')
                     ->orWhere('u.firstName', 'like', '%' . $request->search . '%');
             });
         }
@@ -130,15 +165,18 @@ class PetHotelController extends Controller
 
         $data = $data->orderBy('t.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
@@ -316,7 +354,17 @@ class PetHotelController extends Controller
 
             $regisNo = 'RPC.TRX.' . $request->locationId . '.' . str_pad($trx + 1, 8, 0, STR_PAD_LEFT);
 
+            // Resolve bookingId via queueId (nullable — tidak wajib)
+            $bookingId = null;
+            if ($request->filled('queueId')) {
+                $bookingId = DB::table('queues')
+                    ->where('id', $request->queueId)
+                    ->where('isDeleted', 0)
+                    ->value('bookingId');
+            }
+
             $tran = TransactionPetHotel::create([
+                'bookingId' => $bookingId,
                 'registrationNo' => $regisNo,
                 'petCheckRegistrationNo' => $petCheckRegistrationNo,
                 'status' => 'Menunggu Dokter',
@@ -334,6 +382,15 @@ class PetHotelController extends Controller
             ]);
 
             transactionPetHotelLog($tran->id, 'New Transaction', '', $request->user()->id);
+
+            $petName = DB::table('customerPets')->where('id', $tran->petId)->value('petName') ?? 'Pet';
+            sendNotificationToStaffAtLocation(
+                $request->locationId,
+                [17], // Dokter Hewan
+                'pethotel',
+                "Transaksi hotel baru: {$petName} menunggu pemeriksaan dokter.",
+                'info'
+            );
 
             DB::commit();
             return responseCreate();
@@ -423,6 +480,8 @@ class PetHotelController extends Controller
         $pelunasanLogs = DB::table('transaction_pet_hotel_payment_totals as tpt')
             ->leftJoin('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
             ->join('users as u', 'u.id', 'tpt.userId')
+            ->leftJoin('users as uploader', 'uploader.id', 'tpt.uploadedBy')
+            ->leftJoin('users as confirmer', 'confirmer.id', 'tpt.confirmedBy')
             ->select(
                 'tpt.id',
                 'tpt.nota_number as notaNumber',
@@ -432,7 +491,16 @@ class PetHotelController extends Controller
                 'u.firstName as createdBy',
                 DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%i:%s') as date"),
                 'tpt.note as note',
-                DB::raw("IF(tpt.proofOfPayment IS NOT NULL, 'ada', null) as hasProof")
+                DB::raw("IF(tpt.proofOfPayment IS NOT NULL, 'ada', null) as hasProof"),
+                'tpt.proofOfPayment',
+                'tpt.verificationStatus',
+                'tpt.verificationNote',
+                'tpt.uploadedBy',
+                'tpt.confirmedBy',
+                DB::raw("CONCAT(IFNULL(uploader.firstName,''), ' ', IFNULL(uploader.lastName,'')) as uploadedByName"),
+                DB::raw("CONCAT(IFNULL(confirmer.firstName,''), ' ', IFNULL(confirmer.lastName,'')) as confirmedByName"),
+                DB::raw("DATE_FORMAT(tpt.verifiedAt, '%d-%m-%Y %H:%i') as verifiedAt"),
+                'tpt.isPayed'
             )
             ->where('tpt.transactionId', $request->id)
             ->get();
@@ -753,12 +821,21 @@ class PetHotelController extends Controller
         }
 
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
+        $petName = DB::table('customerPets')->where('id', $tran->petId)->value('petName') ?? 'Pet';
 
         if ($request->status == 1) {
 
             statusTransactionPetHotel($request->transactionId, 'Cek Kondisi Pet', $request->user()->id);
 
             transactionPetHotelLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+
+            sendNotificationToStaffAtLocation(
+                $tran->locationId,
+                [1, 4, 5], // Kasir, Paramedis, Vetnurse
+                'pethotel',
+                "Dr. {$doctor->firstName} menerima {$petName} untuk menginap — sedang diperiksa.",
+                'success'
+            );
         } else {
 
             $validate = Validator::make($request->all(), [
@@ -773,6 +850,14 @@ class PetHotelController extends Controller
             statusTransactionPetHotel($request->transactionId, 'Ditolak Dokter', $request->user()->id);
 
             transactionPetHotelLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+
+            sendNotificationToStaffAtLocation(
+                $tran->locationId,
+                [1], // Kasir
+                'pethotel',
+                "{$petName} ditolak oleh Dr. {$doctor->firstName} — perlu tindak lanjut.",
+                'warning'
+            );
         }
 
         return responseCreate();
@@ -1124,6 +1209,15 @@ class PetHotelController extends Controller
                 'Owner menyetujui dan menandatangani ' . count($policies) . ' policy — pet resmi dalam perawatan',
                 'Ditandatangani oleh: ' . $request->signerName,
                 $request->user()->id
+            );
+
+            $petName = DB::table('customerPets')->where('id', $tran->petId)->value('petName') ?? 'Pet';
+            sendNotificationToStaffAtLocation(
+                $tran->locationId,
+                [17, 4, 5], // Dokter Hewan, Paramedis, Vetnurse
+                'pethotel',
+                "{$petName} resmi dalam perawatan hotel. Policy sudah ditandatangani.",
+                'success'
             );
 
             DB::commit();
@@ -2839,12 +2933,11 @@ class PetHotelController extends Controller
     {
         $access = $this->getUserAccessInfo($request);
         if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
-            return $this->accessDenied('Hanya Kasir, Manager, atau Administrator yang dapat mengkonfirmasi pembayaran.');
+            return $this->accessDenied('Hanya Finance, Manager, atau Administrator yang dapat mengkonfirmasi pembayaran.');
         }
 
         $request->validate([
             'id' => 'required|integer',
-            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
         ]);
 
         $trans_pay = transaction_pet_hotel_payment_total::find($request->id);
@@ -2860,35 +2953,27 @@ class PetHotelController extends Controller
             ], 400);
         }
 
-        if (!$request->hasFile('proof')) {
+        // ── Bukti harus sudah diupload via uploadPaymentProof() ──────────────────
+        if (!$trans_pay->proofOfPayment || $trans_pay->verificationStatus !== 'pending') {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Bukti pembayaran wajib diunggah!'
+                'status'  => 'error',
+                'message' => 'Bukti pembayaran belum diunggah atau status tidak valid. Minta staff untuk upload bukti terlebih dahulu.',
             ], 422);
         }
 
-        $filePath = null;
-        $originalName = null;
-        $randomName = null;
-
-        if ($request->hasFile('proof')) {
-            $file = $request->file('proof');
-            $originalName = $file->getClientOriginalName();
-            $randomName = 'proof_' . $trans_pay->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-
-            if (!Storage::disk('public')->exists('Transaction/Pethotel/proof_of_payment')) {
-                Storage::disk('public')->makeDirectory('Transaction/Pethotel/proof_of_payment');
-            }
-
-            $filePath = $file->storeAs('Transaction/Pethotel/proof_of_payment', $randomName, 'public');
-
-            $trans_pay->proofOfPayment = $filePath;
-            $trans_pay->originalName = $originalName;
-            $trans_pay->proofRandomName = $randomName;
+        // ── 4-Eyes Principle: konfirmator harus berbeda dengan yang upload ──────
+        if ($trans_pay->uploadedBy && (int) $trans_pay->uploadedBy === (int) $request->user()->id) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak dapat mengkonfirmasi pembayaran yang buktinya Anda upload sendiri. Minta rekan Finance/Manager lain untuk mengkonfirmasi.',
+            ], 403);
         }
 
-        $trans_pay->isPayed = 1;
-        $trans_pay->updated_at = now();
+        $trans_pay->isPayed        = 1;
+        $trans_pay->confirmedBy    = $request->user()->id;
+        $trans_pay->verificationStatus = 'verified';
+        $trans_pay->verifiedAt     = now();
+        $trans_pay->updated_at     = now();
         $trans_pay->save();
 
         $trans = transaction_pet_hotel_payment_total::where('transactionId', $trans_pay->transactionId)->first();
@@ -2896,16 +2981,23 @@ class PetHotelController extends Controller
         $total_amount = $trans->amount;
         $amount_paid = transaction_pet_hotel_payment_total::where('transactionId', $trans_pay->transactionId)->sum('amountPaid');
 
-        // if ($amount_paid < $total_amount) {
-        //     statusTransactionPetHotel($trans_pay->transactionId, 'Menunggu Pembayaran Berikutnya', $request->user()->id);
-        // } else {
-
-        // }
-
         DB::beginTransaction();
         try {
             statusTransactionPetHotel($trans_pay->transactionId, 'Selesai', $request->user()->id);
             transactionPetHotelLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi, Pet Resmi Keluar Hotel', '', $request->user()->id);
+
+            $tranData = TransactionPetHotel::find($trans_pay->transactionId);
+            if ($tranData) {
+                $petName = DB::table('customerPets')->where('id', $tranData->petId)->value('petName') ?? 'Pet';
+                sendNotificationToStaffAtLocation(
+                    $tranData->locationId,
+                    [1], // Kasir
+                    'pethotel',
+                    "Pembayaran dikonfirmasi — {$petName} resmi keluar hotel.",
+                    'success'
+                );
+            }
+
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollback();
@@ -2913,6 +3005,163 @@ class PetHotelController extends Controller
         }
 
         return responseCreate();
+    }
+
+    /**
+     * Upload bukti pembayaran (step 1 dari 2-step verification).
+     * Hanya simpan file + hash + set status = pending.
+     * Konfirmasi dilakukan oleh orang berbeda via confirmPayment().
+     */
+    public function uploadPaymentProof(Request $request)
+    {
+        $request->validate([
+            'id'    => 'required|integer',
+            'proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $trans_pay = transaction_pet_hotel_payment_total::find($request->id);
+
+        if (!$trans_pay) {
+            return responseInvalid(['Data pembayaran tidak ditemukan.']);
+        }
+
+        if ($trans_pay->isPayed) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Pembayaran ini sudah dikonfirmasi sebelumnya.',
+            ], 400);
+        }
+
+        if (in_array($trans_pay->verificationStatus, ['verified'])) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Bukti pembayaran sudah terverifikasi.',
+            ], 400);
+        }
+
+        $file        = $request->file('proof');
+        $fileContent = file_get_contents($file->getRealPath());
+        $hash        = hash('sha256', $fileContent);
+
+        // ── Cek duplikat hash (bukti yang sama dipakai di transaksi lain) ────────
+        $duplicate = DB::table('transaction_pet_hotel_payment_totals')
+            ->where('proofHash', $hash)
+            ->where('id', '!=', $trans_pay->id)
+            ->where('isDeleted', 0)
+            ->first();
+
+        if ($duplicate) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Bukti pembayaran ini sudah pernah digunakan pada transaksi lain. Pastikan bukti transfer yang Anda upload adalah yang terbaru.',
+            ], 422);
+        }
+
+        // ── Hapus file lama jika ada (re-upload) ─────────────────────────────────
+        if ($trans_pay->proofOfPayment) {
+            Storage::disk('public')->delete($trans_pay->proofOfPayment);
+        }
+
+        $originalName = $file->getClientOriginalName();
+        $randomName   = 'proof_' . $trans_pay->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+
+        if (!Storage::disk('public')->exists('Transaction/Pethotel/proof_of_payment')) {
+            Storage::disk('public')->makeDirectory('Transaction/Pethotel/proof_of_payment');
+        }
+
+        $filePath = $file->storeAs('Transaction/Pethotel/proof_of_payment', $randomName, 'public');
+
+        $trans_pay->proofOfPayment      = $filePath;
+        $trans_pay->originalName        = $originalName;
+        $trans_pay->proofRandomName     = $randomName;
+        $trans_pay->proofHash           = $hash;
+        $trans_pay->uploadedBy          = $request->user()->id;
+        $trans_pay->verificationStatus  = 'pending';
+        $trans_pay->verificationNote    = null;
+        $trans_pay->verifiedAt          = null;
+        $trans_pay->confirmedBy         = null;
+        $trans_pay->updated_at          = now();
+        $trans_pay->save();
+
+        transactionPetHotelLog(
+            $trans_pay->transactionId,
+            'Bukti pembayaran diunggah, menunggu verifikasi Finance/Manager',
+            '',
+            $request->user()->id
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Bukti pembayaran berhasil diunggah. Menunggu konfirmasi dari Finance atau Manager.',
+            'data'    => [
+                'id'                 => $trans_pay->id,
+                'verificationStatus' => 'pending',
+                'uploadedBy'         => $request->user()->id,
+            ],
+        ], 200);
+    }
+
+    /**
+     * Tolak bukti pembayaran (Finance/Manager yang tidak upload).
+     */
+    public function rejectPayment(Request $request)
+    {
+        $access = $this->getUserAccessInfo($request);
+        if (!$access['isAdminOrManager'] && $access['jobTitleId'] !== 1) {
+            return $this->accessDenied('Hanya Finance, Manager, atau Administrator yang dapat menolak pembayaran.');
+        }
+
+        $request->validate([
+            'id'   => 'required|integer',
+            'note' => 'required|string|max:500',
+        ]);
+
+        $trans_pay = transaction_pet_hotel_payment_total::find($request->id);
+
+        if (!$trans_pay) {
+            return responseInvalid(['Data pembayaran tidak ditemukan.']);
+        }
+
+        if ($trans_pay->isPayed) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Pembayaran sudah dikonfirmasi, tidak bisa ditolak.',
+            ], 400);
+        }
+
+        if ($trans_pay->verificationStatus !== 'pending') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Hanya pembayaran berstatus pending yang bisa ditolak.',
+            ], 400);
+        }
+
+        // ── 4-Eyes: yang reject harus berbeda dengan yang upload ─────────────────
+        if ($trans_pay->uploadedBy && (int) $trans_pay->uploadedBy === (int) $request->user()->id) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak dapat menolak bukti pembayaran yang Anda upload sendiri.',
+            ], 403);
+        }
+
+        $trans_pay->verificationStatus = 'rejected';
+        $trans_pay->verificationNote   = $request->note;
+        $trans_pay->confirmedBy        = $request->user()->id;
+        $trans_pay->verifiedAt         = now();
+        $trans_pay->updated_at         = now();
+        $trans_pay->save();
+
+        transactionPetHotelLog(
+            $trans_pay->transactionId,
+            'Bukti pembayaran ditolak: ' . $request->note,
+            '',
+            $request->user()->id
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Bukti pembayaran ditolak. Staff dapat upload ulang bukti yang benar.',
+        ], 200);
     }
 
     // ─── Fase 2: Additional Treatment & Extend Stay ─────────────────────────────

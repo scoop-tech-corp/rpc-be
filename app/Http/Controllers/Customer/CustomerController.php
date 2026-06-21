@@ -26,6 +26,7 @@ use App\Models\Customer\ReferenceCustomer;
 use App\Models\Customer\CustomerMessengers;
 use App\Models\Customer\CustomerOccupation;
 use App\Models\Customer\CustomerTelephones;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CustomerController extends Controller
 {
@@ -281,15 +282,18 @@ class CustomerController extends Controller
 
             $goToPage = $request->goToPage;
 
+            if (!$defaultRowPerPage) {
+                return responseIndex(0, []);
+            }
             $offset = ($goToPage - 1) * $defaultRowPerPage;
 
             $count_data = $data->count();
             $count_result = $count_data - $offset;
 
             if ($count_result < 0) {
-                $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+                $data = $data->limit($defaultRowPerPage)->offset(0)->get();
             } else {
-                $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+                $data = $data->limit($defaultRowPerPage)->offset($offset)->get();
             }
 
             $total_paging = $count_data / $defaultRowPerPage;
@@ -367,6 +371,69 @@ class CustomerController extends Controller
                 'message' => 'Failed',
                 'errors' => $e,
             ]);
+        }
+    }
+
+    public function exportCustomerPdf(Request $request)
+    {
+        if (!checkAccessIndex('customer-list', $request->user()->roleId)) {
+            return responseUnauthorize();
+        }
+
+        try {
+            // ---- Build data query (same logic as exportCustomer but via buildCustomerBaseQuery) ----
+            $query = $this->buildCustomerBaseQuery($request);
+
+            // Apply keyword search if present
+            if ($request->keyword) {
+                $keyword = $request->keyword;
+                $query->where(function ($q) use ($keyword) {
+                    $q->where(DB::raw("CONCAT_WS(' ', a.firstName, a.middleName, a.lastName)"), 'like', "%{$keyword}%")
+                      ->orWhere('a.memberNo', 'like', "%{$keyword}%");
+                });
+            }
+
+            // Apply customer group filter
+            if ($request->customerGroupId) {
+                $cgIds = array_filter((array) $request->customerGroupId, fn($v) => $v !== '');
+                if (!empty($cgIds)) {
+                    $query->whereIn('a.customerGroupId', $cgIds);
+                }
+            }
+
+            // Order
+            $allowedColumns = ['customerName', 'memberNo', 'totalPet', 'location', 'phoneNumber', 'emailAddress', 'createdBy', 'createdAt'];
+            $orderColumn    = in_array($request->orderColumn, $allowedColumns) ? $request->orderColumn : 'a.created_at';
+            $orderValue     = strtolower($request->orderValue) === 'asc' ? 'asc' : 'desc';
+
+            $data = DB::table($query)
+                ->select('id', 'memberNo', 'customerGroup', 'customerName', 'totalPet', 'location', 'phoneNumber', 'emailAddress', 'createdBy', 'createdAt')
+                ->orderBy($orderColumn, $orderValue)
+                ->get();
+
+            // Resolve location names for filter header
+            $locationLabel = 'Semua Lokasi';
+            if ($request->locationId) {
+                $locIds = array_filter((array) $request->locationId, fn($v) => $v !== '');
+                if (!empty($locIds)) {
+                    $names = DB::table('location')->whereIn('id', $locIds)->pluck('locationName')->toArray();
+                    $locationLabel = implode(', ', $names);
+                }
+            }
+
+            $pdf = Pdf::loadView('customer.customer-list-pdf', [
+                'customers'     => $data,
+                'locationLabel' => $locationLabel,
+                'generatedAt'   => Carbon::now()->format('d/m/Y H:i:s'),
+            ])->setPaper('a4', 'landscape');
+
+            $date     = Carbon::now()->format('d-m-Y');
+            $filename = "Customer List {$date}.pdf";
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed', 'errors' => $e->getMessage()], 500);
         }
     }
 
@@ -701,7 +768,7 @@ class CustomerController extends Controller
 
             $data_item = [];
 
-            $arrayDetailAddress = json_decode($request->detailAddresses, true);
+            $arrayDetailAddress = json_decode($request->detailAddresses, true) ?? [];
 
             if (count($arrayDetailAddress) > 0) {
 
@@ -767,7 +834,7 @@ class CustomerController extends Controller
 
             $data_error_telephone = [];
 
-            $arraytelephone = json_decode($request->telephones, true);
+            $arraytelephone = json_decode($request->telephones, true) ?? [];
 
             if (count($arraytelephone) > 0) {
 
@@ -851,7 +918,7 @@ class CustomerController extends Controller
 
             $data_error_email = [];
 
-            $arrayemail = json_decode($request->emails, true);
+            $arrayemail = json_decode($request->emails, true) ?? [];
 
             if (count($arrayemail) > 0) {
 
@@ -921,7 +988,7 @@ class CustomerController extends Controller
 
             $data_error_messengers = [];
 
-            $arraymessenger = json_decode($request->messengers, true);
+            $arraymessenger = json_decode($request->messengers, true) ?? [];
 
             if (count($arraymessenger) > 0) {
 

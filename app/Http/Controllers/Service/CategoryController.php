@@ -15,8 +15,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        function buildQuery(Request $request)
-        {
+        $buildQuery = function (Request $request) {
             $data = DB::table('serviceCategory as sc')->where('sc.isDeleted', '=', 0)->join('users', 'sc.userId', '=', 'users.id');
 
             if ($request->search) {
@@ -30,9 +29,9 @@ class CategoryController extends Controller
                 $data = $data->orderBy('sc.updated_at', 'desc');
             }
             return $data->select('sc.id', 'sc.categoryName', 'sc.created_at', 'sc.updated_at', DB::raw('(SELECT COUNT(*) FROM servicesCategoryList as scl WHERE sc.id = scl.category_id AND scl.isDeleted = 0) as totalServices'), DB::raw("DATE_FORMAT(sc.updated_at, '%d/%m/%Y') as createdAt"), 'users.firstName as createdBy');
-        }
+        };
 
-        $data = buildQuery($request);
+        $data = $buildQuery($request);
         $data = paginateData($data, $request);
 
         return response()->json($data);

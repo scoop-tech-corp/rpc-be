@@ -10,6 +10,7 @@ use Database\Seeders\Service\PetHotelTreatmentPlanSeeder;
 use Database\Seeders\Cage\CageSeeder;
 use Database\Seeders\QueueMenuSeeder;
 use Database\Seeders\Promotion\PromotionDiscountSeeder;
+use Database\Seeders\Customer\CustomerTableSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -27,5 +28,6 @@ class DatabaseSeeder extends Seeder
         $this->call(PetHotelTreatmentPlanSeeder::class);
         $this->call(QueueMenuSeeder::class);
         $this->call(PromotionDiscountSeeder::class);
+        $this->call(CustomerTableSeeder::class);
     }
 }

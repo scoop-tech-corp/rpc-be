@@ -279,6 +279,7 @@ class TransferProductController
                 productTransferLog($master->id, "Created", "Draft", $request->user()->id);
             } else {
                 productTransferLog($master->id, "Created", "Waiting for Approval", $request->user()->id);
+                sendNotificationToStaffAtLocation($request->locationIdOrigin, [13, 1], 'transfer', "Transfer produk baru {$master->numberId} menunggu persetujuan.", 'info');
             }
 
             $productIdDestination = 0;
@@ -434,19 +435,24 @@ class TransferProductController
 
         $data = $data->orderBy('pt.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, $data->get());
+        }
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
-
 
         return responseIndex(ceil($totalPaging), $data);
     }
@@ -558,15 +564,18 @@ class TransferProductController
 
         $data = $data->orderBy('prl.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
@@ -1348,12 +1357,14 @@ class TransferProductController
                         $find->updated_at = Carbon::now();
                         $find->userUpdateId = $request->user()->id;
                         $find->save();
+                        sendNotificationToStaffAtLocation($find->locationIdDestination, [1], 'transfer', "Transfer produk {$find->numberId} disetujui — menunggu pengiriman.", 'success');
                     }
                 } else {
                     $find->status = 3;
                     $find->updated_at = Carbon::now();
                     $find->userUpdateId = $request->user()->id;
                     $find->save();
+                    sendNotificationToStaffAtLocation($find->locationIdDestination, [1], 'transfer', "Transfer produk {$find->numberId} disetujui — menunggu pengiriman.", 'success');
                 }
             } elseif ($request->isRejectedAll == '1') {
                 $find->status = 2;
@@ -1560,6 +1571,10 @@ class TransferProductController
                 }
 
                 $prodTransfer->save();
+
+                if ($prodTransfer->status == 3) {
+                    sendNotificationToStaffAtLocation($prodTransfer->locationIdDestination, [1], 'transfer', "Transfer produk {$prodTransfer->numberId} disetujui — menunggu pengiriman.", 'success');
+                }
             }
 
             DB::commit();
@@ -1895,6 +1910,10 @@ class TransferProductController
                     'userId' => $request->user()->id,
                 ]);
             }
+        }
+
+        if ($request->isFinished) {
+            sendNotificationToStaffAtLocation($master->locationIdDestination, [13], 'transfer', "Transfer produk {$master->numberId} telah diterima — stok diperbarui.", 'success');
         }
 
         return responseUpdate();
