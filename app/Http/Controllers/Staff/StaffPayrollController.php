@@ -866,66 +866,79 @@ class StaffPayrollController
     private function createPayrollVetDoctor(Request $request, $staff)
     {
         $request->validate([
-            'staffId' => 'required|integer',
-            'name' => 'required|string',
-            'locationId' => 'required|integer',
+            'staffId'     => 'required|integer',
+            'name'        => 'required|string',
+            'locationId'  => 'required|integer',
             'payrollDate' => 'required|date',
-            'startDate' => 'required|date',
-            'endDate' => 'required|date',
-            'basicIncome' => 'numeric|min:0',
-            'income' => 'array',
-            'expense' => 'array',
+            'startDate'   => 'required|date',
+            'endDate'     => 'required|date',
+            'income'      => 'array',
+            'expense'     => 'array',
+            'bonus'       => 'nullable|array',
         ]);
 
         if ($staff->jobTitleId !== "17") {
             return response()->json(['message' => 'Staff is not a Veterinary Doctor.'], 400);
         }
 
-        $input = $request->all();
-        $income = $input['income'] ?? [];
+        $input   = $request->all();
+        $income  = $input['income']  ?? [];
         $expense = $input['expense'] ?? [];
+        $bonus   = $input['bonus']   ?? [];
 
-        $structuredIncome = [
-            'patientIncentive',
-            'labXrayIncentive',
-            'longShiftReplacement',
-            'fullShiftReplacement',
-        ];
-        foreach ($structuredIncome as $field) {
-            $income[$field] = $income[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
+        // ── Income defaults ───────────────────────────────────────────────
+        foreach (['patientIncentive', 'labXrayIncentive', 'longShiftReplacement', 'fullShiftReplacement'] as $f) {
+            $income[$f] = $income[$f] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
+        }
+        foreach (['basicIncome', 'attendanceAllowance', 'mealAllowance', 'clinicTurnoverBonus', 'bpjsHealthAllowance', 'housingAllowance'] as $f) {
+            $income[$f] = $income[$f] ?? 0;
         }
 
-        $flatIncomeFields = [
-            'attendanceAllowance',
-            'mealAllowance',
-            'clinicTurnoverBonus',
-            'bpjsHealthAllowance',
-            'housingAllowance'
-        ];
-        foreach ($flatIncomeFields as $field) {
-            $income[$field] = $income[$field] ?? 0;
+        // ── Expense defaults ──────────────────────────────────────────────
+        foreach (['absent', 'notWearingAttribute'] as $f) {
+            $expense[$f] = $expense[$f] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
         }
 
-        $structuredExpense = [
-            'absent',
-            'late',
-            'notWearingAttribute',
-        ];
-        foreach ($structuredExpense as $field) {
-            $expense[$field] = $expense[$field] ?? ['amount' => 0, 'unitNominal' => 0, 'total' => 0];
+        // Late: tiered deduction calculated server-side (authoritative)
+        $lateDays        = (int) ($expense['late']['amount'] ?? 0);
+        $lateInfo        = $this->calculateLateDeduction($lateDays);
+        $expense['late'] = ['amount' => $lateDays, 'unitNominal' => $lateInfo['unitNominal'], 'total' => $lateInfo['total']];
+
+        foreach (['currentMonthCashAdvance', 'remainingDebtLastMonth', 'stockOpnameInventory', 'stockOpnameLost', 'stockOpnameExpired'] as $f) {
+            $expense[$f] = $expense[$f] ?? 0;
         }
 
-        $flatExpenseFields = [
-            'currentMonthCashAdvance',
-            'remainingDebtLastMonth',
-            'stockOpnameInventory',
-            'stockOpnameLost',
-            'stockOpnameExpired',
-        ];
-        foreach ($flatExpenseFields as $field) {
-            $expense[$field] = $expense[$field] ?? 0;
+        // ── Bonus calculation ─────────────────────────────────────────────
+        $isProbationPassed    = (bool) ($bonus['isProbationPassed']  ?? false);
+        $bonusTotalOmset      = (int)  ($bonus['totalOmset']         ?? 0);
+        $bonusTotalPatients   = (int)  ($bonus['totalPatients']      ?? 0);
+        $bonusTotalLeaveDays  = (int)  ($bonus['totalLeaveDays']     ?? 0);
+        $bonusCalendarDays    = (int)  ($bonus['calendarDays']       ?? 30);
+        $bonusDocComplete     = (bool) ($bonus['docComplete']        ?? false);
+        $bonusSpCutPercentage = (float)($bonus['spCutPercentage']    ?? 0);
+
+        $bonusAvgBillPerPatient = 0;
+        $bonusPercentage        = 0;
+        $bonusGross             = 0;
+        $bonusExcessLeaveDays   = 0;
+        $bonusProportional      = 0;
+        $bonusAdminMultiplier   = 1.0;
+        $bonusFinal             = 0;
+
+        if ($isProbationPassed && $bonusTotalOmset > 0 && $bonusTotalPatients > 0) {
+            $bonusAvgBillPerPatient = $bonusTotalOmset / $bonusTotalPatients;
+            $joinDate               = \Carbon\Carbon::parse($staff->joinDate ?? $staff->startDate);
+            $bonusPercentage        = $this->getDoctorBonusPercentage($joinDate, $bonusAvgBillPerPatient);
+            $bonusGross             = $bonusTotalOmset * ($bonusPercentage / 100);
+            $bonusExcessLeaveDays   = max(0, $bonusTotalLeaveDays - 4);
+            $bonusProportional      = ($bonusCalendarDays > 0 && $bonusExcessLeaveDays > 0)
+                ? $bonusGross - ($bonusExcessLeaveDays / $bonusCalendarDays * $bonusGross)
+                : $bonusGross;
+            $bonusAdminMultiplier   = $bonusDocComplete ? 1.0 : 0.8;
+            $bonusFinal             = (int) round($bonusProportional * $bonusAdminMultiplier * (1 - $bonusSpCutPercentage / 100));
         }
 
+        // ── Totals ────────────────────────────────────────────────────────
         $totalIncome = $income['basicIncome']
             + $income['attendanceAllowance']
             + $income['mealAllowance']
@@ -935,7 +948,8 @@ class StaffPayrollController
             + $income['patientIncentive']['total']
             + $income['labXrayIncentive']['total']
             + $income['longShiftReplacement']['total']
-            + $income['fullShiftReplacement']['total'];
+            + $income['fullShiftReplacement']['total']
+            + $bonusFinal;
 
         $totalDeduction = $expense['absent']['total']
             + $expense['late']['total']
@@ -949,65 +963,124 @@ class StaffPayrollController
         $netPay = $totalIncome - $totalDeduction;
 
         $payroll = StaffPayroll::create([
-            'staffId' => $input['staffId'],
-            'name' => $input['name'],
-            'locationId' => $input['locationId'],
+            'staffId'     => $input['staffId'],
+            'name'        => $input['name'],
+            'locationId'  => $input['locationId'],
             'payrollDate' => $input['payrollDate'],
-            'startDate' => $input['startDate'],
-            'endDate' => $input['endDate'],
+            'startDate'   => $input['startDate'],
+            'endDate'     => $input['endDate'],
 
-            'basicIncome' => $income['basicIncome'],
+            'basicIncome'         => $income['basicIncome'],
             'attendanceAllowance' => $income['attendanceAllowance'],
-            'mealAllowance' => $income['mealAllowance'],
+            'mealAllowance'       => $income['mealAllowance'],
             'clinicTurnoverBonus' => $income['clinicTurnoverBonus'],
             'bpjsHealthAllowance' => $income['bpjsHealthAllowance'],
-            'housingAllowance' => $income['housingAllowance'],
+            'housingAllowance'    => $income['housingAllowance'],
 
-            'patientIncentiveAmount' => $income['patientIncentive']['amount'],
+            'patientIncentiveAmount'      => $income['patientIncentive']['amount'],
             'patientIncentiveUnitNominal' => $income['patientIncentive']['unitNominal'],
-            'patientIncentiveTotal' => $income['patientIncentive']['total'],
+            'patientIncentiveTotal'       => $income['patientIncentive']['total'],
 
-            'labXrayIncentiveAmount' => $income['labXrayIncentive']['amount'],
+            'labXrayIncentiveAmount'      => $income['labXrayIncentive']['amount'],
             'labXrayIncentiveUnitNominal' => $income['labXrayIncentive']['unitNominal'],
-            'labXrayIncentiveTotal' => $income['labXrayIncentive']['total'],
+            'labXrayIncentiveTotal'       => $income['labXrayIncentive']['total'],
 
-            'longShiftReplacementAmount' => $income['longShiftReplacement']['amount'],
+            'longShiftReplacementAmount'      => $income['longShiftReplacement']['amount'],
             'longShiftReplacementUnitNominal' => $income['longShiftReplacement']['unitNominal'],
-            'longShiftReplacementTotal' => $income['longShiftReplacement']['total'],
+            'longShiftReplacementTotal'       => $income['longShiftReplacement']['total'],
 
-            'fullShiftReplacementAmount' => $income['fullShiftReplacement']['amount'],
+            'fullShiftReplacementAmount'      => $income['fullShiftReplacement']['amount'],
             'fullShiftReplacementUnitNominal' => $income['fullShiftReplacement']['unitNominal'],
-            'fullShiftReplacementTotal' => $income['fullShiftReplacement']['total'],
+            'fullShiftReplacementTotal'       => $income['fullShiftReplacement']['total'],
 
-            'absentAmount' => $expense['absent']['amount'],
+            'absentAmount'      => $expense['absent']['amount'],
             'absentUnitNominal' => $expense['absent']['unitNominal'],
-            'absentTotal' => $expense['absent']['total'],
+            'absentTotal'       => $expense['absent']['total'],
 
-            'lateAmount' => $expense['late']['amount'],
+            'lateAmount'      => $expense['late']['amount'],
             'lateUnitNominal' => $expense['late']['unitNominal'],
-            'lateTotal' => $expense['late']['total'],
+            'lateTotal'       => $expense['late']['total'],
 
-            'notWearingAttributeAmount' => $expense['notWearingAttribute']['amount'],
+            'notWearingAttributeAmount'      => $expense['notWearingAttribute']['amount'],
             'notWearingAttributeUnitNominal' => $expense['notWearingAttribute']['unitNominal'],
-            'notWearingAttributeTotal' => $expense['notWearingAttribute']['total'],
+            'notWearingAttributeTotal'       => $expense['notWearingAttribute']['total'],
 
             'currentMonthCashAdvance' => $expense['currentMonthCashAdvance'],
-            'remainingDebtLastMonth' => $expense['remainingDebtLastMonth'],
-            'stockOpnameInventory' => $expense['stockOpnameInventory'],
-            'stockOpnameLost' => $expense['stockOpnameLost'],
-            'stockOpnameExpired' => $expense['stockOpnameExpired'],
+            'remainingDebtLastMonth'  => $expense['remainingDebtLastMonth'],
+            'stockOpnameInventory'    => $expense['stockOpnameInventory'],
+            'stockOpnameLost'         => $expense['stockOpnameLost'],
+            'stockOpnameExpired'      => $expense['stockOpnameExpired'],
 
-            'totalIncome' => $totalIncome,
+            // Bonus fields (requires migration 2026_06_26_000001)
+            'isProbationPassed'       => $isProbationPassed,
+            'bonusTotalOmset'         => $bonusTotalOmset,
+            'bonusTotalPatients'      => $bonusTotalPatients,
+            'bonusAvgBillPerPatient'  => round($bonusAvgBillPerPatient, 2),
+            'bonusPercentage'         => $bonusPercentage,
+            'bonusGross'              => (int) round($bonusGross),
+            'bonusTotalLeaveDays'     => $bonusTotalLeaveDays,
+            'bonusExcessLeaveDays'    => $bonusExcessLeaveDays,
+            'bonusCalendarDays'       => $bonusCalendarDays,
+            'bonusProportional'       => (int) round($bonusProportional),
+            'bonusDocComplete'        => $bonusDocComplete,
+            'bonusAdminMultiplier'    => $bonusAdminMultiplier,
+            'bonusSpCutPercentage'    => $bonusSpCutPercentage,
+            'bonusFinal'              => $bonusFinal,
+
+            'totalIncome'    => $totalIncome,
             'totalDeduction' => $totalDeduction,
-            'netPay' => $netPay,
-            'userId' => $request->user()->id,
+            'netPay'         => $netPay,
+            'userId'         => $request->user()->id,
         ]);
 
         return response()->json([
-            'message' => 'Payroll created successfully for job title: Veterinary Doctor',
+            'message'  => 'Payroll created successfully for job title: Veterinary Doctor',
             'jobTitle' => 'Veterinary Doctor',
-            'data' => $payroll
+            'data'     => $payroll,
         ], 201);
+    }
+
+    private function calculateLateDeduction(int $lateDays): array
+    {
+        if ($lateDays <= 0)  return ['unitNominal' => 0, 'total' => 0];
+        if ($lateDays <= 2)  $unitNominal = 5000;
+        elseif ($lateDays <= 5) $unitNominal = 10000;
+        else                 $unitNominal = 20000;
+        return ['unitNominal' => $unitNominal, 'total' => $lateDays * $unitNominal];
+    }
+
+    private function getDoctorBonusPercentage(\Carbon\Carbon $joinDate, float $avgBill): float
+    {
+        $ranges = [
+            [100000, 150999],
+            [151000, 200999],
+            [201000, 250999],
+            [251000, 300999],
+            [301000, 350999],
+            [351000, 400999],
+            [401000, 450999],
+            [451000, 499999],
+            [500000, PHP_INT_MAX],
+        ];
+
+        $table1 = [1.6, 2.2, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6, 5.0]; // ≤ 30 Des 2021
+        $table2 = [1.4, 1.6, 2.2, 3.6, 3.8, 4.0, 4.2, 4.4, 4.6]; // 1 Jan 2022 – 14 Nov 2023
+        $table3 = [1.4, 1.6, 2.0, 3.4, 3.6, 3.8, 4.0, 4.2, 4.4]; // ≥ 15 Nov 2023
+
+        $cutoff1 = \Carbon\Carbon::parse('2021-12-30');
+        $cutoff2 = \Carbon\Carbon::parse('2023-11-14');
+
+        if ($joinDate->lte($cutoff1))       $pcts = $table1;
+        elseif ($joinDate->lte($cutoff2))   $pcts = $table2;
+        else                                $pcts = $table3;
+
+        foreach ($ranges as $i => [$min, $max]) {
+            if ($avgBill >= $min && $avgBill <= $max) {
+                return $pcts[$i];
+            }
+        }
+
+        return 0.0;
     }
 
     private function createPayrollQualityControl(Request $request, $staff)
