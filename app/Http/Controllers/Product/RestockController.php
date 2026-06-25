@@ -93,15 +93,18 @@ class RestockController extends Controller
 
         $data = $data->orderBy('pr.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
@@ -352,6 +355,8 @@ class RestockController extends Controller
 
         \Log::info('productRestockLog berhasil ditambahkan untuk Restock ID: ' . $prodRstk->id);
 
+        sendNotificationToStaffAtLocation($locationId, [13, 19], 'restock', "Request restock baru {$prodRstk->numberId} menunggu persetujuan.", 'info');
+
         return responseCreate();
     }
 
@@ -510,6 +515,7 @@ class RestockController extends Controller
             productRestockLog($prodRestock->id, "Created", "Draft", $request->user()->id);
         } else {
             productRestockLog($prodRestock->id, "Created", "Waiting for Approval", $request->user()->id);
+            sendNotificationToStaffAtLocation($request->locationId, [13, 19], 'restock', "Request restock baru {$prodRestock->numberId} menunggu persetujuan.", 'info');
         }
 
         $number = "";
@@ -1057,15 +1063,18 @@ class RestockController extends Controller
 
         $data = $data->orderBy('prl.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
@@ -1886,12 +1895,14 @@ class RestockController extends Controller
                         $find->updated_at = Carbon::now();
                         $find->userUpdateId = $request->user()->id;
                         $find->save();
+                        sendNotificationToStaffAtLocation($find->locationId, [1], 'restock', "Restock {$find->numberId} disetujui — menunggu pengiriman dari supplier.", 'success');
                     }
                 } else {
                     $find->status = 3;
                     $find->updated_at = Carbon::now();
                     $find->userUpdateId = $request->user()->id;
                     $find->save();
+                    sendNotificationToStaffAtLocation($find->locationId, [1], 'restock', "Restock {$find->numberId} disetujui — menunggu pengiriman dari supplier.", 'success');
                 }
             } elseif ($request->isRejectedAll == '1') {
                 $find->status = 2;
@@ -2113,6 +2124,10 @@ class RestockController extends Controller
                 }
 
                 $prodRestock->save();
+
+                if ($prodRestock->status == 3) {
+                    sendNotificationToStaffAtLocation($prodRestock->locationId, [1], 'restock', "Restock {$prodRestock->numberId} disetujui — menunggu pengiriman dari supplier.", 'success');
+                }
             }
             DB::commit();
             return responseUpdate();
@@ -2343,6 +2358,8 @@ class RestockController extends Controller
                 $dt->userId = $request->user()->id;
                 $dt->updated_at = Carbon::now();
                 $dt->save();
+
+                sendNotificationToStaffAtLocation($stock->locationId, [13], 'restock', "Produk restock {$dt->numberId} telah diterima — stok diperbarui.", 'success');
             }
         }
 

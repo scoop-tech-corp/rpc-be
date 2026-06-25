@@ -22,6 +22,7 @@ use App\Models\TransactionPetShopDetail;
 
 class TransactionPetShopController
 {
+    use \App\Http\Controllers\Transaction\Traits\PaymentVerificationTrait;
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
@@ -99,11 +100,14 @@ class TransactionPetShopController
 
         $data = $data->orderBy(DB::raw($orderColumn), $orderValue);
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
         $count_data = $data->count();
         $totalPaging = ceil($count_data / $itemPerPage);
 
-        $data = $data->offset($offset)->limit($itemPerPage)->get();
+        $data = $data->limit($itemPerPage)->offset($offset)->get();
 
         return responseIndex($totalPaging, $data);
     }
@@ -1286,10 +1290,22 @@ class TransactionPetShopController
 
     public function transactionDiscount(Request $request)
     {
+        $validate = Validator::make($request->all(), [
+            'products' => 'required',
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
         $products = json_decode($request->products, true);
-        $freeItems = json_decode($request->freeItems, true);
-        $discounts = json_decode($request->discounts, true);
-        $bundles = json_decode($request->bundles, true);
+        $freeItems = json_decode($request->freeItems, true) ?? [];
+        $discounts = json_decode($request->discounts, true) ?? [];
+        $bundles = json_decode($request->bundles, true) ?? [];
+
+        if (!is_array($products)) {
+            return responseInvalid(['products harus berupa JSON array yang valid.']);
+        }
 
         $results = [];
         $promoNotes = [];
@@ -1550,20 +1566,37 @@ class TransactionPetShopController
             ->leftJoin('customer as c', 'c.id', '=', 't.customerId')
             ->leftJoin('users as u', 'u.id', '=', 't.userId')
             ->leftJoin('paymentmethod as pm', 'pm.id', '=', 't.paymentMethod')
+            ->leftJoin('users as uu', 'uu.id', '=', 't.uploadedBy')
+            ->leftJoin('users as cu', 'cu.id', '=', 't.confirmedBy')
             ->select(
                 't.id',
                 't.registrationNo',
                 't.note',
                 't.proofOfPayment',
+                't.isPayed',
                 't.created_at',
+                't.uploadedBy',
+                't.confirmedBy',
+                't.verificationStatus',
+                't.verificationNote',
+                't.verifiedAt',
                 'l.locationName as locationName',
                 'c.firstName as customerName',
                 'pm.name as paymentMethod',
-                'u.firstName as createdBy'
+                'u.firstName as createdBy',
+                'uu.firstName as uploadedByName',
+                'cu.firstName as confirmedByName'
             )
             ->where('t.id', $transactionId)
             ->where('t.isDeleted', 0)
             ->first();
+
+        if (!$transaction) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Transaction tidak ditemukan.',
+            ], 404);
+        }
 
         $transaction->createdAt = Carbon::parse($transaction->created_at)->format('d/m/Y H:i:s');
         $transaction->proofOfPayment = $transaction->proofOfPayment ?? null;
@@ -1655,70 +1688,97 @@ class TransactionPetShopController
         ]);
     }
 
-    public function confirmPayment(Request $request)
+    public function uploadPaymentProof(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer|exists:transactionpetshop,id',
-            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+            'id'    => 'required|integer|exists:transactionpetshop,id',
+            'proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $transaction = TransactionPetShop::find($request->id);
 
         if ($transaction->isPayed == 2) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Transaksi sudah dikonfirmasi sebelumnya.'
+                'status'  => 'error',
+                'message' => 'Transaksi sudah dikonfirmasi sebelumnya.',
             ], 400);
         }
 
         $payment = DB::table('paymentmethod')->where('id', $transaction->paymentMethod)->first();
-
-        if ($payment->name == 'Cash' || $payment->name == 'cash') {
+        if ($payment && (strtolower($payment->name) === 'cash')) {
             return response()->json([
-                'status' => 'warning',
-                'message' => 'Metode pembayaran Cash tidak perlu konfirmasi atau bukti pembayaran.'
+                'status'  => 'warning',
+                'message' => 'Metode pembayaran Cash tidak memerlukan bukti transfer.',
             ], 400);
         }
 
-        if (!$request->hasFile('proof')) {
+        return $this->handleUploadProof(
+            $transaction,
+            $request,
+            'Transaction/Petshop/proof_of_payment',
+            'transactionpetshop'
+        );
+    }
+
+    public function confirmPayment(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|integer|exists:transactionpetshop,id',
+        ]);
+
+        $transaction = TransactionPetShop::find($request->id);
+
+        if ($transaction->isPayed == 2) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Bukti pembayaran wajib diunggah untuk metode non-tunai.'
-            ], 422);
+                'status'  => 'error',
+                'message' => 'Transaksi sudah dikonfirmasi sebelumnya.',
+            ], 400);
         }
 
-        $filePath = null;
-        $originalName = null;
-        $randomName = null;
+        $payment = DB::table('paymentmethod')->where('id', $transaction->paymentMethod)->first();
+        if ($payment && (strtolower($payment->name) === 'cash')) {
+            // Cash: langsung confirm tanpa upload bukti
+            $transaction->isPayed    = 2;
+            $transaction->confirmedBy = $request->user()->id;
+            $transaction->verificationStatus = 'verified';
+            $transaction->verifiedAt = now();
+            $transaction->updated_at = now();
+            $transaction->save();
 
-        if ($request->hasFile('proof')) {
-            $file = $request->file('proof');
-            $originalName = $file->getClientOriginalName();
-            $randomName = 'proof_' . $transaction->id . '_' . time() . '.' . $file->getClientOriginalExtension();
-
-            if (!Storage::disk('public')->exists('Transaction/Petshop/proof_of_payment')) {
-                Storage::disk('public')->makeDirectory('Transaction/Petshop/proof_of_payment');
-            }
-
-            $filePath = $file->storeAs('Transaction/Petshop/proof_of_payment', $randomName, 'public');
-
-            $transaction->proofOfPayment = $filePath;
-            $transaction->originalName = $originalName;
-            $transaction->proofRandomName = $randomName;
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Pembayaran Cash berhasil dikonfirmasi.',
+                'isPayed' => 2,
+            ]);
         }
 
-        $transaction->isPayed = 2;
+        $result = $this->handleConfirmProof($transaction, $request);
+        if (!$result['ok']) {
+            return $result['response'];
+        }
+
+        $transaction = $result['record'];
+        $transaction->isPayed    = 2;
         $transaction->updated_at = now();
         $transaction->save();
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Pembayaran berhasil dikonfirmasi.',
             'isPayed' => 2,
-            'proof' => $filePath,
-            'originalName' => $originalName,
-            'randomName' => $randomName
         ]);
+    }
+
+    public function rejectPayment(Request $request)
+    {
+        $request->validate([
+            'id'   => 'required|integer|exists:transactionpetshop,id',
+            'note' => 'required|string|max:500',
+        ]);
+
+        $transaction = TransactionPetShop::find($request->id);
+
+        return $this->handleRejectProof($transaction, $request);
     }
 
     public function generateInvoice($id)

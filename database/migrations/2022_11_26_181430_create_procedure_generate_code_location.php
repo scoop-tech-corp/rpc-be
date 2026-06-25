@@ -22,8 +22,10 @@ return new class extends Migration
         END
         ";
 
-    DB::unprepared("DROP procedure IF EXISTS generate_codeLocation");
-    DB::unprepared($procedure);
+    if (DB::getDriverName() !== 'sqlite') {
+        DB::unprepared("DROP procedure IF EXISTS generate_codeLocation");
+        DB::unprepared($procedure);
+    }
     }
 
     /**

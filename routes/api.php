@@ -28,6 +28,10 @@ use App\Http\Controllers\Product\SupplierController;
 use App\Http\Controllers\Staff\StaffLeaveController;
 use App\Http\Controllers\Customer\CustomerController;
 use App\Http\Controllers\Customer\CustomerMergeController;
+use App\Http\Controllers\Customer\CustomerDashboardController;
+use App\Http\Controllers\Customer\CustomerFeedbackController;
+use App\Http\Controllers\Customer\CustomerSupportRequestController;
+use App\Http\Controllers\Installment\InstallmentController;
 
 use App\Http\Controllers\Staff\StaffPayrollController;
 
@@ -38,6 +42,7 @@ use App\Http\Controllers\ReportMenuManagementController;
 use App\Http\Controllers\Transaction\BreedingController;
 use App\Http\Controllers\Transaction\PetHotelController;
 use App\Http\Controllers\Transaction\PetSalonController;
+use App\Http\Controllers\Transaction\TransactionDashboardController;
 use App\Http\Controllers\Product\ProductClinicController;
 use App\Http\Controllers\Report\ReportCustomerController;
 use App\Http\Controllers\Staff\DataStaticStaffController;
@@ -57,6 +62,11 @@ use App\Http\Controllers\Finance\DataStaticController as FinanceDataStaticContro
 use App\Http\Controllers\Finance\ExpensesController;
 use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Finance\QuotationController;
+use App\Http\Controllers\Finance\FinanceSalesController;
+use App\Http\Controllers\Finance\FinancePaymentRecordController;
+use App\Http\Controllers\Finance\FinancePiutangController;
+use App\Http\Controllers\Finance\FinanceRefundController;
 use App\Http\Controllers\Product\BatchController;
 use App\Http\Controllers\Product\StockOpnameController;
 use App\Http\Controllers\Staff\AccessControlSchedulesController;
@@ -69,6 +79,7 @@ use App\Http\Controllers\Service\{ServiceController, DataStaticServiceController
 use App\Http\Controllers\Staff\IdentityController;
 use App\Http\Controllers\Staff\OverWorkController;
 use App\Http\Controllers\Staff\RequireSalaryController;
+use App\Http\Controllers\Staff\StaffDashboardController;
 use App\Http\Controllers\Product\LoanProductController;
 use App\Http\Controllers\Product\DeliveryAgentController;
 use App\Http\Controllers\Product\DeliveryOrderController;
@@ -177,6 +188,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
+    Route::get('user/reportmenu', [ApiController::class, 'getReportMenu']);
 
 
     Route::group(['prefix' => 'booking'], function () {
@@ -415,9 +427,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
         Route::get('/detail', [CustomerController::class, 'getDetailCustomer']); // add
         Route::post('/images', [CustomerController::class, 'uploadImageCustomer']); // add
         Route::get('/export', [CustomerController::class, 'exportCustomer']); //add
+        Route::get('/export-pdf', [CustomerController::class, 'exportCustomerPdf']); //add
         Route::get('/typeid', [CustomerController::class, 'getTypeIdCustomer']);
         Route::post('/typeid', [CustomerController::class, 'insertTypeIdCustomer']);
-        Route::get('/dashboard', [CustomerController::class, 'index']);
+        Route::get('/dashboard', [CustomerDashboardController::class, 'index']);
 
 
         Route::get('/group', [CustomerController::class, 'getCustomerGroup']);
@@ -463,9 +476,27 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::post('/', [ImportCustomerController::class, 'import']);
         });
 
+        Route::group(['prefix' => 'feedback'], function () {
+            Route::get('/', [CustomerFeedbackController::class, 'index']);
+            Route::post('/', [CustomerFeedbackController::class, 'create']);
+            Route::put('/', [CustomerFeedbackController::class, 'update']);
+            Route::delete('/', [CustomerFeedbackController::class, 'delete']);
+        });
+
+        Route::group(['prefix' => 'support-request'], function () {
+            Route::get('/',            [CustomerSupportRequestController::class, 'index']);
+            Route::post('/',           [CustomerSupportRequestController::class, 'create']);
+            Route::put('/',            [CustomerSupportRequestController::class, 'update']);
+            Route::delete('/',         [CustomerSupportRequestController::class, 'delete']);
+            Route::get('/history',     [CustomerSupportRequestController::class, 'history']);
+            Route::get('/my-requests', [CustomerSupportRequestController::class, 'myRequests']);
+            Route::post('/self-submit',[CustomerSupportRequestController::class, 'selfSubmit']);
+        });
+
         Route::group(['prefix' => 'datastatic'], function () {
 
             Route::post('/', [DataStaticCustomerController::class, 'insertDataStaticCustomer']);
+
             Route::get('/customer', [DataStaticCustomerController::class, 'getDataStaticCustomer']);
             Route::get('/', [DataStaticCustomerController::class, 'indexDataStaticCustomer']);
             Route::delete('/', [DataStaticCustomerController::class, 'deleteDataStaticCustomer']);
@@ -517,6 +548,8 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     //STAFF
     Route::group(['prefix' => 'staff'], function () {
+
+        Route::get('/dashboard', [StaffDashboardController::class, 'index']);
 
         Route::get('/rolesid', [StaffController::class, 'getRoleName']);
         Route::post('/', [StaffController::class, 'insertStaff']);
@@ -731,6 +764,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     // Transaction
     Route::group(['prefix' => 'transaction'], function () {
+        Route::get('/dashboard', [TransactionDashboardController::class, 'index']);
         Route::get('/category', [TransactionController::class, 'TransactionCategory']);
 
         Route::group(['prefix' => 'petclinic'], function () {
@@ -740,6 +774,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::put('/', [TransPetClinicController::class, 'update']);
             Route::delete('/', [TransPetClinicController::class, 'delete']);
             Route::get('/export', [TransPetClinicController::class, 'export']);
+            Route::get('/stats', [TransPetClinicController::class, 'getStats']);
 
             Route::get('/ordernumber', [TransPetClinicController::class, 'orderNumber']);
 
@@ -750,18 +785,53 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/load-petcheck', [TransPetClinicController::class, 'loadDataPetCheck']);
             Route::get('/check-condition', [TransPetClinicController::class, 'getCheckCondition']);
             Route::post('/serviceandrecipe', [TransPetClinicController::class, 'serviceandrecipe']);
-            Route::post('/checkpromo', [TransPetClinicController::class, 'checkPromo']);
+            Route::post('/checkpromo', [TransPetClinicController::class, 'checkPromo']); // deprecated, use /calculate
             Route::get('/beforepayment', [TransPetClinicController::class, 'showDataBeforePayment']);
-            Route::post('/discount', [TransPetClinicController::class, 'transactionDiscount']);
+            Route::post('/discount', [TransPetClinicController::class, 'transactionDiscount']); // deprecated, use /calculate
+
+            // New unified promo + calculation endpoint
+            Route::post('/calculate', [TransPetClinicController::class, 'calculate']);
+            Route::get('/payment-methods', [TransPetClinicController::class, 'getPaymentMethods']);
 
             Route::get('/invoice', [TransPetClinicController::class, 'printInvoce']);
+            // ===== RAWAT INAP =====
+            // Treatment Plan
+            Route::post('/inpatient/treatment-plan', [TransPetClinicController::class, 'storeTreatmentPlan']);
+            Route::get('/inpatient/treatment-plan', [TransPetClinicController::class, 'getTreatmentPlan']);
+
+            // Policy Agreement
+            Route::get('/inpatient/policies', [TransPetClinicController::class, 'getPoliciesForAgreement']);
+            Route::post('/inpatient/policy-agreement', [TransPetClinicController::class, 'savePolicyAgreement']);
+
+            // Papan Kerja Harian
+            Route::get('/inpatient/papan-kerja', [TransPetClinicController::class, 'getPapanKerjaHarian']);
+            Route::match(['post', 'put'], '/inpatient/papan-kerja/done', [TransPetClinicController::class, 'markPapanKerjaHarianDone']);
+
+            // Additional Treatments
+            Route::get('/inpatient/additional-treatments', [TransPetClinicController::class, 'getAdditionalTreatments']);
+            Route::post('/inpatient/additional-treatments', [TransPetClinicController::class, 'addAdditionalTreatment']);
+            Route::get('/inpatient/available-items', [TransPetClinicController::class, 'getAvailableItems']);
+
+            // Prepayments (DP)
+            Route::get('/inpatient/prepayments', [TransPetClinicController::class, 'getPrepayments']);
+            Route::post('/inpatient/prepayments', [TransPetClinicController::class, 'addPrepayment']);
+            Route::get('/inpatient/prepayments/receipt', [TransPetClinicController::class, 'prepaymentReceipt']);
+            Route::get('/inpatient/estimated-cost', [TransPetClinicController::class, 'getEstimatedCost']);
+
+            // Inpatient Detail & Checkout
+            Route::get('/inpatient/detail', [TransPetClinicController::class, 'getInpatient']);
+            Route::post('/inpatient/checkout', [TransPetClinicController::class, 'initiateCheckout']);
+
             //pembayaran rawat inap
             Route::post('/payment/inpatient', [TransPetClinicController::class, 'paymentInpatient']);
             // Route::post('/invoice/inpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
+            Route::post('/upload-payment-proof', [TransPetClinicController::class, 'uploadPaymentProof']);
             Route::post('/confirm-payment', [TransPetClinicController::class, 'confirmPayment']);
+            Route::post('/reject-payment', [TransPetClinicController::class, 'rejectPayment']);
 
             //pembayaran rawat jalan
             Route::post('/payment/outpatient', [TransPetClinicController::class, 'paymentOutpatient']);
+            Route::get('/payment/outpatient/history', [TransPetClinicController::class, 'getPaymentHistory']);
             Route::post('/invoice/outpatient', [TransPetClinicController::class, 'printInvoceOutpatient']);
         });
 
@@ -773,11 +843,14 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::delete('/', [TransactionPetShopController::class, 'delete']);
             Route::get('/export', [TransactionPetShopController::class, 'export']);
             Route::post('/discount', [TransactionPetShopController::class, 'transactionDiscount']);
+            Route::post('/upload-payment-proof', [TransactionPetShopController::class, 'uploadPaymentProof']);
             Route::post('/confirmPayment', [TransactionPetShopController::class, 'confirmPayment']);
+            Route::post('/reject-payment', [TransactionPetShopController::class, 'rejectPayment']);
             Route::get('/generateInvoice/{id}', [TransactionPetShopController::class, 'generateInvoice']);
         });
 
         Route::group(['prefix' => 'pethotel'], function () {
+            Route::get('/stats', [PetHotelController::class, 'getStats']);
             Route::get('/', [PetHotelController::class, 'index']);
             Route::post('/', [PetHotelController::class, 'create']);
             Route::get('/detail', [PetHotelController::class, 'detail']);
@@ -795,12 +868,19 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/beforepayment', [PetHotelController::class, 'showDataBeforePayment']);
             Route::post('/checkpromo', [PetHotelController::class, 'checkPromo']);
 
+            Route::post('/calculate', [PetHotelController::class, 'calculate']);
+            Route::get('/payment-methods', [PetHotelController::class, 'getPaymentMethods']);
+            Route::get('/payment/history', [PetHotelController::class, 'getPaymentHistory']);
+
             Route::post('/discount', [PetHotelController::class, 'transactionDiscount']);
             Route::post('/payment', [PetHotelController::class, 'payment']);
 
             Route::get('/invoice', [PetHotelController::class, 'printInvoce']);
+            Route::post('/invoice/outpatient', [PetHotelController::class, 'printInvoceOutpatient']);
             Route::get('/checkout/invoice', [PetHotelController::class, 'checkoutInvoice']);
+            Route::post('/upload-payment-proof', [PetHotelController::class, 'uploadPaymentProof']);
             Route::post('/confirm-payment', [PetHotelController::class, 'confirmPayment']);
+            Route::post('/reject-payment', [PetHotelController::class, 'rejectPayment']);
 
             Route::get('/papan-kerja-harian', [PetHotelController::class, 'getPapanKerjaHarian']);
             Route::post('/papan-kerja-harian/done', [PetHotelController::class, 'markPapanKerjaHarianDone']);
@@ -834,6 +914,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::put('/', [BreedingController::class, 'update']);
             Route::delete('/', [BreedingController::class, 'delete']);
             Route::get('/export', [BreedingController::class, 'export']);
+            Route::get('/stats', [BreedingController::class, 'getStats']);
 
             Route::post('/accept', [BreedingController::class, 'acceptionTransaction']);
             Route::post('/reassign', [BreedingController::class, 'reassignDoctor']);
@@ -842,17 +923,46 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
             Route::post('/treatment', [BreedingController::class, 'Treatment']);
 
+            // Policy Agreement
+            Route::get('/policies', [BreedingController::class, 'getPoliciesForBreeding']);
+            Route::post('/policy-agreement', [BreedingController::class, 'savePolicyAgreement']);
+
+            // Prepayment / DP
+            Route::get('/prepayments', [BreedingController::class, 'getPrepayments']);
+            Route::post('/prepayments', [BreedingController::class, 'addPrepayment']);
+            Route::delete('/prepayments', [BreedingController::class, 'deletePrepayment']);
+            Route::get('/prepayments/receipt', [BreedingController::class, 'prepaymentReceipt']);
+
+            // Papan Kerja Harian
+            Route::get('/papan-kerja', [BreedingController::class, 'getPapanKerjaHarian']);
+            Route::post('/papan-kerja', [BreedingController::class, 'addPapanKerjaHarian']);
+            Route::post('/papan-kerja/done', [BreedingController::class, 'markPapanKerjaHarianDone']);
+
+            // Additional Treatment
+            Route::get('/additional-treatments', [BreedingController::class, 'getAdditionalTreatments']);
+            Route::post('/additional-treatments', [BreedingController::class, 'addAdditionalTreatment']);
+            Route::delete('/additional-treatments', [BreedingController::class, 'deleteAdditionalTreatment']);
+
+            // Checkout
+            Route::post('/checkout', [BreedingController::class, 'initiateCheckOut']);
+            Route::get('/checkout/summary', [BreedingController::class, 'getCheckoutSummary']);
+
+            Route::get('/payment-methods', [BreedingController::class, 'getPaymentMethods']);
+
             Route::get('/beforepayment', [BreedingController::class, 'showDataBeforePayment']);
             Route::post('/checkpromo', [BreedingController::class, 'checkPromo']);
 
             Route::post('/discount', [BreedingController::class, 'transactionDiscount']);
             Route::post('/payment', [BreedingController::class, 'payment']);
+            Route::post('/upload-payment-proof', [BreedingController::class, 'uploadPaymentProof']);
+            Route::post('/confirm-payment', [BreedingController::class, 'confirmPayment']);
+            Route::post('/reject-payment', [BreedingController::class, 'rejectPayment']);
 
             Route::get('/invoice', [BreedingController::class, 'printInvoce']);
         });
 
         Route::group(['prefix' => 'petsalon'], function () {
-
+            Route::get('/stats', [PetSalonController::class, 'getStats']);
             Route::get('/', [PetSalonController::class, 'index']);
             Route::post('/', [PetSalonController::class, 'create']);
             Route::get('/detail', [PetSalonController::class, 'detail']);
@@ -867,11 +977,24 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
             Route::post('/treatment', [PetSalonController::class, 'Treatment']);
 
+            // Policy Agreement
+            Route::get('/policies', [PetSalonController::class, 'getPoliciesForAgreement']);
+            Route::post('/policy-agreement', [PetSalonController::class, 'savePolicyAgreement']);
+
+            // Groomer tandai selesai + assign kandang + kirim WA
+            Route::post('/salon-done', [PetSalonController::class, 'markSalonDone']);
+
+            // Customer hadir → inisiasi pembayaran
+            Route::post('/checkout', [PetSalonController::class, 'initiateCheckout']);
+
             Route::get('/beforepayment', [PetSalonController::class, 'showDataBeforePayment']);
             Route::post('/checkpromo', [PetSalonController::class, 'checkPromo']);
 
             Route::post('/discount', [PetSalonController::class, 'transactionDiscount']);
             Route::post('/payment', [PetSalonController::class, 'payment']);
+            Route::post('/upload-payment-proof', [PetSalonController::class, 'uploadPaymentProof']);
+            Route::post('/confirm-payment', [PetSalonController::class, 'confirmPayment']);
+            Route::post('/reject-payment', [PetSalonController::class, 'rejectPayment']);
 
             Route::get('/invoice', [PetSalonController::class, 'printInvoce']);
         });
@@ -1004,6 +1127,54 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/', [FinanceDataStaticController::class, 'index']);
             Route::delete('/', [FinanceDataStaticController::class, 'delete']);
         });
+
+        Route::group(['prefix' => 'quotation'], function () {
+            Route::get('/', [QuotationController::class, 'index']);
+            Route::post('/', [QuotationController::class, 'create']);
+            Route::put('/', [QuotationController::class, 'update']);
+            Route::delete('/', [QuotationController::class, 'delete']);
+            Route::get('/detail', [QuotationController::class, 'detail']);
+            Route::post('/status', [QuotationController::class, 'updateStatus']);
+            Route::post('/duplicate', [QuotationController::class, 'duplicate']);
+            Route::post('/convert', [QuotationController::class, 'convertToTransaction']);
+            Route::get('/print', [QuotationController::class, 'printQuotation']);
+            Route::get('/export-excel', [QuotationController::class, 'exportExcel']);
+            Route::get('/customer-dropdown', [QuotationController::class, 'customerDropdown']);
+            Route::get('/pet-dropdown', [QuotationController::class, 'petDropdown']);
+            Route::get('/discount-options', [QuotationController::class, 'discountOptions']);
+            Route::post('/calculate-discount', [QuotationController::class, 'calculateDiscount']);
+        });
+
+        Route::group(['prefix' => 'sales'], function () {
+            Route::get('/', [FinanceSalesController::class, 'index']);
+            Route::get('/summary', [FinanceSalesController::class, 'summary']);
+            Route::get('/export', [FinanceSalesController::class, 'exportExcel']);
+            Route::get('/payment-methods', [FinanceSalesController::class, 'paymentMethods']);
+            Route::get('/payment-detail', [FinanceSalesController::class, 'paymentDetail']);
+            Route::post('/add-payment', [FinanceSalesController::class, 'addPayment']);
+        });
+
+        Route::group(['prefix' => 'payment-records'], function () {
+            Route::get('/', [FinancePaymentRecordController::class, 'index']);
+            Route::get('/export', [FinancePaymentRecordController::class, 'exportExcel']);
+            Route::get('/payment-methods', [FinancePaymentRecordController::class, 'paymentMethods']);
+        });
+
+        Route::group(['prefix' => 'piutang'], function () {
+            Route::get('/', [FinancePiutangController::class, 'index']);
+            Route::get('/aging-summary', [FinancePiutangController::class, 'agingSummary']);
+            Route::get('/export', [FinancePiutangController::class, 'exportExcel']);
+        });
+
+        Route::group(['prefix' => 'refund'], function () {
+            Route::get('/',                  [FinanceRefundController::class, 'index']);
+            Route::get('/summary',           [FinanceRefundController::class, 'summary']);
+            Route::get('/invoice-lookup',    [FinanceRefundController::class, 'invoiceLookup']);
+            Route::get('/payment-methods',   [FinanceRefundController::class, 'paymentMethods']);
+            Route::get('/export',            [FinanceRefundController::class, 'exportExcel']);
+            Route::post('/',                 [FinanceRefundController::class, 'store']);
+            Route::delete('/{id}',           [FinanceRefundController::class, 'destroy']);
+        });
     });
 
     Route::group(['prefix' => 'report'], function () {
@@ -1023,6 +1194,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/diagnose/export', [BookingController::class, 'exportDiagnose']);
             Route::get('/diagnosespecies/export', [BookingController::class, 'exportSpecies']);
 
+            Route::get('/diagnoseoptions', [BookingController::class, 'getDiagnoseOptions']);
             Route::get('/diagnosespeciesgender', [BookingController::class, 'indexDiagnosesSpeciesGender']);
             Route::get('/diagnosespeciesgender/export', [BookingController::class, 'exportDiagnosesSpeciesGender']);
         });
@@ -1058,6 +1230,12 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/list/export', [ReportExpensesController::class, 'exportList']);
             Route::get('/summary', [ReportExpensesController::class, 'indexSummary']);
             Route::get('/summary/export', [ReportExpensesController::class, 'exportSummary']);
+            Route::get('/options/payment', [ReportExpensesController::class, 'optionPayment']);
+            Route::get('/options/status', [ReportExpensesController::class, 'optionStatus']);
+            Route::get('/options/submiter', [ReportExpensesController::class, 'optionSubmiter']);
+            Route::get('/options/recipient', [ReportExpensesController::class, 'optionRecipient']);
+            Route::get('/options/category', [ReportExpensesController::class, 'optionCategory']);
+            Route::get('/options/supplier', [ReportExpensesController::class, 'optionSupplier']);
         });
 
         Route::group(['prefix' => 'products'], function () {
@@ -1072,6 +1250,10 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             // Route::get('/detail', [ReportProductController::class, 'detail']);
             Route::get('/reminders', [ReportProductController::class, 'indexReminders']);
             Route::get('/reminders/export', [ReportProductController::class, 'exportReminders']);
+            Route::get('/batches', [ReportProductController::class, 'indexBatches']);
+            Route::get('/batches/export', [ReportProductController::class, 'exportBatches']);
+            Route::get('/expiry', [ReportProductController::class, 'indexExpiry']);
+            Route::get('/expiry/export', [ReportProductController::class, 'exportExpiry']);
         });
 
         Route::group(['prefix' => 'sales'], function () {
@@ -1083,6 +1265,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/salesbyservice/export', [ReportSalesController::class, 'exportSalesByService']);
             Route::get('/salesbyproduct', [ReportSalesController::class, 'indexSalesByProduct']);
             Route::get('/salesbyproduct/export', [ReportSalesController::class, 'exportSalesByProduct']);
+            Route::get('/salesbyitemtype', [ReportSalesController::class, 'indexSalesByItemType']);
+            Route::get('/salesbyitemtype/export', [ReportSalesController::class, 'exportSalesByItemType']);
+            Route::get('/packagesummary', [ReportSalesController::class, 'indexPackageSummary']);
+            Route::get('/packagesummary/export', [ReportSalesController::class, 'exportPackageSummary']);
+            Route::get('/customerspend', [ReportSalesController::class, 'indexCustomerSpend']);
+            Route::get('/customerspend/export', [ReportSalesController::class, 'exportCustomerSpend']);
+            Route::get('/dailyreconciliation', [ReportSalesController::class, 'indexDailyReconciliation']);
+            Route::get('/dailyreconciliation/export', [ReportSalesController::class, 'exportDailyReconciliation']);
+            Route::get('/refunds', [ReportSalesController::class, 'indexRefunds']);
+            Route::get('/refunds/export', [ReportSalesController::class, 'exportRefunds']);
             Route::get('/paymentlist', [ReportSalesController::class, 'indexPaymentList']);
             Route::get('/paymentlist/export', [ReportSalesController::class, 'exportPaymentList']);
             Route::get('/details', [ReportSalesController::class, 'indexDetails']);
@@ -1112,6 +1304,17 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/leave/export', [ReportStaffController::class, 'exportStaffLeave']);
             Route::get('/peformance/export', [ReportStaffController::class, 'exportStaffPeformance']);
         });
+    });
+
+    // ── INSTALLMENT (Cicilan) ────────────────────────────────────────────────
+    Route::group(['prefix' => 'installment'], function () {
+        Route::get('/',              [InstallmentController::class, 'index']);
+        Route::get('/detail',        [InstallmentController::class, 'detail']);
+        Route::get('/summary',       [InstallmentController::class, 'summary']);
+        Route::post('/',             [InstallmentController::class, 'create']);
+        Route::post('/payment',      [InstallmentController::class, 'recordPayment']);
+        Route::get('/late-fee',      [InstallmentController::class, 'previewLateFee']);
+        Route::delete('/',           [InstallmentController::class, 'cancel']);
     });
 
     //GLOBAL VARIABLE

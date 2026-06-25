@@ -10,33 +10,52 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition()
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
-            'remember_token' => Str::random(10),
+            'userName'                       => fake()->unique()->userName(),
+            'firstName'                      => fake()->firstName(),
+            'middleName'                     => '',
+            'lastName'                       => fake()->lastName(),
+            'nickName'                       => fake()->firstName(),
+            'gender'                         => fake()->randomElement(['Male', 'Female']),
+            'status'                         => 1,
+            'jobTitleId'                     => 14,
+            'startDate'                      => now()->subYear()->toDateString(),
+            'endDate'                        => now()->addYear()->toDateString(),
+            'joinDate'                       => now()->subYear()->toDateString(),
+            'registrationNo'                 => fake()->numerify('##########'),
+            'designation'                    => fake()->numerify('##########'),
+            'annualSickAllowance'            => 10,
+            'annualLeaveAllowance'           => 10,
+            'annualSickAllowanceRemaining'   => 10,
+            'annualLeaveAllowanceRemaining'  => 10,
+            'payPeriodId'                    => 2,
+            'payAmount'                      => 5000000,
+            'typeId'                         => 0,
+            'identificationNumber'           => '',
+            'additionalInfo'                 => '',
+            'generalCustomerCanSchedule'     => 1,
+            'generalCustomerReceiveDailyEmail' => 1,
+            'generalAllowMemberToLogUsingEmail' => 1,
+            'reminderEmail'                  => 1,
+            'reminderWhatsapp'               => 1,
+            'roleId'                         => 1,
+            'lineManagerId'                  => 1,
+            'imageName'                      => 'default.jpg',
+            'imagePath'                      => '/UsersProfiles/default.jpg',
+            'email'                          => fake()->unique()->safeEmail(),
+            'password'                       => bcrypt('password123'),
+            'isDeleted'                      => 0,
+            'createdBy'                      => 'Test',
+            'isLogin'                        => 0,
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     *
-     * @return static
-     */
     public function unverified()
     {
-        return $this->state(function (array $attributes) {
-            return [
-                'email_verified_at' => null,
-            ];
-        });
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+        ]);
     }
 }

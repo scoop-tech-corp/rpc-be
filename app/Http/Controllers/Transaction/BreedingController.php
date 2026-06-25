@@ -11,6 +11,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Carbon\Carbon;
 use App\Models\Customer\Customer;
 use App\Models\Customer\CustomerPets;
+use App\Models\Customer\CustomerTelephones;
+use App\Models\PromotionMaster;
 use App\Models\Staff\UsersLocation;
 use App\Models\transaction_breeding_payment_based_sales;
 use App\Models\transaction_breeding_payment_totals;
@@ -20,10 +22,17 @@ use App\Models\transactionBreedingTreatmentCage;
 use App\Models\TransactionBreedingTreatmentProduct;
 use App\Models\TransactionBreedingTreatmentService;
 use App\Models\TransactionBreedingTreatmentTreatPlan;
+use App\Models\TransactionBreedingPrepayment;
+use App\Models\TransactionBreedingPolicyAgreement;
+use App\Models\TransactionBreedingPapanKerja;
+use App\Models\TransactionBreedingAdditionalTreatment;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Storage;
 
 class BreedingController extends Controller
 {
+    use \App\Http\Controllers\Transaction\Traits\PaymentVerificationTrait;
     public function index(Request $request)
     {
         $itemPerPage = $request->rowPerPage;
@@ -58,6 +67,7 @@ class BreedingController extends Controller
                 't.registrationNo',
                 'l.locationName',
                 'c.firstName',
+                'cp.petName',
                 DB::raw("IFNULL(cg.customerGroup,'') as customerGroup"),
                 DB::raw("IFNULL(t.startDate,'') as startDate"),
                 DB::raw("IFNULL(t.endDate,'') as endDate"),
@@ -65,7 +75,8 @@ class BreedingController extends Controller
                 'u.firstName as picDoctor',
                 'uc.firstName as createdBy',
                 DB::raw("DATE_FORMAT(t.created_at, '%d-%m-%Y %H:%m:%s') as createdAt"),
-                DB::raw('CASE WHEN ' . $statusDoc . '=1 and u.id=' . $request->user()->id . ' and t.status="Cek Kondisi Pet" THEN 1 ELSE 0 END as isPetCheck')
+                DB::raw('CASE WHEN ' . $statusDoc . '=1 and u.id=' . $request->user()->id . ' and t.status="Cek Kondisi Pet" THEN 1 ELSE 0 END as isPetCheck'),
+                DB::raw('CASE WHEN ' . $statusDoc . '=1 and u.id=' . $request->user()->id . ' and t.status="Pet diterima masuk Breeding" THEN 1 ELSE 0 END as isTreatment')
             )
             ->where('t.isDeleted', '=', 0);
 
@@ -106,6 +117,8 @@ class BreedingController extends Controller
             $data = $data->where(function($q) use ($request) {
                 $q->where('t.registrationNo', 'like', '%' . $request->search . '%')
                   ->orWhere('c.firstName', 'like', '%' . $request->search . '%')
+                  ->orWhere('c.lastName', 'like', '%' . $request->search . '%')
+                  ->orWhere('cp.petName', 'like', '%' . $request->search . '%')
                   ->orWhere('u.firstName', 'like', '%' . $request->search . '%');
             });
         }
@@ -116,15 +129,18 @@ class BreedingController extends Controller
 
         $data = $data->orderBy('t.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
@@ -298,7 +314,17 @@ class BreedingController extends Controller
 
             $regisNo = 'RPC.TRX.' . $request->locationId . '.' . str_pad($trx + 1, 8, 0, STR_PAD_LEFT);
 
+            // Resolve bookingId via queueId (nullable — tidak wajib)
+            $bookingId = null;
+            if ($request->filled('queueId')) {
+                $bookingId = DB::table('queues')
+                    ->where('id', $request->queueId)
+                    ->where('isDeleted', 0)
+                    ->value('bookingId');
+            }
+
             $tran = TransactionBreeding::create([
+                'bookingId' => $bookingId,
                 'registrationNo' => $regisNo,
                 'petCheckRegistrationNo' => $petCheckRegistrationNo,
                 'status' => 'Menunggu Dokter',
@@ -316,6 +342,15 @@ class BreedingController extends Controller
             ]);
 
             transactionBreedingLog($tran->id, 'New Transaction', '', $request->user()->id);
+
+            $petName = DB::table('customerPets')->where('id', $tran->petId)->value('petName') ?? 'Pet';
+            sendNotificationToStaffAtLocation(
+                $request->locationId,
+                [17], // Dokter Hewan
+                'breeding',
+                "Transaksi breeding baru: {$petName} menunggu pemeriksaan dokter.",
+                'info'
+            );
 
             DB::commit();
             return responseCreate();
@@ -383,7 +418,81 @@ class BreedingController extends Controller
             ->orderBy('tl.id', 'desc')
             ->get();
 
-        $data = ['detail' => $detail, 'transactionLogs' => $log];
+        // ── DP / Prepayment ──
+        $dpLogs = DB::table('transaction_breeding_prepayments as p')
+            ->leftJoin('paymentmethod as pm', 'pm.id', 'p.paymentMethodId')
+            ->join('users as u', 'u.id', 'p.userId')
+            ->select(
+                'p.id',
+                DB::raw("COALESCE(p.nota_number, CONCAT('DP-', p.id)) as notaNumber"),
+                DB::raw("'DP / Pembayaran Awal' as type"),
+                DB::raw("CONCAT('Rp ', FORMAT(p.amount, 0)) as amount"),
+                DB::raw("COALESCE(pm.name, '-') as paymentMethod"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(p.created_at, '%d-%m-%Y %H:%i:%s') as date"),
+                'p.catatan as note',
+                DB::raw("IF(p.proofPath IS NOT NULL, 'ada', null) as hasProof")
+            )
+            ->where('p.transactionId', $request->id)
+            ->where('p.isDeleted', false)
+            ->get();
+
+        // ── Pelunasan / Checkout Payment ──
+        $pelunasanLogs = DB::table('transaction_breeding_payment_totals as tpt')
+            ->leftJoin('paymentmethod as pm', 'pm.id', 'tpt.paymentMethodId')
+            ->join('users as u', 'u.id', 'tpt.userId')
+            ->leftJoin('users as uu', 'uu.id', 'tpt.uploadedBy')
+            ->leftJoin('users as cu', 'cu.id', 'tpt.confirmedBy')
+            ->select(
+                'tpt.id',
+                'tpt.nota_number as notaNumber',
+                DB::raw("'Pelunasan' as type"),
+                DB::raw("CONCAT('Rp ', FORMAT(tpt.amountPaid, 0)) as amount"),
+                DB::raw("COALESCE(pm.name, '-') as paymentMethod"),
+                'u.firstName as createdBy',
+                DB::raw("DATE_FORMAT(tpt.created_at, '%d-%m-%Y %H:%i:%s') as date"),
+                DB::raw("NULL as note"),
+                'tpt.isPayed',
+                'tpt.proofOfPayment',
+                'tpt.uploadedBy',
+                'tpt.confirmedBy',
+                'tpt.verificationStatus',
+                'tpt.verificationNote',
+                'tpt.verifiedAt',
+                'uu.firstName as uploadedByName',
+                'cu.firstName as confirmedByName',
+                DB::raw("IF(tpt.proofOfPayment IS NOT NULL, 'ada', null) as hasProof")
+            )
+            ->where('tpt.transactionId', $request->id)
+            ->get();
+
+        $paymentLog = $pelunasanLogs->concat($dpLogs)->sortByDesc('date')->values();
+
+        // ── Policy Agreements ──
+        $policyAgreements = DB::table('transaction_breeding_policy_agreements as pa')
+            ->leftJoin('users as u', 'u.id', 'pa.userId')
+            ->leftJoin('contract_templates as ct', 'ct.id', 'pa.contractTemplateId')
+            ->select(
+                'pa.id',
+                'pa.contractTitle',
+                'pa.contractVersion',
+                'pa.signerName',
+                'pa.signatureData',
+                DB::raw("DATE_FORMAT(pa.signedAt, '%d-%m-%Y %H:%i') as signedAt"),
+                'u.firstName as recordedBy',
+                DB::raw("IF(pa.signatureData IS NOT NULL AND pa.signatureData != '', 1, 0) as hasSigned"),
+                'ct.raw_content as rawContent'
+            )
+            ->where('pa.transactionId', $request->id)
+            ->orderBy('pa.id')
+            ->get();
+
+        $data = [
+            'detail'           => $detail,
+            'transactionLogs'  => $log,
+            'paymentLogs'      => $paymentLog,
+            'policyAgreements' => $policyAgreements,
+        ];
 
         return response()->json($data, 200);
     }
@@ -651,12 +760,25 @@ class BreedingController extends Controller
         }
 
         $doctor = User::where([['id', '=', $request->user()->id]])->first();
+        $tranBreeding = TransactionBreeding::find($request->transactionId);
+        $petName = $tranBreeding ? (DB::table('customerPets')->where('id', $tranBreeding->petId)->value('petName') ?? 'Pet') : 'Pet';
+        $locationId = $tranBreeding ? $tranBreeding->locationId : null;
 
         if ($request->status == 1) {
 
             statusTransactionBreeding($request->transactionId, 'Cek Kondisi Pet', $request->user()->id);
 
             transactionBreedingLog($request->transactionId, 'Pemeriksaan pasien oleh ' . $doctor->firstName, '', $request->user()->id);
+
+            if ($locationId) {
+                sendNotificationToStaffAtLocation(
+                    $locationId,
+                    [1, 4, 5], // Kasir, Paramedis, Vetnurse
+                    'breeding',
+                    "Dr. {$doctor->firstName} menerima {$petName} untuk breeding — sedang diperiksa.",
+                    'success'
+                );
+            }
         } else {
 
             $validate = Validator::make($request->all(), [
@@ -671,6 +793,16 @@ class BreedingController extends Controller
             statusTransactionBreeding($request->transactionId, 'Ditolak Dokter', $request->user()->id);
 
             transactionBreedingLog($request->transactionId, 'Pasien Ditolak oleh ' . $doctor->firstName, $request->reason, $request->user()->id);
+
+            if ($locationId) {
+                sendNotificationToStaffAtLocation(
+                    $locationId,
+                    [1], // Kasir
+                    'breeding',
+                    "{$petName} ditolak oleh Dr. {$doctor->firstName} — perlu tindak lanjut.",
+                    'warning'
+                );
+            }
         }
 
         return responseCreate();
@@ -946,9 +1078,9 @@ class BreedingController extends Controller
                 'userId' => $request->user()->id,
             ]);
 
-            statusTransactionBreeding($request->transactionId, 'Proses Pembayaran', $request->user()->id);
+            statusTransactionBreeding($request->transactionId, 'Menunggu Persetujuan Policy', $request->user()->id);
 
-            transactionBreedingLog($request->transactionId, 'Input Treatment dan Kandang Sudah Selesai', '', $request->user()->id);
+            transactionBreedingLog($request->transactionId, 'Rencana perawatan & kandang telah diisi — menunggu persetujuan policy oleh owner', '', $request->user()->id);
 
             return responseCreate();
         } catch (\Throwable $th) {
@@ -1964,14 +2096,17 @@ class BreedingController extends Controller
             $total->userId = $request->user()->id;
             $total->save();
 
-            transactionBreedingLog($request->transactionId, 'Nota diterbitkan', '', $request->user()->id);
+            transactionBreedingLog($request->transactionId, 'Nota diterbitkan — pembayaran checkout selesai', '', $request->user()->id);
 
             statusTransactionBreeding($request->transactionId, 'Menunggu konfirmasi pembayaran', $request->user()->id);
             DB::commit();
 
             updateLastTransaction($trans->customerId);
 
-            return responseCreate();
+            return response()->json([
+                'message' => 'Add Data Successful!',
+                'data'    => ['id' => $total->id],
+            ], 200);
         } catch (\Throwable $th) {
             DB::rollback();
             return responseInvalid([$th->getMessage()]);
@@ -2045,5 +2180,676 @@ class BreedingController extends Controller
         return $pdf->download($namaFile);
 
         return view('transaction.breeding.print_invoice_breeding');
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // POLICY AGREEMENT
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** Ambil daftar policies aktif untuk ditampilkan ke kasir */
+    public function getPoliciesForBreeding(Request $request)
+    {
+        $policies = DB::table('contract_templates')
+            ->where('isDeleted', 0)
+            ->where('status', 'active')
+            ->select('id', 'title', 'version', 'raw_content')
+            ->orderBy('title')
+            ->get();
+
+        return response()->json($policies);
+    }
+
+    /** Kasir simpan TTD owner → status berubah ke "Proses Pacak" */
+    public function savePolicyAgreement(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'signerName'    => 'required|string',
+            'signatureData' => 'required|string', // base64
+            'policies'      => 'required|string', // JSON array of {id, title, version}
+        ]);
+
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
+        $tran = TransactionBreeding::where('id', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->first();
+
+        if (!$tran) {
+            return responseInvalid(['Transaksi tidak ditemukan.']);
+        }
+
+        if ($tran->status !== 'Menunggu Persetujuan Policy') {
+            return responseInvalid(['Status transaksi tidak valid untuk persetujuan policy.']);
+        }
+
+        $policies = json_decode($request->policies, true) ?? [];
+
+        if (empty($policies)) {
+            return responseInvalid(['Minimal satu policy harus dipilih.']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $signedAt = now();
+
+            foreach ($policies as $policy) {
+                TransactionBreedingPolicyAgreement::create([
+                    'transactionId'      => $request->transactionId,
+                    'contractTemplateId' => $policy['id'] ?? null,
+                    'contractTitle'      => $policy['title'] ?? '',
+                    'contractVersion'    => $policy['version'] ?? '',
+                    'signatureData'      => $request->signatureData,
+                    'signerName'         => $request->signerName,
+                    'signedAt'           => $signedAt,
+                    'userId'             => $request->user()->id,
+                ]);
+            }
+
+            statusTransactionBreeding($request->transactionId, 'Proses Pacak', $request->user()->id);
+
+            transactionBreedingLog(
+                $request->transactionId,
+                'Owner menyetujui dan menandatangani ' . count($policies) . ' policy — proses pacak dimulai',
+                'Ditandatangani oleh: ' . $request->signerName,
+                $request->user()->id
+            );
+
+            DB::commit();
+            return responseCreate();
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // PREPAYMENT (DP)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** List semua DP yang sudah dibayar untuk transaksi ini */
+    public function getPrepayments(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $prepayments = TransactionBreedingPrepayment::where('transactionId', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->with([])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($p) {
+                $methodName = DB::table('paymentMethodFinances')
+                    ->where('id', $p->paymentMethodId)
+                    ->value('paymentMethod');
+                return array_merge($p->toArray(), ['paymentMethodName' => $methodName]);
+            });
+
+        $totalPrepaid = $prepayments->sum('amount');
+
+        return response()->json([
+            'prepayments'  => $prepayments,
+            'totalPrepaid' => (float) $totalPrepaid,
+        ]);
+    }
+
+    /** Tambah DP baru */
+    public function addPrepayment(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId'   => 'required|integer',
+            'paymentMethodId' => 'required|integer',
+            'amount'          => 'required|numeric|min:1',
+            'catatan'         => 'nullable|string',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $tran = TransactionBreeding::where('id', $request->transactionId)->where('isDeleted', 0)->first();
+        if (!$tran) return responseInvalid(['Transaksi tidak ditemukan.']);
+
+        if (!in_array($tran->status, ['Proses Pacak'])) {
+            return responseInvalid(['DP hanya bisa ditambah saat status "Proses Pacak".']);
+        }
+
+        DB::beginTransaction();
+        try {
+            $now    = Carbon::now();
+            $tahun  = $now->format('Y');
+            $bulan  = $now->format('m');
+            $count  = TransactionBreedingPrepayment::where('transactionId', $request->transactionId)
+                ->where('isDeleted', 0)
+                ->count();
+
+            $notaNumber = 'DP/BR/' . $tran->locationId . '/' . $tahun . '/' . $bulan . '/' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+
+            $prep = TransactionBreedingPrepayment::create([
+                'transactionId'   => $request->transactionId,
+                'paymentMethodId' => $request->paymentMethodId,
+                'amount'          => $request->amount,
+                'nota_number'     => $notaNumber,
+                'catatan'         => $request->catatan,
+                'userId'          => $request->user()->id,
+            ]);
+
+            transactionBreedingLog(
+                $request->transactionId,
+                'DP Rp ' . number_format($request->amount, 0, ',', '.') . ' diterima',
+                $notaNumber,
+                $request->user()->id
+            );
+
+            DB::commit();
+            return response()->json(['id' => $prep->id, 'nota_number' => $notaNumber, 'message' => 'DP berhasil disimpan.'], 200);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return responseInvalid([$th->getMessage()]);
+        }
+    }
+
+    /** Hapus DP */
+    public function deletePrepayment(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $prep = TransactionBreedingPrepayment::find($request->id);
+        if (!$prep) return responseInvalid(['Data DP tidak ditemukan.']);
+
+        $prep->update(['isDeleted' => true]);
+
+        transactionBreedingLog(
+            $prep->transactionId,
+            'DP ' . $prep->nota_number . ' dihapus',
+            '',
+            $request->user()->id
+        );
+
+        return responseDelete();
+    }
+
+    /** Print kwitansi DP */
+    public function prepaymentReceipt(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $prep = TransactionBreedingPrepayment::find($request->id);
+        if (!$prep || $prep->isDeleted) return responseInvalid(['Data DP tidak ditemukan.']);
+
+        $tran = TransactionBreeding::find($prep->transactionId);
+        $cust = $tran ? Customer::find($tran->customerId) : null;
+
+        $methodName = DB::table('paymentMethodFinances')
+            ->where('id', $prep->paymentMethodId)
+            ->value('paymentMethod') ?? '-';
+
+        $formattedLocations = $this->getFormattedLocations();
+
+        $data = [
+            'locations'      => $formattedLocations,
+            'nota_number'    => $prep->nota_number ?? '-',
+            'nota_date'      => Carbon::parse($prep->created_at)->format('d/m/Y H:i'),
+            'customer_name'  => $cust ? $cust->firstName : '-',
+            'amount'         => (float) $prep->amount,
+            'catatan'        => $prep->catatan ?? '',
+            'payment_method' => $methodName,
+        ];
+
+        $namaFile = str_replace('/', '_', $prep->nota_number ?? 'DP') . '.pdf';
+        $pdf = Pdf::loadView('invoice.invoice_breeding_prepayment', $data);
+        return $pdf->download($namaFile);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // PAPAN KERJA HARIAN
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** Ambil daftar papan kerja harian */
+    public function getPapanKerjaHarian(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $tasks = TransactionBreedingPapanKerja::where('transactionId', $request->transactionId)
+            ->orderBy('scheduledDate')
+            ->orderBy('time')
+            ->get()
+            ->map(function ($t) {
+                $completedByName = null;
+                if ($t->completedBy) {
+                    $completedByName = DB::table('users')->where('id', $t->completedBy)->value('firstName');
+                }
+                return array_merge($t->toArray(), ['completedByName' => $completedByName]);
+            });
+
+        return response()->json($tasks);
+    }
+
+    /** Tambah entri papan kerja harian */
+    public function addPapanKerjaHarian(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'activity'      => 'required|string',
+            'scheduledDate' => 'required|date',
+            'time'          => 'nullable|string',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $task = TransactionBreedingPapanKerja::create([
+            'transactionId' => $request->transactionId,
+            'activity'      => $request->activity,
+            'scheduledDate' => $request->scheduledDate,
+            'time'          => $request->time,
+            'instructions'  => $request->instructions,
+            'isDone'        => false,
+            'userId'        => $request->user()->id,
+        ]);
+
+        return response()->json(['id' => $task->id, 'message' => 'Papan kerja berhasil ditambahkan.'], 200);
+    }
+
+    /** Tandai papan kerja selesai */
+    public function markPapanKerjaHarianDone(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id'              => 'required|integer',
+            'statusAktivitas' => 'nullable|string',
+            'temuan'          => 'nullable|string',
+            'catatan'         => 'nullable|string',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $task = TransactionBreedingPapanKerja::find($request->id);
+        if (!$task) return responseInvalid(['Papan kerja tidak ditemukan.']);
+
+        $task->update([
+            'isDone'          => true,
+            'statusAktivitas' => $request->statusAktivitas,
+            'temuan'          => $request->temuan,
+            'catatan'         => $request->catatan,
+            'completedBy'     => $request->user()->id,
+            'completedAt'     => now(),
+        ]);
+
+        transactionBreedingLog(
+            $task->transactionId,
+            'Aktivitas "' . $task->activity . '" pada ' . $task->scheduledDate . ' telah selesai',
+            $request->statusAktivitas ?? '',
+            $request->user()->id
+        );
+
+        return responseUpdate();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // ADDITIONAL TREATMENT
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** List tindakan tambahan selama proses pacak */
+    public function getAdditionalTreatments(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $items = TransactionBreedingAdditionalTreatment::where('transactionId', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $subtotal = $items->sum(fn($i) => $i->quantity * $i->price);
+
+        return response()->json([
+            'items'    => $items,
+            'subtotal' => (float) $subtotal,
+        ]);
+    }
+
+    /** Tambah tindakan tambahan */
+    public function addAdditionalTreatment(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+            'type'          => 'required|in:service,product',
+            'itemId'        => 'nullable|integer',
+            'itemName'      => 'required|string',
+            'quantity'      => 'required|numeric|min:0.01',
+            'price'         => 'required|numeric|min:0',
+            'catatan'       => 'nullable|string',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $tran = TransactionBreeding::where('id', $request->transactionId)->where('isDeleted', 0)->first();
+        if (!$tran) return responseInvalid(['Transaksi tidak ditemukan.']);
+
+        $item = TransactionBreedingAdditionalTreatment::create([
+            'transactionId' => $request->transactionId,
+            'type'          => $request->type,
+            'itemId'        => $request->itemId,
+            'itemName'      => $request->itemName,
+            'quantity'      => $request->quantity,
+            'price'         => $request->price,
+            'catatan'       => $request->catatan,
+            'userId'        => $request->user()->id,
+        ]);
+
+        transactionBreedingLog(
+            $request->transactionId,
+            'Tindakan tambahan ditambahkan: ' . $request->itemName,
+            '',
+            $request->user()->id
+        );
+
+        return response()->json(['id' => $item->id, 'message' => 'Tindakan tambahan berhasil disimpan.'], 200);
+    }
+
+    /** Hapus tindakan tambahan */
+    public function deleteAdditionalTreatment(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'id' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $item = TransactionBreedingAdditionalTreatment::find($request->id);
+        if (!$item) return responseInvalid(['Tindakan tambahan tidak ditemukan.']);
+
+        $item->update(['isDeleted' => true]);
+
+        transactionBreedingLog(
+            $item->transactionId,
+            'Tindakan tambahan dihapus: ' . $item->itemName,
+            '',
+            $request->user()->id
+        );
+
+        return responseDelete();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // CHECKOUT
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /** Kasir inisiasi check-out → status "Proses Check-Out" */
+    public function initiateCheckOut(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $tran = TransactionBreeding::where('id', $request->transactionId)->where('isDeleted', 0)->first();
+        if (!$tran) return responseInvalid(['Transaksi tidak ditemukan.']);
+
+        if ($tran->status !== 'Proses Pacak') {
+            return responseInvalid(['Hanya transaksi berstatus "Proses Pacak" yang dapat di-checkout.']);
+        }
+
+        statusTransactionBreeding($request->transactionId, 'Proses Check-Out', $request->user()->id);
+
+        transactionBreedingLog(
+            $request->transactionId,
+            'Check-out diinisiasi — menunggu pembayaran akhir',
+            '',
+            $request->user()->id
+        );
+
+        return responseUpdate();
+    }
+
+    /** Ringkasan checkout: total tagihan dikurangi DP yang sudah dibayar */
+    public function getCheckoutSummary(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'transactionId' => 'required|integer',
+        ]);
+        if ($validate->fails()) return responseInvalid($validate->errors()->all());
+
+        $tran = TransactionBreeding::find($request->transactionId);
+        if (!$tran) return responseInvalid(['Transaksi tidak ditemukan.']);
+
+        // Layanan treatment awal
+        $services = TransactionBreedingTreatmentService::from('transactionBreedingTreatmentServices as tpcs')
+            ->join('services as s', 's.id', '=', 'tpcs.serviceId')
+            ->join('servicesPrice as sp', 's.id', '=', 'sp.service_id')
+            ->select(
+                's.id as serviceId',
+                's.fullName as itemName',
+                DB::raw("'service' as type"),
+                DB::raw("TRIM(tpcs.quantity)+0 as quantity"),
+                DB::raw("TRIM(sp.price)+0 as price"),
+                DB::raw("TRIM(tpcs.quantity)+0 * TRIM(sp.price)+0 as total")
+            )
+            ->where('tpcs.transactionId', $request->transactionId)
+            ->where('sp.location_id', $tran->locationId)
+            ->get();
+
+        $products = TransactionBreedingTreatmentProduct::from('transactionBreedingTreatmentProducts as rc')
+            ->join('products as p', 'p.id', '=', 'rc.productId')
+            ->join('productLocations as pl', 'p.id', '=', 'pl.productId')
+            ->select(
+                'p.id as productId',
+                'p.fullName as itemName',
+                DB::raw("'product' as type"),
+                DB::raw("TRIM(rc.quantity)+0 AS quantity"),
+                DB::raw("TRIM(p.price)+0 AS price"),
+                DB::raw("TRIM(rc.quantity)+0 * TRIM(p.price)+0 as total")
+            )
+            ->where('rc.transactionId', $request->transactionId)
+            ->where('pl.locationId', $tran->locationId)
+            ->get();
+
+        // Tindakan tambahan selama proses pacak
+        $additionals = TransactionBreedingAdditionalTreatment::where('transactionId', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->get()
+            ->map(fn($a) => [
+                'itemName' => $a->itemName,
+                'type'     => $a->type,
+                'quantity' => (float) $a->quantity,
+                'price'    => (float) $a->price,
+                'total'    => (float) ($a->quantity * $a->price),
+            ]);
+
+        $subtotalTreatment  = $services->sum(fn($s) => (float) $s->quantity * (float) $s->price)
+                            + $products->sum(fn($p) => (float) $p->quantity * (float) $p->price);
+        $subtotalAdditional = $additionals->sum('total');
+        $subtotalBruto      = $subtotalTreatment + $subtotalAdditional;
+
+        // DP yang sudah dibayar
+        $totalPrepaid = (float) TransactionBreedingPrepayment::where('transactionId', $request->transactionId)
+            ->where('isDeleted', 0)
+            ->sum('amount');
+
+        $grandTotal = max(0, $subtotalBruto - $totalPrepaid);
+
+        // Metode pembayaran tersedia
+        $paymentMethods = DB::table('paymentMethodFinances')
+            ->where('isDeleted', 0)
+            ->select('id', 'paymentMethod as name')
+            ->orderBy('paymentMethod')
+            ->get();
+
+        return response()->json([
+            'services'           => $services,
+            'products'           => $products,
+            'additionals'        => $additionals,
+            'subtotal_treatment' => (float) $subtotalTreatment,
+            'subtotal_additional'=> (float) $subtotalAdditional,
+            'subtotal_bruto'     => (float) $subtotalBruto,
+            'total_prepaid'      => $totalPrepaid,
+            'grand_total'        => (float) $grandTotal,
+            'payment_methods'    => $paymentMethods,
+        ]);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // STATS
+    // ──────────────────────────────────────────────────────────────────────────
+
+    public function getStats(Request $request)
+    {
+        $user  = $request->user();
+
+        $base = DB::table('transaction_breedings as t')
+            ->join('location as l', 'l.id', 't.locationId')
+            ->where('t.isDeleted', 0);
+
+        // Filter lokasi berdasarkan role
+        $isAdmin = in_array($user->roleId, [1, 2]);
+        $isKasir = ($user->jobTitleId == 1);
+
+        if ($isAdmin) {
+            // no filter
+        } elseif ($isKasir) {
+            $locationIds = DB::table('accessControlSchedulesMaster')
+                ->where('usersId', $user->id)
+                ->where('isDeleted', 0)
+                ->pluck('locationId')
+                ->unique()->values()->toArray();
+            if (!empty($locationIds)) {
+                $base = $base->whereIn('l.id', $locationIds);
+            }
+        } else {
+            $locationIds = UsersLocation::where('usersId', $user->id)
+                ->pluck('locationId')->toArray();
+            if (!empty($locationIds)) {
+                $base = $base->whereIn('l.id', $locationIds);
+            }
+        }
+
+        $allOngoing = (clone $base)->whereNotIn('t.status', ['Selesai', 'Batal'])->count();
+
+        $dalamProses = (clone $base)->where('t.status', 'Proses Pacak')->count();
+
+        $prosesCheckout = (clone $base)->where('t.status', 'Proses Check-Out')->count();
+
+        $finishedToday = (clone $base)
+            ->where('t.status', 'Selesai')
+            ->whereDate('t.updated_at', Carbon::today())
+            ->count();
+
+        return response()->json([
+            'aktif'           => $allOngoing,
+            'dalamProses'     => $dalamProses,
+            'prosesCheckout'  => $prosesCheckout,
+            'finishedToday'   => $finishedToday,
+        ]);
+    }
+
+    public function getPaymentMethods()
+    {
+        $methods = DB::table('paymentMethodFinances')
+            ->where('isDeleted', 0)
+            ->select('id', 'paymentMethod as name')
+            ->orderBy('paymentMethod')
+            ->get();
+        return response()->json($methods);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // HELPERS
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private function getFormattedLocations(): array
+    {
+        $locations = DB::table('location')
+            ->leftJoin('location_telephone', 'location.codeLocation', '=', 'location_telephone.codeLocation')
+            ->where(function ($query) {
+                $query->where('location_telephone.usage', 'Utama')
+                    ->orWhereNull('location_telephone.usage');
+            })
+            ->select(
+                'location.locationName',
+                'location.description',
+                'location_telephone.phoneNumber',
+                'location.codeLocation'
+            )
+            ->distinct()
+            ->get();
+
+        $locationGroups = [];
+        foreach ($locations as $location) {
+            $key = $location->codeLocation;
+            if (!isset($locationGroups[$key])) {
+                $locationGroups[$key] = [
+                    'name'        => $location->locationName,
+                    'description' => $location->description,
+                    'phone'       => $location->phoneNumber ?? ''
+                ];
+            }
+        }
+        return array_values($locationGroups);
+    }
+
+    // ── Secure Payment: Upload → Verify (4-Eyes) ─────────────────────────────
+
+    public function uploadPaymentProof(Request $request)
+    {
+        $request->validate([
+            'id'    => 'required|integer',
+            'proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $trans_pay = transaction_breeding_payment_totals::find($request->id);
+
+        return $this->handleUploadProof(
+            $trans_pay,
+            $request,
+            'Transaction/Breeding/proof_of_payment',
+            'transaction_breeding_payment_totals'
+        );
+    }
+
+    public function confirmPayment(Request $request)
+    {
+        $request->validate(['id' => 'required|integer']);
+
+        $trans_pay = transaction_breeding_payment_totals::find($request->id);
+
+        $result = $this->handleConfirmProof($trans_pay, $request);
+        if (!$result['ok']) {
+            return $result['response'];
+        }
+
+        $trans_pay = $result['record'];
+        $trans_pay->isPayed    = 1;
+        $trans_pay->updated_at = now();
+        $trans_pay->save();
+
+        statusTransactionBreeding($trans_pay->transactionId, 'Selesai', $request->user()->id);
+        transactionBreedingLog($trans_pay->transactionId, 'Pembayaran Dikonfirmasi', '', $request->user()->id);
+
+        return responseCreate();
+    }
+
+    public function rejectPayment(Request $request)
+    {
+        $request->validate([
+            'id'   => 'required|integer',
+            'note' => 'required|string|max:500',
+        ]);
+
+        $trans_pay = transaction_breeding_payment_totals::find($request->id);
+
+        $resp = $this->handleRejectProof($trans_pay, $request);
+
+        if (isset($resp->original['status']) && $resp->original['status'] === 'success') {
+            transactionBreedingLog($trans_pay->transactionId, 'Bukti Pembayaran Ditolak', $request->note, $request->user()->id);
+        }
+
+        return $resp;
     }
 }

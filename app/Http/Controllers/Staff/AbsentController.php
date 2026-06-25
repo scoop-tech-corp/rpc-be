@@ -138,6 +138,9 @@ class AbsentController extends Controller
 
         $data = $data->orderBy('sa.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($page - 1) * $itemPerPage;
 
         $dataTemp = $data->get();
@@ -147,9 +150,9 @@ class AbsentController extends Controller
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $data = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
@@ -210,6 +213,10 @@ class AbsentController extends Controller
             )
             ->where('sa.id', '=', $request->id)
             ->first();
+
+        if (!$data) {
+            return response()->json(['message' => 'Absent record not found.'], 404);
+        }
 
         $dataLoc = DB::table('usersLocation as ul')
             ->join('location as l', 'ul.locationId', 'l.id')
@@ -542,6 +549,10 @@ class AbsentController extends Controller
             ]);
         }
 
+        if ($validate->fails()) {
+            return responseInvalid($validate->errors()->all());
+        }
+
         $users = DB::table('users')
             ->leftjoin('usersRoles', 'usersRoles.id', '=', 'users.roleId')
             ->leftjoin('jobTitle', 'jobTitle.id', '=', 'users.jobTitleId')
@@ -657,6 +668,10 @@ class AbsentController extends Controller
         }
 
         $keeperRes = $keeperRes->first();
+
+        if (!$keeperRes) {
+            return response()->json(['message' => 'Timekeeper schedule not found.'], 404);
+        }
 
         $time2 = $keeperRes->time;
         $time1 = Carbon::now();

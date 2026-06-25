@@ -11,6 +11,11 @@ use Illuminate\Support\Carbon;
 
 class ChatController extends Controller
 {
+    public function index(Request $request)
+    {
+        return $this->list($request);
+    }
+
     public function list(Request $request)
     {
         $data = User::select(['id', 'firstName', 'lastName', 

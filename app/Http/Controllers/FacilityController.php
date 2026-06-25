@@ -981,15 +981,18 @@ class FacilityController extends Controller
 
         $goToPage = $request->goToPage;
 
+        if (!$defaultRowPerPage) {
+            return responseIndex(0, []);
+        }
         $offset = ($goToPage - 1) * $defaultRowPerPage;
 
         $count_data = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($defaultRowPerPage)->get();
+            $data = $data->limit($defaultRowPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($defaultRowPerPage)->get();
+            $data = $data->limit($defaultRowPerPage)->offset($offset)->get();
         }
 
         $total_paging = $count_data / $defaultRowPerPage;
@@ -1368,10 +1371,15 @@ class FacilityController extends Controller
 
     public function listFacilityWithLocation(Request $request)
     {
-        $request->locationId = json_decode($request->locationId);
+        $locationIds = json_decode($request->locationId, true);
+
+        if (!is_array($locationIds) || empty($locationIds)) {
+            return responseList([]);
+        }
+
         $data = DB::table('facility_unit as f')
             ->select('f.id', 'f.unitName')
-            ->whereIn('f.locationId', $request->locationId)
+            ->whereIn('f.locationId', $locationIds)
             ->where('f.isDeleted', '=', 0)
             ->get();
 

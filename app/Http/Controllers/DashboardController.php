@@ -28,6 +28,8 @@ class DashboardController extends Controller
         $bookings              = $this->bookings($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId);
         $newCustomer           = $this->newCustomer($currentStart, $currentEnd, $prevStart, $prevEnd);
         $rebookRate            = $this->calculateRebookRateTrend($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId);
+        $saleMetrics           = $this->saleMetrics($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId);
+        $customerRetention     = $this->customerRetention($currentStart, $currentEnd, $prevStart, $prevEnd, $branchesId);
 
         $data = [
             'chartsBookingCategory' => [
@@ -43,11 +45,7 @@ class DashboardController extends Controller
                 'total'      => (string) $bookings['bookings'],
                 'isLoss'     => $bookings['isLoss']
             ],
-            'totalSaleValue' => [
-                'percentage' => '27.5',
-                'total'      => '250',
-                'isLoss'     => 0
-            ],
+            'totalSaleValue' => $saleMetrics['totalSaleValue'],
             'newCustomer' => [
                 'percentage' => (string) $newCustomer['percentageNewCustomer'],
                 'total'      => (string) $newCustomer['newCustomer'],
@@ -58,16 +56,8 @@ class DashboardController extends Controller
                 'total'      => (string) $rebookRate['rebookCount'],
                 'isLoss'     => $rebookRate['isLoss']
             ],
-            'customerRetention' => [
-                'percentage' => '40',
-                'total'      => '400',
-                'isLoss'     => 1
-            ],
-            'avgSaleValue' => [
-                'percentage' => '68',
-                'total'      => '1,400',
-                'isLoss'     => 0
-            ],
+            'customerRetention' => $customerRetention,
+            'avgSaleValue' => $saleMetrics['avgSaleValue'],
         ];
 
         return response()->json($data);
@@ -161,6 +151,205 @@ class DashboardController extends Controller
             'percentageNewCustomer' => (string) round($percentageNewCustomer, 2),
             'isLoss'                => $newCustomer >= $prevNewCustomer ? 0 : 1
         ];
+    }
+
+    /**
+     * Hitung total sale value & avg sale value dari 5 sumber transaksi.
+     * - Clinic / Hotel / Salon / Breeding: SUM(amountPaid) dari tabel payment_totals
+     *   di-JOIN ke tabel utama transaksi untuk filter lokasi + tanggal.
+     * - PetShop: langsung dari kolom totalPayment di tabel transactionpetshop.
+     */
+    private function saleMetrics(Carbon $currentStart, Carbon $currentEnd, Carbon $prevStart, Carbon $prevEnd, ?array $branchesId = null): array
+    {
+        $current = $this->querySaleMetrics($currentStart, $currentEnd, $branchesId);
+        $prev    = $this->querySaleMetrics($prevStart, $prevEnd, $branchesId);
+
+        // ── Total Sale Value ─────────────────────────────────────
+        $curSale  = $current['totalSale'];
+        $prevSale = $prev['totalSale'];
+
+        $salePercentage = 0;
+        if ($prevSale > 0) {
+            $salePercentage = (($curSale - $prevSale) / $prevSale) * 100;
+        } elseif ($curSale > 0) {
+            $salePercentage = 100;
+        }
+
+        // ── Avg Sale Value ────────────────────────────────────────
+        $curAvg  = $current['totalTrx'] > 0 ? $curSale / $current['totalTrx'] : 0;
+        $prevAvg = $prev['totalTrx']    > 0 ? $prevSale / $prev['totalTrx']   : 0;
+
+        $avgPercentage = 0;
+        if ($prevAvg > 0) {
+            $avgPercentage = (($curAvg - $prevAvg) / $prevAvg) * 100;
+        } elseif ($curAvg > 0) {
+            $avgPercentage = 100;
+        }
+
+        return [
+            'totalSaleValue' => [
+                'total'      => number_format($curSale, 0, ',', '.'),
+                'percentage' => (string) round(abs($salePercentage), 1),
+                'isLoss'     => $curSale >= $prevSale ? 0 : 1,
+            ],
+            'avgSaleValue' => [
+                'total'      => number_format($curAvg, 0, ',', '.'),
+                'percentage' => (string) round(abs($avgPercentage), 1),
+                'isLoss'     => $curAvg >= $prevAvg ? 0 : 1,
+            ],
+        ];
+    }
+
+    /**
+     * Ambil agregat (totalSale, totalTrx) dari semua layanan untuk satu periode.
+     */
+    private function querySaleMetrics(Carbon $start, Carbon $end, ?array $branchesId = null): array
+    {
+        $totalSale = 0;
+        $totalTrx  = 0;
+
+        // ── 1. Pet Clinic ─────────────────────────────────────────
+        $clinic = DB::table('transaction_pet_clinic_payment_totals as pt')
+            ->join('transactionPetClinics as t', 't.id', '=', 'pt.transactionId')
+            ->whereBetween('t.created_at', [$start, $end])
+            ->where('t.isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('t.locationId', $branchesId))
+            ->selectRaw('COALESCE(SUM(pt.amountPaid), 0) as totalSale, COUNT(DISTINCT t.id) as totalTrx')
+            ->first();
+
+        // ── 2. Pet Hotel ──────────────────────────────────────────
+        $hotel = DB::table('transaction_pet_hotel_payment_totals as pt')
+            ->join('transaction_pet_hotels as t', 't.id', '=', 'pt.transactionId')
+            ->whereBetween('t.created_at', [$start, $end])
+            ->where('t.isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('t.locationId', $branchesId))
+            ->selectRaw('COALESCE(SUM(pt.amountPaid), 0) as totalSale, COUNT(DISTINCT t.id) as totalTrx')
+            ->first();
+
+        // ── 3. Pet Salon ──────────────────────────────────────────
+        $salon = DB::table('transaction_pet_salon_payment_totals as pt')
+            ->join('transaction_pet_salons as t', 't.id', '=', 'pt.transactionId')
+            ->whereBetween('t.created_at', [$start, $end])
+            ->where('t.isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('t.locationId', $branchesId))
+            ->selectRaw('COALESCE(SUM(pt.amountPaid), 0) as totalSale, COUNT(DISTINCT t.id) as totalTrx')
+            ->first();
+
+        // ── 4. Breeding ───────────────────────────────────────────
+        $breeding = DB::table('transaction_breeding_payment_totals as pt')
+            ->join('transaction_breedings as t', 't.id', '=', 'pt.transactionId')
+            ->whereBetween('t.created_at', [$start, $end])
+            ->where('t.isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('t.locationId', $branchesId))
+            ->selectRaw('COALESCE(SUM(pt.amountPaid), 0) as totalSale, COUNT(DISTINCT t.id) as totalTrx')
+            ->first();
+
+        // ── 5. Pet Shop ───────────────────────────────────────────
+        // Tidak punya tabel payment_totals terpisah → pakai kolom totalPayment langsung
+        $petshop = DB::table('transactionpetshop as t')
+            ->whereBetween('t.created_at', [$start, $end])
+            ->where('t.isDeleted', 0)
+            ->when($branchesId, fn($q) => $q->whereIn('t.locationId', $branchesId))
+            ->selectRaw('COALESCE(SUM(t.totalPayment), 0) as totalSale, COUNT(t.id) as totalTrx')
+            ->first();
+
+        // ── Agregasi semua sumber ─────────────────────────────────
+        foreach ([$clinic, $hotel, $salon, $breeding, $petshop] as $row) {
+            $totalSale += (float) ($row->totalSale ?? 0);
+            $totalTrx  += (int)   ($row->totalTrx  ?? 0);
+        }
+
+        return compact('totalSale', 'totalTrx');
+    }
+
+    /**
+     * Customer Retention = customer yang bertransaksi di periode ini
+     * DAN juga pernah bertransaksi di periode sebelumnya.
+     * Trend dibanding periode sebelumnya (prev vs prev-prev).
+     */
+    private function customerRetention(Carbon $currentStart, Carbon $currentEnd, Carbon $prevStart, Carbon $prevEnd, ?array $branchesId = null): array
+    {
+        $currRetained = $this->countRetainedCustomers($currentStart, $currentEnd, $prevStart, $branchesId);
+        $prevRetained = $this->countRetainedCustomers($prevStart, $prevEnd, $prevStart->copy()->subDays($prevStart->diffInDays($prevEnd)), $branchesId);
+
+        $percentage = 0;
+        if ($prevRetained > 0) {
+            $percentage = (($currRetained - $prevRetained) / $prevRetained) * 100;
+        } elseif ($currRetained > 0) {
+            $percentage = 100;
+        }
+
+        return [
+            'total'      => (string) $currRetained,
+            'percentage' => (string) round(abs($percentage), 1),
+            'isLoss'     => $currRetained >= $prevRetained ? 0 : 1,
+        ];
+    }
+
+    /**
+     * Hitung jumlah customer yang:
+     * 1. Bertransaksi dalam [$start, $end]
+     * 2. Sebelumnya pernah bertransaksi sebelum $start
+     */
+    private function countRetainedCustomers(Carbon $start, Carbon $end, Carbon $prevStart, ?array $branchesId): int
+    {
+        $periodIds = $this->getTransactionCustomerIds($start, $end, $branchesId);
+
+        if (empty($periodIds)) {
+            return 0;
+        }
+
+        // Dari customer periode ini, cari yang pernah aktif sebelum $start
+        $tables = [
+            'transactionPetClinics',
+            'transaction_pet_hotels',
+            'transaction_pet_salons',
+            'transaction_breedings',
+            'transactionpetshop',
+        ];
+
+        $priorIds = collect();
+        foreach ($tables as $table) {
+            $q = DB::table($table)
+                ->select('customerId')
+                ->whereIn('customerId', $periodIds)
+                ->where('created_at', '<', $start)
+                ->where('isDeleted', 0);
+            if ($branchesId) {
+                $q->whereIn('locationId', $branchesId);
+            }
+            $priorIds = $priorIds->merge($q->pluck('customerId'));
+        }
+
+        return $priorIds->unique()->count();
+    }
+
+    /**
+     * Ambil array distinct customerId dari semua transaksi dalam periode.
+     */
+    private function getTransactionCustomerIds(Carbon $start, Carbon $end, ?array $branchesId): array
+    {
+        $tables = [
+            'transactionPetClinics',
+            'transaction_pet_hotels',
+            'transaction_pet_salons',
+            'transaction_breedings',
+            'transactionpetshop',
+        ];
+
+        $ids = collect();
+        foreach ($tables as $table) {
+            $q = DB::table($table)
+                ->select('customerId')
+                ->whereBetween('created_at', [$start, $end])
+                ->where('isDeleted', 0);
+            if ($branchesId) {
+                $q->whereIn('locationId', $branchesId);
+            }
+            $ids = $ids->merge($q->pluck('customerId'));
+        }
+
+        return $ids->unique()->values()->toArray();
     }
 
     private function reportingGroup($branchesId = null, $start = null, $end = null)
@@ -412,21 +601,26 @@ class DashboardController extends Controller
 
         $data = $data->orderBy('ra.updated_at', 'desc');
 
+        if (!$itemPerPage) {
+            $result = $data->get();
+            return response()->json(['totalPagination' => 0, 'data' => $result], 200);
+        }
+
         $offset       = ($page - 1) * $itemPerPage;
         $count_data   = $data->count();
         $count_result = $count_data - $offset;
 
         if ($count_result < 0) {
-            $data = $data->offset(0)->limit($itemPerPage)->get();
+            $result = $data->limit($itemPerPage)->offset(0)->get();
         } else {
-            $data = $data->offset($offset)->limit($itemPerPage)->get();
+            $result = $data->limit($itemPerPage)->offset($offset)->get();
         }
 
         $totalPaging = $count_data / $itemPerPage;
 
         return response()->json([
             'totalPagination' => ceil($totalPaging),
-            'data'            => $data
+            'data'            => $result
         ], 200);
     }
 }
