@@ -446,6 +446,24 @@ class ApiController extends Controller
         return response()->json(['user' => $user]);
     }
 
+    public function getReportMenu(Request $request)
+    {
+        try {
+            $user   = JWTAuth::parseToken()->authenticate();
+            $roleId = $user->roleId ?? $user->role_id ?? null;
+
+            $items = DB::table('accessReportMenus')
+                ->select('groupName', 'menuName', 'url', 'roleId', 'accessTypeId')
+                ->where('roleId',    $roleId)
+                ->where('isDeleted', 0)
+                ->get();
+
+            return response()->json(['items' => $items]);
+        } catch (\Exception $e) {
+            return response()->json(['items' => []], 200);
+        }
+    }
+
     public function online($id)
     {
         return $id;

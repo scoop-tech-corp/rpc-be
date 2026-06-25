@@ -2547,4 +2547,1562 @@ class SalesController extends Controller
 
         return [$result, $total];
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Sales Value by Item Type
+    // ─────────────────────────────────────────────────────────────────────
+
+    public function indexSalesByItemType(Request $request)
+    {
+        $data = $this->fetchSalesByItemTypeData($request);
+        return response()->json($data);
+    }
+
+    public function exportSalesByItemType(Request $request)
+    {
+        $data = $this->fetchSalesByItemTypeData($request);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Sales by Item Type');
+
+        // ── Styles ───────────────────────────────────────────────────────
+        $darkBlue   = \PhpOffice\PhpSpreadsheet\Style\Color::COLOR_WHITE;
+        $headerFill = [
+            'fillType'  => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor'=> ['argb' => 'FF003366'],
+        ];
+        $altFill = [
+            'fillType'  => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor'=> ['argb' => 'FFD9E1F2'],
+        ];
+        $totalFill = [
+            'fillType'  => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'startColor'=> ['argb' => 'FF1F4E79'],
+        ];
+        $thinBorder = [
+            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+            'color'       => ['argb' => 'FFBFBFBF'],
+        ];
+
+        // ── Title ────────────────────────────────────────────────────────
+        $sheet->mergeCells('A1:F1');
+        $sheet->setCellValue('A1', 'Sales Value by Item Type');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003366');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        // ── Date range subtitle ──────────────────────────────────────────
+        $dateFrom = $request->input('dateFrom', '');
+        $dateTo   = $request->input('dateTo', '');
+        $subtitle = 'Periode: ' . ($dateFrom ?: '-') . ' s/d ' . ($dateTo ?: '-');
+        $sheet->mergeCells('A2:F2');
+        $sheet->setCellValue('A2', $subtitle);
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->getColor()->setARGB('FF595959');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(2)->setRowHeight(16);
+        $sheet->getRowDimension(3)->setRowHeight(8);
+
+        // ── Header row ───────────────────────────────────────────────────
+        $headers = ['No', 'Item Type', 'Total Transactions', 'Gross Revenue (Rp)', 'Share (%)', 'Avg per Transaction (Rp)'];
+        foreach ($headers as $col => $hdr) {
+            $cell = $sheet->getCellByColumnAndRow($col + 1, 4);
+            $cell->setValue($hdr);
+            $style = $sheet->getStyleByColumnAndRow($col + 1, 4);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB('FFFFFFFF');
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                  ->getStartColor()->setARGB('FF003366');
+            $style->getAlignment()
+                  ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                  ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+                  ->getColor()->setARGB('FFBFBFBF');
+        }
+        $sheet->getRowDimension(4)->setRowHeight(22);
+
+        // ── Data rows ────────────────────────────────────────────────────
+        $items = $data['rows'] ?? [];
+        $excelRow = 5;
+        foreach ($items as $idx => $item) {
+            $isAlt = ($idx % 2 === 0);
+            $bgArgb = $isAlt ? 'FFD9E1F2' : 'FFFFFFFF';
+
+            $rowData = [
+                $idx + 1,
+                $item['itemType'],
+                $item['totalTransactions'],
+                $item['grossRevenue'],
+                $item['sharePercent'],
+                $item['avgPerTransaction'],
+            ];
+
+            foreach ($rowData as $col => $val) {
+                $cellStyle = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+                $sheet->getCellByColumnAndRow($col + 1, $excelRow)->setValue($val);
+                $cellStyle->getFont()->setSize(10);
+                $cellStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                          ->getStartColor()->setARGB($bgArgb);
+                $cellStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+                          ->getColor()->setARGB('FFBFBFBF');
+
+                $align = in_array($col, [0, 2]) ? \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER : \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT;
+                if (in_array($col, [3, 4, 5])) {
+                    $align = \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT;
+                }
+                $cellStyle->getAlignment()->setHorizontal($align)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+
+                // Number format for currency / percent columns
+                if ($col === 3 || $col === 5) {
+                    $cellStyle->getNumberFormat()->setFormatCode('#,##0');
+                }
+                if ($col === 4) {
+                    $cellStyle->getNumberFormat()->setFormatCode('0.00"%"');
+                }
+            }
+            $sheet->getRowDimension($excelRow)->setRowHeight(18);
+            $excelRow++;
+        }
+
+        // ── Total row ────────────────────────────────────────────────────
+        $totals = $data['totals'] ?? [];
+        $totalRowData = [
+            '',
+            'TOTAL',
+            $totals['totalTransactions'] ?? 0,
+            $totals['grossRevenue']       ?? 0,
+            '100.00',
+            $totals['avgPerTransaction']  ?? 0,
+        ];
+        foreach ($totalRowData as $col => $val) {
+            $cellStyle = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+            $sheet->getCellByColumnAndRow($col + 1, $excelRow)->setValue($val);
+            $cellStyle->getFont()->setBold(true)->setSize(10)->getColor()->setARGB('FFFFFFFF');
+            $cellStyle->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                      ->getStartColor()->setARGB('FF1F4E79');
+            $cellStyle->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+                      ->getColor()->setARGB('FFBFBFBF');
+            $cellStyle->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                      ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            if ($col === 3 || $col === 5) {
+                $cellStyle->getNumberFormat()->setFormatCode('#,##0');
+            }
+            if ($col === 4) {
+                $cellStyle->getNumberFormat()->setFormatCode('0.00"%"');
+            }
+        }
+        $sheet->getRowDimension($excelRow)->setRowHeight(20);
+
+        // ── Column widths ────────────────────────────────────────────────
+        $widths = [5, 22, 20, 22, 14, 24];
+        foreach ($widths as $col => $w) {
+            $sheet->getColumnDimensionByColumn($col + 1)->setWidth($w);
+        }
+
+        // ── Stream response ──────────────────────────────────────────────
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export_Sales_By_Item_Type.xlsx"',
+            'Cache-Control'       => 'max-age=0',
+        ]);
+    }
+
+    /**
+     * Aggregate total transactions + gross revenue per item type (transaction source).
+     * Sources: Pet Clinic, Pet Hotel, Pet Salon, Breeding (via payment tables),
+     *          Pet Shop (via transactionpetshopdetail.total_final_price).
+     * Filters:  dateFrom, dateTo, locationId[]
+     */
+    private function fetchSalesByItemTypeData(Request $request): array
+    {
+        $dateFrom    = $request->input('dateFrom');
+        $dateTo      = $request->input('dateTo');
+        $locationIds = array_values(array_filter(
+            (array) $request->input('locationId', []),
+            fn($v) => $v !== '' && $v !== null
+        ));
+
+        // ── Sources: clinic / hotel / salon / breeding ───────────────────
+        $sources = [
+            ['label' => 'Pet Clinic',  'tx' => 'transactionPetClinics',      'pay' => 'transaction_pet_clinic_payments'],
+            ['label' => 'Pet Hotel',   'tx' => 'transaction_pet_hotels',      'pay' => 'transaction_pet_hotel_payments'],
+            ['label' => 'Pet Salon',   'tx' => 'transaction_pet_salons',      'pay' => 'transaction_pet_salon_payments'],
+            ['label' => 'Breeding',    'tx' => 'transaction_breedings',       'pay' => 'transactionBreedingPayments'],
+        ];
+
+        $rows = [];
+        foreach ($sources as $src) {
+            $agg = DB::table("{$src['pay']} as p")
+                ->join("{$src['tx']} as t", 't.id', '=', 'p.transactionId')
+                ->where(fn($q) => $q->where('p.isDeleted', 0)->orWhereNull('p.isDeleted'))
+                ->where(fn($q) => $q->where('t.isDeleted', 0)->orWhereNull('t.isDeleted'))
+                ->when($dateFrom,              fn($q) => $q->whereDate('t.created_at', '>=', $dateFrom))
+                ->when($dateTo,                fn($q) => $q->whereDate('t.created_at', '<=', $dateTo))
+                ->when(!empty($locationIds),   fn($q) => $q->whereIn('t.locationId', $locationIds))
+                ->selectRaw('COUNT(DISTINCT p.transactionId) as txCount, COALESCE(SUM(p.priceOverall), 0) as grossRevenue')
+                ->first();
+
+            $rows[] = [
+                'itemType'         => $src['label'],
+                'totalTransactions'=> (int) ($agg->txCount      ?? 0),
+                'grossRevenue'     => (float) ($agg->grossRevenue ?? 0),
+            ];
+        }
+
+        // ── Pet Shop: uses transactionpetshopdetail ──────────────────────
+        $shopAgg = DB::table('transactionpetshopdetail as d')
+            ->join('transactionpetshop as t', 't.id', '=', 'd.transactionpetshopId')
+            ->where(fn($q) => $q->where('d.isDeleted', 0)->orWhereNull('d.isDeleted'))
+            ->where(fn($q) => $q->where('t.isDeleted', 0)->orWhereNull('t.isDeleted'))
+            ->when($dateFrom,            fn($q) => $q->whereDate('t.created_at', '>=', $dateFrom))
+            ->when($dateTo,              fn($q) => $q->whereDate('t.created_at', '<=', $dateTo))
+            ->when(!empty($locationIds), fn($q) => $q->whereIn('t.locationId', $locationIds))
+            ->selectRaw('COUNT(DISTINCT d.transactionpetshopId) as txCount, COALESCE(SUM(d.total_final_price), 0) as grossRevenue')
+            ->first();
+
+        $rows[] = [
+            'itemType'         => 'Pet Shop',
+            'totalTransactions'=> (int) ($shopAgg->txCount      ?? 0),
+            'grossRevenue'     => (float) ($shopAgg->grossRevenue ?? 0),
+        ];
+
+        // ── Compute grand total + share ──────────────────────────────────
+        $grandTotal     = array_sum(array_column($rows, 'grossRevenue'));
+        $grandTxTotal   = array_sum(array_column($rows, 'totalTransactions'));
+
+        $rows = array_map(function ($r) use ($grandTotal) {
+            $share = $grandTotal > 0 ? round(($r['grossRevenue'] / $grandTotal) * 100, 2) : 0.00;
+            $avg   = $r['totalTransactions'] > 0
+                ? round($r['grossRevenue'] / $r['totalTransactions'], 2)
+                : 0.00;
+            return array_merge($r, [
+                'sharePercent'       => $share,
+                'avgPerTransaction'  => $avg,
+            ]);
+        }, $rows);
+
+        $grandAvg = $grandTxTotal > 0 ? round($grandTotal / $grandTxTotal, 2) : 0.00;
+
+        // ── Build chart data ─────────────────────────────────────────────
+        $chart = [
+            'categories' => array_column($rows, 'itemType'),
+            'series'     => [
+                [
+                    'name' => 'Gross Revenue',
+                    'data' => array_column($rows, 'grossRevenue'),
+                ],
+            ],
+        ];
+
+        return [
+            'rows'   => $rows,
+            'totals' => [
+                'totalTransactions' => $grandTxTotal,
+                'grossRevenue'      => round($grandTotal, 2),
+                'avgPerTransaction' => $grandAvg,
+            ],
+            'chart'  => $chart,
+        ];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Package Summary
+    // ─────────────────────────────────────────────────────────────────────
+
+    public function indexPackageSummary(Request $request)
+    {
+        $data = $this->fetchPackageSummaryData($request);
+        return response()->json($data);
+    }
+
+    public function exportPackageSummary(Request $request)
+    {
+        $data = $this->fetchPackageSummaryData($request);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Package Summary');
+
+        $dateFrom = $request->input('dateFrom', '');
+        $dateTo   = $request->input('dateTo', '');
+
+        // ── Title ─────────────────────────────────────────────────────────
+        $sheet->mergeCells('A1:J1');
+        $sheet->setCellValue('A1', 'Package Summary Report');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003366');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        $sheet->mergeCells('A2:J2');
+        $sheet->setCellValue('A2', 'Periode Redemption: ' . ($dateFrom ?: '-') . ' s/d ' . ($dateTo ?: '-'));
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->getColor()->setARGB('FF595959');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(3)->setRowHeight(6);
+
+        // ── Header ────────────────────────────────────────────────────────
+        $headers = [
+            'No', 'Nama Paket', 'Periode Paket', 'Harga Paket (Rp)',
+            'Kuota Max', 'Terealisasi', 'Usage Rate (%)',
+            'Total Revenue (Rp)', 'Channel', 'Isi Paket'
+        ];
+        foreach ($headers as $col => $h) {
+            $style = $sheet->getStyleByColumnAndRow($col + 1, 4);
+            $sheet->getCellByColumnAndRow($col + 1, 4)->setValue($h);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB('FFFFFFFF');
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF003366');
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+        }
+        $sheet->getRowDimension(4)->setRowHeight(22);
+
+        // ── Rows ──────────────────────────────────────────────────────────
+        $rows = $data['rows'] ?? [];
+        $excelRow = 5;
+        foreach ($rows as $idx => $r) {
+            $bg = $idx % 2 === 0 ? 'FFD9E1F2' : 'FFFFFFFF';
+            $rowData = [
+                $idx + 1,
+                $r['packageName'],
+                $r['period'],
+                $r['packagePrice'],
+                $r['quotaMax'],
+                $r['redeemed'],
+                $r['usageRate'],
+                $r['totalRevenue'],
+                implode(', ', $r['channels']),
+                $r['bundleContents'],
+            ];
+            foreach ($rowData as $col => $val) {
+                $cell = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+                $cell->setValue($val);
+                $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+                $style->getFont()->setSize(10);
+                $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($bg);
+                $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+                $style->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)->setWrapText(true);
+                if (in_array($col, [3, 7])) {
+                    $style->getNumberFormat()->setFormatCode('#,##0');
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                }
+                if ($col === 6) {
+                    $style->getNumberFormat()->setFormatCode('0.00"%"');
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                }
+                if (in_array($col, [4, 5])) {
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                }
+            }
+            $sheet->getRowDimension($excelRow)->setRowHeight(20);
+            $excelRow++;
+        }
+
+        // ── Total row ─────────────────────────────────────────────────────
+        $totals = $data['totals'] ?? [];
+        $totalRow = ['', 'TOTAL', '', $totals['totalPackageRevenue'] ?? 0, '', $totals['totalRedeemed'] ?? 0, '', $totals['totalRevenue'] ?? 0, '', ''];
+        foreach ($totalRow as $col => $val) {
+            $cell = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+            $cell->setValue($val);
+            $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB('FFFFFFFF');
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF1F4E79');
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            if (in_array($col, [3, 7])) {
+                $style->getNumberFormat()->setFormatCode('#,##0');
+                $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+            }
+        }
+        $sheet->getRowDimension($excelRow)->setRowHeight(20);
+
+        // ── Column widths ─────────────────────────────────────────────────
+        foreach ([4, 28, 22, 20, 12, 14, 14, 22, 22, 40] as $col => $w) {
+            $sheet->getColumnDimensionByColumn($col + 1)->setWidth($w);
+        }
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export_Package_Summary.xlsx"',
+            'Cache-Control'       => 'max-age=0',
+        ]);
+    }
+
+    /**
+     * Aggregate package (bundle) usage across all transaction sources.
+     * Filters: dateFrom, dateTo (on transaction created_at), locationId, status
+     */
+    private function fetchPackageSummaryData(Request $request): array
+    {
+        $dateFrom    = $request->input('dateFrom');
+        $dateTo      = $request->input('dateTo');
+        $locationIds = array_values(array_filter(
+            (array) $request->input('locationId', []),
+            fn($v) => $v !== '' && $v !== null
+        ));
+        $status = $request->input('status'); // 'active'|'inactive'|null=all
+
+        // ── Fetch all bundles ─────────────────────────────────────────────
+        $bundleQuery = DB::table('promotionBundles as pb')
+            ->join('promotionMasters as pm', 'pm.id', '=', 'pb.promoMasterId')
+            ->where(fn($q) => $q->where('pb.isDeleted', 0)->orWhereNull('pb.isDeleted'))
+            ->where(fn($q) => $q->where('pm.isDeleted', 0)->orWhereNull('pm.isDeleted'))
+            ->where('pm.type', 3); // type 3 = Bundle
+
+        if ($status === 'active')   $bundleQuery->where('pm.status', 1);
+        if ($status === 'inactive') $bundleQuery->where('pm.status', 0);
+
+        $bundles = $bundleQuery->select(
+            'pb.id as bundleId',
+            'pm.name as packageName',
+            'pm.startDate',
+            'pm.endDate',
+            'pm.status',
+            'pb.price as packagePrice',
+            'pb.totalMaxUsage',
+            'pb.maxUsagePerCustomer'
+        )->get();
+
+        if ($bundles->isEmpty()) {
+            return ['rows' => [], 'totals' => [], 'chart' => ['categories' => [], 'series' => []]];
+        }
+
+        // ── Fetch bundle contents (products + services) ───────────────────
+        $allBundleIds = $bundles->pluck('bundleId')->toArray();
+
+        $bundleProducts = DB::table('promotion_bundle_detail_products as bpd')
+            ->join('products as p', 'p.id', '=', 'bpd.productId')
+            ->whereIn('bpd.promoBundleId', $allBundleIds)
+            ->where(fn($q) => $q->where('bpd.isDeleted', 0)->orWhereNull('bpd.isDeleted'))
+            ->select('bpd.promoBundleId', 'p.fullName as name', 'bpd.quantity')
+            ->get()->groupBy('promoBundleId');
+
+        $bundleServices = DB::table('promotion_bundle_detail_services as bsd')
+            ->join('services as s', 's.id', '=', 'bsd.serviceId')
+            ->whereIn('bsd.promoBundleId', $allBundleIds)
+            ->where(fn($q) => $q->where('bsd.isDeleted', 0)->orWhereNull('bsd.isDeleted'))
+            ->select('bsd.promoBundleId', 's.fullName as name', 'bsd.quantity')
+            ->get()->groupBy('promoBundleId');
+
+        // Also check old promotionBundleDetails table (legacy)
+        $bundleLegacy = DB::table('promotionBundleDetails as bd')
+            ->whereIn('bd.promoBundleId', $allBundleIds)
+            ->where(fn($q) => $q->where('bd.isDeleted', 0)->orWhereNull('bd.isDeleted'))
+            ->select('bd.promoBundleId', 'bd.productOrService', 'bd.productId', 'bd.serviceId', 'bd.quantity')
+            ->get()->groupBy('promoBundleId');
+
+        // ── Redemption count per bundle per source ────────────────────────
+        $sources = [
+            'Clinic' => [
+                'tx'  => 'transactionPetClinics',
+                'pay' => 'transaction_pet_clinic_payments',
+                'loc' => 'locationId',
+            ],
+            'Hotel' => [
+                'tx'  => 'transaction_pet_hotels',
+                'pay' => 'transaction_pet_hotel_payments',
+                'loc' => 'locationId',
+            ],
+            'Salon' => [
+                'tx'  => 'transaction_pet_salons',
+                'pay' => 'transaction_pet_salon_payments',
+                'loc' => 'locationId',
+            ],
+            'Breeding' => [
+                'tx'  => 'transaction_breedings',
+                'pay' => 'transactionBreedingPayments',
+                'loc' => 'locationId',
+            ],
+        ];
+
+        // redemptionMap[bundleId][channel] = { redeemed, revenue }
+        $redemptionMap = [];
+
+        foreach ($sources as $label => $src) {
+            $agg = DB::table("{$src['pay']} as p")
+                ->join("{$src['tx']} as t", 't.id', '=', 'p.transactionId')
+                ->where('p.isBundle', 1)
+                ->whereNotNull('p.promoId')
+                ->whereIn('p.promoId', $allBundleIds)
+                ->where(fn($q) => $q->where('p.isDeleted', 0)->orWhereNull('p.isDeleted'))
+                ->where(fn($q) => $q->where('t.isDeleted', 0)->orWhereNull('t.isDeleted'))
+                ->when($dateFrom,            fn($q) => $q->whereDate('t.created_at', '>=', $dateFrom))
+                ->when($dateTo,              fn($q) => $q->whereDate('t.created_at', '<=', $dateTo))
+                ->when(!empty($locationIds), fn($q) => $q->whereIn("t.{$src['loc']}", $locationIds))
+                ->selectRaw('p.promoId as bundleId, COUNT(DISTINCT p.transactionId) as redeemed, COALESCE(SUM(p.priceOverall),0) as revenue')
+                ->groupBy('p.promoId')
+                ->get();
+
+            foreach ($agg as $row) {
+                if (!isset($redemptionMap[$row->bundleId])) {
+                    $redemptionMap[$row->bundleId] = [];
+                }
+                $redemptionMap[$row->bundleId][$label] = [
+                    'redeemed' => (int) $row->redeemed,
+                    'revenue'  => (float) $row->revenue,
+                ];
+            }
+        }
+
+        // ── Build rows ────────────────────────────────────────────────────
+        $rows = [];
+        foreach ($bundles as $bundle) {
+            $bid = $bundle->bundleId;
+
+            // Contents string
+            $contents = [];
+            if (isset($bundleServices[$bid])) {
+                foreach ($bundleServices[$bid] as $s) {
+                    $contents[] = $s->name . ' (x' . $s->quantity . ')';
+                }
+            }
+            if (isset($bundleProducts[$bid])) {
+                foreach ($bundleProducts[$bid] as $p) {
+                    $contents[] = $p->name . ' (x' . $p->quantity . ')';
+                }
+            }
+            if (empty($contents) && isset($bundleLegacy[$bid])) {
+                foreach ($bundleLegacy[$bid] as $l) {
+                    $contents[] = 'Item (x' . $l->quantity . ')';
+                }
+            }
+
+            // Redemption aggregation
+            $channelData = $redemptionMap[$bid] ?? [];
+            $totalRedeemed = array_sum(array_column($channelData, 'redeemed'));
+            $totalRevenue  = array_sum(array_column($channelData, 'revenue'));
+            $channels = array_keys($channelData);
+
+            $quotaMax   = (int) $bundle->totalMaxUsage;
+            $usageRate  = $quotaMax > 0 ? round(($totalRedeemed / $quotaMax) * 100, 2) : 0.00;
+            $remaining  = max(0, $quotaMax - $totalRedeemed);
+
+            $rows[] = [
+                'bundleId'       => $bid,
+                'packageName'    => $bundle->packageName,
+                'period'         => date('d/m/Y', strtotime($bundle->startDate)) . ' – ' . date('d/m/Y', strtotime($bundle->endDate)),
+                'startDate'      => $bundle->startDate,
+                'endDate'        => $bundle->endDate,
+                'status'         => (int) $bundle->status,
+                'packagePrice'   => (float) $bundle->packagePrice,
+                'quotaMax'       => $quotaMax,
+                'maxPerCustomer' => (int) $bundle->maxUsagePerCustomer,
+                'redeemed'       => $totalRedeemed,
+                'remaining'      => $remaining,
+                'usageRate'      => $usageRate,
+                'totalRevenue'   => round($totalRevenue, 2),
+                'channels'       => $channels,
+                'channelDetail'  => $channelData,
+                'bundleContents' => implode('; ', $contents),
+            ];
+        }
+
+        // Sort by totalRevenue desc
+        usort($rows, fn($a, $b) => $b['totalRevenue'] <=> $a['totalRevenue']);
+
+        // ── Totals ────────────────────────────────────────────────────────
+        $grandRedeemed        = array_sum(array_column($rows, 'redeemed'));
+        $grandRevenue         = array_sum(array_column($rows, 'totalRevenue'));
+        $grandPackageRevenue  = array_sum(array_column($rows, 'packagePrice'));
+        $activeCount          = count(array_filter($rows, fn($r) => $r['status'] === 1));
+
+        // ── Chart data ────────────────────────────────────────────────────
+        $chartRows = array_slice($rows, 0, 10); // top 10
+        $chart = [
+            'categories' => array_column($chartRows, 'packageName'),
+            'seriesRevenue'  => [['name' => 'Total Revenue', 'data' => array_column($chartRows, 'totalRevenue')]],
+            'seriesRedeemed' => [['name' => 'Redeemed', 'data' => array_column($chartRows, 'redeemed')]],
+        ];
+
+        return [
+            'rows'   => $rows,
+            'totals' => [
+                'totalPackages'       => count($rows),
+                'activePackages'      => $activeCount,
+                'totalRedeemed'       => $grandRedeemed,
+                'totalRevenue'        => round($grandRevenue, 2),
+                'totalPackageRevenue' => round($grandPackageRevenue, 2),
+            ],
+            'chart'  => $chart,
+        ];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Customer Spend
+    // ─────────────────────────────────────────────────────────────────────
+
+    public function indexCustomerSpend(Request $request)
+    {
+        $data = $this->fetchCustomerSpendData($request);
+        return response()->json($data);
+    }
+
+    public function exportCustomerSpend(Request $request)
+    {
+        $request->merge(['rowPerPage' => 0]); // no pagination for export
+        $data     = $this->fetchCustomerSpendData($request);
+        $rows     = $data['rows'] ?? [];
+        $dateFrom = $request->input('dateFrom', '');
+        $dateTo   = $request->input('dateTo', '');
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Customer Spend');
+
+        // ── Title ─────────────────────────────────────────────────────────
+        $sheet->mergeCells('A1:L1');
+        $sheet->setCellValue('A1', 'Customer Spend Report');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003366');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        $sheet->mergeCells('A2:L2');
+        $sheet->setCellValue('A2', 'Periode: ' . ($dateFrom ?: '-') . ' s/d ' . ($dateTo ?: '-'));
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->getColor()->setARGB('FF595959');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(3)->setRowHeight(6);
+
+        // ── Header ────────────────────────────────────────────────────────
+        $headers = [
+            'No', 'Nama Customer', 'Grup', 'Total Transaksi',
+            'Clinic (Rp)', 'Hotel (Rp)', 'Salon (Rp)', 'Breeding (Rp)', 'Pet Shop (Rp)',
+            'Total Spend (Rp)', 'Transaksi Terakhir', 'Join Date'
+        ];
+        foreach ($headers as $col => $h) {
+            $cell  = $sheet->getCellByColumnAndRow($col + 1, 4);
+            $style = $sheet->getStyleByColumnAndRow($col + 1, 4);
+            $cell->setValue($h);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB('FFFFFFFF');
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF003366');
+            $style->getAlignment()
+                  ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                  ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $style->getBorders()->getAllBorders()
+                  ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+                  ->getColor()->setARGB('FFBFBFBF');
+        }
+        $sheet->getRowDimension(4)->setRowHeight(22);
+
+        // ── Data rows ─────────────────────────────────────────────────────
+        $currencyFmt = '#,##0';
+        $excelRow = 5;
+        foreach ($rows as $idx => $r) {
+            $bg = $idx % 2 === 0 ? 'FFD9E1F2' : 'FFFFFFFF';
+            $rowData = [
+                $idx + 1,
+                $r['customerName'],
+                $r['customerGroup'] ?? '-',
+                $r['totalTransactions'],
+                $r['clinicSpend'],
+                $r['hotelSpend'],
+                $r['salonSpend'],
+                $r['breedingSpend'],
+                $r['petshopSpend'],
+                $r['totalSpend'],
+                $r['lastTransaction'],
+                $r['joinDate'],
+            ];
+            foreach ($rowData as $col => $val) {
+                $cell  = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+                $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+                $cell->setValue($val);
+                $style->getFont()->setSize(10);
+                $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($bg);
+                $style->getBorders()->getAllBorders()
+                      ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+                      ->getColor()->setARGB('FFBFBFBF');
+                $style->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                if (in_array($col, [4, 5, 6, 7, 8, 9])) {
+                    $style->getNumberFormat()->setFormatCode($currencyFmt);
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                } elseif ($col === 3) {
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                }
+            }
+            $sheet->getRowDimension($excelRow)->setRowHeight(18);
+            $excelRow++;
+        }
+
+        // ── Total row ─────────────────────────────────────────────────────
+        $totals   = $data['totals'] ?? [];
+        $totalRow = [
+            '', 'TOTAL', '', $totals['totalTransactions'] ?? 0,
+            $totals['clinicSpend']   ?? 0,
+            $totals['hotelSpend']    ?? 0,
+            $totals['salonSpend']    ?? 0,
+            $totals['breedingSpend'] ?? 0,
+            $totals['petshopSpend']  ?? 0,
+            $totals['totalSpend']    ?? 0,
+            '', '',
+        ];
+        foreach ($totalRow as $col => $val) {
+            $cell  = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+            $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+            $cell->setValue($val);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB('FFFFFFFF');
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FF1F4E79');
+            $style->getBorders()->getAllBorders()
+                  ->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)
+                  ->getColor()->setARGB('FFBFBFBF');
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)
+                  ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            if (in_array($col, [4, 5, 6, 7, 8, 9])) {
+                $style->getNumberFormat()->setFormatCode($currencyFmt);
+                $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+            }
+        }
+        $sheet->getRowDimension($excelRow)->setRowHeight(20);
+
+        // ── Column widths ─────────────────────────────────────────────────
+        foreach ([4, 26, 18, 16, 18, 18, 18, 18, 18, 20, 20, 14] as $col => $w) {
+            $sheet->getColumnDimensionByColumn($col + 1)->setWidth($w);
+        }
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export_Customer_Spend.xlsx"',
+            'Cache-Control'       => 'max-age=0',
+        ]);
+    }
+
+    /**
+     * Aggregate total spending per customer across all 5 transaction sources.
+     * Filters: dateFrom, dateTo, locationId[], customerGroupId[], minSpend
+     */
+    private function fetchCustomerSpendData(Request $request): array
+    {
+        $dateFrom       = $request->input('dateFrom');
+        $dateTo         = $request->input('dateTo');
+        $locationIds    = array_values(array_filter((array) $request->input('locationId', []),    fn($v) => $v !== '' && $v !== null));
+        $customerGroups = array_values(array_filter((array) $request->input('customerGroup', []), fn($v) => $v !== '' && $v !== null));
+        $minSpend       = (float) ($request->input('minSpend', 0));
+        $goToPage       = max(1, (int) $request->input('goToPage', 1));
+        $rowPerPage     = (int) $request->input('rowPerPage', 10);
+        $orderColumn    = $request->input('orderColumn', 'totalSpend');
+        $orderValue     = strtolower($request->input('orderValue', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        // ── Source config ─────────────────────────────────────────────────
+        $serviceSources = [
+            'clinic'   => ['tx' => 'transactionPetClinics',  'tot' => 'transaction_pet_clinic_payment_totals'],
+            'hotel'    => ['tx' => 'transaction_pet_hotels',  'tot' => 'transaction_pet_hotel_payment_totals'],
+            'salon'    => ['tx' => 'transaction_pet_salons',  'tot' => 'transaction_pet_salon_payment_totals'],
+            'breeding' => ['tx' => 'transaction_breedings',   'tot' => 'transaction_breeding_payment_totals'],
+        ];
+
+        // ── Aggregate per customer per service source ─────────────────────
+        $spendMap = [];
+
+        foreach ($serviceSources as $channel => $src) {
+            $agg = DB::table("{$src['tx']} as t")
+                ->join("{$src['tot']} as pt", 'pt.transactionId', '=', 't.id')
+                ->where(fn($q) => $q->where('t.isDeleted',  0)->orWhereNull('t.isDeleted'))
+                ->where(fn($q) => $q->where('pt.isDeleted', 0)->orWhereNull('pt.isDeleted'))
+                ->when($dateFrom,            fn($q) => $q->whereDate('t.created_at', '>=', $dateFrom))
+                ->when($dateTo,              fn($q) => $q->whereDate('t.created_at', '<=', $dateTo))
+                ->when(!empty($locationIds), fn($q) => $q->whereIn('t.locationId', $locationIds))
+                ->selectRaw('t.customerId, COUNT(DISTINCT t.id) as txCount, COALESCE(SUM(pt.amountPaid),0) as spend, MAX(t.created_at) as lastDate')
+                ->groupBy('t.customerId')
+                ->get();
+
+            foreach ($agg as $row) {
+                $cid = $row->customerId;
+                if (!isset($spendMap[$cid])) $spendMap[$cid] = [];
+                $spendMap[$cid][$channel] = [
+                    'spend'    => (float) $row->spend,
+                    'txCount'  => (int)   $row->txCount,
+                    'lastDate' => $row->lastDate,
+                ];
+            }
+        }
+
+        // ── Pet Shop (uses totalPayment on header table) ──────────────────
+        $shopAgg = DB::table('transactionpetshop as t')
+            ->where(fn($q) => $q->where('t.isDeleted', 0)->orWhereNull('t.isDeleted'))
+            ->when($dateFrom,            fn($q) => $q->whereDate('t.created_at', '>=', $dateFrom))
+            ->when($dateTo,              fn($q) => $q->whereDate('t.created_at', '<=', $dateTo))
+            ->when(!empty($locationIds), fn($q) => $q->whereIn('t.locationId', $locationIds))
+            ->selectRaw('t.customerId, COUNT(t.id) as txCount, COALESCE(SUM(t.totalPayment),0) as spend, MAX(t.created_at) as lastDate')
+            ->groupBy('t.customerId')
+            ->get();
+
+        foreach ($shopAgg as $row) {
+            $cid = $row->customerId;
+            if (!isset($spendMap[$cid])) $spendMap[$cid] = [];
+            $spendMap[$cid]['petshop'] = [
+                'spend'    => (float) $row->spend,
+                'txCount'  => (int)   $row->txCount,
+                'lastDate' => $row->lastDate,
+            ];
+        }
+
+        if (empty($spendMap)) {
+            return ['rows' => [], 'totals' => [], 'totalPagination' => 0, 'chart' => [], 'channelTotals' => []];
+        }
+
+        // ── Fetch customer info in bulk ────────────────────────────────────
+        $customerIds = array_keys($spendMap);
+
+        $customerQuery = DB::table('customer as c')
+            ->leftJoin('customerGroups as cg', 'cg.id', '=', 'c.customerGroupId')
+            ->whereIn('c.id', $customerIds)
+            ->where(fn($q) => $q->where('c.isDeleted', 0)->orWhereNull('c.isDeleted'))
+            ->select(
+                'c.id',
+                DB::raw("TRIM(CONCAT(COALESCE(c.firstName,''), IF(c.lastName IS NOT NULL AND c.lastName != '', CONCAT(' ', c.lastName), ''))) as fullName"),
+                'c.customerGroupId',
+                'cg.customerGroup as groupName',
+                'c.joinDate'
+            );
+
+        if (!empty($customerGroups)) {
+            $customerQuery->whereIn('c.customerGroupId', $customerGroups);
+        }
+
+        $customers = $customerQuery->get()->keyBy('id');
+
+        // ── Build result rows ─────────────────────────────────────────────
+        $rows = [];
+        foreach ($spendMap as $cid => $channels) {
+            if (!isset($customers[$cid])) continue;
+
+            $cust     = $customers[$cid];
+            $clinic   = $channels['clinic']   ?? ['spend' => 0, 'txCount' => 0, 'lastDate' => null];
+            $hotel    = $channels['hotel']    ?? ['spend' => 0, 'txCount' => 0, 'lastDate' => null];
+            $salon    = $channels['salon']    ?? ['spend' => 0, 'txCount' => 0, 'lastDate' => null];
+            $breeding = $channels['breeding'] ?? ['spend' => 0, 'txCount' => 0, 'lastDate' => null];
+            $petshop  = $channels['petshop']  ?? ['spend' => 0, 'txCount' => 0, 'lastDate' => null];
+
+            $totalSpend = $clinic['spend'] + $hotel['spend'] + $salon['spend'] + $breeding['spend'] + $petshop['spend'];
+            if ($minSpend > 0 && $totalSpend < $minSpend) continue;
+
+            $totalTx = $clinic['txCount'] + $hotel['txCount'] + $salon['txCount'] + $breeding['txCount'] + $petshop['txCount'];
+
+            $dates    = array_filter([$clinic['lastDate'], $hotel['lastDate'], $salon['lastDate'], $breeding['lastDate'], $petshop['lastDate']]);
+            $lastDate = $dates ? max($dates) : null;
+
+            $rows[] = [
+                'customerId'        => $cid,
+                'customerName'      => $cust->fullName ?: '-',
+                'customerGroup'     => $cust->groupName ?? '-',
+                'joinDate'          => $cust->joinDate ? date('d/m/Y', strtotime($cust->joinDate)) : '-',
+                'totalTransactions' => $totalTx,
+                'clinicSpend'       => round($clinic['spend'],   2),
+                'hotelSpend'        => round($hotel['spend'],    2),
+                'salonSpend'        => round($salon['spend'],    2),
+                'breedingSpend'     => round($breeding['spend'], 2),
+                'petshopSpend'      => round($petshop['spend'],  2),
+                'totalSpend'        => round($totalSpend,        2),
+                'lastTransaction'   => $lastDate ? date('d/m/Y', strtotime($lastDate)) : '-',
+            ];
+        }
+
+        // ── Sort ──────────────────────────────────────────────────────────
+        $allowed = ['totalSpend', 'totalTransactions', 'clinicSpend', 'hotelSpend', 'salonSpend', 'breedingSpend', 'petshopSpend', 'customerName', 'lastTransaction'];
+        if (!in_array($orderColumn, $allowed)) $orderColumn = 'totalSpend';
+
+        usort($rows, function ($a, $b) use ($orderColumn, $orderValue) {
+            $va = $a[$orderColumn] ?? 0;
+            $vb = $b[$orderColumn] ?? 0;
+            return $orderValue === 'asc' ? ($va <=> $vb) : ($vb <=> $va);
+        });
+
+        // ── Totals (before pagination) ────────────────────────────────────
+        $totalPagination = count($rows);
+        $grandSpend      = array_sum(array_column($rows, 'totalSpend'));
+        $grandTx         = array_sum(array_column($rows, 'totalTransactions'));
+        $totals = [
+            'totalCustomers'    => $totalPagination,
+            'totalTransactions' => $grandTx,
+            'totalSpend'        => round($grandSpend, 2),
+            'avgSpend'          => $totalPagination > 0 ? round($grandSpend / $totalPagination, 2) : 0,
+            'topSpender'        => $rows[0] ?? null,
+            'clinicSpend'       => round(array_sum(array_column($rows, 'clinicSpend')),   2),
+            'hotelSpend'        => round(array_sum(array_column($rows, 'hotelSpend')),    2),
+            'salonSpend'        => round(array_sum(array_column($rows, 'salonSpend')),    2),
+            'breedingSpend'     => round(array_sum(array_column($rows, 'breedingSpend')), 2),
+            'petshopSpend'      => round(array_sum(array_column($rows, 'petshopSpend')),  2),
+        ];
+
+        // ── Chart data ────────────────────────────────────────────────────
+        $top10 = array_slice($rows, 0, 10);
+        $chart = [
+            'categories'  => array_column($top10, 'customerName'),
+            'seriesSpend' => [['name' => 'Total Spend', 'data' => array_column($top10, 'totalSpend')]],
+            'seriesTx'    => [['name' => 'Total Transactions', 'data' => array_column($top10, 'totalTransactions')]],
+        ];
+
+        $channelTotals = [
+            ['label' => 'Clinic',   'value' => $totals['clinicSpend']],
+            ['label' => 'Hotel',    'value' => $totals['hotelSpend']],
+            ['label' => 'Salon',    'value' => $totals['salonSpend']],
+            ['label' => 'Breeding', 'value' => $totals['breedingSpend']],
+            ['label' => 'Pet Shop', 'value' => $totals['petshopSpend']],
+        ];
+
+        // ── Paginate ──────────────────────────────────────────────────────
+        if ($rowPerPage > 0) {
+            $offset = ($goToPage - 1) * $rowPerPage;
+            $rows   = array_slice($rows, $offset, $rowPerPage);
+        }
+
+        return [
+            'rows'            => $rows,
+            'totals'          => $totals,
+            'totalPagination' => $totalPagination,
+            'chart'           => $chart,
+            'channelTotals'   => $channelTotals,
+        ];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Daily Reconciliation
+    // ─────────────────────────────────────────────────────────────────────
+
+    public function indexDailyReconciliation(Request $request)
+    {
+        $data = $this->fetchDailyReconciliationData($request);
+        return response()->json($data);
+    }
+
+    public function exportDailyReconciliation(Request $request)
+    {
+        $data     = $this->fetchDailyReconciliationData($request);
+        $dateFrom = $request->input('dateFrom', '');
+        $dateTo   = $request->input('dateTo', '');
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Daily Reconciliation');
+
+        $navyARGB = 'FF1F4E79';
+        $whiteARGB = 'FFFFFFFF';
+        $currFmt   = '#,##0';
+
+        // ── Title ─────────────────────────────────────────────────────────
+        $sheet->mergeCells('A1:I1');
+        $sheet->setCellValue('A1', 'Daily Reconciliation Report');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003366');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        $sheet->mergeCells('A2:I2');
+        $sheet->setCellValue('A2', 'Periode: ' . ($dateFrom ?: '-') . ' s/d ' . ($dateTo ?: '-'));
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->getColor()->setARGB('FF595959');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(3)->setRowHeight(6);
+
+        // ── Section 1: Daily detail ───────────────────────────────────────
+        $sheet->setCellValue('A4', 'REKAP HARIAN PER CHANNEL');
+        $sheet->getStyle('A4')->getFont()->setBold(true)->setSize(11)->getColor()->setARGB($navyARGB);
+        $sheet->getRowDimension(4)->setRowHeight(18);
+
+        $headers = ['No', 'Tanggal', 'Channel', 'Jml Transaksi', 'Gross Revenue (Rp)', 'Total Paid (Rp)', 'Outstanding (Rp)', '% Lunas'];
+        foreach ($headers as $col => $h) {
+            $style = $sheet->getStyleByColumnAndRow($col + 1, 5);
+            $sheet->getCellByColumnAndRow($col + 1, 5)->setValue($h);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB($whiteARGB);
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($navyARGB);
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+        }
+        $sheet->getRowDimension(5)->setRowHeight(22);
+
+        $excelRow = 6;
+        $rowIdx   = 0;
+        $dailyRows = $data['dailyRows'] ?? [];
+        $currentDate = null;
+        $dateGroup = [];
+
+        foreach ($dailyRows as $r) {
+            $bg = $rowIdx % 2 === 0 ? 'FFD9E1F2' : 'FFFFFFFF';
+            $isDateSubtotal = ($r['isSubtotal'] ?? false);
+
+            if ($isDateSubtotal) {
+                $bg = 'FFE2EFDA'; // green tint for subtotals
+            }
+
+            $rowData = [
+                $isDateSubtotal ? '' : ($rowIdx + 1),
+                $r['date'],
+                $r['channel'],
+                $r['txCount'],
+                $r['grossRevenue'],
+                $r['totalPaid'],
+                $r['outstanding'],
+                number_format($r['percentPaid'], 1) . '%',
+            ];
+
+            foreach ($rowData as $col => $val) {
+                $cell  = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+                $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+                $cell->setValue($val);
+                $style->getFont()->setSize(10)->setBold($isDateSubtotal);
+                $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($bg);
+                $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+                $style->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                if (in_array($col, [4, 5, 6])) {
+                    $style->getNumberFormat()->setFormatCode($currFmt);
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                } elseif (in_array($col, [3])) {
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                }
+            }
+            $sheet->getRowDimension($excelRow)->setRowHeight(18);
+            $excelRow++;
+            if (!$isDateSubtotal) $rowIdx++;
+        }
+
+        // Grand total
+        $totals = $data['totals'] ?? [];
+        $grandRow = ['', 'GRAND TOTAL', '', $totals['totalTransactions'] ?? 0, $totals['totalGross'] ?? 0, $totals['totalPaid'] ?? 0, $totals['totalOutstanding'] ?? 0, number_format($totals['percentPaid'] ?? 0, 1) . '%'];
+        foreach ($grandRow as $col => $val) {
+            $cell  = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+            $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+            $cell->setValue($val);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB($whiteARGB);
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($navyARGB);
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            if (in_array($col, [4, 5, 6])) {
+                $style->getNumberFormat()->setFormatCode($currFmt);
+                $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+            }
+        }
+        $sheet->getRowDimension($excelRow)->setRowHeight(20);
+        $excelRow += 2;
+
+        // ── Section 2: Channel summary ────────────────────────────────────
+        $sheet->setCellValue('A' . $excelRow, 'REKAP PER CHANNEL');
+        $sheet->getStyle('A' . $excelRow)->getFont()->setBold(true)->setSize(11)->getColor()->setARGB($navyARGB);
+        $sheet->getRowDimension($excelRow)->setRowHeight(18);
+        $excelRow++;
+
+        $sumHeaders = ['No', 'Channel', 'Jml Transaksi', 'Gross Revenue (Rp)', 'Total Paid (Rp)', 'Outstanding (Rp)', '% Lunas'];
+        foreach ($sumHeaders as $col => $h) {
+            $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+            $sheet->getCellByColumnAndRow($col + 1, $excelRow)->setValue($h);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB($whiteARGB);
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($navyARGB);
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+        }
+        $sheet->getRowDimension($excelRow)->setRowHeight(20);
+        $excelRow++;
+
+        foreach (($data['channelSummary'] ?? []) as $idx => $r) {
+            $bg = $idx % 2 === 0 ? 'FFD9E1F2' : 'FFFFFFFF';
+            $sumRow = [$idx + 1, $r['channel'], $r['txCount'], $r['grossRevenue'], $r['totalPaid'], $r['outstanding'], number_format($r['percentPaid'], 1) . '%'];
+            foreach ($sumRow as $col => $val) {
+                $cell  = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+                $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+                $cell->setValue($val);
+                $style->getFont()->setSize(10);
+                $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($bg);
+                $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+                $style->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                if (in_array($col, [3, 4, 5])) {
+                    $style->getNumberFormat()->setFormatCode($currFmt);
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                } elseif ($col === 2) {
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                }
+            }
+            $sheet->getRowDimension($excelRow)->setRowHeight(18);
+            $excelRow++;
+        }
+
+        // Channel total row
+        $chTotalRow = ['', 'TOTAL', $totals['totalTransactions'] ?? 0, $totals['totalGross'] ?? 0, $totals['totalPaid'] ?? 0, $totals['totalOutstanding'] ?? 0, number_format($totals['percentPaid'] ?? 0, 1) . '%'];
+        foreach ($chTotalRow as $col => $val) {
+            $cell  = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+            $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+            $cell->setValue($val);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB($whiteARGB);
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($navyARGB);
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            if (in_array($col, [3, 4, 5])) {
+                $style->getNumberFormat()->setFormatCode($currFmt);
+                $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+            }
+        }
+        $sheet->getRowDimension($excelRow)->setRowHeight(20);
+
+        // ── Column widths ─────────────────────────────────────────────────
+        foreach ([5, 14, 18, 16, 22, 20, 20, 12] as $col => $w) {
+            $sheet->getColumnDimensionByColumn($col + 1)->setWidth($w);
+        }
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export_Daily_Reconciliation.xlsx"',
+            'Cache-Control'       => 'max-age=0',
+        ]);
+    }
+
+    /**
+     * Aggregate gross revenue vs amount paid per day per channel.
+     * Sources: 4 service channels (priceOverall vs amountPaid) + petshop (totalPayment vs isPayed).
+     */
+    private function fetchDailyReconciliationData(Request $request): array
+    {
+        $dateFrom    = $request->input('dateFrom');
+        $dateTo      = $request->input('dateTo');
+        $locationIds = array_values(array_filter((array) $request->input('locationId', []), fn($v) => $v !== '' && $v !== null));
+
+        // ── Source config for service channels ────────────────────────────
+        $sources = [
+            'Pet Clinic'  => ['tx' => 'transactionPetClinics',  'pay' => 'transaction_pet_clinic_payments',  'tot' => 'transaction_pet_clinic_payment_totals',  'fk' => 'transactionId'],
+            'Pet Hotel'   => ['tx' => 'transaction_pet_hotels',  'pay' => 'transaction_pet_hotel_payments',   'tot' => 'transaction_pet_hotel_payment_totals',   'fk' => 'transactionId'],
+            'Pet Salon'   => ['tx' => 'transaction_pet_salons',  'pay' => 'transaction_pet_salon_payments',   'tot' => 'transaction_pet_salon_payment_totals',   'fk' => 'transactionId'],
+            'Breeding'    => ['tx' => 'transaction_breedings',   'pay' => 'transactionBreedingPayments',      'tot' => 'transaction_breeding_payment_totals',    'fk' => 'transactionId'],
+        ];
+
+        // rawMap[date][channel] = { txCount, gross, paid }
+        $rawMap = [];
+
+        foreach ($sources as $channel => $src) {
+            // Gross revenue = SUM(priceOverall) from payment line items, joined via tx for date/location
+            $grossRows = DB::table("{$src['tx']} as t")
+                ->join("{$src['pay']} as p", 'p.' . $src['fk'], '=', 't.id')
+                ->where(fn($q) => $q->where('t.isDeleted', 0)->orWhereNull('t.isDeleted'))
+                ->where(fn($q) => $q->where('p.isDeleted', 0)->orWhereNull('p.isDeleted'))
+                ->when($dateFrom,            fn($q) => $q->whereDate('t.created_at', '>=', $dateFrom))
+                ->when($dateTo,              fn($q) => $q->whereDate('t.created_at', '<=', $dateTo))
+                ->when(!empty($locationIds), fn($q) => $q->whereIn('t.locationId', $locationIds))
+                ->selectRaw("DATE(t.created_at) as txDate, COUNT(DISTINCT t.id) as txCount, COALESCE(SUM(p.priceOverall),0) as gross")
+                ->groupBy(DB::raw('DATE(t.created_at)'))
+                ->get();
+
+            foreach ($grossRows as $r) {
+                $date = $r->txDate;
+                if (!isset($rawMap[$date][$channel])) $rawMap[$date][$channel] = ['txCount' => 0, 'gross' => 0, 'paid' => 0];
+                $rawMap[$date][$channel]['txCount'] = (int) $r->txCount;
+                $rawMap[$date][$channel]['gross']   = (float) $r->gross;
+            }
+
+            // Paid = SUM(amountPaid) from payment_totals
+            $paidRows = DB::table("{$src['tx']} as t")
+                ->join("{$src['tot']} as pt", 'pt.transactionId', '=', 't.id')
+                ->where(fn($q) => $q->where('t.isDeleted',  0)->orWhereNull('t.isDeleted'))
+                ->where(fn($q) => $q->where('pt.isDeleted', 0)->orWhereNull('pt.isDeleted'))
+                ->when($dateFrom,            fn($q) => $q->whereDate('t.created_at', '>=', $dateFrom))
+                ->when($dateTo,              fn($q) => $q->whereDate('t.created_at', '<=', $dateTo))
+                ->when(!empty($locationIds), fn($q) => $q->whereIn('t.locationId', $locationIds))
+                ->selectRaw("DATE(t.created_at) as txDate, COALESCE(SUM(pt.amountPaid),0) as paid")
+                ->groupBy(DB::raw('DATE(t.created_at)'))
+                ->get();
+
+            foreach ($paidRows as $r) {
+                $date = $r->txDate;
+                if (!isset($rawMap[$date][$channel])) $rawMap[$date][$channel] = ['txCount' => 0, 'gross' => 0, 'paid' => 0];
+                $rawMap[$date][$channel]['paid'] = (float) $r->paid;
+            }
+        }
+
+        // ── Pet Shop ──────────────────────────────────────────────────────
+        $shopRows = DB::table('transactionpetshop as t')
+            ->where(fn($q) => $q->where('t.isDeleted', 0)->orWhereNull('t.isDeleted'))
+            ->when($dateFrom,            fn($q) => $q->whereDate('t.created_at', '>=', $dateFrom))
+            ->when($dateTo,              fn($q) => $q->whereDate('t.created_at', '<=', $dateTo))
+            ->when(!empty($locationIds), fn($q) => $q->whereIn('t.locationId', $locationIds))
+            ->selectRaw("DATE(t.created_at) as txDate, COUNT(t.id) as txCount, COALESCE(SUM(t.totalPayment),0) as gross, COALESCE(SUM(CASE WHEN t.isPayed=1 THEN t.totalPayment ELSE 0 END),0) as paid")
+            ->groupBy(DB::raw('DATE(t.created_at)'))
+            ->get();
+
+        foreach ($shopRows as $r) {
+            $date = $r->txDate;
+            if (!isset($rawMap[$date]['Pet Shop'])) $rawMap[$date]['Pet Shop'] = ['txCount' => 0, 'gross' => 0, 'paid' => 0];
+            $rawMap[$date]['Pet Shop']['txCount'] = (int)   $r->txCount;
+            $rawMap[$date]['Pet Shop']['gross']   = (float) $r->gross;
+            $rawMap[$date]['Pet Shop']['paid']    = (float) $r->paid;
+        }
+
+        if (empty($rawMap)) {
+            return ['dailyRows' => [], 'channelSummary' => [], 'dailySummary' => [], 'totals' => [], 'chart' => []];
+        }
+
+        // ── Build flat daily rows (with subtotals) ─────────────────────────
+        ksort($rawMap); // sort by date ascending
+        $allChannels = ['Pet Clinic', 'Pet Hotel', 'Pet Salon', 'Breeding', 'Pet Shop'];
+        $dailyRows   = [];
+        $dailySummary = []; // for chart: per date totals
+
+        foreach ($rawMap as $date => $channels) {
+            $dateTx    = 0; $dateGross = 0; $datePaid = 0;
+            foreach ($allChannels as $ch) {
+                $d = $channels[$ch] ?? null;
+                if (!$d || ($d['txCount'] === 0 && $d['gross'] == 0)) continue;
+
+                $outstanding = $d['gross'] - $d['paid'];
+                $pct         = $d['gross'] > 0 ? round($d['paid'] / $d['gross'] * 100, 1) : 0;
+
+                $dailyRows[] = [
+                    'date'        => date('d/m/Y', strtotime($date)),
+                    'channel'     => $ch,
+                    'txCount'     => $d['txCount'],
+                    'grossRevenue'=> round($d['gross'], 2),
+                    'totalPaid'   => round($d['paid'],  2),
+                    'outstanding' => round($outstanding, 2),
+                    'percentPaid' => $pct,
+                    'isSubtotal'  => false,
+                ];
+                $dateTx    += $d['txCount'];
+                $dateGross += $d['gross'];
+                $datePaid  += $d['paid'];
+            }
+
+            if ($dateTx > 0) {
+                $dateOutstanding = $dateGross - $datePaid;
+                $datePct         = $dateGross > 0 ? round($datePaid / $dateGross * 100, 1) : 0;
+                // Subtotal row for date
+                $dailyRows[] = [
+                    'date'        => 'Subtotal ' . date('d/m/Y', strtotime($date)),
+                    'channel'     => '',
+                    'txCount'     => $dateTx,
+                    'grossRevenue'=> round($dateGross, 2),
+                    'totalPaid'   => round($datePaid,  2),
+                    'outstanding' => round($dateOutstanding, 2),
+                    'percentPaid' => $datePct,
+                    'isSubtotal'  => true,
+                ];
+                $dailySummary[] = [
+                    'date'        => date('d/m/Y', strtotime($date)),
+                    'dateRaw'     => $date,
+                    'gross'       => round($dateGross, 2),
+                    'paid'        => round($datePaid,  2),
+                    'outstanding' => round($dateOutstanding, 2),
+                ];
+            }
+        }
+
+        // ── Channel summary ────────────────────────────────────────────────
+        $channelMap = [];
+        foreach ($rawMap as $date => $channels) {
+            foreach ($channels as $ch => $d) {
+                if (!isset($channelMap[$ch])) $channelMap[$ch] = ['txCount' => 0, 'gross' => 0, 'paid' => 0];
+                $channelMap[$ch]['txCount'] += $d['txCount'];
+                $channelMap[$ch]['gross']   += $d['gross'];
+                $channelMap[$ch]['paid']    += $d['paid'];
+            }
+        }
+
+        $channelSummary = [];
+        foreach ($allChannels as $ch) {
+            $d = $channelMap[$ch] ?? null;
+            if (!$d || $d['txCount'] === 0) continue;
+            $outstanding = $d['gross'] - $d['paid'];
+            $channelSummary[] = [
+                'channel'      => $ch,
+                'txCount'      => $d['txCount'],
+                'grossRevenue' => round($d['gross'], 2),
+                'totalPaid'    => round($d['paid'],  2),
+                'outstanding'  => round($outstanding, 2),
+                'percentPaid'  => $d['gross'] > 0 ? round($d['paid'] / $d['gross'] * 100, 1) : 0,
+            ];
+        }
+
+        // ── Grand totals ──────────────────────────────────────────────────
+        $grandTx      = array_sum(array_column($channelSummary, 'txCount'));
+        $grandGross   = array_sum(array_column($channelSummary, 'grossRevenue'));
+        $grandPaid    = array_sum(array_column($channelSummary, 'totalPaid'));
+        $grandOut     = $grandGross - $grandPaid;
+        $grandPct     = $grandGross > 0 ? round($grandPaid / $grandGross * 100, 1) : 0;
+
+        $totals = [
+            'totalTransactions' => $grandTx,
+            'totalGross'        => round($grandGross, 2),
+            'totalPaid'         => round($grandPaid,  2),
+            'totalOutstanding'  => round($grandOut,   2),
+            'percentPaid'       => $grandPct,
+        ];
+
+        // ── Chart data ────────────────────────────────────────────────────
+        $chart = [
+            'categories'     => array_column($dailySummary, 'date'),
+            'seriesPaid'     => [['name' => 'Total Paid',        'data' => array_column($dailySummary, 'paid')]],
+            'seriesOutstand' => [['name' => 'Outstanding',       'data' => array_column($dailySummary, 'outstanding')]],
+        ];
+
+        return [
+            'dailyRows'      => $dailyRows,
+            'channelSummary' => $channelSummary,
+            'dailySummary'   => $dailySummary,
+            'totals'         => $totals,
+            'chart'          => $chart,
+        ];
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Refunds
+    // ─────────────────────────────────────────────────────────────────────
+
+    public function indexRefunds(Request $request)
+    {
+        $data = $this->fetchRefundsData($request);
+        return response()->json($data);
+    }
+
+    public function exportRefunds(Request $request)
+    {
+        $request->merge(['rowPerPage' => 0]);
+        $data     = $this->fetchRefundsData($request);
+        $rows     = $data['rows'] ?? [];
+        $dateFrom = $request->input('dateFrom', '');
+        $dateTo   = $request->input('dateTo', '');
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet       = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Refunds');
+
+        $navyARGB  = 'FF1F4E79';
+        $whiteARGB = 'FFFFFFFF';
+        $currFmt   = '#,##0';
+
+        // ── Title ─────────────────────────────────────────────────────────
+        $sheet->mergeCells('A1:L1');
+        $sheet->setCellValue('A1', 'Refunds Report');
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->getColor()->setARGB('FF003366');
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        $sheet->mergeCells('A2:L2');
+        $sheet->setCellValue('A2', 'Periode: ' . ($dateFrom ?: '-') . ' s/d ' . ($dateTo ?: '-'));
+        $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(9)->getColor()->setARGB('FF595959');
+        $sheet->getStyle('A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getRowDimension(3)->setRowHeight(6);
+
+        // ── Header ────────────────────────────────────────────────────────
+        $headers = ['No', 'No. Refund', 'Tanggal', 'Customer', 'Channel', 'No. Invoice', 'Metode Pembayaran', 'Jumlah Refund (Rp)', 'Alasan', 'Catatan', 'Status', 'Disetujui Oleh'];
+        foreach ($headers as $col => $h) {
+            $style = $sheet->getStyleByColumnAndRow($col + 1, 4);
+            $sheet->getCellByColumnAndRow($col + 1, 4)->setValue($h);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB($whiteARGB);
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($navyARGB);
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+        }
+        $sheet->getRowDimension(4)->setRowHeight(22);
+
+        // ── Data rows ─────────────────────────────────────────────────────
+        $statusMap = [0 => 'Pending', 1 => 'Approved', 2 => 'Rejected'];
+        $excelRow  = 5;
+        foreach ($rows as $idx => $r) {
+            $bg = $idx % 2 === 0 ? 'FFD9E1F2' : 'FFFFFFFF';
+            $rowData = [
+                $idx + 1,
+                $r['refundNumber'],
+                $r['createdAt'],
+                $r['customerName'],
+                $r['serviceType'],
+                $r['invoiceNumber'],
+                $r['paymentMethod'],
+                $r['amount'],
+                $r['reason'],
+                $r['notes'],
+                $statusMap[$r['status']] ?? '-',
+                $r['approvedBy'],
+            ];
+            foreach ($rowData as $col => $val) {
+                $cell  = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+                $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+                $cell->setValue($val);
+                $style->getFont()->setSize(10);
+                $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($bg);
+                $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+                $style->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+                if ($col === 7) {
+                    $style->getNumberFormat()->setFormatCode($currFmt);
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                } elseif (in_array($col, [0, 2, 10])) {
+                    $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                }
+            }
+            $sheet->getRowDimension($excelRow)->setRowHeight(18);
+            $excelRow++;
+        }
+
+        // ── Total row ─────────────────────────────────────────────────────
+        $totals = $data['totals'] ?? [];
+        $totalRow = ['', 'TOTAL', '', '', '', '', '', $totals['totalAmount'] ?? 0, '', '', '', ''];
+        foreach ($totalRow as $col => $val) {
+            $cell  = $sheet->getCellByColumnAndRow($col + 1, $excelRow);
+            $style = $sheet->getStyleByColumnAndRow($col + 1, $excelRow);
+            $cell->setValue($val);
+            $style->getFont()->setBold(true)->setSize(10)->getColor()->setARGB($whiteARGB);
+            $style->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB($navyARGB);
+            $style->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN)->getColor()->setARGB('FFBFBFBF');
+            $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+            if ($col === 7) {
+                $style->getNumberFormat()->setFormatCode($currFmt);
+                $style->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+            }
+        }
+        $sheet->getRowDimension($excelRow)->setRowHeight(20);
+
+        // ── Column widths ─────────────────────────────────────────────────
+        foreach ([5, 18, 14, 22, 14, 18, 20, 20, 30, 24, 12, 20] as $col => $w) {
+            $sheet->getColumnDimensionByColumn($col + 1)->setWidth($w);
+        }
+
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        return response()->stream(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="Export_Refunds.xlsx"',
+            'Cache-Control'       => 'max-age=0',
+        ]);
+    }
+
+    private function fetchRefundsData(Request $request): array
+    {
+        $dateFrom    = $request->input('dateFrom');
+        $dateTo      = $request->input('dateTo');
+        $locationIds = array_values(array_filter((array) $request->input('locationId', []),   fn($v) => $v !== '' && $v !== null));
+        $serviceType = (string) ($request->input('serviceType') ?? '');
+        $status      = $request->input('status', '');
+        $goToPage    = max(1, (int) $request->input('goToPage', 1));
+        $rowPerPage  = (int) $request->input('rowPerPage', 10);
+        $orderColumn = $request->input('orderColumn', 'fr.created_at');
+        $orderValue  = strtolower($request->input('orderValue', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        $allowedOrder = ['fr.created_at', 'fr.amount', 'fr.refundNumber', 'fr.serviceType', 'fr.status', 'customerName'];
+        if (!in_array($orderColumn, $allowedOrder)) $orderColumn = 'fr.created_at';
+
+        $query = DB::table('finance_refunds as fr')
+            ->join('customer as c', 'c.id', '=', 'fr.customerId')
+            ->join('location as l',  'l.id', '=', 'fr.locationId')
+            ->leftJoin('paymentMethodFinances as pm', 'pm.id', '=', 'fr.paymentMethodId')
+            ->leftJoin('users as ua', 'ua.id', '=', 'fr.approvedBy')
+            ->where(fn($q) => $q->where('fr.isDeleted', 0)->orWhereNull('fr.isDeleted'))
+            ->when($dateFrom,            fn($q) => $q->whereDate('fr.created_at', '>=', $dateFrom))
+            ->when($dateTo,              fn($q) => $q->whereDate('fr.created_at', '<=', $dateTo))
+            ->when(!empty($locationIds), fn($q) => $q->whereIn('fr.locationId', $locationIds))
+            ->when($serviceType !== '',  fn($q) => $q->where('fr.serviceType', $serviceType))
+            ->when($status !== '',       fn($q) => $q->where('fr.status', (int) $status))
+            ->select(
+                'fr.id',
+                'fr.refundNumber',
+                'fr.serviceType',
+                'fr.invoiceNumber',
+                'fr.amount',
+                'fr.reason',
+                'fr.notes',
+                'fr.status',
+                'fr.created_at',
+                DB::raw("TRIM(CONCAT(COALESCE(c.firstName,''), IF(c.lastName IS NOT NULL AND c.lastName != '', CONCAT(' ', c.lastName), ''))) AS customerName"),
+                'l.locationName',
+                DB::raw("COALESCE(pm.paymentMethod, '-') AS paymentMethod"),
+                DB::raw("COALESCE(TRIM(CONCAT(COALESCE(ua.firstName,''), IF(ua.lastName IS NOT NULL AND ua.lastName != '', CONCAT(' ', ua.lastName), ''))), '-') AS approvedByName")
+            );
+
+        $total = $query->count();
+
+        // ── Totals — fresh query to avoid mixing aggregate with non-aggregate selects ──
+        $aggregates = DB::table('finance_refunds as fr')
+            ->where(fn($q) => $q->where('fr.isDeleted', 0)->orWhereNull('fr.isDeleted'))
+            ->when($dateFrom,            fn($q) => $q->whereDate('fr.created_at', '>=', $dateFrom))
+            ->when($dateTo,              fn($q) => $q->whereDate('fr.created_at', '<=', $dateTo))
+            ->when(!empty($locationIds), fn($q) => $q->whereIn('fr.locationId', $locationIds))
+            ->when($serviceType !== '',  fn($q) => $q->where('fr.serviceType', $serviceType))
+            ->when($status !== '',       fn($q) => $q->where('fr.status', (int) $status))
+            ->selectRaw(
+                'COUNT(*) as totalRefunds,
+                 COALESCE(SUM(amount), 0) as totalAmount,
+                 SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as totalPending,
+                 SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as totalApproved,
+                 SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) as totalRejected,
+                 COALESCE(SUM(CASE WHEN status = 1 THEN amount ELSE 0 END), 0) as approvedAmount,
+                 COALESCE(SUM(CASE WHEN status = 0 THEN amount ELSE 0 END), 0) as pendingAmount'
+            )->first();
+
+        $totals = [
+            'totalRefunds'   => (int)   ($aggregates->totalRefunds   ?? 0),
+            'totalAmount'    => (float) ($aggregates->totalAmount     ?? 0),
+            'totalPending'   => (int)   ($aggregates->totalPending    ?? 0),
+            'totalApproved'  => (int)   ($aggregates->totalApproved   ?? 0),
+            'totalRejected'  => (int)   ($aggregates->totalRejected   ?? 0),
+            'approvedAmount' => (float) ($aggregates->approvedAmount  ?? 0),
+            'pendingAmount'  => (float) ($aggregates->pendingAmount   ?? 0),
+        ];
+
+        // ── Chart: daily stacked by status ────────────────────────────────
+        $chartData = DB::table('finance_refunds as fr')
+            ->where(fn($q) => $q->where('fr.isDeleted', 0)->orWhereNull('fr.isDeleted'))
+            ->when($dateFrom,            fn($q) => $q->whereDate('fr.created_at', '>=', $dateFrom))
+            ->when($dateTo,              fn($q) => $q->whereDate('fr.created_at', '<=', $dateTo))
+            ->when(!empty($locationIds), fn($q) => $q->whereIn('fr.locationId', $locationIds))
+            ->when($serviceType !== '',  fn($q) => $q->where('fr.serviceType', $serviceType))
+            ->selectRaw("DATE(fr.created_at) as txDate,
+                COALESCE(SUM(CASE WHEN fr.status = 1 THEN fr.amount ELSE 0 END), 0) as approved,
+                COALESCE(SUM(CASE WHEN fr.status = 0 THEN fr.amount ELSE 0 END), 0) as pending,
+                COALESCE(SUM(CASE WHEN fr.status = 2 THEN fr.amount ELSE 0 END), 0) as rejected")
+            ->groupBy(DB::raw('DATE(fr.created_at)'))
+            ->orderBy('txDate')
+            ->get();
+
+        $chart = [
+            'categories'     => $chartData->pluck('txDate')->map(fn($d) => date('d/m/Y', strtotime($d)))->values()->toArray(),
+            'seriesApproved' => [['name' => 'Approved', 'data' => $chartData->pluck('approved')->map(fn($v) => (float) $v)->values()->toArray()]],
+            'seriesPending'  => [['name' => 'Pending',  'data' => $chartData->pluck('pending')->map(fn($v) => (float) $v)->values()->toArray()]],
+            'seriesRejected' => [['name' => 'Rejected', 'data' => $chartData->pluck('rejected')->map(fn($v) => (float) $v)->values()->toArray()]],
+        ];
+
+        // ── Channel summary for donut ─────────────────────────────────────
+        $channelData = DB::table('finance_refunds as fr')
+            ->where(fn($q) => $q->where('fr.isDeleted', 0)->orWhereNull('fr.isDeleted'))
+            ->when($dateFrom,            fn($q) => $q->whereDate('fr.created_at', '>=', $dateFrom))
+            ->when($dateTo,              fn($q) => $q->whereDate('fr.created_at', '<=', $dateTo))
+            ->when(!empty($locationIds), fn($q) => $q->whereIn('fr.locationId', $locationIds))
+            ->selectRaw('fr.serviceType, COUNT(*) as cnt, COALESCE(SUM(fr.amount),0) as totalAmount')
+            ->groupBy('fr.serviceType')
+            ->get();
+
+        $channelSummary = $channelData->map(fn($r) => [
+            'label'  => $r->serviceType,
+            'count'  => (int)   $r->cnt,
+            'amount' => (float) $r->totalAmount,
+        ])->values()->toArray();
+
+        // ── Paginate rows ─────────────────────────────────────────────────
+        $rawRows = $query->orderBy($orderColumn, $orderValue)
+            ->when($rowPerPage > 0, fn($q) => $q->offset(($goToPage - 1) * $rowPerPage)->limit($rowPerPage))
+            ->get();
+
+        $statusMap = [0 => 'Pending', 1 => 'Approved', 2 => 'Rejected'];
+        $rows = $rawRows->map(fn($r) => [
+            'id'            => $r->id,
+            'refundNumber'  => $r->refundNumber,
+            'createdAt'     => date('d/m/Y', strtotime($r->created_at)),
+            'customerName'  => $r->customerName,
+            'locationName'  => $r->locationName,
+            'serviceType'   => $r->serviceType,
+            'invoiceNumber' => $r->invoiceNumber,
+            'paymentMethod' => $r->paymentMethod,
+            'amount'        => (float) $r->amount,
+            'reason'        => $r->reason ?? '-',
+            'notes'         => $r->notes  ?? '-',
+            'status'        => (int) $r->status,
+            'statusLabel'   => $statusMap[(int) $r->status] ?? '-',
+            'approvedBy'    => $r->approvedByName,
+        ])->values()->toArray();
+
+        return [
+            'rows'           => $rows,
+            'totals'         => $totals,
+            'totalPagination'=> $total,
+            'chart'          => $chart,
+            'channelSummary' => $channelSummary,
+        ];
+    }
 }

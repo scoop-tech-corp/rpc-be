@@ -17,26 +17,29 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('transaction_pet_hotel_payment_totals', function (Blueprint $table) {
-            // Hash SHA-256 file bukti pembayaran (untuk deteksi duplikat)
-            $table->string('proofHash', 64)->nullable()->after('proofRandomName');
+        $table = 'transaction_pet_hotel_payment_totals';
 
-            // Siapa yang upload bukti (bisa berbeda dengan userId yang buat transaksi)
-            $table->unsignedBigInteger('uploadedBy')->nullable()->after('proofHash');
-
-            // Siapa yang konfirmasi (harus berbeda dengan uploadedBy)
-            $table->unsignedBigInteger('confirmedBy')->nullable()->after('uploadedBy');
-
-            // Status verifikasi bukti pembayaran
-            $table->enum('verificationStatus', ['pending', 'verified', 'rejected'])
-                  ->default('pending')
-                  ->after('confirmedBy');
-
-            // Catatan penolakan (diisi saat reject)
-            $table->text('verificationNote')->nullable()->after('verificationStatus');
-
-            // Kapan dikonfirmasi/ditolak
-            $table->timestamp('verifiedAt')->nullable()->after('verificationNote');
+        Schema::table($table, function (Blueprint $t) use ($table) {
+            if (!Schema::hasColumn($table, 'proofHash')) {
+                $t->string('proofHash', 64)->nullable()->after('proofRandomName');
+            }
+            if (!Schema::hasColumn($table, 'uploadedBy')) {
+                $t->unsignedBigInteger('uploadedBy')->nullable()->after('proofHash');
+            }
+            if (!Schema::hasColumn($table, 'confirmedBy')) {
+                $t->unsignedBigInteger('confirmedBy')->nullable()->after('uploadedBy');
+            }
+            if (!Schema::hasColumn($table, 'verificationStatus')) {
+                $t->enum('verificationStatus', ['pending', 'verified', 'rejected'])
+                    ->default('pending')
+                    ->after('confirmedBy');
+            }
+            if (!Schema::hasColumn($table, 'verificationNote')) {
+                $t->text('verificationNote')->nullable()->after('verificationStatus');
+            }
+            if (!Schema::hasColumn($table, 'verifiedAt')) {
+                $t->timestamp('verifiedAt')->nullable()->after('verificationNote');
+            }
         });
     }
 
