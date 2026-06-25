@@ -188,6 +188,7 @@ Route::group(['middleware' => ['jwt.verify']], function () {
 
     Route::get('logout', [ApiController::class, 'logout']);
     Route::get('get_user', [ApiController::class, 'get_user']);
+    Route::get('user/reportmenu', [ApiController::class, 'getReportMenu']);
 
 
     Route::group(['prefix' => 'booking'], function () {
@@ -1264,6 +1265,16 @@ Route::group(['middleware' => ['jwt.verify']], function () {
             Route::get('/salesbyservice/export', [ReportSalesController::class, 'exportSalesByService']);
             Route::get('/salesbyproduct', [ReportSalesController::class, 'indexSalesByProduct']);
             Route::get('/salesbyproduct/export', [ReportSalesController::class, 'exportSalesByProduct']);
+            Route::get('/salesbyitemtype', [ReportSalesController::class, 'indexSalesByItemType']);
+            Route::get('/salesbyitemtype/export', [ReportSalesController::class, 'exportSalesByItemType']);
+            Route::get('/packagesummary', [ReportSalesController::class, 'indexPackageSummary']);
+            Route::get('/packagesummary/export', [ReportSalesController::class, 'exportPackageSummary']);
+            Route::get('/customerspend', [ReportSalesController::class, 'indexCustomerSpend']);
+            Route::get('/customerspend/export', [ReportSalesController::class, 'exportCustomerSpend']);
+            Route::get('/dailyreconciliation', [ReportSalesController::class, 'indexDailyReconciliation']);
+            Route::get('/dailyreconciliation/export', [ReportSalesController::class, 'exportDailyReconciliation']);
+            Route::get('/refunds', [ReportSalesController::class, 'indexRefunds']);
+            Route::get('/refunds/export', [ReportSalesController::class, 'exportRefunds']);
             Route::get('/paymentlist', [ReportSalesController::class, 'indexPaymentList']);
             Route::get('/paymentlist/export', [ReportSalesController::class, 'exportPaymentList']);
             Route::get('/details', [ReportSalesController::class, 'indexDetails']);
