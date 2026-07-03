@@ -1177,6 +1177,10 @@ class AccessControlController extends Controller
                 ['roleId', '=', $roleIdAccessControl]
             ])->first();
 
+            if (!$getFinal) {
+                return responseInvalid(['Access control entry not found for this menu and role!']);
+            }
+
             if (($getFinal->accessTypeId != $Request->type)) {
 
                 $valeuremark = "Access Type " . $checkIfDataMenuExists->menuName . " is change to " . $checkIfDataExits->accessType . " by " . $Request->user()->firstName;
